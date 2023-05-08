@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools>=67.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vector_db_bench"
+# authors = [
+#   { name="", email="" },
+# ]
+description = ""
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "pytz",
+    "streamlit-autorefresh",
+    "streamlit>=1.23.0",
+    "streamlit_extras",
+    "grpcio==1.53.0", # for qdrant-client and pymilvus
+    "grpcio-tools==1.53.0", # for qdrant-client and pymilvus
+    "pymilvus", # with pandas, numpy, ujson
+    "qdrant-client",
+    "pinecone-client",
+    "weaviate-client",
+    "elasticsearch",
+    "plotly",
+    "pydantic==v1.10.7", # for qdrant-client
+    "environs",
+    "scikit-learn",
+    "s3fs",
+    "psutil",
+]
+version = "0.0.1"
+
+[project.optional-dependencies]
+test = [
+    "ruff",
+    "pytest",
+]
+
+
+# [project.urls]
+# "Homepage"          = ""
+# "Docs: User Guide"  = ""
+# "Source Code"       = ""
+
+[project.scripts]
+init_bench = "vector_db_bench.__main__:main"
