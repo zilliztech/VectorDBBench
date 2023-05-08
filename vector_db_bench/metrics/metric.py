@@ -1,0 +1,2 @@
+class Metric:
+    pass

@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=67.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vector_db_bench"
+# authors = [
+#   { name="", email="" },
+# ]
+description = ""
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+]
+
+version = "0.0.1"
+
+# [project.urls]
+# "Homepage"          = ""
+# "Docs: User Guide"  = ""
+# "Source Code"       = ""
+
+[project.scripts]
+init_bench = "vector_db_bench.__main__:main"
