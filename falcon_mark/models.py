@@ -4,19 +4,19 @@ from pydantic import BaseModel
 from .metric import Metric
 
 class CaseType(IntEnum):
-    LoadLDim: 10000
-    LoadSDim: 10001
+    LoadLDim = 10000
+    LoadSDim =  10001
 
-    PerformanceLZero: 10002
-    PerformanceMZero: 10003
-    PerformanceSZero: 10004
+    PerformanceLZero = 10002
+    PerformanceMZero = 10003
+    PerformanceSZero = 10004
 
-    PerformanceLLow: 10005
-    PerformanceMLow: 10006
-    PerformanceSLow: 10007
-    PerformanceLHigh: 10008
-    PerformanceMHigh: 10009
-    PerformanceSHigh: 10010
+    PerformanceLLow = 10005
+    PerformanceMLow = 10006
+    PerformanceSLow = 10007
+    PerformanceLHigh = 10008
+    PerformanceMHigh = 10009
+    PerformanceSHigh = 10010
 
 
 class CustomizedCase(BaseModel):

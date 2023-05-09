@@ -26,6 +26,7 @@ version = "0.0.1"
 [project.optional-dependencies]
 test = [
     "ruff",
+    "pytest",
 ]
 
 

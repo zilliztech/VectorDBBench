@@ -1,7 +1,7 @@
 """Assembler assembles cases with datasets and runners"""
 
 from typing import Any
-from .case import Case
+from .cases import Case
 from .client import Client
 
 class Assembler:

@@ -1,14 +1,98 @@
+from enum import Enum, auto
 from pydantic import BaseModel
+from pydantic.dataclasses import dataclass
 
-class DataSet(BaseModel):
-    name:      str
-    dim:       int
+@dataclass
+class GIST:
+    name: str = "GIST"
+    dim: int = 960
+    metric_type: str = "L2"
+
+@dataclass
+class Cohere:
+    name: str = "Cohere"
+    dim: int = 768
+    metric_type: str = "Consine"
+
+@dataclass
+class Glove:
+    name: str = "Glove"
+    dim: int = 200
+    metric_type: str = "Consine"
+
+@dataclass
+class SIFT:
+    name: str = "SIFT"
+    dim: int = 128
+    metric_type: str = "L2"
+
+@dataclass
+class GIST_S(GIST):
+    name: str  = "GIST_S_100K"
+    label: str = "SMALL"
+    size: int  = 100_000
+
+@dataclass
+class GIST_M(GIST):
+    name: str  = "GIST_M_1M"
+    label: str = "MEDIUM"
+    size: int  = 1_000_000
+
+@dataclass
+class Cohere_S(Cohere):
+    name: str  = "Cohere_S_100K"
+    label: str = "SMALL"
+    size: int  = 100_000
+
+@dataclass
+class Cohere_M(Cohere):
+    name: str = "Cohere_M_1M"
+    label: str = "MEDIUM"
+    size: int = 1_000_000
+
+@dataclass
+class Cohere_L(Cohere):
+    name  : str = "Cohere_L_10M"
+    label : str = "LARGE"
+    size  : int = 10_000_000
+
+@dataclass
+class Glove_S(Glove):
+    name : str = "Glove_S_100K"
+    label: str = "SMALL"
+    size : int = 100_000
+
+@dataclass
+class Glove_M(Glove):
+    name : str = "Glove_M_1M"
+    label: str = "MEDIUM"
+    size : int = 1_000_000
+
+@dataclass
+class SIFT_S(SIFT):
+    name : str = "SIFT_S_500K"
+    label: str = "SMALL"
+    size : int = 500_000
+
+@dataclass
+class SIFT_M(SIFT):
+    name : str = "SIFT_M_5M"
+    label: str = "MEDIUM"
+    size : int = 5_000_000
+
+@dataclass
+class SIFT_L(SIFT):
+    name : str = "SIFT_L_50M"
+    label: str = "LARGE"
+    size : int = 50_000_000
+
+
+class DataSetManager(BaseModel):
+    data:   GIST | Cohere | Glove | SIFT
     data_path: str
-    size:      int
-    metric_type: str
 
-    def prepare(self, url: str) -> bool:
-        """Download the dataset"""
+    def prepare(self) -> bool:
+        """Download the dataset from the default url"""
         pass
 
     def batch(self):
@@ -19,62 +103,37 @@ class DataSet(BaseModel):
         # yield
         pass
 
-class GIST(DataSet, BaseModel):
-    dim: int = 960
-    metric_type: str = "L2"
+class DataSet(Enum):
+    GIST = auto()
+    Cohere = auto()
+    Glove = auto()
+    SIFT = auto()
 
-class Cohere(DataSet, BaseModel):
-    dim: int = 768
-    metric_type: str = "Consine"
+class Label(Enum):
+    SMALL = auto()
+    MEDIUM = auto()
+    LARGE = auto()
 
-class Glove(DataSet, BaseModel):
-    dim: int = 200
-    metric_type: str = "Consine"
+_global_ds_mapping = {
+    DataSet.GIST: {
+        Label.SMALL: GIST_S(),
+        Label.MEDIUM: GIST_M(),
+    },
+    DataSet.Cohere: {
+        Label.SMALL: Cohere_S(),
+        Label.MEDIUM: Cohere_M(),
+        Label.LARGE: Cohere_L(),
+    },
+    DataSet.Glove:{
+        Label.SMALL: Glove_S(),
+        Label.MEDIUM: Glove_M(),
+    },
+    DataSet.SIFT: {
+        Label.SMALL: SIFT_S(),
+        Label.MEDIUM: SIFT_M(),
+        Label.LARGE: SIFT_L(),
+    },
+}
 
-class SIFT(DataSet, BaseModel):
-    dim: int = 128
-    metric_type: str = "L2"
-
-class GIST_S(GIST, BaseModel):
-    name: str = "GIST_S_100K"
-    size: 100_000
-
-class GIST_M(GIST, BaseModel):
-    name: str = "GIST_M_1M"
-    size: 1_000_000
-
-class Cohere_S(Cohere, BaseModel):
-    name: str = "Cohere_S_100K"
-    size: 100_000
-
-class Cohere_M(Cohere, BaseModel):
-    name: str = "Cohere_M_1M"
-    size: 1_000_000
-
-class Cohere_L(Cohere, BaseModel):
-    name: str = "Cohere_L_10M"
-    size: 10_000_000
-
-class Glove_S(Glove, BaseModel):
-    name: str = "Glove_S_100K"
-    size: 100_000
-
-class Glove_M(Glove, BaseModel):
-    name: str = "Glove_M_1M"
-    size: 1_000_000
-
-class SIFT_S(SIFT, BaseModel):
-    name: str = "SIFT_S_500K"
-    size: 500_000
-
-class SIFT_M(SIFT, BaseModel):
-    name: str = "SIFT_M_5M"
-    size: 5_000_000
-
-class SIFT_L(SIFT, BaseModel):
-    name: str = "SIFT_L_50M"
-    size: 50_000_000
-
-SMALL = [GIST_S, Cohere_S, Glove_S, SIFT_S]
-MEDIUM = [GIST_M, Cohere_M, Glove_M, SIFT_M]
-LARGE = [Cohere_L, SIFT_L]
+def get_data_set(ds: DataSet, label: Label):
+    return _global_ds_mapping.get(ds, {}).get(label)

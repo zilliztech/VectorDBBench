@@ -3,6 +3,7 @@ from pydantic import BaseModel
 
 class Metric(BaseModel):
     """result metrics"""
+    pass
 
 class LoadMetric(BaseModel):
     label: str = "l_metric"
