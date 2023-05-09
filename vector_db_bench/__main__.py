@@ -23,7 +23,7 @@ def main():
 
 def run_streamlit():
     # TODO: add log level
-    cmd = ['streamlit', 'run', f'{os.path.dirname(__file__)}/home.py']
+    cmd = ['streamlit', 'run', f'{os.path.dirname(__file__)}/frontend/home.py']
     log.debug(f"cmd: {cmd}")
     try:
         subprocess.run(cmd, check=True)

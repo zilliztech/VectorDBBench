@@ -6,10 +6,11 @@ class Case:
     case_id: int # TODO enum
     run_id: int
     data_set: DataSet
+    db_client: api.Client
 
     filter_rate: Any = None # TODO
 
-    def run(self, db_client: api.Client, run_id: int) -> CaseResult:
+    def run(self, run_id: int) -> CaseResult:
         pass
 
     def stop(self):

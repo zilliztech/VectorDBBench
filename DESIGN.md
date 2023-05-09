@@ -24,7 +24,7 @@ TaskConfig = (BaseConfig, CaseConfig, DBConfig)
 # Output Results
 class Metric:
     # TODO
-    QPS: float
+    qps: float
     recall: float
     latency: Any
     insert_duration: float
@@ -42,29 +42,13 @@ class TestResult:
     results: List[CaseResult]
 ```
 
--> BaseConfig and DBConfig can merge into DBConfig
-
 
 ### APIs
 ```python
 
-def run(configs: List[TaskConfig], path: str) -> int:
+def run(configs: List[TaskConfig], path: str) -> bool:
     """run all the tasks in the configs, write one result into the path?
 
-    Examples:
-        dbs = [db_a, db_b]
-        cases = [case_x, case_y, case_z]
-
-        configs = dbs X cases
-                = ((db, case) for db in dbs
-                              for case in cases)
-                = ((db_a, case_x), (db_a, case_y), (db_a, case_z),
-                   (db_b, case_x'), (db_b, case_y'), (db_b, case_z'))
-
-        TestResult = [CaseResult("db_a", "case_x"), ..., CaseResult("db_b", "case_z")]
-
-    Returns:
-        int: run_id
     """
     pass
 
