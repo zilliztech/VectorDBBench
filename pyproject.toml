@@ -3,7 +3,7 @@ requires = ["setuptools>=67.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "vector_db_bench"
+name = "falcon_mark"
 # authors = [
 #   { name="", email="" },
 # ]
@@ -35,4 +35,4 @@ test = [
 # "Source Code"       = ""
 
 [project.scripts]
-init_bench = "vector_db_bench.__main__:main"
+init_falcon_mark = "falcon_mark.__main__:main"

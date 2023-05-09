@@ -5,7 +5,7 @@ import os
 from . import config
 
 LOG_LEVEL = "DEBUG"
-LOG_PATH = '/tmp/vector_db_bench'
+LOG_PATH = '/tmp/falcon_mark'
 LOG_NAME = 'logfile'
 TIMEZONE = 'UTC'
 
