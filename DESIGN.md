@@ -7,9 +7,8 @@ Frond End -> API -> Back End
 ### models
 ```python
 # Input Configs
-class BaseConfig:
+class DB(IntEnum):
     """types of db"""
-    # TODO
 
 class CaseConfig:
     """dataset, test cases, filter rate, params"""
@@ -19,16 +18,11 @@ class DBConfig:
     """DB authentications: host, port, user, password, and, token"""
     # TODO
 
-TaskConfig = (BaseConfig, CaseConfig, DBConfig)
+TaskConfig = (DB, DBConfig, CaseConfig)
 
 # Output Results
 class Metric:
     # TODO
-    qps: float
-    recall: float
-    latency: Any
-    insert_duration: float
-    build_duration: float
 
 class CaseResult:
     result_id: int
@@ -46,20 +40,25 @@ class TestResult:
 ### APIs
 ```python
 
-def run(configs: List[TaskConfig], path: str) -> bool:
-    """run all the tasks in the configs, write one result into the path?
+class BenchMarkRunner(BaseModel):
+    result_collector: ResultCollector
+    assembler: Assembler
 
-    """
-    pass
+    def run(configs: list[TaskConfig]) -> bool:
+        """run all the tasks in the configs, write one result into the path"""
+        pass
 
-def get_results(paths: List[str]) -> List[TestResult]:
-    """results of all runs, each TestResult represents one run."""
+    def get_results(paths: list[str]) -> list[TestResult]:
+        """results of all runs, each TestResult represnets one run."""
+        pass
 
-def has_running() ->  bool:
-    """check if there're running benchmarks"""
+    def has_running() -> bool:
+        """check if there're running benchmarks"""
+        pass
 
-def stop_running():
-    """force stop if there're running benchmarks"""
+    def stop_running():
+        """force stop if ther're running benchmarks"""
+        pass
 ```
 
 ## Back End Framework
