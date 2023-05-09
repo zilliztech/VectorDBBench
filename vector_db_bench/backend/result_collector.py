@@ -1,4 +1,4 @@
-from .results import TestResult, CaseResult
+from ..results import TestResult, CaseResult
 
 
 class ResultCollector:

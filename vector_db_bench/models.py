@@ -1,13 +1,7 @@
-from abc import ABC, abstractmethod
-from typing import Any, NamedTuple
+from typing import Any
 from enum import IntEnum
 from pydantic import BaseModel
-
-
-class TaskConfig(NamedTuple):
-    db: DB
-    db_config: BaseDBConfig
-    case_config: BaseCaseConfig
+from .metric import Metric
 
 
 class DB(IntEnum):
@@ -33,21 +27,13 @@ class DB(IntEnum):
         return db2config.get(self.name, None)
 
 
-class BaseDBConfig(ABC):
-    """Base interface for database configs"""
-    pass
-
-
-class MilvusConfig(BaseDBConfig, BaseModel):
+class MilvusConfig(BaseModel):
     host: str
     port: int | str
 
 
     def __repr__(self) -> str:
         return f"MilvusConfig<host={self.host}, port={self.port}>"
-
-    def parse_client(self):
-        return 
 
 
 
@@ -60,15 +46,30 @@ class ZillizCloudConfig(BaseModel):
         return f"ZillizCloudConfig<uri={self.uri}, user={self.user}>"
 
 
-class TokenConfig(BaseModel):
-    uri:    str
-    token:  str
-
-    def __repr__(self) -> str:
-        return f"TokenConfig<uri={self.uri}>"
-
-
 db2config = {
     "Milvus": MilvusConfig,
     "ZillizCloud": ZillizCloudConfig,
 }
+
+
+class TaskConfig(BaseModel):
+    db: DB
+    db_config: Any
+    case_config: Any
+
+
+class CaseResult(BaseModel):
+    result_id: int
+    case_id: int
+    case_config: Any
+    output_path: str
+
+    metrics: list[Metric]
+
+    def append_to_disk(self):
+        pass
+
+
+class TestResult(BaseModel):
+    run_id: int
+    results: list[CaseResult]
