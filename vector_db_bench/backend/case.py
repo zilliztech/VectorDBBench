@@ -1,8 +1,11 @@
+from typing import Any
+from pydantic import BaseModel
 from .clients import api
 from .dataset import DataSet
-from .results import CaseResult
+from .result import CaseResult
 
-class Case:
+
+class Case(BaseModel):
     case_id: int # TODO enum
     run_id: int
     data_set: DataSet

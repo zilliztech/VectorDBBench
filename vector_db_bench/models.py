@@ -1,5 +1,13 @@
-from typing import Any
+from abc import ABC, abstractmethod
+from typing import Any, NamedTuple
 from enum import IntEnum
+from pydantic import BaseModel
+
+
+class TaskConfig(NamedTuple):
+    db: DB
+    db_config: BaseDBConfig
+    case_config: BaseCaseConfig
 
 
 class DB(IntEnum):
@@ -25,39 +33,36 @@ class DB(IntEnum):
         return db2config.get(self.name, None)
 
 
-class MilvusConfig:
+class BaseDBConfig(ABC):
+    """Base interface for database configs"""
+    pass
+
+
+class MilvusConfig(BaseDBConfig, BaseModel):
     host: str
     port: int | str
 
-    def __init__(self, host: str, port: int | str):
-        self.host = host
-        self.port = port
 
     def __repr__(self) -> str:
         return f"MilvusConfig<host={self.host}, port={self.port}>"
 
+    def parse_client(self):
+        return 
 
-class ZillizCloudConfig:
+
+
+class ZillizCloudConfig(BaseModel):
     uri:        str
     user:       str
     password:   str
-
-    def __init__(self, uri: str, user: str, password: str):
-        self.uri = uri
-        self.user = user
-        self.password = password
 
     def __repr__(self) -> str:
         return f"ZillizCloudConfig<uri={self.uri}, user={self.user}>"
 
 
-class TokenConfig:
+class TokenConfig(BaseModel):
     uri:    str
     token:  str
-
-    def __init__(self, uri: str, token: str):
-        self.uri = uri
-        self.token = token
 
     def __repr__(self) -> str:
         return f"TokenConfig<uri={self.uri}>"

@@ -1,4 +1,0 @@
-ruff
-pytz
-pymilvus
-streamlit

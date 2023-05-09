@@ -1,20 +1,20 @@
 """Assembler assembles cases with datasets and runners"""
 
-
-from .cases import Case
-from .clients import Client
+from typing import Any
+from .case import Case
+from .client import Client
 
 class Assembler:
     """
     Examples:
     """
 
-    def assemble() -> List[Any]:
-
-
-    def _get_db_clients(self, dbs: List[Any]) -> List[Client]:
+    def assemble() -> list[Any]:
         pass
 
-    def _get_cases(cases_config: List[Any]) -> List[Case]:
+
+    def _get_db_clients(self, dbs: list[Any]) -> list[Client]:
         pass
-    
+
+    def _get_cases(cases_config: list[Any]) -> list[Case]:
+        pass

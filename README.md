@@ -19,8 +19,9 @@ Local URL: http://localhost:8501
 
 ### Install requirements
 ``` shell
-pip install -r requirements.txt
+pip install -e '.[test]'
 ```
+
 ### Run test server
 ```
 $ python -m vector_db_bench
@@ -29,7 +30,6 @@ $ python -m vector_db_bench
 OR:
 
 ```shell
-$ pip install -e .
 $ init_bench
 ```
 

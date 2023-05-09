@@ -1,10 +1,9 @@
-class DataSet:
-    _name:      str = ""
-    _data_path: str = ""
-    _size:      int = 0
+from pydantic import BaseModel
 
-    def __init__(self):
-        pass
+class DataSet(BaseModel):
+    name:      str
+    data_path: str
+    size:      int
 
     def prepare(self, url: str) -> bool:
         """Download the dataset"""
@@ -17,13 +16,3 @@ class DataSet:
     def ground_truth(self):
         # yield
         pass
-
-    @property
-    def size(self) -> int:
-        """The data counts of this dataset"""
-        return self._size
-    
-    @property
-    def name(self) -> int:
-        """The unique name of the dataset"""
-        return self._name

@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=67.0"]
+requires = ["setuptools>=67.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -9,14 +9,25 @@ name = "vector_db_bench"
 # ]
 description = ""
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
 ]
-
+dependencies = [
+    "pytz",
+    "streamlit",
+    "pymilvus",
+    "pydantic",
+]
 version = "0.0.1"
+
+[project.optional-dependencies]
+test = [
+    "ruff",
+]
+
 
 # [project.urls]
 # "Homepage"          = ""
