@@ -20,6 +20,7 @@ dependencies = [
     "streamlit",
     "pymilvus",
     "pydantic",
+    "plotly",
 ]
 version = "0.0.1"
 

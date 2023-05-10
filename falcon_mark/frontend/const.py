@@ -74,6 +74,42 @@ DEFAULT_CONFIG_CHECKED = lambda x: True
 
 CASE_CONFIG_MAP = {
     DB.Milvus: {
+        Case.Loading: [
+            {
+                "name": CaseConfig.IndexType,
+                "inputType": InputType.Option,
+                "options": [
+                    IndexType.HNSW.value,
+                    IndexType.Ivfflat.value,
+                    IndexType.DiskAnn.value,
+                    IndexType.Flat.value,
+                ],
+            },
+            {
+                "name": CaseConfig.M,
+                "checked": lambda config: config[CaseConfig.IndexType]
+                == IndexType.HNSW.value,
+                "inputType": InputType.Int,
+                "min": 4,
+                "max": 64,
+            },
+            {
+                "name": CaseConfig.EFConstruction,
+                "checked": lambda config: config[CaseConfig.IndexType]
+                == IndexType.HNSW.value,
+                "inputType": InputType.Int,
+                "min": 8,
+                "max": 512,
+            },
+            {
+                "name": CaseConfig.Nlist,
+                "checked": lambda config: config[CaseConfig.IndexType]
+                == IndexType.Ivfflat.value,
+                "inputType": InputType.Int,
+                "min": 1,
+                "max": 65536,
+            },
+        ],
         Case.Performance: [
             {
                 "name": CaseConfig.IndexType,
@@ -82,52 +118,53 @@ CASE_CONFIG_MAP = {
                     IndexType.HNSW.value,
                     IndexType.Ivfflat.value,
                     IndexType.DiskAnn.value,
+                    IndexType.Flat.value,
                 ],
             },
             {
                 "name": CaseConfig.M,
-                "checked": lambda config: config[CaseConfig.IndexType].lower()
-                == IndexType.HNSW.value.lower(),
+                "checked": lambda config: config[CaseConfig.IndexType]
+                == IndexType.HNSW.value,
                 "inputType": InputType.Int,
                 "min": 4,
                 "max": 64,
             },
             {
                 "name": CaseConfig.EFConstruction,
-                "checked": lambda config: config[CaseConfig.IndexType].lower()
-                == IndexType.HNSW.value.lower(),
+                "checked": lambda config: config[CaseConfig.IndexType]
+                == IndexType.HNSW.value,
                 "inputType": InputType.Int,
                 "min": 8,
                 "max": 512,
             },
             {
                 "name": CaseConfig.EF,
-                "checked": lambda config: config[CaseConfig.IndexType].lower()
-                == IndexType.HNSW.value.lower(),
+                "checked": lambda config: config[CaseConfig.IndexType]
+                == IndexType.HNSW.value,
                 "inputType": InputType.Int,
                 "min": 100,
                 "max": (1 << 53) - 1,
             },
             {
                 "name": CaseConfig.SearchList,
-                "checked": lambda config: config[CaseConfig.IndexType].lower()
-                == IndexType.DiskAnn.value.lower(),
+                "checked": lambda config: config[CaseConfig.IndexType]
+                == IndexType.DiskAnn.value,
                 "inputType": InputType.Int,
                 "min": 100,
                 "max": (1 << 53) - 1,
             },
             {
                 "name": CaseConfig.Nlist,
-                "checked": lambda config: config[CaseConfig.IndexType].lower()
-                == IndexType.Ivfflat.value.lower(),
+                "checked": lambda config: config[CaseConfig.IndexType]
+                == IndexType.Ivfflat.value,
                 "inputType": InputType.Int,
                 "min": 1,
                 "max": 65536,
             },
             {
                 "name": CaseConfig.Nprobe,
-                "checked": lambda config: config[CaseConfig.IndexType].lower()
-                == IndexType.Ivfflat.value.lower(),
+                "checked": lambda config: config[CaseConfig.IndexType]
+                == IndexType.Ivfflat.value,
                 "inputType": InputType.Int,
                 "min": 1,
                 "max": 65536,

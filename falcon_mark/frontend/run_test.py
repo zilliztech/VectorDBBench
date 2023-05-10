@@ -6,7 +6,7 @@ from falcon_mark.frontend.const import *
 st.set_page_config(
     page_title="Falcon Mark - Open VectorDB Bench",
     page_icon="🧊",
-    layout="wide",
+    # layout="wide",
     initial_sidebar_state="collapsed",
 )
 
