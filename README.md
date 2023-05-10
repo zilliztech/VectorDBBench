@@ -43,3 +43,8 @@ Add `--fix` if you want to fix the coding styles automatically
 ```shell
 $ ruff check falcon_mark --fix
 ```
+
+## 4. How to run uinitest
+```
+pytest -sv tests/
+```

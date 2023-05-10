@@ -2,15 +2,6 @@ import logging
 import subprocess
 import os
 
-from . import config
-
-LOG_LEVEL = "DEBUG"
-LOG_PATH = '/tmp/falcon_mark'
-LOG_NAME = 'logfile'
-TIMEZONE = 'UTC'
-
-config.init(LOG_LEVEL, LOG_PATH, LOG_NAME, TIMEZONE)
-
 log = logging.getLogger("main")
 
 # TODO: logging configs before start

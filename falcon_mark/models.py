@@ -47,7 +47,6 @@ class DB(IntEnum):
         return db2config.get(self.name, None)
 
 
-
 class MilvusConfig(BaseModel):
     uri: str
 

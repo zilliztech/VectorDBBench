@@ -19,8 +19,9 @@ dependencies = [
     "pytz",
     "streamlit",
     "pymilvus",
-    "pydantic",
     "plotly",
+    "pydantic >= v2.0.a3",
+    "environs",
 ]
 version = "0.0.1"
 

@@ -1,22 +1,20 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from .clients import api
 from . import dataset as ds
 from ..models import CaseResult, CaseType
-from ..metric import Metric, LoadMetric, PerformanceMetric
+from ..metric import Metric
 
 
 class Case(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     case_id: CaseType
     run_id: int
     metric: Metric = None # TODO
-    filter_rate: float 
+    filter_rate: float
     filter_size: int
 
     db_client: api.Client = None
-
-    class Config:
-        """configs for pydantic"""
-        arbitrary_types_allowed = True
 
     def run(self, run_id: int) -> CaseResult:
         pass
@@ -24,62 +22,67 @@ class Case(BaseModel):
     def stop(self):
         pass
 
-class LoadCase(Case):
+
+class LoadCase(Case, BaseModel):
     #  metric: Metric = LoadMetric()
     metric: Metric = None
     filter_rate: float = 0
     filter_size: int = 0
 
 
-class PerformanceCase(Case):
+class PerformanceCase(Case, BaseModel):
     #  metric: Metric = PerformanceMetric()
     metric: Metric = None
 
-class LoadLDimCase(LoadCase, ds.GIST_S):
+class LoadLDimCase(LoadCase):
+    case_id: CaseType = CaseType.LoadLDim
+    dataset: ds.DataSet = ds.get(ds.Name.GIST, ds.Label.SMALL)
 
-    def __init__(self):
-        self.case_id: CaseType = CaseType.LoadLDim
+class LoadSDimCase(LoadCase):
+    case_id: CaseType = CaseType.LoadSDim
+    dataset: ds.DataSet = ds.get(ds.Name.SIFT, ds.Label.SMALL)
 
-class LoadSDimCase(LoadCase, ds.SIFT_S):
-    case_id = CaseType.LoadSDim
+class PerformanceLZero(PerformanceCase):
+    case_id: CaseType = CaseType.PerformanceLZero
+    dataset: ds.DataSet = ds.get(ds.Name.Cohere, ds.Label.LARGE)
 
-class PerformanceLZero(PerformanceCase, ds.Cohere_L):
-    case_id = CaseType.PerformanceLZero
+class PerformanceMZero(PerformanceCase):
+    case_id: CaseType = CaseType.PerformanceMZero
+    dataset: ds.DataSet = ds.get(ds.Name.Cohere, ds.Label.LARGE)
 
-class PerformanceMZero(PerformanceCase, ds.Cohere_M):
-    case_id = CaseType.PerformanceMZero
+class PerformanceSZero(PerformanceCase):
+    case_id: CaseType = CaseType.PerformanceSZero
+    dataset: ds.DataSet = ds.get(ds.Name.Cohere, ds.Label.SMALL)
 
-class PerformanceSZero(PerformanceCase, ds.Cohere_S):
-    case_id = CaseType.PerformanceSZero
-
-
-class PerformanceLLow(PerformanceCase, ds.Cohere_L):
-
-    case_id = CaseType.PerformanceLLow
+class PerformanceLLow(PerformanceCase):
+    case_id: CaseType = CaseType.PerformanceLLow
     filter_size: int = 100
+    dataset: ds.DataSet = ds.get(ds.Name.Cohere, ds.Label.LARGE)
 
-class PerformanceMLow(PerformanceCase, ds.Cohere_M):
-
-    case_id = CaseType.PerformanceMLow
+class PerformanceMLow(PerformanceCase):
+    case_id: CaseType = CaseType.PerformanceMLow
     filter_size: int = 100
+    dataset: ds.DataSet = ds.get(ds.Name.Cohere, ds.Label.MEDIUM)
 
-class PerformanceSLow(PerformanceCase, ds.Cohere_S):
+class PerformanceSLow(PerformanceCase):
     case_id: CaseType = CaseType.PerformanceSLow
     filter_size: int = 100
+    dataset: ds.DataSet = ds.get(ds.Name.Cohere, ds.Label.SMALL)
 
-
-class PerformanceLHigh(PerformanceCase, ds.Cohere_L):
+class PerformanceLHigh(PerformanceCase):
     case_id: CaseType = CaseType.PerformanceLHigh
     filter_rate: float = 0.9
+    dataset: ds.DataSet = ds.get(ds.Name.Cohere, ds.Label.LARGE)
 
-class PerformanceMHigh(PerformanceCase, ds.Cohere_M):
+class PerformanceMHigh(PerformanceCase):
     case_id: CaseType = CaseType.PerformanceMHigh
     filter_rate: float = 0.9
+    dataset: ds.DataSet = ds.get(ds.Name.Cohere, ds.Label.MEDIUM)
 
-
-class PerformanceSHigh(PerformanceCase, ds.Cohere_S):
+class PerformanceSHigh(PerformanceCase):
     case_id: CaseType = CaseType.PerformanceSLow
     filter_rate: float = 0.9
+    dataset: ds.DataSet = ds.get(ds.Name.Cohere, ds.Label.SMALL)
 
 type2case = {
     CaseType.LoadLDim: LoadLDimCase,
