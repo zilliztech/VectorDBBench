@@ -17,3 +17,12 @@ class TestDataSet:
         assert g.name == "GIST"
         assert g.label == "SMALL"
         assert g.size == 100_000
+
+    @pytest.mark.skip("runs locally")
+    def test_iter_dataset_cohere(self):
+        cohere_s = ds.get(ds.Name.Cohere, ds.Label.SMALL)
+        assert cohere_s.prepare()
+
+        for f in cohere_s:
+            log.debug(f"iter to: {f.columns}")
+

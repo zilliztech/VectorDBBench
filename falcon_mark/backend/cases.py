@@ -10,11 +10,18 @@ class Case(BaseModel):
 
     case_id: CaseType
     run_id: int
-    metric: Metric = None # TODO
+    dataset: ds.DataSet
+
+    metric: Metric
     filter_rate: float
     filter_size: int
+    runner: Any
 
-    db_client: api.Client = None
+    db: api.VectorDB
+
+    def prepare(self):
+        """Prepare runner, dataset, and db"""
+        pass
 
     def run(self, run_id: int) -> CaseResult:
         pass
@@ -32,7 +39,10 @@ class LoadCase(Case, BaseModel):
 
 class PerformanceCase(Case, BaseModel):
     #  metric: Metric = PerformanceMetric()
-    metric: Metric = None
+    metric: Metric = None # TODO
+
+    def run(self):
+        pass
 
 class LoadLDimCase(LoadCase):
     case_id: CaseType = CaseType.LoadLDim
