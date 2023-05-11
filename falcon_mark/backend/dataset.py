@@ -7,39 +7,17 @@ Usage:
 """
 
 import os
+import logging
 from enum import Enum, auto
-from typing import Optional, Type
-from decimal import Decimal
-from pydantic import BaseModel, validator, computed_field, ConfigDict
+
+import pandas as pd
+from pydantic import BaseModel, computed_field, ConfigDict
 from pydantic.dataclasses import dataclass
+
 from .. import DATASET_LOCAL_DIR
+from . import utils
 
-
-def numerize(n) -> str:
-    """nuimerize display of positive number
-
-    Examples:
-        >>> numerize(1_000)
-        '1K'
-    """
-    def round_num(n):
-        n=Decimal(n)
-        return n.to_integral() if n == n.to_integral() else round(n.normalize(), 2)
-
-    sufixes = [ "", "K", "M", "B", "END"] 
-    sci_expr = [1e0, 1e3, 1e6, 1e9 ]
-    for x in range(len(sci_expr)):
-        try:
-            if n >= sci_expr[x] and n < sci_expr[x+1]:
-                sufix = sufixes[x]
-                if n >= 1e3:
-                    num = str(round_num(n/sci_expr[x]))
-                else:
-                    num = str(n)
-                return f"{num}{sufix}"
-        except IndexError:
-            print("You've reached the end")
-
+log = logging.getLogger(__name__)
 
 @dataclass
 class GIST:
@@ -50,7 +28,7 @@ class GIST:
     @computed_field
     @property
     def dir_name(self) -> str:
-        return f"{self.name}_{self.label}_{numerize(self.size)}".lower()
+        return f"{self.name}_{self.label}_{utils.numerize(self.size)}".lower()
 
 @dataclass
 class Cohere:
@@ -61,18 +39,18 @@ class Cohere:
     @computed_field
     @property
     def dir_name(self) -> str:
-        return f"{self.name}_{self.label}_{numerize(self.size)}".lower()
+        return f"{self.name}_{self.label}_{utils.numerize(self.size)}".lower()
 
 @dataclass
 class Glove:
     name: str = "Glove"
     dim: int = 200
     metric_type: str = "Consine"
-    
+
     @computed_field
     @property
     def dir_name(self) -> str:
-        return f"{self.name}_{self.label}_{numerize(self.size)}".lower()
+        return f"{self.name}_{self.label}_{utils.numerize(self.size)}".lower()
 
 @dataclass
 class SIFT:
@@ -83,7 +61,7 @@ class SIFT:
     @computed_field
     @property
     def dir_name(self) -> str:
-        return f"{self.name}_{self.label}_{numerize(self.size)}".lower()
+        return f"{self.name}_{self.label}_{utils.numerize(self.size)}".lower()
 
 @dataclass
 class GIST_S(GIST):
@@ -139,41 +117,79 @@ class SIFT_L(SIFT):
 class DataSet(BaseModel):
     """Download dataset if not int the local directory. Provide data for cases.
 
-    data local directory: DATASET_LOCAL_DIR/{dataset_name}/{dataset_dirname}
-        {dataset_name} = ds.name in DataSet
-        {dataset_dirname} = {ds.name}_{ds.label}_{ds.size}
+    DataSet is iterable, each iteration will return the next batch of data in pandas.DataFrame
 
-        `DATASET_LOCAL_DIR/sift/sift_small_500k/`
+    Examples:
+        >>> cohere_s = DataSet(data=Cohere_S)
+        >>> for data in cohere_s:
+        >>>    print(data.columns)
     """
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     data:   GIST | Cohere | Glove | SIFT
+    train_files : list[str] = []
 
     @computed_field
     @property
     def data_dir(self) -> str:
+        """ data local directory: DATASET_LOCAL_DIR/{dataset_name}/{dataset_dirname}
+
+        Examples:
+            >>> sift_s = DataSet(data=SIFT_L())
+            >>> sift_s.relative_path
+            '/tmp/falcon_mark/dataset/sift/sift_small_500k/'
+        """
         relative_path = os.path.join(self.data.name, self.data.dir_name).lower()
         return os.path.join(DATASET_LOCAL_DIR, relative_path)
 
+    def __iter__(self):
+        return DataSetIterator(self)
 
     def prepare(self) -> bool:
-        """Download the dataset from S3"""
-        # TODO
+        """Download the dataset from S3
+         url = f"{DEFAULT_DATASET_URL}/{self.data.dir_name}"
+
+         download files from url to self.data_dir, there'll be 3 types of files in the data_dir
+             - train*.parquet: for training
+             - test.parquet: for testing
+             - neighbors.parquet: ground_truth of the test.parquet
+        """
+        # TODO: check BM5 of the dir
+        # if not correct: download from url
+        # url = f"{DEFAULT_DATASET_URL}/{self.data.dir_name}"
+
+        self.train_files = sorted([f for f in os.listdir(self.data_dir) if "train" in f])
+
+        log.debug(f"{self.data.name} train files: {self.train_files}")
         return True
 
-    def batch(self):
-        # yield
-        pass
+    def test(self) -> pd.DataFrame:
+        """test data"""
+        return self._read_file("test.parquet")
 
-    def get_line(self) -> list[float] | bytes:
-        pass
+    def ground_truth(self) -> pd.DataFrame:
+        """ground truth of the test data"""
+        return self._read_file("neighbors.parquet")
 
-    def get_lines(self, size: int) -> list[list[float]]:
-        pass
+    def _read_file(self, file_name: str) -> pd.DataFrame:
+        """read one file from disk into memory"""
+        path = os.path.join(self.data_dir, file_name)
+        return pd.read_parquet(path)
 
-    def ground_truth(self):
-        # yield
-        pass
+
+class DataSetIterator:
+    def __init__(self, dataset: DataSet):
+        self._ds = dataset
+        self._idx = 0
+
+    def __next__(self) -> pd.DataFrame:
+        """return the data in the next file of the training list"""
+        if self._idx < len(self._ds.train_files):
+            file_name = self._ds.train_files[self._idx]
+            df_data = self._ds._read_file(file_name)
+            self._idx +=1
+            return df_data
+        raise StopIteration
 
 
 class Name(Enum):
