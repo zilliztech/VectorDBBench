@@ -1,8 +1,14 @@
+import logging
+from typing import Any, Type
 from pydantic import BaseModel, ConfigDict
 from .clients import api
 from . import dataset as ds
 from ..models import CaseResult, CaseType
 from ..metric import Metric
+from .runner import MultiProcessingInsertRunner
+
+
+log = logging.getLogger(__name__)
 
 
 class Case(BaseModel):
@@ -15,9 +21,9 @@ class Case(BaseModel):
     metric: Metric
     filter_rate: float
     filter_size: int
-    runner: Any
+    runner: Any = None
 
-    db: api.VectorDB
+    db_class: Type[api.VectorDB]
 
     def prepare(self):
         """Prepare runner, dataset, and db"""
@@ -40,9 +46,26 @@ class LoadCase(Case, BaseModel):
 class PerformanceCase(Case, BaseModel):
     #  metric: Metric = PerformanceMetric()
     metric: Metric = None # TODO
+    filter_rate: float = 0
+    filter_size: int = 0
 
-    def run(self):
-        pass
+    def run(self) -> CaseResult:
+        log.debug("start run")
+
+        log.debug("stop run")
+
+    def _insert_train_data(self):
+        # TODO reduce the iterated data columns in dataset
+        results = []
+        for data in self.dataset:
+            runner = MultiProcessingInsertRunner(self.db_class, data)
+            res = runner.run()
+            results.append(res)
+            #  res = runner.run_sequentially()
+        return results
+
+    def prepare_train_data_in_db(self):
+        self.dataset.prepare()
 
 class LoadLDimCase(LoadCase):
     case_id: CaseType = CaseType.LoadLDim

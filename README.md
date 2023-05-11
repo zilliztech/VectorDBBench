@@ -3,12 +3,12 @@ requires: `python >= 3.9`
 ## 1. Quick Start
 ### Installation
 ```shell
-$ pip install falcon_mark
+$ pip install vector_db_bench
 ```
 
 ### Run
 ```shell
-$ init_falcon_mark
+$ init_bench
 ```
 
 ### View app in browser
@@ -24,24 +24,24 @@ pip install -e '.[test]'
 
 ### Run test server
 ```
-$ python -m falcon_mark
+$ python -m vector_db_bench
 ```
 
 OR:
 
 ```shell
-$ init_falcon_mark
+$ init_bench
 ```
 
 ## 3. How to check coding styles
 
 ```shell
-$ ruff check falcon_mark
+$ ruff check vector_db_bench
 ```
 
 Add `--fix` if you want to fix the coding styles automatically
 ```shell
-$ ruff check falcon_mark --fix
+$ ruff check vector_db_bench --fix
 ```
 
 ## 4. How to run uinitest

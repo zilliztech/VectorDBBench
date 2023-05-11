@@ -22,10 +22,10 @@ def init(log_level, log_path, name, tz='UTC'):
         'disable_existing_loggers': False,
         'formatters': {
             'default': {
-                'format': '%(asctime)s | %(levelname)s | %(name)s | %(threadName)s: %(message)s (%(filename)s:%(lineno)s)',
+                'format': '%(asctime)s | %(levelname)s | %(name)s | %(process)s: %(message)s (%(filename)s:%(lineno)s)',
             },
             'colorful_console': {
-                'format': '%(asctime)s | %(levelname)s: %(message)s (%(filename)s:%(lineno)s) (%(threadName)s)',
+                'format': '%(asctime)s | %(levelname)s: %(message)s (%(filename)s:%(lineno)s) (%(process)s)',
                 '()': ColorfulFormatter,
             },
         },
@@ -121,7 +121,8 @@ class ColorfulLogRecordProxy(logging.LogRecord):
         self.msg = f"{COLORS[msg_level]}{record.msg}{COLORS['ENDC']}"
         self.filename = record.filename
         self.lineno = f'{record.lineno}'
-        self.threadName = f'{record.threadName}'
+        #  self.threadName = f'{record.threadName}'
+        self.process = f'{record.process}'
         self.levelname = f"{COLORS[record.levelname]}{record.levelname}{COLORS['ENDC']}"
         #  self.filename = COLORS['FILENAME'] + record.filename + COLORS['ENDC']
         #  self.lineno = '{}{}{}'.format(COLORS['LINENO'], record.lineno, COLORS['ENDC'])

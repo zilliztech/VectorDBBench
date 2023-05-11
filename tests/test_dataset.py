@@ -1,7 +1,7 @@
 import pytest
 import logging
 
-from falcon_mark.backend import dataset as ds
+from vector_db_bench.backend import dataset as ds
 
 log = logging.getLogger(__name__)
 class TestDataSet:

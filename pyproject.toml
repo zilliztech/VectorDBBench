@@ -3,7 +3,7 @@ requires = ["setuptools>=67.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "falcon_mark"
+name = "vector_db_bench"
 # authors = [
 #   { name="", email="" },
 # ]
@@ -22,6 +22,7 @@ dependencies = [
     "plotly",
     "pydantic >= v2.0.a3",
     "environs",
+    "uuid",
 ]
 version = "0.0.1"
 
@@ -38,4 +39,4 @@ test = [
 # "Source Code"       = ""
 
 [project.scripts]
-init_falcon_mark = "falcon_mark.__main__:main"
+init_bench = "vector_db_bench.__main__:main"

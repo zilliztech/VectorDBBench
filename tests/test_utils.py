@@ -1,6 +1,6 @@
 import pytest
 
-from falcon_mark.backend import utils
+from vector_db_bench.backend import utils
 
 class TestUtils:
     @pytest.mark.parametrize("testcases", [
