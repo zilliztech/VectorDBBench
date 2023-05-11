@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional, Any, Iterable
+from typing import Any, Iterable
 
 
 class VectorDB(ABC):

@@ -1,8 +1,8 @@
 import streamlit as st
-from falcon_mark.frontend.const import *
-from falcon_mark.models import TaskConfig, CaseConfig
+from vector_db_bench.frontend.const import *
+from vector_db_bench.models import TaskConfig, CaseConfig
 
-# from falcon_mark.interface import BenchMarkRunner
+# from vector_db_bench.interface import BenchMarkRunner
 
 st.set_page_config(
     page_title="Falcon Mark - Open VectorDB Bench",

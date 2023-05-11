@@ -1,5 +1,8 @@
 """Wrapper around the Milvus vector database over VectorDB"""
 
+import logging
+from uuid import uuid4
+from typing import Any, Optional, Iterable, Union
 from .api import VectorDB
 
 log = logging.getLogger(__name__)
@@ -17,7 +20,7 @@ class Milvus(VectorDB):
 
     def __init__(
         self,
-        collection_name: str = "FalconMarkCollection",
+        collection_name: str = "VectorDBBenchCollection",
         connection_args: dict[str, Any] | None = None,
         consistency_level: str = "Session",
         index_params: dict | None = None,
@@ -66,7 +69,7 @@ class Milvus(VectorDB):
 
         Args:
             collection_name (str): Which Milvus collection to use. Defaults to
-                "FalconMarkCollection".
+                "VectorDBBenchCollection".
             connection_args (Optional[dict[str, any]]): The arguments for connection to
                 Milvus/Zilliz instance. Defaults to DEFAULT_MILVUS_CONNECTION.
             consistency_level (str): The consistency level to use for a collection.
@@ -84,7 +87,7 @@ class Milvus(VectorDB):
             raise ValueError(
                 "Could not import pymilvus python package. "
                 "Please install it with `pip install pymilvus`."
-            )
+            ) from None
 
         # Default search params when one is not provided.
         self.default_search_params = {
@@ -107,9 +110,7 @@ class Milvus(VectorDB):
 
         # In order for a collection to be compatible, pk needs to be auto'id and int
         self._primary_field = "pk"
-        # In order for compatiblility, the text field will need to be called "text"
-        self._text_field = "text"
-        # In order for compatbility, the vector field needs to be called "vector"
+        # In orer for compatbility, the vector field needs to be called "vector"
         self._vector_field = "vector"
         self.fields: list[str] = []
         # Create the connection to the server
@@ -152,7 +153,7 @@ class Milvus(VectorDB):
             given_address = address
         else:
             given_address = None
-            logger.debug("Missing standard address type for reuse atttempt")
+            log.debug("Missing standard address type for reuse atttempt")
 
         # User defaults to empty string when getting connection info
         if user is not None:
@@ -171,22 +172,22 @@ class Milvus(VectorDB):
                     and ("user" in addr)
                     and (addr["user"] == tmp_user)
                 ):
-                    logger.debug("Using previous connection: %s", con[0])
+                    log.debug("Using previous connection: %s", con[0])
                     return con[0]
 
         # Generate a new connection if one doesnt exist
         alias = uuid4().hex
         try:
             connections.connect(alias=alias, **connection_args)
-            logger.debug("Created new connection using: %s", alias)
+            log.debug("Created new connection using: %s", alias)
             return alias
         except MilvusException as e:
-            logger.error("Failed to create new connection using: %s", alias)
+            log.error("Failed to create new connection using: %s", alias)
             raise e
 
     def _init(
         self,
-        embeddings: list | None = None,
+        embeddings: list[list[float]] | None = None,
         metadatas: list[dict] | None = None,
     ) -> None:
         if embeddings is not None:
@@ -197,7 +198,7 @@ class Milvus(VectorDB):
         self._load()
 
     def _create_collection(
-        self, embeddings: list, metadatas: Optional[list[dict]] = None
+        self, embeddings: list[list[float]], metadatas: Optional[list[dict]] = None
     ) -> None:
         from pymilvus import (
             Collection,
@@ -219,7 +220,7 @@ class Milvus(VectorDB):
                 dtype = infer_dtype_bydata(value)
                 # Datatype isnt compatible
                 if dtype == DataType.UNKNOWN or dtype == DataType.NONE:
-                    logger.error(
+                    log.error(
                         "Failure to create collection, unrecognized dtype for key: %s",
                         key,
                     )
@@ -243,6 +244,7 @@ class Milvus(VectorDB):
 
         # Create the schema for the collection
         schema = CollectionSchema(fields)
+        log.info(f"collection schema: {schema}")
 
         # Create the collection
         try:
@@ -253,7 +255,7 @@ class Milvus(VectorDB):
                 using=self.alias,
             )
         except MilvusException as e:
-            logger.error(
+            log.error(
                 "Failed to create collection: %s error: %s", self.collection_name, e
             )
             raise e
@@ -300,7 +302,7 @@ class Milvus(VectorDB):
                 )
 
             except MilvusException as e:
-                logger.error(
+                log.error(
                     "Failed to create an index on collection: %s", self.collection_name
                 )
                 raise e
@@ -345,15 +347,12 @@ class Milvus(VectorDB):
             kwargs(Any): vector database specific parameters.
 
         Raises:
-            MilvusException: Failure to add texts
+            MilvusException: Failure to add embeddings
 
         Returns:
             list[str]: The resulting ids for each inserted element.
         """
         from pymilvus import Collection, MilvusException
-
-        texts = list(texts)
-
         # If the collection hasnt been initialized yet, perform all steps to do so
         if not isinstance(self.col, Collection):
             self._init(embeddings, metadatas)
@@ -370,27 +369,15 @@ class Milvus(VectorDB):
                     if key in self.fields:
                         insert_dict.setdefault(key, []).append(value)
 
-        # Total insert count
-        vectors: list = insert_dict[self._vector_field]
-        total_count = len(vectors)
-
         pks: list[str] = []
-
         assert isinstance(self.col, Collection)
-        batch_size = 1000
-        for i in range(0, total_count, batch_size):
-            # Grab end index
-            end = min(i + batch_size, total_count)
-            # Convert dict to list of lists batch for insertion
-            insert_list = [insert_dict[x][i:end] for x in self.fields]
-            # Insert into the collection.
-            try:
-                res: Collection
-                res = self.col.insert(insert_list, **kwargs)
-                pks.extend(res.primary_keys)
-            except MilvusException as e:
-                logger.error(f"Failed to insert batch starting at entity: {i}/{total_count}")
-                raise e
+        insert_list = [insert_dict[x] for x in self.fields]
+        try:
+            res = self.col.insert(insert_list, **kwargs)
+            pks.extend(res.primary_keys)
+        except MilvusException as e:
+            log.error("Failed to insert data")
+            raise e
         return pks
 
     def search_embedding_with_score(
@@ -420,7 +407,7 @@ class Milvus(VectorDB):
             list[tuple[int, float]]: Result embedding's id and score.
         """
         if self.col is None:
-            logger.debug("No existing collection to search.")
+            log.debug("No existing collection to search.")
             return []
 
         if param is None:
@@ -432,7 +419,7 @@ class Milvus(VectorDB):
 
         # Perform the search.
         res = self.col.search(
-            data=[embedding],
+            data=[query],
             anns_field=self._vector_field,
             param=param,
             limit=k,

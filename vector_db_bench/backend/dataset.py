@@ -137,7 +137,7 @@ class DataSet(BaseModel):
         Examples:
             >>> sift_s = DataSet(data=SIFT_L())
             >>> sift_s.relative_path
-            '/tmp/falcon_mark/dataset/sift/sift_small_500k/'
+            '/tmp/vector_db_bench/dataset/sift/sift_small_500k/'
         """
         relative_path = os.path.join(self.data.name, self.data.dir_name).lower()
         return os.path.join(DATASET_LOCAL_DIR, relative_path)
@@ -154,13 +154,21 @@ class DataSet(BaseModel):
              - test.parquet: for testing
              - neighbors.parquet: ground_truth of the test.parquet
         """
-        # TODO: check BM5 of the dir
-        # if not correct: download from url
+        if not os.path.exists(self.data_dir):
+            log.info(f"{self.data.name}: local file path not exist, creating it: {self.data_dir}")
+            os.makedirs(self.data_dir)
+
+        if len(os.listdir()) == 0:
+            log.info(f"{self.data.name}: no data in the local file path, downloading it from s3")
+            # TODO download
+
+        # TODO: check md5 of the dir?
+        # if not correct: re-download from url
         # url = f"{DEFAULT_DATASET_URL}/{self.data.dir_name}"
 
         self.train_files = sorted([f for f in os.listdir(self.data_dir) if "train" in f])
 
-        log.debug(f"{self.data.name} train files: {self.train_files}")
+        log.debug(f"{self.data.name}: available train files {self.train_files}")
         return True
 
     def test(self) -> pd.DataFrame:
