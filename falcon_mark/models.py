@@ -1,27 +1,52 @@
 from typing import Any
-from enum import IntEnum
+from enum import IntEnum, Enum
 from pydantic import BaseModel
 from .metric import Metric
 
-class CaseType(IntEnum):
-    LoadLDim = 10000
-    LoadSDim =  10001
 
-    PerformanceLZero = 10002
-    PerformanceMZero = 10003
-    PerformanceSZero = 10004
+class CaseType(Enum):
+    """
+    Value will be displayed in UI
+    """
+    LoadLDim = "Capacity-1"
+    LoadSDim = "Capacity-2"
 
-    PerformanceLLow = 10005
-    PerformanceMLow = 10006
-    PerformanceSLow = 10007
-    PerformanceLHigh = 10008
-    PerformanceMHigh = 10009
-    PerformanceSHigh = 10010
+    PerformanceLZero = "ANNS-1"
+    PerformanceMZero = "ANNS-2"
+    PerformanceSZero = "ANNS-3"
+
+    PerformanceLLow = "Filter-1"
+    PerformanceMLow = "Filter-2"
+    PerformanceSLow = "Filter-3"
+    PerformanceLHigh = "Filter-4"
+    PerformanceMHigh = "Filter-5"
+    PerformanceSHigh = "Filter-6"
+
+
+class IndexType(Enum):
+    HNSW = "hnsw"
+    DiskAnn = "diskann"
+    Ivfflat = "ivfflat"
+    Flat = "flat"
 
 
 class CustomizedCase(BaseModel):
     pass
     # TODO
+
+
+class CaseConfigParamType(Enum):
+    """
+    Name will be displayed in UI
+    Value will be the key of CaseConfig.params
+    """
+    IndexType = "IndexType"
+    M = "M"
+    EFConstruction = "efConstruction"
+    EF = "ef"
+    SearchList = "search_list"
+    Nlist = "nlist"
+    Nprobe = "nprobe"
 
 
 class DB(IntEnum):
@@ -33,8 +58,9 @@ class DB(IntEnum):
         >>> DB.Milvus.name
         "Milvus"
     """
-    Milvus: 100
-    ZillizCloud: 101
+
+    Milvus = 100
+    ZillizCloud = 101
 
     def config(self) -> Any:
         """Get configs of the DB type
@@ -55,9 +81,9 @@ class MilvusConfig(BaseModel):
 
 
 class ZillizCloudConfig(BaseModel):
-    uri:        str
-    user:       str
-    password:   str
+    uri: str
+    user: str
+    password: str
 
     def __repr__(self) -> str:
         return f"ZillizCloudConfig<uri={self.uri}, user={self.user}>"
@@ -71,9 +97,11 @@ db2config = {
 
 class CaseConfig(BaseModel):
     """dataset, test cases, filter rate, params"""
+
     case_id: CaseType
     custom_case: dict
     params: dict = None
+
 
 class TaskConfig(BaseModel):
     db: DB
