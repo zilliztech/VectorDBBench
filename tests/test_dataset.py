@@ -26,3 +26,10 @@ class TestDataSet:
         for f in cohere_s:
             log.debug(f"iter to: {f.columns}")
 
+    @pytest.mark.skip("runs locally")
+    def test_dataset_download(self):
+        cohere_s = ds.get(ds.Name.Cohere, ds.Label.SMALL)
+        cohere_s._validate_local_file()
+
+        cohere_m = ds.get(ds.Name.Cohere, ds.Label.MEDIUM)
+        cohere_m._validate_local_file()

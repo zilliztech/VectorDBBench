@@ -3,7 +3,14 @@
 import logging
 from uuid import uuid4
 from typing import Any, Optional, Iterable, Union
-from .api import VectorDB
+
+from pydantic import BaseModel
+from . import (
+    IndexType,
+    MetricType,
+    DBCaseConfig,
+    VectorDB,
+)
 
 log = logging.getLogger(__name__)
 
@@ -17,6 +24,7 @@ DEFAULT_MILVUS_CONNECTION = {
 
 
 class Milvus(VectorDB):
+    # TODO normalize vectors for COSIN metric and use L2 for COSIN
 
     def __init__(
         self,
@@ -31,55 +39,6 @@ class Milvus(VectorDB):
 
         In order to use this you need to have `pymilvus` installed and a
         running Milvus/Zilliz Cloud instance.
-
-        See the following documentation for how to run a Milvus instance:
-        https://milvus.io/docs/install_standalone-docker.md
-
-        If looking for a hosted Milvus, take a looka this documentation:
-        https://zilliz.com/cloud
-
-        IF USING L2/IP metric IT IS HIGHLY SUGGESTED TO NORMALIZE YOUR DATA.
-
-        The connection args used for this class comes in the form of a dict,
-        here are a few of the options:
-            address (str): The actual address of Milvus
-                instance. Example address: "localhost:19530"
-            uri (str): The uri of Milvus instance. Example uri:
-                "http://randomwebsite:19530",
-                "tcp:foobarsite:19530",
-                "https://ok.s3.south.com:19530".
-            host (str): The host of Milvus instance. Default at "localhost",
-                PyMilvus will fill in the default host if only port is provided.
-            port (str/int): The port of Milvus instance. Default at 19530, PyMilvus
-                will fill in the default port if only host is provided.
-            user (str): Use which user to connect to Milvus instance. If user and
-                password are provided, we will add related header in every RPC call.
-            password (str): Required when user is provided. The password
-                corresponding to the user.
-            secure (bool): Default is false. If set to true, tls will be enabled.
-            client_key_path (str): If use tls two-way authentication, need to
-                write the client.key path.
-            client_pem_path (str): If use tls two-way authentication, need to
-                write the client.pem path.
-            ca_pem_path (str): If use tls two-way authentication, need to write
-                the ca.pem path.
-            server_pem_path (str): If use tls one-way authentication, need to
-                write the server.pem path.
-            server_name (str): If use tls, need to write the common name.
-
-        Args:
-            collection_name (str): Which Milvus collection to use. Defaults to
-                "VectorDBBenchCollection".
-            connection_args (Optional[dict[str, any]]): The arguments for connection to
-                Milvus/Zilliz instance. Defaults to DEFAULT_MILVUS_CONNECTION.
-            consistency_level (str): The consistency level to use for a collection.
-                Defaults to "Session".
-            index_params (Optional[dict]): Which index params to use. Defaults to
-                HNSW/AUTOINDEX depending on service.
-            search_params (Optional[dict]): Which search params to use. Defaults to
-                default of index.
-            drop_old (Optional[bool]): Whether to drop the current collection. Defaults
-                to False.
         """
         try:
             from pymilvus import Collection, utility
@@ -182,7 +141,7 @@ class Milvus(VectorDB):
             log.debug("Created new connection using: %s", alias)
             return alias
         except MilvusException as e:
-            log.error("Failed to create new connection using: %s", alias)
+            log.warn("Failed to create new connection using: %s", alias)
             raise e
 
     def _init(
@@ -220,7 +179,7 @@ class Milvus(VectorDB):
                 dtype = infer_dtype_bydata(value)
                 # Datatype isnt compatible
                 if dtype == DataType.UNKNOWN or dtype == DataType.NONE:
-                    log.error(
+                    log.warn(
                         "Failure to create collection, unrecognized dtype for key: %s",
                         key,
                     )
@@ -255,7 +214,7 @@ class Milvus(VectorDB):
                 using=self.alias,
             )
         except MilvusException as e:
-            log.error(
+            log.warn(
                 "Failed to create collection: %s error: %s", self.collection_name, e
             )
             raise e
@@ -290,7 +249,7 @@ class Milvus(VectorDB):
                 # If no index params, use a default HNSW based one
                 if self.index_params is None:
                     self.index_params = {
-                        "metric_type": "L2",
+                        "metric_type": "COSINE", # todo
                         "index_type": "HNSW",
                         "params": {"M": 8, "efConstruction": 64},
                     }
@@ -302,7 +261,7 @@ class Milvus(VectorDB):
                 )
 
             except MilvusException as e:
-                log.error(
+                log.warn(
                     "Failed to create an index on collection: %s", self.collection_name
                 )
                 raise e
@@ -376,7 +335,7 @@ class Milvus(VectorDB):
             res = self.col.insert(insert_list, **kwargs)
             pks.extend(res.primary_keys)
         except MilvusException as e:
-            log.error("Failed to insert data")
+            log.warn("Failed to insert data")
             raise e
         return pks
 
@@ -416,6 +375,8 @@ class Milvus(VectorDB):
         # Determine result metadata fields.
         output_fields = self.fields[:]
         output_fields.remove(self._vector_field)
+        param["metric_type"]= "COSINE"
+        log.debug(f"search param: {param}")
 
         # Perform the search.
         res = self.col.search(
@@ -431,3 +392,86 @@ class Milvus(VectorDB):
         # Organize results.
         ret = [(result.id, result.score) for result in res[0]]
         return ret
+
+    def ready_to_search(self):
+        # TODO wait for create index done
+        return
+
+
+class MilvusIndexConfig(BaseModel):
+    index: IndexType
+    metric_type: MetricType
+
+
+class HNSWConfig(MilvusIndexConfig, DBCaseConfig):
+    M: int
+    efConstruction: int
+    ef: int | None = None
+    index: IndexType = IndexType.HNSW
+
+    def index_param(self) -> dict:
+        return {
+            "metric_type": self.metric_type,
+            "index_type": self.index,
+            "params": {"M": self.M, "efConstruction": self.efConstruction},
+        }
+
+    def search_param(self) -> dict:
+        return {
+            "metric_type": self.metric_type,
+            "params": {"ef": self.ef},
+        }
+
+class DISKANNConfig(MilvusIndexConfig, DBCaseConfig):
+    search_list: int | None = None
+    index: IndexType = IndexType.DISKANN
+
+    def index_param(self) -> dict:
+        return {
+            "metric_type": self.metric_type,
+            "index_type": self.index,
+            "params": {},
+        }
+
+    def search_param(self) -> dict:
+        return {
+            "metric_type": self.metric_type,
+            "params": {"search_list": self.search_list},
+        }
+
+class IVFFlatConfig(DBCaseConfig, DBCaseConfig):
+    nlist: int
+    nprobe: int | None = None
+    index: IndexType = IndexType.IVFFlat
+
+    def index_param(self) -> dict:
+        return {
+            "metric_type": self.metric_type,
+            "index_type": self.index,
+            "params": {"nlist": self.nlist},
+        }
+
+    def search_param(self) -> dict:
+        return {
+            "metric_type": self.metric_type,
+            "params": {"nprobe": self.nprobe},
+        }
+
+
+class FLATConfig(DBCaseConfig, DBCaseConfig):
+    index: IndexType = IndexType.IVFFlat
+
+    def index_param(self) -> dict:
+        return {
+            "metric_type": self.metric_type,
+            "index_type": self.index,
+            "params": {},
+        }
+
+    def search_param(self) -> dict:
+        return {
+            "metric_type": self.metric_type,
+            "params": {},
+        }
+
+

@@ -1,6 +1,7 @@
 from typing import Any
 from enum import IntEnum, Enum
 from pydantic import BaseModel
+from abc import ABC, abstractmethod
 from .metric import Metric
 
 
@@ -23,11 +24,17 @@ class CaseType(Enum):
     PerformanceSHigh = "Filter-6"
 
 
-class IndexType(Enum):
-    HNSW = "hnsw"
-    DiskAnn = "diskann"
-    Ivfflat = "ivfflat"
-    Flat = "flat"
+class IndexType(str, Enum):
+    HNSW = "HNSW"
+    DISKANN = "DISKANN"
+    IVFFlat = "IVF_FLAT"
+    Flat = "FLAT"
+
+
+class MetricType(str, Enum):
+    L2 = "L2"
+    COSIN = "COSIN"
+    IP = "IP"
 
 
 class CustomizedCase(BaseModel):
@@ -76,17 +83,11 @@ class DB(IntEnum):
 class MilvusConfig(BaseModel):
     uri: str
 
-    def __repr__(self) -> str:
-        return f"MilvusConfig<uri={self.uri}>"
-
 
 class ZillizCloudConfig(BaseModel):
     uri: str
     user: str
     password: str
-
-    def __repr__(self) -> str:
-        return f"ZillizCloudConfig<uri={self.uri}, user={self.user}>"
 
 
 db2config = {
@@ -94,13 +95,23 @@ db2config = {
     "ZillizCloud": ZillizCloudConfig,
 }
 
+class DBCaseConfig(ABC):
+    @abstractmethod
+    def index_param(self) -> dict:
+        raise NotImplementedError
+
+
+    @abstractmethod
+    def search_param(self) -> dict:
+        raise NotImplementedError
+
 
 class CaseConfig(BaseModel):
     """dataset, test cases, filter rate, params"""
 
     case_id: CaseType
     custom_case: dict
-    params: dict = None
+    db_case_config: DBCaseConfig
 
 
 class TaskConfig(BaseModel):

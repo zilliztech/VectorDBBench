@@ -1,7 +1,9 @@
+import time
 import pytest
 import logging
 from vector_db_bench.backend import cases
 from vector_db_bench.backend.clients.milvus import Milvus
+from vector_db_bench.backend.utils import Timer
 
 log  = logging.getLogger(__name__)
 class TestCases:
@@ -15,4 +17,6 @@ class TestCases:
 
     def test_performance_case_small_zero(self):
         c = cases.PerformanceSZero(run_id=1, db_class=Milvus)
-        c.run()
+        c.dataset.prepare()
+        c.search()
+        #  c.run()

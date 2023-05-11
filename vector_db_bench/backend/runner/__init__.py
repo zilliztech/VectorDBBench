@@ -1,4 +1,10 @@
-from .mp_runner import MultiProcessingInsertRunner
+from .mp_runner import (
+    MultiProcessingInsertRunner,
+    MultiProcessingSearchRunner,
+)
 
 
-__all__ = ['MultiProcessingInsertRunner']
+__all__ = [
+    'MultiProcessingInsertRunner',
+    'MultiProcessingSearchRunner',
+]
