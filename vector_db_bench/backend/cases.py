@@ -5,7 +5,8 @@ from .clients import api
 from . import dataset as ds
 from ..models import CaseResult, CaseType
 from ..metric import Metric
-from .runner import MultiProcessingInsertRunner
+from .runner import MultiProcessingInsertRunner, MultiProcessingSearchRunner
+from . import utils
 
 
 log = logging.getLogger(__name__)
@@ -44,17 +45,41 @@ class LoadCase(Case, BaseModel):
 
 
 class PerformanceCase(Case, BaseModel):
+    """ DataSet, filter_rate/filter_size, db_class with db config
+
+    Static params:
+        k = 100
+        concurrency = [1, 5, 10, 15, 20, 25, 30, 35]
+        run_dur(k, concurrency) = 30s
+
+    Dynamic params:
+        dataset = GIST | Glove | Cohere | SIFT
+        filter_rate/filter_size = 0 | 100 | 90%
+
+        db_class = Type[api.VectorDB]
+        case_config = CaseConfig
+
+    Result metrics:
+        QPS
+        Recall
+        serial_latency
+        ready_elapse # TODO rename
+    """
     #  metric: Metric = PerformanceMetric()
     metric: Metric = None # TODO
-    filter_rate: float = 0
-    filter_size: int = 0
+    filter_rate: float = 0 # TODO
+    filter_size: int = 0 # TODO
 
     def run(self) -> CaseResult:
         log.debug("start run")
-
+        self.dataset.prepare()
+        self.load_dataset_into_db()
+        self.search()
         log.debug("stop run")
 
+    @utils.Timer(name="insert_train", logger=log.info)
     def _insert_train_data(self):
+        """Insert train data and get the insert_duration"""
         # TODO reduce the iterated data columns in dataset
         results = []
         for data in self.dataset:
@@ -64,8 +89,21 @@ class PerformanceCase(Case, BaseModel):
             #  res = runner.run_sequentially()
         return results
 
-    def prepare_train_data_in_db(self):
-        self.dataset.prepare()
+    @utils.Timer(name="ready_elapse", logger=log.info)
+    def load_dataset_into_db(self):
+        self._insert_train_data()
+        self.db_class().ready_to_search()
+
+    @utils.Timer(name="search", logger=log.info)
+    def search(self):
+        runner = MultiProcessingSearchRunner(
+            db_class=self.db_class,
+            test_df=self.dataset.test_data,
+            ground_truth=self.dataset.ground_truth,
+        )
+
+        runner.run()
+
 
 class LoadLDimCase(LoadCase):
     case_id: CaseType = CaseType.LoadLDim

@@ -31,7 +31,8 @@ exclude = [
     "dist",
     "node_modules",
     "venv",
-    "__pycache__"
+    "__pycache__",
+    "__init__.py",
 ]
 
 # Allow unused variables when underscore-prefixed.

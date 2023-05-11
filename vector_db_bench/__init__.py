@@ -1,3 +1,4 @@
+import os
 import environs
 from . import config
 
@@ -9,7 +10,7 @@ LOG_PATH = env.str("LOG_PATH", '/tmp/vector_db_bench')
 LOG_NAME = env.str("LOG_NAME", 'logfile')
 TIMEZONE = env.str("TIMEZONE", 'UTC')
 
-DEFAULT_DATASET_URL = env.str("DEFAULT_DATASET_URL", "") # TODO
+DEFAULT_DATASET_URL = env.str("DEFAULT_DATASET_URL", "assets.zilliz.com/benchmark/")
 DATASET_LOCAL_DIR = env.path("DATASET_LOCAL_DIR", "/tmp/vector_db_bench/dataset")
 
 config.init(LOG_LEVEL, LOG_PATH, LOG_NAME, TIMEZONE)
