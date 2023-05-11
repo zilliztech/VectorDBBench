@@ -24,3 +24,14 @@ class BenchMarkRunner(BaseModel):
         """force stop if ther're running benchmarks"""
         pass
 
+    def get_tasks_count() -> int:
+        """the count of all tasks"""
+        pass
+
+    def get_current_task_id() -> int:
+        """
+        the index of current running task
+        return -1 if not running
+        """
+        pass
+
