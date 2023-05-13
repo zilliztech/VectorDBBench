@@ -1,9 +1,8 @@
-import time
-import pytest
 import logging
+import vector_db_bench.backend.dataset as ds
+from vector_db_bench.models import DB
 from vector_db_bench.backend import cases
-from vector_db_bench.backend.clients.milvus import Milvus
-from vector_db_bench.backend.utils import Timer
+from vector_db_bench.backend.clients.milvus import Milvus, FLATConfig
 
 log  = logging.getLogger(__name__)
 class TestCases:
@@ -16,7 +15,18 @@ class TestCases:
         log.debug(f"{CaseType.LoadLDim}")
 
     def test_performance_case_small_zero(self):
-        c = cases.PerformanceSZero(run_id=1, db_class=Milvus)
-        c.dataset.prepare()
-        c.search()
-        #  c.run()
+        dataset = ds.get(ds.Name.Cohere, ds.Label.SMALL)
+        db_config = DB.Milvus.config().to_dict()
+        db_case_config = FLATConfig(metric_type=dataset.data.metric_type)
+        milvus = Milvus(
+            db_config=db_config,
+            db_case_config=db_case_config,
+            drop_old=True,
+        )
+
+        c = cases.PerformanceSZero(run_id=1, db=milvus)
+
+        #  c.dataset.prepare()
+        #  c.search()
+
+        c.run()

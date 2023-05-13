@@ -14,10 +14,12 @@ from enum import Enum, auto
 
 import s3fs
 import pandas as pd
+import numpy as np
 from pydantic import BaseModel, computed_field, ConfigDict
 from pydantic.dataclasses import dataclass
 
 from .. import DATASET_LOCAL_DIR, DEFAULT_DATASET_URL
+from ..models import MetricType
 from . import utils
 
 log = logging.getLogger(__name__)
@@ -26,7 +28,7 @@ log = logging.getLogger(__name__)
 class GIST:
     name: str = "GIST"
     dim: int = 960
-    metric_type: str = "L2"
+    metric_type: MetricType = MetricType.L2
 
     @computed_field
     @property
@@ -37,7 +39,7 @@ class GIST:
 class Cohere:
     name: str = "Cohere"
     dim: int = 768
-    metric_type: str = "Cosine"
+    metric_type: MetricType = MetricType.COSIN
 
     @computed_field
     @property
@@ -48,7 +50,7 @@ class Cohere:
 class Glove:
     name: str = "Glove"
     dim: int = 200
-    metric_type: str = "Cosine"
+    metric_type: MetricType = MetricType.COSIN
 
     @computed_field
     @property
@@ -59,7 +61,7 @@ class Glove:
 class SIFT:
     name: str = "SIFT"
     dim: int = 128
-    metric_type: str = "L2"
+    metric_type: MetricType = MetricType.COSIN
 
     @computed_field
     @property
@@ -181,7 +183,7 @@ class DataSet(BaseModel):
         file_names = [p.name for p in data_dir.glob("*.parquet")]
         log.info(f"local files: {file_names}, s3 files: {path2etag}")
         if len(file_names) != len(path2etag):
-            log.info(f"local file number mismatch with s3, downloading...")
+            log.info("local file number mismatch with s3, downloading...")
             for s3_path in path2etag.keys():
                 log.info(f"downloading file {s3_path} to {data_dir}")
                 fs.download(s3_path, data_dir.as_posix())

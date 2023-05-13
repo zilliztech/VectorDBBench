@@ -1,6 +1,6 @@
 from typing import Any
 from enum import IntEnum, Enum
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from abc import ABC, abstractmethod
 from .metric import Metric
 
@@ -56,6 +56,21 @@ class CaseConfigParamType(Enum):
     Nprobe = "nprobe"
 
 
+class DBConfig(ABC):
+    @abstractmethod
+    def to_dict(self) -> dict:
+        raise NotImplementedError
+
+class DBCaseConfig(ABC):
+    @abstractmethod
+    def index_param(self) -> dict:
+        raise NotImplementedError
+
+    @abstractmethod
+    def search_param(self) -> dict:
+        raise NotImplementedError
+
+
 class DB(IntEnum):
     """Database types
 
@@ -69,25 +84,30 @@ class DB(IntEnum):
     Milvus = 100
     ZillizCloud = 101
 
-    def config(self) -> Any:
+    @property
+    def config(self) -> DBConfig:
         """Get configs of the DB type
         Examples:
-            >>> DB.Milvus.config()
+            >>> DB.Milvus.config
 
         Returns:
             None, if the database not in the db2config
         """
         return db2config.get(self.name, None)
 
+class MilvusConfig(DBConfig, BaseModel):
+    uri: str = "http://localhost:19530"
 
-class MilvusConfig(BaseModel):
-    uri: str
+    def to_dict(self) -> dict:
+        return {"uri": self.uri}
 
-
-class ZillizCloudConfig(BaseModel):
+class ZillizCloudConfig(DBConfig, BaseModel):
     uri: str
     user: str
     password: str
+
+    def to_dict(self) -> dict:
+        return {"uri": self.uri, "user": self.user, "password": self.password}
 
 
 db2config = {
@@ -95,28 +115,22 @@ db2config = {
     "ZillizCloud": ZillizCloudConfig,
 }
 
-class DBCaseConfig(ABC):
-    @abstractmethod
-    def index_param(self) -> dict:
-        raise NotImplementedError
-
-
-    @abstractmethod
-    def search_param(self) -> dict:
-        raise NotImplementedError
-
 
 class CaseConfig(BaseModel):
-    """dataset, test cases, filter rate, params"""
+    """cases, dataset, test cases, filter rate, params"""
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     case_id: CaseType
-    custom_case: dict
     db_case_config: DBCaseConfig
+
+    custom_case: dict | None = None
 
 
 class TaskConfig(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     db: DB
-    db_config: Any
+    db_config: DBConfig
     case_config: CaseConfig
 
 
