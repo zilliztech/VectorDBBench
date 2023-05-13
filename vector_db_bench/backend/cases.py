@@ -1,11 +1,14 @@
 import logging
-from typing import Any, Type
+from typing import Any
 from pydantic import BaseModel, ConfigDict
 from .clients import api
 from . import dataset as ds
 from ..models import CaseResult, CaseType
 from ..metric import Metric
-from .runner import MultiProcessingInsertRunner, MultiProcessingSearchRunner
+from .runner import (
+    MultiProcessingInsertRunner,
+    MultiProcessingSearchRunner,
+)
 from . import utils
 
 
@@ -24,7 +27,7 @@ class Case(BaseModel):
     filter_size: int
     runner: Any = None
 
-    db_class: Type[api.VectorDB]
+    db: api.VectorDB
 
     def prepare(self):
         """Prepare runner, dataset, and db"""
@@ -83,26 +86,28 @@ class PerformanceCase(Case, BaseModel):
         # TODO reduce the iterated data columns in dataset
         results = []
         for data in self.dataset:
-            runner = MultiProcessingInsertRunner(self.db_class, data)
+            runner = MultiProcessingInsertRunner(self.db, data)
             res = runner.run()
-            results.append(res)
+            runner.clean()
             #  res = runner.run_sequentially()
+            results.append(res)
         return results
 
     @utils.Timer(name="ready_elapse", logger=log.info)
     def load_dataset_into_db(self):
         self._insert_train_data()
-        self.db_class().ready_to_search()
+        #  self.db.ready_to_search()
 
     @utils.Timer(name="search", logger=log.info)
     def search(self):
         runner = MultiProcessingSearchRunner(
-            db_class=self.db_class,
+            db=self.db,
             test_df=self.dataset.test_data,
             ground_truth=self.dataset.ground_truth,
         )
 
         runner.run()
+        runner.clean()
 
 
 class LoadLDimCase(LoadCase):

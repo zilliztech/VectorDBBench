@@ -18,11 +18,12 @@ classifiers = [
 dependencies = [
     "pytz",
     "streamlit",
-    "pymilvus",
+    "pymilvus", # with pandas, numpy
     "plotly",
     "pydantic >= v2.0.a3",
     "environs",
-    "uuid",
+    "scikit-learn",
+    "s3fs",
 ]
 version = "0.0.1"
 

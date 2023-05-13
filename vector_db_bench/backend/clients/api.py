@@ -1,24 +1,40 @@
 from abc import ABC, abstractmethod
 from typing import Any, Iterable
-from . import DBCaseConfig
+from ...models import DBCaseConfig
 
 
 class VectorDB(ABC):
-    def init(db_config: dict) -> None:
+    """Each VectorDB will be __init__ once, the object will be copied into multiple processes.
+
+    In each process, the benchmark cases ensure VectorDB.init() calls before any other methods operations
+
+    insert_embeddings, search_embedding_with_score, and, ready_to_search will be timed for each call.
+    """
+
+    @abstractmethod
+    def __init__(
+        self,
+        db_config: dict | None,
+        db_case_config: DBCaseConfig | None,
+        **kwargs
+    ) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def init(self) -> None:
         raise NotImplementedError
 
     @abstractmethod
     def insert_embeddings(
         self,
         embeddings: Iterable[list[float]],
-        metadatas: list[dict] | None = None,
-        db_case_config: DBCaseConfig | None = None,
+        metadata: list[int],
     ) -> list[str]:
         """Insert the embeddings to the vector database
 
         Args:
             embeddings(Iterable[list[float]]): list of embedding to add to the vector database.
-            metadatas(list[dict], Optional): metadatas associated with the embeddings.
+            metadatas(list[int], Optional): metadata associated with the embeddings, for filtering
             kwargs(Any): vector database specific parameters.
 
         Returns:
@@ -31,8 +47,7 @@ class VectorDB(ABC):
         self,
         query: list[float],
         k: int = 100,
-        filters: Any | None = None,
-        db_case_config: DBCaseConfig | None = None,
+        filters: Any | None = None, # TODO filters
     ) -> list[tuple[int, float]]:
         """Get k most similar embeddings to query vector.
 
