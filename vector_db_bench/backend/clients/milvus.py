@@ -25,7 +25,6 @@ class Milvus(VectorDB):
         db_config: dict,
         db_case_config: DBCaseConfig,
         collection_name: str = "VectorDBBenchCollection",
-        connection_args: dict[str, Any] | None = None,
         drop_old: bool = False,
     ):
         """Initialize wrapper around the milvus vector database."""

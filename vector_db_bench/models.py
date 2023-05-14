@@ -29,6 +29,7 @@ class IndexType(str, Enum):
     DISKANN = "DISKANN"
     IVFFlat = "IVF_FLAT"
     Flat = "FLAT"
+    AUTOINDEX = "AUTOINDEX"
 
 
 class MetricType(str, Enum):
