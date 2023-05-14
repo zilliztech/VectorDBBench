@@ -90,7 +90,7 @@ class MultiProcessingSearchRunner:
         test_df: pd.DataFrame,
         ground_truth: pd.DataFrame,
         k: int = 100,
-        filters: Any | None = None,
+        filters: dict | None = None,
         concurrencies: Iterable[int] = (1, 5, 10, 15, 20, 25, 30, 35),
         duration: int = 30,
     ):
@@ -146,7 +146,7 @@ class MultiProcessingSearchRunner:
         with concurrent.futures.ProcessPoolExecutor(max_workers=35) as executor:
             for conc in self.concurrencies:
                 start = time.perf_counter()
-                log.info(f"start search in concurrency {conc}")
+                log.info(f"start search in concurrency {conc}, filters: {self.filters}")
                 future_iter = executor.map(self.search, [(self.shared_test, self.shared_ground_truth) for i in range(conc)])
 
                 all_latencies, all_count = [], 0

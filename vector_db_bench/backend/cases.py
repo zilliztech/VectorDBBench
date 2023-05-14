@@ -1,6 +1,6 @@
 import logging
 from typing import Any
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, computed_field
 from .clients import api
 from . import dataset as ds
 from ..models import CaseResult, CaseType
@@ -92,8 +92,24 @@ class PerformanceCase(Case, BaseModel):
     """
     #  metric: Metric = PerformanceMetric()
     metric: Metric = None # TODO
-    filter_rate: float = 0 # TODO
-    filter_size: int = 0 # TODO
+    filter_rate: float = 0
+    filter_size: int = 0
+
+    @computed_field
+    @property
+    def filters(self) -> dict | None:
+        if abs(self.filter_rate - 0) > 1e8:
+            ID = round(self.filter_rate * self.dataset.data.size)
+            return {
+                "metadata": f">{ID}"
+            }
+
+        if self.filter_size > 0:
+            return {
+                "metadata": f">{self.filter_size}",
+            }
+
+        return None
 
     def run(self) -> CaseResult:
         log.debug("start run")
@@ -123,6 +139,7 @@ class PerformanceCase(Case, BaseModel):
             db=self.db,
             test_df=self.dataset.test_data,
             ground_truth=self.dataset.ground_truth,
+            filters=self.filters,
         )
 
         runner.run()
