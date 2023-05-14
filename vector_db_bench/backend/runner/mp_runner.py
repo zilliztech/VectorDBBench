@@ -52,6 +52,19 @@ class MultiProcessingInsertRunner:
             results = [r for r in future_iter]
         return results
 
+    def run_sequentially_endlessness(self) -> int:
+        """run forever"""
+        count = 0
+        start_time = time.perf_counter()
+        try:
+            while True:
+                results = self._insert_all_batches_sequentially()
+                count += len(results)
+        except Exception as e:
+            duration = time.perf_counter() - start_time
+            log.info("load reach limit: dur={duration}, insertion counts={count}, err={str(e)}")
+            return duration, count
+
     def run_sequentially(self) -> list[int]:
         start_time = time.time()
         results = self._insert_all_batches_sequentially()

@@ -46,6 +46,28 @@ class LoadCase(Case, BaseModel):
     filter_rate: float = 0
     filter_size: int = 0
 
+    def run(self) -> CaseResult:
+        log.debug("start run")
+        self.prep()
+        self.load()
+        log.debug("stop run")
+
+    def prep(self):
+        self.dataset.prepare()
+        self.db.init()
+
+    @utils.Timer(name="insert_train", logger=log.info)
+    def load(self):
+        """Insert train data and get the insert_duration"""
+        # datasets for load tests are quite small, can fit into memory
+        data_dfs = [data_df for data_df in self.dataset]
+        assert len(data_dfs) == 1
+
+        runner = MultiProcessingInsertRunner(self.db, data_dfs[0])
+        dur, count = runner.run_sequentially_endlessness()
+        runner.clean()
+
+        log.info("load reach limit: dur={dur}, insertion counts={count}")
 
 class PerformanceCase(Case, BaseModel):
     """ DataSet, filter_rate/filter_size, db_class with db config
@@ -76,27 +98,24 @@ class PerformanceCase(Case, BaseModel):
     def run(self) -> CaseResult:
         log.debug("start run")
         self.dataset.prepare()
-        self.load_dataset_into_db()
+        self._insert_train_data()
         self.search()
         log.debug("stop run")
 
     @utils.Timer(name="insert_train", logger=log.info)
     def _insert_train_data(self):
         """Insert train data and get the insert_duration"""
-        # TODO reduce the iterated data columns in dataset
         results = []
         for data in self.dataset:
             runner = MultiProcessingInsertRunner(self.db, data)
             res = runner.run()
-            runner.clean()
-            #  res = runner.run_sequentially()
             results.append(res)
+            runner.clean()
         return results
 
-    @utils.Timer(name="ready_elapse", logger=log.info)
-    def load_dataset_into_db(self):
-        self._insert_train_data()
-        #  self.db.ready_to_search()
+    #  @utils.Timer(name="ready_elapse", logger=log.info)
+    #  def load_dataset_into_db(self):
+    #      self._insert_train_data()
 
     @utils.Timer(name="search", logger=log.info)
     def search(self):
