@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Iterable
+from typing import Iterable
 from ...models import DBCaseConfig
 
 
@@ -47,7 +47,7 @@ class VectorDB(ABC):
         self,
         query: list[float],
         k: int = 100,
-        filters: Any | None = None, # TODO filters
+        filters: dict | None = None,
     ) -> list[tuple[int, float]]:
         """Get k most similar embeddings to query vector.
 

@@ -123,7 +123,7 @@ class Milvus(VectorDB):
         self,
         query: list[float],
         k: int = 100,
-        filters: Any | None = None,
+        filters: dict | None = None,
         timeout: int | None = None,
         **kwargs: Any,
     ) -> list[tuple[int, float]]:
@@ -137,13 +137,15 @@ class Milvus(VectorDB):
             from sklearn import preprocessing
             query = preprocessing.normalize(query, norm="l2")
 
+        expr = f"{self._primary_field} {filters.get('metadata')}" if filters else ""
+
         # Perform the search.
         res = self.col.search(
             data=query,
             anns_field=self._vector_field,
             param=self.case_config.search_param(),
             limit=k,
-            expr=filters,
+            expr=expr,
             **kwargs,
         )
 

@@ -14,7 +14,6 @@ from enum import Enum, auto
 
 import s3fs
 import pandas as pd
-import numpy as np
 from pydantic import BaseModel, computed_field, ConfigDict
 from pydantic.dataclasses import dataclass
 
