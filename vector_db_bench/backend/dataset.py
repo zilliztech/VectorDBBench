@@ -170,13 +170,15 @@ class DataSet(BaseModel):
 
         if not data_dir.exists():
             log.info(f"local file path not exist, creating it: {data_dir}")
-            data_dir.mkdir()
+            data_dir.mkdir(parents=True)
 
         fs = s3fs.S3FileSystem(
             #  anon=True, TODO remove comment
             client_kwargs={'region_name': 'us-west-2'}
         )
         dataset_info = fs.ls(self.download_dir, detail=True)
+        if len(dataset_info) == 0:
+            raise ValueError(f"No data in s3 for dataset: {self.download_dir}")
         path2etag = {info['Key']: info['ETag'].split('"')[1] for info in dataset_info}
 
         # get local files ended with '.parquet'
