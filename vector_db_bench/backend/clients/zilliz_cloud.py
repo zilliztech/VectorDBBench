@@ -29,17 +29,3 @@ class ZillizCloud(Milvus):
         )
 
 
-class AutoIndexConfig(MilvusIndexConfig, DBCaseConfig):
-    index: IndexType = IndexType.AUTOINDEX
-
-    def index_param(self) -> dict:
-       return {
-            'metric_type': self.parse_metric(),
-            'index_type': self.index.upper(),
-            'params': {},
-        }
-
-    def search_param(self) -> dict:
-        return {
-            "metric_type": self.parse_metric(),
-        }
