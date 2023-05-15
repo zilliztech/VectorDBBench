@@ -1,5 +1,5 @@
 from typing import Any, Type
-from enum import IntEnum, Enum, StrEnum
+from enum import IntEnum, Enum
 from pydantic import BaseModel, ConfigDict
 from abc import ABC, abstractmethod
 
@@ -23,6 +23,7 @@ class CaseType(Enum):
     """
     Value will be displayed in UI
     """
+
     LoadLDim = "Capacity-1"
     LoadSDim = "Capacity-2"
 
@@ -40,9 +41,9 @@ class CaseType(Enum):
 
 class CaseConfigParamType(Enum):
     """
-    Name will be displayed in UI
-    Value will be the key of CaseConfig.params
+    Value will be the key of CaseConfig.params and displayed in UI
     """
+
     IndexType = "IndexType"
     M = "M"
     EFConstruction = "efConstruction"
@@ -52,7 +53,7 @@ class CaseConfigParamType(Enum):
     Nprobe = "nprobe"
 
 
-class DB(StrEnum):
+class DB(Enum):
     """Database types
 
     Examples:
@@ -77,7 +78,7 @@ class DB(StrEnum):
         Returns:
             None, if the database not in the db2config
         """
-        return _db2config.get(self.name)
+        return _db2config.get(self)
 
     def case_config_cls(self, index: IndexType | None = None) -> Type[DBCaseConfig]:
         """Get case config class of the DB
@@ -118,6 +119,7 @@ class CustomizedCase(BaseModel):
 
 class CaseConfig(BaseModel):
     """cases, dataset, test cases, filter rate, params"""
+
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     case_id: CaseType

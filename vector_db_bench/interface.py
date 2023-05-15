@@ -5,11 +5,13 @@ from .backend.assembler import Assembler
 
 
 class BenchMarkRunner(BaseModel):
-    result_collector: ResultCollector
-    assembler: Assembler
+    # result_collector: ResultCollector
+    # assembler: Assembler
 
-    def run(configs: list[TaskConfig]) -> bool:
+    def run(self, tasks: list[TaskConfig]) -> bool:
         """run all the tasks in the configs, write one result into the path"""
+        for i, task in enumerate(tasks):
+            print(i, task)
         pass
 
     def get_results(paths: list[str]) -> list[TestResult]:
@@ -34,4 +36,3 @@ class BenchMarkRunner(BaseModel):
         return -1 if not running
         """
         pass
-
