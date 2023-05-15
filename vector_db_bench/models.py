@@ -1,8 +1,22 @@
-from typing import Any
-from enum import IntEnum, Enum
+from typing import Any, Type
+from enum import IntEnum, Enum, StrEnum
 from pydantic import BaseModel, ConfigDict
 from abc import ABC, abstractmethod
+
 from .metric import Metric
+from .db_config import (
+    DBConfig,
+    MilvusConfig,
+    ZillizCloudConfig,
+)
+
+from .db_case_config import (
+    DBCaseConfig, # base class
+    IndexType, MetricType, # Const
+    HNSWConfig, DISKANNConfig, IVFFlatConfig, FLATConfig, # Milvus Configs
+    AutoIndexConfig, # ZillizCound configs
+    EmptyDBCaseConfig,
+)
 
 
 class CaseType(Enum):
@@ -24,25 +38,6 @@ class CaseType(Enum):
     PerformanceSHigh = "Filter-6"
 
 
-class IndexType(str, Enum):
-    HNSW = "HNSW"
-    DISKANN = "DISKANN"
-    IVFFlat = "IVF_FLAT"
-    Flat = "FLAT"
-    AUTOINDEX = "AUTOINDEX"
-
-
-class MetricType(str, Enum):
-    L2 = "L2"
-    COSIN = "COSIN"
-    IP = "IP"
-
-
-class CustomizedCase(BaseModel):
-    pass
-    # TODO
-
-
 class CaseConfigParamType(Enum):
     """
     Name will be displayed in UI
@@ -57,64 +52,68 @@ class CaseConfigParamType(Enum):
     Nprobe = "nprobe"
 
 
-class DBConfig(ABC):
-    @abstractmethod
-    def to_dict(self) -> dict:
-        raise NotImplementedError
-
-class DBCaseConfig(ABC):
-    @abstractmethod
-    def index_param(self) -> dict:
-        raise NotImplementedError
-
-    @abstractmethod
-    def search_param(self) -> dict:
-        raise NotImplementedError
-
-
-class DB(IntEnum):
+class DB(StrEnum):
     """Database types
 
     Examples:
         >>> DB.Milvus
-        100
+        <DB.Milvus: 'Milvus'>
+        >>> DB.Milvus.value
+        "Milvus"
         >>> DB.Milvus.name
         "Milvus"
     """
 
-    Milvus = 100
-    ZillizCloud = 101
+    Milvus = "Milvus"
+    ZillizCloud = "ZillizCloud"
 
     @property
-    def config(self) -> DBConfig:
-        """Get configs of the DB type
+    def config(self) -> Type[DBConfig]:
+        """Get configs of the DB
         Examples:
-            >>> DB.Milvus.config
+            >>> config_cls = DB.Milvus.config
+            >>> config_cls(uri="localhost:19530")
 
         Returns:
             None, if the database not in the db2config
         """
-        return db2config.get(self.name, None)
+        return _db2config.get(self.name)
 
-class MilvusConfig(DBConfig, BaseModel):
-    uri: str = "http://localhost:19530"
+    def case_config_cls(self, index: IndexType | None = None) -> Type[DBCaseConfig]:
+        """Get case config class of the DB
+        Examples:
+            >>> case_config_cls = DB.Milvus.case_config_cls(IndexType.HNSW)
+            >>> hnsw_config = {
+            ...     M: 8,
+            ...     efConstruction: 12,
+            ...     ef: 8,
+            >>> }
+            >>> milvus_hnsw_config = case_config_cls(**hnsw_config)
+        """
+        if self == DB.Milvus:
+            assert index is not None, "Please provide valid index for DB Milvus"
+            return _milvus_case_config.get(index)
+        if self == DB.ZillizCloud:
+            return AutoIndexConfig
+        return EmptyDBCaseConfig
 
-    def to_dict(self) -> dict:
-        return {"uri": self.uri}
 
-class ZillizCloudConfig(DBConfig, BaseModel):
-    uri: str
-    user: str
-    password: str
-
-    def to_dict(self) -> dict:
-        return {"uri": self.uri, "user": self.user, "password": self.password}
-
-
-db2config = {
-    "Milvus": MilvusConfig,
-    "ZillizCloud": ZillizCloudConfig,
+_db2config = {
+    DB.Milvus: MilvusConfig,
+    DB.ZillizCloud: ZillizCloudConfig,
 }
+
+
+_milvus_case_config = {
+    IndexType.HNSW: HNSWConfig,
+    IndexType.DISKANN: DISKANNConfig,
+    IndexType.IVFFlat: IVFFlatConfig,
+    IndexType.Flat: FLATConfig,
+}
+
+
+class CustomizedCase(BaseModel):
+    pass
 
 
 class CaseConfig(BaseModel):
@@ -122,8 +121,6 @@ class CaseConfig(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     case_id: CaseType
-    db_case_config: DBCaseConfig
-
     custom_case: dict | None = None
 
 
@@ -132,6 +129,7 @@ class TaskConfig(BaseModel):
 
     db: DB
     db_config: DBConfig
+    db_case_config: DBCaseConfig
     case_config: CaseConfig
 
 

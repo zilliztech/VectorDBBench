@@ -8,11 +8,7 @@ from pydantic import BaseModel
 from pymilvus import Collection, utility
 from pymilvus import CollectionSchema, DataType, FieldSchema, MilvusException
 
-from ...models import (
-    IndexType,
-    MetricType,
-    DBCaseConfig,
-)
+from ...models import DBCaseConfig
 
 from .api import VectorDB
 
@@ -152,86 +148,3 @@ class Milvus(VectorDB):
         # Organize results.
         ret = [(result.id, result.score) for result in res[0]]
         return ret
-
-
-class MilvusIndexConfig(BaseModel):
-    index: IndexType
-    metric_type: MetricType
-
-    def parse_metric(self) -> MetricType:
-        if self.metric_type == MetricType.COSIN:
-            return MetricType.L2.upper()
-        return self.metric_type.upper()
-
-class HNSWConfig(MilvusIndexConfig, DBCaseConfig):
-    M: int
-    efConstruction: int
-    ef: int | None = None
-    index: IndexType = IndexType.HNSW
-
-    def index_param(self) -> dict:
-        return {
-            "metric_type": self.parse_metric(),
-            "index_type": self.index.upper(),
-            "params": {"M": self.M, "efConstruction": self.efConstruction},
-        }
-
-    def search_param(self) -> dict:
-        return {
-            "metric_type": self.parse_metric(),
-            "params": {"ef": self.ef},
-        }
-
-
-class DISKANNConfig(MilvusIndexConfig, DBCaseConfig):
-    search_list: int | None = None
-    index: IndexType = IndexType.DISKANN
-
-    def index_param(self) -> dict:
-        return {
-            "metric_type": self.parse_metric(),
-            "index_type": self.index.upper(),
-            "params": {},
-        }
-
-    def search_param(self) -> dict:
-        return {
-            "metric_type": self.parse_metric(),
-            "params": {"search_list": self.search_list},
-        }
-
-
-class IVFFlatConfig(MilvusIndexConfig, DBCaseConfig):
-    nlist: int
-    nprobe: int | None = None
-    index: IndexType = IndexType.IVFFlat
-
-    def index_param(self) -> dict:
-        return {
-            "metric_type": self.parse_metric(),
-            "index_type": self.index.upper(),
-            "params": {"nlist": self.nlist},
-        }
-
-    def search_param(self) -> dict:
-        return {
-            "metric_type": self.parse_metric(),
-            "params": {"nprobe": self.nprobe},
-        }
-
-
-class FLATConfig(MilvusIndexConfig, DBCaseConfig):
-    index: IndexType = IndexType.Flat
-
-    def index_param(self) -> dict:
-        return {
-            "metric_type": self.parse_metric(),
-            "index_type": self.index.upper(),
-            "params": {},
-        }
-
-    def search_param(self) -> dict:
-        return {
-            "metric_type": self.parse_metric(),
-            "params": {},
-        }

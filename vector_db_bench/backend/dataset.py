@@ -172,7 +172,7 @@ class DataSet(BaseModel):
             data_dir.mkdir(parents=True)
 
         fs = s3fs.S3FileSystem(
-            #  anon=True, TODO remove comment
+            anon=True,
             client_kwargs={'region_name': 'us-west-2'}
         )
         dataset_info = fs.ls(self.download_dir, detail=True)
