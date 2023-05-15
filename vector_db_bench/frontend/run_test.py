@@ -1,8 +1,7 @@
 import streamlit as st
 from vector_db_bench.frontend.const import *
-from vector_db_bench.models import TaskConfig, CaseConfig
-
-# from vector_db_bench.interface import BenchMarkRunner
+from vector_db_bench.models import TaskConfig, CaseConfig, DBCaseConfig
+from vector_db_bench.interface import BenchMarkRunner
 
 st.set_page_config(
     page_title="Falcon Mark - Open VectorDB Bench",
@@ -15,13 +14,13 @@ st.set_page_config(
 st.title("Run Your Test")
 
 
-# @st.cache_resource
-# def getBenchMarkRunner():
-#     print("===> Cache Global BenchMarkRunner")
-#     return BenchMarkRunner()
+@st.cache_resource
+def getBenchMarkRunner():
+    print("===> Cache Global BenchMarkRunner")
+    return BenchMarkRunner()
 
 
-# benchMarkRunner = getBenchMarkRunner()
+benchMarkRunner = getBenchMarkRunner()
 
 # DB Setting
 st.divider()
@@ -49,7 +48,7 @@ if len(activedDbList) > 0:
         dbConfigContainerColumns = dbConfigContainer.columns(
             [1, *[INPUT_WIDTH_RADIO for _ in range(INPUT_MAX_COLUMNS)]], gap="small"
         )
-        dbConfigClass = activeDb.config()
+        dbConfigClass = activeDb.config
         properties = dbConfigClass.model_json_schema().get("properties")
         dbConfig = {}
         dbConfigContainerColumns[0].markdown("##### · %s" % activeDb.name)
@@ -110,18 +109,18 @@ if len(activedDbList) > 0 and len(activedCaseList) > 0:
                     key = "%s-%s-%s" % (db, case, config.label.value)
                     if config.inputType == InputType.Text:
                         caseConfig[config.label] = column.text_input(
-                            config.label.name,
+                            config.label.value,
                             key=key,
                         )
                     elif config.inputType == InputType.Option:
                         caseConfig[config.label] = column.selectbox(
-                            config.label.name,
+                            config.label.value,
                             config.inputConfig["options"],
                             key=key,
                         )
                     elif config.inputType == InputType.Number:
                         caseConfig[config.label] = column.number_input(
-                            config.label.name,
+                            config.label.value,
                             format="%d",
                             step=1,
                             min_value=config.inputConfig["min"],
@@ -131,27 +130,27 @@ if len(activedDbList) > 0 and len(activedCaseList) > 0:
                     k += 1
             if k == 0:
                 columns[1].write("no config")
-
+            # print("caseConfig", caseConfig)
 
 # Contruct Task
 tasks = [
     TaskConfig(
-        db=db,
+        db=db.value,
         db_config=dbConfigs[db],
         case_config=CaseConfig(
-            case_id=case,
+            case_id=case.value,
             custom_case={},
-            params={
-                key.value: value for key, value in allCaseConfigs[db][case].items()
-            },
         ),
+        db_case_config=db.case_config_cls(
+            allCaseConfigs[db][case].get(CaseConfigParamType.IndexType, None)
+        )(**{key.value: value for key, value in allCaseConfigs[db][case].items()}),
     )
     for case in activedCaseList
     for db in activedDbList
 ]
-print("\n=====>\nTasks:")
-for i, task in enumerate(tasks):
-    print(i, task)
+# print("\n=====>\nTasks:")
+# for i, task in enumerate(tasks):
+#     print(i, task)
 
 # Control
 st.divider()
@@ -159,7 +158,7 @@ controlContainer = st.container()
 
 taskCount = 100
 currentTaskId = 14
-isRunning = True
+isRunning = False
 
 ## Task Progress
 progressContainer = controlContainer.container()
@@ -173,9 +172,7 @@ columns = submitContainer.columns(CHECKBOX_MAX_COLUMNS)
 
 
 def runHandler():
-    print("run")
-    # benchMarkRunner.run()
-    print("run successful")
+    benchMarkRunner.run(tasks)
 
 
 def stopHandler():

@@ -1,14 +1,19 @@
 from enum import Enum, IntEnum
-from falcon_mark.models import DB, CaseType, IndexType, CaseConfigParamType
+from vector_db_bench.models import DB, CaseType, IndexType, CaseConfigParamType
 from pydantic import BaseModel
 import typing
 
 # style const
 CHECKBOX_MAX_COLUMNS = 4
-INPUT_MAX_COLUMNS = 3
-INPUT_WIDTH_RADIO = 1.4
+INPUT_MAX_COLUMNS = 4
+INPUT_WIDTH_RADIO = 1.2
 CASE_INTRO_RATIO = 3
 MAX_STREAMLIT_INT = (1 << 53) - 1
+
+COLOR_SCHEME = ['#8dd3c7','#ffffb3','#bebada','#fb8072','#80b1d3']
+LEGEND_RECT_WIDTH = 32
+LEGEND_RECT_HEIGHT = 20
+LEGEND_TEXT_FONT_SIZE = 14
 
 
 DB_LIST = [DB.Milvus, DB.ZillizCloud]
@@ -81,8 +86,8 @@ CaseConfigParamInput_IndexType = CaseConfigInput(
     inputConfig={
         "options": [
             IndexType.HNSW.value,
-            IndexType.Ivfflat.value,
-            IndexType.DiskAnn.value,
+            IndexType.IVFFlat.value,
+            IndexType.DISKANN.value,
             IndexType.Flat.value,
         ],
     },
@@ -129,7 +134,7 @@ CaseConfigParamInput_SearchList = CaseConfigInput(
         "max": MAX_STREAMLIT_INT,
     },
     isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
-    == IndexType.DiskAnn.value,
+    == IndexType.DISKANN.value,
 )
 
 CaseConfigParamInput_Nlist = CaseConfigInput(
@@ -140,7 +145,7 @@ CaseConfigParamInput_Nlist = CaseConfigInput(
         "max": 65536,
     },
     isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
-    == IndexType.Ivfflat.value,
+    == IndexType.IVFFlat.value,
 )
 
 CaseConfigParamInput_Nprobe = CaseConfigInput(
@@ -151,7 +156,7 @@ CaseConfigParamInput_Nprobe = CaseConfigInput(
         "max": 65536,
     },
     isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
-    == IndexType.Ivfflat.value,
+    == IndexType.IVFFlat.value,
 )
 
 
@@ -161,6 +166,7 @@ MilvusLoadConfig = [
     CaseConfigParamInput_EFConstruction,
     CaseConfigParamInput_Nlist,
 ]
+
 
 MilvusPerformanceConfig = [
     CaseConfigParamInput_IndexType,
@@ -185,5 +191,5 @@ CASE_CONFIG_MAP = {
         CaseType.PerformanceLHigh: MilvusPerformanceConfig,
         CaseType.PerformanceMHigh: MilvusPerformanceConfig,
         CaseType.PerformanceSHigh: MilvusPerformanceConfig,
-    }
+    },
 }
