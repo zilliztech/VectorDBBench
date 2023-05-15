@@ -1,6 +1,9 @@
+import logging
+import numpy as np
 from pydantic import BaseModel
 
 
+log  = logging.getLogger(__name__)
 class Metric(BaseModel):
     """result metrics"""
     pass
@@ -18,3 +21,12 @@ class PerformanceMetric(BaseModel):
     latency: float # (pqq, p95)
     insert_duration: float
     build_duration: float
+
+
+def calc_recall(count: int, ground_truth: list[int], got: list[tuple[int, float]]):
+    recalls = np.zeros(count)
+    for i, result  in enumerate(got):
+        if result[0] in ground_truth:
+            recalls[i] = 1
+
+    return np.mean(recalls)

@@ -98,18 +98,18 @@ class PerformanceCase(Case, BaseModel):
     @computed_field
     @property
     def filters(self) -> dict | None:
-        if abs(self.filter_rate - 0) > 1e8:
+        if abs(self.filter_rate - 0) > 1e-6:
             ID = round(self.filter_rate * self.dataset.data.size)
             return {
-                "metadata": f">{ID}"
+                "metadata": f">={ID}",
+                "id": ID,
             }
 
         if self.filter_size > 0:
             return {
-                "metadata": f">{self.filter_size}",
+                "metadata": f">={self.filter_size}",
+                "id": self.filter_size,
             }
-
-        return None
 
     def run(self) -> CaseResult:
         log.debug("start run")
