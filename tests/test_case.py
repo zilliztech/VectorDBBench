@@ -26,6 +26,8 @@ class TestCases:
         )
 
         c = cases.PerformanceSZero(run_id=1, db=milvus)
+        #  c.dataset.prepare()
+        #  c.search()
         c.run()
 
     def test_performance_case_small_low_filter(self):
@@ -39,6 +41,7 @@ class TestCases:
         )
 
         c = cases.PerformanceSLow(run_id=1, db=milvus)
+        #  c = cases.PerformanceSHigh(run_id=1, db=milvus)
         c.run()
 
     @pytest.mark.skip("wait for sift in s3")

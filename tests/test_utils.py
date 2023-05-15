@@ -1,6 +1,10 @@
 import pytest
+import logging
 
 from vector_db_bench.backend import utils
+from vector_db_bench.metric import calc_recall
+
+log = logging.getLogger(__name__)
 
 class TestUtils:
     @pytest.mark.parametrize("testcases", [
@@ -19,3 +23,17 @@ class TestUtils:
     def test_numerize(self, testcases):
         t_in, expected = testcases
         assert expected == utils.numerize(t_in)
+
+    @pytest.mark.parametrize("got_expected", [
+        ([1, 3, 5, 7, 9, 10], 1.0),
+        ([11, 12, 13, 14, 15, 16], 0.0),
+        ([1, 3, 5, 11, 12, 13], 0.5),
+        ([1, 3, 5], 0.5),
+    ])
+    def test_recall(self, got_expected):
+        got, expected = got_expected
+        ground_truth = [1, 3, 5, 7, 9, 10]
+        res = calc_recall(6, ground_truth, got)
+        log.info(f"recall: {res}, expected: {expected}")
+        assert res == expected
+

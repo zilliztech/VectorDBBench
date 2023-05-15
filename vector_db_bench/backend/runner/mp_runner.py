@@ -8,6 +8,7 @@ import pandas as pd
 import numpy as np
 from ..clients import api
 from .. import utils
+from ...metric import calc_recall
 
 log = logging.getLogger(__name__)
 
@@ -95,12 +96,13 @@ class MultiProcessingSearchRunner:
         duration: int = 30,
     ):
         self.db = db
-        self.shared_test = utils.SharedDataFrame(test_df)
-        self.shared_ground_truth = utils.SharedDataFrame(ground_truth)
         self.k = k
         self.filters = filters
         self.concurrencies = concurrencies
         self.duration = duration
+
+        self.shared_test = utils.SharedDataFrame(test_df)
+        self.shared_ground_truth = utils.SharedDataFrame(ground_truth)
 
 
     def search(self, args: tuple[utils.SharedDataFrame, utils.SharedDataFrame]):
@@ -110,10 +112,14 @@ class MultiProcessingSearchRunner:
         test_df, ground_truth = args[0].read(), args[1].read()
 
         num, idx = test_df.shape[0], 0
-        log.debug(f"batch: {test_df}, batch shape: {test_df.shape}")
+        log.debug(f"batch: {test_df.columns}, batch shape: {test_df.shape}")
+        log.debug(f"ground_truth: {ground_truth.columns}, "
+            f"ground_truth shape: {test_df.shape}, "
+            f"ground_truth neighbors: {len(ground_truth['neighbors_id'])}")
 
         start_time = time.perf_counter()
         latencies = []
+        recalls = []
         count = 0
         while time.perf_counter() < start_time + self.duration:
             s = time.perf_counter()
@@ -123,24 +129,36 @@ class MultiProcessingSearchRunner:
                     self.k,
                     self.filters,
                 )
+
             except Exception as e:
                 log.warn(str(e))
                 return
 
+            latencies.append(time.perf_counter() - s)
+
+            gt = ground_truth['neighbors_id'][idx]
+            valid_idx = self.k
+            if self.filters:
+                valid_idx, iter_idx = 0, 0
+                while iter_idx < self.k and valid_idx < len(gt):
+                    if gt[iter_idx] >= self.filters['id']:
+                        valid_idx += 1
+                    iter_idx += 1
+
+            recalls.append(calc_recall(self.k, gt[:valid_idx], results))
+            log.debug(f"({mp.current_process().name:14}) serial latency: {latencies[-1]}, recall: {recalls[-1]}")
+
             count += 1
             idx = idx + 1 if idx < num - 1 else 0 # loop through the embeddings
-            dur = time.perf_counter() - s
-            latencies.append(dur)
-            log.debug(f"({mp.current_process().name:14}) serial latency: {dur}")
 
         logging.info(
             f"{mp.current_process().name:14} search {self.duration}s: "
             f"cost={np.sum(latencies):.4f}s, "
             f"queries={len(latencies)}, "
-            f"avg_latency={round(np.mean(latencies), 4)}"
+            f"avg_latency={round(np.mean(latencies), 4)}, "
+            f"avg_recall={round(np.mean(recalls), 4)}"
          )
-        # TODO: calculate recall
-        return (latencies, count)
+        return (latencies, count, np.mean(recalls))
 
     def _run_all_concurrencies(self):
         with concurrent.futures.ProcessPoolExecutor(max_workers=35) as executor:
@@ -149,17 +167,22 @@ class MultiProcessingSearchRunner:
                 log.info(f"start search in concurrency {conc}, filters: {self.filters}")
                 future_iter = executor.map(self.search, [(self.shared_test, self.shared_ground_truth) for i in range(conc)])
 
-                all_latencies, all_count = [], 0
+                all_latencies, all_count, recalls = [], 0, []
                 for r in future_iter:
                     all_latencies.extend(r[0])
                     all_count += r[1]
+                    recalls.append(r[2])
 
                 total = time.perf_counter() - start
 
                 p99 = round(np.percentile(all_latencies, 99), 4)
                 avg = round(np.mean(all_latencies), 4)
                 qps = round(all_count / total, 4)
-                log.info(f"end search in concurrency {conc}: dur={total}s, queries={len(all_latencies)}, qps={qps}, avg={avg}, p99={p99}")
+                recall = round(np.mean(recalls), 4)
+                log.info(f"end search in concurrency {conc}: "
+                        f"dur={total}s, "
+                        f"queries={len(all_latencies)}, "
+                        f"qps={qps}, avg={avg}, p99={p99}, recall={recall}")
 
     def _run_sequantially(self):
         log.info("start search sequentially")
