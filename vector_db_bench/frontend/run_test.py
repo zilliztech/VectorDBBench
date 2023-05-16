@@ -4,6 +4,7 @@ from vector_db_bench.models import TaskConfig, CaseConfig, DBCaseConfig
 from vector_db_bench.interface import BenchMarkRunner
 from vector_db_bench.frontend.utils import inputIsPassword
 
+
 st.set_page_config(
     page_title="Falcon Mark - Open VectorDB Bench",
     page_icon="🧊",

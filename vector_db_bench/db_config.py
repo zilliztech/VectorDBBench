@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from abc import ABC, abstractmethod
-
+import weaviate
 
 class DBConfig(ABC):
     @abstractmethod
@@ -22,3 +22,10 @@ class ZillizCloudConfig(DBConfig, BaseModel):
 
     def to_dict(self) -> dict:
         return {"uri": self.uri, "user": self.user, "password": self.password}
+    
+class WeaviateConfig(DBConfig, BaseModel):
+    url: str
+    auth_client_secret: weaviate.AuthApiKey
+
+    def to_dict(self) -> dict:
+        return {"url": self.url, "auth_client_secret": self.auth_client_secret}

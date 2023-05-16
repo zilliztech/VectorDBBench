@@ -3,7 +3,8 @@ import logging
 import vector_db_bench.backend.dataset as ds
 from vector_db_bench.models import DB
 from vector_db_bench.backend import cases
-from vector_db_bench.backend.clients.milvus import Milvus, FLATConfig
+from vector_db_bench.backend.clients.milvus import Milvus
+from vector_db_bench.db_case_config import FLATConfig
 
 log  = logging.getLogger(__name__)
 class TestCases:

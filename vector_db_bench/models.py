@@ -8,6 +8,7 @@ from .db_config import (
     DBConfig,
     MilvusConfig,
     ZillizCloudConfig,
+    WeaviateConfig
 )
 
 from .db_case_config import (
@@ -15,6 +16,7 @@ from .db_case_config import (
     IndexType, MetricType, # Const
     HNSWConfig, DISKANNConfig, IVFFlatConfig, FLATConfig, # Milvus Configs
     AutoIndexConfig, # ZillizCound configs
+    WeaviateIndexConfig, # Weaviate configs
     EmptyDBCaseConfig,
 )
 
@@ -67,6 +69,7 @@ class DB(Enum):
 
     Milvus = "Milvus"
     ZillizCloud = "ZillizCloud"
+    Weaviate = "Weaviate"
 
     @property
     def config(self) -> Type[DBConfig]:
@@ -96,12 +99,15 @@ class DB(Enum):
             return _milvus_case_config.get(index)
         if self == DB.ZillizCloud:
             return AutoIndexConfig
+        if self == DB.Weaviate:
+            return WeaviateIndexConfig
         return EmptyDBCaseConfig
 
 
 _db2config = {
     DB.Milvus: MilvusConfig,
     DB.ZillizCloud: ZillizCloudConfig,
+    DB.Weaviate: WeaviateConfig,
 }
 
 
