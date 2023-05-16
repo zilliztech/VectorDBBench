@@ -11,6 +11,7 @@ import logging
 import pathlib
 from hashlib import md5
 from enum import Enum, auto
+from typing import Any
 
 import s3fs
 import pandas as pd
@@ -131,15 +132,15 @@ class DataSet(BaseModel):
     """
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    data:   GIST | Cohere | Glove | SIFT
+    data:   GIST | Cohere | Glove | SIFT | Any
     test_data: pd.DataFrame | None = None
     ground_truth: pd.DataFrame | None = None
+    ground_truth_90p: pd.DataFrame | None = None
     train_files : list[str] = []
 
     @computed_field
     @property
-    def data_dir(self) -> str:
-        # TODO change str into pathlib.Path
+    def data_dir(self) -> pathlib.Path:
         """ data local directory: DATASET_LOCAL_DIR/{dataset_name}/{dataset_dirname}
 
         Examples:
@@ -147,8 +148,7 @@ class DataSet(BaseModel):
             >>> sift_s.relative_path
             '/tmp/vector_db_bench/dataset/sift/sift_small_500k/'
         """
-        relative_path = os.path.join(self.data.name, self.data.dir_name).lower()
-        return os.path.join(DATASET_LOCAL_DIR, relative_path)
+        return pathlib.Path(DATASET_LOCAL_DIR, self.data.name.lower(), self.data.dir_name.lower())
 
     @computed_field
     @property
@@ -166,11 +166,9 @@ class DataSet(BaseModel):
         return DataSetIterator(self)
 
     def _validate_local_file(self):
-        data_dir = pathlib.Path(self.data_dir)
-
-        if not data_dir.exists():
-            log.info(f"local file path not exist, creating it: {data_dir}")
-            data_dir.mkdir(parents=True)
+        if not self.data_dir.exists():
+            log.info(f"local file path not exist, creating it: {self.data_dir}")
+            self.data_dir.mkdir(parents=True)
 
         fs = s3fs.S3FileSystem(
             anon=True,
@@ -182,7 +180,7 @@ class DataSet(BaseModel):
         path2etag = {info['Key']: info['ETag'].split('"')[1] for info in dataset_info}
 
         # get local files ended with '.parquet'
-        file_names = [p.name for p in data_dir.glob("*.parquet")]
+        file_names = [p.name for p in self.data_dir.glob("*.parquet")]
         log.info(f"local files: {file_names}, s3 files: {path2etag}")
         downloads = []
         if len(file_names) == 0:
@@ -193,7 +191,7 @@ class DataSet(BaseModel):
             # make sure data files aren't corrupted.
             for name in [key.split("/")[-1] for key in path2etag.keys()]:
                 s3_path = f"{self.download_dir}/{name}"
-                local_path = data_dir.joinpath(name)
+                local_path = self.data_dir.joinpath(name)
                 log.debug(f"s3 path: {s3_path}, local_path: {local_path}")
                 if not local_path.exists():
                     log.info(f"local file not exists: {local_path}, add to downloading lists")
@@ -204,8 +202,8 @@ class DataSet(BaseModel):
                     downloads.append(s3_path)
 
         for s3_file in tqdm(downloads):
-            log.debug(f"downloading file {s3_file} to {data_dir}")
-            fs.download(s3_file, data_dir.as_posix())
+            log.debug(f"downloading file {s3_file} to {self.data_dir}")
+            fs.download(s3_file, self.data_dir)
 
     def match_etag(self, expected_etag: str, local_file) -> bool:
         """Check if local files' etag match with S3"""
@@ -255,12 +253,17 @@ class DataSet(BaseModel):
              - test.parquet: for testing
              - neighbors.parquet: ground_truth of the test.parquet
         """
+        if self.test_data is not None and \
+            self.ground_truth is not None and \
+            self.ground_truth_90p is not None:
+            log.info("Local dataset file already validated, skip validation and file reading")
+            return True
         self._validate_local_file()
 
-        data_dir = pathlib.Path(self.data_dir)
-        self.train_files = sorted([f.name for f in data_dir.glob('train*.parquet')])
+        self.train_files = sorted([f.name for f in self.data_dir.glob('train*.parquet')])
         self.test_data = self._read_file("test.parquet")
         self.ground_truth = self._read_file("neighbors.parquet")
+        self.ground_truth_90p = self._read_file("neighbors_90p.parquet")
 
         log.debug(f"{self.data.name}: available train files {self.train_files}")
         return True

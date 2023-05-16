@@ -110,6 +110,7 @@ class PerformanceCase(Case, BaseModel):
                 "metadata": f">={self.filter_size}",
                 "id": self.filter_size,
             }
+        return None
 
     def run(self) -> Metric:
         self.dataset.prepare()
@@ -134,10 +135,13 @@ class PerformanceCase(Case, BaseModel):
         Returns:
             Metric
         """
+        gt_df = self.dataset.ground_truth if self.filters is None or self.filters['id'] == self.filter_size \
+                else self.dataset.ground_truth_90p
+
         runner =  MultiProcessingSearchRunner(
             db=self.db,
             test_df=self.dataset.test_data,
-            ground_truth=self.dataset.ground_truth,
+            ground_truth=gt_df,
             filters=self.filters,
         )
         self.search_runner = runner

@@ -152,8 +152,12 @@ class MultiProcessingSearchRunner:
             latencies.append(time.perf_counter() - s)
 
             gt = ground_truth['neighbors_id'][idx]
+
+            # valid_idx for ground_truth for no filter and high filter
             valid_idx = self.k
-            if self.filters:
+
+            # calculate the ground_truth for low filter, filtering 100 entities.
+            if self.filters and self.filters['id'] == 100:
                 valid_idx, iter_idx = 0, 0
                 while iter_idx < self.k and valid_idx < len(gt):
                     if gt[iter_idx] >= self.filters['id']:
@@ -185,7 +189,6 @@ class MultiProcessingSearchRunner:
         with concurrent.futures.ProcessPoolExecutor(max_workers=35) as executor:
             future = executor.submit(self._ready_to_search)
             _, m.build_duration = future.result()
-            #  future_iter = executor.map(self._ready_to_search, [(self.shared_test, self.shared_ground_truth) for i in range(conc)])
 
             for conc in self.concurrencies:
                 start = time.perf_counter()

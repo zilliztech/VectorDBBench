@@ -34,22 +34,32 @@ class TestCases:
         )
 
         c = cases.PerformanceSZero(run_id=1, db=milvus)
-        #  c.dataset.prepare()
-        #  c.search()
         c.run()
 
     def test_performance_case_small_low_filter(self):
         dataset = ds.get(ds.Name.Cohere, ds.Label.SMALL)
-        db_config = DB.Milvus.config().to_dict()
-        db_case_config = FLATConfig(metric_type=dataset.data.metric_type)
+
+        db_case_config = DB.Milvus.case_config_cls(IndexType.Flat)()
+        db_case_config.metric_type = dataset.data.metric_type
         milvus = Milvus(
-            db_config=db_config,
+            db_config=DB.Milvus.config().to_dict(),
             db_case_config=db_case_config,
             drop_old=True,
         )
+        c = cases.PerformanceSLow(run_id=2, db=milvus)
+        c.run()
 
-        c = cases.PerformanceSLow(run_id=1, db=milvus)
-        #  c = cases.PerformanceSHigh(run_id=1, db=milvus)
+    def test_performance_case_small_high_filter(self):
+        dataset = ds.get(ds.Name.Cohere, ds.Label.SMALL)
+
+        db_case_config = DB.Milvus.case_config_cls(IndexType.Flat)()
+        db_case_config.metric_type = dataset.data.metric_type
+        milvus = Milvus(
+            db_config=DB.Milvus.config().to_dict(),
+            db_case_config=db_case_config,
+            drop_old=True,
+        )
+        c = cases.PerformanceSHigh(run_id=3, db=milvus)
         c.run()
 
     @pytest.mark.skip("wait for sift in s3")
