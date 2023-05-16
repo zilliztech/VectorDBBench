@@ -113,8 +113,10 @@ CaseConfigParamInput_EFConstruction = CaseConfigInput(
         "min": 8,
         "max": 512,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
-    in [IndexType.HNSW.value, None],
+    isDisplayed=lambda config: config[CaseConfigParamType.IndexType]
+    == IndexType.HNSW.value
+    if CaseConfigParamType.IndexType in config
+    else True,
 )
 
 CaseConfigParamInput_EF = CaseConfigInput(
@@ -137,10 +139,6 @@ CaseConfigParamInput_MaxConnections = CaseConfigInput(
         "min": 1,
         "max": MAX_STREAMLIT_INT,
     },
-    isDisplayed=lambda config: config[CaseConfigParamType.IndexType]
-    == IndexType.HNSW.value
-    if CaseConfigParamType.IndexType in config
-    else True,
 )
 
 CaseConfigParamInput_SearchList = CaseConfigInput(
