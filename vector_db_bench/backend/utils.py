@@ -1,4 +1,5 @@
 import time
+from functools import wraps
 from multiprocessing.shared_memory import SharedMemory
 from contextlib import ContextDecorator
 from dataclasses import dataclass, field
@@ -38,6 +39,16 @@ def numerize(n) -> str:
             display_n = int(n/(base/1e3))
             break
     return f"{display_n}{sufix}"
+
+
+def time_it(func):
+    @wraps(func)
+    def inner(*args, **kwargs):
+        pref = time.perf_counter()
+        result = func(*args, **kwargs)
+        delta = time.perf_counter() - pref
+        return result, delta
+    return inner
 
 
 @dataclass

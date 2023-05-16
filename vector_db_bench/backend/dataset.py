@@ -14,6 +14,7 @@ from enum import Enum, auto
 
 import s3fs
 import pandas as pd
+from tqdm import tqdm
 from pydantic import BaseModel, computed_field, ConfigDict
 from pydantic.dataclasses import dataclass
 
@@ -183,23 +184,28 @@ class DataSet(BaseModel):
         # get local files ended with '.parquet'
         file_names = [p.name for p in data_dir.glob("*.parquet")]
         log.info(f"local files: {file_names}, s3 files: {path2etag}")
-        if len(file_names) != len(path2etag):
-            log.info("local file number mismatch with s3, downloading...")
-            for s3_path in path2etag.keys():
-                log.info(f"downloading file {s3_path} to {data_dir}")
-                fs.download(s3_path, data_dir.as_posix())
+        downloads = []
+        if len(file_names) == 0:
+            log.info("no local files, set all to downloading lists")
+            downloads = path2etag.keys()
         else:
-            # if numbers of local file matches with s3, check the etag of local file,
+            # if local file exists, check the etag of local file with s3,
             # make sure data files aren't corrupted.
             for name in [key.split("/")[-1] for key in path2etag.keys()]:
                 s3_path = f"{self.download_dir}/{name}"
                 local_path = data_dir.joinpath(name)
                 log.debug(f"s3 path: {s3_path}, local_path: {local_path}")
-                if name in file_names:
-                    if self.match_etag(path2etag.get(s3_path), local_path):
-                        continue
-                log.info(f"local file {name} missing or etag not match, redownloading...")
-                fs.download(s3_path, local_path.as_posix())
+                if not local_path.exists():
+                    log.info(f"local file not exists: {local_path}, add to downloading lists")
+                    downloads.append(s3_path)
+
+                elif not self.match_etag(path2etag.get(s3_path), local_path):
+                    log.info(f"local file etag not match with s3 file: {local_path}, add to downloading lists")
+                    downloads.append(s3_path)
+
+        for s3_file in tqdm(downloads):
+            log.debug(f"downloading file {s3_file} to {data_dir}")
+            fs.download(s3_file, data_dir.as_posix())
 
     def match_etag(self, expected_etag: str, local_file) -> bool:
         """Check if local files' etag match with S3"""
@@ -315,9 +321,3 @@ _global_ds_mapping = {
 
 def get(ds: Name, label: Label):
     return _global_ds_mapping.get(ds, {}).get(label)
-
-checksums = {
-    #  get(Name.GIST, Label.SMALL).data.dir_name: "",
-    get(Name.Cohere, Label.SMALL).data.dir_name: "110154351655098665637835926551405536153",
-
-}

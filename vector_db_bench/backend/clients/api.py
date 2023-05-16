@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Iterable
-from ...models import DBCaseConfig
+from .db_case_config import DBCaseConfig
 
 
 class VectorDB(ABC):

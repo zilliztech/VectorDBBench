@@ -2,17 +2,12 @@
 
 import logging
 from typing import Any, Iterable
+
 import weaviate
 from weaviate.exceptions import WeaviateBaseError
-from pydantic import BaseModel
-
-from ...models import (
-    IndexType,
-    MetricType,
-    DBCaseConfig,
-)
 
 from .api import VectorDB
+from .db_case_config import DBCaseConfig
 
 log = logging.getLogger(__name__)
 
