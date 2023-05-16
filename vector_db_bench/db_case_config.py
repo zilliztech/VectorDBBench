@@ -36,14 +36,18 @@ class EmptyDBCaseConfig(DBCaseConfig):
 
 
 class WeaviateIndexConfig(BaseModel, DBCaseConfig):
-    metric_type: str
+    metric_type: str | None = None
     ef: int | None = -1
     efConstruction: int | None = None
     maxConnections: int | None = None
 
     def index_param(self) -> dict:
         if self.maxConnections is not None and self.efConstruction is not None:
-            params = {"distance": self.metric_type, "maxConnections": self.maxConnections, "efConstruction": self.efConstruction}
+            params = {
+                "distance": self.metric_type,
+                "maxConnections": self.maxConnections,
+                "efConstruction": self.efConstruction,
+            }
         else:
             params = {"distance": self.metric_type}
         return params
@@ -53,8 +57,10 @@ class WeaviateIndexConfig(BaseModel, DBCaseConfig):
             "ef": self.ef,
         }
 
+
 class MilvusIndexConfig(BaseModel):
     """Base config for milvus"""
+
     index: IndexType
     metric_type: MetricType | None = None
 
@@ -140,14 +146,15 @@ class FLATConfig(MilvusIndexConfig, DBCaseConfig):
             "params": {},
         }
 
+
 class AutoIndexConfig(MilvusIndexConfig, DBCaseConfig):
     index: IndexType = IndexType.AUTOINDEX
 
     def index_param(self) -> dict:
-       return {
-            'metric_type': self.parse_metric(),
-            'index_type': self.index.value,
-            'params': {},
+        return {
+            "metric_type": self.parse_metric(),
+            "index_type": self.index.value,
+            "params": {},
         }
 
     def search_param(self) -> dict:

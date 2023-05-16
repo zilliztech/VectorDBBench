@@ -18,7 +18,7 @@ LEGEND_RECT_HEIGHT = 20
 LEGEND_TEXT_FONT_SIZE = 14
 
 
-DB_LIST = [DB.Milvus, DB.ZillizCloud]
+DB_LIST = [DB.Milvus, DB.ZillizCloud, DB.Weaviate]
 
 CASE_LIST = [
     {
@@ -114,7 +114,7 @@ CaseConfigParamInput_EFConstruction = CaseConfigInput(
         "max": 512,
     },
     isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
-    == IndexType.HNSW.value,
+    in [IndexType.HNSW.value, None],
 )
 
 CaseConfigParamInput_EF = CaseConfigInput(
@@ -124,8 +124,23 @@ CaseConfigParamInput_EF = CaseConfigInput(
         "min": 100,
         "max": MAX_STREAMLIT_INT,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
-    == IndexType.HNSW.value,
+    isDisplayed=lambda config: config[CaseConfigParamType.IndexType]
+    == IndexType.HNSW.value
+    if CaseConfigParamType.IndexType in config
+    else True,
+)
+
+CaseConfigParamInput_MaxConnections = CaseConfigInput(
+    label=CaseConfigParamType.MaxConnections,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": MAX_STREAMLIT_INT,
+    },
+    isDisplayed=lambda config: config[CaseConfigParamType.IndexType]
+    == IndexType.HNSW.value
+    if CaseConfigParamType.IndexType in config
+    else True,
 )
 
 CaseConfigParamInput_SearchList = CaseConfigInput(
@@ -169,6 +184,17 @@ MilvusLoadConfig = [
     CaseConfigParamInput_Nlist,
 ]
 
+WeaviateLoadConfig = [
+    CaseConfigParamInput_MaxConnections,
+    CaseConfigParamInput_EFConstruction,
+]
+
+WeaviatePerformanceConfig = [
+    CaseConfigParamInput_MaxConnections,
+    CaseConfigParamInput_EFConstruction,
+    CaseConfigParamInput_EF,
+]
+
 
 MilvusPerformanceConfig = [
     CaseConfigParamInput_IndexType,
@@ -193,5 +219,18 @@ CASE_CONFIG_MAP = {
         CaseType.PerformanceLHigh: MilvusPerformanceConfig,
         CaseType.PerformanceMHigh: MilvusPerformanceConfig,
         CaseType.PerformanceSHigh: MilvusPerformanceConfig,
+    },
+    DB.Weaviate: {
+        CaseType.LoadLDim: WeaviateLoadConfig,
+        CaseType.LoadSDim: WeaviateLoadConfig,
+        CaseType.PerformanceLZero: WeaviatePerformanceConfig,
+        CaseType.PerformanceMZero: WeaviatePerformanceConfig,
+        CaseType.PerformanceSZero: WeaviatePerformanceConfig,
+        CaseType.PerformanceLLow: WeaviatePerformanceConfig,
+        CaseType.PerformanceMLow: WeaviatePerformanceConfig,
+        CaseType.PerformanceSLow: WeaviatePerformanceConfig,
+        CaseType.PerformanceLHigh: WeaviatePerformanceConfig,
+        CaseType.PerformanceMHigh: WeaviatePerformanceConfig,
+        CaseType.PerformanceSHigh: WeaviatePerformanceConfig,
     },
 }
