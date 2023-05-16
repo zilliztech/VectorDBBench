@@ -1,9 +1,8 @@
 import logging
-from typing import Any
 from pydantic import BaseModel, ConfigDict, computed_field
 from .clients import api
 from . import dataset as ds
-from ..models import CaseResult, CaseType
+from ..models import CaseType
 from ..metric import Metric
 from .runner import (
     MultiProcessingInsertRunner,
@@ -25,15 +24,10 @@ class Case(BaseModel):
     metric: Metric
     filter_rate: float
     filter_size: int
-    runner: Any = None
 
     db: api.VectorDB | None = None
 
-    def prepare(self):
-        """Prepare runner, dataset, and db"""
-        pass
-
-    def run(self, run_id: int) -> CaseResult:
+    def run(self):
         pass
 
     def stop(self):
@@ -45,28 +39,36 @@ class LoadCase(Case, BaseModel):
     filter_rate: float = 0
     filter_size: int = 0
 
-    def run(self) -> CaseResult:
-        log.debug("start run")
-        self.prep()
-        self.load()
-        log.debug("stop run")
+    def run(self) -> int:
+        """
+        Returns
+            int: the max load count
+        """
+        log.info("start to run load case")
+        self._prep()
+        self._load()
+        log.info("end run load case")
 
-    def prep(self):
+    def _prep(self):
         self.dataset.prepare()
         self.db.init()
 
-    @utils.Timer(name="insert_train", logger=log.info)
-    def load(self):
+    def _load(self):
         """Insert train data and get the insert_duration"""
         # datasets for load tests are quite small, can fit into memory
         data_dfs = [data_df for data_df in self.dataset]
         assert len(data_dfs) == 1
 
         runner = MultiProcessingInsertRunner(self.db, data_dfs[0])
-        dur, count = runner.run_sequentially_endlessness()
-        runner.clean()
+        try:
+            count = runner.run_sequentially_endlessness()
+            log.info("load reach limit: dur={dur}, insertion counts={count}")
+            return count
+        except Exception as e:
+            log.warning(f"run load case error: {e}")
+        finally:
+            runner.stop()
 
-        log.info("load reach limit: dur={dur}, insertion counts={count}")
 
 class PerformanceCase(Case, BaseModel):
     """ DataSet, filter_rate/filter_size, db_class with db config
@@ -89,7 +91,6 @@ class PerformanceCase(Case, BaseModel):
         serial_latency
         ready_elapse # TODO rename
     """
-    #  metric: Metric = PerformanceMetric()
     metric: Metric = None # TODO
     filter_rate: float = 0
     filter_size: int = 0
@@ -112,10 +113,12 @@ class PerformanceCase(Case, BaseModel):
             }
         return None
 
-    def run(self) -> Metric:
+    def run(self):
+        # TODO try catch
         self.dataset.prepare()
         result, insert_dur = self._insert_train_data()
         m = self.search()
+        log.info(f"got results: {m}")
         m.load_duration = insert_dur
         return m
 
@@ -125,33 +128,34 @@ class PerformanceCase(Case, BaseModel):
         results = []
         for data in self.dataset:
             runner = MultiProcessingInsertRunner(self.db, data)
-            res = runner.run()
-            results.append(res)
-            runner.clean()
+            try:
+                res = runner.run()
+                results.append(res)
+            except Exception as e:
+                log.waring(f"insert train data error: {e}")
+            finally:
+                runner.stop()
         return results
 
-    def search(self) -> Metric:
-        """
-        Returns:
-            Metric
-        """
+    def search(self):
+        """ performance tests """
         gt_df = self.dataset.ground_truth if self.filters is None or self.filters['id'] == self.filter_size \
                 else self.dataset.ground_truth_90p
 
-        runner =  MultiProcessingSearchRunner(
+        self.search_runner =  MultiProcessingSearchRunner(
             db=self.db,
             test_df=self.dataset.test_data,
             ground_truth=gt_df,
             filters=self.filters,
         )
-        self.search_runner = runner
         try:
-            return runner.run()
+            #  self.metric = self.search_runner.run()
+            return self.search_runner.run()
         except Exception as e:
             log.warning(f"search error: {str(e)}, {e}")
             raise e from None
         finally:
-            runner.clean()
+            self.search_runner.stop()
 
     def stop(self):
         if self.search_runner:

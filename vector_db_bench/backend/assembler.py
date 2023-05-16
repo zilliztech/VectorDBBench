@@ -4,7 +4,6 @@ from .cases import type2case, Case
 from ..models import TaskConfig
 
 class Assembler:
-    """ Examples """
 
     @classmethod
     def assemble(cls, run_id: int, task: TaskConfig) -> Case:
@@ -16,7 +15,7 @@ class Assembler:
         db = task.db.init_cls(
             db_config=task.db_config.to_dict(),
             db_case_config=task.db_case_config,
-            drop_old=True, # Test only, TODO remove
+            drop_old=True,
         )
 
         c.db = db

@@ -1,10 +1,9 @@
 import pytest
 import logging
 import vector_db_bench.backend.dataset as ds
-from vector_db_bench.models import DB
+from vector_db_bench.models import DB, IndexType
 from vector_db_bench.backend import cases
 from vector_db_bench.backend.clients.milvus import Milvus
-from vector_db_bench.backend.clients.db_case_config import FLATConfig, IndexType
 
 log  = logging.getLogger(__name__)
 class TestCases:
@@ -62,12 +61,13 @@ class TestCases:
         c = cases.PerformanceSHigh(run_id=3, db=milvus)
         c.run()
 
-    @pytest.mark.skip("wait for sift in s3")
+    #  @pytest.mark.skip("wait for sift in s3")
     def test_load_small_dim(self):
         dataset = ds.get(ds.Name.SIFT, ds.Label.SMALL)
 
         db_config = DB.Milvus.config().to_dict()
-        db_case_config = FLATConfig(metric_type=dataset.data.metric_type)
+        db_case_config = DB.Milvus.case_config_cls(IndexType.Flat)()
+        db_case_config.metric_type = dataset.data.metric_type
         milvus = Milvus(
             db_config=db_config,
             db_case_config=db_case_config,

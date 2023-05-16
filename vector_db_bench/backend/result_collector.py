@@ -1,12 +1,17 @@
-from ..models import TestResult, CaseResult
+import pathlib
+from ..models import TestResult
 
 
 class ResultCollector:
-    def get_results(self, path_to_results_folder: str) -> list[TestResult]:
-        pass
+    @classmethod
+    def collect(cls, target_dir: str) -> list[TestResult]:
+        results = []
+        result_dir = pathlib.Path(target_dir)
+        if not result_dir.exists() or len(list(result_dir.glob("*.json"))) == 0:
+            return []
 
-    def _gen_test_result(path_to_file: str) -> TestResult:
-        pass
+    
+        for json_file in result_dir.glob("*.json"):
+            results.append(TestResult.read_file(json_file))
 
-    def _gen_case_result(config) -> CaseResult:
-        pass
+        return results

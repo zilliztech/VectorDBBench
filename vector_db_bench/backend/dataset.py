@@ -203,7 +203,7 @@ class DataSet(BaseModel):
 
         for s3_file in tqdm(downloads):
             log.debug(f"downloading file {s3_file} to {self.data_dir}")
-            fs.download(s3_file, self.data_dir)
+            fs.download(s3_file, self.data_dir.as_posix())
 
     def match_etag(self, expected_etag: str, local_file) -> bool:
         """Check if local files' etag match with S3"""

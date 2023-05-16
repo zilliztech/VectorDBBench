@@ -8,11 +8,11 @@ import pandas as pd
 import numpy as np
 from ..clients import api
 from .. import utils
+from ... import NUM_PER_BATCH
 from ...metric import calc_recall, Metric
 
 log = logging.getLogger(__name__)
 
-NUM_PER_BATCH = 5000
 
 class MultiProcessingInsertRunner:
     def __init__(self, db: api.VectorDB, train_df: pd.DataFrame):
@@ -24,7 +24,7 @@ class MultiProcessingInsertRunner:
         self.tasks = [(self.sharded_df, idx) for idx in range(self.num_batches)]
 
 
-    def insert_data(self, args):
+    def insert_data(self, args) -> int:
         self.db.init()
 
         sharded_df, batch_id = args
@@ -40,54 +40,46 @@ class MultiProcessingInsertRunner:
 
         assert len(insert_results) == batch.shape[0]
         log.debug(f"({mp.current_process().name:14})Batch No.{batch_id:3}: Finish inserting embeddings")
+        return len(insert_results)
 
-    def _insert_all_batches_sequentially(self) -> list[int]:
-        results = []
+    @utils.time_it
+    def _insert_all_batches_sequentially(self) -> int:
+        count = 0
         for t in self.tasks:
-            results.append(self.insert_data(t))
-        return results
+            count += self.insert_data(t)
+        return count
 
-    def _insert_all_batches(self) -> list[int]:
-        results = []
+    @utils.time_it
+    def _insert_all_batches(self) -> int:
         with concurrent.futures.ProcessPoolExecutor(max_workers=12) as executor:
             future_iter = executor.map(self.insert_data, self.tasks)
-            results = [r for r in future_iter]
-        return results
+            total_count = sum([r for r in future_iter])
+            return total_count
 
-    def run_sequentially_endlessness(self) -> Metric:
+    def run_sequentially_endlessness(self) -> int:
         """run forever util DB raises exception or crash"""
-        m = Metric(load_time=0.0, max_load_count=0)
-        start_time = time.perf_counter()
+        max_load_count = 0
         try:
             while True:
-                results = self._insert_all_batches_sequentially()
-                m.max_load_count += len(results)
+                results, _ = self._insert_all_batches_sequentially()
+                max_load_count += len(results)
         except Exception as e:
-            m.load_time = time.perf_counter() - start_time
-            log.info("load reach limit: dur={duration}, insertion counts={count}, err={e}")
+            log.info(f"load reach limit, insertion counts={max_load_count}, err={e}")
+            return max_load_count
 
-            return m
-
-    def run_sequentially(self) -> list[int]:
-        start_time = time.time()
-        results = self._insert_all_batches_sequentially()
-        duration = time.time() - start_time
-        log.info(f'Sequentially inserted {len(self.tasks)} batches of {NUM_PER_BATCH} entities in {duration} seconds')
-        return results
+    def run_sequentially(self) -> int:
+        log.info(f'start sequentially insert {len(self.tasks)} batches of {NUM_PER_BATCH} entities')
+        count, dur = self._insert_all_batches_sequentially()
+        log.info(f'end sequentially insert {len(self.tasks)} batches of {NUM_PER_BATCH} entities in {dur}s')
+        return count
 
     def run(self) -> list[int]:
         log.info(f'start insert {len(self.tasks)} batches of {NUM_PER_BATCH} entities')
-        start_time = time.time()
-        results = self._insert_all_batches()
-        duration = time.time() - start_time
-        log.info(f'end insert {len(self.tasks)} batches of {NUM_PER_BATCH} entities in {duration} seconds')
-        return results
+        count, dur = self._insert_all_batches()
+        log.info(f'end insert {len(self.tasks)} batches of {NUM_PER_BATCH} entities in {dur} seconds')
+        return count
 
     def stop(self) -> None:
-        # TODO
-        self.clean()
-
-    def clean(self):
         if self.sharded_df:
             self.sharded_df.unlink()
 
@@ -208,7 +200,7 @@ class MultiProcessingSearchRunner:
 
                     log.info(f"update largest qps with concurrency {conc}: "
                         f"dur={total}s, queries={len(all_latencies)}, "
-                        f"metric={m.model_dump(include=['qps', 'p99', 'serial_latency', 'recall', 'build_duration'])}")
+                        f"metric={m}")
             return m
 
 
@@ -216,10 +208,6 @@ class MultiProcessingSearchRunner:
         return self._run_all_concurrencies()
 
     def stop(self) -> None:
-        self.clean()
-        pass # TODO
-
-    def clean(self):
         if self.shared_test:
             self.shared_test.unlink()
         if self.shared_ground_truth:

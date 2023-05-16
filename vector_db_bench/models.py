@@ -177,30 +177,34 @@ class CaseResult(BaseModel):
 
 class TestResult(BaseModel):
     """ ROOT/result_{date.today()}_{run_id}.json """
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     run_id: int
     results: list[CaseResult]
 
     def write_file(self):
         result_dir = pathlib.Path(RESULTS_LOCAL_DIR)
         if not result_dir.exists():
+            log.info(f"local result directory not exist, creating it: {result_dir}")
             result_dir.mkdir(parents=True)
 
         result_file = result_dir.joinpath(f'result_{date.today().strftime("%Y%m%d")}_{self.run_id}.json')
         if result_file.exists():
+            # should not happen
             raise ValueError(f"try to write to existing file: {result_file}")
 
+        log.info(f"write results to disk {result_file}")
         with open(result_file, 'w') as f:
             b = self.model_dump_json()
             f.write(b)
 
 
     @classmethod
-    def read_file(cls, name: str) -> Self:
-        fname = pathlib.Path(RESULTS_LOCAL_DIR, name)
-        if not fname.exists():
-            raise ValueError(f"No such file: {fname}")
+    def read_file(cls, full_path: pathlib.Path) -> Self:
+        if not full_path.exists():
+            raise ValueError(f"No such file: {full_path}")
 
-        with open(fname) as f:
+        with open(full_path) as f:
             test_result = ujson.loads(f.read())
 
             for case_result in test_result['results']:
