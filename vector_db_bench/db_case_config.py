@@ -37,6 +37,24 @@ class EmptyDBCaseConfig(DBCaseConfig):
         return {}
 
 
+class WeaviateIndexConfig(BaseModel, DBCaseConfig):
+    metric_type: str
+    ef: int | None = -1
+    efConstruction: int | None = None
+    maxConnections: int | None = None
+
+    def index_param(self) -> dict:
+        if self.maxConnections is not None and self.efConstruction is not None:
+            params = {"distance": self.metric_type, "maxConnections": self.maxConnections, "efConstruction": self.efConstruction}
+        else:
+            params = {"distance": self.metric_type}
+        return params
+
+    def search_param(self) -> dict:
+        return {
+            "ef": self.ef,
+        }
+
 class MilvusIndexConfig(BaseModel):
     """Base config for milvus"""
     index: IndexType
