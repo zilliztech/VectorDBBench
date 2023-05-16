@@ -54,8 +54,7 @@ class VectorDB(ABC):
         Args:
             query(list[float]): query embedding to look up documents similar to.
             k(int): Number of most similar embeddings to return. Defaults to 100.
-            filters(Any, optional): filtering expression to filter the data while searching.
-            kwargs(Any): vector database specific parameters.
+            filters(dict, optional): filtering expression to filter the data while searching.
 
         Returns:
             list[tuple[int, float]]: list of k most similar embeddings in (id, score) tuple to the query embedding.
