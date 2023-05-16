@@ -1,8 +1,13 @@
-from typing import Any, Type
-from enum import IntEnum, Enum
-from pydantic import BaseModel, ConfigDict
-from abc import ABC, abstractmethod
+import logging
+import pathlib
+from datetime import date
+from typing import Type, Self
+from enum import Enum
 
+import ujson
+from pydantic import BaseModel, ConfigDict
+
+from . import RESULTS_LOCAL_DIR
 from .metric import Metric
 from .db_config import (
     DBConfig,
@@ -19,6 +24,9 @@ from .db_case_config import (
     WeaviateIndexConfig, # Weaviate configs
     EmptyDBCaseConfig,
 )
+
+
+log = logging.getLogger(__name__)
 
 
 class CaseType(Enum):
@@ -142,16 +150,47 @@ class TaskConfig(BaseModel):
 
 
 class CaseResult(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    metrics: Metric
     result_id: int
-    case_config: CaseConfig
-    output_path: str
-
-    metrics: list[Metric]
-
-    def append_to_disk(self):
-        pass
+    task_config: TaskConfig
 
 
 class TestResult(BaseModel):
+    """ ROOT/result_{data.today()}_{run_id}.json """
     run_id: int
     results: list[CaseResult]
+
+    def write_file(self):
+        result_dir = pathlib.Path(RESULTS_LOCAL_DIR)
+        if not result_dir.exists():
+            result_dir.mkdir(parents=True)
+
+        result_file = result_dir.joinpath(f'result_{date.today().strftime("%Y%m%d")}_{self.run_id}.json')
+        if result_file.exists():
+            raise ValueError(f"try to write to existing file: {result_file}")
+
+        with open(result_file, 'w') as f:
+            b = self.model_dump_json()
+            f.write(b)
+
+
+    @classmethod
+    def read_file(cls, name: str) -> Self:
+        fname = pathlib.Path(RESULTS_LOCAL_DIR, name)
+        if not fname.exists():
+            raise ValueError(f"No such file: {fname}")
+
+        with open(fname) as f:
+            test_result = ujson.loads(f.read())
+
+            for case_result in test_result['results']:
+                task_config = case_result.get('task_config')
+                db = DB(task_config.get('db'))
+                task_config['db_config'] = db.config(**task_config['db_config'])
+                task_config['db_case_config'] = db.case_config_cls(index=task_config['db_case_config']['index'])(**task_config['db_case_config'])
+
+                case_result['task_config'] = task_config
+            c = TestResult.model_validate(test_result)
+            return c

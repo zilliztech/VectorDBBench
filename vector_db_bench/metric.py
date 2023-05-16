@@ -6,21 +6,14 @@ from pydantic import BaseModel
 log  = logging.getLogger(__name__)
 class Metric(BaseModel):
     """result metrics"""
-    pass
 
-class LoadMetric(BaseModel):
-    label: str = "l_metric"
-    load_count_max: int
-    load_speed: float
-
-class PerformanceMetric(BaseModel):
-    label: str = "p_metric"
-
-    qps: float
-    recall: float
-    latency: float # (pqq, p95)
-    insert_duration: float
-    build_duration: float
+    load_time: float = 0.0
+    max_load_count: int = 0
+    qps: float = 0
+    recall: float = 0
+    serial_latency: float = 0
+    load_duration: float = 0
+    build_duration: float = 0
 
 
 def calc_recall(count: int, ground_truth: list[int], got: list[tuple[int, float]]):

@@ -18,7 +18,8 @@ classifiers = [
 dependencies = [
     "pytz",
     "streamlit",
-    "pymilvus", # with pandas, numpy
+    "pymilvus", # with pandas, numpy, ujson
+    "weaviate-client",
     "plotly",
     "pydantic >= v2.0.a3",
     "environs",

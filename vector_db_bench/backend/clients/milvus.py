@@ -4,11 +4,10 @@ import logging
 from typing import Any, Iterable
 
 from sklearn import preprocessing
-from pydantic import BaseModel
 from pymilvus import Collection, utility
 from pymilvus import CollectionSchema, DataType, FieldSchema, MilvusException
 
-from ...models import DBCaseConfig
+from ...models import DBCaseConfig, MetricType
 
 from .api import VectorDB
 

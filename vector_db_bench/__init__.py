@@ -12,5 +12,6 @@ TIMEZONE = env.str("TIMEZONE", 'UTC')
 
 DEFAULT_DATASET_URL = env.str("DEFAULT_DATASET_URL", "assets.zilliz.com/benchmark/")
 DATASET_LOCAL_DIR = env.path("DATASET_LOCAL_DIR", "/tmp/vector_db_bench/dataset")
+RESULTS_LOCAL_DIR = env.path("RESULTS_LOCAL_DIR", "/tmp/vector_db_bench/results")
 
 config.init(LOG_LEVEL, LOG_PATH, LOG_NAME, TIMEZONE)
