@@ -25,6 +25,8 @@ dependencies = [
     "environs",
     "scikit-learn",
     "s3fs",
+    "psutil",
+    "streamlit_autorefresh",
 ]
 version = "0.0.1"
 
