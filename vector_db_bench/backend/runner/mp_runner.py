@@ -8,7 +8,7 @@ import pandas as pd
 import numpy as np
 from ..clients import api
 from .. import utils
-from ...metric import calc_recall
+from ...metric import calc_recall, Metric
 
 log = logging.getLogger(__name__)
 
@@ -22,6 +22,7 @@ class MultiProcessingInsertRunner:
 
         self.num_batches = math.ceil(train_df.shape[0]/NUM_PER_BATCH)
         self.tasks = [(self.sharded_df, idx) for idx in range(self.num_batches)]
+
 
     def insert_data(self, args):
         self.db.init()
@@ -80,9 +81,15 @@ class MultiProcessingInsertRunner:
         log.info(f'multiprocessing inserted {len(self.tasks)} batches of {NUM_PER_BATCH} entities in {duration} seconds')
         return results
 
-    def clean(self):
-        self.sharded_df.unlink()
+    def stop(self) -> None:
+        # TODO
+        self.clean()
 
+    def clean(self):
+        if self.sharded_df:
+            self.sharded_df.unlink()
+
+global_manager = mp.Manager()
 
 class MultiProcessingSearchRunner:
     def __init__(
@@ -92,7 +99,8 @@ class MultiProcessingSearchRunner:
         ground_truth: pd.DataFrame,
         k: int = 100,
         filters: dict | None = None,
-        concurrencies: Iterable[int] = (1, 5, 10, 15, 20, 25, 30, 35),
+        #  concurrencies: Iterable[int] = (1, 5, 10, 15, 20, 25, 30, 35),
+        concurrencies: Iterable[int] = (1,),
         duration: int = 30,
     ):
         self.db = db
@@ -103,6 +111,8 @@ class MultiProcessingSearchRunner:
 
         self.shared_test = utils.SharedDataFrame(test_df)
         self.shared_ground_truth = utils.SharedDataFrame(ground_truth)
+
+        self.stop_event = global_manager.Event()
 
 
     def search(self, args: tuple[utils.SharedDataFrame, utils.SharedDataFrame]):
@@ -122,6 +132,9 @@ class MultiProcessingSearchRunner:
         recalls = []
         count = 0
         while time.perf_counter() < start_time + self.duration:
+            if self.stop_event.is_set():
+                log.warning(f"{mp.current_process().name:14} force stopped")
+                return None
             s = time.perf_counter()
             try:
                 results = self.db.search_embedding_with_score(
@@ -131,7 +144,7 @@ class MultiProcessingSearchRunner:
                 )
 
             except Exception as e:
-                log.warn(str(e))
+                log.warning(f"{str(e)}, {e}")
                 return
 
             latencies.append(time.perf_counter() - s)
@@ -158,13 +171,15 @@ class MultiProcessingSearchRunner:
             f"avg_latency={round(np.mean(latencies), 4)}, "
             f"avg_recall={round(np.mean(recalls), 4)}"
          )
-        return (latencies, count, np.mean(recalls))
+        return (latencies, count, np.mean(recalls, dtype=float))
 
-    def _run_all_concurrencies(self):
+    def _run_all_concurrencies(self) -> Metric:
+        m = Metric()
         with concurrent.futures.ProcessPoolExecutor(max_workers=35) as executor:
             for conc in self.concurrencies:
                 start = time.perf_counter()
                 log.info(f"start search in concurrency {conc}, filters: {self.filters}")
+
                 future_iter = executor.map(self.search, [(self.shared_test, self.shared_ground_truth) for i in range(conc)])
 
                 all_latencies, all_count, recalls = [], 0, []
@@ -174,27 +189,32 @@ class MultiProcessingSearchRunner:
                     recalls.append(r[2])
 
                 total = time.perf_counter() - start
-
-                p99 = round(np.percentile(all_latencies, 99), 4)
-                avg = round(np.mean(all_latencies), 4)
                 qps = round(all_count / total, 4)
-                recall = round(np.mean(recalls), 4)
-                log.info(f"end search in concurrency {conc}: "
-                        f"dur={total}s, "
-                        f"queries={len(all_latencies)}, "
-                        f"qps={qps}, avg={avg}, p99={p99}, recall={recall}")
+                log.info(f"end search in concurrency {conc}: dur={total}s, queries={len(all_latencies)}, qps={qps}")
 
-    def _run_sequantially(self):
-        log.info("start search sequentially")
-        self.search((self.shared_test, self.shared_ground_truth))
-        log.info("end search sequentially")
+                if qps > m.qps:
+                    m.qps = float(qps)
+                    m.p99 = float(round(np.percentile(all_latencies, 99), 4))
+                    m.serial_latency = float(round(np.mean(all_latencies), 4))
+                    m.recall = float(round(np.mean(recalls), 4))
 
-    def run(self, seq=False):
-        if seq:
-            self._run_sequantially()
-        else:
-            self._run_all_concurrencies()
+                    log.info(f"update largest qps with concurrency {conc}: "
+                        f"dur={total}s, queries={len(all_latencies)}, "
+                        f"metric={m.model_dump(include=['qps', 'p99', 'serial_latency', 'recall'])}")
+            return m
+
+
+    def run(self) -> Metric:
+        return self._run_all_concurrencies()
+
+    def stop(self) -> None:
+        self.stop_event.set()
+        self.clean()
+        pass # TODO
 
     def clean(self):
-        self.shared_test.unlink()
-        self.shared_ground_truth.unlink()
+        global_manager.shutdown()
+        if self.shared_test:
+            self.shared_test.unlink()
+        if self.shared_ground_truth:
+            self.shared_ground_truth.unlink()

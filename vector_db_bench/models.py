@@ -9,14 +9,21 @@ from pydantic import BaseModel, ConfigDict
 
 from . import RESULTS_LOCAL_DIR
 from .metric import Metric
-from .db_config import (
+from .backend.clients import (
+    VectorDB,
+    Milvus,
+    Weaviate,
+    ZillizCloud,
+)
+
+from .backend.clients.db_config import (
     DBConfig,
     MilvusConfig,
     ZillizCloudConfig,
     WeaviateConfig
 )
 
-from .db_case_config import (
+from .backend.clients.db_case_config import (
     DBCaseConfig, # base class
     IndexType, MetricType, # Const
     HNSWConfig, DISKANNConfig, IVFFlatConfig, FLATConfig, # Milvus Configs
@@ -91,6 +98,10 @@ class DB(Enum):
         """
         return _db2config.get(self)
 
+    @property
+    def init_cls(self) -> Type[VectorDB]:
+        return _db2client.get(self)
+
     def case_config_cls(self, index: IndexType | None = None) -> Type[DBCaseConfig]:
         """Get case config class of the DB
         Examples:
@@ -116,6 +127,12 @@ _db2config = {
     DB.Milvus: MilvusConfig,
     DB.ZillizCloud: ZillizCloudConfig,
     DB.Weaviate: WeaviateConfig,
+}
+
+_db2client = {
+    DB.Milvus: Milvus,
+    DB.ZillizCloud: ZillizCloud,
+    DB.Weaviate: Weaviate,
 }
 
 
@@ -158,7 +175,7 @@ class CaseResult(BaseModel):
 
 
 class TestResult(BaseModel):
-    """ ROOT/result_{data.today()}_{run_id}.json """
+    """ ROOT/result_{date.today()}_{run_id}.json """
     run_id: int
     results: list[CaseResult]
 

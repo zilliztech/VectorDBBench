@@ -7,8 +7,7 @@ from sklearn import preprocessing
 from pymilvus import Collection, utility
 from pymilvus import CollectionSchema, DataType, FieldSchema, MilvusException
 
-from ...models import DBCaseConfig, MetricType
-
+from .db_case_config import DBCaseConfig, MetricType
 from .api import VectorDB
 
 log = logging.getLogger(__name__)

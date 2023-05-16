@@ -10,6 +10,7 @@ class Metric(BaseModel):
     load_time: float = 0.0
     max_load_count: int = 0
     qps: float = 0
+    p99: float = 0
     recall: float = 0
     serial_latency: float = 0
     load_duration: float = 0

@@ -1,6 +1,6 @@
 from enum import Enum
-from pydantic import BaseModel
 from abc import ABC, abstractmethod
+from pydantic import BaseModel
 
 
 class IndexType(str, Enum):
@@ -36,7 +36,7 @@ class EmptyDBCaseConfig(DBCaseConfig):
 
 
 class WeaviateIndexConfig(BaseModel, DBCaseConfig):
-    metric_type: str
+    metric_type: str | None = None
     ef: int | None = -1
     efConstruction: int | None = None
     maxConnections: int | None = None

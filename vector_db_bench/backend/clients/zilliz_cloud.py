@@ -2,12 +2,12 @@
 
 import logging
 
-from ...models import (
-    IndexType,
+from .db_case_config import (
     DBCaseConfig,
+    AutoIndexConfig,
 )
 
-from .milvus import Milvus, MilvusIndexConfig
+from .milvus import Milvus
 
 log = logging.getLogger(__name__)
 
@@ -21,6 +21,7 @@ class ZillizCloud(Milvus):
         drop_old: bool = False,
     ):
         assert isinstance(DBCaseConfig, AutoIndexConfig)
+
         super().__init__(
             db_config=db_config,
             db_case_config=db_case_config,
