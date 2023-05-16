@@ -4,7 +4,7 @@ import vector_db_bench.backend.dataset as ds
 from vector_db_bench.models import DB
 from vector_db_bench.backend import cases
 from vector_db_bench.backend.clients.milvus import Milvus
-from vector_db_bench.db_case_config import FLATConfig
+from vector_db_bench.backend.clients.db_case_config import FLATConfig, IndexType
 
 log  = logging.getLogger(__name__)
 class TestCases:
@@ -18,10 +18,17 @@ class TestCases:
 
     def test_performance_case_small_zero(self):
         dataset = ds.get(ds.Name.Cohere, ds.Label.SMALL)
-        db_config = DB.Milvus.config().to_dict()
-        db_case_config = FLATConfig(metric_type=dataset.data.metric_type)
+        # milvus crash
+        #  db_case_config = DB.Milvus.case_config_cls(IndexType.HNSW)(
+        #      M=8,
+        #      efConstruction=32,
+        #      ef=8,
+        #  )
+        db_case_config = DB.Milvus.case_config_cls(IndexType.Flat)()
+
+        db_case_config.metric_type = dataset.data.metric_type
         milvus = Milvus(
-            db_config=db_config,
+            db_config=DB.Milvus.config().to_dict(),
             db_case_config=db_case_config,
             drop_old=True,
         )
