@@ -2,6 +2,7 @@ import streamlit as st
 from vector_db_bench.frontend.const import *
 from vector_db_bench.models import TaskConfig, CaseConfig, DBCaseConfig
 from vector_db_bench.interface import BenchMarkRunner
+from vector_db_bench.frontend.utils import inputIsPassword
 
 st.set_page_config(
     page_title="Falcon Mark - Open VectorDB Bench",
@@ -46,17 +47,20 @@ if len(activedDbList) > 0:
     for i, activeDb in enumerate(activedDbList):
         dbConfigContainer = dbConfigContainers.container()
         dbConfigContainerColumns = dbConfigContainer.columns(
-            [1, *[INPUT_WIDTH_RADIO for _ in range(INPUT_MAX_COLUMNS)]], gap="small"
+            [1, *[DB_CONFIG_INPUT_WIDTH_RADIO for _ in range(DB_CONFIG_INPUT_MAX_COLUMNS)]], gap="small"
         )
         dbConfigClass = activeDb.config
         properties = dbConfigClass.model_json_schema().get("properties")
         dbConfig = {}
         dbConfigContainerColumns[0].markdown("##### · %s" % activeDb.name)
         for j, property in enumerate(properties.items()):
-            column = dbConfigContainerColumns[1 + j % INPUT_MAX_COLUMNS]
+            column = dbConfigContainerColumns[1 + j % DB_CONFIG_INPUT_MAX_COLUMNS]
             key, value = property
             dbConfig[key] = column.text_input(
-                value["title"], key="%s-%s" % (activeDb, key)
+                key,
+                key="%s-%s" % (activeDb, key),
+                value=value.get("default", ""),
+                type="password" if inputIsPassword(key) else "default",
             )
         dbConfigs[activeDb] = dbConfigClass(**dbConfig)
 # print("dbConfigs", dbConfigs)
@@ -97,7 +101,7 @@ if len(activedDbList) > 0 and len(activedCaseList) > 0:
         for j, case in enumerate(activedCaseList):
             caseConfigDBCaseContainer = caseConfigDBContainer.container()
             columns = caseConfigDBCaseContainer.columns(
-                [1, *[INPUT_WIDTH_RADIO for _ in range(INPUT_MAX_COLUMNS)]], gap="small"
+                [1, *[CASE_CONFIG_INPUT_WIDTH_RADIO for _ in range(CASE_CONFIG_INPUT_MAX_COLUMNS)]], gap="small"
             )
             columns[0].markdown("##### · %s" % case.value)
 
@@ -105,7 +109,7 @@ if len(activedDbList) > 0 and len(activedCaseList) > 0:
             caseConfig = allCaseConfigs[db][case]
             for config in CASE_CONFIG_MAP.get(db, {}).get(case, []):
                 if config.isDisplayed(caseConfig):
-                    column = columns[1 + k % INPUT_MAX_COLUMNS]
+                    column = columns[1 + k % CASE_CONFIG_INPUT_MAX_COLUMNS]
                     key = "%s-%s-%s" % (db, case, config.label.value)
                     if config.inputType == InputType.Text:
                         caseConfig[config.label] = column.text_input(
@@ -129,7 +133,7 @@ if len(activedDbList) > 0 and len(activedCaseList) > 0:
                         )
                     k += 1
             if k == 0:
-                columns[1].write("no config")
+                columns[1].write("Auto")
             # print("caseConfig", caseConfig)
 
 # Contruct Task
