@@ -3,12 +3,12 @@ import math
 import concurrent
 import multiprocessing as mp
 import logging
-from typing import Iterable, Any
+from typing import Iterable
 import pandas as pd
 import numpy as np
 from ..clients import api
 from .. import utils
-from ...metric import calc_recall
+from ...metric import calc_recall, Metric
 
 log = logging.getLogger(__name__)
 
@@ -22,6 +22,7 @@ class MultiProcessingInsertRunner:
 
         self.num_batches = math.ceil(train_df.shape[0]/NUM_PER_BATCH)
         self.tasks = [(self.sharded_df, idx) for idx in range(self.num_batches)]
+
 
     def insert_data(self, args):
         self.db.init()
@@ -53,18 +54,19 @@ class MultiProcessingInsertRunner:
             results = [r for r in future_iter]
         return results
 
-    def run_sequentially_endlessness(self) -> int:
-        """run forever"""
-        count = 0
+    def run_sequentially_endlessness(self) -> Metric:
+        """run forever util DB raises exception or crash"""
+        m = Metric(load_time=0.0, max_load_count=0)
         start_time = time.perf_counter()
         try:
             while True:
                 results = self._insert_all_batches_sequentially()
-                count += len(results)
+                m.max_load_count += len(results)
         except Exception as e:
-            duration = time.perf_counter() - start_time
-            log.info("load reach limit: dur={duration}, insertion counts={count}, err={str(e)}")
-            return duration, count
+            m.load_time = time.perf_counter() - start_time
+            log.info("load reach limit: dur={duration}, insertion counts={count}, err={e}")
+
+            return m
 
     def run_sequentially(self) -> list[int]:
         start_time = time.time()
@@ -74,14 +76,20 @@ class MultiProcessingInsertRunner:
         return results
 
     def run(self) -> list[int]:
+        log.info(f'start insert {len(self.tasks)} batches of {NUM_PER_BATCH} entities')
         start_time = time.time()
         results = self._insert_all_batches()
         duration = time.time() - start_time
-        log.info(f'multiprocessing inserted {len(self.tasks)} batches of {NUM_PER_BATCH} entities in {duration} seconds')
+        log.info(f'end insert {len(self.tasks)} batches of {NUM_PER_BATCH} entities in {duration} seconds')
         return results
 
+    def stop(self) -> None:
+        # TODO
+        self.clean()
+
     def clean(self):
-        self.sharded_df.unlink()
+        if self.sharded_df:
+            self.sharded_df.unlink()
 
 
 class MultiProcessingSearchRunner:
@@ -92,7 +100,8 @@ class MultiProcessingSearchRunner:
         ground_truth: pd.DataFrame,
         k: int = 100,
         filters: dict | None = None,
-        concurrencies: Iterable[int] = (1, 5, 10, 15, 20, 25, 30, 35),
+        #  concurrencies: Iterable[int] = (1, 5, 10, 15, 20, 25, 30, 35),
+        concurrencies: Iterable[int] = (1,),
         duration: int = 30,
     ):
         self.db = db
@@ -107,7 +116,7 @@ class MultiProcessingSearchRunner:
 
     def search(self, args: tuple[utils.SharedDataFrame, utils.SharedDataFrame]):
         self.db.init()
-        self.db.ready_to_search()
+        #  self.db.ready_to_search()
 
         test_df, ground_truth = args[0].read(), args[1].read()
 
@@ -131,14 +140,18 @@ class MultiProcessingSearchRunner:
                 )
 
             except Exception as e:
-                log.warn(str(e))
+                log.warning(f"{str(e)}, {e}")
                 return
 
             latencies.append(time.perf_counter() - s)
 
             gt = ground_truth['neighbors_id'][idx]
+
+            # valid_idx for ground_truth for no filter and high filter
             valid_idx = self.k
-            if self.filters:
+
+            # calculate the ground_truth for low filter, filtering 100 entities.
+            if self.filters and self.filters['id'] == 100:
                 valid_idx, iter_idx = 0, 0
                 while iter_idx < self.k and valid_idx < len(gt):
                     if gt[iter_idx] >= self.filters['id']:
@@ -158,13 +171,23 @@ class MultiProcessingSearchRunner:
             f"avg_latency={round(np.mean(latencies), 4)}, "
             f"avg_recall={round(np.mean(recalls), 4)}"
          )
-        return (latencies, count, np.mean(recalls))
+        return (latencies, count, np.mean(recalls, dtype=float))
 
-    def _run_all_concurrencies(self):
+    @utils.time_it
+    def _ready_to_search(self):
+        self.db.init()
+        self.db.ready_to_search()
+
+    def _run_all_concurrencies(self) -> Metric:
+        m = Metric()
         with concurrent.futures.ProcessPoolExecutor(max_workers=35) as executor:
+            future = executor.submit(self._ready_to_search)
+            _, m.build_duration = future.result()
+
             for conc in self.concurrencies:
                 start = time.perf_counter()
                 log.info(f"start search in concurrency {conc}, filters: {self.filters}")
+
                 future_iter = executor.map(self.search, [(self.shared_test, self.shared_ground_truth) for i in range(conc)])
 
                 all_latencies, all_count, recalls = [], 0, []
@@ -174,27 +197,30 @@ class MultiProcessingSearchRunner:
                     recalls.append(r[2])
 
                 total = time.perf_counter() - start
-
-                p99 = round(np.percentile(all_latencies, 99), 4)
-                avg = round(np.mean(all_latencies), 4)
                 qps = round(all_count / total, 4)
-                recall = round(np.mean(recalls), 4)
-                log.info(f"end search in concurrency {conc}: "
-                        f"dur={total}s, "
-                        f"queries={len(all_latencies)}, "
-                        f"qps={qps}, avg={avg}, p99={p99}, recall={recall}")
+                log.info(f"end search in concurrency {conc}: dur={total}s, queries={len(all_latencies)}, qps={qps}")
 
-    def _run_sequantially(self):
-        log.info("start search sequentially")
-        self.search((self.shared_test, self.shared_ground_truth))
-        log.info("end search sequentially")
+                if qps > m.qps:
+                    m.qps = float(qps)
+                    m.p99 = float(round(np.percentile(all_latencies, 99), 4))
+                    m.serial_latency = float(round(np.mean(all_latencies), 4))
+                    m.recall = float(round(np.mean(recalls), 4))
 
-    def run(self, seq=False):
-        if seq:
-            self._run_sequantially()
-        else:
-            self._run_all_concurrencies()
+                    log.info(f"update largest qps with concurrency {conc}: "
+                        f"dur={total}s, queries={len(all_latencies)}, "
+                        f"metric={m.model_dump(include=['qps', 'p99', 'serial_latency', 'recall', 'build_duration'])}")
+            return m
+
+
+    def run(self) -> Metric:
+        return self._run_all_concurrencies()
+
+    def stop(self) -> None:
+        self.clean()
+        pass # TODO
 
     def clean(self):
-        self.shared_test.unlink()
-        self.shared_ground_truth.unlink()
+        if self.shared_test:
+            self.shared_test.unlink()
+        if self.shared_ground_truth:
+            self.shared_ground_truth.unlink()

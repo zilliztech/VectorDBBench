@@ -27,7 +27,7 @@ class Case(BaseModel):
     filter_size: int
     runner: Any = None
 
-    db: api.VectorDB
+    db: api.VectorDB | None = None
 
     def prepare(self):
         """Prepare runner, dataset, and db"""
@@ -41,7 +41,6 @@ class Case(BaseModel):
 
 
 class LoadCase(Case, BaseModel):
-    #  metric: Metric = LoadMetric()
     metric: Metric = None
     filter_rate: float = 0
     filter_size: int = 0
@@ -94,6 +93,7 @@ class PerformanceCase(Case, BaseModel):
     metric: Metric = None # TODO
     filter_rate: float = 0
     filter_size: int = 0
+    search_runner: MultiProcessingSearchRunner | None = None
 
     @computed_field
     @property
@@ -110,15 +110,16 @@ class PerformanceCase(Case, BaseModel):
                 "metadata": f">={self.filter_size}",
                 "id": self.filter_size,
             }
+        return None
 
-    def run(self) -> CaseResult:
-        log.debug("start run")
+    def run(self) -> Metric:
         self.dataset.prepare()
-        self._insert_train_data()
-        self.search()
-        log.debug("stop run")
+        result, insert_dur = self._insert_train_data()
+        m = self.search()
+        m.load_duration = insert_dur
+        return m
 
-    @utils.Timer(name="insert_train", logger=log.info)
+    @utils.time_it
     def _insert_train_data(self):
         """Insert train data and get the insert_duration"""
         results = []
@@ -129,21 +130,32 @@ class PerformanceCase(Case, BaseModel):
             runner.clean()
         return results
 
-    #  @utils.Timer(name="ready_elapse", logger=log.info)
-    #  def load_dataset_into_db(self):
-    #      self._insert_train_data()
+    def search(self) -> Metric:
+        """
+        Returns:
+            Metric
+        """
+        gt_df = self.dataset.ground_truth if self.filters is None or self.filters['id'] == self.filter_size \
+                else self.dataset.ground_truth_90p
 
-    @utils.Timer(name="search", logger=log.info)
-    def search(self):
-        runner = MultiProcessingSearchRunner(
+        runner =  MultiProcessingSearchRunner(
             db=self.db,
             test_df=self.dataset.test_data,
-            ground_truth=self.dataset.ground_truth,
+            ground_truth=gt_df,
             filters=self.filters,
         )
+        self.search_runner = runner
+        try:
+            return runner.run()
+        except Exception as e:
+            log.warning(f"search error: {str(e)}, {e}")
+            raise e from None
+        finally:
+            runner.clean()
 
-        runner.run()
-        runner.clean()
+    def stop(self):
+        if self.search_runner:
+            self.search_runner.stop()
 
 
 class LoadLDimCase(LoadCase):
@@ -160,7 +172,7 @@ class PerformanceLZero(PerformanceCase):
 
 class PerformanceMZero(PerformanceCase):
     case_id: CaseType = CaseType.PerformanceMZero
-    dataset: ds.DataSet = ds.get(ds.Name.Cohere, ds.Label.LARGE)
+    dataset: ds.DataSet = ds.get(ds.Name.Cohere, ds.Label.MEDIUM)
 
 class PerformanceSZero(PerformanceCase):
     case_id: CaseType = CaseType.PerformanceSZero

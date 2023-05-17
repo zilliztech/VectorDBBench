@@ -2,12 +2,12 @@
 
 import logging
 
-from ...models import (
-    IndexType,
+from .db_case_config import (
     DBCaseConfig,
+    AutoIndexConfig,
 )
 
-from .milvus import Milvus, MilvusIndexConfig
+from .milvus import Milvus
 
 log = logging.getLogger(__name__)
 
@@ -20,7 +20,8 @@ class ZillizCloud(Milvus):
         collection_name: str = "ZillizCloudVectorDBBench",
         drop_old: bool = False,
     ):
-        assert isinstance(DBCaseConfig, AutoIndexConfig)
+        assert isinstance(DBCaseConfig, AutoIndexConfig), "ZillizCloud only support AutoIndexConfig"
+
         super().__init__(
             db_config=db_config,
             db_case_config=db_case_config,
@@ -29,3 +30,32 @@ class ZillizCloud(Milvus):
         )
 
 
+    def ready_to_search(self):
+        assert self.col, "Please call self.init() before"
+        if not self.col.has_index(index_name=self._index_name):
+            log.info("ZillizCloud flush, compact, create index and load")
+            try:
+                # not supported on zilliz cloud
+                #  self.col.flush()
+                #  self.col.compact()
+                #  self.col.wait_for_compaction_completed()
+
+                # is this sync ?
+                self.col.create_index(
+                    self._vector_field,
+                    self.case_config.index_param(),
+                    index_name=self._index_name,
+                    #  timeout=600,
+                )
+
+                #  utility.wait_for_index_building_complete(
+                #      collection_name=self.collection_name,
+                #      index_name=self._index_name,
+                #  )
+
+                # is this sync ?
+                self.col.load()
+                #  utility.wait_for_loading_complete(self.collection_name)
+            except Exception as e:
+                log.warning(f"ZillizCloud ready to search error: {e}")
+                raise e from None

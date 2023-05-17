@@ -7,8 +7,7 @@ from sklearn import preprocessing
 from pymilvus import Collection, utility
 from pymilvus import CollectionSchema, DataType, FieldSchema, MilvusException
 
-from ...models import DBCaseConfig, MetricType
-
+from .db_case_config import DBCaseConfig, MetricType
 from .api import VectorDB
 
 log = logging.getLogger(__name__)
@@ -28,6 +27,7 @@ class Milvus(VectorDB):
         self.collection_name = collection_name
 
         if drop_old:
+            log.info(f"Milvus client drop_old collection: {self.collection_name}")
             from pymilvus import connections
             connections.connect(**self.db_config)
             utility.drop_collection(self.collection_name)
@@ -49,20 +49,27 @@ class Milvus(VectorDB):
 
 
     def ready_to_search(self):
-        assert self.col
+        assert self.col, "Please call self.init() before"
         if not self.col.has_index(index_name=self._index_name):
-            log.info(f"create index with config: {self.case_config.index_param()}")
-            self.col.create_index(
-                self._vector_field,
-                self.case_config.index_param(),
-                index_name=self._index_name,
-            )
+            log.info("Milvus flush, compact, create index and load")
+            try:
+                self.col.flush()
+                self.col.compact()
+                self.col.wait_for_compaction_completed()
 
-        utility.wait_for_index_building_complete(
-            collection_name=self.collection_name,
-            index_name=self._index_name,
-        )
-        self.col.load()
+                # this is sync
+                self.col.create_index(
+                    self._vector_field,
+                    self.case_config.index_param(),
+                    index_name=self._index_name,
+                    #  timeout=600,
+                )
+
+                # this is also sync
+                self.col.load()
+            except Exception as e:
+                log.warning(f"Milvus ready to search error: {e}")
+                raise e from None
 
     def _create_collection(self, dim: int) -> Collection:
         if utility.has_collection(self.collection_name):
@@ -96,8 +103,6 @@ class Milvus(VectorDB):
         # use the first insert_embeddings to init collection
         if not self.col:
             self.col = self._create_collection(len(embeddings[0]))
-            # load and create_index before the first insertion
-            self.ready_to_search()
 
         if self.case_config.metric_type == MetricType.COSIN:
             embeddings = preprocessing.normalize(embeddings, norm="l2")

@@ -1,20 +1,23 @@
 """Assembler assembles cases with datasets and runners"""
 
-from typing import Any
-from .cases import Case
-# from .clients import Client
+from .cases import type2case, Case
+from ..models import TaskConfig
 
 class Assembler:
-    """
-    Examples:
-    """
+    """ Examples """
 
-    # def assemble() -> list[Any]:
-    #     pass
+    @classmethod
+    def assemble(cls, run_id: int, task: TaskConfig) -> Case:
+        c_cls = type2case.get(task.case_config.case_id)
 
+        c = c_cls(run_id=run_id)
+        task.db_case_config.metric_type = c.dataset.data.metric_type
 
-    # def _get_db_clients(self, dbs: list[Any]) -> list[Client]:
-    #     pass
+        db = task.db.init_cls(
+            db_config=task.db_config.to_dict(),
+            db_case_config=task.db_case_config,
+            drop_old=True, # Test only, TODO remove
+        )
 
-    # def _get_cases(cases_config: list[Any]) -> list[Case]:
-    #     pass
+        c.db = db
+        return c
