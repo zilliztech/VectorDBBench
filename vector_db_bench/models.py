@@ -68,6 +68,7 @@ class CaseConfigParamType(Enum):
     SearchList = "search_list"
     Nlist = "nlist"
     Nprobe = "nprobe"
+    MaxConnections = "maxConnections"
 
 
 class DB(Enum):
