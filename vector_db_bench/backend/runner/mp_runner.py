@@ -91,7 +91,6 @@ class MultiProcessingInsertRunner:
         if self.sharded_df:
             self.sharded_df.unlink()
 
-global_manager = mp.Manager()
 
 class MultiProcessingSearchRunner:
     def __init__(
@@ -114,8 +113,6 @@ class MultiProcessingSearchRunner:
         self.shared_test = utils.SharedDataFrame(test_df)
         self.shared_ground_truth = utils.SharedDataFrame(ground_truth)
 
-        self.stop_event = global_manager.Event()
-
 
     def search(self, args: tuple[utils.SharedDataFrame, utils.SharedDataFrame]):
         self.db.init()
@@ -134,9 +131,6 @@ class MultiProcessingSearchRunner:
         recalls = []
         count = 0
         while time.perf_counter() < start_time + self.duration:
-            if self.stop_event.is_set():
-                log.warning(f"{mp.current_process().name:14} force stopped")
-                return None
             s = time.perf_counter()
             try:
                 results = self.db.search_embedding_with_score(
@@ -222,12 +216,10 @@ class MultiProcessingSearchRunner:
         return self._run_all_concurrencies()
 
     def stop(self) -> None:
-        self.stop_event.set()
         self.clean()
         pass # TODO
 
     def clean(self):
-        global_manager.shutdown()
         if self.shared_test:
             self.shared_test.unlink()
         if self.shared_ground_truth:
