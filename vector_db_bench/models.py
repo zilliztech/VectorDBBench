@@ -1,3 +1,4 @@
+import uuid
 import logging
 import pathlib
 from datetime import date
@@ -171,7 +172,6 @@ class CaseResult(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     metrics: Metric
-    result_id: int
     task_config: TaskConfig
 
 
@@ -179,7 +179,7 @@ class TestResult(BaseModel):
     """ ROOT/result_{date.today()}_{run_id}.json """
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    run_id: int
+    run_id: str
     results: list[CaseResult]
 
     def write_file(self):
@@ -196,7 +196,9 @@ class TestResult(BaseModel):
         log.info(f"write results to disk {result_file}")
         with open(result_file, 'w') as f:
             b = self.model_dump_json()
-            f.write(b)
+            size = f.write(b)
+            log.warning(f"length of write: {size}, {b}")
+
 
 
     @classmethod

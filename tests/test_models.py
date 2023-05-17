@@ -67,4 +67,3 @@ class TestModels:
 
         with pytest.raises(ValueError):
             result = TestResult.read_file('nosuchfile.json')
-

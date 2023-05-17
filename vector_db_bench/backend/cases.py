@@ -18,7 +18,6 @@ class Case(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     case_id: CaseType
-    run_id: int
     dataset: ds.DataSet
 
     metric: Metric
@@ -36,7 +35,7 @@ class Case(BaseModel):
 
 class LoadCase(Case, BaseModel):
     metric: Metric = None
-    filter_rate: float = 0
+    filter_rate: float = 0.
     filter_size: int = 0
 
     def run(self) -> int:

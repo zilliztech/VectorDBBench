@@ -6,10 +6,10 @@ from ..models import TaskConfig
 class Assembler:
 
     @classmethod
-    def assemble(cls, run_id: int, task: TaskConfig) -> Case:
+    def assemble(cls, run_id , task: TaskConfig) -> Case:
         c_cls = type2case.get(task.case_config.case_id)
 
-        c = c_cls(run_id=run_id)
+        c = c_cls()
         task.db_case_config.metric_type = c.dataset.data.metric_type
 
         db = task.db.init_cls(
