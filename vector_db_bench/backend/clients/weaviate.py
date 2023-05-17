@@ -24,40 +24,44 @@ class Weaviate(VectorDB):
         self.db_config = db_config
         self.case_config = db_case_config
         self.collection_name = collection_name
-        self.client = weaviate.Client(**db_config)
-
-        if drop_old:
-            if self.client.schema.exists(self.collection_name):
-                self.client.schema.delete_class(self.collection_name)
 
         self._scalar_field = "key"
         self._vector_field = "vector"
         self._index_name = "vector_idx"
 
-    def init(self) -> None:
-        pass
+        if drop_old:
+            from weaviate import Client
+            client = Client(**db_config)
+            if client.schema.exists(self.collection_name):
+                client.schema.delete_class(self.collection_name)
 
+        self._create_collection(client)
+
+
+    def init(self) -> None:
+        from weaviate import Client
+        self.client = Client(**self.db_config)
 
     def ready_to_search(self):
         assert self.client.schema.exists(self.collection_name)
         self.client.schema.update_config(self.collection_name, {"vectorIndexConfig": self.case_config.search_param() } )
 
-    def _create_collection(self, dim: int):
-        if not self.client.schema.exists(self.collection_name):
+    def _create_collection(self, client):
+        if not client.schema.exists(self.collection_name):
             log.info(f"Create collection: {self.collection_name}")
             class_obj = {
                 "class": self.collection_name,
                 "vectorizer": "none",
                 "properties": [
                     {
-                        "datatype": ["int"],
+                        "dataType": ["int"],
                         "name": self._scalar_field,
                     },
                 ]
             }
-            class_obj["vectorIndexConfig"].update(**self.case_config.index_param())
+            class_obj["vectorIndexConfig"] = self.case_config.index_param()
             try:
-                self.client.schema.create_class(class_obj)
+                client.schema.create_class(class_obj)
             except WeaviateBaseError as e:
                 log.warning(f"Failed to create collection: {self.collection_name} error: {str(e)}")
                 raise e from None
@@ -69,9 +73,7 @@ class Weaviate(VectorDB):
         **kwargs: Any,
     ) -> list[str]:
         """Insert embeddings into Weaviate"""
-        if not self.client.schema.exists(self.collection_name):
-            self._create_collection()
-            self.ready_to_search()
+        assert self.client.schema.exists(self.collection_name)
 
         try:
             with self.client.batch as batch:
@@ -111,11 +113,11 @@ class Weaviate(VectorDB):
             }
             query_obj = query_obj.with_where(where_filter)
 
-
         # Perform the search.
         res = query_obj.do()
 
         # Organize results.
-        ret = [(result["data"]["Get"][self.collection_name][self._scalar_field], result["data"]["Get"][self.collection_name]["_additional"]["distance"]) for result in res]
+        ret = [(result[self._scalar_field], result["_additional"]["distance"]) for result in res["data"]["Get"][self.collection_name]]
+
         return ret
 
