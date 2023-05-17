@@ -34,7 +34,8 @@ class BenchMarkRunner:
         log.debug(f"tasks: {tasks}")
 
         # Generate run_id
-        run_id = uuid.uuid4().int
+        run_id = uuid.uuid4().hex
+        log.warning(f"uuid: {run_id}")
         self.running_task = {
             'run_id': run_id,
             'cases': [Assembler.assemble(run_id, task) for task in tasks],
@@ -68,7 +69,8 @@ class BenchMarkRunner:
         return -1 if not running
         """
         if self.running_task:
-            return self.running_task['run_id']
+            #  self._sync_running_task() sync bench running for debug
+            return sum(self.running_task['progress'])
         return -1
 
     def _sync_running_task(self):
@@ -99,28 +101,27 @@ class BenchMarkRunner:
                 log.info(f"end running case: {c.model_dump(exclude=['dataset'])}")
 
                 c_results.append(CaseResult(
-                    run_id=self.running_task['run_id'],
                     result_id=idx,
                     metrics=metric,
                     task_config=self.running_task['tasks'][idx],
                 ))
                 self.running_task['progress'][idx] = True
 
-                test_result = TestResult(
-                    run_id=self.running_task['run_id'],
-                    results=c_results,
-                )
-
-                log.info(f"Write results file for task: {test_result}")
-                test_result.write_file()
-                log.info(f"Succes to finish task: {self.running_task['run_id']}")
             except Exception as e:
                 err_msg = f"An error occurs when running case={c.model_dump(exclude=['dataset'])}, err={str(e)}"
                 log.warning(err_msg)
                 self.latest_error = err_msg
-            finally:
                 self.running_task = None
+                return
 
+        test_result = TestResult(
+            run_id=self.running_task['run_id'],
+            results=c_results,
+        )
+
+        log.info(f"Write results file for task: {test_result}")
+        test_result.write_file()
+        log.info(f"Succes to finish task: {self.running_task['run_id']}")
 
     def _clear_running_task(self):
         global global_result_future
@@ -141,7 +142,7 @@ class BenchMarkRunner:
     def _run_async(self) -> bool:
         log.info(f"task submitted: {self.running_task}")
         global global_result_future
-        global_result_future = global_executor.submit(self._async_task, self.running_task)
+        global_result_future = global_executor.submit(self._async_task)
 
         return True
 
