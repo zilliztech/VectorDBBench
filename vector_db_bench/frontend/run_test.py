@@ -1,8 +1,10 @@
 import streamlit as st
 from vector_db_bench.frontend.const import *
 from vector_db_bench.models import TaskConfig, CaseConfig, DBCaseConfig
-from vector_db_bench.interface import BenchMarkRunner
+from vector_db_bench.interface import benchMarkRunner
 from vector_db_bench.frontend.utils import inputIsPassword
+import time
+from streamlit_autorefresh import st_autorefresh
 
 
 st.set_page_config(
@@ -14,15 +16,6 @@ st.set_page_config(
 
 
 st.title("Run Your Test")
-
-
-@st.cache_resource
-def getBenchMarkRunner():
-    print("===> Cache Global BenchMarkRunner")
-    return BenchMarkRunner()
-
-
-benchMarkRunner = getBenchMarkRunner()
 
 # DB Setting
 st.divider()
@@ -48,7 +41,14 @@ if len(activedDbList) > 0:
     for i, activeDb in enumerate(activedDbList):
         dbConfigContainer = dbConfigContainers.container()
         dbConfigContainerColumns = dbConfigContainer.columns(
-            [1, *[DB_CONFIG_INPUT_WIDTH_RADIO for _ in range(DB_CONFIG_INPUT_MAX_COLUMNS)]], gap="small"
+            [
+                1,
+                *[
+                    DB_CONFIG_INPUT_WIDTH_RADIO
+                    for _ in range(DB_CONFIG_INPUT_MAX_COLUMNS)
+                ],
+            ],
+            gap="small",
         )
         dbConfigClass = activeDb.config
         properties = dbConfigClass.model_json_schema().get("properties")
@@ -102,7 +102,14 @@ if len(activedDbList) > 0 and len(activedCaseList) > 0:
         for j, case in enumerate(activedCaseList):
             caseConfigDBCaseContainer = caseConfigDBContainer.container()
             columns = caseConfigDBCaseContainer.columns(
-                [1, *[CASE_CONFIG_INPUT_WIDTH_RADIO for _ in range(CASE_CONFIG_INPUT_MAX_COLUMNS)]], gap="small"
+                [
+                    1,
+                    *[
+                        CASE_CONFIG_INPUT_WIDTH_RADIO
+                        for _ in range(CASE_CONFIG_INPUT_MAX_COLUMNS)
+                    ],
+                ],
+                gap="small",
             )
             columns[0].markdown("##### · %s" % case.value)
 
@@ -192,3 +199,12 @@ def stopHandler():
 
 columns[0].button("Run", disabled=isRunning, on_click=runHandler)
 columns[1].button("Stop", disabled=not isRunning, on_click=stopHandler)
+
+
+# Use "setTimeInterval" in js and simulate page interaction behavior to trigger refresh.
+# Will not block the main python server thread.
+auto_refresh_ount = st_autorefresh(
+    interval=MAX_AUTO_REFRESH_INTERVAL,
+    limit=MAX_AUTO_REFRESH_COUNT,
+    key="streamlit-auto-refresh",
+)

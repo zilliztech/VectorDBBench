@@ -36,3 +36,6 @@ class BenchMarkRunner(BaseModel):
         return -1 if not running
         """
         pass
+
+
+benchMarkRunner = BenchMarkRunner()
