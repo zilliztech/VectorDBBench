@@ -197,9 +197,6 @@ class TestResult(BaseModel):
         with open(result_file, 'w') as f:
             b = self.model_dump_json()
             size = f.write(b)
-            log.warning(f"length of write: {size}, {b}")
-
-
 
     @classmethod
     def read_file(cls, full_path: pathlib.Path) -> Self:

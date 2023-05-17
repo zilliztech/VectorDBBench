@@ -1,6 +1,7 @@
 import logging
 import uuid
 import concurrent
+import multiprocessing as mp
 
 import psutil
 
@@ -35,15 +36,19 @@ class BenchMarkRunner:
 
         # Generate run_id
         run_id = uuid.uuid4().hex
-        log.warning(f"uuid: {run_id}")
+        log.info(f"generated uuid for the tasks: {run_id}")
+
+        sub_conn, self.progress_conn = mp.Pipe(duplex=True)
+        self.latest_error = ""
         self.running_task = {
             'run_id': run_id,
             'cases': [Assembler.assemble(run_id, task) for task in tasks],
             'tasks': tasks,
             'progress': [False for i in range(len(tasks))],
+            'latest_error': "",
         }
 
-        return self._run_async()
+        return self._run_async(sub_conn)
 
     def get_results(self, result_dir: list[str] | None = None) -> list[TestResult]:
         """results of all runs, each TestResult represents one run."""
@@ -64,14 +69,26 @@ class BenchMarkRunner:
             return len(self.running_task['cases'])
         return 0
 
+    def _try_get_signal(self):
+        if self.progress_conn and self.progress_conn.poll():
+            received = self.progress_conn.recv()
+            if isinstance(received, str):
+                self.latest_error = received
+                self.running_task = None
+                self.progress_conn.close()
+            elif isinstance(received, list):
+                self.running_task['progress'] = self.progress_conn.recv()
+
+
     def get_current_task_id(self) -> int:
         """ the index of current running task
         return -1 if not running
         """
-        if self.running_task:
-            #  self._sync_running_task() sync bench running for debug
-            return sum(self.running_task['progress'])
-        return -1
+        self._try_get_signal()
+        if not self.running_task:
+            return -1
+
+        return sum(self.running_task['progress'])
 
     def _sync_running_task(self):
         if not self.running_task:
@@ -88,12 +105,12 @@ class BenchMarkRunner:
             self.running_task = 0
 
 
-    def _async_task(self) -> None:
-        if not self.running_task:
+    def _async_task(self, running_task: dict, progress_conn: mp.connection.Connection) -> None:
+        if not running_task:
             return
 
         c_results = []
-        for idx, c in enumerate(self.running_task['cases']):
+        for idx, c in enumerate(running_task['cases']):
 
             try:
                 log.info(f"start running case: {c.model_dump(exclude=['dataset'])}")
@@ -103,15 +120,17 @@ class BenchMarkRunner:
                 c_results.append(CaseResult(
                     result_id=idx,
                     metrics=metric,
-                    task_config=self.running_task['tasks'][idx],
+                    task_config=running_task['tasks'][idx],
                 ))
-                self.running_task['progress'][idx] = True
+
+                running_task['progress'][idx] = True
+                progress_conn.send(running_task['progress'])
 
             except Exception as e:
                 err_msg = f"An error occurs when running case={c.model_dump(exclude=['dataset'])}, err={str(e)}"
                 log.warning(err_msg)
-                self.latest_error = err_msg
-                self.running_task = None
+                progress_conn.send(err_msg)
+                progress_conn.close()
                 return
 
         test_result = TestResult(
@@ -121,14 +140,17 @@ class BenchMarkRunner:
 
         log.info(f"Write results file for task: {test_result}")
         test_result.write_file()
+        progress_conn.send("")
+        progress_conn.close()
         log.info(f"Succes to finish task: {self.running_task['run_id']}")
+
 
     def _clear_running_task(self):
         global global_result_future
         global_result_future = None
 
         if self.running_task:
-            log.info(f"force stop running task: {self.running_task['run_id']}")
+            log.info(f"will force stop running task: {self.running_task['run_id']}")
             for c in self.running_task['cases']:
                 c.stop()
 
@@ -137,12 +159,14 @@ class BenchMarkRunner:
                 child_p.kill()
 
             self.running_task = None
+        if self.progress_conn:
+            self.progress_conn.close()
 
 
-    def _run_async(self) -> bool:
+    def _run_async(self, conn: mp.connection.Connection) -> bool:
         log.info(f"task submitted: {self.running_task}")
         global global_result_future
-        global_result_future = global_executor.submit(self._async_task)
+        global_result_future = global_executor.submit(self._async_task, self.running_task, conn)
 
         return True
 
