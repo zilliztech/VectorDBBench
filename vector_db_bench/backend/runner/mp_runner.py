@@ -92,8 +92,7 @@ class MultiProcessingSearchRunner:
         ground_truth: pd.DataFrame,
         k: int = 100,
         filters: dict | None = None,
-        #  concurrencies: Iterable[int] = (1, 5, 10, 15, 20, 25, 30, 35),
-        concurrencies: Iterable[int] = (1,),
+        concurrencies: Iterable[int] = (1, 5, 10, 15, 20, 25, 30, 35),
         duration: int = 30,
     ):
         self.db = db
