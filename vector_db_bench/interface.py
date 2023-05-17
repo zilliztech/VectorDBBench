@@ -105,3 +105,6 @@ class BenchMarkRunner(BaseModel):
         global_result_future = global_executor.submit(self._async_task)
 
         return True
+
+
+benchMarkRunner = BenchMarkRunner()

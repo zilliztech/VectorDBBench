@@ -26,7 +26,10 @@ class ZillizCloudConfig(DBConfig, BaseModel):
 
 class WeaviateConfig(DBConfig, BaseModel):
     url: str
-    auth_client_secret: weaviate.AuthApiKey
+    api_key: str
 
     def to_dict(self) -> dict:
-        return {"url": self.url, "auth_client_secret": self.auth_client_secret}
+        return {
+            "url": self.url,
+            "auth_client_secret": weaviate.AuthApiKey(apikey=self.api_key),
+        }

@@ -3,7 +3,6 @@ from vector_db_bench.frontend.const import *
 from vector_db_bench.models import TaskConfig, CaseConfig, DBCaseConfig
 from vector_db_bench.interface import benchMarkRunner
 from vector_db_bench.frontend.utils import inputIsPassword
-import time
 from streamlit_autorefresh import st_autorefresh
 
 
@@ -168,43 +167,37 @@ tasks = [
 st.divider()
 controlContainer = st.container()
 
-taskCount = 100
-currentTaskId = 14
-isRunning = False
+# isRunning = False
+isRunning = benchMarkRunner.has_running()
+runHandler =lambda: benchMarkRunner.run(tasks)
+stopHandler = lambda: benchMarkRunner.stop_running()
+with controlContainer:
+    if isRunning:
+        progressContainer = controlContainer.container()
+        currentTaskId = benchMarkRunner.get_current_task_id()
+        tasksCount = benchMarkRunner.get_tasks_count()
+        text = f":running: task {currentTaskId} / {tasksCount}"
+        progressContainer.progress(currentTaskId / tasksCount, text=text)
+    else:
+        # errorText = benchMarkRunner.xxx
+        errorText = ""
+        if len(errorText) > 0:
+            controlContainer.error(errorText)
 
-## Task Progress
-progressContainer = controlContainer.container()
-if isRunning:
-    progressContainer.markdown(f":running: task {currentTaskId} / {taskCount}")
-    progressContainer.progress(currentTaskId / taskCount, text="")
-
-## Submit
-submitContainer = controlContainer.container()
-columns = submitContainer.columns(CHECKBOX_MAX_COLUMNS)
-
-
-def runHandler():
-    benchMarkRunner.run(tasks)
-
-
-def stopHandler():
-    print("stop")
-    # benchMarkRunner.stop_running()
-    print("stop successful")
+    submitContainer = controlContainer.container()
+    columns = submitContainer.columns(CHECKBOX_MAX_COLUMNS)
 
 
-# def checkRunning():
-#     return benchMarkRunner.has_running
 
-
-columns[0].button("Run", disabled=isRunning, on_click=runHandler)
-columns[1].button("Stop", disabled=not isRunning, on_click=stopHandler)
+    columns[0].button("Run", disabled=isRunning, on_click=runHandler)
+    columns[1].button("Stop", disabled=not isRunning, on_click=stopHandler)
 
 
 # Use "setTimeInterval" in js and simulate page interaction behavior to trigger refresh.
 # Will not block the main python server thread.
-auto_refresh_ount = st_autorefresh(
+auto_refresh_count = st_autorefresh(
     interval=MAX_AUTO_REFRESH_INTERVAL,
     limit=MAX_AUTO_REFRESH_COUNT,
     key="streamlit-auto-refresh",
 )
+st.write(f"*auto_refresh_count: {auto_refresh_count}")

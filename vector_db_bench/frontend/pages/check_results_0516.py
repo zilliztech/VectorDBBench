@@ -10,7 +10,6 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-
 st.title("Check Results")
 
 results = benchMarkRunner.get_results()
