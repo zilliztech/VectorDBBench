@@ -42,7 +42,7 @@ class Milvus(VectorDB):
         from pymilvus import connections
         self.col: Collection | None = None
 
-        connections.connect(**self.db_config)
+        connections.connect(**self.db_config, timeout=60)
         # Grab the existing colection if it exists
         if utility.has_collection(self.collection_name):
             self.col = Collection(self.collection_name)
