@@ -55,20 +55,6 @@ class BenchMarkRunner:
         target_dir = result_dir if result_dir else RESULTS_LOCAL_DIR
         return ResultCollector.collect(target_dir)
 
-    def has_running(self) -> bool:
-        """check if there're running benchmarks"""
-        return self.running_task is not None
-
-    def stop_running(self):
-        """force stop if ther're running benchmarks"""
-        self._clear_running_task()
-
-    def get_tasks_count(self) -> int:
-        """the count of all tasks"""
-        if self.running_task:
-            return len(self.running_task['cases'])
-        return 0
-
     def _try_get_signal(self):
         if self.progress_conn and self.progress_conn.poll():
             received = self.progress_conn.recv()
@@ -81,11 +67,27 @@ class BenchMarkRunner:
                 self.running_task['progress'] = self.progress_conn.recv()
 
 
+    def has_running(self) -> bool:
+        """check if there're running benchmarks"""
+        if self.running_task:
+            self._try_get_signal()
+        return self.running_task is not None
+
+    def stop_running(self):
+        """force stop if ther're running benchmarks"""
+        self._clear_running_task()
+
+    def get_tasks_count(self) -> int:
+        """the count of all tasks"""
+        if self.running_task:
+            return len(self.running_task['cases'])
+        return 0
+
+
     def get_current_task_id(self) -> int:
         """ the index of current running task
         return -1 if not running
         """
-        self._try_get_signal()
         if not self.running_task:
             return -1
 
