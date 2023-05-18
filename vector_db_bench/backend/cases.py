@@ -131,7 +131,7 @@ class PerformanceCase(Case, BaseModel):
                 res = runner.run()
                 results.append(res)
             except Exception as e:
-                log.waring(f"insert train data error: {e}")
+                log.warning(f"insert train data error: {e}")
             finally:
                 runner.stop()
         return results
@@ -148,7 +148,6 @@ class PerformanceCase(Case, BaseModel):
             filters=self.filters,
         )
         try:
-            #  self.metric = self.search_runner.run()
             return self.search_runner.run()
         except Exception as e:
             log.warning(f"search error: {str(e)}, {e}")

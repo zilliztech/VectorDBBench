@@ -4,7 +4,6 @@ import logging
 
 from .db_case_config import (
     DBCaseConfig,
-    AutoIndexConfig,
 )
 
 from .milvus import Milvus
@@ -20,8 +19,6 @@ class ZillizCloud(Milvus):
         collection_name: str = "ZillizCloudVectorDBBench",
         drop_old: bool = False,
     ):
-        assert isinstance(DBCaseConfig, AutoIndexConfig), "ZillizCloud only support AutoIndexConfig"
-
         super().__init__(
             db_config=db_config,
             db_case_config=db_case_config,
@@ -35,10 +32,10 @@ class ZillizCloud(Milvus):
         if not self.col.has_index(index_name=self._index_name):
             log.info("ZillizCloud flush, compact, create index and load")
             try:
-                # not supported on zilliz cloud
-                #  self.col.flush()
-                #  self.col.compact()
-                #  self.col.wait_for_compaction_completed()
+                # supported on zilliz cloud?
+                self.col.flush()
+                self.col.compact()
+                self.col.wait_for_compaction_completed()
 
                 # is this sync ?
                 self.col.create_index(
@@ -47,11 +44,6 @@ class ZillizCloud(Milvus):
                     index_name=self._index_name,
                     #  timeout=600,
                 )
-
-                #  utility.wait_for_index_building_complete(
-                #      collection_name=self.collection_name,
-                #      index_name=self._index_name,
-                #  )
 
                 # is this sync ?
                 self.col.load()
