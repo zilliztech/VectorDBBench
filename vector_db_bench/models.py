@@ -21,7 +21,7 @@ from .backend.clients.db_config import (
     DBConfig,
     MilvusConfig,
     ZillizCloudConfig,
-    WeaviateConfig
+    WeaviateConfig,
 )
 
 from .backend.clients.db_case_config import (
@@ -42,19 +42,31 @@ class CaseType(Enum):
     Value will be displayed in UI
     """
 
-    LoadLDim = "Capacity-1"
-    LoadSDim = "Capacity-2"
+    LoadLDim = "Capacity Test(Large-dim)"
+    LoadSDim = "Capacity Test(Small-dim)"
 
-    PerformanceLZero = "ANNS-1"
-    PerformanceMZero = "ANNS-2"
-    PerformanceSZero = "ANNS-3"
+    PerformanceLZero = "Search Performance Test(Large Dataset)"
+    PerformanceMZero = "Search Performance Test(Medium Dataset)"
+    PerformanceSZero = "Search Performance Test(Small Dataset)"
 
-    PerformanceLLow = "Filter-1"
-    PerformanceMLow = "Filter-2"
-    PerformanceSLow = "Filter-3"
-    PerformanceLHigh = "Filter-4"
-    PerformanceMHigh = "Filter-5"
-    PerformanceSHigh = "Filter-6"
+    PerformanceLLow = (
+        "Filtering Search Performance Test (Large Dataset, Low Filtering Rate)"
+    )
+    PerformanceMLow = (
+        "Filtering Search Performance Test (Medium Dataset, Low Filtering Rate)"
+    )
+    PerformanceSLow = (
+        "Filtering Search Performance Test (Small Dataset, Low Filtering Rate)"
+    )
+    PerformanceLHigh = (
+        "Filtering Search Performance Test (Large Dataset, High Filtering Rate)"
+    )
+    PerformanceMHigh = (
+        "Filtering Search Performance Test (Medium Dataset, High Filtering Rate)"
+    )
+    PerformanceSHigh = (
+        "Filtering Search Performance Test (Small Dataset, High Filtering Rate)"
+    )
 
 
 class CaseConfigParamType(Enum):
