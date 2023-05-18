@@ -1,3 +1,4 @@
+import traceback
 import logging
 import uuid
 import concurrent
@@ -74,8 +75,9 @@ class BenchMarkRunner:
             received = self.progress_conn.recv()
             if isinstance(received, str):
                 self.latest_error = received
-                self.running_task = None
                 self.progress_conn.close()
+
+                self._clear_running_task()
             elif isinstance(received, list):
                 self.running_task['progress'] = self.progress_conn.recv()
 
@@ -127,7 +129,8 @@ class BenchMarkRunner:
                 progress_conn.send(running_task['progress'])
 
             except Exception as e:
-                err_msg = f"An error occurs when running case={c.model_dump(exclude=['dataset'])}, err={str(e)}"
+                err_msg = f"An error occurs when running case={c.model_dump(exclude=['dataset'])}, err={e}"
+                traceback.print_exc()
                 log.warning(err_msg)
                 progress_conn.send(err_msg)
                 progress_conn.close()

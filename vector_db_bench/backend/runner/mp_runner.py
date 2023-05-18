@@ -183,7 +183,8 @@ class MultiProcessingSearchRunner:
 
     def _run_all_concurrencies(self) -> Metric:
         m = Metric()
-        with concurrent.futures.ProcessPoolExecutor(max_workers=35) as executor:
+        #  with concurrent.futures.ProcessPoolExecutor(max_workers=35) as executor:
+        with concurrent.futures.ProcessPoolExecutor(max_workers=sum(self.concurrencies)) as executor:
             future = executor.submit(self._ready_to_search)
             _, m.build_duration = future.result()
 
