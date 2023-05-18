@@ -9,7 +9,7 @@ from streamlit_autorefresh import st_autorefresh
 st.set_page_config(
     page_title="Falcon Mark - Open VectorDB Bench",
     page_icon="🧊",
-    # layout="wide",
+    layout="wide",
     initial_sidebar_state="collapsed",
 )
 
@@ -75,7 +75,7 @@ for i, case in enumerate(CASE_LIST):
     caseContainer = caseContainers.container()
     columns = caseContainer.columns([1, CASE_INTRO_RATIO], gap="small")
     caseIsActived[case["name"]] = columns[0].checkbox(case["name"].value)
-    columns[1].write(case["intro"])
+    columns[1].markdown(case["intro"])
 activedCaseList = [case["name"] for case in CASE_LIST if caseIsActived[case["name"]]]
 # print("activedCaseList", activedCaseList)
 
@@ -179,8 +179,7 @@ with controlContainer:
         text = f":running: task {currentTaskId} / {tasksCount}"
         progressContainer.progress(currentTaskId / tasksCount, text=text)
     else:
-        # errorText = benchMarkRunner.xxx
-        errorText = ""
+        errorText = benchMarkRunner.latest_error or ''
         if len(errorText) > 0:
             controlContainer.error(errorText)
 
@@ -200,4 +199,4 @@ auto_refresh_count = st_autorefresh(
     limit=MAX_AUTO_REFRESH_COUNT,
     key="streamlit-auto-refresh",
 )
-st.write(f"*auto_refresh_count: {auto_refresh_count}")
+# st.write(f"*auto_refresh_count: {auto_refresh_count}")

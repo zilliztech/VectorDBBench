@@ -1,162 +1,108 @@
 import streamlit as st
-import numpy as np
-import plotly.figure_factory as ff
+from vector_db_bench.frontend.const import *
+from vector_db_bench.models import TaskConfig, CaseConfig, DBCaseConfig
+from vector_db_bench.interface import BenchMarkRunner, benchMarkRunner
+from dataclasses import asdict
 import plotly.express as px
+from plotly.subplots import make_subplots
+import streamlit.components.v1 as components
 
 st.set_page_config(
-    page_title="Falcon Mark - Check Results",
+    page_title="Falcon Mark - Open VectorDB Bench",
     page_icon="🧊",
     # layout="wide",
     initial_sidebar_state="collapsed",
 )
 
+st.title("Check Results")
 
-st.title("Result Check")
-
-results = ["result_1", "result_2", "result_3", "result_4", "result_5"]
-caseCount = 3
-dbCount = 2
-
-resultsData = [
-    {
-        "db": f"db-{db}",
-        "case": f"case-{case}",
-        **{
-            f"metric-{metric}": np.random.random() * 10**metric for metric in range(6)
-        },
-    }
-    for case in range(caseCount)
-    for db in range(dbCount)
-]
-
-
-def standardlize(data, metrics, fromZero=False):
-    ranges = [
-        [
-            0 if fromZero else min([d.get(metric, 0) for d in data]),
-            max([d.get(metric, 0) for d in data]),
-        ]
-        for metric in metrics
-    ]
-    return [
-        {
-            **d,
-            **{
-                f"format_{metric}": (d.get(metric, 0) - ranges[i][0])
-                / (ranges[i][1] - ranges[i][0])
-                for i, metric in enumerate(metrics)
-            },
-        }
-        for d in data
-    ]
-
-
-metrics = [f"metric-{metric}" for metric in range(6)]
-
-standardData = standardlize(resultsData, metrics, True)
-
-
-def flatData(data, metrics):
-    return [
-        {
-            **d,
-            "metric": metric,
-            "format_value": d[f"format_{metric}"],
-            "value": d[metric],
-        }
-        for d in data
-        for metric in metrics
-    ]
-
-
-allData = flatData(standardData, metrics)
+results = benchMarkRunner.get_results()
+resultSelectOptions = [f"result-{i+1}" for i, result in enumerate(results)]
 
 # Result Seletor
 selectorContainer = st.container()
 with selectorContainer:
     selectorContainer.header("Results")
-    selectedResult = selectorContainer.selectbox(
-        "results", results, label_visibility="hidden"
+
+    selectedResultSelectedOption = selectorContainer.selectbox(
+        "results", resultSelectOptions, label_visibility="hidden"
     )
-    # selectedResult = selectorContainer.multiselect('', results, max_selections=1)
+selectedResult = results[resultSelectOptions.index(selectedResultSelectedOption)]
+
+allData = [
+    {
+        "db": res.task_config.db.value,
+        "case": res.task_config.case_config.case_id.value,
+        "db_case_config": res.task_config.db_case_config.model_dump(),
+        **asdict(res.metrics),
+        "metrics": {key for key, value in asdict(res.metrics).items() if value > 1e-7},
+    }
+    for res in selectedResult.results
+]
+
+dbs = list({d["db"] for d in allData})
+cases = list({d["case"] for d in allData})
 
 
-# Result Tables
-
-
-# Result Charts
+## Charts
 chartContainers = st.container()
 with chartContainers:
-    chartContainers.header("Chart")
-
-    for caseId in range(caseCount):
-        case = f"case-{caseId}"
+    for case in cases:
         chartContainer = chartContainers.container()
         chartContainer.header(case)
-
         with chartContainer:
             data = [d for d in allData if d["case"] == case]
+            metrics = set()
+            for d in data:
+                metrics = metrics.union(d["metrics"])
+            metrics = list(metrics)
+            fig = make_subplots(rows=len(metrics), cols=1)
 
-            fig = px.bar(
-                data,
-                x="format_value",
-                y="metric",
-                color="db",
-                title="",
-                barmode="group",
-                # pattern_shape="db",
-                # text="value",
-                # texttemplate="%{metric}",
-                orientation="h",
-                hover_data={
-                    # "metric-1": ":.2f",
-                    # f"format_{metric}": False,
-                    # "db": False,
-                    "metric": False,
-                    "format_value": False,
-                    "value": True,
-                }
-                # text_auto=True,
+            legendContainer = chartContainer.container()
+            legendDiv = (
+                lambda i: f"""
+            <div style="margin-right: 24px; display: flex; align-items: center;">
+                <div style="margin-right: 12px; background: {COLOR_MAP[dbs[i]]}; width: {LEGEND_RECT_WIDTH}px; height: {LEGEND_RECT_HEIGHT}px"></div>
+                <div style="font-size: {LEGEND_TEXT_FONT_SIZE}px; font-weight: semi-bold;">{dbs[i]}</div>
+            </div>
+            """
             )
-            fig.update_xaxes(showticklabels=False, visible=False)
-            fig.update_yaxes(title="")
-            st.plotly_chart(fig, use_container_width=True)
 
-
-caseChartContainers = st.container()
-with caseChartContainers:
-    caseChartContainers.header("Metric Chart")
-
-    for metric in metrics:
-        chartContainer = caseChartContainers.container()
-        chartContainer.header(metric)
-
-        with chartContainer:
-            data = [d for d in allData if d["metric"] == metric]
-
-            fig = px.bar(
-                data,
-                x="format_value",
-                y="case",
-                color="db",
-                title="",
-                barmode="group",
-                # pattern_shape="db",
-                orientation="h",
-                hover_data={
-                    # "metric-1": ":.2f",
-                    # f"format_{metric}": False,
-                    # "db": False,
-                    "metric": False,
-                    "case": False,
-                    "format_value": False,
-                    "value": True,
-                }
-                # text_auto=True,
+            legendsHtml = " ".join([legendDiv(i) for i, _ in enumerate(dbs)])
+            components.html(
+                f"""
+                <div style="display: flex; float: right">
+                    {legendsHtml}
+                </div>
+                """,
+                height=30,
             )
-            fig.update_xaxes(showticklabels=False, visible=False)
-            fig.update_yaxes(title="")
-            st.plotly_chart(fig, use_container_width=True)
 
+            for row, metric in enumerate(metrics):
+                subChartContainer = chartContainers.container()
+                fig = px.bar(
+                    data,
+                    x=metric,
+                    y="db",
+                    color="db",
+                    title="",
+                    height=len(dbs) * 30,
+                    # barmode="group",
+                    # pattern_shape="db",
+                    orientation="h",
+                    hover_data={
+                        "db": True,
+                        # 'case': True,
+                        metric: ":.2f",
+                    },
+                    # hover_data=f"{metric}",
+                    color_discrete_map=COLOR_MAP,
+                    text_auto=f".2f",
+                )
+                fig.update_xaxes(showticklabels=False, visible=False)
+                fig.update_yaxes(showticklabels=False, title=metric, tickangle=135)
+                fig.update_layout(
+                    margin=dict(l=20, r=20, t=0, b=0, pad=4), showlegend=False
+                )
 
-# Share
+                subChartContainer.plotly_chart(fig, use_container_width=True)

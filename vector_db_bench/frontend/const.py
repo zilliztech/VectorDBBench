@@ -6,13 +6,13 @@ import typing
 # style const
 CHECKBOX_MAX_COLUMNS = 4
 DB_CONFIG_INPUT_MAX_COLUMNS = 2
-CASE_CONFIG_INPUT_MAX_COLUMNS = 4
+CASE_CONFIG_INPUT_MAX_COLUMNS = 3
 DB_CONFIG_INPUT_WIDTH_RADIO = 2
-CASE_CONFIG_INPUT_WIDTH_RADIO = 1.2
+CASE_CONFIG_INPUT_WIDTH_RADIO = 0.98
 CASE_INTRO_RATIO = 3
 MAX_STREAMLIT_INT = (1 << 53) - 1
 
-COLOR_SCHEME = ["#8dd3c7", "#ffffb3", "#bebada", "#fb8072", "#80b1d3"]
+COLORS = ["#66c2a5", "#fc8d62", "#8da0cb", "#e78ac3"]
 LEGEND_RECT_WIDTH = 32
 LEGEND_RECT_HEIGHT = 20
 LEGEND_TEXT_FONT_SIZE = 14
@@ -22,51 +22,64 @@ MAX_AUTO_REFRESH_INTERVAL = 2000  # 2s
 
 
 DB_LIST = [DB.Milvus, DB.ZillizCloud, DB.Weaviate]
+COLOR_MAP = {db.value: COLORS[i] for i, db in enumerate(DB_LIST)}
 
 CASE_LIST = [
     {
         "name": CaseType.LoadLDim,
-        "intro": "Capacity benchmark for high dimension vector",
+        "intro": """This case tests the vector database's loading capacity by repeatedly inserting large-dimension vectors (GIST 100K vectors, **960 dimensions**) until it is fully loaded.  
+Number of inserted vectors will be reported.
+""",
     },
     {
         "name": CaseType.LoadSDim,
-        "intro": "Capacity benchmark for low dimension vector",
+        "intro": """This case tests the vector database's loading capacity by repeatedly inserting small-dimension vectors (SIFT 100K vectors, **128 dimensions**) until it is fully loaded.  
+Number of inserted vectors will be reported.""",
     },
     {
         "name": CaseType.PerformanceLZero,
-        "intro": "Performance benchmark for large dataset",
+        "intro": """This case tests the search performance of a vector database with a large dataset (**Cohere 10M vectors**, 768 dimensions) at varying parallel levels.
+Results will show index building time, recall, and maximum QPS.""",
     },
     {
         "name": CaseType.PerformanceMZero,
-        "intro": "Performance benchmark for medium dataset",
+        "intro": """This case tests the search performance of a vector database with a medium dataset (**Cohere 1M vectors**, 768 dimensions) at varying parallel levels.
+Results will show index building time, recall, and maximum QPS.""",
     },
     {
         "name": CaseType.PerformanceSZero,
-        "intro": "Performance benchmark for small dataset",
+        "intro": """This case tests the search performance of a vector database with a small dataset (**Cohere 100K vectors**, 768 dimensions) at varying parallel levels.
+Results will show index building time, recall, and maximum QPS.""",
     },
     {
         "name": CaseType.PerformanceLLow,
-        "intro": "Performance benchmark for large dataset with low filtering rate",
+        "intro": """This case tests the search performance of a vector database with a large dataset (**Cohere 10M vectors**, 768 dimensions) under a low filtering rate (**10% vectors**), at varying parallel levels.
+Results will show index building time, recall, and maximum QPS.""",
     },
     {
         "name": CaseType.PerformanceMLow,
-        "intro": "Performance benchmark for medium dataset with low filtering rate",
+        "intro": """This case tests the search performance of a vector database with a medium dataset (**Cohere 1M vectors**, 768 dimensions) under a low filtering rate (**10% vectors**), at varying parallel levels.
+Results will show index building time, recall, and maximum QPS.""",
     },
     {
         "name": CaseType.PerformanceSLow,
-        "intro": "Performance benchmark for low dataset with low filtering rate",
+        "intro": """This case tests the search performance of a vector database with a small dataset (**Cohere 100K vectors**, 768 dimensions) under a low filtering rate (**10% vectors**), at varying parallel levels.
+Results will show index building time, recall, and maximum QPS.""",
     },
     {
         "name": CaseType.PerformanceLHigh,
-        "intro": "Performance benchmark for medium dataset high low filtering rate",
+        "intro": """This case tests the search performance of a vector database with a large dataset (**Cohere 10M vectors**, 768 dimensions) under a high filtering rate (**90% vectors**), at varying parallel levels.
+Results will show index building time, recall, and maximum QPS.""",
     },
     {
         "name": CaseType.PerformanceMHigh,
-        "intro": "Performance benchmark for low dataset with high filtering rate",
+        "intro": """This case tests the search performance of a vector database with a medium dataset (**Cohere 1M vectors**, 768 dimensions) under a high filtering rate (**90% vectors**), at varying parallel levels.
+Results will show index building time, recall, and maximum QPS.""",
     },
     {
         "name": CaseType.PerformanceSHigh,
-        "intro": "Performance benchmark for low dataset with high filtering rate",
+        "intro": """This case tests the search performance of a vector database with a small dataset (**Cohere 100K vectors**, 768 dimensions) under a high filtering rate (**90% vectors**), at varying parallel levels.
+Results will show index building time, recall, and maximum QPS.""",
     },
 ]
 

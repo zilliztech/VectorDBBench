@@ -72,7 +72,7 @@ with chartContainers:
             legendContainer = chartContainer.container()
             legendDiv = lambda i: f"""
             <div style="margin-right: 24px; display: flex; align-items: center;">
-                <div style="margin-right: 12px; background: {COLOR_SCHEME[i]}; width: {LEGEND_RECT_WIDTH}px; height: {LEGEND_RECT_HEIGHT}px"></div>
+                <div style="margin-right: 12px; background: {COLORS[i]}; width: {LEGEND_RECT_WIDTH}px; height: {LEGEND_RECT_HEIGHT}px"></div>
                 <div style="font-size: {LEGEND_TEXT_FONT_SIZE}px; font-weight: semi-bold;">{dbs[i]}</div>
             </div>
             """
@@ -107,7 +107,7 @@ with chartContainers:
                         metric: ":.2f",
                     },
                     # hover_data=f"{metric}",
-                    color_discrete_sequence=COLOR_SCHEME,
+                    color_discrete_map=COLOR_MAP,
                     text_auto=f".2f",
                 )
                 fig.update_xaxes(showticklabels=False, visible=False)
