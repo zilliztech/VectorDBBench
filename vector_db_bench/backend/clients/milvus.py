@@ -47,6 +47,24 @@ class Milvus(VectorDB):
         if utility.has_collection(self.collection_name):
             self.col = Collection(self.collection_name)
 
+    def ready_to_load(self):
+        assert self.col, "Please call self.init() before"
+        if not self.col.has_index(index_name=self._index_name):
+            log.info("Milvus create index and load")
+            try:
+                # this is sync
+                self.col.create_index(
+                    self._vector_field,
+                    self.case_config.index_param(),
+                    index_name=self._index_name,
+                )
+
+                # this is also sync
+                self.col.load()
+            except Exception as e:
+                log.warning(f"Milvus ready to load error: {e}")
+                raise e from None
+
 
     def ready_to_search(self):
         assert self.col, "Please call self.init() before"

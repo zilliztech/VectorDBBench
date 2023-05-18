@@ -18,7 +18,7 @@ class MilvusConfig(DBConfig, BaseModel):
 class ZillizCloudConfig(DBConfig, BaseModel):
     uri: str
     user: str
-    password: str = Field(exclude=True)
+    password: str = Field(default="", exclude=True)
 
     def to_dict(self) -> dict:
         return {"uri": self.uri, "user": self.user, "password": self.password}

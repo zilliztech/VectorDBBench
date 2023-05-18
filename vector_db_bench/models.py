@@ -208,7 +208,7 @@ class TestResult(BaseModel):
         log.info(f"write results to disk {result_file}")
         with open(result_file, 'w') as f:
             b = self.model_dump_json()
-            size = f.write(b)
+            f.write(b)
 
     @classmethod
     def read_file(cls, full_path: pathlib.Path) -> Self:
