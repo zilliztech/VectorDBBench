@@ -14,7 +14,6 @@ from .backend.assembler import Assembler
 
 log = logging.getLogger("__name__")
 
-global_executor = concurrent.futures.ProcessPoolExecutor(max_workers=1)
 global_result_future: concurrent.futures.Future | None = None
 
 
@@ -164,12 +163,14 @@ class BenchMarkRunner:
             self.running_task = None
         if self.progress_conn:
             self.progress_conn.close()
+            self.progress_conn = None
 
 
     def _run_async(self, conn: mp.connection.Connection) -> bool:
         log.info(f"task submitted: {self.running_task}")
         global global_result_future
-        global_result_future = global_executor.submit(self._async_task, self.running_task, conn)
+        executor = concurrent.futures.ProcessPoolExecutor(max_workers=1)
+        global_result_future = executor.submit(self._async_task, self.running_task, conn)
 
         return True
 
