@@ -13,60 +13,88 @@ from ...metric import calc_recall, Metric
 
 log = logging.getLogger(__name__)
 
-
 class MultiProcessingInsertRunner:
     def __init__(self, db: api.VectorDB, train_df: pd.DataFrame):
-        log.info(f"shape: {train_df.shape}")
+        log.info(f"Dataset shape: {train_df.shape}")
         self.db = db
         self.sharded_df = utils.SharedDataFrame(train_df)
 
-        self.num_batches = math.ceil(train_df.shape[0]/NUM_PER_BATCH)
-        self.tasks = [(self.sharded_df, idx) for idx in range(self.num_batches)]
+        # seq
+        self.seq_batches = math.ceil(train_df.shape[0]/NUM_PER_BATCH)
+
+        # conc
+        self.num_concurrency = mp.cpu_count()
+        self.num_per_concurrency = train_df.shape[0] // self.num_concurrency
+        self.conc_tasks = [(self.sharded_df, idx) for idx in range(self.num_concurrency)]
 
 
     def insert_data(self, args) -> int:
         self.db.init()
 
-        sharded_df, batch_id = args
-        batch = sharded_df.read()[batch_id*NUM_PER_BATCH: (batch_id+1)*NUM_PER_BATCH]
+        sharded_df, conc_id = args
+        conc_data = sharded_df.read()[conc_id*self.num_per_concurrency: (conc_id+1)*self.num_per_concurrency]
 
-        metadata, embeddings = batch['id'].to_list(), batch['emb'].to_list()
-        log.debug(f"({mp.current_process().name:14})Batch No.{batch_id:3}: Start inserting {batch.shape[0]} embeddings")
+        num_conc_batches = math.ceil(conc_data.shape[0]/NUM_PER_BATCH)
+        log.info(f"({mp.current_process().name:16}) Conc {conc_id:3}, Start batch inserting {conc_data.shape[0]} embeddings")
 
-        insert_results = self.db.insert_embeddings(
-            embeddings=embeddings,
-            metadata=metadata,
-        )
+        count = 0
+        for batch_id in range(num_conc_batches):
+            batch = conc_data[batch_id*NUM_PER_BATCH: (batch_id+1)*NUM_PER_BATCH]
+            metadata, embeddings = batch['id'].to_list(), batch['emb'].to_list()
 
-        assert len(insert_results) == batch.shape[0]
-        log.debug(f"({mp.current_process().name:14})Batch No.{batch_id:3}: Finish inserting embeddings")
-        return len(insert_results)
+            log.debug(f"({mp.current_process().name:16}) Conc {conc_id:2}, batch {batch_id:3}, Start inserting {batch.shape[0]} embeddings")
+            insert_results = self.db.insert_embeddings(
+                embeddings=embeddings,
+                metadata=metadata,
+            )
+
+            assert len(insert_results) == batch.shape[0]
+            count += len(insert_results)
+            log.debug(f"({mp.current_process().name:16}) Conc {conc_id:2}, batch {batch_id:3}, Finish inserting {batch.shape[0]} embeddings")
+
+        log.info(f"({mp.current_process().name:16}) Conc {conc_id:2}, Finish batch inserting {conc_data.shape[0]} embeddings")
+        return count
 
 
     def load_data(self, args) -> int:
-        self.db.init()
         count = self.insert_data(args)
-        self.db.ready_to_load()
         return count
 
 
     def _insert_all_batches_sequentially(self) -> int:
+        """Load case only"""
+        self.db.init()
         count = 0
-        for t in self.tasks:
-            count += self.load_data(t)
+
+        for idx in range(self.seq_batches):
+            batch = self.sharded_df.read()[idx*NUM_PER_BATCH: (idx+1)*NUM_PER_BATCH]
+            metadata, embeddings = batch['id'].to_list(), batch['emb'].to_list()
+            log.debug(f"({mp.current_process().name:14})Batch No.{idx:3}: Start inserting {batch.shape[0]} embeddings")
+
+            insert_results = self.db.insert_embeddings(
+                embeddings=embeddings,
+                metadata=metadata,
+            )
+
+            assert len(insert_results) == batch.shape[0]
+            log.debug(f"({mp.current_process().name:14})Batch No.{idx:3}: Finish inserting embeddings")
+
+            if idx == 0:
+                self.db.ready_to_load()
+            count += len(insert_results)
         return count
 
     @utils.time_it
     def _insert_all_batches(self) -> int:
-        with concurrent.futures.ProcessPoolExecutor(max_workers=12) as executor:
-            future_iter = executor.map(self.insert_data, self.tasks)
+        """Performance case only"""
+        with concurrent.futures.ProcessPoolExecutor(max_workers=self.num_concurrency) as executor:
+            future_iter = executor.map(self.insert_data, self.conc_tasks)
             total_count = sum([r for r in future_iter])
             return total_count
 
     def run_sequentially_endlessness(self) -> int:
         """run forever util DB raises exception or crash"""
-        max_load_count = 0
-        times = 0
+        max_load_count, times = 0, 0
         try:
             while True:
                 count = self._insert_all_batches_sequentially()
@@ -80,15 +108,15 @@ class MultiProcessingInsertRunner:
             return max_load_count
 
     def run_sequentially(self) -> int:
-        log.info(f'start sequentially insert {len(self.tasks)} batches of {NUM_PER_BATCH} entities')
-        count, dur = self._insert_all_batches_sequentially()
-        log.info(f'end sequentially insert {len(self.tasks)} batches of {NUM_PER_BATCH} entities in {dur}s')
+        log.info(f'start sequentially insert {self.seq_batches} batches of {NUM_PER_BATCH} entities')
+        count = self._insert_all_batches_sequentially()
+        log.info(f'end sequentially insert {self.seq_batches} batches of {NUM_PER_BATCH} entities')
         return count
 
     def run(self) -> list[int]:
-        log.info(f'start insert {len(self.tasks)} batches of {NUM_PER_BATCH} entities')
+        log.info(f'start insert with concurrency of {self.num_concurrency}')
         count, dur = self._insert_all_batches()
-        log.info(f'end insert {len(self.tasks)} batches of {NUM_PER_BATCH} entities in {dur} seconds')
+        log.info(f'end insert with concurrency of {self.num_concurrency} in {dur} seconds')
         return count
 
     def stop(self) -> None:
