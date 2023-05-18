@@ -39,8 +39,16 @@ class Weaviate(VectorDB):
 
 
     def init(self) -> None:
+        """
+        Examples:
+            >>> with self.init():
+            >>>     self.insert_embeddings()
+            >>>     self.search_embedding_with_score()
+        """
         from weaviate import Client
         self.client = Client(**self.db_config)
+        yield
+        # TODO: close client
 
     def ready_to_load(self):
         """Should call insert first, do nothing"""

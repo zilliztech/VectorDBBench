@@ -1,5 +1,6 @@
 import traceback
 import logging
+import concurrent
 from pydantic import BaseModel, ConfigDict, computed_field
 from .clients import api
 from . import dataset as ds
@@ -8,6 +9,7 @@ from ..metric import Metric
 from .runner import (
     MultiProcessingInsertRunner,
     MultiProcessingSearchRunner,
+    SerialSearchRunner,
 )
 from . import utils
 
@@ -45,13 +47,9 @@ class LoadCase(Case, BaseModel):
             int: the max load count
         """
         log.info("start to run load case")
-        self._prep()
+        self.dataset.prepare()
         self._load()
         log.info("end run load case")
-
-    def _prep(self):
-        self.dataset.prepare()
-        self.db.init()
 
     def _load(self):
         """Insert train data and get the insert_duration"""
@@ -86,15 +84,14 @@ class PerformanceCase(Case, BaseModel):
         case_config = CaseConfig
 
     Result metrics:
-        QPS
-        Recall
-        serial_latency
-        ready_elapse # TODO rename
+        Metric: metrics except max_load_count,
+            including load_duration, build_duration, qps, serial_latency, p99, recall
     """
-    metric: Metric = None # TODO
+    metric: Metric = None
     filter_rate: float = 0
     filter_size: int = 0
     search_runner: MultiProcessingSearchRunner | None = None
+    serial_search_runner: SerialSearchRunner | None = None
 
     @computed_field
     @property
@@ -113,12 +110,20 @@ class PerformanceCase(Case, BaseModel):
             }
         return None
 
-    def run(self):
-        # TODO try catch
+    def run(self) -> Metric:
         self.dataset.prepare()
-        result, insert_dur = self._insert_train_data()
-        m = self.search()
-        m.load_duration = round(insert_dur, 4)
+        _, insert_dur = self._insert_train_data()
+        build_dur = self._ready_to_search()
+        recall, serial_latency, p99 = self.serial_search()
+        qps = self.conc_search()
+        m = Metric(
+            load_duration=round(insert_dur, 4),
+            build_duration=round(build_dur, 4),
+            recall=recall,
+            serial_latency=serial_latency,
+            p99=p99,
+            qps=qps,
+        )
         log.info(f"got results: {m}")
         return m
 
@@ -138,15 +143,58 @@ class PerformanceCase(Case, BaseModel):
                 runner.stop()
         return results
 
-    def search(self):
-        """ performance tests """
+    @utils.time_it
+    def _task(self) -> None:
+        """"""
+        with self.db.init():
+            self.db.ready_to_search()
+
+    def _ready_to_search(self) -> float:
+        with concurrent.futures.ProcessPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(self._task)
+            try:
+                return future.result()[1]
+            except Exception as e:
+                log.warning(f"VectorDB ready_to_search error: {e}")
+                traceback.print_exc()
+
+
+    def serial_search(self) -> tuple[float, float, float]:
+        """Performance serial tests, search the entire test data once,
+        calculate the recall, serial_latency, and, p99
+
+        Returns:
+            tuple[float, float, float]: recall, serial_latency, p99
+        """
         gt_df = self.dataset.ground_truth if self.filters is None or self.filters['id'] == self.filter_size \
                 else self.dataset.ground_truth_90p
+
+        self.serial_search_runner = SerialSearchRunner(
+            db=self.db,
+            test_df=self.dataset.test_data,
+            ground_truth=gt_df,
+            filters=self.filters,
+        )
+
+        try:
+            return self.serial_search_runner.run()
+        except Exception as e:
+            log.warning(f"search error: {str(e)}, {e}")
+            raise e from None
+        finally:
+            self.serial_search_runner.stop()
+
+    def conc_search(self):
+        """Performance concurrency tests, search the test data endlessness
+        for 30s in several concurrencies
+
+        Returns:
+            float: the largest qps in all concurrencies
+        """
 
         self.search_runner =  MultiProcessingSearchRunner(
             db=self.db,
             test_df=self.dataset.test_data,
-            ground_truth=gt_df,
             filters=self.filters,
         )
         try:
@@ -160,6 +208,8 @@ class PerformanceCase(Case, BaseModel):
     def stop(self):
         if self.search_runner:
             self.search_runner.stop()
+        if self.serial_search_runner:
+            self.serial_search_runner.stop()
 
 
 class LoadLDimCase(LoadCase):

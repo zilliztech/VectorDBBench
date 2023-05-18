@@ -1,4 +1,4 @@
-"""Wrapper around the Milvus vector database over VectorDB"""
+"""Wrapper around the ZillizCloud vector database over VectorDB"""
 
 import logging
 

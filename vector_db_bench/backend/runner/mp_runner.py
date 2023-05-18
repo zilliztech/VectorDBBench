@@ -1,15 +1,14 @@
 import time
+import traceback
 import math
 import concurrent
 import multiprocessing as mp
 import logging
 from typing import Iterable
 import pandas as pd
-import numpy as np
 from ..clients import api
 from .. import utils
 from ... import NUM_PER_BATCH
-from ...metric import calc_recall, Metric
 
 log = logging.getLogger(__name__)
 
@@ -29,28 +28,27 @@ class MultiProcessingInsertRunner:
 
 
     def insert_data(self, args) -> int:
-        self.db.init()
+        with self.db.init():
+            sharded_df, conc_id = args
+            conc_data = sharded_df.read()[conc_id*self.num_per_concurrency: (conc_id+1)*self.num_per_concurrency]
 
-        sharded_df, conc_id = args
-        conc_data = sharded_df.read()[conc_id*self.num_per_concurrency: (conc_id+1)*self.num_per_concurrency]
+            num_conc_batches = math.ceil(conc_data.shape[0]/NUM_PER_BATCH)
+            log.info(f"({mp.current_process().name:16}) Conc {conc_id:3}, Start batch inserting {conc_data.shape[0]} embeddings")
 
-        num_conc_batches = math.ceil(conc_data.shape[0]/NUM_PER_BATCH)
-        log.info(f"({mp.current_process().name:16}) Conc {conc_id:3}, Start batch inserting {conc_data.shape[0]} embeddings")
+            count = 0
+            for batch_id in range(num_conc_batches):
+                batch = conc_data[batch_id*NUM_PER_BATCH: (batch_id+1)*NUM_PER_BATCH]
+                metadata, embeddings = batch['id'].to_list(), batch['emb'].to_list()
 
-        count = 0
-        for batch_id in range(num_conc_batches):
-            batch = conc_data[batch_id*NUM_PER_BATCH: (batch_id+1)*NUM_PER_BATCH]
-            metadata, embeddings = batch['id'].to_list(), batch['emb'].to_list()
+                log.debug(f"({mp.current_process().name:16}) Conc {conc_id:2}, batch {batch_id:3}, Start inserting {batch.shape[0]} embeddings")
+                insert_results = self.db.insert_embeddings(
+                    embeddings=embeddings,
+                    metadata=metadata,
+                )
 
-            log.debug(f"({mp.current_process().name:16}) Conc {conc_id:2}, batch {batch_id:3}, Start inserting {batch.shape[0]} embeddings")
-            insert_results = self.db.insert_embeddings(
-                embeddings=embeddings,
-                metadata=metadata,
-            )
-
-            assert len(insert_results) == batch.shape[0]
-            count += len(insert_results)
-            log.debug(f"({mp.current_process().name:16}) Conc {conc_id:2}, batch {batch_id:3}, Finish inserting {batch.shape[0]} embeddings")
+                assert len(insert_results) == batch.shape[0]
+                count += len(insert_results)
+                log.debug(f"({mp.current_process().name:16}) Conc {conc_id:2}, batch {batch_id:3}, Finish inserting {batch.shape[0]} embeddings")
 
         log.info(f"({mp.current_process().name:16}) Conc {conc_id:2}, Finish batch inserting {conc_data.shape[0]} embeddings")
         return count
@@ -63,25 +61,25 @@ class MultiProcessingInsertRunner:
 
     def _insert_all_batches_sequentially(self) -> int:
         """Load case only"""
-        self.db.init()
-        count = 0
+        with self.db.init():
+            count = 0
 
-        for idx in range(self.seq_batches):
-            batch = self.sharded_df.read()[idx*NUM_PER_BATCH: (idx+1)*NUM_PER_BATCH]
-            metadata, embeddings = batch['id'].to_list(), batch['emb'].to_list()
-            log.debug(f"({mp.current_process().name:14})Batch No.{idx:3}: Start inserting {batch.shape[0]} embeddings")
+            for idx in range(self.seq_batches):
+                batch = self.sharded_df.read()[idx*NUM_PER_BATCH: (idx+1)*NUM_PER_BATCH]
+                metadata, embeddings = batch['id'].to_list(), batch['emb'].to_list()
+                log.debug(f"({mp.current_process().name:14})Batch No.{idx:3}: Start inserting {batch.shape[0]} embeddings")
 
-            insert_results = self.db.insert_embeddings(
-                embeddings=embeddings,
-                metadata=metadata,
-            )
+                insert_results = self.db.insert_embeddings(
+                    embeddings=embeddings,
+                    metadata=metadata,
+                )
 
-            assert len(insert_results) == batch.shape[0]
-            log.debug(f"({mp.current_process().name:14})Batch No.{idx:3}: Finish inserting embeddings")
+                assert len(insert_results) == batch.shape[0]
+                log.debug(f"({mp.current_process().name:14})Batch No.{idx:3}: Finish inserting embeddings")
 
-            if idx == 0:
-                self.db.ready_to_load()
-            count += len(insert_results)
+                if idx == 0:
+                    self.db.ready_to_load()
+                count += len(insert_results)
         return count
 
     @utils.time_it
@@ -129,7 +127,6 @@ class MultiProcessingSearchRunner:
         self,
         db: api.VectorDB,
         test_df: pd.DataFrame,
-        ground_truth: pd.DataFrame,
         k: int = 100,
         filters: dict | None = None,
         concurrencies: Iterable[int] = (1, 5, 10, 15, 20, 25, 30, 35),
@@ -142,113 +139,76 @@ class MultiProcessingSearchRunner:
         self.duration = duration
 
         self.shared_test = utils.SharedDataFrame(test_df)
-        self.shared_ground_truth = utils.SharedDataFrame(ground_truth)
+        log.debug(f"test dataset columns: {test_df.columns}, shape: {test_df.shape}")
 
 
-    def search(self, args: tuple[utils.SharedDataFrame, utils.SharedDataFrame]):
-        self.db.init()
-        #  self.db.ready_to_search()
+    def search(self, test_df: utils.SharedDataFrame) -> tuple[int, float]:
+        with self.db.init():
+            test_df = test_df.read()
 
-        test_df, ground_truth = args[0].read(), args[1].read()
+            num, idx = test_df.shape[0], 0
+            start_time = time.perf_counter()
+            count = 0
+            while time.perf_counter() < start_time + self.duration:
+                s = time.perf_counter()
+                try:
+                    self.db.search_embedding_with_score(
+                        test_df['emb'][idx],
+                        self.k,
+                        self.filters,
+                    )
+                except Exception as e:
+                    log.warning(f"VectorDB search_embedding_with_score error: {e}")
+                    traceback.print_exc(chain=True)
+                    raise e from None
 
-        num, idx = test_df.shape[0], 0
-        log.debug(f"batch: {test_df.columns}, batch shape: {test_df.shape}")
-        log.debug(f"ground_truth: {ground_truth.columns}, "
-            f"ground_truth shape: {test_df.shape}, "
-            f"ground_truth neighbors: {len(ground_truth['neighbors_id'])}")
+                count += 1
+                # loop through the test data
+                idx = idx + 1 if idx < num - 1 else 0
 
-        start_time = time.perf_counter()
-        latencies = []
-        recalls = []
-        count = 0
-        while time.perf_counter() < start_time + self.duration:
-            s = time.perf_counter()
-            try:
-                results = self.db.search_embedding_with_score(
-                    test_df['emb'][idx],
-                    self.k,
-                    self.filters,
-                )
+                if count % 50 == 0:
+                    log.info(f"({mp.current_process().name:16}) search count: {count}, latest_latency={time.perf_counter()-s}")
 
-            except Exception as e:
-                log.warning(f"{str(e)}, {e}")
-                return
-
-            latencies.append(time.perf_counter() - s)
-
-            gt = ground_truth['neighbors_id'][idx]
-
-            # valid_idx for ground_truth for no filter and high filter
-            valid_idx = self.k
-
-            # calculate the ground_truth for low filter, filtering 100 entities.
-            if self.filters and self.filters['id'] == 100:
-                valid_idx, iter_idx = 0, 0
-                while iter_idx < self.k and valid_idx < len(gt):
-                    if gt[iter_idx] >= self.filters['id']:
-                        valid_idx += 1
-                    iter_idx += 1
-
-            recalls.append(calc_recall(self.k, gt[:valid_idx], results))
-            log.debug(f"({mp.current_process().name:14}) serial latency: {latencies[-1]}, recall: {recalls[-1]}")
-
-            count += 1
-            idx = idx + 1 if idx < num - 1 else 0 # loop through the embeddings
-
+        total_dur = round(time.perf_counter() - start_time, 4)
         logging.info(
-            f"{mp.current_process().name:14} search {self.duration}s: "
-            f"cost={np.sum(latencies):.4f}s, "
-            f"queries={len(latencies)}, "
-            f"avg_latency={round(np.mean(latencies), 4)}, "
-            f"avg_recall={round(np.mean(recalls), 4)}"
+            f"{mp.current_process().name:16} search {self.duration}s: "
+            f"actual_dur={total_dur}s, count={count}, qps in this process: {round(count / total_dur, 4):3}"
          )
-        return (latencies, count, np.mean(recalls, dtype=float))
 
-    @utils.time_it
-    def _ready_to_search(self):
-        self.db.init()
-        self.db.ready_to_search()
+        return (count, total_dur)
 
-    def _run_all_concurrencies(self) -> Metric:
-        m = Metric()
+
+    def _run_all_concurrencies(self) -> float:
+        max_qps = 0
         with concurrent.futures.ProcessPoolExecutor(max_workers=sum(self.concurrencies)) as executor:
-            future = executor.submit(self._ready_to_search)
-            _, dur = future.result()
-            m.build_duration = round(dur, 4)
-
+        #  with concurrent.futures.ProcessPoolExecutor(max_workers=self.concurrencies[-1]) as executor:
             for conc in self.concurrencies:
                 start = time.perf_counter()
-                log.info(f"start search in concurrency {conc}, filters: {self.filters}")
+                log.info(f"start search {self.duration}s in concurrency {conc}, filters: {self.filters}")
 
-                future_iter = executor.map(self.search, [(self.shared_test, self.shared_ground_truth) for i in range(conc)])
+                future_iter = executor.map(self.search, [self.shared_test for i in range(conc)])
 
-                all_latencies, all_count, recalls = [], 0, []
+                all_count = 0
                 for r in future_iter:
-                    all_latencies.extend(r[0])
-                    all_count += r[1]
-                    recalls.append(r[2])
+                    count, dur = r
+                    all_count += count
 
-                total = time.perf_counter() - start
-                qps = round(all_count / total, 4)
-                log.info(f"end search in concurrency {conc}: dur={total}s, queries={len(all_latencies)}, qps={qps}")
+                cost = time.perf_counter() - start
+                qps = round(all_count / cost, 4)
+                log.info(f"end search in concurrency {conc}: dur={cost}s, total_count={all_count}, qps={qps}")
 
-                if qps > m.qps:
-                    m.qps = round(qps, 4)
-                    m.p99 = round(np.percentile(all_latencies, 99), 4)
-                    m.serial_latency = round(np.mean(all_latencies), 4)
-                    m.recall = round(np.mean(recalls), 4)
-
-                    log.info(f"update largest qps with concurrency {conc}: "
-                        f"dur={total}s, queries={len(all_latencies)}, "
-                        f"metric={m}")
-            return m
+                max_qps = qps if qps > max_qps else max_qps
+                log.info(f"update largest qps with concurrency {conc}: current max_qps={max_qps}")
+        return max_qps
 
 
-    def run(self) -> Metric:
+    def run(self) -> float:
+        """
+        Returns:
+            float: largest qps
+        """
         return self._run_all_concurrencies()
 
     def stop(self) -> None:
         if self.shared_test:
             self.shared_test.unlink()
-        if self.shared_ground_truth:
-            self.shared_ground_truth.unlink()
