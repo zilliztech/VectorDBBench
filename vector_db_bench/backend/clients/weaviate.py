@@ -43,7 +43,8 @@ class Weaviate(VectorDB):
         self.client = Client(**self.db_config)
 
     def ready_to_load(self):
-        raise NotImplementedError
+        """Should call insert first, do nothing"""
+        pass
 
     def ready_to_search(self):
         assert self.client.schema.exists(self.collection_name)
