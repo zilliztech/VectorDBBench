@@ -1,6 +1,7 @@
 """Wrapper around the Milvus vector database over VectorDB"""
 
 import logging
+from contextlib import contextmanager
 from typing import Any, Iterable
 
 from sklearn import preprocessing
@@ -38,7 +39,14 @@ class Milvus(VectorDB):
         self._vector_field = "vector"
         self._index_name = "vector_idx"
 
+    @contextmanager
     def init(self) -> None:
+        """
+        Examples:
+            >>> with self.init():
+            >>>     self.insert_embeddings()
+            >>>     self.search_embedding_with_score()
+        """
         from pymilvus import connections
         self.col: Collection | None = None
 
@@ -46,6 +54,9 @@ class Milvus(VectorDB):
         # Grab the existing colection if it exists
         if utility.has_collection(self.collection_name):
             self.col = Collection(self.collection_name)
+
+        yield
+        connections.disconnect("default")
 
     def ready_to_load(self):
         assert self.col, "Please call self.init() before"

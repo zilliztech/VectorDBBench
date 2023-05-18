@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Iterable
+from contextlib import contextmanager
 from .db_case_config import DBCaseConfig
 
 
@@ -9,6 +10,10 @@ class VectorDB(ABC):
     In each process, the benchmark cases ensure VectorDB.init() calls before any other methods operations
 
     insert_embeddings, search_embedding_with_score, and, ready_to_search will be timed for each call.
+
+    Examples:
+        db = Milvus()
+        with Milvus
     """
 
     @abstractmethod
@@ -21,7 +26,13 @@ class VectorDB(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    @contextmanager
     def init(self) -> None:
+        """
+        Examples:
+            >>> with self.init():
+            >>>     self.insert_embeddings()
+        """
         raise NotImplementedError
 
     @abstractmethod
