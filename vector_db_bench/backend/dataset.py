@@ -271,6 +271,9 @@ class DataSet(BaseModel):
     def _read_file(self, file_name: str) -> pd.DataFrame:
         """read one file from disk into memory"""
         p = pathlib.Path(self.data_dir, file_name)
+        if not p.exists():
+            log.warning(f"No such file: {p}")
+            return pd.DataFrame()
         return pd.read_parquet(p)
 
 

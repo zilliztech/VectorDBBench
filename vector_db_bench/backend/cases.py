@@ -1,3 +1,4 @@
+import traceback
 import logging
 from pydantic import BaseModel, ConfigDict, computed_field
 from .clients import api
@@ -132,6 +133,7 @@ class PerformanceCase(Case, BaseModel):
                 results.append(res)
             except Exception as e:
                 log.warning(f"insert train data error: {e}")
+                traceback.print_exc()
             finally:
                 runner.stop()
         return results
