@@ -21,7 +21,7 @@ class TestModels:
         assert DB.Milvus.case_config_cls(IndexType.IVFFlat) == IVFFlatConfig
 
         milvus_case_config_cls = DB.Milvus.case_config_cls(IndexType.Flat)
-        c = milvus_case_config_cls(metric_type=MetricType.COSIN)
+        c = milvus_case_config_cls(metric_type=MetricType.COSINE)
         assert c.index_param() == {
             'metric_type': "L2",
             'index_type': "FLAT",
@@ -34,7 +34,7 @@ class TestModels:
         }
 
         c = milvus_case_config_cls()
-        c.metric_type = MetricType.COSIN
+        c.metric_type = MetricType.COSINE
         assert c.index_param() == {
             'metric_type': "L2",
             'index_type': "FLAT",

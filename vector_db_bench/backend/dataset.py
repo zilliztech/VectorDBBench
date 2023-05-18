@@ -40,7 +40,7 @@ class GIST:
 class Cohere:
     name: str = "Cohere"
     dim: int = 768
-    metric_type: MetricType = MetricType.COSIN
+    metric_type: MetricType = MetricType.COSINE
 
     @computed_field
     @property
@@ -51,7 +51,7 @@ class Cohere:
 class Glove:
     name: str = "Glove"
     dim: int = 200
-    metric_type: MetricType = MetricType.COSIN
+    metric_type: MetricType = MetricType.COSINE
 
     @computed_field
     @property
@@ -62,7 +62,7 @@ class Glove:
 class SIFT:
     name: str = "SIFT"
     dim: int = 128
-    metric_type: MetricType = MetricType.COSIN
+    metric_type: MetricType = MetricType.COSINE
 
     @computed_field
     @property

@@ -13,7 +13,7 @@ class IndexType(str, Enum):
 
 class MetricType(str, Enum):
     L2 = "L2"
-    COSIN = "COSIN"
+    COSINE = "COSINE"
     IP = "IP"
 
 
@@ -36,16 +36,23 @@ class EmptyDBCaseConfig(DBCaseConfig):
 
 
 class WeaviateIndexConfig(BaseModel, DBCaseConfig):
-    metric_type: str | None = None
+    metric_type: MetricType | None = None
     ef: int | None = -1
     efConstruction: int | None = None
     maxConnections: int | None = None
 
+    def parse_metric(self) -> str:
+        if self.metric_type == MetricType.L2:
+            return "l2-squared"
+        elif self.metric_type == MetricType.IP:
+            return "dot"
+        return "cosine"
+
     def index_param(self) -> dict:
         if self.maxConnections is not None and self.efConstruction is not None:
-            params = {"distance": self.metric_type, "maxConnections": self.maxConnections, "efConstruction": self.efConstruction}
+            params = {"distance": self.parse_metric(), "maxConnections": self.maxConnections, "efConstruction": self.efConstruction}
         else:
-            params = {"distance": self.metric_type}
+            params = {"distance": self.parse_metric()}
         return params
 
     def search_param(self) -> dict:
@@ -62,7 +69,7 @@ class MilvusIndexConfig(BaseModel):
         if not self.metric_type:
             return ""
 
-        if self.metric_type == MetricType.COSIN:
+        if self.metric_type == MetricType.COSINE:
             return MetricType.L2.value
         return self.metric_type.value
 

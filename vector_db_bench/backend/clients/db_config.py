@@ -31,5 +31,5 @@ class WeaviateConfig(DBConfig, BaseModel):
     def to_dict(self) -> dict:
         return {
             "url": self.url,
-            "auth_client_secret": weaviate.AuthApiKey(apikey=self.api_key),
+            "auth_client_secret": weaviate.AuthApiKey(api_key=self.api_key),
         }
