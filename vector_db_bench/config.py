@@ -98,6 +98,8 @@ COLORS = {
     'DEBUGM': colors.DEBUG,
     'WARNING': colors.WARNING,
     'WARNINGM': colors.WARNING,
+    'CRITICAL': colors.CRITICAL,
+    'CRITICALM': colors.CRITICAL,
     'ERROR': colors.ERROR,
     'ERRORM': colors.ERROR,
     'ENDC': colors.ENDC,

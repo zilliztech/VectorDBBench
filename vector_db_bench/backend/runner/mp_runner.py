@@ -183,10 +183,10 @@ class MultiProcessingSearchRunner:
 
     def _run_all_concurrencies(self) -> Metric:
         m = Metric()
-        #  with concurrent.futures.ProcessPoolExecutor(max_workers=35) as executor:
-        with concurrent.futures.ProcessPoolExecutor(max_workers=sum(self.concurrencies), max_tasks_per_child=1) as executor:
+        with concurrent.futures.ProcessPoolExecutor(max_workers=sum(self.concurrencies)) as executor:
             future = executor.submit(self._ready_to_search)
-            _, m.build_duration = future.result()
+            _, dur = future.result()
+            m.build_duration = round(dur, 4)
 
             for conc in self.concurrencies:
                 start = time.perf_counter()
@@ -205,10 +205,10 @@ class MultiProcessingSearchRunner:
                 log.info(f"end search in concurrency {conc}: dur={total}s, queries={len(all_latencies)}, qps={qps}")
 
                 if qps > m.qps:
-                    m.qps = float(qps)
-                    m.p99 = float(round(np.percentile(all_latencies, 99), 4))
-                    m.serial_latency = float(round(np.mean(all_latencies), 4))
-                    m.recall = float(round(np.mean(recalls), 4))
+                    m.qps = round(qps, 4)
+                    m.p99 = round(np.percentile(all_latencies, 99), 4)
+                    m.serial_latency = round(np.mean(all_latencies), 4)
+                    m.recall = round(np.mean(recalls), 4)
 
                     log.info(f"update largest qps with concurrency {conc}: "
                         f"dur={total}s, queries={len(all_latencies)}, "

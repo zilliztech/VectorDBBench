@@ -221,7 +221,7 @@ class TestResult(BaseModel):
                 task_config = case_result.get('task_config')
                 db = DB(task_config.get('db'))
                 task_config['db_config'] = db.config(**task_config['db_config'])
-                task_config['db_case_config'] = db.case_config_cls(index=task_config['db_case_config']['index'])(**task_config['db_case_config'])
+                task_config['db_case_config'] = db.case_config_cls(index=task_config['db_case_config'].get('index', ''))(**task_config['db_case_config'])
 
                 case_result['task_config'] = task_config
             c = TestResult.model_validate(test_result)

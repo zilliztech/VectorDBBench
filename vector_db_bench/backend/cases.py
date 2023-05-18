@@ -118,8 +118,8 @@ class PerformanceCase(Case, BaseModel):
         self.dataset.prepare()
         result, insert_dur = self._insert_train_data()
         m = self.search()
+        m.load_duration = round(insert_dur, 4)
         log.info(f"got results: {m}")
-        m.load_duration = insert_dur
         return m
 
     @utils.time_it
