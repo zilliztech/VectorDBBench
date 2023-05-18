@@ -42,6 +42,9 @@ class Weaviate(VectorDB):
         from weaviate import Client
         self.client = Client(**self.db_config)
 
+    def ready_to_load(self):
+        raise NotImplementedError
+
     def ready_to_search(self):
         assert self.client.schema.exists(self.collection_name)
         self.client.schema.update_config(self.collection_name, {"vectorIndexConfig": self.case_config.search_param() } )

@@ -42,11 +42,18 @@ class MultiProcessingInsertRunner:
         log.debug(f"({mp.current_process().name:14})Batch No.{batch_id:3}: Finish inserting embeddings")
         return len(insert_results)
 
-    @utils.time_it
+
+    def load_data(self, args) -> int:
+        self.db.init()
+        count = self.insert_data(args)
+        self.db.ready_to_load()
+        return count
+
+
     def _insert_all_batches_sequentially(self) -> int:
         count = 0
         for t in self.tasks:
-            count += self.insert_data(t)
+            count += self.load_data(t)
         return count
 
     @utils.time_it
@@ -59,12 +66,17 @@ class MultiProcessingInsertRunner:
     def run_sequentially_endlessness(self) -> int:
         """run forever util DB raises exception or crash"""
         max_load_count = 0
+        times = 0
         try:
             while True:
-                results, _ = self._insert_all_batches_sequentially()
-                max_load_count += len(results)
+                count = self._insert_all_batches_sequentially()
+                max_load_count += count
+                times += 1
+                log.info(f"Loaded {times:3} entire dataset, current max load counts={utils.numerize(max_load_count)}, {max_load_count}")
         except Exception as e:
-            log.info(f"load reach limit, insertion counts={max_load_count}, err={e}")
+            import traceback
+            log.info(f"load reach limit, insertion counts={utils.numerize(max_load_count)}, {max_load_count}, err={e}")
+            traceback.print_exc()
             return max_load_count
 
     def run_sequentially(self) -> int:

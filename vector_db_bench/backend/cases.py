@@ -61,7 +61,7 @@ class LoadCase(Case, BaseModel):
         runner = MultiProcessingInsertRunner(self.db, data_dfs[0])
         try:
             count = runner.run_sequentially_endlessness()
-            log.info("load reach limit: dur={dur}, insertion counts={count}")
+            log.info(f"load reach limit: insertion counts={count}")
             return count
         except Exception as e:
             log.warning(f"run load case error: {e}")

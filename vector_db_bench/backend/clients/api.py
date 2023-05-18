@@ -63,11 +63,20 @@ class VectorDB(ABC):
 
     @abstractmethod
     def ready_to_search(self):
-        """ready_to_search will be called between insertion and search.
+        """ready_to_search will be called between insertion and search in performance cases.
 
         Should be blocked until the vectorDB is ready to be tested on
         heavy performance cases.
 
         Time(insert the dataset) + Time(ready_to_search) will be recorded as "ready_elapse" metric
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def ready_to_load(self):
+        """ready_to_load will be called before load in load cases.
+
+        Should be blocked until the vectorDB is ready to be tested on
+        heavy load cases.
         """
         raise NotImplementedError

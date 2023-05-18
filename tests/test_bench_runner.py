@@ -10,6 +10,12 @@ from vector_db_bench.models import (
 log = logging.getLogger(__name__)
 
 class TestBenchRunner:
+    def test_get_results(self):
+        runner = BenchMarkRunner()
+
+        result = runner.get_results()
+        log.info(f"test result: {result}")
+
     def test_performance_case_whole(self):
         runner = BenchMarkRunner()
 
