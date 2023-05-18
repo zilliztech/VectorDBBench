@@ -117,44 +117,60 @@ CaseConfigParamInput_M = CaseConfigInput(
     inputConfig={
         "min": 4,
         "max": 64,
+        "value": 30,
     },
     isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
     == IndexType.HNSW.value,
 )
 
-CaseConfigParamInput_EFConstruction = CaseConfigInput(
+CaseConfigParamInput_EFConstruction_Milvus = CaseConfigInput(
     label=CaseConfigParamType.EFConstruction,
     inputType=InputType.Number,
     inputConfig={
         "min": 8,
         "max": 512,
+        "value": 360,
     },
     isDisplayed=lambda config: config[CaseConfigParamType.IndexType]
-    == IndexType.HNSW.value
-    if CaseConfigParamType.IndexType in config
-    else True,
+    == IndexType.HNSW.value,
 )
 
-CaseConfigParamInput_EF = CaseConfigInput(
+CaseConfigParamInput_EFConstruction_Weaviate = CaseConfigInput(
+    label=CaseConfigParamType.EFConstruction,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 8,
+        "max": 512,
+        "value": 128,
+    },
+)
+
+CaseConfigParamInput_EF_Milvus = CaseConfigInput(
     label=CaseConfigParamType.EF,
     inputType=InputType.Number,
     inputConfig={
         "min": 100,
         "max": MAX_STREAMLIT_INT,
+        "value": 100,
     },
     isDisplayed=lambda config: config[CaseConfigParamType.IndexType]
-    == IndexType.HNSW.value
-    if CaseConfigParamType.IndexType in config
-    else True,
+    == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_EF_Weaviate = CaseConfigInput(
+    label=CaseConfigParamType.EF,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": -1,
+        "max": MAX_STREAMLIT_INT,
+        "value": -1,
+    },
 )
 
 CaseConfigParamInput_MaxConnections = CaseConfigInput(
     label=CaseConfigParamType.MaxConnections,
     inputType=InputType.Number,
-    inputConfig={
-        "min": 1,
-        "max": MAX_STREAMLIT_INT,
-    },
+    inputConfig={"min": 1, "max": MAX_STREAMLIT_INT, "value": 64},
 )
 
 CaseConfigParamInput_SearchList = CaseConfigInput(
@@ -163,6 +179,7 @@ CaseConfigParamInput_SearchList = CaseConfigInput(
     inputConfig={
         "min": 100,
         "max": MAX_STREAMLIT_INT,
+        "value": 100,
     },
     isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
     == IndexType.DISKANN.value,
@@ -174,6 +191,7 @@ CaseConfigParamInput_Nlist = CaseConfigInput(
     inputConfig={
         "min": 1,
         "max": 65536,
+        "value": 1000,
     },
     isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
     == IndexType.IVFFlat.value,
@@ -185,6 +203,7 @@ CaseConfigParamInput_Nprobe = CaseConfigInput(
     inputConfig={
         "min": 1,
         "max": 65536,
+        "value": 10,
     },
     isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
     == IndexType.IVFFlat.value,
@@ -194,7 +213,7 @@ CaseConfigParamInput_Nprobe = CaseConfigInput(
 MilvusLoadConfig = [
     CaseConfigParamInput_IndexType,
     CaseConfigParamInput_M,
-    CaseConfigParamInput_EFConstruction,
+    CaseConfigParamInput_EFConstruction_Milvus,
     CaseConfigParamInput_Nlist,
 ]
 
@@ -202,8 +221,8 @@ MilvusLoadConfig = [
 MilvusPerformanceConfig = [
     CaseConfigParamInput_IndexType,
     CaseConfigParamInput_M,
-    CaseConfigParamInput_EFConstruction,
-    CaseConfigParamInput_EF,
+    CaseConfigParamInput_EFConstruction_Milvus,
+    CaseConfigParamInput_EF_Milvus,
     CaseConfigParamInput_SearchList,
     CaseConfigParamInput_Nlist,
     CaseConfigParamInput_Nprobe,
@@ -211,13 +230,13 @@ MilvusPerformanceConfig = [
 
 WeaviateLoadConfig = [
     CaseConfigParamInput_MaxConnections,
-    CaseConfigParamInput_EFConstruction,
+    CaseConfigParamInput_EFConstruction_Weaviate,
 ]
 
 WeaviatePerformanceConfig = [
     CaseConfigParamInput_MaxConnections,
-    CaseConfigParamInput_EFConstruction,
-    CaseConfigParamInput_EF,
+    CaseConfigParamInput_EFConstruction_Weaviate,
+    CaseConfigParamInput_EF_Weaviate,
 ]
 
 CASE_CONFIG_MAP = {

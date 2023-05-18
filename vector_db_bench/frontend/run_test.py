@@ -120,8 +120,7 @@ if len(activedDbList) > 0 and len(activedCaseList) > 0:
                     key = "%s-%s-%s" % (db, case, config.label.value)
                     if config.inputType == InputType.Text:
                         caseConfig[config.label] = column.text_input(
-                            config.label.value,
-                            key=key,
+                            config.label.value, key=key, value=config.inputConfig["value"]
                         )
                     elif config.inputType == InputType.Option:
                         caseConfig[config.label] = column.selectbox(
@@ -137,6 +136,7 @@ if len(activedDbList) > 0 and len(activedCaseList) > 0:
                             min_value=config.inputConfig["min"],
                             max_value=config.inputConfig["max"],
                             key=key,
+                            value=config.inputConfig["value"],
                         )
                     k += 1
             if k == 0:
@@ -169,7 +169,7 @@ controlContainer = st.container()
 
 # isRunning = False
 isRunning = benchMarkRunner.has_running()
-runHandler =lambda: benchMarkRunner.run(tasks)
+runHandler = lambda: benchMarkRunner.run(tasks)
 stopHandler = lambda: benchMarkRunner.stop_running()
 with controlContainer:
     if isRunning:
@@ -179,14 +179,12 @@ with controlContainer:
         text = f":running: task {currentTaskId} / {tasksCount}"
         progressContainer.progress(currentTaskId / tasksCount, text=text)
     else:
-        errorText = benchMarkRunner.latest_error or ''
+        errorText = benchMarkRunner.latest_error or ""
         if len(errorText) > 0:
             controlContainer.error(errorText)
 
     submitContainer = controlContainer.container()
     columns = submitContainer.columns(CHECKBOX_MAX_COLUMNS)
-
-
 
     columns[0].button("Run", disabled=isRunning, on_click=runHandler)
     columns[1].button("Stop", disabled=not isRunning, on_click=stopHandler)
