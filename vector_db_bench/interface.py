@@ -125,10 +125,11 @@ class BenchMarkRunner:
         c_results = []
         try:
             for idx, c in enumerate(running_task['cases']):
+                c_dict = c.model_dump(include={'case_id': True, 'db': True, 'filters': True})
 
-                log.info(f"start running case: {c.model_dump(exclude=['dataset'])}")
+                log.info(f"start running case: {c_dict}")
                 metric = c.run()
-                log.info(f"end running case: {c.model_dump(exclude=['dataset'])}")
+                log.info(f"end running case: {c_dict}")
 
                 c_results.append(CaseResult(
                     result_id=idx,
@@ -143,14 +144,13 @@ class BenchMarkRunner:
                 results=c_results,
             )
 
-            log.info(f"Write results file for task: {test_result.model_dump()}")
             test_result.write_file()
             send_conn.send((SIGNAL.SUCCESS, None))
             send_conn.close()
             log.info(f"Succes to finish task: {running_task['run_id']}")
 
         except Exception as e:
-            err_msg = f"An error occurs when running task={running_task['tasks']}, err={e}"
+            err_msg = f"An error occurs when running task={running_task['run_id']}, err={e}"
             traceback.print_exc()
             log.warning(err_msg)
             send_conn.send((SIGNAL.ERROR, err_msg))

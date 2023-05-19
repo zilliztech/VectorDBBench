@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, SecretStr
 from abc import ABC, abstractmethod
 import weaviate
 
@@ -18,18 +18,18 @@ class MilvusConfig(DBConfig, BaseModel):
 class ZillizCloudConfig(DBConfig, BaseModel):
     uri: str
     user: str
-    password: str = Field(default="", exclude=True)
+    password: SecretStr | None = None
 
     def to_dict(self) -> dict:
-        return {"uri": self.uri, "user": self.user, "password": self.password}
+        return {"uri": self.uri, "user": self.user, "password": self.password.get_secret_value()}
 
 
 class WeaviateConfig(DBConfig, BaseModel):
     url: str
-    api_key: str
+    api_key: SecretStr | None = None
 
     def to_dict(self) -> dict:
         return {
             "url": self.url,
-            "auth_client_secret": weaviate.AuthApiKey(api_key=self.api_key),
+            "auth_client_secret": weaviate.AuthApiKey(api_key=self.api_key.get_secret_value()),
         }
