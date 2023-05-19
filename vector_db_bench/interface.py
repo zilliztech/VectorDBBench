@@ -147,7 +147,7 @@ class BenchMarkRunner:
                 return
 
         test_result = TestResult(
-            run_id=self.running_task['run_id'],
+            run_id=running_task['run_id'],
             results=c_results,
         )
 
@@ -155,7 +155,7 @@ class BenchMarkRunner:
         test_result.write_file()
         send_conn.send((SIGNAL.SUCCESS, None))
         send_conn.close()
-        log.info(f"Succes to finish task: {self.running_task['run_id']}")
+        log.info(f"Succes to finish task: {running_task['run_id']}")
 
 
     def _clear_running_task(self):
