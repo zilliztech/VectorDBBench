@@ -70,7 +70,7 @@ def init(log_level, log_path, name, tz='UTC'):
         'loggers': {
             '': {
                 #  'handlers': ['console', 'info_file', 'debug_file', 'warn_file'],
-                'handlers': ['console'],
+                'handlers': ['console', 'info_file'],
                 'level': log_level,
                 'propagate': False
             },
