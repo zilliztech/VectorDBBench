@@ -167,7 +167,7 @@ class MultiProcessingSearchRunner:
                 idx = idx + 1 if idx < num - 1 else 0
 
                 if count % 50 == 0:
-                    log.info(f"({mp.current_process().name:16}) search count: {count}, latest_latency={time.perf_counter()-s}")
+                    log.debug(f"({mp.current_process().name:16}) search_count: {count}, latest_latency={time.perf_counter()-s}")
 
         total_dur = round(time.perf_counter() - start_time, 4)
         logging.info(

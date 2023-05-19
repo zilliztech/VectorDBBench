@@ -38,7 +38,7 @@ class BenchMarkRunner:
         run_id = uuid.uuid4().hex
         log.info(f"generated uuid for the tasks: {run_id}")
 
-        sub_conn, self.progress_conn = mp.Pipe(duplex=True)
+        send_conn, self.receive_conn = mp.Pipe()
         self.latest_error = ""
         self.running_task = {
             'run_id': run_id,
@@ -47,7 +47,7 @@ class BenchMarkRunner:
             'progress': [False for i in range(len(tasks))],
         }
 
-        return self._run_async(sub_conn)
+        return self._run_async(send_conn)
 
     def get_results(self, result_dir: list[str] | None = None) -> list[TestResult]:
         """results of all runs, each TestResult represents one run."""
@@ -55,13 +55,13 @@ class BenchMarkRunner:
         return ResultCollector.collect(target_dir)
 
     def _try_get_signal(self):
-        if self.progress_conn and not self.progress_conn.closed and self.progress_conn.poll():
-            received = self.progress_conn.recv()
+        if self.receive_conn and self.receive_conn.poll():
+            received = self.receive_conn.recv()
             if isinstance(received, str):
                 self.latest_error = received
                 self._clear_running_task()
             elif isinstance(received, list):
-                self.running_task['progress'] = self.progress_conn.recv()
+                self.running_task['progress'] = received
 
     def has_running(self) -> bool:
         """check if there're running benchmarks"""
@@ -104,7 +104,7 @@ class BenchMarkRunner:
             self.running_task = 0
 
 
-    def _async_task(self, running_task: dict, progress_conn: mp.connection.Connection) -> None:
+    def _async_task(self, running_task: dict, send_conn: mp.connection.Connection) -> None:
         if not running_task:
             return
 
@@ -123,14 +123,14 @@ class BenchMarkRunner:
                 ))
 
                 running_task['progress'][idx] = True
-                progress_conn.send(running_task['progress'])
+                send_conn.send(running_task['progress'])
 
             except Exception as e:
                 err_msg = f"An error occurs when running case={c.model_dump(exclude=['dataset'])}, err={e}"
                 traceback.print_exc()
                 log.warning(err_msg)
-                progress_conn.send(err_msg)
-                progress_conn.close()
+                send_conn.send(err_msg)
+                send_conn.close()
                 return
 
         test_result = TestResult(
@@ -140,8 +140,8 @@ class BenchMarkRunner:
 
         log.info(f"Write results file for task: {test_result}")
         test_result.write_file()
-        progress_conn.send("")
-        #  progress_conn.close()
+        send_conn.send("")
+        send_conn.close()
         log.info(f"Succes to finish task: {self.running_task['run_id']}")
 
 
@@ -159,9 +159,9 @@ class BenchMarkRunner:
                 child_p.kill()
             self.running_task = None
 
-        if self.progress_conn:
-            self.progress_conn.close()
-            self.progress_conn = None
+        if self.receive_conn:
+            self.receive_conn.close()
+            self.receive_conn = None
 
 
     def _run_async(self, conn: mp.connection.Connection) -> bool:
