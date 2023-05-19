@@ -177,11 +177,31 @@ class MultiProcessingSearchRunner:
 
         return (count, total_dur)
 
+    def _run_all_concurrencies_mem_efficient(self) -> float:
+        max_qps = 0
+        for conc in self.concurrencies:
+            with concurrent.futures.ProcessPoolExecutor(max_workers=conc) as executor:
+                start = time.perf_counter()
+                log.info(f"start search {self.duration}s in concurrency {conc}, filters: {self.filters}")
+                future_iter = executor.map(self.search, [self.shared_test for i in range(conc)])
+
+                all_count = 0
+                for r in future_iter:
+                    count, dur = r
+                    all_count += count
+
+                cost = time.perf_counter() - start
+                qps = round(all_count / cost, 4)
+                log.info(f"end search in concurrency {conc}: dur={cost}s, total_count={all_count}, qps={qps}")
+
+            max_qps = qps if qps > max_qps else max_qps
+            log.info(f"update largest qps with concurrency {conc}: current max_qps={max_qps}")
+        return max_qps
+
 
     def _run_all_concurrencies(self) -> float:
         max_qps = 0
         with concurrent.futures.ProcessPoolExecutor(max_workers=sum(self.concurrencies)) as executor:
-        #  with concurrent.futures.ProcessPoolExecutor(max_workers=self.concurrencies[-1]) as executor:
             for conc in self.concurrencies:
                 start = time.perf_counter()
                 log.info(f"start search {self.duration}s in concurrency {conc}, filters: {self.filters}")
@@ -207,7 +227,8 @@ class MultiProcessingSearchRunner:
         Returns:
             float: largest qps
         """
-        return self._run_all_concurrencies()
+        #  return self._run_all_concurrencies()
+        return self._run_all_concurrencies_mem_efficient()
 
     def stop(self) -> None:
         if self.shared_test:

@@ -56,11 +56,14 @@ class LoadCase(Case, BaseModel):
         Returns
             int: the max load count
         """
-        log.info("start to run load case")
-        self.init_db()
-        self.dataset.prepare()
-        self._load()
-        log.info("end run load case")
+        try:
+            log.info("start to run load case")
+            self.init_db()
+            self.dataset.prepare()
+            self._load()
+            log.info("end run load case")
+        except Exception as e:
+            log.warning(f"run load case error: {e}")
 
     def _load(self):
         """Insert train data and get the insert_duration"""
@@ -75,6 +78,7 @@ class LoadCase(Case, BaseModel):
             return count
         except Exception as e:
             log.warning(f"run load case error: {e}")
+            raise e from None
         finally:
             runner.stop()
 
@@ -122,22 +126,28 @@ class PerformanceCase(Case, BaseModel):
         return None
 
     def run(self) -> Metric:
-        self.dataset.prepare()
-        self.init_db()
-        _, insert_dur = self._insert_train_data()
-        build_dur = self._ready_to_search()
-        recall, serial_latency, p99 = self.serial_search()
-        qps = self.conc_search()
-        m = Metric(
-            load_duration=round(insert_dur, 4),
-            build_duration=round(build_dur, 4),
-            recall=recall,
-            serial_latency=serial_latency,
-            p99=p99,
-            qps=qps,
-        )
-        log.info(f"got results: {m}")
-        return m
+        try:
+            self.dataset.prepare()
+            self.init_db()
+            _, insert_dur = self._insert_train_data()
+            build_dur = self._ready_to_search()
+            recall, serial_latency, p99 = self.serial_search()
+            qps = self.conc_search()
+            m = Metric(
+                load_duration=round(insert_dur, 4),
+                build_duration=round(build_dur, 4),
+                recall=recall,
+                serial_latency=serial_latency,
+                p99=p99,
+                qps=qps,
+            )
+            log.info(f"got results: {m}")
+            return m
+        except Exception as e:
+            log.warning(f"performance case run error: {e}")
+            traceback.print_exc()
+            raise e
+
 
     @utils.time_it
     def _insert_train_data(self):
@@ -149,8 +159,7 @@ class PerformanceCase(Case, BaseModel):
                 res = runner.run()
                 results.append(res)
             except Exception as e:
-                log.warning(f"insert train data error: {e}")
-                traceback.print_exc()
+                raise e from None
             finally:
                 runner.stop()
         return results
@@ -168,7 +177,7 @@ class PerformanceCase(Case, BaseModel):
                 return future.result()[1]
             except Exception as e:
                 log.warning(f"VectorDB ready_to_search error: {e}")
-                traceback.print_exc()
+                raise e from None
 
 
     def serial_search(self) -> tuple[float, float, float]:

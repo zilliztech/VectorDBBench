@@ -1,6 +1,6 @@
 import logging
 import pathlib
-from datetime import date
+from datetime import date, datetime
 from typing import Type, Self
 from enum import Enum
 
@@ -206,7 +206,7 @@ class TestResult(BaseModel):
 
         log.info(f"write results to disk {result_file}")
         with open(result_file, 'w') as f:
-            b = self.model_dump_json()
+            b = self.model_dump_json(exclude={'db_config': {'password', 'api_key'}})
             f.write(b)
 
     @classmethod
