@@ -217,12 +217,14 @@ class TestResult(BaseModel):
         with open(full_path) as f:
             test_result = ujson.loads(f.read())
 
-            for case_result in test_result['results']:
-                task_config = case_result.get('task_config')
-                db = DB(task_config.get('db'))
-                task_config['db_config'] = db.config(**task_config['db_config'])
-                task_config['db_case_config'] = db.case_config_cls(index=task_config['db_case_config'].get('index', ''))(**task_config['db_case_config'])
+            for case_result in test_result["results"]:
+                task_config = case_result.get("task_config")
+                db = DB(task_config.get("db"))
+                task_config["db_config"] = db.config(**task_config["db_config"])
+                task_config["db_case_config"] = db.case_config_cls(
+                    index=task_config["db_case_config"].get("index", None)
+                )(**task_config["db_case_config"])
 
-                case_result['task_config'] = task_config
+                case_result["task_config"] = task_config
             c = TestResult.model_validate(test_result)
             return c
