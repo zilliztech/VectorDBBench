@@ -4,7 +4,7 @@ from . import config
 env = environs.Env()
 env.read_env(".env")
 
-LOG_LEVEL = env.str("LOG_LEVEL", "DEBUG")
+LOG_LEVEL = env.str("LOG_LEVEL", "INFO")
 LOG_PATH = env.str("LOG_PATH", '/tmp/vector_db_bench')
 LOG_NAME = env.str("LOG_NAME", 'logfile')
 TIMEZONE = env.str("TIMEZONE", 'UTC')

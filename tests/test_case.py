@@ -4,6 +4,7 @@ import vector_db_bench.backend.dataset as ds
 from vector_db_bench.models import DB, IndexType
 from vector_db_bench.backend import cases
 from vector_db_bench.backend.clients.milvus import Milvus
+from vector_db_bench.backend.clients.weaviate import Weaviate
 
 log  = logging.getLogger(__name__)
 class TestCases:
@@ -33,6 +34,21 @@ class TestCases:
         )
 
         c = cases.PerformanceSZero(run_id=1, db=milvus)
+        c.run()
+
+    @pytest.mark.skip(reason="replace url and auth_key by real value")
+    def test_performance_case_small_zero_weaviate(self):
+        dataset = ds.get(ds.Name.Cohere, ds.Label.SMALL)
+        db_case_config = DB.Weaviate.case_config_cls()()
+
+        db_case_config.metric_type = dataset.data.metric_type
+        w = Weaviate(
+            db_config=DB.Weaviate.config(url="", auth_key="").to_dict(),
+            db_case_config=db_case_config,
+            drop_old=True,
+        )
+
+        c = cases.PerformanceSZero(run_id=1, db=w)
         c.run()
 
     def test_performance_case_small_low_filter(self):

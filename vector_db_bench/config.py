@@ -70,7 +70,7 @@ def init(log_level, log_path, name, tz='UTC'):
         'loggers': {
             '': {
                 #  'handlers': ['console', 'info_file', 'debug_file', 'warn_file'],
-                'handlers': ['console'],
+                'handlers': ['console', 'info_file'],
                 'level': log_level,
                 'propagate': False
             },
@@ -98,6 +98,8 @@ COLORS = {
     'DEBUGM': colors.DEBUG,
     'WARNING': colors.WARNING,
     'WARNINGM': colors.WARNING,
+    'CRITICAL': colors.CRITICAL,
+    'CRITICALM': colors.CRITICAL,
     'ERROR': colors.ERROR,
     'ERRORM': colors.ERROR,
     'ENDC': colors.ENDC,
