@@ -12,11 +12,9 @@ class Assembler:
         c = c_cls()
         task.db_case_config.metric_type = c.dataset.data.metric_type
 
-        db = task.db.init_cls(
-            db_config=task.db_config.to_dict(),
-            db_case_config=task.db_case_config,
-            drop_old=True,
+        c.db_configs = (
+            task.db.init_cls,
+            task.db_config.to_dict(),
+            task.db_case_config
         )
-
-        c.db = db
         return c

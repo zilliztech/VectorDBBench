@@ -24,31 +24,27 @@ class TestCases:
         #      efConstruction=32,
         #      ef=8,
         #  )
+
         db_case_config = DB.Milvus.case_config_cls(IndexType.Flat)()
-
         db_case_config.metric_type = dataset.data.metric_type
-        milvus = Milvus(
-            db_config=DB.Milvus.config().to_dict(),
-            db_case_config=db_case_config,
-            drop_old=True,
-        )
-
-        c = cases.PerformanceSZero(run_id=1, db=milvus)
+        c = cases.PerformanceSZero(run_id=1, db_configs=(
+            DB.Milvus.init_cls,
+            DB.Milvus.config().to_dict(),
+            db_case_config,
+        ))
         c.run()
 
     @pytest.mark.skip(reason="replace url and auth_key by real value")
     def test_performance_case_small_zero_weaviate(self):
         dataset = ds.get(ds.Name.Cohere, ds.Label.SMALL)
         db_case_config = DB.Weaviate.case_config_cls()()
-
         db_case_config.metric_type = dataset.data.metric_type
-        w = Weaviate(
-            db_config=DB.Weaviate.config(url="", auth_key="").to_dict(),
-            db_case_config=db_case_config,
-            drop_old=True,
-        )
 
-        c = cases.PerformanceSZero(run_id=1, db=w)
+        c = cases.PerformanceSZero(run_id=1, db_configs={
+            DB.Weaviate.init_cls,
+            DB.Weaviate.config(url="", auth_key="").to_dict(),
+            db_case_config,
+        })
         c.run()
 
     def test_performance_case_small_low_filter(self):
@@ -56,40 +52,35 @@ class TestCases:
 
         db_case_config = DB.Milvus.case_config_cls(IndexType.Flat)()
         db_case_config.metric_type = dataset.data.metric_type
-        milvus = Milvus(
-            db_config=DB.Milvus.config().to_dict(),
-            db_case_config=db_case_config,
-            drop_old=True,
-        )
-        c = cases.PerformanceSLow(run_id=2, db=milvus)
+        c = cases.PerformanceSLow(run_id=2, db_configs=(
+            DB.Milvus.init_cls,
+            DB.Milvus.config().to_dict(),
+            db_case_config,
+        ))
         c.run()
 
     def test_performance_case_small_high_filter(self):
         dataset = ds.get(ds.Name.Cohere, ds.Label.SMALL)
-
         db_case_config = DB.Milvus.case_config_cls(IndexType.Flat)()
         db_case_config.metric_type = dataset.data.metric_type
-        milvus = Milvus(
-            db_config=DB.Milvus.config().to_dict(),
-            db_case_config=db_case_config,
-            drop_old=True,
-        )
-        c = cases.PerformanceSHigh(run_id=3, db=milvus)
+
+        c = cases.PerformanceSHigh(run_id=3, db_configs=(
+            DB.Milvus.init_cls,
+            DB.Milvus.config().to_dict(),
+            db_case_config,
+        ))
         c.run()
 
     #  @pytest.mark.skip("wait for sift in s3")
     def test_load_small_dim(self):
         dataset = ds.get(ds.Name.SIFT, ds.Label.SMALL)
-
-        db_config = DB.Milvus.config().to_dict()
         db_case_config = DB.Milvus.case_config_cls(IndexType.Flat)()
         db_case_config.metric_type = dataset.data.metric_type
-        milvus = Milvus(
-            db_config=db_config,
-            db_case_config=db_case_config,
-            drop_old=True,
-        )
 
-        c = cases.LoadSDimCase(run_id=1, db=milvus)
+        c = cases.LoadSDimCase(run_id=1, db_configs=(
+            DB.Milvus.init_cls,
+            DB.Milvus.config().to_dict(),
+            db_case_config,
+        ))
         c.run()
 

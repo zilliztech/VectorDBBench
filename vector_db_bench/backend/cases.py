@@ -1,10 +1,11 @@
 import traceback
 import logging
 import concurrent
+from typing import Any
 from pydantic import BaseModel, ConfigDict, computed_field
 from .clients import api
 from . import dataset as ds
-from ..models import CaseType
+from ..models import CaseType, DBCaseConfig
 from ..metric import Metric
 from .runner import (
     MultiProcessingInsertRunner,
@@ -28,6 +29,15 @@ class Case(BaseModel):
     filter_size: int
 
     db: api.VectorDB | None = None
+    # tuple of db init cls, db_config and db_case_config
+    db_configs: tuple[Any, dict, DBCaseConfig] | None = None
+
+    def init_db(self) -> None:
+        self.db = self.db_configs[0](
+            db_config=self.db_configs[1],
+            db_case_config=self.db_configs[2],
+            drop_old=True,
+        )
 
     def run(self):
         pass
@@ -47,6 +57,7 @@ class LoadCase(Case, BaseModel):
             int: the max load count
         """
         log.info("start to run load case")
+        self.init_db()
         self.dataset.prepare()
         self._load()
         log.info("end run load case")
@@ -112,6 +123,7 @@ class PerformanceCase(Case, BaseModel):
 
     def run(self) -> Metric:
         self.dataset.prepare()
+        self.init_db()
         _, insert_dur = self._insert_train_data()
         build_dur = self._ready_to_search()
         recall, serial_latency, p99 = self.serial_search()
