@@ -13,7 +13,7 @@ class IndexType(str, Enum):
 
 class MetricType(str, Enum):
     L2 = "L2"
-    COSIN = "COSIN"
+    COSINE = "COSINE"
     IP = "IP"
 
 
@@ -62,7 +62,7 @@ class MilvusIndexConfig(BaseModel):
         if not self.metric_type:
             return ""
 
-        if self.metric_type == MetricType.COSIN:
+        if self.metric_type == MetricType.COSINE:
             return MetricType.L2.value
         return self.metric_type.value
 

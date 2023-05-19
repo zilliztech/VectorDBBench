@@ -122,7 +122,7 @@ class Milvus(VectorDB):
         if not self.col:
             self.col = self._create_collection(len(embeddings[0]))
 
-        if self.case_config.metric_type == MetricType.COSIN:
+        if self.case_config.metric_type == MetricType.COSINE:
             embeddings = preprocessing.normalize(embeddings, norm="l2")
 
         insert_data = [
@@ -151,7 +151,7 @@ class Milvus(VectorDB):
         assert self.col is not None
 
         query = [query]
-        if self.case_config.metric_type == MetricType.COSIN:
+        if self.case_config.metric_type == MetricType.COSINE:
             from sklearn import preprocessing
             query = preprocessing.normalize(query, norm="l2")
 

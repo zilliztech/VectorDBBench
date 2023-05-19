@@ -1,4 +1,4 @@
-requires: `python >= 3.9`
+requires: `python >= 3.11`
 
 ## 1. Quick Start
 ### Installation

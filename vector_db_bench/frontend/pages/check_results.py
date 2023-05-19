@@ -80,12 +80,15 @@ with chartContainers:
 
             for row, metric in enumerate(metrics):
                 subChartContainer = chartContainers.container()
+                title = subChartContainer.container()
+                title.markdown(f"**{metric}** (lower is better)")
+                chart = subChartContainer.container()
                 fig = px.bar(
                     data,
                     x=metric,
                     y="db",
                     color="db",
-                    title="",
+                    # title=f"{metric}",
                     height=len(dbs) * 30,
                     # barmode="group",
                     # pattern_shape="db",
@@ -93,16 +96,17 @@ with chartContainers:
                     hover_data={
                         "db": True,
                         # 'case': True,
-                        metric: ":.2f",
+                        # metric: ":.2s",
                     },
                     # hover_data=f"{metric}",
                     color_discrete_map=COLOR_MAP,
-                    text_auto=f".2f",
+                    # text_auto=f".2f",
+                    text_auto=True,
                 )
                 fig.update_xaxes(showticklabels=False, visible=False)
-                fig.update_yaxes(showticklabels=False, title=metric, tickangle=135)
+                fig.update_yaxes(showticklabels=False, visible=False)
                 fig.update_layout(
-                    margin=dict(l=20, r=20, t=0, b=0, pad=4), showlegend=False
+                    margin=dict(l=0, r=0, t=0, b=0, pad=4), showlegend=False
                 )
 
-                subChartContainer.plotly_chart(fig, use_container_width=True)
+                chart.plotly_chart(fig, use_container_width=True)
