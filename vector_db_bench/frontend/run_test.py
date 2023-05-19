@@ -9,7 +9,7 @@ from streamlit_autorefresh import st_autorefresh
 st.set_page_config(
     page_title="Falcon Mark - Open VectorDB Bench",
     page_icon="🧊",
-    layout="wide",
+    # layout="wide",
     initial_sidebar_state="collapsed",
 )
 

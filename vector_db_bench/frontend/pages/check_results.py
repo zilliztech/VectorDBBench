@@ -1,7 +1,7 @@
 import streamlit as st
 from vector_db_bench.frontend.const import *
-from vector_db_bench.models import TaskConfig, CaseConfig, DBCaseConfig
-from vector_db_bench.interface import BenchMarkRunner, benchMarkRunner
+from vector_db_bench.metric import isLowerIsBetterMetric
+from vector_db_bench.interface import benchMarkRunner
 from dataclasses import asdict
 import plotly.express as px
 from plotly.subplots import make_subplots
@@ -81,7 +81,9 @@ with chartContainers:
             for row, metric in enumerate(metrics):
                 subChartContainer = chartContainers.container()
                 title = subChartContainer.container()
-                title.markdown(f"**{metric}** (lower is better)")
+                title.markdown(
+                    f"**{metric}** ({'less' if isLowerIsBetterMetric(metric) else 'more'} is better)"
+                )
                 chart = subChartContainer.container()
                 fig = px.bar(
                     data,
