@@ -123,9 +123,9 @@ class BenchMarkRunner:
             return
 
         c_results = []
-        for idx, c in enumerate(running_task['cases']):
+        try:
+            for idx, c in enumerate(running_task['cases']):
 
-            try:
                 log.info(f"start running case: {c.model_dump(exclude=['dataset'])}")
                 metric = c.run()
                 log.info(f"end running case: {c.model_dump(exclude=['dataset'])}")
@@ -138,25 +138,24 @@ class BenchMarkRunner:
 
                 send_conn.send((SIGNAL.WIP, idx))
 
-            except Exception as e:
-                err_msg = f"An error occurs when running case={c.model_dump(exclude=['dataset'])}, err={e}"
-                traceback.print_exc()
-                log.warning(err_msg)
-                send_conn.send((SIGNAL.ERROR, err_msg))
-                send_conn.close()
-                return
+            test_result = TestResult(
+                run_id=running_task['run_id'],
+                results=c_results,
+            )
 
-        test_result = TestResult(
-            run_id=running_task['run_id'],
-            results=c_results,
-        )
+            log.info(f"Write results file for task: {test_result.model_dump()}")
+            test_result.write_file()
+            send_conn.send((SIGNAL.SUCCESS, None))
+            send_conn.close()
+            log.info(f"Succes to finish task: {running_task['run_id']}")
 
-        log.info(f"Write results file for task: {test_result}")
-        test_result.write_file()
-        send_conn.send((SIGNAL.SUCCESS, None))
-        send_conn.close()
-        log.info(f"Succes to finish task: {running_task['run_id']}")
-
+        except Exception as e:
+            err_msg = f"An error occurs when running task={running_task['tasks']}, err={e}"
+            traceback.print_exc()
+            log.warning(err_msg)
+            send_conn.send((SIGNAL.ERROR, err_msg))
+            send_conn.close()
+            return
 
     def _clear_running_task(self):
         global global_result_future
