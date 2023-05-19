@@ -5,6 +5,7 @@ import concurrent
 import multiprocessing as mp
 
 import psutil
+from enum import Enum
 
 from . import RESULTS_LOCAL_DIR
 from .models import TaskConfig, TestResult, CaseResult
@@ -15,6 +16,11 @@ from .backend.assembler import Assembler
 log = logging.getLogger("__name__")
 
 global_result_future: concurrent.futures.Future | None = None
+
+class SIGNAL(Enum):
+    SUCCESS=0
+    ERROR=1
+    WIP=2
 
 
 class BenchMarkRunner:
@@ -38,7 +44,7 @@ class BenchMarkRunner:
         run_id = uuid.uuid4().hex
         log.info(f"generated uuid for the tasks: {run_id}")
 
-        send_conn, self.receive_conn = mp.Pipe()
+        self.receive_conn, send_conn = mp.Pipe()
         self.latest_error = ""
         self.running_task = {
             'run_id': run_id,
@@ -56,12 +62,20 @@ class BenchMarkRunner:
 
     def _try_get_signal(self):
         if self.receive_conn and self.receive_conn.poll():
-            received = self.receive_conn.recv()
-            if isinstance(received, str):
+            sig, received = self.receive_conn.recv()
+            log.debug(f"Sigal received to process: {sig}, {received}")
+            if sig == SIGNAL.ERROR:
                 self.latest_error = received
                 self._clear_running_task()
-            elif isinstance(received, list):
-                self.running_task['progress'] = received
+            elif sig == SIGNAL.SUCCESS:
+                global global_result_future
+                global_result_future = None
+                self.running_task = None
+                self.receive_conn = None
+            elif sig == SIGNAL.WIP:
+                self.running_task['progress'][received] = True
+            else:
+                self._clear_running_task()
 
     def has_running(self) -> bool:
         """check if there're running benchmarks"""
@@ -101,7 +115,7 @@ class BenchMarkRunner:
             log.warning(f"task running failed: {e}", exc_info=True)
         finally:
             global_result_future = None
-            self.running_task = 0
+            self.running_task = None
 
 
     def _async_task(self, running_task: dict, send_conn: mp.connection.Connection) -> None:
@@ -122,14 +136,13 @@ class BenchMarkRunner:
                     task_config=running_task['tasks'][idx],
                 ))
 
-                running_task['progress'][idx] = True
-                send_conn.send(running_task['progress'])
+                send_conn.send((SIGNAL.WIP, idx))
 
             except Exception as e:
                 err_msg = f"An error occurs when running case={c.model_dump(exclude=['dataset'])}, err={e}"
                 traceback.print_exc()
                 log.warning(err_msg)
-                send_conn.send(err_msg)
+                send_conn.send((SIGNAL.ERROR, err_msg))
                 send_conn.close()
                 return
 
@@ -140,7 +153,7 @@ class BenchMarkRunner:
 
         log.info(f"Write results file for task: {test_result}")
         test_result.write_file()
-        send_conn.send("")
+        send_conn.send((SIGNAL.SUCCESS, None))
         send_conn.close()
         log.info(f"Succes to finish task: {self.running_task['run_id']}")
 
