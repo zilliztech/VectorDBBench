@@ -33,3 +33,15 @@ class WeaviateConfig(DBConfig, BaseModel):
             "url": self.url,
             "auth_client_secret": weaviate.AuthApiKey(api_key=self.api_key.get_secret_value()),
         }
+
+class QdrantConfig(DBConfig, BaseModel):
+    url: str
+    api_key: SecretStr | None = None
+    prefer_grpc: bool = True
+
+    def to_dict(self) -> dict:
+        return {
+            "url": self.url,
+            "api_key": self.api_key.get_secret_value(),
+            "perfer_grpc": self.prefer_grpc,
+        }

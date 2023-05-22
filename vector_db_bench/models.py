@@ -14,6 +14,7 @@ from .backend.clients import (
     Milvus,
     Weaviate,
     ZillizCloud,
+    Qdrant,
 )
 
 from .backend.clients.db_config import (
@@ -21,6 +22,7 @@ from .backend.clients.db_config import (
     MilvusConfig,
     ZillizCloudConfig,
     WeaviateConfig,
+    QdrantConfig,
 )
 
 from .backend.clients.db_case_config import (
@@ -98,6 +100,7 @@ class DB(Enum):
     Milvus = "Milvus"
     ZillizCloud = "ZillizCloud"
     Weaviate = "Weaviate"
+    Qdrant = "Qdrant"
 
     @property
     def config(self) -> Type[DBConfig]:
@@ -140,12 +143,14 @@ _db2config = {
     DB.Milvus: MilvusConfig,
     DB.ZillizCloud: ZillizCloudConfig,
     DB.Weaviate: WeaviateConfig,
+    DB.Qdrant: QdrantConfig,
 }
 
 _db2client = {
     DB.Milvus: Milvus,
     DB.ZillizCloud: ZillizCloud,
     DB.Weaviate: Weaviate,
+    DB.Qdrant: Qdrant,
 }
 
 

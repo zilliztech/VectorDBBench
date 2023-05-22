@@ -21,7 +21,7 @@ MAX_AUTO_REFRESH_COUNT = 999999
 MAX_AUTO_REFRESH_INTERVAL = 2000  # 2s
 
 
-DB_LIST = [DB.Milvus, DB.ZillizCloud, DB.Weaviate]
+DB_LIST = [DB.Milvus, DB.ZillizCloud, DB.Weaviate, DB.Qdrant]
 COLOR_MAP = {db.value: COLORS[i] for i, db in enumerate(DB_LIST)}
 
 CASE_LIST = [
