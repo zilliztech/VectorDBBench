@@ -1,12 +1,12 @@
 import logging
 import pathlib
-from datetime import date, datetime
+from datetime import date
 from typing import Type, Self
 from enum import Enum
 
 import ujson
-from pydantic import BaseModel, ConfigDict
 
+from .base import BaseModel
 from . import RESULTS_LOCAL_DIR
 from .metric import Metric
 from .backend.clients import (
@@ -163,16 +163,11 @@ class CustomizedCase(BaseModel):
 
 class CaseConfig(BaseModel):
     """cases, dataset, test cases, filter rate, params"""
-
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
     case_id: CaseType
     custom_case: dict | None = None
 
 
 class TaskConfig(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
     db: DB
     db_config: DBConfig
     db_case_config: DBCaseConfig
@@ -180,16 +175,12 @@ class TaskConfig(BaseModel):
 
 
 class CaseResult(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
     metrics: Metric
     task_config: TaskConfig
 
 
 class TestResult(BaseModel):
     """ ROOT/result_{date.today()}_{run_id}.json """
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
     run_id: str
     results: list[CaseResult]
 
@@ -206,7 +197,7 @@ class TestResult(BaseModel):
 
         log.info(f"write results to disk {result_file}")
         with open(result_file, 'w') as f:
-            b = self.model_dump_json(exclude={'db_config': {'password', 'api_key'}})
+            b = self.json(exclude={'db_config': {'password', 'api_key'}})
             f.write(b)
 
     @classmethod
@@ -226,5 +217,5 @@ class TestResult(BaseModel):
                 )(**task_config["db_case_config"])
 
                 case_result["task_config"] = task_config
-            c = TestResult.model_validate(test_result)
+            c = TestResult.validate(test_result)
             return c

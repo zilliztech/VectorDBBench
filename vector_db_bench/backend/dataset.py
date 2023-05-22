@@ -2,7 +2,7 @@
 Usage:
     >>> from xxx import dataset as ds
     >>> gist_s = ds.get(ds.Name.GIST, ds.Label.SMALL)
-    >>> gist_s.model_dump()
+    >>> gist_s.dict()
     dataset: {'data': {'name': 'GIST', 'dim': 128, 'metric_type': 'L2', 'label': 'SMALL', 'size': 50000000}, 'data_dir': 'xxx'}
 """
 
@@ -16,9 +16,9 @@ from typing import Any
 import s3fs
 import pandas as pd
 from tqdm import tqdm
-from pydantic import BaseModel, computed_field, ConfigDict
 from pydantic.dataclasses import dataclass
 
+from ..base import BaseModel
 from .. import DATASET_LOCAL_DIR, DEFAULT_DATASET_URL
 from ..models import MetricType
 from . import utils
@@ -31,7 +31,6 @@ class GIST:
     dim: int = 960
     metric_type: MetricType = MetricType.L2
 
-    @computed_field
     @property
     def dir_name(self) -> str:
         return f"{self.name}_{self.label}_{utils.numerize(self.size)}".lower()
@@ -42,7 +41,6 @@ class Cohere:
     dim: int = 768
     metric_type: MetricType = MetricType.COSINE
 
-    @computed_field
     @property
     def dir_name(self) -> str:
         return f"{self.name}_{self.label}_{utils.numerize(self.size)}".lower()
@@ -53,7 +51,6 @@ class Glove:
     dim: int = 200
     metric_type: MetricType = MetricType.COSINE
 
-    @computed_field
     @property
     def dir_name(self) -> str:
         return f"{self.name}_{self.label}_{utils.numerize(self.size)}".lower()
@@ -64,7 +61,7 @@ class SIFT:
     dim: int = 128
     metric_type: MetricType = MetricType.COSINE
 
-    @computed_field
+    #  @computed_field
     @property
     def dir_name(self) -> str:
         return f"{self.name}_{self.label}_{utils.numerize(self.size)}".lower()
@@ -130,15 +127,13 @@ class DataSet(BaseModel):
         >>> for data in cohere_s:
         >>>    print(data.columns)
     """
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
     data:   GIST | Cohere | Glove | SIFT | Any
     test_data: pd.DataFrame | None = None
     ground_truth: pd.DataFrame | None = None
     ground_truth_90p: pd.DataFrame | None = None
     train_files : list[str] = []
 
-    @computed_field
+    #  @computed_field
     @property
     def data_dir(self) -> pathlib.Path:
         """ data local directory: DATASET_LOCAL_DIR/{dataset_name}/{dataset_dirname}
@@ -150,7 +145,7 @@ class DataSet(BaseModel):
         """
         return pathlib.Path(DATASET_LOCAL_DIR, self.data.name.lower(), self.data.dir_name.lower())
 
-    @computed_field
+    #  @computed_field
     @property
     def download_dir(self) -> str:
         """ data s3 directory: DEFAULT_DATASET_URL/{dataset_dirname}

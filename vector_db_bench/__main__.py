@@ -1,3 +1,4 @@
+import traceback
 import logging
 import subprocess
 import os
@@ -20,8 +21,8 @@ def run_streamlit():
         subprocess.run(cmd, check=True)
     except KeyboardInterrupt:
         log.info("exit streamlit...")
-    except BaseException as e:
-        log.info(f"exit, err={e.__class__}\nstack trace={e.with_traceback()}")
+    except Exception as e:
+        log.warning(f"exit, err={e}\nstack trace={traceback.format_exc(chain=True)}")
 
 
 if __name__ == "__main__":

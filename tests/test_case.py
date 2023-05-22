@@ -10,7 +10,7 @@ log  = logging.getLogger(__name__)
 class TestCases:
     def test_init_LoadCase(self):
         c = cases.LoadSDimCase(run_id=1, db_class=Milvus)
-        log.debug(f"c: {c}, {c.model_dump().keys()}")
+        log.debug(f"c: {c}, {c.dict().keys()}")
 
     def test_case_type(self):
         from vector_db_bench.models import CaseType

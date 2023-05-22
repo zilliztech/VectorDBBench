@@ -125,7 +125,7 @@ class BenchMarkRunner:
         c_results = []
         try:
             for idx, c in enumerate(running_task['cases']):
-                c_dict = c.model_dump(include={'case_id': True, 'db': True, 'filters': True})
+                c_dict = c.dict(include={'case_id': True, 'db': True, 'filters': True})
 
                 log.info(f"start running case: {c_dict}")
                 metric = c.run()
