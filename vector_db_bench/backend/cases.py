@@ -2,9 +2,11 @@ import traceback
 import logging
 import concurrent
 from typing import Any
-from pydantic import BaseModel, ConfigDict, computed_field
-from .clients import api
+#  from pydantic import computed_field
+
 from . import dataset as ds
+from .clients import api
+from ..base import BaseModel
 from ..models import CaseType, DBCaseConfig
 from ..metric import Metric
 from .runner import (
@@ -19,8 +21,6 @@ log = logging.getLogger(__name__)
 
 
 class Case(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
     case_id: CaseType
     dataset: ds.DataSet
 
@@ -108,7 +108,7 @@ class PerformanceCase(Case, BaseModel):
     search_runner: MultiProcessingSearchRunner | None = None
     serial_search_runner: SerialSearchRunner | None = None
 
-    @computed_field
+    #  @computed_field
     @property
     def filters(self) -> dict | None:
         if abs(self.filter_rate - 0) > 1e-6:

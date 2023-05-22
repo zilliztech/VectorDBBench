@@ -17,11 +17,14 @@ classifiers = [
 ]
 dependencies = [
     "pytz",
-    "streamlit",
+    "streamlit_nightly==1.22.1.dev20230521", # for protobuf 4 support, for qdrant-client, wait for 1.22.1 or 1.23.0
+    "grpcio==1.53.0", # for qdrant-client and pymilvus
+    "grpcio-tools==1.53.0", # for qdrant-client and pymilvus
     "pymilvus", # with pandas, numpy, ujson
+    "qdrant-client",
     "weaviate-client",
     "plotly",
-    "pydantic >= v2.0.a3",
+    "pydantic==v1.10.7", # for qdrant-client
     "environs",
     "scikit-learn",
     "s3fs",

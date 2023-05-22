@@ -50,7 +50,7 @@ if len(activedDbList) > 0:
             gap="small",
         )
         dbConfigClass = activeDb.config
-        properties = dbConfigClass.model_json_schema().get("properties")
+        properties = dbConfigClass.schema().get("properties")
         dbConfig = {}
         dbConfigContainerColumns[0].markdown("##### · %s" % activeDb.name)
         for j, property in enumerate(properties.items()):

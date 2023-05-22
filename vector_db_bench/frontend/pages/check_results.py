@@ -33,7 +33,7 @@ allData = [
     {
         "db": res.task_config.db.value,
         "case": res.task_config.case_config.case_id.value,
-        "db_case_config": res.task_config.db_case_config.model_dump(),
+        "db_case_config": res.task_config.db_case_config.dict(),
         **asdict(res.metrics),
         "metrics": {key for key, value in asdict(res.metrics).items() if value > 1e-7},
     }
