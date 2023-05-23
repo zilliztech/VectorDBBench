@@ -5,7 +5,6 @@ import concurrent
 import multiprocessing as mp
 import logging
 from typing import Iterable
-import pandas as pd
 import numpy as np
 from ..clients import api
 from .. import utils
@@ -13,31 +12,31 @@ from ... import NUM_PER_BATCH
 
 log = logging.getLogger(__name__)
 
+
 class MultiProcessingInsertRunner:
-    def __init__(self, db: api.VectorDB, train_df: pd.DataFrame):
-        log.info(f"Dataset shape: {train_df.shape}")
+    def __init__(self, db: api.VectorDB, train_emb: np.ndarray, train_id: np.ndarray):
+        log.info(f"Dataset shape: {train_emb.shape[0]}")
         self.db = db
-        self.sharded_df = utils.SharedDataFrame(train_df)
+        self.shared_emb = utils.SharedNumpyArray(train_emb)
+        self.train_id = train_id.tolist()
 
         # seq
-        self.seq_batches = math.ceil(train_df.shape[0]/NUM_PER_BATCH)
+        self.seq_batches = math.ceil(train_emb.shape[0]/NUM_PER_BATCH)
 
         # conc
         self.num_concurrency = mp.cpu_count()
-        self.num_per_concurrency = train_df.shape[0] // self.num_concurrency
-        self.conc_tasks = [(self.sharded_df, idx) for idx in range(self.num_concurrency)]
+        self.num_per_concurrency = train_emb.shape[0] // self.num_concurrency
+        self.conc_tasks = [(self.shared_emb, self.train_id, idx) for idx in range(self.num_concurrency)]
 
 
     def insert_data(self, args) -> int:
         with self.db.init():
-            sharded_df, conc_id = args
-            conc_data = sharded_df.read()[conc_id*self.num_per_concurrency: (conc_id+1)*self.num_per_concurrency]
+            shared_np, train_id, conc_id = args
+            all_embeddings = shared_np.read()[conc_id*self.num_per_concurrency: (conc_id+1)*self.num_per_concurrency].tolist()
+            all_metadata = train_id[conc_id*self.num_per_concurrency: (conc_id+1)*self.num_per_concurrency]
 
-            num_conc_batches = math.ceil(conc_data.shape[0]/NUM_PER_BATCH)
-            log.info(f"({mp.current_process().name:16}) Conc {conc_id:3}, Start batch inserting {conc_data.shape[0]} embeddings")
-
-            all_embeddings, all_metadata = np.stack(conc_data["emb"]).tolist(), conc_data['id'].tolist()
-
+            num_conc_batches = math.ceil(len(all_embeddings)/NUM_PER_BATCH)
+            log.info(f"({mp.current_process().name:16}) Conc {conc_id:3}, Start batch inserting {len(all_embeddings)} embeddings")
             count = 0
             for batch_id in range(num_conc_batches):
                 metadata = all_metadata[batch_id*NUM_PER_BATCH: (batch_id+1)*NUM_PER_BATCH]
@@ -52,7 +51,7 @@ class MultiProcessingInsertRunner:
                 count += len(insert_results)
                 log.debug(f"({mp.current_process().name:16}) Conc {conc_id:2}, batch {batch_id:3}, Finish inserting {len(metadata)} embeddings")
 
-        log.info(f"({mp.current_process().name:16}) Conc {conc_id:2}, Finish batch inserting {conc_data.shape[0]} embeddings")
+        log.info(f"({mp.current_process().name:16}) Conc {conc_id:2}, Finish batch inserting {len(all_embeddings)} embeddings")
         return count
 
 
@@ -64,10 +63,10 @@ class MultiProcessingInsertRunner:
     def _insert_all_batches_sequentially(self) -> int:
         """Load case only"""
         with self.db.init():
+            all_embeddings = self.shared_emb.read().tolist()
+            all_metadata = self.train_id
             count = 0
 
-            shared_data = self.sharded_df.read()
-            all_embeddings, all_metadata = np.stack(shared_data["emb"]).tolist(), shared_data['id'].tolist()
             for idx in range(self.seq_batches):
                 metadata = all_metadata[idx*NUM_PER_BATCH: (idx+1)*NUM_PER_BATCH]
                 embeddings = all_embeddings[idx*NUM_PER_BATCH: (idx+1)*NUM_PER_BATCH]
@@ -122,15 +121,15 @@ class MultiProcessingInsertRunner:
         return count
 
     def stop(self) -> None:
-        if self.sharded_df:
-            self.sharded_df.unlink()
+        if self.shared_emb:
+            self.shared_emb.unlink()
 
 
 class MultiProcessingSearchRunner:
     def __init__(
         self,
         db: api.VectorDB,
-        test_df: pd.DataFrame,
+        test_data: np.ndarray,
         k: int = 100,
         filters: dict | None = None,
         concurrencies: Iterable[int] = (1, 5, 10, 15, 20, 25, 30, 35),
@@ -142,22 +141,22 @@ class MultiProcessingSearchRunner:
         self.concurrencies = concurrencies
         self.duration = duration
 
-        self.shared_test = utils.SharedDataFrame(test_df)
-        log.debug(f"test dataset columns: {test_df.columns}, shape: {test_df.shape}")
+        self.test_data = utils.SharedNumpyArray(test_data)
+        log.debug(f"test dataset columns: {len(test_data)}")
 
 
-    def search(self, test_df: utils.SharedDataFrame) -> tuple[int, float]:
+    def search(self, test_np: utils.SharedNumpyArray) -> tuple[int, float]:
         with self.db.init():
-            test_df = test_df.read()
+            test_data = test_np.read().tolist()
+            num, idx = len(test_data), 0
 
-            num, idx = test_df.shape[0], 0
             start_time = time.perf_counter()
             count = 0
             while time.perf_counter() < start_time + self.duration:
                 s = time.perf_counter()
                 try:
                     self.db.search_embedding_with_score(
-                        test_df['emb'][idx].tolist(),
+                        test_data[idx],
                         self.k,
                         self.filters,
                     )
@@ -187,7 +186,7 @@ class MultiProcessingSearchRunner:
             with concurrent.futures.ProcessPoolExecutor(max_workers=conc) as executor:
                 start = time.perf_counter()
                 log.info(f"start search {self.duration}s in concurrency {conc}, filters: {self.filters}")
-                future_iter = executor.map(self.search, [self.shared_test for i in range(conc)])
+                future_iter = executor.map(self.search, [self.test_data for i in range(conc)])
 
                 all_count = 0
                 for r in future_iter:
@@ -210,7 +209,7 @@ class MultiProcessingSearchRunner:
                 start = time.perf_counter()
                 log.info(f"start search {self.duration}s in concurrency {conc}, filters: {self.filters}")
 
-                future_iter = executor.map(self.search, [self.shared_test for i in range(conc)])
+                future_iter = executor.map(self.search, [self.test_data for i in range(conc)])
 
                 all_count = 0
                 for r in future_iter:
@@ -235,5 +234,5 @@ class MultiProcessingSearchRunner:
         return self._run_all_concurrencies_mem_efficient()
 
     def stop(self) -> None:
-        if self.shared_test:
-            self.shared_test.unlink()
+        if self.test_data:
+            self.test_data.unlink()

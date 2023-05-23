@@ -161,16 +161,11 @@ class Milvus(VectorDB):
         """
         assert self.col is not None
 
-        query = [query]
-        if self.case_config.metric_type == MetricType.COSINE:
-            from sklearn import preprocessing
-            query = preprocessing.normalize(query, norm="l2")
-
         expr = f"{self._primary_field} {filters.get('metadata')}" if filters else ""
 
         # Perform the search.
         res = self.col.search(
-            data=query,
+            data=[query],
             anns_field=self._vector_field,
             param=self.case_config.search_param(),
             limit=k,
