@@ -2,6 +2,7 @@
 
 import logging
 from typing import Any, Iterable
+from contextlib import contextmanager
 
 import weaviate
 from weaviate.exceptions import WeaviateBaseError
@@ -37,7 +38,7 @@ class Weaviate(VectorDB):
 
         self._create_collection(client)
 
-
+    @contextmanager
     def init(self) -> None:
         """
         Examples:

@@ -34,7 +34,7 @@ class TestCases:
         ))
         c.run()
 
-    @pytest.mark.skip(reason="replace url and auth_key by real value")
+    @pytest.mark.skip(reason="replace url and api_key by real value")
     def test_performance_case_small_zero_weaviate(self):
         dataset = ds.get(ds.Name.Cohere, ds.Label.SMALL)
         db_case_config = DB.Weaviate.case_config_cls()()
@@ -42,7 +42,7 @@ class TestCases:
 
         c = cases.PerformanceSZero(run_id=1, db_configs={
             DB.Weaviate.init_cls,
-            DB.Weaviate.config(url="", auth_key="").to_dict(),
+            DB.Weaviate.config(url="", api_key="").to_dict(),
             db_case_config,
         })
         c.run()
