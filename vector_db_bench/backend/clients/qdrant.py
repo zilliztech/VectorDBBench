@@ -4,6 +4,7 @@ import logging
 import time
 from contextlib import contextmanager
 from typing import Any, Iterable
+import grpc
 
 from .db_case_config import DBCaseConfig
 from .api import VectorDB
@@ -36,13 +37,11 @@ class Qdrant(VectorDB):
         self.db_config = db_config
         self.case_config = db_case_config
         self.collection_name = collection_name
-
         if drop_old:
             log.info(f"Qdrant client drop_old collection: {self.collection_name}")
-            from qdrant_client import QdrantClient
-            qdrant_client = QdrantClient(**self.db_config)
-            qdrant_client.delete_collection(self.collection_name)
-            self.qdrant_client = None
+            tmp_client = QdrantClient(**self.db_config)
+            tmp_client.delete_collection(self.collection_name)
+            tmp_client = None
 
         self._primary_field = "pk"
         self._vector_field = "vector"
@@ -57,7 +56,8 @@ class Qdrant(VectorDB):
         """
         self.qdrant_client = QdrantClient(**self.db_config)
         yield
-        pass
+        self.qdrant_client = None
+        del(self.qdrant_client)
 
     def ready_to_load(self):
         pass
@@ -69,12 +69,12 @@ class Qdrant(VectorDB):
         SECONDS_WAITING_FOR_INDEXING_API_CALL = 5
         try:
             while True:
-                collection_info = self.qdrant_client.get_collection(self._collection_name)
+                info = self.qdrant_client.get_collection(self.collection_name)
                 time.sleep(SECONDS_WAITING_FOR_INDEXING_API_CALL)
-                if collection_info.status != CollectionStatus.GREEN:
+                if info.status != CollectionStatus.GREEN:
                     continue
-                if collection_info.status == CollectionStatus.GREEN:
-                    log.info(f"Stored vectors: {collection_info.vectors_count}, Indexed vectors: {collection_info.indexed_vectors_count}, Collection status: {collection_info.indexed_vectors_count}")
+                if info.status == CollectionStatus.GREEN:
+                    log.info(f"Stored vectors: {info.vectors_count}, Indexed vectors: {info.indexed_vectors_count}, Collection status: {info.indexed_vectors_count}")
                     return
         except Exception as e:
             log.warning(f"Qdrant ready to search error: {e}")
@@ -96,18 +96,22 @@ class Qdrant(VectorDB):
             )
 
         except Exception as e:
+            if "already exists!" in str(e):
+                return
             log.warning(f"Failed to create collection: {self.collection_name} error: {e}")
             raise e from None
 
     def insert_embeddings(
         self,
-        embeddings: Iterable[list[float]],
+        embeddings: list[list[float]],
         metadata: list[int],
         **kwargs: Any,
     ) -> list[str]:
         """Insert embeddings into Milvus. should call self.init() first"""
         # use the first insert_embeddings to init collection
-        if not self.qdrant_client.get_collection(self.collection_name):
+        try:
+            _ = self.qdrant_client.get_collection(self.collection_name)
+        except grpc.RpcError:
             self._create_collection(len(embeddings[0]))
 
         try:
@@ -115,12 +119,12 @@ class Qdrant(VectorDB):
             _ = self.qdrant_client.upsert(
                 collection_name=self.collection_name,
                 wait=True,
-                points=Batch(payloads={self._primary_field: v for v in metadata}, vectors=embeddings)
+                points=Batch(ids=metadata, payloads=[{self._primary_field: v} for v in metadata], vectors=embeddings)
             )
 
-            return len(metadata)
+            return [i for i in metadata]
         except Exception as e:
-            log.warning("Failed to insert data")
+            log.info(f"Failed to insert data, {e}")
             raise e from None
 
     def search_embedding_with_score(

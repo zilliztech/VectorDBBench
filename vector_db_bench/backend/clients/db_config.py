@@ -43,5 +43,5 @@ class QdrantConfig(DBConfig, BaseModel):
         return {
             "url": self.url,
             "api_key": self.api_key.get_secret_value(),
-            "perfer_grpc": self.prefer_grpc,
+            "prefer_grpc": self.prefer_grpc,
         }

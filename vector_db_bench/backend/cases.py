@@ -108,7 +108,6 @@ class PerformanceCase(Case, BaseModel):
     search_runner: MultiProcessingSearchRunner | None = None
     serial_search_runner: SerialSearchRunner | None = None
 
-    #  @computed_field
     @property
     def filters(self) -> dict | None:
         if abs(self.filter_rate - 0) > 1e-6:

@@ -42,7 +42,7 @@ class SerialSearchRunner:
                 s = time.perf_counter()
                 try:
                     results = self.db.search_embedding_with_score(
-                        test_df['emb'][idx],
+                        test_df['emb'][idx].tolist(),
                         self.k,
                         self.filters,
                     )

@@ -6,6 +6,7 @@ import multiprocessing as mp
 import logging
 from typing import Iterable
 import pandas as pd
+import numpy as np
 from ..clients import api
 from .. import utils
 from ... import NUM_PER_BATCH
@@ -35,20 +36,21 @@ class MultiProcessingInsertRunner:
             num_conc_batches = math.ceil(conc_data.shape[0]/NUM_PER_BATCH)
             log.info(f"({mp.current_process().name:16}) Conc {conc_id:3}, Start batch inserting {conc_data.shape[0]} embeddings")
 
+            all_embeddings, all_metadata = np.stack(conc_data["emb"]).tolist(), conc_data['id'].tolist()
+
             count = 0
             for batch_id in range(num_conc_batches):
-                batch = conc_data[batch_id*NUM_PER_BATCH: (batch_id+1)*NUM_PER_BATCH]
-                metadata, embeddings = batch['id'].to_list(), batch['emb'].to_list()
-
-                log.debug(f"({mp.current_process().name:16}) Conc {conc_id:2}, batch {batch_id:3}, Start inserting {batch.shape[0]} embeddings")
+                metadata = all_metadata[batch_id*NUM_PER_BATCH: (batch_id+1)*NUM_PER_BATCH]
+                embeddings = all_embeddings[batch_id*NUM_PER_BATCH: (batch_id+1)*NUM_PER_BATCH]
+                log.debug(f"({mp.current_process().name:16}) Conc {conc_id:2}, batch {batch_id:3}, Start inserting {len(metadata)} embeddings")
                 insert_results = self.db.insert_embeddings(
                     embeddings=embeddings,
                     metadata=metadata,
                 )
 
-                assert len(insert_results) == batch.shape[0]
+                assert len(insert_results) == len(metadata)
                 count += len(insert_results)
-                log.debug(f"({mp.current_process().name:16}) Conc {conc_id:2}, batch {batch_id:3}, Finish inserting {batch.shape[0]} embeddings")
+                log.debug(f"({mp.current_process().name:16}) Conc {conc_id:2}, batch {batch_id:3}, Finish inserting {len(metadata)} embeddings")
 
         log.info(f"({mp.current_process().name:16}) Conc {conc_id:2}, Finish batch inserting {conc_data.shape[0]} embeddings")
         return count
@@ -64,17 +66,19 @@ class MultiProcessingInsertRunner:
         with self.db.init():
             count = 0
 
+            shared_data = self.sharded_df.read()
+            all_embeddings, all_metadata = np.stack(shared_data["emb"]).tolist(), shared_data['id'].tolist()
             for idx in range(self.seq_batches):
-                batch = self.sharded_df.read()[idx*NUM_PER_BATCH: (idx+1)*NUM_PER_BATCH]
-                metadata, embeddings = batch['id'].to_list(), batch['emb'].to_list()
-                log.debug(f"({mp.current_process().name:14})Batch No.{idx:3}: Start inserting {batch.shape[0]} embeddings")
+                metadata = all_metadata[idx*NUM_PER_BATCH: (idx+1)*NUM_PER_BATCH]
+                embeddings = all_embeddings[idx*NUM_PER_BATCH: (idx+1)*NUM_PER_BATCH]
+                log.debug(f"({mp.current_process().name:14})Batch No.{idx:3}: Start inserting {len(metadata)} embeddings")
 
                 insert_results = self.db.insert_embeddings(
                     embeddings=embeddings,
                     metadata=metadata,
                 )
 
-                assert len(insert_results) == batch.shape[0]
+                assert len(insert_results) == len(metadata)
                 log.debug(f"({mp.current_process().name:14})Batch No.{idx:3}: Finish inserting embeddings")
 
                 if idx == 0:
@@ -153,7 +157,7 @@ class MultiProcessingSearchRunner:
                 s = time.perf_counter()
                 try:
                     self.db.search_embedding_with_score(
-                        test_df['emb'][idx],
+                        test_df['emb'][idx].tolist(),
                         self.k,
                         self.filters,
                     )
