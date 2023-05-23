@@ -2,10 +2,13 @@ import traceback
 import logging
 import concurrent
 from typing import Any
-#  from pydantic import computed_field
+import numpy as np
 
 from . import dataset as ds
 from .clients import api
+from .clients.db_case_config import MetricType
+from .clients.milvus import Milvus
+from .clients.zilliz_cloud import ZillizCloud
 from ..base import BaseModel
 from ..models import CaseType, DBCaseConfig
 from ..metric import Metric
@@ -14,6 +17,7 @@ from .runner import (
     MultiProcessingSearchRunner,
     SerialSearchRunner,
 )
+
 from . import utils
 
 
@@ -68,10 +72,14 @@ class LoadCase(Case, BaseModel):
     def _load(self):
         """Insert train data and get the insert_duration"""
         # datasets for load tests are quite small, can fit into memory
-        data_dfs = [data_df for data_df in self.dataset]
-        assert len(data_dfs) == 1
+        # only 1 file
+        data_df = [data_df for data_df in self.dataset][0]
 
-        runner = MultiProcessingInsertRunner(self.db, data_dfs[0])
+        data_np = np.stack(data_df)
+        log.warning(f"data np: {data_np.shape}")
+
+        all_embeddings, all_metadata = np.stack(data_df["emb"]), data_df['id']
+        runner = MultiProcessingInsertRunner(self.db, all_embeddings, all_metadata)
         try:
             count = runner.run_sequentially_endlessness()
             log.info(f"load reach limit: insertion counts={count}")
@@ -107,6 +115,14 @@ class PerformanceCase(Case, BaseModel):
     filter_size: int = 0
     search_runner: MultiProcessingSearchRunner | None = None
     serial_search_runner: SerialSearchRunner | None = None
+    test_emb: np.ndarray | None = None
+
+
+    @property
+    def normalize(self) -> bool:
+        assert self.db
+        return isinstance(self.db, (Milvus, ZillizCloud)) and \
+            self.dataset.data.metric_type == MetricType.COSINE
 
     @property
     def filters(self) -> dict | None:
@@ -128,6 +144,7 @@ class PerformanceCase(Case, BaseModel):
         try:
             self.dataset.prepare()
             self.init_db()
+            self.calc_test_emb()
             _, insert_dur = self._insert_train_data()
             build_dur = self._ready_to_search()
             recall, serial_latency, p99 = self.serial_search()
@@ -152,8 +169,11 @@ class PerformanceCase(Case, BaseModel):
     def _insert_train_data(self):
         """Insert train data and get the insert_duration"""
         results = []
-        for data in self.dataset:
-            runner = MultiProcessingInsertRunner(self.db, data)
+        for data_df in self.dataset:
+            all_embeddings, all_metadata = np.stack(data_df["emb"]), data_df['id']
+            if self.normalize:
+                all_embeddings = all_embeddings / np.linalg.norm(all_embeddings, axis=1)[:, np.newaxis]
+            runner = MultiProcessingInsertRunner(self.db, all_embeddings, all_metadata)
             try:
                 res = runner.run()
                 results.append(res)
@@ -178,6 +198,12 @@ class PerformanceCase(Case, BaseModel):
                 log.warning(f"VectorDB ready_to_search error: {e}")
                 raise e from None
 
+    def calc_test_emb(self):
+        test_emb = np.stack(self.dataset.test_data["emb"])
+        if self.normalize:
+            test_emb = test_emb / np.linalg.norm(test_emb, axis=1)[:, np.newaxis]
+        self.test_emb = test_emb
+
 
     def serial_search(self) -> tuple[float, float, float]:
         """Performance serial tests, search the entire test data once,
@@ -189,9 +215,10 @@ class PerformanceCase(Case, BaseModel):
         gt_df = self.dataset.ground_truth if self.filters is None or self.filters['id'] == self.filter_size \
                 else self.dataset.ground_truth_90p
 
+
         self.serial_search_runner = SerialSearchRunner(
             db=self.db,
-            test_df=self.dataset.test_data,
+            test_data=self.test_emb,
             ground_truth=gt_df,
             filters=self.filters,
         )
@@ -211,10 +238,9 @@ class PerformanceCase(Case, BaseModel):
         Returns:
             float: the largest qps in all concurrencies
         """
-
         self.search_runner =  MultiProcessingSearchRunner(
             db=self.db,
-            test_df=self.dataset.test_data,
+            test_data=self.test_emb,
             filters=self.filters,
         )
         try:

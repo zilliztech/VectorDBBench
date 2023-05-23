@@ -12,11 +12,12 @@ from ...metric import calc_recall
 
 log = logging.getLogger(__name__)
 
+
 class SerialSearchRunner:
     def __init__(
         self,
         db: api.VectorDB,
-        test_df: pd.DataFrame,
+        test_data: list[list[float]],
         ground_truth: pd.DataFrame,
         k: int = 100,
         filters: dict | None = None,
@@ -25,24 +26,22 @@ class SerialSearchRunner:
         self.k = k
         self.filters = filters
 
-        self.shared_test = utils.SharedDataFrame(test_df)
-        self.shared_ground_truth = utils.SharedDataFrame(ground_truth)
+        self.test_data = test_data
+        self.ground_truth = ground_truth
 
-
-    def search(self, args: tuple[utils.SharedDataFrame, utils.SharedDataFrame]):
+    def search(self, args: tuple[list, utils.SharedDataFrame]):
         with self.db.init():
-            test_df, ground_truth = args[0].read(), args[1].read()
+            test_data, ground_truth = args
 
-            num = test_df.shape[0]
-            log.debug(f"test dataset columns: {test_df.columns}, shape: {test_df.shape}")
-            log.debug(f"ground truth colums: {ground_truth.columns}, shape: {ground_truth.shape}")
+            log.debug(f"test dataset size: {len(test_data)}")
+            log.debug(f"ground truth size: {ground_truth.columns}, shape: {ground_truth.shape}")
 
             latencies, recalls = [], []
-            for idx in range(num):
+            for idx, emb in enumerate(test_data):
                 s = time.perf_counter()
                 try:
                     results = self.db.search_embedding_with_score(
-                        test_df['emb'][idx].tolist(),
+                        emb,
                         self.k,
                         self.filters,
                     )
@@ -89,7 +88,7 @@ class SerialSearchRunner:
 
     def _run_in_subprocess(self) -> tuple[float, float, float]:
         with concurrent.futures.ProcessPoolExecutor(max_workers=1) as executor:
-            future = executor.submit(self.search, (self.shared_test, self.shared_ground_truth))
+            future = executor.submit(self.search, (self.test_data, self.ground_truth))
             result = future.result()
             return result
 
@@ -99,7 +98,4 @@ class SerialSearchRunner:
 
     def stop(self) -> None:
         """stop to prevent resource leak"""
-        if self.shared_test:
-            self.shared_test.unlink()
-        if self.shared_ground_truth:
-            self.shared_ground_truth.unlink()
+        pass
