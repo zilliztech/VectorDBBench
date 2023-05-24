@@ -3,8 +3,7 @@
 import logging
 import time
 from contextlib import contextmanager
-from typing import Any, Iterable
-import grpc
+from typing import Any
 
 from .db_case_config import DBCaseConfig
 from .api import VectorDB
@@ -28,6 +27,7 @@ log = logging.getLogger(__name__)
 class Qdrant(VectorDB):
     def __init__(
         self,
+        dim: int,
         db_config: dict,
         db_case_config: DBCaseConfig,
         collection_name: str = "QdrantCollection",
@@ -37,14 +37,17 @@ class Qdrant(VectorDB):
         self.db_config = db_config
         self.case_config = db_case_config
         self.collection_name = collection_name
-        if drop_old:
-            log.info(f"Qdrant client drop_old collection: {self.collection_name}")
-            tmp_client = QdrantClient(**self.db_config)
-            tmp_client.delete_collection(self.collection_name)
-            tmp_client = None
 
         self._primary_field = "pk"
         self._vector_field = "vector"
+
+        tmp_client = QdrantClient(**self.db_config)
+        if drop_old:
+            log.info(f"Qdrant client drop_old collection: {self.collection_name}")
+            tmp_client.delete_collection(self.collection_name)
+
+        tmp_client._create_collection(dim)
+        tmp_client = None
 
     @contextmanager
     def init(self) -> None:
@@ -108,12 +111,7 @@ class Qdrant(VectorDB):
         **kwargs: Any,
     ) -> list[str]:
         """Insert embeddings into Milvus. should call self.init() first"""
-        # use the first insert_embeddings to init collection
-        try:
-            _ = self.qdrant_client.get_collection(self.collection_name)
-        except grpc.RpcError:
-            self._create_collection(len(embeddings[0]))
-
+        assert self.qdrant_client is not None
         try:
             # TODO: counts
             _ = self.qdrant_client.upsert(
@@ -122,7 +120,7 @@ class Qdrant(VectorDB):
                 points=Batch(ids=metadata, payloads=[{self._primary_field: v} for v in metadata], vectors=embeddings)
             )
 
-            return [i for i in metadata]
+            return len(metadata)
         except Exception as e:
             log.info(f"Failed to insert data, {e}")
             raise e from None
@@ -134,7 +132,7 @@ class Qdrant(VectorDB):
         filters: dict | None = None,
         timeout: int | None = None,
         **kwargs: Any,
-    ) -> list[tuple[int, float]]:
+    ) -> list[int]:
         """Perform a search on a query embedding and return results with score.
         Should call self.init() first.
         """
@@ -159,5 +157,5 @@ class Qdrant(VectorDB):
             #  with_payload=True,
         ),
 
-        ret = [(result.id, result.score) for result in res[0]]
+        ret = [result.id for result in res[0]]
         return ret

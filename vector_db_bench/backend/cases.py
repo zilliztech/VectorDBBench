@@ -38,6 +38,7 @@ class Case(BaseModel):
 
     def init_db(self) -> None:
         self.db = self.db_configs[0](
+            dim=self.dataset.data.dim,
             db_config=self.db_configs[1],
             db_case_config=self.db_configs[2],
             drop_old=True,

@@ -35,10 +35,10 @@ def isLowerIsBetterMetric(metric: str) -> bool:
     return metric in lowerIsBetterMetricList
 
 
-def calc_recall(count: int, ground_truth: list[int], got: list[tuple[int, float]]) -> float:
+def calc_recall(count: int, ground_truth: list[int], got: list[int]) -> float:
     recalls = np.zeros(count)
     for i, result in enumerate(got):
-        if result[0] in ground_truth:
+        if result in ground_truth:
             recalls[i] = 1
 
     return np.mean(recalls)
