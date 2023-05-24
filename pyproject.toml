@@ -24,6 +24,7 @@ dependencies = [
     "pymilvus", # with pandas, numpy, ujson
     "qdrant-client",
     "weaviate-client",
+    "elasticsearch",
     "plotly",
     "pydantic==v1.10.7", # for qdrant-client
     "environs",

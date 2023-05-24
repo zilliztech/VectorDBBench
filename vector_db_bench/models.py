@@ -14,6 +14,7 @@ from .backend.clients import (
     Milvus,
     Weaviate,
     ZillizCloud,
+    Elasticsearch,
     Qdrant,
 )
 
@@ -22,6 +23,7 @@ from .backend.clients.db_config import (
     MilvusConfig,
     ZillizCloudConfig,
     WeaviateConfig,
+    ElasticsearchConfig,
     QdrantConfig,
 )
 
@@ -31,6 +33,7 @@ from .backend.clients.db_case_config import (
     HNSWConfig, DISKANNConfig, IVFFlatConfig, FLATConfig, # Milvus Configs
     AutoIndexConfig, # ZillizCound configs
     WeaviateIndexConfig, # Weaviate configs
+    ElasticsearchIndexConfig, # Elasticsearch configs
     EmptyDBCaseConfig,
 )
 
@@ -83,6 +86,7 @@ class CaseConfigParamType(Enum):
     Nlist = "nlist"
     Nprobe = "nprobe"
     MaxConnections = "maxConnections"
+    numCandidates = "num_candidates"
 
 
 class DB(Enum):
@@ -100,6 +104,7 @@ class DB(Enum):
     Milvus = "Milvus"
     ZillizCloud = "ZillizCloud"
     Weaviate = "Weaviate"
+    Elasticsearch = "Elasticsearch"
     Qdrant = "Qdrant"
 
     @property
@@ -136,6 +141,8 @@ class DB(Enum):
             return AutoIndexConfig
         if self == DB.Weaviate:
             return WeaviateIndexConfig
+        if self == DB.Elasticsearch:
+            return ElasticsearchIndexConfig
         return EmptyDBCaseConfig
 
 
@@ -143,6 +150,7 @@ _db2config = {
     DB.Milvus: MilvusConfig,
     DB.ZillizCloud: ZillizCloudConfig,
     DB.Weaviate: WeaviateConfig,
+    DB.Elasticsearch: ElasticsearchConfig,
     DB.Qdrant: QdrantConfig,
 }
 
@@ -150,6 +158,7 @@ _db2client = {
     DB.Milvus: Milvus,
     DB.ZillizCloud: ZillizCloud,
     DB.Weaviate: Weaviate,
+    DB.Elasticsearch: Elasticsearch,
     DB.Qdrant: Qdrant,
 }
 

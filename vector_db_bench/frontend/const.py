@@ -12,7 +12,7 @@ CASE_CONFIG_INPUT_WIDTH_RADIO = 0.98
 CASE_INTRO_RATIO = 3
 MAX_STREAMLIT_INT = (1 << 53) - 1
 
-COLORS = ["#66c2a5", "#fc8d62", "#8da0cb", "#e78ac3"]
+COLORS = ["#7fc97f", "#beaed4", "#fdc086", "#ffff99", "#386cb0"]
 LEGEND_RECT_WIDTH = 32
 LEGEND_RECT_HEIGHT = 20
 LEGEND_TEXT_FONT_SIZE = 14
@@ -21,7 +21,7 @@ MAX_AUTO_REFRESH_COUNT = 999999
 MAX_AUTO_REFRESH_INTERVAL = 2000  # 2s
 
 
-DB_LIST = [DB.Milvus, DB.ZillizCloud, DB.Weaviate, DB.Qdrant]
+DB_LIST = [DB.Milvus, DB.ZillizCloud, DB.Weaviate, DB.Elasticsearch, DB.Qdrant]
 COLOR_MAP = {db.value: COLORS[i] for i, db in enumerate(DB_LIST)}
 
 CASE_LIST = [
@@ -145,6 +145,36 @@ CaseConfigParamInput_EFConstruction_Weaviate = CaseConfigInput(
     },
 )
 
+CaseConfigParamInput_EFConstruction_ES = CaseConfigInput(
+    label=CaseConfigParamType.EFConstruction,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 8,
+        "max": 512,
+        "value": 100,
+    },
+)
+
+CaseConfigParamInput_M_ES = CaseConfigInput(
+    label=CaseConfigParamType.M,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 4,
+        "max": 64,
+        "value": 16,
+    },
+)
+
+CaseConfigParamInput_NumCandidates_ES = CaseConfigInput(
+    label=CaseConfigParamType.numCandidates,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 10000,
+        "value": 100,
+    },
+)
+
 CaseConfigParamInput_EF_Milvus = CaseConfigInput(
     label=CaseConfigParamType.EF,
     inputType=InputType.Number,
@@ -239,6 +269,14 @@ WeaviatePerformanceConfig = [
     CaseConfigParamInput_EF_Weaviate,
 ]
 
+ESLoadingConfig = [CaseConfigParamInput_EFConstruction_ES, CaseConfigParamInput_M_ES]
+
+ESPerformanceConfig = [
+    CaseConfigParamInput_EFConstruction_ES,
+    CaseConfigParamInput_M_ES,
+    CaseConfigParamInput_NumCandidates_ES,
+]
+
 CASE_CONFIG_MAP = {
     DB.Milvus: {
         CaseType.LoadLDim: MilvusLoadConfig,
@@ -265,5 +303,18 @@ CASE_CONFIG_MAP = {
         CaseType.PerformanceLHigh: WeaviatePerformanceConfig,
         CaseType.PerformanceMHigh: WeaviatePerformanceConfig,
         CaseType.PerformanceSHigh: WeaviatePerformanceConfig,
+    },
+    DB.Elasticsearch: {
+        CaseType.LoadLDim: ESLoadingConfig,
+        CaseType.LoadSDim: ESLoadingConfig,
+        CaseType.PerformanceLZero: ESPerformanceConfig,
+        CaseType.PerformanceMZero: ESPerformanceConfig,
+        CaseType.PerformanceSZero: ESPerformanceConfig,
+        CaseType.PerformanceLLow: ESPerformanceConfig,
+        CaseType.PerformanceMLow: ESPerformanceConfig,
+        CaseType.PerformanceSLow: ESPerformanceConfig,
+        CaseType.PerformanceLHigh: ESPerformanceConfig,
+        CaseType.PerformanceMHigh: ESPerformanceConfig,
+        CaseType.PerformanceSHigh: ESPerformanceConfig,
     },
 }
