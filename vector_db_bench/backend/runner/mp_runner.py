@@ -24,7 +24,7 @@ class MultiProcessingInsertRunner:
         self.seq_batches = math.ceil(train_emb.shape[0]/NUM_PER_BATCH)
 
         # conc
-        self.num_concurrency = mp.cpu_count()
+        self.num_concurrency = 2
         self.num_per_concurrency = train_emb.shape[0] // self.num_concurrency
         self.conc_tasks = [(self.shared_emb, self.train_id, idx) for idx in range(self.num_concurrency)]
 
@@ -180,10 +180,16 @@ class MultiProcessingSearchRunner:
 
         return (count, total_dur)
 
+    @staticmethod
+    def get_mp_start_method():
+        mp_start_method = "forkserver" if "forkserver" in mp.get_all_start_methods() else "spawn"
+        log.info(f"MultiProcessingSearchRunner get multiprocessing start method: {mp_start_method}")
+        return mp_start_method
+
     def _run_all_concurrencies_mem_efficient(self) -> float:
         max_qps = 0
         for conc in self.concurrencies:
-            with concurrent.futures.ProcessPoolExecutor(max_workers=conc) as executor:
+            with concurrent.futures.ProcessPoolExecutor(mp_context=self.get_mp_start_method(), max_workers=conc) as executor:
                 start = time.perf_counter()
                 log.info(f"start search {self.duration}s in concurrency {conc}, filters: {self.filters}")
                 future_iter = executor.map(self.search, [self.test_data for i in range(conc)])
