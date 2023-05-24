@@ -11,6 +11,7 @@ log = logging.getLogger(__name__)
 class Elasticsearch(VectorDB):
     def __init__(
         self,
+        dim: int,
         db_config: dict,
         db_case_config: ElasticsearchIndexConfig,
         indice: str = "vdb_bench_indice", # must be lowercase
@@ -18,6 +19,7 @@ class Elasticsearch(VectorDB):
         vector_col_name: str = "vector",
         drop_old: bool = False,
     ):
+        self.dim = dim
         self.db_config = db_config
         self.case_config = db_case_config
         self.indice = indice
@@ -42,15 +44,19 @@ class Elasticsearch(VectorDB):
 
         self.client = Elasticsearch(**self.db_config)
 
+        is_existed_res = self.client.indices.exists(index=self.indice)
+        if is_existed_res.raw == False:
+            self._create_indice()
+
         yield
         self.client.transport.close()
 
-    def _create_indice(self, dim: int) -> None:
+    def _create_indice(self) -> None:
         mappings = {
             "properties": {
                 self.id_col_name: {"type": "integer"},
                 self.vector_col_name: {
-                    "dims": dim,
+                    "dims": self.dim,
                     **self.case_config.index_param(),
                 },
             }
@@ -66,14 +72,9 @@ class Elasticsearch(VectorDB):
         self,
         embeddings: Iterable[list[float]],
         metadata: list[int],
-    ) -> list[str]:
+    ) -> int:
         """Insert the embeddings to the elasticsearch."""
         assert self.client is not None, "should self.init() first"
-
-        is_existed_res = self.client.indices.exists(index=self.indice)
-        if is_existed_res.raw == False:
-            dim = len(embeddings[0])
-            self._create_indice(dim)
 
         insert_data = [
             {
@@ -87,8 +88,7 @@ class Elasticsearch(VectorDB):
         ]
         try:
             bulk_insert_res = bulk(self.client, insert_data)
-            # a little bit stupid, just for length computing.
-            return range(bulk_insert_res[0])
+            return bulk_insert_res[0]
         except Exception as e:
             log.warning(f"Failed to insert data: {self.indice} error: {str(e)}")
             raise e from None
@@ -98,7 +98,7 @@ class Elasticsearch(VectorDB):
         query: list[float],
         k: int = 100,
         filters: dict | None = None,
-    ) -> list[tuple[int, float]]:
+    ) -> list[int]:
         """Get k most similar embeddings to query vector.
 
         Args:
@@ -124,7 +124,7 @@ class Elasticsearch(VectorDB):
         try:
             search_res = self.client.search(index=self.indice, knn=knn, size=size)
             res = [
-                (d["_source"][self.id_col_name], d["_score"])
+                d["_source"][self.id_col_name]
                 for d in search_res["hits"]["hits"]
             ]
 
