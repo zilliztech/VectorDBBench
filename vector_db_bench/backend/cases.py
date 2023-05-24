@@ -173,7 +173,7 @@ class PerformanceCase(Case, BaseModel):
         for data_df in self.dataset:
             all_embeddings, all_metadata = np.stack(data_df["emb"]), data_df['id']
             if self.normalize:
-                all_embeddings = all_embeddings / np.linalg.norm(all_embeddings, axis=1)[:, np.newaxis]
+                all_embeddings = all_embeddings / np.linalg.norm(all_embeddings)
             runner = MultiProcessingInsertRunner(self.db, all_embeddings, all_metadata)
             try:
                 res = runner.run()
