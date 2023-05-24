@@ -178,7 +178,7 @@ class BenchMarkRunner:
 
 
     def _run_async(self, conn: Connection) -> bool:
-        log.info(f"task submitted: {self.running_task}")
+        log.info(f"task submitted: id={self.running_task['run_id']}, {self.running_task['tasks']}, case number: {len(self.running_task['cases'])}")
         global global_result_future
         executor = concurrent.futures.ProcessPoolExecutor(max_workers=1)
         global_result_future = executor.submit(self._async_task, self.running_task, conn)
