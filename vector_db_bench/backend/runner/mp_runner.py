@@ -14,26 +14,24 @@ log = logging.getLogger(__name__)
 
 
 class MultiProcessingInsertRunner:
-    def __init__(self, db: api.VectorDB, train_emb: np.ndarray, train_id: np.ndarray):
-        log.info(f"Dataset shape: {train_emb.shape[0]}")
+    def __init__(self, db: api.VectorDB, train_emb: list[list[float]], train_id: list[int]):
+        log.info(f"Dataset shape: {len(train_emb)}")
         self.db = db
-        self.shared_emb = utils.SharedNumpyArray(train_emb)
-        self.train_id = train_id.tolist()
+        self.shared_emb = train_emb
+        self.train_id = train_id
 
         # seq
-        self.seq_batches = math.ceil(train_emb.shape[0]/NUM_PER_BATCH)
+        self.seq_batches = math.ceil(len(train_emb)/NUM_PER_BATCH)
 
         # conc
-        self.num_concurrency = 2
-        self.num_per_concurrency = train_emb.shape[0] // self.num_concurrency
-        self.conc_tasks = [(self.shared_emb, self.train_id, idx) for idx in range(self.num_concurrency)]
+        self.num_concurrency = 1
 
 
     def insert_data(self, args) -> int:
         with self.db.init():
-            shared_np, train_id, conc_id = args
-            all_embeddings = shared_np.read()[conc_id*self.num_per_concurrency: (conc_id+1)*self.num_per_concurrency].tolist()
-            all_metadata = train_id[conc_id*self.num_per_concurrency: (conc_id+1)*self.num_per_concurrency]
+            conc_id = args
+            all_embeddings = self.shared_emb
+            all_metadata = self.train_id
 
             num_conc_batches = math.ceil(len(all_embeddings)/NUM_PER_BATCH)
             log.info(f"({mp.current_process().name:16}) Conc {conc_id:3}, Start batch inserting {len(all_embeddings)} embeddings")
@@ -54,6 +52,14 @@ class MultiProcessingInsertRunner:
         log.info(f"({mp.current_process().name:16}) Conc {conc_id:2}, Finish batch inserting {len(all_embeddings)} embeddings")
         return count
 
+    @utils.time_it
+    def _insert_all_batches(self) -> int:
+        """Performance case only"""
+        with concurrent.futures.ProcessPoolExecutor(mp_context=mp.get_context('spawn'), max_workers=self.num_concurrency) as executor:
+            future_iter = executor.map(self.insert_data, (1,))
+            total_count = sum([r for r in future_iter])
+            return total_count
+
 
     def load_data(self, args) -> int:
         count = self.insert_data(args)
@@ -63,13 +69,12 @@ class MultiProcessingInsertRunner:
     def _insert_all_batches_sequentially(self) -> int:
         """Load case only"""
         with self.db.init():
-            all_embeddings = self.shared_emb.read().tolist()
-            all_metadata = self.train_id
+            self.db.ready_to_load()
             count = 0
 
             for idx in range(self.seq_batches):
-                metadata = all_metadata[idx*NUM_PER_BATCH: (idx+1)*NUM_PER_BATCH]
-                embeddings = all_embeddings[idx*NUM_PER_BATCH: (idx+1)*NUM_PER_BATCH]
+                metadata = self.train_id[idx*NUM_PER_BATCH: (idx+1)*NUM_PER_BATCH]
+                embeddings = self.shared_emb[idx*NUM_PER_BATCH: (idx+1)*NUM_PER_BATCH]
                 log.debug(f"({mp.current_process().name:14})Batch No.{idx:3}: Start inserting {len(metadata)} embeddings")
 
                 insert_count = self.db.insert_embeddings(
@@ -78,20 +83,10 @@ class MultiProcessingInsertRunner:
                 )
 
                 assert insert_count == len(metadata)
-                log.debug(f"({mp.current_process().name:14})Batch No.{idx:3}: Finish inserting embeddings")
-
-                if idx == 0:
-                    self.db.ready_to_load()
                 count += insert_count
-        return count
+                log.debug(f"({mp.current_process().name:14})Batch No.{idx:3}: Finish inserting embeddings")
+            return count
 
-    @utils.time_it
-    def _insert_all_batches(self) -> int:
-        """Performance case only"""
-        with concurrent.futures.ProcessPoolExecutor(max_workers=self.num_concurrency) as executor:
-            future_iter = executor.map(self.insert_data, self.conc_tasks)
-            total_count = sum([r for r in future_iter])
-            return total_count
 
     def run_sequentially_endlessness(self) -> int:
         """run forever util DB raises exception or crash"""
@@ -121,9 +116,7 @@ class MultiProcessingInsertRunner:
         return count
 
     def stop(self) -> None:
-        if self.shared_emb:
-            self.shared_emb.unlink()
-
+        pass
 
 class MultiProcessingSearchRunner:
     def __init__(
@@ -181,15 +174,15 @@ class MultiProcessingSearchRunner:
         return (count, total_dur)
 
     @staticmethod
-    def get_mp_start_method():
+    def get_mp_context():
         mp_start_method = "forkserver" if "forkserver" in mp.get_all_start_methods() else "spawn"
         log.info(f"MultiProcessingSearchRunner get multiprocessing start method: {mp_start_method}")
-        return mp_start_method
+        return mp.get_context(mp_start_method)
 
     def _run_all_concurrencies_mem_efficient(self) -> float:
         max_qps = 0
         for conc in self.concurrencies:
-            with concurrent.futures.ProcessPoolExecutor(mp_context=self.get_mp_start_method(), max_workers=conc) as executor:
+            with concurrent.futures.ProcessPoolExecutor(mp_context=self.get_mp_context(), max_workers=conc) as executor:
                 start = time.perf_counter()
                 log.info(f"start search {self.duration}s in concurrency {conc}, filters: {self.filters}")
                 future_iter = executor.map(self.search, [self.test_data for i in range(conc)])

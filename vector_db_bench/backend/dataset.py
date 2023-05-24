@@ -266,24 +266,48 @@ class DataSet(BaseModel):
     def _read_file(self, file_name: str) -> pd.DataFrame:
         """read one file from disk into memory"""
         p = pathlib.Path(self.data_dir, file_name)
+        log.warning(f"file: {p}")
         if not p.exists():
             log.warning(f"No such file: {p}")
             return pd.DataFrame()
-        return pd.read_parquet(p)
+        a = pd.read_parquet(p)
+        return a
 
 
 class DataSetIterator:
     def __init__(self, dataset: DataSet):
         self._ds = dataset
-        self._idx = 0
+        self._idx = 0  # file number
+        self._curr: pd.DataFrame | None = None
+        self._sub_idx = [0 for i in range(len(self._ds.train_files))] # iter num for each file
 
     def __next__(self) -> pd.DataFrame:
         """return the data in the next file of the training list"""
+        import math
         if self._idx < len(self._ds.train_files):
-            file_name = self._ds.train_files[self._idx]
-            df_data = self._ds._read_file(file_name)
-            self._idx +=1
-            return df_data
+            _sub = self._sub_idx[self._idx]
+            if _sub == 0 and self._idx == 0: # init
+                file_name = self._ds.train_files[self._idx]
+                self._curr = self._ds._read_file(file_name)
+                self._iter_num = math.ceil(self._curr.shape[0]/100_000)
+
+            if _sub == self._iter_num:
+                if self._idx == len(self._ds.train_files) - 1:
+                    self._curr = None
+                    raise StopIteration
+                else:
+                    self._idx += 1
+                    _sub = self._sub_idx[self._idx]
+
+                    self._curr = None
+                    file_name = self._ds.train_files[self._idx]
+                    self._curr = self._ds._read_file(file_name)
+
+            sub_df = self._curr[_sub*100_000: (_sub+1)*100_000]
+            self._sub_idx[self._idx] += 1
+            log.info(f"Get the [{_sub+1}/{self._iter_num}] batch of {self._idx+1}/{len(self._ds.train_files)} train file")
+            return sub_df
+        self._curr = None
         raise StopIteration
 
 
