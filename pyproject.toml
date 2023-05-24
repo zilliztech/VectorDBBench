@@ -17,7 +17,7 @@ classifiers = [
 ]
 dependencies = [
     "pytz",
-    "streamlit-autorefresh@git+https://github.com/XuanYang-cn/streamlit-autorefresh.git@main", # to remove the rely on streamlit
+    "streamlit-autorefresh@git+https://github.com/alwayslove2013/streamlit-autorefresh.git@main", # to remove the rely on streamlit
     "streamlit_nightly==1.22.1.dev20230521", # for protobuf 4 support, for qdrant-client, wait for streamlit release of 1.22.1 or 1.23.0
     "grpcio==1.53.0", # for qdrant-client and pymilvus
     "grpcio-tools==1.53.0", # for qdrant-client and pymilvus
