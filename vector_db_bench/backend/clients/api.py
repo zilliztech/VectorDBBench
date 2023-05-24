@@ -19,16 +19,20 @@ class VectorDB(ABC):
     @abstractmethod
     def __init__(
         self,
+        dim: int,
         db_config: dict | None,
         db_case_config: DBCaseConfig | None,
+        drop_old: bool = False,
         **kwargs
     ) -> None:
+        """Init collection"""
         raise NotImplementedError
 
     @abstractmethod
     @contextmanager
     def init(self) -> None:
-        """
+        """ connect to DB
+
         Examples:
             >>> with self.init():
             >>>     self.insert_embeddings()
@@ -40,7 +44,7 @@ class VectorDB(ABC):
         self,
         embeddings: Iterable[list[float]],
         metadata: list[int],
-    ) -> list[str]:
+    ) -> int:
         """Insert the embeddings to the vector database
 
         Args:
@@ -49,7 +53,7 @@ class VectorDB(ABC):
             kwargs(Any): vector database specific parameters.
 
         Returns:
-            list[str]: ids from insertion of the embeddings.
+            int: inserted data count
         """
         raise NotImplementedError
 
@@ -59,7 +63,7 @@ class VectorDB(ABC):
         query: list[float],
         k: int = 100,
         filters: dict | None = None,
-    ) -> list[tuple[int, float]]:
+    ) -> list[int]:
         """Get k most similar embeddings to query vector.
 
         Args:
@@ -68,7 +72,7 @@ class VectorDB(ABC):
             filters(dict, optional): filtering expression to filter the data while searching.
 
         Returns:
-            list[tuple[int, float]]: list of k most similar embeddings in (id, score) tuple to the query embedding.
+            list[int]: list of k most similar embeddings IDs to the query embedding.
         """
         raise NotImplementedError
 
