@@ -42,13 +42,13 @@ class MultiProcessingInsertRunner:
                 metadata = all_metadata[batch_id*NUM_PER_BATCH: (batch_id+1)*NUM_PER_BATCH]
                 embeddings = all_embeddings[batch_id*NUM_PER_BATCH: (batch_id+1)*NUM_PER_BATCH]
                 log.debug(f"({mp.current_process().name:16}) Conc {conc_id:2}, batch {batch_id:3}, Start inserting {len(metadata)} embeddings")
-                insert_results = self.db.insert_embeddings(
+                insert_count = self.db.insert_embeddings(
                     embeddings=embeddings,
                     metadata=metadata,
                 )
 
-                assert len(insert_results) == len(metadata)
-                count += len(insert_results)
+                assert insert_count == len(metadata)
+                count += insert_count
                 log.debug(f"({mp.current_process().name:16}) Conc {conc_id:2}, batch {batch_id:3}, Finish inserting {len(metadata)} embeddings")
 
         log.info(f"({mp.current_process().name:16}) Conc {conc_id:2}, Finish batch inserting {len(all_embeddings)} embeddings")
@@ -72,17 +72,17 @@ class MultiProcessingInsertRunner:
                 embeddings = all_embeddings[idx*NUM_PER_BATCH: (idx+1)*NUM_PER_BATCH]
                 log.debug(f"({mp.current_process().name:14})Batch No.{idx:3}: Start inserting {len(metadata)} embeddings")
 
-                insert_results = self.db.insert_embeddings(
+                insert_count = self.db.insert_embeddings(
                     embeddings=embeddings,
                     metadata=metadata,
                 )
 
-                assert len(insert_results) == len(metadata)
+                assert insert_count == len(metadata)
                 log.debug(f"({mp.current_process().name:14})Batch No.{idx:3}: Finish inserting embeddings")
 
                 if idx == 0:
                     self.db.ready_to_load()
-                count += len(insert_results)
+                count += insert_count
         return count
 
     @utils.time_it

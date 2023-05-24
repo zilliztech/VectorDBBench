@@ -4,7 +4,6 @@ import logging
 from typing import Any, Iterable
 from contextlib import contextmanager
 
-import weaviate
 from weaviate.exceptions import WeaviateBaseError
 
 from .api import VectorDB
@@ -16,6 +15,7 @@ log = logging.getLogger(__name__)
 class Weaviate(VectorDB):
     def __init__(
         self,
+        dim: int,
         db_config: dict,
         db_case_config: DBCaseConfig,
         collection_name: str = "VectorDBBenchCollection",
@@ -84,7 +84,7 @@ class Weaviate(VectorDB):
         embeddings: Iterable[list[float]],
         metadata: list[int],
         **kwargs: Any,
-    ) -> list[str]:
+    ) -> int:
         """Insert embeddings into Weaviate"""
         assert self.client.schema.exists(self.collection_name)
 
@@ -99,7 +99,7 @@ class Weaviate(VectorDB):
                         class_name=self.collection_name,
                         vector=embeddings[i]
                     ))
-                return res
+                return len(res)
         except WeaviateBaseError as e:
             log.warning(f"Failed to insert data, error: {str(e)}")
             raise e from None
@@ -111,7 +111,7 @@ class Weaviate(VectorDB):
         filters: dict | None = None,
         timeout: int | None = None,
         **kwargs: Any,
-    ) -> list[tuple[int, float]]:
+    ) -> list[int]:
         """Perform a search on a query embedding and return results with distance.
         Should call self.init() first.
         """
@@ -130,7 +130,7 @@ class Weaviate(VectorDB):
         res = query_obj.do()
 
         # Organize results.
-        ret = [(result[self._scalar_field], result["_additional"]["distance"]) for result in res["data"]["Get"][self.collection_name]]
+        ret = [result[self._scalar_field] for result in res["data"]["Get"][self.collection_name]]
 
         return ret
 

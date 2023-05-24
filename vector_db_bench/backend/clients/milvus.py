@@ -4,11 +4,10 @@ import logging
 from contextlib import contextmanager
 from typing import Any, Iterable
 
-from sklearn import preprocessing
 from pymilvus import Collection, utility
 from pymilvus import CollectionSchema, DataType, FieldSchema, MilvusException
 
-from .db_case_config import DBCaseConfig, MetricType
+from .db_case_config import DBCaseConfig
 from .api import VectorDB
 
 log = logging.getLogger(__name__)
@@ -17,6 +16,7 @@ log = logging.getLogger(__name__)
 class Milvus(VectorDB):
     def __init__(
         self,
+        dim: int,
         db_config: dict,
         db_case_config: DBCaseConfig,
         collection_name: str = "VectorDBBenchCollection",
@@ -27,17 +27,32 @@ class Milvus(VectorDB):
         self.case_config = db_case_config
         self.collection_name = collection_name
 
-        if drop_old:
-            log.info(f"Milvus client drop_old collection: {self.collection_name}")
-            from pymilvus import connections
-            connections.connect(**self.db_config, timeout=30)
-            utility.drop_collection(self.collection_name)
-            self.col = None
-            connections.disconnect("default")
-
         self._primary_field = "pk"
         self._vector_field = "vector"
         self._index_name = "vector_idx"
+
+        from pymilvus import connections
+        connections.connect(**self.db_config, timeout=30)
+        if drop_old:
+            log.info(f"Milvus client drop_old collection: {self.collection_name}")
+            utility.drop_collection(self.collection_name)
+
+        if not utility.has_collection(self.collection_name):
+            fields = [
+                FieldSchema(self._primary_field, DataType.INT64, is_primary=True),
+                FieldSchema(self._vector_field, DataType.FLOAT_VECTOR, dim=dim)
+            ]
+
+            log.info(f"Create collection: {self.collection_name}")
+
+            # Create the collection
+            _ =Collection(
+                name=self.collection_name,
+                schema=CollectionSchema(fields),
+                consistency_level="Session",
+            )
+        connections.disconnect("default")
+
 
     @contextmanager
     def init(self) -> None:
@@ -51,9 +66,8 @@ class Milvus(VectorDB):
         self.col: Collection | None = None
 
         connections.connect(**self.db_config, timeout=60)
-        # Grab the existing colection if it exists
-        if utility.has_collection(self.collection_name):
-            self.col = Collection(self.collection_name)
+        # Grab the existing colection with connections
+        self.col = Collection(self.collection_name)
 
         yield
         connections.disconnect("default")
@@ -91,7 +105,6 @@ class Milvus(VectorDB):
                     self._vector_field,
                     self.case_config.index_param(),
                     index_name=self._index_name,
-                    #  timeout=600,
                 )
 
                 # this is also sync
@@ -100,42 +113,16 @@ class Milvus(VectorDB):
                 log.warning(f"Milvus ready to search error: {e}")
                 raise e from None
 
-    def _create_collection(self, dim: int) -> Collection:
-        if utility.has_collection(self.collection_name):
-            return Collection(self.collection_name)
-
-        fields = [
-            FieldSchema(self._primary_field, DataType.INT64, is_primary=True),
-            FieldSchema(self._vector_field, DataType.FLOAT_VECTOR, dim=dim)
-        ]
-
-        log.info(f"Create collection: {self.collection_name}")
-
-        # Create the collection
-        try:
-            return Collection(
-                name=self.collection_name,
-                schema=CollectionSchema(fields),
-                consistency_level="Session",
-            )
-        except MilvusException as e:
-            log.warning(f"Failed to create collection: {self.collection_name} error: {str(e)}")
-            raise e from None
 
     def insert_embeddings(
         self,
         embeddings: Iterable[list[float]],
         metadata: list[int],
         **kwargs: Any,
-    ) -> list[str]:
+    ) -> int:
         """Insert embeddings into Milvus. should call self.init() first"""
         # use the first insert_embeddings to init collection
-        if not self.col:
-            self.col = self._create_collection(len(embeddings[0]))
-
-        if self.case_config.metric_type == MetricType.COSINE:
-            embeddings = preprocessing.normalize(embeddings, norm="l2")
-
+        assert self.col is not None
         insert_data = [
                 metadata,
                 embeddings,
@@ -143,7 +130,7 @@ class Milvus(VectorDB):
 
         try:
             res = self.col.insert(insert_data, **kwargs)
-            return res.primary_keys
+            return len(res.primary_keys)
         except MilvusException as e:
             log.warning("Failed to insert data")
             raise e from None
@@ -154,8 +141,7 @@ class Milvus(VectorDB):
         k: int = 100,
         filters: dict | None = None,
         timeout: int | None = None,
-        **kwargs: Any,
-    ) -> list[tuple[int, float]]:
+    ) -> list[int]:
         """Perform a search on a query embedding and return results with score.
         Should call self.init() first.
         """
@@ -170,9 +156,8 @@ class Milvus(VectorDB):
             param=self.case_config.search_param(),
             limit=k,
             expr=expr,
-            **kwargs,
         )
 
         # Organize results.
-        ret = [(result.id, result.score) for result in res[0]]
+        ret = [result.id for result in res[0]]
         return ret

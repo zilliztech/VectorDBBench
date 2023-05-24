@@ -3,6 +3,7 @@ import logging
 import uuid
 import concurrent
 import multiprocessing as mp
+from multiprocessing.connection import Connection
 
 import psutil
 from enum import Enum
@@ -118,7 +119,7 @@ class BenchMarkRunner:
             self.running_task = None
 
 
-    def _async_task(self, running_task: dict, send_conn: mp.connection.Connection) -> None:
+    def _async_task(self, running_task: dict, send_conn: Connection) -> None:
         if not running_task:
             return
 
@@ -176,7 +177,7 @@ class BenchMarkRunner:
             self.receive_conn = None
 
 
-    def _run_async(self, conn: mp.connection.Connection) -> bool:
+    def _run_async(self, conn: Connection) -> bool:
         log.info(f"task submitted: {self.running_task}")
         global global_result_future
         executor = concurrent.futures.ProcessPoolExecutor(max_workers=1)
