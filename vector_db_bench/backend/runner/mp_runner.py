@@ -183,7 +183,7 @@ class MultiProcessingSearchRunner:
     def _run_all_concurrencies_mem_efficient(self) -> float:
         max_qps = 0
         for conc in self.concurrencies:
-            with concurrent.futures.ProcessPoolExecutor(max_workers=conc) as executor:
+            with concurrent.futures.ProcessPoolExecutor(mp_context=mp.get_context('spawn'), max_workers=conc) as executor:
                 start = time.perf_counter()
                 log.info(f"start search {self.duration}s in concurrency {conc}, filters: {self.filters}")
                 future_iter = executor.map(self.search, [self.test_data for i in range(conc)])
