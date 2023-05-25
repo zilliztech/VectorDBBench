@@ -54,7 +54,7 @@ class Milvus(VectorDB):
                 consistency_level="Session",
             )
 
-            self._pre_load(coll)
+            #  self._pre_load(coll)
 
         connections.disconnect("default")
 
@@ -105,13 +105,16 @@ class Milvus(VectorDB):
                 self.case_config.index_param(),
                 index_name=self._index_name,
             )
-            utility.wait_for_index_building_complete(self.collection_name)
-            self.col.load(_refresh=True)
+            #  utility.wait_for_index_building_complete(self.collection_name)
+            #  self.col.load(_refresh=True)
+            self.col.load()
         except Exception as e:
             log.warning(f"{self.name} optimize error: {e}")
             raise e from None
 
     def ready_to_load(self):
+        assert self.col, "Please call self.init() before"
+        self._pre_load(self.col)
         pass
 
     def ready_to_search(self):
