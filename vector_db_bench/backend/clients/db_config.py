@@ -2,6 +2,7 @@ from pydantic import BaseModel, SecretStr
 from abc import ABC, abstractmethod
 import weaviate
 
+
 class DBConfig(ABC):
     @abstractmethod
     def to_dict(self) -> dict:
@@ -34,6 +35,7 @@ class WeaviateConfig(DBConfig, BaseModel):
             "auth_client_secret": weaviate.AuthApiKey(api_key=self.api_key.get_secret_value()),
         }
 
+
 class QdrantConfig(DBConfig, BaseModel):
     url: str
     api_key: SecretStr | None = None
@@ -45,3 +47,11 @@ class QdrantConfig(DBConfig, BaseModel):
             "api_key": self.api_key.get_secret_value(),
             "prefer_grpc": self.prefer_grpc,
         }
+
+
+class ElasticsearchConfig(DBConfig, BaseModel):
+    cloud_id: str
+    password: str
+
+    def to_dict(self) -> dict:
+        return {"cloud_id": self.cloud_id, "basic_auth": ("elastic", self.password)}
