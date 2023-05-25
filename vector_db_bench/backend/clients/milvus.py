@@ -48,13 +48,13 @@ class Milvus(VectorDB):
             log.info(f"{self.name} create collection: {self.collection_name}")
 
             # Create the collection
-            _ =Collection(
+            coll = Collection(
                 name=self.collection_name,
                 schema=CollectionSchema(fields),
                 consistency_level="Session",
             )
 
-            self._pre_load()
+            self._pre_load(coll)
 
         connections.disconnect("default")
 
@@ -99,8 +99,7 @@ class Milvus(VectorDB):
             self.col.compact()
             self.col.wait_for_compaction_completed()
 
-            # wait for index done
-            # load refresh
+            # wait for index done and load refresh
             utility.wait_for_index_building_complete(self.collection_name)
             self.col.load(_refresh=True)
         except Exception as e:
