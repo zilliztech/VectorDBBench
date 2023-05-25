@@ -61,7 +61,6 @@ class SIFT:
     dim: int = 128
     metric_type: MetricType = MetricType.COSINE
 
-    #  @computed_field
     @property
     def dir_name(self) -> str:
         return f"{self.name}_{self.label}_{utils.numerize(self.size)}".lower()
@@ -239,7 +238,7 @@ class DataSet(BaseModel):
                     return True
         return False
 
-    def prepare(self) -> bool:
+    def prepare(self, check=True) -> bool:
         """Download the dataset from S3
          url = f"{DEFAULT_DATASET_URL}/{self.data.dir_name}"
 
@@ -253,7 +252,9 @@ class DataSet(BaseModel):
             self.ground_truth_90p is not None:
             log.info("Local dataset file already validated, skip validation and file reading")
             return True
-        self._validate_local_file()
+
+        if check:
+            self._validate_local_file()
 
         self.train_files = sorted([f.name for f in self.data_dir.glob('train*.parquet')])
         self.test_data = self._read_file("test.parquet")
@@ -265,13 +266,17 @@ class DataSet(BaseModel):
 
     def _read_file(self, file_name: str) -> pd.DataFrame:
         """read one file from disk into memory"""
+        import pyarrow.parquet as pq
+
         p = pathlib.Path(self.data_dir, file_name)
-        log.warning(f"file: {p}")
+        log.info(f"reading file into memory: {p}")
         if not p.exists():
             log.warning(f"No such file: {p}")
             return pd.DataFrame()
-        a = pd.read_parquet(p)
-        return a
+        #  a = pd.read_parquet(p)
+        data = pq.read_table(p)
+        df = data.to_pandas()
+        return df
 
 
 class DataSetIterator:
