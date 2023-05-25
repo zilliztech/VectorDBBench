@@ -79,7 +79,7 @@ class LoadCase(Case, BaseModel):
         data_np = np.stack(data_df)
         log.warning(f"data np: {data_np.shape}")
 
-        all_embeddings, all_metadata = np.stack(data_df["emb"]), data_df['id']
+        all_embeddings, all_metadata = np.stack(data_df["emb"]).tolist(), data_df['id'].tolist()
         runner = MultiProcessingInsertRunner(self.db, all_embeddings, all_metadata)
         try:
             count = runner.run_sequentially_endlessness()
@@ -170,18 +170,31 @@ class PerformanceCase(Case, BaseModel):
     def _insert_train_data(self):
         """Insert train data and get the insert_duration"""
         results = []
-        for data_df in self.dataset:
-            all_embeddings, all_metadata = np.stack(data_df["emb"]), data_df['id']
-            if self.normalize:
-                all_embeddings = all_embeddings / np.linalg.norm(all_embeddings)
-            runner = MultiProcessingInsertRunner(self.db, all_embeddings, all_metadata)
+        ds_iter = ds.DataSetIterator(self.dataset)
+        while True:
             try:
-                res = runner.run()
-                results.append(res)
-            except Exception as e:
-                raise e from None
-            finally:
+                data_df = next(ds_iter)
+
+                log.info("get next batch 100k train data and transfer it")
+                all_embeddings, all_metadata = np.stack(data_df["emb"]), data_df['id'].tolist()
+                data_df = None
+
+                if self.normalize:
+                    log.info("normalize the 100k train data")
+                    all_embeddings = all_embeddings / np.linalg.norm(all_embeddings).tolist()
+
+                runner = MultiProcessingInsertRunner(self.db, all_embeddings, all_metadata)
+                results.append(runner.run())
                 runner.stop()
+            except StopIteration:
+                # don't need to stop the runner here
+                break
+                log.info("finished to insert all train data")
+            except Exception as e:
+                if runner:
+                    runner.stop()
+                raise e from None
+        ds_iter = None
         return results
 
     @utils.time_it
