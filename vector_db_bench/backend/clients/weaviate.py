@@ -37,6 +37,7 @@ class Weaviate(VectorDB):
                 client.schema.delete_class(self.collection_name)
 
         self._create_collection(client)
+        client = None
 
     @contextmanager
     def init(self) -> None:
@@ -49,7 +50,8 @@ class Weaviate(VectorDB):
         from weaviate import Client
         self.client = Client(**self.db_config)
         yield
-        # TODO: close client
+        self.client = None
+        del(self.client)
 
     def ready_to_load(self):
         """Should call insert first, do nothing"""
