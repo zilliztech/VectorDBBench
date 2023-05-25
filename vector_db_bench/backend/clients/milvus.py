@@ -100,6 +100,11 @@ class Milvus(VectorDB):
             self.col.wait_for_compaction_completed()
 
             # wait for index done and load refresh
+            self.col.create_index(
+                self._vector_field,
+                self.case_config.index_param(),
+                index_name=self._index_name,
+            )
             utility.wait_for_index_building_complete(self.collection_name)
             self.col.load(_refresh=True)
         except Exception as e:

@@ -157,8 +157,8 @@ class PerformanceCase(Case, BaseModel):
                 _, insert_dur = self._insert_train_data()
                 build_dur = self._ready_to_search()
 
-                m.load_duration = round(insert_dur, 4),
-                m.build_duration = round(build_dur, 4),
+                m.load_duration = round(insert_dur, 4)
+                m.build_duration = round(build_dur, 4)
 
             m.recall, m.serial_latency, m.p99 = self.serial_search()
             m.qps = self.conc_search()
