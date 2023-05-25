@@ -44,6 +44,10 @@ class Case(BaseModel):
             drop_old=True,
         )
 
+    @property
+    def db_cls(self) -> Any:
+        return self.db_configs[0]
+
     def run(self):
         pass
 
@@ -170,31 +174,30 @@ class PerformanceCase(Case, BaseModel):
     def _insert_train_data(self):
         """Insert train data and get the insert_duration"""
         results = []
-        ds_iter = ds.DataSetIterator(self.dataset)
-        while True:
-            try:
-                data_df = next(ds_iter)
 
-                log.info("get next batch 100k train data and transfer it")
-                all_embeddings, all_metadata = np.stack(data_df["emb"]), data_df['id'].tolist()
-                data_df = None
+        for data_df in self.dataset:
+            try:
+                all_metadata = data_df['id'].tolist()
+                emb_np = np.stack(data_df['emb'])
 
                 if self.normalize:
                     log.info("normalize the 100k train data")
-                    all_embeddings = all_embeddings / np.linalg.norm(all_embeddings).tolist()
+                    all_embeddings = emb_np / np.linalg.norm(emb_np, axis=1)[:, np.newaxis].tolist()
+                else:
+                    all_embeddings = emb_np.tolist()
+
+                del(emb_np)
+
+                log.info(f"normalized size: {len(all_embeddings)}, {len(all_metadata)}")
 
                 runner = MultiProcessingInsertRunner(self.db, all_embeddings, all_metadata)
                 results.append(runner.run())
-                runner.stop()
-            except StopIteration:
-                # don't need to stop the runner here
-                break
-                log.info("finished to insert all train data")
             except Exception as e:
+                raise e from None
+            finally:
                 if runner:
                     runner.stop()
-                raise e from None
-        ds_iter = None
+                    runner = None
         return results
 
     @utils.time_it

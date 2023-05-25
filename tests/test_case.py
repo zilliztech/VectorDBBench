@@ -71,7 +71,6 @@ class TestCases:
         ))
         c.run()
 
-    #  @pytest.mark.skip("wait for sift in s3")
     def test_load_small_dim(self):
         dataset = ds.get(ds.Name.SIFT, ds.Label.SMALL)
         db_case_config = DB.Milvus.case_config_cls(IndexType.Flat)()
@@ -82,5 +81,19 @@ class TestCases:
             DB.Milvus.config().to_dict(),
             db_case_config,
         ))
+        c.run()
+
+    def test_performance_case_medium_zero(self):
+        dataset = ds.get(ds.Name.Cohere, ds.Label.MEDIUM)
+        db_case_config = DB.Milvus.case_config_cls(IndexType.Flat)()
+        db_case_config.metric_type = dataset.data.metric_type
+        c = cases.PerformanceMZero(run_id=1, db_configs=(
+            DB.Milvus.init_cls,
+            DB.Milvus.config().to_dict(),
+            db_case_config,
+        ))
+
+        #  c.dataset.prepare(False)
+        #  c._insert_train_data()
         c.run()
 
