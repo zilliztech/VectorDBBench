@@ -36,10 +36,12 @@ class TestModels:
             dim=dim,
             db_config=dbConfig.to_dict(),
             db_case_config=dbCaseConfig,
+            indice="test_es_cloud",
             drop_old=True,
         )
 
         count = 10_000
+        filter_rate = 0.9
         embeddings = [[np.random.random() for _ in range(dim)] for _ in range(count)]
 
         # insert
@@ -60,12 +62,32 @@ class TestModels:
 
         # search
         with es.init():
-            test_id = 1235
+            test_id = np.random.randint(count)
             log.info(f"test_id: {test_id}")
             q = embeddings[test_id]
 
             res = es.search_embedding_with_score(query=q, k=100)
-            log.info(f"search_results_id: {[d for d in res]}")
+            log.info(f"search_results_id: {res}")
             assert (
                 res[0] == test_id
             ), f"the most nearest neighbor ({res[0]}) id is not test_id ({test_id})"
+
+        # search with filters
+        with es.init():
+            test_id = np.random.randint(count * filter_rate, count)
+            log.info(f"test_id: {test_id}")
+            q = embeddings[test_id]
+
+            res = es.search_embedding_with_score(
+                query=q, k=100, filters={"id": count * filter_rate}
+            )
+            log.info(f"search_results_id: {res}")
+            assert (
+                res[0] == test_id
+            ), f"the most nearest neighbor ({res[0]}) id is not test_id ({test_id})"
+            isFilter = True
+            for id in res:
+                if id < count * filter_rate:
+                    isFilter = False
+                    break
+            assert isFilter, f"filters failed"

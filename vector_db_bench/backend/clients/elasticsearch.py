@@ -14,7 +14,7 @@ class Elasticsearch(VectorDB):
         dim: int,
         db_config: dict,
         db_case_config: ElasticsearchIndexConfig,
-        indice: str = "vdb_bench_indice", # must be lowercase
+        indice: str = "vdb_bench_indice",  # must be lowercase
         id_col_name: str = "id",
         vector_col_name: str = "vector",
         drop_old: bool = False,
@@ -26,32 +26,29 @@ class Elasticsearch(VectorDB):
         self.id_col_name = id_col_name
         self.vector_col_name = vector_col_name
 
+        from elasticsearch import Elasticsearch
+
+        client = Elasticsearch(**self.db_config)
+
         if drop_old:
             log.info(f"Elasticsearch client drop_old indices: {self.indice}")
-            from elasticsearch import Elasticsearch
-
-            client = Elasticsearch(**self.db_config)
             is_existed_res = client.indices.exists(index=self.indice)
             if is_existed_res.raw == True:
                 client.indices.delete(index=self.indice)
                 client.transport.close()
             pass
+        self._create_indice(client)
 
     @contextmanager
     def init(self) -> None:
         """connect to elasticsearch"""
         from elasticsearch import Elasticsearch
-
         self.client = Elasticsearch(**self.db_config)
 
-        is_existed_res = self.client.indices.exists(index=self.indice)
-        if is_existed_res.raw == False:
-            self._create_indice()
-
         yield
-        self.client.transport.close()
+        # self.client.transport.close()
 
-    def _create_indice(self) -> None:
+    def _create_indice(self, client) -> None:
         mappings = {
             "properties": {
                 self.id_col_name: {"type": "integer"},
@@ -63,7 +60,7 @@ class Elasticsearch(VectorDB):
         }
 
         try:
-            self.client.indices.create(index=self.indice, mappings=mappings)
+            client.indices.create(index=self.indice, mappings=mappings)
         except Exception as e:
             log.warning(f"Failed to create indice: {self.indice} error: {str(e)}")
             raise e from None
@@ -117,16 +114,15 @@ class Elasticsearch(VectorDB):
             "field": self.vector_col_name,
             "k": k,
             "num_candidates": self.case_config.num_candidates,
-            "filter":  [{"range": {self.id_col_name: {"gt": filters["id"]}}}] if filters else [],
+            "filter": [{"range": {self.id_col_name: {"gt": filters["id"]}}}]
+            if filters
+            else [],
             "query_vector": query,
         }
         size = k
         try:
             search_res = self.client.search(index=self.indice, knn=knn, size=size)
-            res = [
-                d["_source"][self.id_col_name]
-                for d in search_res["hits"]["hits"]
-            ]
+            res = [d["_source"][self.id_col_name] for d in search_res["hits"]["hits"]]
 
             return res
         except Exception as e:
