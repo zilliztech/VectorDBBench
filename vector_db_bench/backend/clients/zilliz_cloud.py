@@ -19,6 +19,7 @@ class ZillizCloud(Milvus):
         db_case_config: DBCaseConfig,
         collection_name: str = "ZillizCloudVectorDBBench",
         drop_old: bool = False,
+        name: str = "ZillizCloud"
     ):
         super().__init__(
             dim=dim,
@@ -26,25 +27,5 @@ class ZillizCloud(Milvus):
             db_case_config=db_case_config,
             collection_name=collection_name,
             drop_old=drop_old,
+            name=name,
         )
-
-
-    def ready_to_search(self):
-        assert self.col, "Please call self.init() before"
-        if not self.col.has_index(index_name=self._index_name):
-            log.info("ZillizCloud flush, compact, create index and load")
-            try:
-                self.col.flush()
-                self.col.compact()
-                self.col.wait_for_compaction_completed()
-
-                self.col.create_index(
-                    self._vector_field,
-                    self.case_config.index_param(),
-                    index_name=self._index_name,
-                )
-
-                self.col.load()
-            except Exception as e:
-                log.warning(f"ZillizCloud ready to search error: {e}")
-                raise e from None

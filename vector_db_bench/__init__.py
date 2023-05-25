@@ -14,4 +14,6 @@ DATASET_LOCAL_DIR = env.path("DATASET_LOCAL_DIR", "/tmp/vector_db_bench/dataset"
 RESULTS_LOCAL_DIR = env.path("RESULTS_LOCAL_DIR", "/tmp/vector_db_bench/results")
 NUM_PER_BATCH = env.int("NUM_PER_BATCH", 5000)
 
+DROP_OLD = env.bool("DROP_OLD", True)
+
 config.init(LOG_LEVEL, LOG_PATH, LOG_NAME, TIMEZONE)
