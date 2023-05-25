@@ -236,7 +236,7 @@ class PerformanceCase(Case, BaseModel):
 
         self.serial_search_runner = SerialSearchRunner(
             db=self.db,
-            test_data=self.test_emb,
+            test_data=self.test_emb.tolist(),
             ground_truth=gt_df,
             filters=self.filters,
         )
