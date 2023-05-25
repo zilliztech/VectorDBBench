@@ -21,8 +21,10 @@ class Milvus(VectorDB):
         db_case_config: DBCaseConfig,
         collection_name: str = "VectorDBBenchCollection",
         drop_old: bool = False,
+        name: str = "Milvus",
     ):
         """Initialize wrapper around the milvus vector database."""
+        self.name = name
         self.db_config = db_config
         self.case_config = db_case_config
         self.collection_name = collection_name
@@ -34,7 +36,7 @@ class Milvus(VectorDB):
         from pymilvus import connections
         connections.connect(**self.db_config, timeout=30)
         if drop_old:
-            log.info(f"Milvus client drop_old collection: {self.collection_name}")
+            log.info(f"{self.name} client drop_old collection: {self.collection_name}")
             utility.drop_collection(self.collection_name)
 
         if not utility.has_collection(self.collection_name):
@@ -43,7 +45,7 @@ class Milvus(VectorDB):
                 FieldSchema(self._vector_field, DataType.FLOAT_VECTOR, dim=dim)
             ]
 
-            log.info(f"Create collection: {self.collection_name}")
+            log.info(f"{self.name} create collection: {self.collection_name}")
 
             # Create the collection
             _ =Collection(
@@ -51,6 +53,9 @@ class Milvus(VectorDB):
                 schema=CollectionSchema(fields),
                 consistency_level="Session",
             )
+
+            self._pre_load()
+
         connections.disconnect("default")
 
 
@@ -72,47 +77,42 @@ class Milvus(VectorDB):
         yield
         connections.disconnect("default")
 
-    def ready_to_load(self):
-        assert self.col, "Please call self.init() before"
-        if not self.col.has_index(index_name=self._index_name):
-            log.info("Milvus create index and load")
+    def _pre_load(self, coll: Collection):
+        if not coll.has_index(index_name=self._index_name):
+            log.info(f"{self.name} create index and load")
             try:
-                # this is sync
-                self.col.create_index(
+                coll.create_index(
                     self._vector_field,
                     self.case_config.index_param(),
                     index_name=self._index_name,
                 )
 
-                # this is also sync
-                self.col.load()
+                coll.load()
             except Exception as e:
-                log.warning(f"Milvus ready to load error: {e}")
+                log.warning(f"{self.name} pre load error: {e}")
                 raise e from None
 
+    def _optimize(self):
+        log.info(f"{self.name} optimizing before search")
+        try:
+            self.col.flush()
+            self.col.compact()
+            self.col.wait_for_compaction_completed()
+
+            # wait for index done
+            # load refresh
+            utility.wait_for_index_building_complete(self.collection_name)
+            self.col.load(_refresh=True)
+        except Exception as e:
+            log.warning(f"{self.name} optimize error: {e}")
+            raise e from None
+
+    def ready_to_load(self):
+        pass
 
     def ready_to_search(self):
         assert self.col, "Please call self.init() before"
-        if not self.col.has_index(index_name=self._index_name):
-            log.info("Milvus flush, compact, create index and load")
-            try:
-                self.col.flush()
-                self.col.compact()
-                self.col.wait_for_compaction_completed()
-
-                # this is sync
-                self.col.create_index(
-                    self._vector_field,
-                    self.case_config.index_param(),
-                    index_name=self._index_name,
-                )
-
-                # this is also sync
-                self.col.load()
-            except Exception as e:
-                log.warning(f"Milvus ready to search error: {e}")
-                raise e from None
-
+        self._optimize()
 
     def insert_embeddings(
         self,
@@ -142,7 +142,7 @@ class Milvus(VectorDB):
         filters: dict | None = None,
         timeout: int | None = None,
     ) -> list[int]:
-        """Perform a search on a query embedding and return results with score.
+        """Perform a search on a query embedding and return results.
         Should call self.init() first.
         """
         assert self.col is not None

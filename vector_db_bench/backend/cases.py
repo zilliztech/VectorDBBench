@@ -19,6 +19,7 @@ from .runner import (
 )
 
 from . import utils
+from .. import DROP_OLD
 
 
 log = logging.getLogger(__name__)
@@ -36,12 +37,12 @@ class Case(BaseModel):
     # tuple of db init cls, db_config and db_case_config
     db_configs: tuple[Any, dict, DBCaseConfig] | None = None
 
-    def init_db(self) -> None:
+    def init_db(self, drop_old: bool = True) -> None:
         self.db = self.db_configs[0](
             dim=self.dataset.data.dim,
             db_config=self.db_configs[1],
             db_case_config=self.db_configs[2],
-            drop_old=True,
+            drop_old=drop_old,
         )
 
     @property
@@ -148,20 +149,20 @@ class PerformanceCase(Case, BaseModel):
     def run(self) -> Metric:
         try:
             self.dataset.prepare()
-            self.init_db()
+            self.init_db(DROP_OLD)
             self.calc_test_emb()
-            _, insert_dur = self._insert_train_data()
-            build_dur = self._ready_to_search()
-            recall, serial_latency, p99 = self.serial_search()
-            qps = self.conc_search()
-            m = Metric(
-                load_duration=round(insert_dur, 4),
-                build_duration=round(build_dur, 4),
-                recall=recall,
-                serial_latency=serial_latency,
-                p99=p99,
-                qps=qps,
-            )
+
+            m = Metric()
+            if DROP_OLD:
+                _, insert_dur = self._insert_train_data()
+                build_dur = self._ready_to_search()
+
+                m.load_duration = round(insert_dur, 4),
+                m.build_duration = round(build_dur, 4),
+
+            m.recall, m.serial_latency, m.p99 = self.serial_search()
+            m.qps = self.conc_search()
+
             log.info(f"got results: {m}")
             return m
         except Exception as e:
