@@ -14,7 +14,7 @@ class Elasticsearch(VectorDB):
         dim: int,
         db_config: dict,
         db_case_config: ElasticsearchIndexConfig,
-        indice: str = "vdb_bench_indice",  # must be lowercase
+        indice: str = "vdb_bench_indice_s",  # must be lowercase
         id_col_name: str = "id",
         vector_col_name: str = "vector",
         drop_old: bool = False,
@@ -35,18 +35,18 @@ class Elasticsearch(VectorDB):
             is_existed_res = client.indices.exists(index=self.indice)
             if is_existed_res.raw == True:
                 client.indices.delete(index=self.indice)
-                client.transport.close()
-            pass
-        self._create_indice(client)
+            self._create_indice(client)
 
     @contextmanager
     def init(self) -> None:
         """connect to elasticsearch"""
         from elasticsearch import Elasticsearch
-        self.client = Elasticsearch(**self.db_config)
+        self.client = Elasticsearch(**self.db_config, request_timeout=30)
 
         yield
         # self.client.transport.close()
+        self.client = None
+        del(self.client)
 
     def _create_indice(self, client) -> None:
         mappings = {
@@ -107,8 +107,8 @@ class Elasticsearch(VectorDB):
             list[tuple[int, float]]: list of k most similar embeddings in (id, score) tuple to the query embedding.
         """
         assert self.client is not None, "should self.init() first"
-        is_existed_res = self.client.indices.exists(index=self.indice)
-        assert is_existed_res.raw == True, "should self.init() first"
+        # is_existed_res = self.client.indices.exists(index=self.indice)
+        # assert is_existed_res.raw == True, "should self.init() first"
 
         knn = {
             "field": self.vector_col_name,

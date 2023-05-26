@@ -151,7 +151,7 @@ CaseConfigParamInput_EFConstruction_ES = CaseConfigInput(
     inputConfig={
         "min": 8,
         "max": 512,
-        "value": 100,
+        "value": 360,
     },
 )
 
@@ -161,7 +161,7 @@ CaseConfigParamInput_M_ES = CaseConfigInput(
     inputConfig={
         "min": 4,
         "max": 64,
-        "value": 16,
+        "value": 30,
     },
 )
 
