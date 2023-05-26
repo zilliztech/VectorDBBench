@@ -12,7 +12,7 @@ CASE_CONFIG_INPUT_WIDTH_RADIO = 0.98
 CASE_INTRO_RATIO = 3
 MAX_STREAMLIT_INT = (1 << 53) - 1
 
-COLORS = ["#7fc97f", "#beaed4", "#fdc086", "#ffff99", "#386cb0"]
+COLORS = ["#7fc97f", "#beaed4", "#fdc086", "#ffff99", "#386cb0", "#f0027f"]
 LEGEND_RECT_WIDTH = 32
 LEGEND_RECT_HEIGHT = 20
 LEGEND_TEXT_FONT_SIZE = 14
@@ -21,7 +21,14 @@ MAX_AUTO_REFRESH_COUNT = 999999
 MAX_AUTO_REFRESH_INTERVAL = 2000  # 2s
 
 
-DB_LIST = [DB.Milvus, DB.ZillizCloud, DB.Weaviate, DB.Elasticsearch, DB.Qdrant]
+DB_LIST = [
+    DB.Milvus,
+    DB.ZillizCloud,
+    DB.Weaviate,
+    DB.Elasticsearch,
+    DB.Qdrant,
+    DB.Pinecone,
+]
 COLOR_MAP = {db.value: COLORS[i] for i, db in enumerate(DB_LIST)}
 
 CASE_LIST = [
