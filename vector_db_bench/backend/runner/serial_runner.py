@@ -26,7 +26,9 @@ class SerialSearchRunner:
         self.k = k
         self.filters = filters
 
-        self.test_data = test_data
+        self.test_data = []
+        for query in test_data:
+            self.test_data.append(query.tolist())
         self.ground_truth = ground_truth
 
     def search(self, args: tuple[list, utils.SharedDataFrame]):
