@@ -16,6 +16,7 @@ from .backend.clients import (
     ZillizCloud,
     Elasticsearch,
     Qdrant,
+    Pinecone,
 )
 
 from .backend.clients.db_config import (
@@ -25,6 +26,7 @@ from .backend.clients.db_config import (
     WeaviateConfig,
     ElasticsearchConfig,
     QdrantConfig,
+    PineconeConfig,
 )
 
 from .backend.clients.db_case_config import (
@@ -106,6 +108,7 @@ class DB(Enum):
     Weaviate = "Weaviate"
     Elasticsearch = "Elasticsearch"
     Qdrant = "Qdrant"
+    Pinecone = "Pinecone"
 
     @property
     def config(self) -> Type[DBConfig]:
@@ -152,6 +155,7 @@ _db2config = {
     DB.Weaviate: WeaviateConfig,
     DB.Elasticsearch: ElasticsearchConfig,
     DB.Qdrant: QdrantConfig,
+    DB.Pinecone: PineconeConfig,
 }
 
 _db2client = {
@@ -160,6 +164,7 @@ _db2client = {
     DB.Weaviate: Weaviate,
     DB.Elasticsearch: Elasticsearch,
     DB.Qdrant: Qdrant,
+    DB.Pinecone: Pinecone,
 }
 
 

@@ -23,6 +23,7 @@ dependencies = [
     "grpcio-tools==1.53.0", # for qdrant-client and pymilvus
     "pymilvus", # with pandas, numpy, ujson
     "qdrant-client",
+    "pinecone-clinet",
     "weaviate-client",
     "elasticsearch",
     "plotly",

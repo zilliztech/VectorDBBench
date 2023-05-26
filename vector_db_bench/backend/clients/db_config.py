@@ -55,3 +55,16 @@ class ElasticsearchConfig(DBConfig, BaseModel):
 
     def to_dict(self) -> dict:
         return {"cloud_id": self.cloud_id, "basic_auth": ("elastic", self.password)}
+
+
+class PineconeConfig(DBConfig, BaseModel):
+    api_key: str
+    environment: str
+    index_name: str
+
+    def to_dict(self) -> dict:
+        return {
+            "api_key": self.api_key,
+            "environment": self.environment,
+            "index_name": self.index_name,
+        }
