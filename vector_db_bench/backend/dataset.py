@@ -132,6 +132,13 @@ class DataSet(BaseModel):
     ground_truth_90p: pd.DataFrame | None = None
     train_files : list[str] = []
 
+    def __eq__(self, obj):
+        if isinstance(obj, DataSet):
+            return self.data.name == obj.data.name and \
+                self.data.label == obj.data.label
+        return False
+
+
     #  @computed_field
     @property
     def data_dir(self) -> pathlib.Path:

@@ -8,7 +8,7 @@ from multiprocessing.connection import Connection
 import psutil
 from enum import Enum
 
-from . import RESULTS_LOCAL_DIR
+from . import RESULTS_LOCAL_DIR, DROP_OLD
 from .models import TaskConfig, TestResult, CaseResult
 from .backend.result_collector import ResultCollector
 from .backend.assembler import Assembler
@@ -49,7 +49,7 @@ class BenchMarkRunner:
         self.latest_error = ""
         self.running_task = {
             'run_id': run_id,
-            'cases': [Assembler.assemble(run_id, task) for task in tasks],
+            'cases': Assembler.assemble_all(run_id, tasks),
             'tasks': tasks,
             'progress': [False for i in range(len(tasks))],
         }
@@ -124,13 +124,23 @@ class BenchMarkRunner:
             return
 
         c_results = []
+        db2case = {}
         try:
             for idx, c in enumerate(running_task['cases']):
+                db = c.db_configs[0]
                 c_dict = c.dict(include={'case_id', 'filters'})
-                c_dict['db'] = c.db_configs[0]
+                c_dict['db'] = db
 
                 log.info(f"start running case: {c_dict}")
-                metric = c.run()
+
+                drop_old = DROP_OLD
+                if db in db2case:
+                    if c.db_configs[1] == db2case[db].db_configs[1] and c.dataset == db2case[db].dataset:
+                        drop_old = False
+                else:
+                    db2case[db] = c
+
+                metric = c.run(drop_old)
                 log.info(f"end running case: {c_dict}")
 
                 c_results.append(CaseResult(

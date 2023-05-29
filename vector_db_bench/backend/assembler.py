@@ -18,3 +18,8 @@ class Assembler:
             task.db_case_config
         )
         return c
+
+    @classmethod
+    def assemble_all(cls, run_id: str, tasks: list[TaskConfig]) -> list[Case]:
+        return [cls.assemble(run_id, task) for task in tasks]
+

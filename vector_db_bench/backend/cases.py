@@ -19,7 +19,6 @@ from .runner import (
 )
 
 from . import utils
-from .. import DROP_OLD
 
 
 log = logging.getLogger(__name__)
@@ -61,8 +60,11 @@ class LoadCase(Case, BaseModel):
     filter_rate: float = 0.
     filter_size: int = 0
 
-    def run(self) -> int:
+    def run(self, drop_old: bool=False) -> int:
         """
+        Args:
+            drop_old(bool): no effects, always drops old
+
         Returns
             int: the max load count
         """
@@ -146,14 +148,14 @@ class PerformanceCase(Case, BaseModel):
             }
         return None
 
-    def run(self) -> Metric:
+    def run(self, drop_old: True) -> Metric:
         try:
             self.dataset.prepare()
-            self.init_db(DROP_OLD)
+            self.init_db(drop_old)
             self.calc_test_emb()
 
             m = Metric()
-            if DROP_OLD:
+            if drop_old:
                 _, insert_dur = self._insert_train_data()
                 build_dur = self._ready_to_search()
 
