@@ -46,7 +46,7 @@ class Qdrant(VectorDB):
             log.info(f"Qdrant client drop_old collection: {self.collection_name}")
             tmp_client.delete_collection(self.collection_name)
 
-        tmp_client._create_collection(dim)
+        self._create_collection(dim, tmp_client)
         tmp_client = None
 
     @contextmanager
@@ -83,16 +83,16 @@ class Qdrant(VectorDB):
             log.warning(f"Qdrant ready to search error: {e}")
             raise e from None
 
-    def _create_collection(self, dim: int):
+    def _create_collection(self, dim, qdrant_client: int):
         log.info(f"Create collection: {self.collection_name}")
 
         try:
-            self.qdrant_client.create_collection(
+            qdrant_client.create_collection(
                 collection_name=self.collection_name,
                 vectors_config=VectorParams(size=dim, distance=Distance.EUCLID)
             )
 
-            self.qdrant_client.create_payload_index(
+            qdrant_client.create_payload_index(
                 collection_name=self.collection_name,
                 field_name=self._primary_field,
                 field_schema=PayloadSchemaType.INTEGER,
@@ -151,7 +151,7 @@ class Qdrant(VectorDB):
 
         res = self.qdrant_client.search(
             collection_name=self.collection_name,
-            query_vector=[query],
+            query_vector=query,
             limit=k,
             query_filter=f,
             #  with_payload=True,
