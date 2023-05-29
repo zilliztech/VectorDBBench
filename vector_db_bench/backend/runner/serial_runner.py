@@ -26,9 +26,10 @@ class SerialSearchRunner:
         self.k = k
         self.filters = filters
 
-        self.test_data = []
-        for query in test_data:
-            self.test_data.append(query.tolist())
+        if isinstance(test_data[0], np.ndarray):
+            self.test_data = [query.tolist() for query in test_data]
+        else:
+            self.test_data = test_data
         self.ground_truth = ground_truth
 
     def search(self, args: tuple[list, utils.SharedDataFrame]):
