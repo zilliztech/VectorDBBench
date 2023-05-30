@@ -3,7 +3,10 @@ from abc import ABC, abstractmethod
 import weaviate
 
 
-class DBConfig(ABC):
+class DBConfig(ABC, BaseModel):
+
+    db_label: str | None = None
+
     @abstractmethod
     def to_dict(self) -> dict:
         raise NotImplementedError
