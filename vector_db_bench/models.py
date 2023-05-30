@@ -110,6 +110,7 @@ class DB(Enum):
     Qdrant = "Qdrant"
     Pinecone = "Pinecone"
 
+
     @property
     def config(self) -> Type[DBConfig]:
         """Get configs of the DB

@@ -3,6 +3,7 @@ import logging
 import concurrent
 from typing import Any
 import numpy as np
+from enum import Enum, auto
 
 from . import dataset as ds
 from .clients import api
@@ -24,8 +25,14 @@ from . import utils
 log = logging.getLogger(__name__)
 
 
+class CaseLabel(Enum):
+    Load = auto()
+    Performance = auto()
+
+
 class Case(BaseModel):
     case_id: CaseType
+    label: CaseLabel
     dataset: ds.DataSet
 
     metric: Metric
@@ -56,6 +63,7 @@ class Case(BaseModel):
 
 
 class LoadCase(Case, BaseModel):
+    label: CaseLabel = CaseLabel.Load
     metric: Metric = None
     filter_rate: float = 0.
     filter_size: int = 0
@@ -118,6 +126,7 @@ class PerformanceCase(Case, BaseModel):
         Metric: metrics except max_load_count,
             including load_duration, build_duration, qps, serial_latency, p99, recall
     """
+    label: CaseLabel = CaseLabel.Performance
     metric: Metric = None
     filter_rate: float = 0
     filter_size: int = 0
@@ -184,14 +193,14 @@ class PerformanceCase(Case, BaseModel):
                 emb_np = np.stack(data_df['emb'])
 
                 if self.normalize:
-                    log.info("normalize the 100k train data")
+                    log.debug("normalize the 100k train data")
                     all_embeddings = emb_np / np.linalg.norm(emb_np, axis=1)[:, np.newaxis].tolist()
                 else:
                     all_embeddings = emb_np.tolist()
 
                 del(emb_np)
 
-                log.info(f"normalized size: {len(all_embeddings)}, {len(all_metadata)}")
+                log.debug(f"normalized size: {len(all_embeddings)}, {len(all_metadata)}")
 
                 runner = MultiProcessingInsertRunner(self.db, all_embeddings, all_metadata)
                 results.append(runner.run())
