@@ -8,7 +8,11 @@ from multiprocessing.connection import Connection
 import psutil
 from enum import Enum
 
-from . import RESULTS_LOCAL_DIR, DROP_OLD
+from . import (
+    RESULTS_LOCAL_DIR,
+    DROP_OLD,
+)
+
 from .models import TaskConfig, TestResult, CaseResult
 from .backend.result_collector import ResultCollector
 from .backend.assembler import Assembler
