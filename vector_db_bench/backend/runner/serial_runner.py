@@ -33,6 +33,7 @@ class SerialSearchRunner:
         self.ground_truth = ground_truth
 
     def search(self, args: tuple[list, utils.SharedDataFrame]):
+        logging.info(f"{mp.current_process().name:14} start search the entire test_data to get recall and latency")
         with self.db.init():
             test_data, ground_truth = args
 
@@ -79,7 +80,7 @@ class SerialSearchRunner:
         cost = round(np.sum(latencies), 4)
         p99 = round(np.percentile(latencies, 99), 4)
         logging.info(
-            f"{mp.current_process().name:14} search entire dataset: "
+            f"{mp.current_process().name:14} search entire test_data: "
             f"cost={cost}s, "
             f"queries={len(latencies)}, "
             f"avg_recall={avg_recall}, "

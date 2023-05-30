@@ -91,7 +91,7 @@ class BenchMarkRunner:
     def get_tasks_count(self) -> int:
         """the count of all tasks"""
         if self.running_task:
-            return len(self.running_task['cases'])
+            return len(self.running_task['tasks'])
         return 0
 
 
@@ -124,32 +124,52 @@ class BenchMarkRunner:
             return
 
         c_results = []
-        db2case = {}
+        idx = 0
         try:
-            for idx, c in enumerate(running_task['cases']):
-                db = c.db_configs[0]
-                c_dict = c.dict(include={'case_id', 'filters'})
-                c_dict['db'] = db
+            load_cases, perf_cases = running_task['cases']
+            for lcase in load_cases:
+                db = lcase.db_configs[0].__name__
+                c_dict = lcase.dict(include={'label':True, 'dataset':{'data': True} })
+                log.info(f"start  load case: db={db:15}, {c_dict}")
 
-                log.info(f"start running case: {c_dict}")
-
-                drop_old = DROP_OLD
-                if db in db2case:
-                    if c.db_configs[1] == db2case[db].db_configs[1] and c.dataset == db2case[db].dataset:
-                        drop_old = False
-                else:
-                    db2case[db] = c
-
-                metric = c.run(drop_old)
-                log.info(f"end running case: {c_dict}")
-
+                metric = lcase.run()
+                # TODO persist case result
                 c_results.append(CaseResult(
                     result_id=idx,
                     metrics=metric,
                     task_config=running_task['tasks'][idx],
                 ))
+                log.info(f"finish load case: db={db:15}, {c_dict}")
 
                 send_conn.send((SIGNAL.WIP, idx))
+                idx += 1
+
+            for db, pcases in perf_cases.items():
+                log.info(f"start performance case: db={db.__name__}, case_count={len(pcases)}")
+                latest_case = None
+                for i, pcase in enumerate(pcases):
+                    drop_old = DROP_OLD
+                    if latest_case and \
+                        pcase.db_configs[1] == latest_case.db_configs[1] and \
+                        pcase.dataset == latest_case.dataset:
+                        drop_old = False
+
+                    else:
+                        latest_case = pcase
+
+                    c_dict = pcase.dict(include={'label': True, 'filters': True, 'dataset':{'data': True} })
+                    log.info(f"[{i+1}/{len(pcases)}] start  {db.__name__} performance case: {c_dict} with drop_old={drop_old}")
+                    metric = pcase.run(drop_old)
+                    c_results.append(CaseResult(
+                        result_id=idx,
+                        metrics=metric,
+                        task_config=running_task['tasks'][idx],
+                    ))
+                    log.info(f"[{i+1}/{len(pcases)}] finish {db.__name__} performance case, result={metric}")
+
+                    send_conn.send((SIGNAL.WIP, idx))
+                    idx += 1
+
 
             test_result = TestResult(
                 run_id=running_task['run_id'],
@@ -175,8 +195,12 @@ class BenchMarkRunner:
 
         if self.running_task:
             log.info(f"will force stop running task: {self.running_task['run_id']}")
-            for c in self.running_task['cases']:
+            lcases, pcases = self.running_task['cases']
+            for c in lcases:
                 c.stop()
+            for db_pcases in pcases.values():
+                for c in db_pcases:
+                    c.stop()
 
             for child_p in psutil.Process().children(recursive=True):
                 log.warning(f"force killing child process: {child_p}")
@@ -189,7 +213,7 @@ class BenchMarkRunner:
 
 
     def _run_async(self, conn: Connection) -> bool:
-        log.info(f"task submitted: id={self.running_task['run_id']}, {self.running_task['tasks']}, case number: {len(self.running_task['cases'])}")
+        log.info(f"task submitted: id={self.running_task['run_id']}, {self.running_task['tasks']}, case number: {len(self.running_task['tasks'])}")
         global global_result_future
         executor = concurrent.futures.ProcessPoolExecutor(max_workers=1, mp_context=mp.get_context('spawn'))
         global_result_future = executor.submit(self._async_task, self.running_task, conn)

@@ -15,7 +15,7 @@ log = logging.getLogger(__name__)
 
 class MultiProcessingInsertRunner:
     def __init__(self, db: api.VectorDB, train_emb: list[list[float]], train_id: list[int]):
-        log.info(f"Dataset shape: {len(train_emb)}")
+        log.debug(f"Dataset shape: {len(train_emb)}")
         self.db = db
         self.shared_emb = train_emb
         self.train_id = train_id
@@ -172,7 +172,7 @@ class MultiProcessingSearchRunner:
     @staticmethod
     def get_mp_context():
         mp_start_method = "forkserver" if "forkserver" in mp.get_all_start_methods() else "spawn"
-        log.info(f"MultiProcessingSearchRunner get multiprocessing start method: {mp_start_method}")
+        log.debug(f"MultiProcessingSearchRunner get multiprocessing start method: {mp_start_method}")
         return mp.get_context(mp_start_method)
 
     def _run_all_concurrencies_mem_efficient(self) -> float:
