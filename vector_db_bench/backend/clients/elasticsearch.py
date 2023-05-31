@@ -5,8 +5,11 @@ from .api import VectorDB
 from .db_case_config import ElasticsearchIndexConfig
 from elasticsearch.helpers import bulk
 
-log = logging.getLogger(__name__)
 
+for logger in ("elasticsearch", "elastic_transport"):
+    logging.getLogger(logger).setLevel(logging.WARNING)
+
+log = logging.getLogger(__name__)
 
 class Elasticsearch(VectorDB):
     def __init__(
