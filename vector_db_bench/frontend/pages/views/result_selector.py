@@ -1,7 +1,7 @@
 def getShowResults(results, st):
     st.header("Results")
     resultSelectOptions = [
-        result.task_label if 'task_label' in result else f"result-{i+1}"
+        result.task_label if result.task_label != result.run_id else f"res-{result.run_id[:4]}"
         for i, result in enumerate(results)
     ]
     selectedResultSelectedOptions = st.multiselect(
