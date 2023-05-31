@@ -208,6 +208,7 @@ class CaseResult(BaseModel):
 class TestResult(BaseModel):
     """ ROOT/result_{date.today()}_{run_id}.json """
     run_id: str
+    task_label: str
     results: list[CaseResult]
 
     def write_file(self):
@@ -233,6 +234,8 @@ class TestResult(BaseModel):
 
         with open(full_path) as f:
             test_result = ujson.loads(f.read())
+            if "task_label" not in test_result:
+                test_result['task_label'] = test_result['run_id']
 
             for case_result in test_result["results"]:
                 task_config = case_result.get("task_config")

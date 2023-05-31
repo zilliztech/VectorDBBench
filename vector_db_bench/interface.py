@@ -48,11 +48,13 @@ class BenchMarkRunner:
         # Generate run_id
         run_id = uuid.uuid4().hex
         log.info(f"generated uuid for the tasks: {run_id}")
+        task_label = task_label if task_label else run_id
 
         self.receive_conn, send_conn = mp.Pipe()
         self.latest_error = ""
         self.running_task = {
             'run_id': run_id,
+            'task_label': task_label,
             'cases': Assembler.assemble_all(run_id, tasks),
             'tasks': tasks,
             'progress': [False for i in range(len(tasks))],
@@ -177,6 +179,7 @@ class BenchMarkRunner:
 
             test_result = TestResult(
                 run_id=running_task['run_id'],
+                task_label=running_task['task_label'],
                 results=c_results,
             )
 

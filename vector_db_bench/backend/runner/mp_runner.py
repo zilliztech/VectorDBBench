@@ -193,8 +193,9 @@ class MultiProcessingSearchRunner:
                     qps = round(all_count / cost, 4)
                     log.info(f"end search in concurrency {conc}: dur={cost}s, total_count={all_count}, qps={qps}")
 
-                max_qps = qps if qps > max_qps else max_qps
-                log.info(f"update largest qps with concurrency {conc}: current max_qps={max_qps}")
+                if qps > max_qps:
+                    max_qps = qps
+                    log.info(f"update largest qps with concurrency {conc}: current max_qps={max_qps}")
         except Exception as e:
             log.warning(f"fail to search all concurrencies: {self.concurrencies}, max_qps before failure={max_qps}, reason={e}")
             traceback.print_exc()
