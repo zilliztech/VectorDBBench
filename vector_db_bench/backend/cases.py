@@ -80,7 +80,7 @@ class LoadCase(Case, BaseModel):
             log.info("start to run load case")
             self.init_db()
             self.dataset.prepare()
-            self._load()
+            return self._load()
             log.info("end run load case")
         except Exception as e:
             log.warning(f"run load case error: {e}")
