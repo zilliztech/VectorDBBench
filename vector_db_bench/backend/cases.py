@@ -91,15 +91,12 @@ class LoadCase(Case, BaseModel):
         # only 1 file
         data_df = [data_df for data_df in self.dataset][0]
 
-        data_np = np.stack(data_df)
-        log.warning(f"data np: {data_np.shape}")
-
         all_embeddings, all_metadata = np.stack(data_df["emb"]).tolist(), data_df['id'].tolist()
         runner = MultiProcessingInsertRunner(self.db, all_embeddings, all_metadata)
         try:
             count = runner.run_sequentially_endlessness()
             log.info(f"load reach limit: insertion counts={count}")
-            return count
+            return Metric(max_load_count=count)
         except Exception as e:
             log.warning(f"run load case error: {e}")
             raise e from None
