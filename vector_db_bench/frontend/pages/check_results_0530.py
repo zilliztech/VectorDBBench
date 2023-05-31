@@ -35,7 +35,6 @@ def main():
 
     # data
     allData = getChartData(selectedResult, showDBNames, showCases)
-    print('allData',allData)
 
     # charts
     for case in showCases:
