@@ -35,7 +35,7 @@ class Milvus(VectorDB):
 
         from pymilvus import connections
         connections.connect(**self.db_config, timeout=30)
-        if drop_old:
+        if drop_old and utility.has_collection(self.collection_name):
             log.info(f"{self.name} client drop_old collection: {self.collection_name}")
             utility.drop_collection(self.collection_name)
 

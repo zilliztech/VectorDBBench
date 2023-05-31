@@ -87,16 +87,15 @@ class Pinecone(VectorDB):
         **kwargs: Any,
     ) -> list[tuple[int, float]]:
         if filters is None:
-            filters = {}
+            pinecone_filters = {}
         else:
-            filters[self._metadata_key] = {
-                self._metadata_key: {"$gte", filters["id"]}}
+            pinecone_filters = {self._metadata_key: {"$gte": filters["id"]}}
     
         try:
             res = self.index.query(
                 top_k=k,
                 vector=query,
-                filter=filters,
+                filter=pinecone_filters,
             )['matches']
         except Exception as e:
             print(f"Error querying index: {e}")

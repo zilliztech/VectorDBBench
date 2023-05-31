@@ -29,48 +29,22 @@ def init(log_level, log_path, name, tz='UTC'):
                 '()': ColorfulFormatter,
             },
         },
-        'filters': {
-            'InfoFilter': {
-                '()': InfoFilter,
-            },
-            'DebugFilter': {
-                '()': DebugFilter,
-            },
-            'WarnFilter': {
-                '()': WarnFilter,
-            },
-        },
         'handlers': {
             'console': {
                 'class': 'logging.StreamHandler',
                 'formatter': 'colorful_console',
             },
-            'debug_file': {
-                'level': 'DEBUG',
-                'filters': ['DebugFilter'],
-                'class': 'logging.handlers.RotatingFileHandler',
-                'formatter': 'default',
-                'filename': build_log_file('debug', log_path, name, tz)
-            },
-            'info_file': {
-                'level': 'INFO',
-                'filters': ['InfoFilter'],
-                'class': 'logging.handlers.RotatingFileHandler',
-                'formatter': 'default',
-                'filename': build_log_file('info', log_path, name, tz)
-            },
-            'warn_file': {
-                'level': 'WARN',
-                'filters': ['WarnFilter'],
-                'class': 'logging.handlers.RotatingFileHandler',
-                'formatter': 'default',
-                'filename': build_log_file('warn', log_path, name, tz)
-            },
+            #  'log_file': {
+            #      'level': 'INFO',
+            #      'class': 'logging.handlers.RotatingFileHandler',
+            #      'formatter': 'default',
+            #      'filename': build_log_file('all', log_path, name, tz)
+            #  },
         },
         'loggers': {
             '': {
-                #  'handlers': ['console', 'info_file', 'debug_file', 'warn_file'],
-                'handlers': ['console', 'info_file'],
+                #  'handlers': ['console', 'log_file'],
+                'handlers': ['console'],
                 'level': log_level,
                 'propagate': False
             },
@@ -114,7 +88,6 @@ class ColorFulFormatColMixin:
 
     def formatTime(self, record, datefmt=None):
         ret = super().formatTime(record, datefmt)
-        #  ret = COLORS['ASCTIME'] + ret + COLORS['ENDC']
         return ret
 
 
@@ -125,13 +98,8 @@ class ColorfulLogRecordProxy(logging.LogRecord):
         self.msg = f"{COLORS[msg_level]}{record.msg}{COLORS['ENDC']}"
         self.filename = record.filename
         self.lineno = f'{record.lineno}'
-        #  self.threadName = f'{record.threadName}'
         self.process = f'{record.process}'
         self.levelname = f"{COLORS[record.levelname]}{record.levelname}{COLORS['ENDC']}"
-        #  self.filename = COLORS['FILENAME'] + record.filename + COLORS['ENDC']
-        #  self.lineno = '{}{}{}'.format(COLORS['LINENO'], record.lineno, COLORS['ENDC'])
-        #  self.threadName = '{}{}{}'.format(COLORS['THREAD'], record.threadName, COLORS['ENDC'])
-        #  self.levelname = COLORS[record.levelname] + record.levelname + COLORS['ENDC']
 
     def __getattr__(self, attr):
         if attr not in self.__dict__:
@@ -145,17 +113,3 @@ class ColorfulFormatter(ColorFulFormatColMixin, logging.Formatter):
         message_str = super().format(proxy)
 
         return message_str
-
-class InfoFilter(Filter):
-    def filter(self, rec):
-        return rec.levelno == logging.INFO
-
-
-class DebugFilter(Filter):
-    def filter(self, rec):
-        return rec.levelno == logging.DEBUG
-
-
-class WarnFilter(Filter):
-    def filter(self, rec):
-        return rec.levelno == logging.WARN
