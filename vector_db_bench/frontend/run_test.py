@@ -2,19 +2,18 @@ import streamlit as st
 from vector_db_bench.frontend.const import *
 from vector_db_bench.models import TaskConfig, CaseConfig, DBCaseConfig
 from vector_db_bench.interface import benchMarkRunner
-from vector_db_bench.frontend.utils import inputIsPassword
+from vector_db_bench.frontend.utils import inputIsPassword, displayCaseText
 from streamlit_autorefresh import st_autorefresh
+from datetime import datetime
 
 
 def main():
-
     st.set_page_config(
         page_title="Falcon Mark - Open VectorDB Bench",
         page_icon="🧊",
         # layout="wide",
         initial_sidebar_state="collapsed",
     )
-
 
     st.title("Run Your Test")
 
@@ -30,7 +29,6 @@ def main():
 
     activedDbList = [db for db in DB_LIST if dbIsActived[db]]
     # print("activedDbList", activedDbList)
-
 
     # DB Config Setting
     dbConfigs = {}
@@ -67,7 +65,6 @@ def main():
             dbConfigs[activeDb] = dbConfigClass(**dbConfig)
     # print("dbConfigs", dbConfigs)
 
-
     # Case
     st.divider()
     caseContainers = st.container()
@@ -76,9 +73,13 @@ def main():
     for i, case in enumerate(CASE_LIST):
         caseContainer = caseContainers.container()
         columns = caseContainer.columns([1, CASE_INTRO_RATIO], gap="small")
-        caseIsActived[case["name"]] = columns[0].checkbox(case["name"].value)
+        caseIsActived[case["name"]] = columns[0].checkbox(
+            displayCaseText(case["name"].value)
+        )
         columns[1].markdown(case["intro"])
-    activedCaseList = [case["name"] for case in CASE_LIST if caseIsActived[case["name"]]]
+    activedCaseList = [
+        case["name"] for case in CASE_LIST if caseIsActived[case["name"]]
+    ]
     # print("activedCaseList", activedCaseList)
 
     # Case Config Setting
@@ -122,7 +123,9 @@ def main():
                         key = "%s-%s-%s" % (db, case, config.label.value)
                         if config.inputType == InputType.Text:
                             caseConfig[config.label] = column.text_input(
-                                config.label.value, key=key, value=config.inputConfig["value"]
+                                config.label.value,
+                                key=key,
+                                value=config.inputConfig["value"],
                             )
                         elif config.inputType == InputType.Option:
                             caseConfig[config.label] = column.selectbox(
@@ -171,8 +174,6 @@ def main():
 
     # isRunning = False
     isRunning = benchMarkRunner.has_running()
-    runHandler = lambda: benchMarkRunner.run(tasks)
-    stopHandler = lambda: benchMarkRunner.stop_running()
     with controlContainer:
         if isRunning:
             progressContainer = controlContainer.container()
@@ -185,12 +186,22 @@ def main():
             if len(errorText) > 0:
                 controlContainer.error(errorText)
 
+        # task label
+        taskLabelContainer = controlContainer.container()
+        taskLabelColumns = taskLabelContainer.columns(2)
+        defaultTaskLabel = datetime.now().strftime("%Y%m%d")
+        taskLabel = taskLabelColumns[0].text_input(
+            "Task Label (used to mark the result)", defaultTaskLabel
+        )
+
         submitContainer = controlContainer.container()
         columns = submitContainer.columns(CHECKBOX_MAX_COLUMNS)
 
+        runHandler = lambda: benchMarkRunner.run(tasks, taskLabel)
+        stopHandler = lambda: benchMarkRunner.stop_running()
+
         columns[0].button("Run", disabled=isRunning, on_click=runHandler)
         columns[1].button("Stop", disabled=not isRunning, on_click=stopHandler)
-
 
     # Use "setTimeInterval" in js and simulate page interaction behavior to trigger refresh.
     # Will not block the main python server thread.

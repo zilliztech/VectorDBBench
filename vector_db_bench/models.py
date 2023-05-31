@@ -192,6 +192,12 @@ class TaskConfig(BaseModel):
     db_case_config: DBCaseConfig
     case_config: CaseConfig
 
+    @property
+    def db_name(self):
+        db = self.db.value
+        db_label = self.db_config.db_label
+        return f"{db}-{db_label}" if db_label else db
+
 
 class CaseResult(BaseModel):
     metrics: Metric

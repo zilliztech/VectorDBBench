@@ -30,6 +30,16 @@ lowerIsBetterMetricList = [
     "p99",
 ]
 
+metricOrder = [
+    "qps",
+    "recall",
+    "load_duration",
+    "build_duration",
+    "serial_latency",
+    "p99",
+    "max_load_count",
+]
+
 
 def isLowerIsBetterMetric(metric: str) -> bool:
     return metric in lowerIsBetterMetricList
