@@ -22,6 +22,12 @@ class Metric:
     p99: float = 0.0
     recall: float = 0.0
 
+metricUnitMap = {
+    'load_duration': 's',
+    'build_duration': 's',
+    'serial_latency': 's',
+    'p99': 's',
+}
 
 lowerIsBetterMetricList = [
     "load_duration",

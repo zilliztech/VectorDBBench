@@ -1,4 +1,4 @@
-from vector_db_bench.metric import metricOrder, isLowerIsBetterMetric
+from vector_db_bench.metric import metricOrder, isLowerIsBetterMetric, metricUnitMap
 from vector_db_bench.frontend.const import *
 import plotly.express as px
 
@@ -26,7 +26,13 @@ def drawMetricChart(data, metric, st):
     )
     chart = st.container()
 
-    height = len(dataWithMetric) * 28
+    height = len(dataWithMetric) * 24 + 40
+    xmin = 0
+    xmax = max([d.get(metric, 0) for d in dataWithMetric])
+    xpadding = (xmax - xmin) / 16
+    xpadding_multiplier = 1.2
+    xrange = [xmin, xmax + xpadding * xpadding_multiplier]
+    unit = metricUnitMap.get(metric, '')
     fig = px.bar(
         dataWithMetric,
         x=metric,
@@ -44,18 +50,26 @@ def drawMetricChart(data, metric, st):
         color_discrete_map=COLOR_MAP,
         text_auto=True,
     )
-    fig.update_xaxes(showticklabels=False, visible=False)
+    fig.update_xaxes(showticklabels=False, visible=False, range=xrange)
     fig.update_yaxes(showticklabels=False, visible=False)
     fig.update_traces(
         textposition="outside",
+        textfont=dict(
+            # color="#fff",
+            size=14,
+        ),
         marker=dict(
             pattern=dict(fillmode="overlay", fgcolor="#fff", fgopacity=1, size=7)
         ),
+        texttemplate="%{x:,.4~r}" + unit,
     )
     fig.update_layout(
         margin=dict(l=0, r=0, t=0, b=0, pad=8),
-        showlegend=False,
-        # legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="right", x=1, title=""),
+        bargap=0.25,
+        # showlegend=False,
+        legend=dict(
+            orientation="h", yanchor="bottom", y=1, xanchor="right", x=1, title=""
+        ),
         # legend=dict(orientation="v", title=""),
     )
 
