@@ -30,6 +30,7 @@ class Milvus(VectorDB):
         self.collection_name = collection_name
 
         self._primary_field = "pk"
+        self._scalar_field = "id"
         self._vector_field = "vector"
         self._index_name = "vector_idx"
 
@@ -42,6 +43,7 @@ class Milvus(VectorDB):
         if not utility.has_collection(self.collection_name):
             fields = [
                 FieldSchema(self._primary_field, DataType.INT64, is_primary=True),
+                FieldSchema(self._scalar_field, DataType.INT64),
                 FieldSchema(self._vector_field, DataType.FLOAT_VECTOR, dim=dim)
             ]
 
@@ -132,6 +134,7 @@ class Milvus(VectorDB):
         assert self.col is not None
         insert_data = [
                 metadata,
+                metadata,
                 embeddings,
         ]
 
@@ -154,7 +157,7 @@ class Milvus(VectorDB):
         """
         assert self.col is not None
 
-        expr = f"{self._primary_field} {filters.get('metadata')}" if filters else ""
+        expr = f"{self._scalar_field} {filters.get('metadata')}" if filters else ""
 
         # Perform the search.
         res = self.col.search(
