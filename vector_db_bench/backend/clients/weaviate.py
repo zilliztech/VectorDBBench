@@ -30,12 +30,16 @@ class Weaviate(VectorDB):
         self._vector_field = "vector"
         self._index_name = "vector_idx"
 
+        from weaviate import Client
+        client = Client(**db_config)
         if drop_old:
-            from weaviate import Client
-            client = Client(**db_config)
-            if client.schema.exists(self.collection_name):
-                client.schema.delete_class(self.collection_name)
-
+            try:
+                if client.schema.exists(self.collection_name):
+                    log.info(f"weaviate client drop_old collection: {self.collection_name}")
+                    client.schema.delete_class(self.collection_name)
+            except WeaviateBaseError as e:
+                log.warning(f"Failed to drop collection: {self.collection_name} error: {str(e)}")
+                raise e from None
         self._create_collection(client)
         client = None
 
