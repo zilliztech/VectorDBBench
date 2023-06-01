@@ -1,4 +1,5 @@
 import traceback
+import pathlib
 import logging
 import uuid
 import concurrent
@@ -62,7 +63,7 @@ class BenchMarkRunner:
 
         return self._run_async(send_conn)
 
-    def get_results(self, result_dir: list[str] | None = None) -> list[TestResult]:
+    def get_results(self, result_dir: pathlib.Path | None = None) -> list[TestResult]:
         """results of all runs, each TestResult represents one run."""
         target_dir = result_dir if result_dir else RESULTS_LOCAL_DIR
         return ResultCollector.collect(target_dir)

@@ -206,26 +206,27 @@ class CaseResult(BaseModel):
 
 
 class TestResult(BaseModel):
-    """ ROOT/result_{date.today()}_{run_id}.json """
+    """ ROOT/result_{date.today()}_{task_label}.json """
     run_id: str
     task_label: str
     results: list[CaseResult]
 
     def write_file(self):
-        result_dir = pathlib.Path(RESULTS_LOCAL_DIR)
+        result_dir = RESULTS_LOCAL_DIR
         if not result_dir.exists():
             log.info(f"local result directory not exist, creating it: {result_dir}")
             result_dir.mkdir(parents=True)
 
-        result_file = result_dir.joinpath(f'result_{date.today().strftime("%Y%m%d")}_{self.run_id}.json')
+        file_name = f'result_{date.today().strftime("%Y%m%d")}_{self.task_label}.json'
+        result_file = result_dir.joinpath(file_name)
         if result_file.exists():
-            # should not happen
-            raise ValueError(f"try to write to existing file: {result_file}")
+            log.warning(f"Replacing existing result with the same file_name: {result_file}")
 
         log.info(f"write results to disk {result_file}")
         with open(result_file, 'w') as f:
             b = self.json(exclude={'db_config': {'password', 'api_key'}})
             f.write(b)
+
 
     @classmethod
     def read_file(cls, full_path: pathlib.Path) -> Self:
