@@ -8,6 +8,7 @@ from vector_db_bench.models import (
     CaseResult, TestResult,
     Metric,
 )
+from vector_db_bench import RESULTS_LOCAL_DIR
 
 
 log = logging.getLogger(__name__)
@@ -61,9 +62,15 @@ class TestModels:
             ),
             metrics=Metric(),
         )
-        
+
         test_result = TestResult(run_id=10000, results=[result])
         test_result.write_file()
 
         with pytest.raises(ValueError):
             result = TestResult.read_file('nosuchfile.json')
+
+    def test_test_result_read_write(self):
+        result_dir = RESULTS_LOCAL_DIR
+        for json_file in result_dir.glob("*.json"):
+            res = TestResult.read_file(json_file)
+            res.write_file()
