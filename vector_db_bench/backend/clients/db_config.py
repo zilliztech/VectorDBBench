@@ -13,61 +13,68 @@ class DBConfig(ABC, BaseModel):
 
 
 class MilvusConfig(DBConfig, BaseModel):
-    uri: str = "http://localhost:19530"
+    uri: SecretStr | None = "http://localhost:19530"
 
     def to_dict(self) -> dict:
-        return {"uri": self.uri}
+        return {"uri": self.uri.get_secret_value()}
 
 
 class ZillizCloudConfig(DBConfig, BaseModel):
-    uri: str
+    uri: SecretStr | None = None
     user: str
     password: SecretStr | None = None
 
     def to_dict(self) -> dict:
-        return {"uri": self.uri, "user": self.user, "password": self.password.get_secret_value()}
+        return {
+            "uri": self.uri.get_secret_value(),
+            "user": self.user,
+            "password": self.password.get_secret_value(),
+        }
 
 
 class WeaviateConfig(DBConfig, BaseModel):
-    url: str
+    url: SecretStr | None = None
     api_key: SecretStr | None = None
 
     def to_dict(self) -> dict:
         return {
-            "url": self.url,
+            "url": self.url.get_secret_value(),
             "auth_client_secret": weaviate.AuthApiKey(api_key=self.api_key.get_secret_value()),
         }
 
 
 class QdrantConfig(DBConfig, BaseModel):
-    url: str
+    url: SecretStr | None = None
     api_key: SecretStr | None = None
     prefer_grpc: bool = True
 
     def to_dict(self) -> dict:
         return {
-            "url": self.url,
+            "url": self.url.get_secret_value(),
             "api_key": self.api_key.get_secret_value(),
             "prefer_grpc": self.prefer_grpc,
         }
 
 
 class ElasticsearchConfig(DBConfig, BaseModel):
-    cloud_id: str
-    password: str
+    cloud_id: SecretStr
+    password: SecretStr | None = None
 
     def to_dict(self) -> dict:
-        return {"cloud_id": self.cloud_id, "basic_auth": ("elastic", self.password)}
+        return {
+            "cloud_id": self.cloud_id.get_secret_value(),
+            "basic_auth": ("elastic", self.password.get_secret_value()),
+        }
 
 
 class PineconeConfig(DBConfig, BaseModel):
-    api_key: str
-    environment: str
+    api_key: SecretStr | None = None
+    environment: SecretStr | None = None
     index_name: str
 
     def to_dict(self) -> dict:
         return {
-            "api_key": self.api_key,
-            "environment": self.environment,
+            "api_key": self.api_key.get_secret_value(),
+            "environment": self.environment.get_secret_value(),
             "index_name": self.index_name,
         }
