@@ -33,7 +33,8 @@ class DBCaseConfig(ABC):
         raise NotImplementedError
 
 
-class EmptyDBCaseConfig(DBCaseConfig):
+class EmptyDBCaseConfig(BaseModel, DBCaseConfig):
+    null: str | None = None
     def index_param(self) -> dict:
         return {}
 
