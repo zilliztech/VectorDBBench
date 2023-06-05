@@ -121,7 +121,7 @@ class PerformanceCase(Case, BaseModel):
 
     Result metrics:
         Metric: metrics except max_load_count,
-            including load_duration, qps, serial_latency, recall
+            including load_duration, qps, serial_latency_p99, recall
     """
     label: CaseLabel = CaseLabel.Performance
     metric: Metric = None
@@ -167,7 +167,7 @@ class PerformanceCase(Case, BaseModel):
 
                 m.load_duration = round(insert_dur+build_dur, 4)
 
-            m.recall, m.serial_latency = self.serial_search()
+            m.recall, m.serial_latency_p99 = self.serial_search()
             m.qps = self.conc_search()
 
             log.info(f"got results: {m}")
@@ -232,10 +232,10 @@ class PerformanceCase(Case, BaseModel):
 
     def serial_search(self) -> tuple[float, float, float]:
         """Performance serial tests, search the entire test data once,
-        calculate the recall, serial_latency, and, p99
+        calculate the recall, serial_latency_p99
 
         Returns:
-            tuple[float, float, float]: recall, serial_latency, p99
+            tuple[float, float]: recall, serial_latency_p99
         """
         gt_df = self.dataset.ground_truth if self.filters is None or self.filters['id'] == self.filter_size \
                 else self.dataset.ground_truth_90p
