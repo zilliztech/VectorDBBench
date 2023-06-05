@@ -9,6 +9,7 @@ Usage:
 import os
 import logging
 import pathlib
+import math
 from hashlib import md5
 from enum import Enum, auto
 from typing import Any
@@ -139,7 +140,6 @@ class DataSet(BaseModel):
         return False
 
 
-    #  @computed_field
     @property
     def data_dir(self) -> pathlib.Path:
         """ data local directory: DATASET_LOCAL_DIR/{dataset_name}/{dataset_dirname}
@@ -151,7 +151,6 @@ class DataSet(BaseModel):
         """
         return pathlib.Path(DATASET_LOCAL_DIR, self.data.name.lower(), self.data.dir_name.lower())
 
-    #  @computed_field
     @property
     def download_dir(self) -> str:
         """ data s3 directory: DEFAULT_DATASET_URL/{dataset_dirname}
@@ -249,10 +248,11 @@ class DataSet(BaseModel):
         """Download the dataset from S3
          url = f"{DEFAULT_DATASET_URL}/{self.data.dir_name}"
 
-         download files from url to self.data_dir, there'll be 3 types of files in the data_dir
+         download files from url to self.data_dir, there'll be 4 types of files in the data_dir
              - train*.parquet: for training
              - test.parquet: for testing
              - neighbors.parquet: ground_truth of the test.parquet
+             - neighbors_90p.parquet: ground_truth of the test.parquet after filtering 90% data
         """
         if self.test_data is not None and \
             self.ground_truth is not None and \
@@ -280,7 +280,6 @@ class DataSet(BaseModel):
         if not p.exists():
             log.warning(f"No such file: {p}")
             return pd.DataFrame()
-        #  a = pd.read_parquet(p)
         data = pq.read_table(p)
         df = data.to_pandas()
         return df
@@ -295,7 +294,6 @@ class DataSetIterator:
 
     def __next__(self) -> pd.DataFrame:
         """return the data in the next file of the training list"""
-        import math
         if self._idx < len(self._ds.train_files):
             _sub = self._sub_idx[self._idx]
             if _sub == 0 and self._idx == 0: # init

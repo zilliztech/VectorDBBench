@@ -1,5 +1,5 @@
 from enum import Enum
-from pydantic import BaseModel, SecretStr
+from pydantic import SecretStr, BaseModel
 
 from ..api import DBConfig, DBCaseConfig, MetricType, IndexType
 

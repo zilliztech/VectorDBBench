@@ -93,7 +93,6 @@ class MultiProcessingInsertRunner:
                 times += 1
                 log.info(f"Loaded {times:3} entire dataset, current max load counts={utils.numerize(max_load_count)}, {max_load_count}")
         except Exception as e:
-            import traceback
             log.info(f"load reach limit, insertion counts={utils.numerize(max_load_count)}, {max_load_count}, err={e}")
             traceback.print_exc()
             return max_load_count

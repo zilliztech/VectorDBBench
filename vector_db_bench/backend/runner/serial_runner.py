@@ -7,8 +7,8 @@ import numpy as np
 import pandas as pd
 
 from ..clients import api
-from .. import utils
 from ...metric import calc_recall
+
 
 log = logging.getLogger(__name__)
 
@@ -32,7 +32,7 @@ class SerialSearchRunner:
             self.test_data = test_data
         self.ground_truth = ground_truth
 
-    def search(self, args: tuple[list, utils.SharedDataFrame]):
+    def search(self, args: tuple[list, pd.DataFrame]):
         logging.info(f"{mp.current_process().name:14} start search the entire test_data to get recall and latency")
         with self.db.init():
             test_data, ground_truth = args
