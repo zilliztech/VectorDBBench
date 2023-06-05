@@ -115,14 +115,14 @@ class PerformanceCase(Case, BaseModel):
         run_dur(k, concurrency) = 30s
 
     Dynamic params:
-        dataset = GIST | Glove | Cohere | SIFT
+        dataset = GIST | Glove | Cohere | SIFT | Any
         filter_rate/filter_size = 0 | 100 | 90%
 
         db_class = Type[api.VectorDB]
         case_config = CaseConfig
 
     Result metrics:
-        Metric: metrics except max_load_count,
+        Metric: all the metrics except max_load_count,
             including load_duration, qps, serial_latency_p99, recall
     """
     label: CaseLabel = CaseLabel.Performance

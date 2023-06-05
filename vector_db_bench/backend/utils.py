@@ -1,16 +1,12 @@
 import time
 from functools import wraps
 from multiprocessing.shared_memory import SharedMemory
-from contextlib import ContextDecorator
-from dataclasses import dataclass, field
-from typing import Any, Callable
 
 import numpy as np
-import pandas as pd
 
 
 def numerize(n) -> str:
-    """display positive number in for readability
+    """display positive number n for readability
 
     Examples:
         >>> numerize(1_000)
@@ -28,7 +24,7 @@ def numerize(n) -> str:
 
     display_n, sufix = n, ""
     for s, base in sufix2upbound.items():
-        # number >= 1000B will alway has sufix 'B'
+        # number >= 1000B will alway have sufix 'B'
         if s == "END":
             display_n = int(n/1e9)
             sufix = "B"
@@ -49,39 +45,6 @@ def time_it(func):
         delta = time.perf_counter() - pref
         return result, delta
     return inner
-
-
-@dataclass
-class Timer(ContextDecorator):
-    """simple timer """
-
-    text: str = "elapsed time: {:0.4f}s"
-    name: str | None = None
-    logger: Callable[[str], None] = print
-    _start_time: float | None = field(default=None, init=False, repr=False)
-
-    def start(self) -> None:
-        self._start_time = time.perf_counter()
-
-    def stop(self) -> float:
-        # Calculate elapsed time
-        elapsed_time = time.perf_counter() - self._start_time
-        self._start_time = None
-
-        # Report elapsed time
-        if self.logger:
-            self.logger(f"{self.name}: {self.text.format(elapsed_time)}")
-
-        return elapsed_time
-
-    def __enter__(self) -> "Timer":
-        """Start a new timer as a context manager"""
-        self.start()
-        return self
-
-    def __exit__(self, *exc_info: Any) -> None:
-        """Stop the context manager timer"""
-        self.stop()
 
 
 class SharedNumpyArray:
@@ -120,28 +83,3 @@ class SharedNumpyArray:
         '''
         self._shared.close()
         self._shared.unlink()
-
-class SharedDataFrame:
-    ''' Wraps a pandas dataframe so that it can be shared quickly
-    among processes, avoiding unnecessary copying and (de)serializing.
-    '''
-    def __init__(self, df):
-        ''' Creates the shared memory and copies the dataframe therein '''
-        self._values = SharedNumpyArray(df.values)
-        self._index = df.index
-        self._columns = df.columns
-
-    def read(self):
-        ''' Reads the dataframe from the shared memory without unnecessary copying. '''
-        return pd.DataFrame(
-            self._values.read(),
-            index=self._index,
-            columns=self._columns
-        )
-
-    def unlink(self):
-        '''
-        Releases the allocated memory. Call when finished using the data,
-        or when the data was copied somewhere else.
-        '''
-        self._values.unlink()
