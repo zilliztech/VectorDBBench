@@ -9,7 +9,7 @@ def getShowDbsAndCases(result, st):
 
     dbFilterContainer = st.container()
     dbFilterContainer.subheader("DB Filter")
-    showDBNames = filterView(allDbNames, dbFilterContainer, col=4)
+    showDBNames = filterView(allDbNames, dbFilterContainer, col=3)
 
     caseFilterContainer = st.container()
     caseFilterContainer.subheader("Case Filter")
@@ -28,10 +28,12 @@ def filterView(options, st, col, optionLables=None):
         col,
         gap="small",
     )
-    isActive = {option: False for option in options}
+    isActive = {option: True for option in options}
     if optionLables is None:
         optionLables = options
     for i, option in enumerate(options):
-        isActive[option] = columns[i % col].checkbox(optionLables[i])
+        isActive[option] = columns[i % col].checkbox(
+            optionLables[i], value=isActive[option]
+        )
 
     return [option for option in options if isActive[option]]

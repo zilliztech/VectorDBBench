@@ -24,6 +24,10 @@ LEGEND_RECT_WIDTH = 24
 LEGEND_RECT_HEIGHT = 16
 LEGEND_TEXT_FONT_SIZE = 14
 
+PATTERN_SHAPES = ["", "+", "\\", "x", ".", "|", "/", "-"]
+def getPatternShape(i):
+    return PATTERN_SHAPES[i % len(PATTERN_SHAPES)]
+
 MAX_AUTO_REFRESH_COUNT = 999999
 MAX_AUTO_REFRESH_INTERVAL = 2000  # 2s
 
