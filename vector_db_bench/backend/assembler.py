@@ -1,7 +1,7 @@
 """Assembler assembles cases with datasets and runners"""
 
 from .cases import type2case, Case, CaseLabel
-from ..models import TaskConfig
+from ..models import TaskConfig, EmptyDBCaseConfig
 
 class Assembler:
 
@@ -10,7 +10,8 @@ class Assembler:
         c_cls = type2case.get(task.case_config.case_id)
 
         c = c_cls()
-        task.db_case_config.metric_type = c.dataset.data.metric_type
+        if type(task.db_case_config) != EmptyDBCaseConfig:
+            task.db_case_config.metric_type = c.dataset.data.metric_type
 
         c.db_configs = (
             task.db.init_cls,

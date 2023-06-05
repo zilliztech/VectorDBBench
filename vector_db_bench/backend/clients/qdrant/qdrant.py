@@ -3,10 +3,10 @@
 import logging
 import time
 from contextlib import contextmanager
-from typing import Any
+from typing import Any, Type
 
-from .db_case_config import DBCaseConfig
-from .api import VectorDB
+from ..api import VectorDB, DBConfig, DBCaseConfig, EmptyDBCaseConfig, IndexType
+from .config import QdrantConfig
 from qdrant_client.http.models import (
     CollectionStatus,
     Distance,
@@ -49,13 +49,21 @@ class Qdrant(VectorDB):
         self._create_collection(dim, tmp_client)
         tmp_client = None
 
+    @classmethod
+    def config_cls(cls) -> Type[DBConfig]:
+        return QdrantConfig
+
+    @classmethod
+    def case_config_cls(cls, index_type: IndexType | None = None) -> Type[DBCaseConfig]:
+        return EmptyDBCaseConfig
+
     @contextmanager
     def init(self) -> None:
         """
         Examples:
             >>> with self.init():
             >>>     self.insert_embeddings()
-            >>>     self.search_embedding_with_score()
+            >>>     self.search_embedding()
         """
         self.qdrant_client = QdrantClient(**self.db_config)
         yield
@@ -125,7 +133,7 @@ class Qdrant(VectorDB):
             log.info(f"Failed to insert data, {e}")
             raise e from None
 
-    def search_embedding_with_score(
+    def search_embedding(
         self,
         query: list[float],
         k: int = 100,

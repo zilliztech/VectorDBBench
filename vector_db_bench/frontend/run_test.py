@@ -49,7 +49,8 @@ def main():
                 ],
                 gap="small",
             )
-            dbConfigClass = activeDb.config
+            activeDbCls = activeDb.init_cls
+            dbConfigClass = activeDbCls.config_cls()
             properties = dbConfigClass.schema().get("properties")
             dbConfig = {}
             dbConfigContainerColumns[0].markdown("##### · %s" % activeDb.name)
@@ -157,7 +158,7 @@ def main():
                 case_id=case.value,
                 custom_case={},
             ),
-            db_case_config=db.case_config_cls(
+            db_case_config=db.init_cls.case_config_cls(
                 allCaseConfigs[db][case].get(CaseConfigParamType.IndexType, None)
             )(**{key.value: value for key, value in allCaseConfigs[db][case].items()}),
         )

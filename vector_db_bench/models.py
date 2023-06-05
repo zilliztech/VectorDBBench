@@ -1,43 +1,15 @@
 import logging
 import pathlib
 from datetime import date
-from typing import Type, Self
+from typing import Self
 from enum import Enum
 
 import ujson
 
+from .backend.clients import DB, VectorDB, DBCaseConfig, DBConfig, IndexType, MetricType, EmptyDBCaseConfig
 from .base import BaseModel
 from . import RESULTS_LOCAL_DIR
 from .metric import Metric
-from .backend.clients import (
-    VectorDB,
-    Milvus,
-    Weaviate,
-    ZillizCloud,
-    Elasticsearch,
-    Qdrant,
-    Pinecone,
-)
-
-from .backend.clients.db_config import (
-    DBConfig,
-    MilvusConfig,
-    ZillizCloudConfig,
-    WeaviateConfig,
-    ElasticsearchConfig,
-    QdrantConfig,
-    PineconeConfig,
-)
-
-from .backend.clients.db_case_config import (
-    DBCaseConfig, # base class
-    IndexType, MetricType, # Const
-    HNSWConfig, DISKANNConfig, IVFFlatConfig, FLATConfig, # Milvus Configs
-    AutoIndexConfig, # ZillizCound configs
-    WeaviateIndexConfig, # Weaviate configs
-    ElasticsearchIndexConfig, # Elasticsearch configs
-    EmptyDBCaseConfig,
-)
 
 
 log = logging.getLogger(__name__)
@@ -89,92 +61,6 @@ class CaseConfigParamType(Enum):
     Nprobe = "nprobe"
     MaxConnections = "maxConnections"
     numCandidates = "num_candidates"
-
-
-class DB(Enum):
-    """Database types
-
-    Examples:
-        >>> DB.Milvus
-        <DB.Milvus: 'Milvus'>
-        >>> DB.Milvus.value
-        "Milvus"
-        >>> DB.Milvus.name
-        "Milvus"
-    """
-
-    Milvus = "Milvus"
-    ZillizCloud = "ZillizCloud"
-    Weaviate = "Weaviate"
-    Elasticsearch = "Elasticsearch"
-    Qdrant = "Qdrant"
-    Pinecone = "Pinecone"
-
-
-    @property
-    def config(self) -> Type[DBConfig]:
-        """Get configs of the DB
-        Examples:
-            >>> config_cls = DB.Milvus.config
-            >>> config_cls(uri="localhost:19530")
-
-        Returns:
-            None, if the database not in the db2config
-        """
-        return _db2config.get(self)
-
-    @property
-    def init_cls(self) -> Type[VectorDB]:
-        return _db2client.get(self)
-
-    def case_config_cls(self, index: IndexType | None = None) -> Type[DBCaseConfig]:
-        """Get case config class of the DB
-        Examples:
-            >>> case_config_cls = DB.Milvus.case_config_cls(IndexType.HNSW)
-            >>> hnsw_config = {
-            ...     M: 8,
-            ...     efConstruction: 12,
-            ...     ef: 8,
-            >>> }
-            >>> milvus_hnsw_config = case_config_cls(**hnsw_config)
-        """
-        if self == DB.Milvus:
-            assert index is not None, "Please provide valid index for DB Milvus"
-            return _milvus_case_config.get(index)
-        if self == DB.ZillizCloud:
-            return AutoIndexConfig
-        if self == DB.Weaviate:
-            return WeaviateIndexConfig
-        if self == DB.Elasticsearch:
-            return ElasticsearchIndexConfig
-        return EmptyDBCaseConfig
-
-
-_db2config = {
-    DB.Milvus: MilvusConfig,
-    DB.ZillizCloud: ZillizCloudConfig,
-    DB.Weaviate: WeaviateConfig,
-    DB.Elasticsearch: ElasticsearchConfig,
-    DB.Qdrant: QdrantConfig,
-    DB.Pinecone: PineconeConfig,
-}
-
-_db2client = {
-    DB.Milvus: Milvus,
-    DB.ZillizCloud: ZillizCloud,
-    DB.Weaviate: Weaviate,
-    DB.Elasticsearch: Elasticsearch,
-    DB.Qdrant: Qdrant,
-    DB.Pinecone: Pinecone,
-}
-
-
-_milvus_case_config = {
-    IndexType.HNSW: HNSWConfig,
-    IndexType.DISKANN: DISKANNConfig,
-    IndexType.IVFFlat: IVFFlatConfig,
-    IndexType.Flat: FLATConfig,
-}
 
 
 class CustomizedCase(BaseModel):
@@ -241,12 +127,11 @@ class TestResult(BaseModel):
             for case_result in test_result["results"]:
                 task_config = case_result.get("task_config")
                 db = DB(task_config.get("db"))
-                task_config["db_config"] = db.config(**task_config["db_config"])
-
-                if db.case_config_cls.__name__ != EmptyDBCaseConfig.__name__:
-                    task_config["db_case_config"] = db.case_config_cls(
-                        index=task_config["db_case_config"].get("index", None)
-                    )(**task_config["db_case_config"])
+                dbcls = db.init_cls
+                task_config["db_config"] = dbcls.config_cls()(**task_config["db_config"])
+                task_config["db_case_config"] = dbcls.case_config_cls(
+                    index_type=task_config["db_case_config"].get("index", None),
+                )(**task_config["db_case_config"])
 
                 case_result["task_config"] = task_config
             c = TestResult.validate(test_result)

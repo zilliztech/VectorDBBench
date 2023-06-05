@@ -2,9 +2,7 @@ import time
 import logging
 from vector_db_bench.interface import BenchMarkRunner
 from vector_db_bench.models import (
-    DB,
-    IndexType, CaseType,
-    TaskConfig, CaseConfig,
+    DB, IndexType, CaseType, TaskConfig, CaseConfig,
 )
 
 log = logging.getLogger(__name__)

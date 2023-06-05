@@ -1,13 +1,14 @@
 """Wrapper around the Weaviate vector database over VectorDB"""
 
 import logging
-from typing import Any, Iterable
+from typing import Any, Iterable, Type
 from contextlib import contextmanager
 
 from weaviate.exceptions import WeaviateBaseError
 
-from .api import VectorDB
-from .db_case_config import DBCaseConfig
+from ..api import VectorDB, DBConfig, DBCaseConfig, IndexType
+from .config import WeaviateConfig, WeaviateIndexConfig
+
 
 log = logging.getLogger(__name__)
 
@@ -43,13 +44,21 @@ class Weaviate(VectorDB):
         self._create_collection(client)
         client = None
 
+    @classmethod
+    def config_cls(cls) -> Type[DBConfig]:
+        return WeaviateConfig
+
+    @classmethod
+    def case_config_cls(cls, index_type: IndexType | None = None) -> Type[DBCaseConfig]:
+        return WeaviateIndexConfig
+
     @contextmanager
     def init(self) -> None:
         """
         Examples:
             >>> with self.init():
             >>>     self.insert_embeddings()
-            >>>     self.search_embedding_with_score()
+            >>>     self.search_embedding()
         """
         from weaviate import Client
         self.client = Client(**self.db_config)
@@ -110,7 +119,7 @@ class Weaviate(VectorDB):
             log.warning(f"Failed to insert data, error: {str(e)}")
             raise e from None
 
-    def search_embedding_with_score(
+    def search_embedding(
         self,
         query: list[float],
         k: int = 100,

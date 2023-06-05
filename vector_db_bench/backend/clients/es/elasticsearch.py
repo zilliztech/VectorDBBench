@@ -1,8 +1,8 @@
 import logging
 from contextlib import contextmanager
-from typing import Iterable
-from .api import VectorDB
-from .db_case_config import ElasticsearchIndexConfig
+from typing import Iterable, Type
+from ..api import VectorDB, DBCaseConfig, DBConfig, IndexType
+from .config import ElasticsearchIndexConfig, ElasticsearchConfig
 from elasticsearch.helpers import bulk
 
 
@@ -36,9 +36,20 @@ class Elasticsearch(VectorDB):
         if drop_old:
             log.info(f"Elasticsearch client drop_old indices: {self.indice}")
             is_existed_res = client.indices.exists(index=self.indice)
-            if is_existed_res.raw == True:
+            if is_existed_res.raw:
                 client.indices.delete(index=self.indice)
             self._create_indice(client)
+
+
+    @classmethod
+    def config_cls(cls) -> Type[DBConfig]:
+        return ElasticsearchConfig
+
+
+    @classmethod
+    def case_config_cls(cls, index_type: IndexType | None = None) -> Type[DBCaseConfig]:
+        return ElasticsearchIndexConfig
+
 
     @contextmanager
     def init(self) -> None:
@@ -93,7 +104,7 @@ class Elasticsearch(VectorDB):
             log.warning(f"Failed to insert data: {self.indice} error: {str(e)}")
             raise e from None
 
-    def search_embedding_with_score(
+    def search_embedding(
         self,
         query: list[float],
         k: int = 100,
