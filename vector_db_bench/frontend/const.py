@@ -25,8 +25,11 @@ LEGEND_RECT_HEIGHT = 16
 LEGEND_TEXT_FONT_SIZE = 14
 
 PATTERN_SHAPES = ["", "+", "\\", "x", ".", "|", "/", "-"]
+
+
 def getPatternShape(i):
     return PATTERN_SHAPES[i % len(PATTERN_SHAPES)]
+
 
 MAX_AUTO_REFRESH_COUNT = 999999
 MAX_AUTO_REFRESH_INTERVAL = 2000  # 2s
@@ -328,5 +331,33 @@ CASE_CONFIG_MAP = {
         CaseType.PerformanceLHigh: ESPerformanceConfig,
         CaseType.PerformanceMHigh: ESPerformanceConfig,
         CaseType.PerformanceSHigh: ESPerformanceConfig,
+    },
+}
+
+DB_DBLABEL_TO_PRICE = {
+    DB.Milvus.value: {},
+    DB.ZillizCloud.value: {
+        "1cu-perf": 0.159,
+        "8cu-perf": 1.272,
+        "disk-1cu": 0.159,
+        "disk-2cu": 0.318,
+    },
+    DB.Weaviate.value: {
+        # "sandox": 0, # emmmm
+        "standard": 0.144,
+        "bus_crit": 0.625,
+    },
+    DB.Elasticsearch.value: {
+        "free-5c8g": 0.260,
+    },
+    DB.Qdrant.value: {
+        "0.5c4g-1node": 0.052,
+        "2c8g-1node": 0.166,
+        "4c16g-5node": 1.426,
+    },
+    DB.Pinecone.value: {
+        "S1": 0.0973,
+        "P1": 0.0973,
+        "P2": 0.146,
     },
 }
