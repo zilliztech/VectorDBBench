@@ -121,7 +121,7 @@ class PerformanceCase(Case, BaseModel):
 
     Result metrics:
         Metric: metrics except max_load_count,
-            including load_duration, build_duration, qps, serial_latency, p99, recall
+            including load_duration, qps, serial_latency, recall
     """
     label: CaseLabel = CaseLabel.Performance
     metric: Metric = None
@@ -165,10 +165,9 @@ class PerformanceCase(Case, BaseModel):
                 _, insert_dur = self._insert_train_data()
                 build_dur = self._ready_to_search()
 
-                m.load_duration = round(insert_dur, 4)
-                m.build_duration = round(build_dur, 4)
+                m.load_duration = round(insert_dur+build_dur, 4)
 
-            m.recall, m.serial_latency, m.p99 = self.serial_search()
+            m.recall, m.serial_latency = self.serial_search()
             m.qps = self.conc_search()
 
             log.info(f"got results: {m}")

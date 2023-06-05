@@ -78,27 +78,18 @@ class TestModels:
 
     def test_test_result_merge(self):
         result_dir = RESULTS_LOCAL_DIR
+        all_results = []
 
         first_result = None
-        all_results = []
-        #  for f in files:
-        #      json_file = result_dir.joinpath(f)
         for json_file in result_dir.glob("*.json"):
             res = TestResult.read_file(json_file)
-            #  all_results.extend(res.results)
 
-            #  zc = [r for r in res.results if r.task_config.db == DB.ZillizCloud]
-            #  all_results.extend(zc)
-
-            no_filter = [r for r in res.results if r.task_config.case_config.case_id in (CaseType.PerformanceLZero, CaseType.PerformanceMZero, CaseType.PerformanceSZero)]
-            all_results.extend(no_filter)
-
+            for cr in res.results:
+                all_results.append(cr)
 
             if not first_result:
                 first_result = res
 
-        #  for r in all_results:
-        #      r.task_config.db_config.db_label = "16c64g"
         tr = TestResult(
             run_id=first_result.run_id,
             task_label="standard",
