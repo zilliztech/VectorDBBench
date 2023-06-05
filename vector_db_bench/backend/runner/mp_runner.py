@@ -144,13 +144,13 @@ class MultiProcessingSearchRunner:
             while time.perf_counter() < start_time + self.duration:
                 s = time.perf_counter()
                 try:
-                    self.db.search_embedding_with_score(
+                    self.db.search_embedding(
                         test_data[idx],
                         self.k,
                         self.filters,
                     )
                 except Exception as e:
-                    log.warning(f"VectorDB search_embedding_with_score error: {e}")
+                    log.warning(f"VectorDB search_embedding error: {e}")
                     traceback.print_exc(chain=True)
                     raise e from None
 

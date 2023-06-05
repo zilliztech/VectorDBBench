@@ -2,13 +2,14 @@
 
 import logging
 from contextlib import contextmanager
-from typing import Any, Iterable
+from typing import Any, Iterable, Type
 
 from pymilvus import Collection, utility
 from pymilvus import CollectionSchema, DataType, FieldSchema, MilvusException
 
-from .db_case_config import DBCaseConfig
-from .api import VectorDB
+from ..api import VectorDB, DBCaseConfig, DBConfig, IndexType
+from .config import MilvusConfig, _milvus_case_config
+
 
 log = logging.getLogger(__name__)
 
@@ -60,6 +61,14 @@ class Milvus(VectorDB):
 
         connections.disconnect("default")
 
+    @classmethod
+    def config_cls(cls) -> Type[DBConfig]:
+        return MilvusConfig
+
+    @classmethod
+    def case_config_cls(cls, index_type: IndexType | None = None) -> Type[DBCaseConfig]:
+        return _milvus_case_config.get(index_type)
+
 
     @contextmanager
     def init(self) -> None:
@@ -67,7 +76,7 @@ class Milvus(VectorDB):
         Examples:
             >>> with self.init():
             >>>     self.insert_embeddings()
-            >>>     self.search_embedding_with_score()
+            >>>     self.search_embedding()
         """
         from pymilvus import connections
         self.col: Collection | None = None
@@ -145,16 +154,14 @@ class Milvus(VectorDB):
             log.warning("Failed to insert data")
             raise e from None
 
-    def search_embedding_with_score(
+    def search_embedding(
         self,
         query: list[float],
         k: int = 100,
         filters: dict | None = None,
         timeout: int | None = None,
     ) -> list[int]:
-        """Perform a search on a query embedding and return results.
-        Should call self.init() first.
-        """
+        """Perform a search on a query embedding and return results."""
         assert self.col is not None
 
         expr = f"{self._scalar_field} {filters.get('metadata')}" if filters else ""

@@ -1,16 +1,8 @@
-import pytest
 import logging
 from vector_db_bench.models import (
     DB,
-    IndexType,
     MetricType,
-    CaseType,
     ElasticsearchConfig,
-    TaskConfig,
-    CaseConfig,
-    CaseResult,
-    TestResult,
-    Metric,
 )
 import numpy as np
 
@@ -26,13 +18,14 @@ class TestModels:
         assert DB.Elasticsearch.value == "Elasticsearch"
         assert DB.Elasticsearch.config == ElasticsearchConfig
 
-        dbConfig = DB.Elasticsearch.config(cloud_id=cloud_id, password=password)
-        dbCaseConfig = DB.Elasticsearch.case_config_cls()(
+        dbcls = DB.Elasticsearch.init_cls
+        dbConfig = dbcls.config_cls()(cloud_id=cloud_id, password=password)
+        dbCaseConfig = dbcls.case_config_cls()(
             metric_type=MetricType.L2, efConstruction=64, M=16, num_candidates=100
         )
 
         dim = 16
-        es = DB.Elasticsearch.init_cls(
+        es = dbcls(
             dim=dim,
             db_config=dbConfig.to_dict(),
             db_case_config=dbCaseConfig,
@@ -66,7 +59,7 @@ class TestModels:
             log.info(f"test_id: {test_id}")
             q = embeddings[test_id]
 
-            res = es.search_embedding_with_score(query=q, k=100)
+            res = es.search_embedding(query=q, k=100)
             log.info(f"search_results_id: {res}")
             assert (
                 res[0] == test_id
@@ -78,7 +71,7 @@ class TestModels:
             log.info(f"test_id: {test_id}")
             q = embeddings[test_id]
 
-            res = es.search_embedding_with_score(
+            res = es.search_embedding(
                 query=q, k=100, filters={"id": count * filter_rate}
             )
             log.info(f"search_results_id: {res}")

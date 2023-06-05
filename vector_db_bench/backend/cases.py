@@ -6,12 +6,14 @@ import numpy as np
 from enum import Enum, auto
 
 from . import dataset as ds
-from .clients import api
-from .clients.db_case_config import MetricType
-from .clients.milvus import Milvus
-from .clients.zilliz_cloud import ZillizCloud
+from .clients import (
+    api,
+    ZillizCloud,
+    Milvus,
+    MetricType, DBCaseConfig
+)
 from ..base import BaseModel
-from ..models import CaseType, DBCaseConfig
+from ..models import CaseType
 from ..metric import Metric
 from .runner import (
     MultiProcessingInsertRunner,

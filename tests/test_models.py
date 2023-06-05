@@ -3,10 +3,13 @@ import logging
 from vector_db_bench.models import (
     DB,
     IndexType, MetricType, CaseType,
-    MilvusConfig, HNSWConfig, IVFFlatConfig,
     TaskConfig, CaseConfig,
     CaseResult, TestResult,
     Metric,
+)
+
+from vector_db_bench.backend.clients.milvus.milvus.config import (
+    MilvusConfig, HNSWConfig, IVFFlatConfig,
 )
 from vector_db_bench import RESULTS_LOCAL_DIR
 

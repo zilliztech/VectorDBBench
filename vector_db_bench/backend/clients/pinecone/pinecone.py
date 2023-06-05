@@ -2,12 +2,12 @@
 
 import logging
 from contextlib import contextmanager
-from typing import Any, Iterable
+from typing import Any, Type
 
 import pinecone
 
-from .db_case_config import DBCaseConfig
-from .api import VectorDB
+from ..api import VectorDB, DBConfig, DBCaseConfig, EmptyDBCaseConfig, IndexType
+from .config import PineconeConfig
 
 
 log = logging.getLogger(__name__)
@@ -48,6 +48,14 @@ class Pinecone(VectorDB):
 
         self._metadata_key = "meta"
 
+    @classmethod
+    def config_cls(cls) -> Type[DBConfig]:
+        return PineconeConfig
+
+    @classmethod
+    def case_config_cls(cls, index_type: IndexType | None = None) -> Type[DBCaseConfig]:
+        return EmptyDBCaseConfig
+
     @contextmanager
     def init(self) -> None:
         pinecone.init(
@@ -64,7 +72,7 @@ class Pinecone(VectorDB):
 
     def insert_embeddings(
         self,
-        embeddings: Iterable[list[float]],
+        embeddings: list[list[float]],
         metadata: list[int],
     ) -> list[str]:
         assert len(embeddings) == len(metadata)
@@ -78,7 +86,7 @@ class Pinecone(VectorDB):
             self.index.upsert(insert_datas)
         return len(embeddings)
 
-    def search_embedding_with_score(
+    def search_embedding(
         self,
         query: list[float],
         k: int = 100,
