@@ -5,11 +5,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 27890.2597,
-        "build_duration": 0.0074,
+        "load_duration": 27890.2671,
         "qps": 4.1594,
-        "serial_latency": 3.8432,
-        "p99": 5.1106,
+        "serial_latency": 5.1106,
         "recall": 0.9799
       },
       "task_config": {
@@ -36,11 +34,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 2557.7502,
-        "build_duration": 0.0076,
+        "load_duration": 2557.7578,
         "qps": 41.1083,
-        "serial_latency": 0.1502,
-        "p99": 0.1778,
+        "serial_latency": 0.1778,
         "recall": 0.9923
       },
       "task_config": {
@@ -67,11 +63,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 158.641,
-        "build_duration": 307.0945,
+        "load_duration": 465.7355,
         "qps": 467.1856,
-        "serial_latency": 0.0065,
-        "p99": 0.0078,
+        "serial_latency": 0.0078,
         "recall": 0.9795
       },
       "task_config": {
@@ -95,11 +89,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 2104.3986,
-        "build_duration": 26827.8983,
+        "load_duration": 28932.2969,
         "qps": 51.3355,
-        "serial_latency": 0.0291,
-        "p99": 0.0358,
+        "serial_latency": 0.0358,
         "recall": 0.9908
       },
       "task_config": {
@@ -122,11 +114,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 189.3892,
-        "build_duration": 2377.1854,
+        "load_duration": 2566.5746,
         "qps": 316.2338,
-        "serial_latency": 0.007,
-        "p99": 0.009,
+        "serial_latency": 0.009,
         "recall": 0.9727
       },
       "task_config": {
@@ -149,11 +139,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 197.2164,
-        "build_duration": 5734.9382,
+        "load_duration": 5932.1546,
         "qps": 88.7744,
-        "serial_latency": 0.014,
-        "p99": 0.0222,
+        "serial_latency": 0.0222,
         "recall": 0.9879
       },
       "task_config": {
@@ -176,11 +164,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 18.8964,
-        "build_duration": 371.5562,
+        "load_duration": 390.4526,
         "qps": 512.9846,
-        "serial_latency": 0.0058,
-        "p99": 0.0071,
+        "serial_latency": 0.0071,
         "recall": 0.9535
       },
       "task_config": {
@@ -203,11 +189,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 163.9611,
-        "build_duration": 311.9397,
+        "load_duration": 475.9008,
         "qps": 220.6992,
-        "serial_latency": 0.0069,
-        "p99": 0.0097,
+        "serial_latency": 0.0097,
         "recall": 0.9509
       },
       "task_config": {
@@ -231,11 +215,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 1738.8838,
-        "build_duration": 1767.4683,
+        "load_duration": 3506.3521,
         "qps": 141.9678,
-        "serial_latency": 0.0106,
-        "p99": 0.0166,
+        "serial_latency": 0.0166,
         "recall": 0.9492
       },
       "task_config": {
@@ -259,11 +241,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 19.0624,
-        "build_duration": 632.793,
+        "load_duration": 651.8554,
         "qps": 237.7295,
-        "serial_latency": 0.0066,
-        "p99": 0.0094,
+        "serial_latency": 0.0094,
         "recall": 0.951
       },
       "task_config": {
@@ -286,11 +266,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 17484.7672,
-        "build_duration": 4329.9809,
+        "load_duration": 21814.7481,
         "qps": 93.8714,
-        "serial_latency": 0.0217,
-        "p99": 0.0283,
+        "serial_latency": 0.0283,
         "recall": 0.9714
       },
       "task_config": {
@@ -314,11 +292,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 1689.3733,
-        "build_duration": 1605.3049,
+        "load_duration": 3294.6782,
         "qps": 351.578,
-        "serial_latency": 0.0067,
-        "p99": 0.0091,
+        "serial_latency": 0.0091,
         "recall": 0.9204
       },
       "task_config": {
@@ -342,11 +318,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 3673.8998,
-        "build_duration": 0.1955,
+        "load_duration": 3674.0953,
         "qps": 67.9121,
-        "serial_latency": 0.0968,
-        "p99": 0.1795,
+        "serial_latency": 0.1795,
         "recall": 0.9909
       },
       "task_config": {
@@ -371,11 +345,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 250.939,
-        "build_duration": 0.1541,
+        "load_duration": 251.0931,
         "qps": 101.6631,
-        "serial_latency": 0.0213,
-        "p99": 0.03,
+        "serial_latency": 0.03,
         "recall": 0.9977
       },
       "task_config": {
@@ -400,11 +372,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 283.3975,
-        "build_duration": 0.2429,
+        "load_duration": 283.6404,
         "qps": 113.661,
-        "serial_latency": 0.0245,
-        "p99": 0.0489,
+        "serial_latency": 0.0489,
         "recall": 0.9977
       },
       "task_config": {
@@ -429,11 +399,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 280.1196,
-        "build_duration": 0.154,
+        "load_duration": 280.2736,
         "qps": 73.0806,
-        "serial_latency": 0.0261,
-        "p99": 0.0472,
+        "serial_latency": 0.0472,
         "recall": 0.9977
       },
       "task_config": {
@@ -458,11 +426,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 3580.6196,
-        "build_duration": 0.1631,
+        "load_duration": 3580.7827,
         "qps": 63.1365,
-        "serial_latency": 0.0823,
-        "p99": 0.1457,
+        "serial_latency": 0.1457,
         "recall": 0.991
       },
       "task_config": {
@@ -488,10 +454,8 @@
       "metrics": {
         "max_load_count": 0,
         "load_duration": 0,
-        "build_duration": 0,
         "qps": 439.8072,
-        "serial_latency": 0.0047,
-        "p99": 0.0054,
+        "serial_latency": 0.0054,
         "recall": 0.9472
       },
       "task_config": {
@@ -515,11 +479,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 1766.8452,
-        "build_duration": 553.0211,
+        "load_duration": 2319.8663,
         "qps": 447.4476,
-        "serial_latency": 0.0048,
-        "p99": 0.0055,
+        "serial_latency": 0.0055,
         "recall": 0.9472
       },
       "task_config": {
@@ -544,10 +506,8 @@
       "metrics": {
         "max_load_count": 0,
         "load_duration": 0,
-        "build_duration": 0,
         "qps": 1133.9269,
-        "serial_latency": 0.0043,
-        "p99": 0.0047,
+        "serial_latency": 0.0047,
         "recall": 0.9575
       },
       "task_config": {
@@ -571,11 +531,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 172.9133,
-        "build_duration": 94.3324,
+        "load_duration": 267.2457,
         "qps": 1133.1236,
-        "serial_latency": 0.0037,
-        "p99": 0.0041,
+        "serial_latency": 0.0041,
         "recall": 0.9577
       },
       "task_config": {
@@ -599,11 +557,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 1488.5177,
-        "build_duration": 492.4939,
+        "load_duration": 1981.0116,
         "qps": 1510.1926,
-        "serial_latency": 0.0041,
-        "p99": 0.005,
+        "serial_latency": 0.005,
         "recall": 0.9481
       },
       "task_config": {
@@ -627,11 +583,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 137.863,
-        "build_duration": 96.1267,
+        "load_duration": 233.9897,
         "qps": 3145.7445,
-        "serial_latency": 0.0045,
-        "p99": 0.0053,
+        "serial_latency": 0.0053,
         "recall": 0.9576
       },
       "task_config": {
@@ -655,11 +609,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 14493.9966,
-        "build_duration": 1385.0772,
+        "load_duration": 15879.0738,
         "qps": 288.3655,
-        "serial_latency": 0.0072,
-        "p99": 0.0083,
+        "serial_latency": 0.0083,
         "recall": 0.9446
       },
       "task_config": {
@@ -683,11 +635,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 182.248,
-        "build_duration": 2197.3085,
+        "load_duration": 2379.5565,
         "qps": 232.1813,
-        "serial_latency": 0.0048,
-        "p99": 0.0363,
+        "serial_latency": 0.0363,
         "recall": 0.9818
       },
       "task_config": {
@@ -712,11 +662,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 18.2689,
-        "build_duration": 210.3587,
+        "load_duration": 228.6276,
         "qps": 1176.3736,
-        "serial_latency": 0.0022,
-        "p99": 0.0027,
+        "serial_latency": 0.0027,
         "recall": 0.9576
       },
       "task_config": {
@@ -741,11 +689,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 18.1807,
-        "build_duration": 199.9611,
+        "load_duration": 218.1418,
         "qps": 1232.3202,
-        "serial_latency": 0.0021,
-        "p99": 0.0025,
+        "serial_latency": 0.0025,
         "recall": 0.9577
       },
       "task_config": {
@@ -771,10 +717,8 @@
       "metrics": {
         "max_load_count": 0,
         "load_duration": 0,
-        "build_duration": 0,
         "qps": 227.0346,
-        "serial_latency": 0.005,
-        "p99": 0.0368,
+        "serial_latency": 0.0368,
         "recall": 0.9818
       },
       "task_config": {
@@ -799,11 +743,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 194.0272,
-        "build_duration": 4035.5581,
+        "load_duration": 4229.5853,
         "qps": 120.3348,
-        "serial_latency": 0.008,
-        "p99": 0.0603,
+        "serial_latency": 0.0603,
         "recall": 0.9819
       },
       "task_config": {
@@ -828,11 +770,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 18.8373,
-        "build_duration": 345.8221,
+        "load_duration": 364.6594,
         "qps": 674.0372,
-        "serial_latency": 0.0021,
-        "p99": 0.0027,
+        "serial_latency": 0.0027,
         "recall": 0.9576
       },
       "task_config": {
@@ -858,10 +798,8 @@
       "metrics": {
         "max_load_count": 0,
         "load_duration": 0,
-        "build_duration": 0,
         "qps": 118.9911,
-        "serial_latency": 0.0083,
-        "p99": 0.0607,
+        "serial_latency": 0.0607,
         "recall": 0.981
       },
       "task_config": {
@@ -886,11 +824,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 19.3543,
-        "build_duration": 351.0773,
+        "load_duration": 370.4316,
         "qps": 646.3226,
-        "serial_latency": 0.0021,
-        "p99": 0.0028,
+        "serial_latency": 0.0028,
         "recall": 0.9578
       },
       "task_config": {
@@ -915,11 +851,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 19.6073,
-        "build_duration": 371.2236,
+        "load_duration": 390.8309,
         "qps": 655.6607,
-        "serial_latency": 0.0021,
-        "p99": 0.0027,
+        "serial_latency": 0.0027,
         "recall": 0.9581
       },
       "task_config": {
@@ -944,11 +878,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 20.215,
-        "build_duration": 56.2693,
+        "load_duration": 76.4843,
         "qps": 4256.7975,
-        "serial_latency": 0.0024,
-        "p99": 0.0028,
+        "serial_latency": 0.0028,
         "recall": 0.958
       },
       "task_config": {
@@ -973,11 +905,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 2087.4181,
-        "build_duration": 3442.9364,
+        "load_duration": 5530.3545,
         "qps": 111.8828,
-        "serial_latency": 0.0124,
-        "p99": 0.0153,
+        "serial_latency": 0.0153,
         "recall": 0.9844
       },
       "task_config": {
@@ -1002,11 +932,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 191.012,
-        "build_duration": 377.3129,
+        "load_duration": 568.3249,
         "qps": 905.5505,
-        "serial_latency": 0.0035,
-        "p99": 0.0043,
+        "serial_latency": 0.0043,
         "recall": 0.9819
       },
       "task_config": {
@@ -1031,11 +959,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 271.8367,
-        "build_duration": 196.5387,
+        "load_duration": 468.3754,
         "qps": 78.9362,
-        "serial_latency": 0.0321,
-        "p99": 0.0385,
+        "serial_latency": 0.0385,
         "recall": 0.8197
       },
       "task_config": {
@@ -1058,11 +984,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 2488.2436,
-        "build_duration": 71.1322,
+        "load_duration": 2559.3758,
         "qps": 76.672,
-        "serial_latency": 0.0381,
-        "p99": 0.0569,
+        "serial_latency": 0.0569,
         "recall": 0.7964
       },
       "task_config": {
@@ -1085,11 +1009,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 25025.4362,
-        "build_duration": 156.1143,
+        "load_duration": 25181.5505,
         "qps": 115.4696,
-        "serial_latency": 0.0376,
-        "p99": 0.0677,
+        "serial_latency": 0.0677,
         "recall": 0.7861
       },
       "task_config": {
@@ -1105,195 +1027,6 @@
         },
         "case_config": {
           "case_id": "Search Performance Test(Large Dataset)",
-          "custom_case": {}
-        }
-      }
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "load_duration": 1259.8685,
-        "build_duration": 0.0565,
-        "qps": 19.9197,
-        "serial_latency": 0.0565,
-        "p99": 0.0697,
-        "recall": 0.8733
-      },
-      "task_config": {
-        "db": "Pinecone",
-        "db_config": {
-          "db_label": "S1",
-          "api_key": "**********",
-          "environment": "**********",
-          "index_name": "test_index"
-        },
-        "db_case_config": {
-          "null": null
-        },
-        "case_config": {
-          "case_id": "Search Performance Test(Medium Dataset)",
-          "custom_case": {}
-        }
-      }
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "load_duration": 126.8928,
-        "build_duration": 0.0755,
-        "qps": 28.3136,
-        "serial_latency": 0.0405,
-        "p99": 0.0528,
-        "recall": 0.9503
-      },
-      "task_config": {
-        "db": "Pinecone",
-        "db_config": {
-          "db_label": "S1",
-          "api_key": "**********",
-          "environment": "**********",
-          "index_name": "test_index"
-        },
-        "db_case_config": {
-          "null": null
-        },
-        "case_config": {
-          "case_id": "Search Performance Test(Small Dataset)",
-          "custom_case": {}
-        }
-      }
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "load_duration": 17081.5064,
-        "build_duration": 0.401,
-        "qps": 51.059,
-        "serial_latency": 0.1164,
-        "p99": 0.1324,
-        "recall": 0.9564
-      },
-      "task_config": {
-        "db": "Pinecone",
-        "db_config": {
-          "db_label": "P1-4X-3pod",
-          "api_key": "**********",
-          "environment": "**********",
-          "index_name": "test_index"
-        },
-        "db_case_config": {
-          "null": null
-        },
-        "case_config": {
-          "case_id": "Search Performance Test(Large Dataset)",
-          "custom_case": {}
-        }
-      }
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "load_duration": 1235.8487,
-        "build_duration": 0.0638,
-        "qps": 46.4164,
-        "serial_latency": 0.0263,
-        "p99": 0.0348,
-        "recall": 0.8733
-      },
-      "task_config": {
-        "db": "Pinecone",
-        "db_config": {
-          "db_label": "P1",
-          "api_key": "**********",
-          "environment": "**********",
-          "index_name": "test_index"
-        },
-        "db_case_config": {
-          "null": null
-        },
-        "case_config": {
-          "case_id": "Search Performance Test(Medium Dataset)",
-          "custom_case": {}
-        }
-      }
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "load_duration": 123.5848,
-        "build_duration": 0.0336,
-        "qps": 146.2459,
-        "serial_latency": 0.0126,
-        "p99": 0.0229,
-        "recall": 0.9503
-      },
-      "task_config": {
-        "db": "Pinecone",
-        "db_config": {
-          "db_label": "P1",
-          "api_key": "**********",
-          "environment": "**********",
-          "index_name": "test_index"
-        },
-        "db_case_config": {
-          "null": null
-        },
-        "case_config": {
-          "case_id": "Search Performance Test(Small Dataset)",
-          "custom_case": {}
-        }
-      }
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "load_duration": 1450.5834,
-        "build_duration": 0.0427,
-        "qps": 237.946,
-        "serial_latency": 0.0101,
-        "p99": 0.0204,
-        "recall": 0.9268
-      },
-      "task_config": {
-        "db": "Pinecone",
-        "db_config": {
-          "db_label": "P2",
-          "api_key": "**********",
-          "environment": "**********",
-          "index_name": "test_index"
-        },
-        "db_case_config": {
-          "null": null
-        },
-        "case_config": {
-          "case_id": "Search Performance Test(Medium Dataset)",
-          "custom_case": {}
-        }
-      }
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "load_duration": 131.5227,
-        "build_duration": 0.0447,
-        "qps": 306.687,
-        "serial_latency": 0.0092,
-        "p99": 0.0198,
-        "recall": 0.9516
-      },
-      "task_config": {
-        "db": "Pinecone",
-        "db_config": {
-          "db_label": "P2",
-          "api_key": "**********",
-          "environment": "**********",
-          "index_name": "test_index"
-        },
-        "db_case_config": {
-          "null": null
-        },
-        "case_config": {
-          "case_id": "Search Performance Test(Small Dataset)",
           "custom_case": {}
         }
       }

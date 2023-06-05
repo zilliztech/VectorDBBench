@@ -16,33 +16,25 @@ class Metric:
 
     # for performance cases
     load_duration: float = 0.0  # duration to load all dataset into DB
-    build_duration: float = 0.0  # duration of ready_search
     qps: float = 0.0
     serial_latency: float = 0.0
-    p99: float = 0.0
     recall: float = 0.0
 
 metricUnitMap = {
     'load_duration': 's',
-    'build_duration': 's',
     'serial_latency': 's',
-    'p99': 's',
 }
 
 lowerIsBetterMetricList = [
     "load_duration",
-    "build_duration",
     "serial_latency",
-    "p99",
 ]
 
 metricOrder = [
     "qps",
     "recall",
     "load_duration",
-    "build_duration",
     "serial_latency",
-    "p99",
     "max_load_count",
 ]
 

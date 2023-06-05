@@ -87,7 +87,7 @@ class SerialSearchRunner:
             f"avg_latency={avg_latency}, "
             f"p99={p99}"
          )
-        return (avg_recall, avg_latency, p99)
+        return (avg_recall, p99)
 
 
     def _run_in_subprocess(self) -> tuple[float, float, float]:
