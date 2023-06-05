@@ -122,10 +122,11 @@ def drawMetricChart(data, metric, st):
 
 def drawChartQpsPerHour(data, st):
     dataWithMetric = []
-    metric = "qps_per_hour"
+    metric = "qps_per_dollar (qps / price)"
     for d in data:
+        qps = d.get("qps", 0)
         price = DB_DBLABEL_TO_PRICE.get(d["db"], {}).get(d["db_label"], 0)
-        if price > 0:
+        if qps > 0 and price > 0:
             d[metric] = d["qps"] / price
             dataWithMetric.append(d)
     if len(dataWithMetric) == 0:
