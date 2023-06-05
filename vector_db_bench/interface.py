@@ -14,6 +14,7 @@ from . import (
     DROP_OLD,
 )
 
+from .metric import Metric
 from .models import TaskConfig, TestResult, CaseResult
 from .backend.result_collector import ResultCollector
 from .backend.assembler import Assembler
@@ -137,7 +138,8 @@ class BenchMarkRunner:
             for lcase in load_cases:
                 db = lcase.db_configs[0].__name__
                 c_dict = lcase.dict(include={'label':True, 'dataset':{'data': True} })
-                log.info(f"start  load case: db={db:15}, {c_dict}")
+                log.info(f"start  load case: db={db}, {c_dict}")
+
 
                 metric = lcase.run()
                 # TODO persist case result
@@ -146,14 +148,14 @@ class BenchMarkRunner:
                     metrics=metric,
                     task_config=running_task['tasks'][idx],
                 ))
-                log.info(f"finish load case: db={db:15}, {c_dict}")
+                log.info(f"finish load case: db={db}, {c_dict}")
 
                 send_conn.send((SIGNAL.WIP, idx))
                 idx += 1
 
             for db, pcases in perf_cases.items():
                 log.info(f"start performance case: db={db.__name__}, case_count={len(pcases)}")
-                latest_case = None
+                latest_case, cached_load_duration = None, None
                 for i, pcase in enumerate(pcases):
                     drop_old = DROP_OLD
                     if latest_case and \
@@ -166,16 +168,35 @@ class BenchMarkRunner:
 
                     c_dict = pcase.dict(include={'label': True, 'filters': True, 'dataset':{'data': True} })
                     log.info(f"[{i+1}/{len(pcases)}] start  {db.__name__} performance case: {c_dict} with drop_old={drop_old}")
-                    metric = pcase.run(drop_old)
-                    c_results.append(CaseResult(
-                        result_id=idx,
-                        metrics=metric,
-                        task_config=running_task['tasks'][idx],
-                    ))
-                    log.info(f"[{i+1}/{len(pcases)}] finish {db.__name__} performance case, result={metric}")
 
-                    send_conn.send((SIGNAL.WIP, idx))
-                    idx += 1
+                    case_res = CaseResult(
+                        result_id=idx,
+                        metrics=Metric(),
+                        task_config=running_task['tasks'][idx],
+                    )
+                    try:
+                        metric = pcase.run(drop_old)
+
+                        if not cached_load_duration:
+                            cached_load_duration = metric.load_duration
+                        if cached_load_duration and metric.load_duration == 0.0:
+                            metric.load_duration = cached_load_duration
+
+                        case_res.metrics = metric
+
+                    except Exception as e:
+                        log.warning(f"[{i+1}/{len(pcases)}] {db.__name__} performance case failed to run, reason={e}")
+                        traceback.print_exc()
+
+                        case_res.failed = True
+                    finally:
+
+                        c_results.append(case_res)
+                        log.info(f"[{i+1}/{len(pcases)}] finish {db.__name__} performance case, "
+                            f"result={case_res.metrics}, failed={case_res.failed}")
+
+                        send_conn.send((SIGNAL.WIP, idx))
+                        idx += 1
 
 
             test_result = TestResult(

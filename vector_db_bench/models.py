@@ -89,6 +89,7 @@ class TaskConfig(BaseModel):
 class CaseResult(BaseModel):
     metrics: Metric
     task_config: TaskConfig
+    failed: bool | None = False
 
 
 class TestResult(BaseModel):
