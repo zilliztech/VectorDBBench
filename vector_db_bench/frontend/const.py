@@ -344,8 +344,8 @@ DB_DBLABEL_TO_PRICE = {
     },
     DB.Weaviate.value: {
         # "sandox": 0, # emmmm
-        "standard": 0.144,
-        "bus_crit": 0.625,
+        "standard": 10.10,
+        "bus_crit": 32.60,
     },
     DB.Elasticsearch.value: {
         "free-5c8g": 0.260,
