@@ -80,12 +80,12 @@ class CaseRunner(BaseModel):
             drop_old=drop_old,
         )
 
-    def _pre_run(self):
+    def _pre_run(self, drop_old: bool = True):
         self.ca.dataset.prepare()
-        self.init_db()
+        self.init_db(drop_old)
 
     def run(self, drop_old: bool = True) -> Metric:
-        self._pre_run()
+        self._pre_run(drop_old)
 
         if self.ca.label == CaseLabel.Load:
             return self._run_load_case()
