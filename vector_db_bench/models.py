@@ -6,9 +6,14 @@ from enum import Enum
 
 import ujson
 
-from .backend.clients import DB, VectorDB, DBCaseConfig, DBConfig, IndexType, MetricType, EmptyDBCaseConfig
+from .backend.clients import (
+    DB,
+    DBConfig,
+    DBCaseConfig,
+    IndexType,
+)
 from .base import BaseModel
-from . import RESULTS_LOCAL_DIR
+from . import config
 from .metric import Metric
 
 
@@ -99,7 +104,7 @@ class TestResult(BaseModel):
     results: list[CaseResult]
 
     def write_file(self):
-        result_dir = RESULTS_LOCAL_DIR
+        result_dir = config.RESULTS_LOCAL_DIR
         if not result_dir.exists():
             log.info(f"local result directory not exist, creating it: {result_dir}")
             result_dir.mkdir(parents=True)

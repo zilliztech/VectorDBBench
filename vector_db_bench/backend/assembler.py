@@ -1,40 +1,58 @@
-"""Assembler assembles cases with datasets and runners"""
+from .cases import type2case, CaseLabel
+from .runner.case_runner import CaseRunner, RunningStatus
+from .runner.task_runner import TaskRunner
+from ..models import TaskConfig
+from ..backend.clients import EmptyDBCaseConfig
+import logging
 
-from .cases import type2case, Case, CaseLabel
-from ..models import TaskConfig, EmptyDBCaseConfig
+
+
+log = logging.getLogger(__name__)
 
 class Assembler:
-
     @classmethod
-    def assemble(cls, run_id , task: TaskConfig) -> Case:
+    def assemble(cls, run_id , task: TaskConfig) -> CaseRunner:
         c_cls = type2case.get(task.case_config.case_id)
 
         c = c_cls()
         if type(task.db_case_config) != EmptyDBCaseConfig:
             task.db_case_config.metric_type = c.dataset.data.metric_type
 
-        c.db_configs = (
-            task.db.init_cls,
-            task.db_config.to_dict(),
-            task.db_case_config
+        runner = CaseRunner(
+            run_id=run_id,
+            config=task,
+            ca=c,
+            status=RunningStatus.PENDING,
         )
-        return c
+
+        return runner
 
     @classmethod
-    def assemble_all(cls, run_id: str, tasks: list[TaskConfig]) -> list[Case]:
+    def assemble_all(cls, run_id: str, task_label: str, tasks: list[TaskConfig]) -> TaskRunner:
         """group by case type, db, and case dataset"""
-        cases = [cls.assemble(run_id, task) for task in tasks]
-        load_cases = [c for c in cases if c.label == CaseLabel.Load]
-        perf_cases = [c for c in cases if c.label == CaseLabel.Performance]
+        runners = [cls.assemble(run_id, task) for task in tasks]
+        load_runners = [r for r in runners if r.ca.label == CaseLabel.Load]
+        perf_runners = [r for r in runners if r.ca.label == CaseLabel.Performance]
 
         # group by db
-        db2cases = {}
-        for c in perf_cases:
-            db = c.db_configs[0]
-            if db not in db2cases:
-                db2cases[db] = []
-            db2cases[db].append(c)
+        db2runner = {}
+        for r in perf_runners:
+            db = r.config.db
+            if db not in db2runner:
+                db2runner[db] = []
+            db2runner[db].append(r)
 
-        for k in db2cases.keys():
-            db2cases[k].sort(key=lambda x:x.dataset.data.size)
-        return (load_cases, db2cases)
+        # sort by dataset size
+        for k in db2runner.keys():
+            db2runner[k].sort(key=lambda x:x.ca.dataset.data.size)
+
+        all_runners = []
+        all_runners.extend(load_runners)
+        for v in db2runner.values():
+            all_runners.extend(v)
+
+        return TaskRunner(
+            run_id=run_id,
+            task_label=task_label,
+            case_runners=all_runners,
+        )

@@ -1,22 +1,8 @@
 import logging
-from logging import config, Filter
-import os
-import datetime
-from pytz import timezone
+from logging import config
 
 
-def init(log_level, log_path, name, tz='UTC'):
-    def build_log_file(level, log_path, name, tz):
-        utc_now = datetime.datetime.utcnow()
-        utc_tz = timezone('UTC')
-        local_tz = timezone(tz)
-        tznow = utc_now.replace(tzinfo=utc_tz).astimezone(local_tz)
-        return '{}-{}-{}.log'.format(os.path.join(log_path, name), tznow.strftime("%m-%d-%Y-%H:%M:%S"),
-                                     level)
-
-    if not os.path.exists(log_path):
-        os.makedirs(log_path)
-
+def init(log_level):
     LOGGING = {
         'version': 1,
         'disable_existing_loggers': False,
@@ -34,16 +20,9 @@ def init(log_level, log_path, name, tz='UTC'):
                 'class': 'logging.StreamHandler',
                 'formatter': 'colorful_console',
             },
-            #  'log_file': {
-            #      'level': 'INFO',
-            #      'class': 'logging.handlers.RotatingFileHandler',
-            #      'formatter': 'default',
-            #      'filename': build_log_file('all', log_path, name, tz)
-            #  },
         },
         'loggers': {
-            '': {
-                #  'handlers': ['console', 'log_file'],
+            'vector_db_bench': {
                 'handlers': ['console'],
                 'level': log_level,
                 'propagate': False

@@ -20,8 +20,8 @@ from tqdm import tqdm
 from pydantic.dataclasses import dataclass
 
 from ..base import BaseModel
-from .. import DATASET_LOCAL_DIR, DEFAULT_DATASET_URL
-from ..models import MetricType
+from .. import config
+from ..backend.clients import MetricType
 from . import utils
 
 log = logging.getLogger(__name__)
@@ -157,25 +157,25 @@ class DataSet(BaseModel):
 
     @property
     def data_dir(self) -> pathlib.Path:
-        """ data local directory: DATASET_LOCAL_DIR/{dataset_name}/{dataset_dirname}
+        """ data local directory: config.DATASET_LOCAL_DIR/{dataset_name}/{dataset_dirname}
 
         Examples:
             >>> sift_s = DataSet(data=SIFT_L())
             >>> sift_s.relative_path
             '/tmp/vector_db_bench/dataset/sift/sift_small_500k/'
         """
-        return pathlib.Path(DATASET_LOCAL_DIR, self.data.name.lower(), self.data.dir_name.lower())
+        return pathlib.Path(config.DATASET_LOCAL_DIR, self.data.name.lower(), self.data.dir_name.lower())
 
     @property
     def download_dir(self) -> str:
-        """ data s3 directory: DEFAULT_DATASET_URL/{dataset_dirname}
+        """ data s3 directory: config.DEFAULT_DATASET_URL/{dataset_dirname}
 
         Examples:
             >>> sift_s = DataSet(data=SIFT_L())
             >>> sift_s.download_dir
             'assets.zilliz.com/benchmark/sift_small_500k'
         """
-        return f"{DEFAULT_DATASET_URL}{self.data.dir_name}"
+        return f"{config.DEFAULT_DATASET_URL}{self.data.dir_name}"
 
     def __iter__(self):
         return DataSetIterator(self)
@@ -261,7 +261,7 @@ class DataSet(BaseModel):
 
     def prepare(self, check=True) -> bool:
         """Download the dataset from S3
-         url = f"{DEFAULT_DATASET_URL}/{self.data.dir_name}"
+         url = f"{config.DEFAULT_DATASET_URL}/{self.data.dir_name}"
 
          download files from url to self.data_dir, there'll be 4 types of files in the data_dir
              - train*.parquet: for training
