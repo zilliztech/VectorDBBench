@@ -144,8 +144,6 @@ class DataSet(BaseModel):
     """
     data:   GIST | Cohere | Glove | SIFT | Any
     test_data: pd.DataFrame | None = None
-    ground_truth: pd.DataFrame | None = None
-    ground_truth_90p: pd.DataFrame | None = None
     train_files : list[str] = []
 
     def __eq__(self, obj):
@@ -268,23 +266,30 @@ class DataSet(BaseModel):
              - test.parquet: for testing
              - neighbors.parquet: ground_truth of the test.parquet
              - neighbors_90p.parquet: ground_truth of the test.parquet after filtering 90% data
+             - neighbors_head_1p.parquet: ground_truth of the test.parquet after filtering 1% data
+             - neighbors_99p.parquet: ground_truth of the test.parquet after filtering 99% data
         """
-        if self.test_data is not None and \
-            self.ground_truth is not None and \
-            self.ground_truth_90p is not None:
-            log.info("Local dataset file already validated, skip validation and file reading")
-            return True
-
         if check:
             self._validate_local_file()
 
         self.train_files = sorted([f.name for f in self.data_dir.glob('train*.parquet')])
         self.test_data = self._read_file("test.parquet")
-        self.ground_truth = self._read_file("neighbors.parquet")
-        self.ground_truth_90p = self._read_file("neighbors_90p.parquet")
-
         log.debug(f"{self.data.name}: available train files {self.train_files}")
         return True
+
+    def get_ground_truth(self, filters: int | float | None = None) -> pd.DataFrame:
+        file_name = ""
+        if filters is None or filters == 100:
+            file_name = "neighbors.parquet"
+        elif filters == 0.9:
+            file_name = "neighbors_90p.parquet"
+        elif filters == 0.01:
+            file_name = "neighbors_head_1p.parquet"
+        elif filters == 0.99:
+            file_name = "neighbors_tail_1p.parquet"
+        else:
+            raise ValueError(f"Filters not supported: {filters}")
+        return self._read_file(file_name)
 
     def _read_file(self, file_name: str) -> pd.DataFrame:
         """read one file from disk into memory"""

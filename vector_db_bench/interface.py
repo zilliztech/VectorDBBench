@@ -14,7 +14,7 @@ from .metric import Metric
 from .models import TaskConfig, TestResult, CaseResult
 from .backend.result_collector import ResultCollector
 from .backend.assembler import Assembler
-from .backend.runner.task_runner import TaskRunner
+from .backend.task_runner import TaskRunner
 
 log = logging.getLogger(__name__)
 
@@ -74,7 +74,7 @@ class BenchMarkRunner:
                 self.running_task = None
                 self.receive_conn = None
             elif sig == SIGNAL.WIP:
-                self.running_task.case_runners.set_finished(received)
+                self.running_task.set_finished(received)
             else:
                 self._clear_running_task()
 

@@ -4,7 +4,7 @@ import subprocess
 import os
 from . import  config
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("vector_db_bench")
 
 def main():
     log.info(f"all configs: {config().display()}")

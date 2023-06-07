@@ -1,26 +1,23 @@
-from .. import utils
-from ..cases import Case, CaseLabel
-from ...base import BaseModel
-from ...models import TaskConfig
-import traceback
 import logging
+import traceback
 import concurrent
 import numpy as np
 from enum import Enum, auto
 
-from ..clients import (
+from . import utils
+from .cases import Case, CaseLabel
+from ..base import BaseModel
+from ..models import TaskConfig
+
+from .clients import (
     api,
     ZillizCloud,
     Milvus,
     MetricType
 )
-from ...metric import Metric
-from .mp_runner import (
-    MultiProcessingInsertRunner,
-    MultiProcessingSearchRunner,
-)
-from .serial_runner import SerialSearchRunner
-
+from ..metric import Metric
+from .runner import MultiProcessingSearchRunner
+from .runner import SerialSearchRunner, SerialInsertRunner
 
 
 log = logging.getLogger(__name__)
@@ -32,12 +29,25 @@ class RunningStatus(Enum):
 
 
 class CaseRunner(BaseModel):
+    """ DataSet, filter_rate, db_class with db config
+
+    Fields:
+        run_id(str): run_id of this case runner,
+            indicating which task does this case belong to.
+        config(TaskConfig): task configs of this case runner.
+        ca(Case): case for this case runner.
+        status(RunningStatus): RunningStatus of this case runner.
+
+        db(api.VectorDB): The vector database for this case runner.
+    """
+
     run_id: str
     config: TaskConfig
     ca: Case
     status: RunningStatus
 
     db: api.VectorDB | None = None
+    test_emb: np.ndarray | None = None
     search_runner: MultiProcessingSearchRunner | None = None
     serial_search_runner: SerialSearchRunner | None = None
 
@@ -80,7 +90,7 @@ class CaseRunner(BaseModel):
         if self.ca.label == CaseLabel.Load:
             return self._run_load_case()
         elif self.ca.label == CaseLabel.Performance:
-            return self._run_perf_case()
+            return self._run_perf_case(drop_old)
         else:
             log.warning(f"unknown case type: {self.ca.label}")
             raise ValueError(f"Unknown case type: {self.ca.label}")
@@ -98,9 +108,9 @@ class CaseRunner(BaseModel):
         data_df = [data_df for data_df in self.ca.dataset][0]
 
         all_embeddings, all_metadata = np.stack(data_df["emb"]).tolist(), data_df['id'].tolist()
-        runner = MultiProcessingInsertRunner(self.db, all_embeddings, all_metadata)
+        runner = SerialInsertRunner(self.db, all_embeddings, all_metadata)
         try:
-            count = runner.run_sequentially_endlessness()
+            count = runner.run_endlessness()
             log.info(f"load reach limit: insertion counts={count}")
             return Metric(max_load_count=count)
         except Exception as e:
@@ -111,7 +121,6 @@ class CaseRunner(BaseModel):
 
     def _run_perf_case(self, drop_old: bool = True) -> Metric:
         try:
-
             m = Metric()
             if drop_old:
                 _, load_dur = self._load_train_data()
@@ -133,6 +142,8 @@ class CaseRunner(BaseModel):
     def _load_train_data(self):
         """Insert train data and get the insert_duration"""
         for data_df in self.ca.dataset:
+            log.info("shuffling train data")
+            data_df = data_df.sample(frac = 1)
             try:
                 all_metadata = data_df['id'].tolist()
                 emb_np = np.stack(data_df['emb'])
@@ -146,7 +157,7 @@ class CaseRunner(BaseModel):
                 del(emb_np)
                 log.debug(f"normalized size: {len(all_embeddings)}, {len(all_metadata)}")
 
-                runner = MultiProcessingInsertRunner(self.db, all_embeddings, all_metadata)
+                runner = SerialInsertRunner(self.db, all_embeddings, all_metadata)
                 runner.run()
             except Exception as e:
                 raise e from None
@@ -165,6 +176,7 @@ class CaseRunner(BaseModel):
             return self.serial_search_runner.run()
         except Exception as e:
             log.warning(f"search error: {str(e)}, {e}")
+            self.stop()
             raise e from None
 
     def _conc_search(self):
@@ -180,8 +192,7 @@ class CaseRunner(BaseModel):
             log.warning(f"search error: {str(e)}, {e}")
             raise e from None
         finally:
-            self.search_runner.stop()
-
+            self.stop()
 
     @utils.time_it
     def _task(self) -> None:
@@ -202,24 +213,74 @@ class CaseRunner(BaseModel):
         test_emb = np.stack(self.ca.dataset.test_data["emb"])
         if self.normalize:
             test_emb = test_emb / np.linalg.norm(test_emb, axis=1)[:, np.newaxis]
+        self.test_emb = test_emb
 
-        gt_df = self.ca.dataset.ground_truth if self.ca.filters is None or self.ca.filters['id'] == self.ca.filter_size \
-                else self.ca.dataset.ground_truth_90p
-
+        gt_df = self.ca.dataset.get_ground_truth(self.ca.filter_rate)
 
         self.serial_search_runner = SerialSearchRunner(
             db=self.db,
-            test_data=test_emb.tolist(),
+            test_data=self.test_emb.tolist(),
             ground_truth=gt_df,
             filters=self.ca.filters,
         )
 
         self.search_runner =  MultiProcessingSearchRunner(
             db=self.db,
-            test_data=test_emb,
+            test_data=self.test_emb,
             filters=self.ca.filters,
         )
 
     def stop(self):
         if self.search_runner:
             self.search_runner.stop()
+
+
+class TaskRunner(BaseModel):
+    run_id: str
+    task_label: str
+    case_runners: list[CaseRunner]
+
+    def num_cases(self) -> int:
+        return len(self.case_runners)
+
+    def num_finished(self) -> int:
+        return self._get_num_by_status(RunningStatus.FINISHED)
+
+    def set_finished(self, idx: int) -> None:
+        self.case_runners[idx].status = RunningStatus.FINISHED
+
+    def _get_num_by_status(self, status: RunningStatus) -> int:
+        return sum([1 for c in self.case_runners if c.status == status])
+
+    def display(self) -> None:
+        DATA_FORMAT = (" %34s | %-12s %-20s %7s | %-10s")
+        TITLE_FORMAT = (" %s | %-12s %-20s %7s | %-10s") % (
+            "DB", "CaseType", "Dataset", "Filter", "task_label")
+
+        fmt = [TITLE_FORMAT]
+        fmt.append(DATA_FORMAT%(
+            "-"*11,
+            "-"*12,
+            "-"*20,
+            "-"*7,
+            "-"*7
+        ))
+
+        for f in self.case_runners:
+            if f.ca.filter_rate != 0.0:
+                filters = f.ca.filter_rate
+            elif f.ca.filter_size != 0:
+                filters = f.ca.filter_size
+            else:
+                filters = "None"
+
+            ds_str = f"{f.ca.dataset.data.name}-{f.ca.dataset.data.label}-{utils.numerize(f.ca.dataset.data.size)}"
+            fmt.append(DATA_FORMAT%(
+                f.config.db_name,
+                f.ca.label.name,
+                ds_str,
+                filters,
+                self.task_label,
+            ))
+
+        log.info('\n'.join(fmt))

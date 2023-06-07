@@ -1,13 +1,12 @@
 from .cases import type2case, CaseLabel
-from .runner.case_runner import CaseRunner, RunningStatus
-from .runner.task_runner import TaskRunner
+from .task_runner import CaseRunner, RunningStatus, TaskRunner
 from ..models import TaskConfig
 from ..backend.clients import EmptyDBCaseConfig
 import logging
 
 
-
 log = logging.getLogger(__name__)
+
 
 class Assembler:
     @classmethod
