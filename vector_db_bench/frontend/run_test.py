@@ -1,6 +1,6 @@
 import streamlit as st
 from vector_db_bench.frontend.const import *
-from vector_db_bench.models import TaskConfig, CaseConfig, DBCaseConfig
+from vector_db_bench.models import TaskConfig, CaseConfig
 from vector_db_bench.interface import benchMarkRunner
 from vector_db_bench.frontend.utils import inputIsPassword, displayCaseText
 from streamlit_autorefresh import st_autorefresh

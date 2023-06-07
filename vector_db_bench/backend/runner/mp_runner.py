@@ -8,8 +8,10 @@ from typing import Iterable
 import numpy as np
 from ..clients import api
 from .. import utils
-from ... import NUM_PER_BATCH
+from ... import config
 
+
+NUM_PER_BATCH = config.NUM_PER_BATCH
 log = logging.getLogger(__name__)
 
 
@@ -109,9 +111,6 @@ class MultiProcessingInsertRunner:
         log.info(f'end insert with concurrency of {self.num_concurrency} in {dur} seconds')
         return count
 
-    def stop(self) -> None:
-        pass
-
 
 class MultiProcessingSearchRunner:
     def __init__(
@@ -201,6 +200,9 @@ class MultiProcessingSearchRunner:
             # No results available, raise exception
             if max_qps == 0:
                 raise e from None
+
+        finally:
+            self.stop()
 
         return max_qps
 

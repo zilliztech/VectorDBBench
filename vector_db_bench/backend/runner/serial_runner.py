@@ -99,7 +99,3 @@ class SerialSearchRunner:
 
     def run(self) -> tuple[float, float, float]:
         return self._run_in_subprocess()
-
-    def stop(self) -> None:
-        """stop to prevent resource leak"""
-        pass

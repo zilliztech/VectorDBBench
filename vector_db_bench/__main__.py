@@ -2,20 +2,16 @@ import traceback
 import logging
 import subprocess
 import os
+from . import  config
 
-log = logging.getLogger("main")
+log = logging.getLogger(__name__)
 
-# TODO: logging configs before start
 def main():
-    log.debug("Debug log message")
-    log.info("Info log message")
-    log.warning("Warining log message")
-
+    log.info(f"all configs: {config().display()}")
     run_streamlit()
 
 def run_streamlit():
-    # TODO: add log level
-    cmd = ['streamlit', 'run', f'{os.path.dirname(__file__)}/frontend/run_test.py']
+    cmd = ['streamlit', 'run', f'{os.path.dirname(__file__)}/frontend/run_test.py', '--logger.level', 'info']
     log.debug(f"cmd: {cmd}")
     try:
         subprocess.run(cmd, check=True)

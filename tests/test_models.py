@@ -11,7 +11,7 @@ from vector_db_bench.models import (
 from vector_db_bench.backend.clients.milvus.milvus.config import (
     MilvusConfig, HNSWConfig, IVFFlatConfig,
 )
-from vector_db_bench import RESULTS_LOCAL_DIR
+from vector_db_bench import config
 
 
 log = logging.getLogger(__name__)
@@ -73,14 +73,14 @@ class TestModels:
             result = TestResult.read_file('nosuchfile.json')
 
     def test_test_result_read_write(self):
-        result_dir = RESULTS_LOCAL_DIR
+        result_dir = config.RESULTS_LOCAL_DIR
         for json_file in result_dir.glob("*.json"):
             res = TestResult.read_file(json_file)
             res.task_label = f"Milvus-{res.run_id}"
             res.write_file()
 
     def test_test_result_merge(self):
-        result_dir = RESULTS_LOCAL_DIR
+        result_dir = config.RESULTS_LOCAL_DIR
         all_results = []
 
         first_result = None
