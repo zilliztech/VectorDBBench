@@ -1,13 +1,12 @@
 from .mp_runner import (
-    MultiProcessingInsertRunner,
     MultiProcessingSearchRunner,
 )
 
-from .serial_runner import SerialSearchRunner
+from .serial_runner import SerialSearchRunner, SerialInsertRunner
 
 
 __all__ = [
-    'MultiProcessingInsertRunner',
     'MultiProcessingSearchRunner',
     'SerialSearchRunner',
+    'SerialInsertRunner',
 ]
