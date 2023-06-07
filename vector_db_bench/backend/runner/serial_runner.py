@@ -26,10 +26,12 @@ class SerialInsertRunner:
 
         self.seq_batches = math.ceil(len(train_emb)/NUM_PER_BATCH)
 
-    def insert_data(self) -> int:
+    def insert_data(self, left_id: int = 0) -> int:
         with self.db.init():
             all_embeddings = self.shared_emb
-            all_metadata = self.train_id
+
+            # unique id for endlessness insertion
+            all_metadata = [i+left_id for i in self.train_id]
 
             num_conc_batches = math.ceil(len(all_embeddings)/NUM_PER_BATCH)
             log.info(f"({mp.current_process().name:16}) Start inserting {len(all_embeddings)} embeddings in batch {NUM_PER_BATCH}")
@@ -66,7 +68,7 @@ class SerialInsertRunner:
             with self.db.init():
                 self.db.ready_to_load()
             while True:
-                count = self._insert_data()
+                count = self.insert_data(left_id=max_load_count)
                 max_load_count += count
                 times += 1
                 log.info(f"Loaded {times:3} entire dataset, current max load counts={utils.numerize(max_load_count)}, {max_load_count}")
