@@ -27,6 +27,16 @@ from . import utils
 log = logging.getLogger(__name__)
 
 @dataclass
+class LAION:
+    name: str = "LAION"
+    dim: int = 768
+    metric_type: MetricType = MetricType.COSINE
+
+    @property
+    def dir_name(self) -> str:
+        return f"{self.name}_{self.label}_{utils.numerize(self.size)}".lower()
+
+@dataclass
 class GIST:
     name: str = "GIST"
     dim: int = 960
@@ -65,6 +75,11 @@ class SIFT:
     @property
     def dir_name(self) -> str:
         return f"{self.name}_{self.label}_{utils.numerize(self.size)}".lower()
+
+@dataclass
+class LAION_L(GIST):
+    label: str = "LARGE"
+    size: int  = 100_000_000
 
 @dataclass
 class GIST_S(GIST):
@@ -326,6 +341,7 @@ class Name(Enum):
     Cohere = auto()
     Glove = auto()
     SIFT = auto()
+    LAION = auto()
 
 
 class Label(Enum):
@@ -351,6 +367,9 @@ _global_ds_mapping = {
         Label.SMALL: DataSet(data=SIFT_S()),
         Label.MEDIUM: DataSet(data=SIFT_M()),
         Label.LARGE: DataSet(data=SIFT_L()),
+    },
+    Name.LAION: {
+        Label.LARGE: DataSet(data=LAION_L()),
     },
 }
 
