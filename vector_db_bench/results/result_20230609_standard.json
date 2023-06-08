@@ -29,7 +29,8 @@
           "case_id": "Search Performance Test(Medium Dataset)",
           "custom_case": {}
         }
-      }
+      },
+      "label": ":)"
     },
     {
       "metrics": {
@@ -58,7 +59,8 @@
           "case_id": "Search Performance Test(Small Dataset)",
           "custom_case": {}
         }
-      }
+      },
+      "label": ":)"
     },
     {
       "metrics": {
@@ -84,7 +86,8 @@
           "case_id": "Search Performance Test(Small Dataset)",
           "custom_case": {}
         }
-      }
+      },
+      "label": ":)"
     },
     {
       "metrics": {
@@ -109,7 +112,8 @@
           "case_id": "Search Performance Test(Large Dataset)",
           "custom_case": {}
         }
-      }
+      },
+      "label": ":)"
     },
     {
       "metrics": {
@@ -134,7 +138,8 @@
           "case_id": "Search Performance Test(Medium Dataset)",
           "custom_case": {}
         }
-      }
+      },
+      "label": ":)"
     },
     {
       "metrics": {
@@ -159,7 +164,8 @@
           "case_id": "Search Performance Test(Medium Dataset)",
           "custom_case": {}
         }
-      }
+      },
+      "label": ":)"
     },
     {
       "metrics": {
@@ -184,7 +190,8 @@
           "case_id": "Search Performance Test(Small Dataset)",
           "custom_case": {}
         }
-      }
+      },
+      "label": ":)"
     },
     {
       "metrics": {
@@ -210,7 +217,8 @@
           "case_id": "Search Performance Test(Small Dataset)",
           "custom_case": {}
         }
-      }
+      },
+      "label": ":)"
     },
     {
       "metrics": {
@@ -236,7 +244,8 @@
           "case_id": "Search Performance Test(Medium Dataset)",
           "custom_case": {}
         }
-      }
+      },
+      "label": ":)"
     },
     {
       "metrics": {
@@ -261,7 +270,8 @@
           "case_id": "Search Performance Test(Small Dataset)",
           "custom_case": {}
         }
-      }
+      },
+      "label": ":)"
     },
     {
       "metrics": {
@@ -287,7 +297,8 @@
           "case_id": "Search Performance Test(Large Dataset)",
           "custom_case": {}
         }
-      }
+      },
+      "label": ":)"
     },
     {
       "metrics": {
@@ -313,7 +324,8 @@
           "case_id": "Search Performance Test(Medium Dataset)",
           "custom_case": {}
         }
-      }
+      },
+      "label": ":)"
     },
     {
       "metrics": {
@@ -341,7 +353,7 @@
           "custom_case": null
         }
       },
-      "failed": true
+      "label": "x"
     },
     {
       "metrics": {
@@ -368,7 +380,8 @@
           "case_id": "Search Performance Test(Medium Dataset)",
           "custom_case": null
         }
-      }
+      },
+      "label": ":)"
     },
     {
       "metrics": {
@@ -395,7 +408,8 @@
           "case_id": "Search Performance Test(Small Dataset)",
           "custom_case": null
         }
-      }
+      },
+      "label": ":)"
     },
     {
       "metrics": {
@@ -423,7 +437,7 @@
           "custom_case": null
         }
       },
-      "failed": true
+      "label": "x"
     },
     {
       "metrics": {
@@ -450,7 +464,8 @@
           "case_id": "Search Performance Test(Small Dataset)",
           "custom_case": null
         }
-      }
+      },
+      "label": ":)"
     },
     {
       "metrics": {
@@ -477,7 +492,8 @@
           "case_id": "Search Performance Test(Small Dataset)",
           "custom_case": null
         }
-      }
+      },
+      "label": ":)"
     },
     {
       "metrics": {
@@ -504,7 +520,8 @@
           "case_id": "Search Performance Test(Medium Dataset)",
           "custom_case": null
         }
-      }
+      },
+      "label": ":)"
     },
     {
       "metrics": {
@@ -532,7 +549,7 @@
           "custom_case": null
         }
       },
-      "failed": true
+      "label": "x"
     },
     {
       "metrics": {
@@ -558,7 +575,8 @@
           "case_id": "Search Performance Test(Medium Dataset)",
           "custom_case": {}
         }
-      }
+      },
+      "label": ":)"
     },
     {
       "metrics": {
@@ -584,7 +602,8 @@
           "case_id": "Search Performance Test(Medium Dataset)",
           "custom_case": {}
         }
-      }
+      },
+      "label": ":)"
     },
     {
       "metrics": {
@@ -610,7 +629,8 @@
           "case_id": "Search Performance Test(Small Dataset)",
           "custom_case": {}
         }
-      }
+      },
+      "label": ":)"
     },
     {
       "metrics": {
@@ -636,7 +656,8 @@
           "case_id": "Search Performance Test(Small Dataset)",
           "custom_case": {}
         }
-      }
+      },
+      "label": ":)"
     },
     {
       "metrics": {
@@ -663,7 +684,7 @@
           "custom_case": {}
         }
       },
-      "failed": false
+      "label": ":)"
     },
     {
       "metrics": {
@@ -690,7 +711,7 @@
           "custom_case": {}
         }
       },
-      "failed": false
+      "label": ":)"
     },
     {
       "metrics": {
@@ -717,7 +738,7 @@
           "custom_case": {}
         }
       },
-      "failed": false
+      "label": ":)"
     },
     {
       "metrics": {
@@ -744,7 +765,8 @@
           "case_id": "Search Performance Test(Medium Dataset)",
           "custom_case": {}
         }
-      }
+      },
+      "label": ":)"
     },
     {
       "metrics": {
@@ -771,7 +793,8 @@
           "case_id": "Search Performance Test(Small Dataset)",
           "custom_case": {}
         }
-      }
+      },
+      "label": ":)"
     },
     {
       "metrics": {
@@ -798,7 +821,8 @@
           "case_id": "Search Performance Test(Small Dataset)",
           "custom_case": {}
         }
-      }
+      },
+      "label": ":)"
     },
     {
       "metrics": {
@@ -825,7 +849,8 @@
           "case_id": "Search Performance Test(Medium Dataset)",
           "custom_case": {}
         }
-      }
+      },
+      "label": ":)"
     },
     {
       "metrics": {
@@ -852,7 +877,8 @@
           "case_id": "Search Performance Test(Medium Dataset)",
           "custom_case": {}
         }
-      }
+      },
+      "label": ":)"
     },
     {
       "metrics": {
@@ -879,7 +905,8 @@
           "case_id": "Search Performance Test(Small Dataset)",
           "custom_case": {}
         }
-      }
+      },
+      "label": ":)"
     },
     {
       "metrics": {
@@ -906,7 +933,8 @@
           "case_id": "Search Performance Test(Medium Dataset)",
           "custom_case": {}
         }
-      }
+      },
+      "label": ":)"
     },
     {
       "metrics": {
@@ -933,7 +961,8 @@
           "case_id": "Search Performance Test(Small Dataset)",
           "custom_case": {}
         }
-      }
+      },
+      "label": ":)"
     },
     {
       "metrics": {
@@ -960,7 +989,8 @@
           "case_id": "Search Performance Test(Small Dataset)",
           "custom_case": {}
         }
-      }
+      },
+      "label": ":)"
     },
     {
       "metrics": {
@@ -987,7 +1017,8 @@
           "case_id": "Search Performance Test(Small Dataset)",
           "custom_case": {}
         }
-      }
+      },
+      "label": ":)"
     },
     {
       "metrics": {
@@ -1014,7 +1045,8 @@
           "case_id": "Search Performance Test(Large Dataset)",
           "custom_case": {}
         }
-      }
+      },
+      "label": ":)"
     },
     {
       "metrics": {
@@ -1041,7 +1073,8 @@
           "case_id": "Search Performance Test(Medium Dataset)",
           "custom_case": {}
         }
-      }
+      },
+      "label": ":)"
     },
     {
       "metrics": {
@@ -1066,7 +1099,8 @@
           "case_id": "Search Performance Test(Small Dataset)",
           "custom_case": {}
         }
-      }
+      },
+      "label": ":)"
     },
     {
       "metrics": {
@@ -1091,7 +1125,8 @@
           "case_id": "Search Performance Test(Medium Dataset)",
           "custom_case": {}
         }
-      }
+      },
+      "label": ":)"
     },
     {
       "metrics": {
@@ -1116,7 +1151,8 @@
           "case_id": "Search Performance Test(Large Dataset)",
           "custom_case": {}
         }
-      }
+      },
+      "label": ":)"
     }
   ]
 }

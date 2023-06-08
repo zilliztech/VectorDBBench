@@ -90,11 +90,16 @@ class TaskConfig(BaseModel):
         db_label = self.db_config.db_label
         return f"{db}-{db_label}" if db_label else db
 
+class ResultLabel(Enum):
+    NORMAL = ":)"
+    FAILED = "x"
+    OUTOFRANGE = "?"
+
 
 class CaseResult(BaseModel):
     metrics: Metric
     task_config: TaskConfig
-    failed: bool | None = False
+    label: ResultLabel = ResultLabel.NORMAL
 
 
 class TestResult(BaseModel):
