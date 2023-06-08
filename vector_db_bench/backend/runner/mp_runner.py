@@ -101,15 +101,15 @@ class MultiProcessingSearchRunner:
         except Exception as e:
             log.warning(f"fail to search all concurrencies: {self.concurrencies}, max_qps before failure={max_qps}, reason={e}")
             traceback.print_exc()
+
             # No results available, raise exception
-            if max_qps == 0:
+            if max_qps == 0.0:
                 raise e from None
 
         finally:
             self.stop()
 
         return max_qps
-
 
     def run(self) -> float:
         """

@@ -79,32 +79,32 @@ class PerformanceSZero(PerformanceCase):
 
 class PerformanceLLow(PerformanceCase):
     case_id: CaseType = CaseType.PerformanceLLow
-    filter_rate: float | int | None = 100
+    filter_rate: float | int | None = 0.01
     dataset: ds.DataSet = ds.get(ds.Name.Cohere, ds.Label.LARGE)
 
 class PerformanceMLow(PerformanceCase):
     case_id: CaseType = CaseType.PerformanceMLow
-    filter_rate: float | int | None = 100
+    filter_rate: float | int | None = 0.01
     dataset: ds.DataSet = ds.get(ds.Name.Cohere, ds.Label.MEDIUM)
 
 class PerformanceSLow(PerformanceCase):
     case_id: CaseType = CaseType.PerformanceSLow
-    filter_rate: float | int | None = 100
+    filter_rate: float | int | None = 0.01
     dataset: ds.DataSet = ds.get(ds.Name.Cohere, ds.Label.SMALL)
 
 class PerformanceLHigh(PerformanceCase):
     case_id: CaseType = CaseType.PerformanceLHigh
-    filter_rate: float | int | None = 0.9
+    filter_rate: float | int | None = 0.99
     dataset: ds.DataSet = ds.get(ds.Name.Cohere, ds.Label.LARGE)
 
 class PerformanceMHigh(PerformanceCase):
     case_id: CaseType = CaseType.PerformanceMHigh
-    filter_rate: float | int | None = 0.9
+    filter_rate: float | int | None = 0.99
     dataset: ds.DataSet = ds.get(ds.Name.Cohere, ds.Label.MEDIUM)
 
 class PerformanceSHigh(PerformanceCase):
     case_id: CaseType = CaseType.PerformanceSLow
-    filter_rate: float | int | None = 0.9
+    filter_rate: float | int | None = 0.99
     dataset: ds.DataSet = ds.get(ds.Name.Cohere, ds.Label.SMALL)
 
 type2case = {

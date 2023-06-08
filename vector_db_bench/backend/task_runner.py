@@ -142,12 +142,10 @@ class CaseRunner(BaseModel):
     def _load_train_data(self):
         """Insert train data and get the insert_duration"""
         for data_df in self.ca.dataset:
-            log.info("shuffling train data")
-            data_df = data_df.sample(frac = 1)
             try:
                 all_metadata = data_df['id'].tolist()
-                emb_np = np.stack(data_df['emb'])
 
+                emb_np = np.stack(data_df['emb'])
                 if self.normalize:
                     log.debug("normalize the 100k train data")
                     all_embeddings = emb_np / np.linalg.norm(emb_np, axis=1)[:, np.newaxis].tolist()
@@ -253,8 +251,8 @@ class TaskRunner(BaseModel):
         return sum([1 for c in self.case_runners if c.status == status])
 
     def display(self) -> None:
-        DATA_FORMAT = (" %34s | %-12s %-20s %7s | %-10s")
-        TITLE_FORMAT = (" %s | %-12s %-20s %7s | %-10s") % (
+        DATA_FORMAT = (" %-14s | %-12s %-20s %7s | %-10s")
+        TITLE_FORMAT = (" %-14s | %-12s %-20s %7s | %-10s") % (
             "DB", "CaseType", "Dataset", "Filter", "task_label")
 
         fmt = [TITLE_FORMAT]
@@ -283,4 +281,6 @@ class TaskRunner(BaseModel):
                 self.task_label,
             ))
 
-        log.info('\n'.join(fmt))
+        tmp_logger = logging.getLogger("no_color")
+        for f in fmt:
+            tmp_logger.info(f)

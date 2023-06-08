@@ -152,7 +152,6 @@ class DataSet(BaseModel):
                 self.data.label == obj.data.label
         return False
 
-
     @property
     def data_dir(self) -> pathlib.Path:
         """ data local directory: config.DATASET_LOCAL_DIR/{dataset_name}/{dataset_dirname}
@@ -194,7 +193,8 @@ class DataSet(BaseModel):
 
         # get local files ended with '.parquet'
         file_names = [p.name for p in self.data_dir.glob("*.parquet")]
-        log.info(f"local files: {file_names}, s3 files: {path2etag}")
+        log.info(f"local files: {file_names}")
+        log.info(f"s3 files: {path2etag.keys()}")
         downloads = []
         if len(file_names) == 0:
             log.info("no local files, set all to downloading lists")
@@ -202,7 +202,7 @@ class DataSet(BaseModel):
         else:
             # if local file exists, check the etag of local file with s3,
             # make sure data files aren't corrupted.
-            for name in [key.split("/")[-1] for key in path2etag.keys()]:
+            for name in tqdm([key.split("/")[-1] for key in path2etag.keys()]):
                 s3_path = f"{self.download_dir}/{name}"
                 local_path = self.data_dir.joinpath(name)
                 log.debug(f"s3 path: {s3_path}, local_path: {local_path}")
@@ -240,7 +240,7 @@ class DataSet(BaseModel):
         if '-' not in expected_etag: # no spliting uploading
             with open(local_file, 'rb') as f:
                 le = md5(f.read()).hexdigest()
-                log.info(f"calculated local etag {le}, expected etag: {expected_etag}")
+                log.debug(f"calculated local etag {le}, expected etag: {expected_etag}")
                 return expected_etag == le
         else:
             num_parts = int(expected_etag.split('-')[-1])
@@ -252,7 +252,7 @@ class DataSet(BaseModel):
 
             for partsize in filter(possible_partsizes(filesize, num_parts), partsizes):
                 le = calc_etag(local_file, partsize)
-                log.info(f"calculated local etag {le}, expected etag: {expected_etag}")
+                log.debug(f"calculated local etag {le}, expected etag: {expected_etag}")
                 if expected_etag == le:
                     return True
         return False
@@ -278,6 +278,7 @@ class DataSet(BaseModel):
         return True
 
     def get_ground_truth(self, filters: int | float | None = None) -> pd.DataFrame:
+
         file_name = ""
         if filters is None or filters == 100:
             file_name = "neighbors.parquet"
