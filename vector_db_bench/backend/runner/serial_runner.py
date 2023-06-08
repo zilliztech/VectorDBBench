@@ -127,7 +127,6 @@ class SerialSearchRunner:
                 latencies.append(time.perf_counter() - s)
 
                 gt = ground_truth['neighbors_id'][idx]
-                #  gt = ground_truth['neighobrs_id'][idx]
 
                 # valid_idx for ground_truth for no filter and high filter
                 valid_idx = self.k
@@ -141,6 +140,7 @@ class SerialSearchRunner:
                         iter_idx += 1
 
                 recalls.append(calc_recall(self.k, gt[:valid_idx], results))
+
 
                 if len(latencies) % 100 == 0:
                     log.debug(f"({mp.current_process().name:14}) search_count={len(latencies):3}, latest_latency={latencies[-1]}, latest recall={recalls[-1]}")

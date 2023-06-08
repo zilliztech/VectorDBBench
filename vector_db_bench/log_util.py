@@ -8,7 +8,7 @@ def init(log_level):
         'disable_existing_loggers': False,
         'formatters': {
             'default': {
-                'format': '%(asctime)s | %(levelname)s | %(name)s | %(process)s: %(message)s (%(filename)s:%(lineno)s)',
+                'format': '%(asctime)s | %(levelname)s |%(message)s (%(filename)s:%(lineno)s)',
             },
             'colorful_console': {
                 'format': '%(asctime)s | %(levelname)s: %(message)s (%(filename)s:%(lineno)s) (%(process)s)',
@@ -20,10 +20,19 @@ def init(log_level):
                 'class': 'logging.StreamHandler',
                 'formatter': 'colorful_console',
             },
+            'no_color_console': {
+                'class': 'logging.StreamHandler',
+                'formatter': 'default',
+            },
         },
         'loggers': {
             'vector_db_bench': {
                 'handlers': ['console'],
+                'level': log_level,
+                'propagate': False
+            },
+            'no_color': {
+                'handlers': ['no_color_console'],
                 'level': log_level,
                 'propagate': False
             },

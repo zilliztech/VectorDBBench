@@ -119,7 +119,6 @@ class TestResult(BaseModel):
             b = self.json(exclude={'db_config': {'password', 'api_key'}})
             f.write(b)
 
-
     @classmethod
     def read_file(cls, full_path: pathlib.Path) -> Self:
         if not full_path.exists():
@@ -142,3 +141,51 @@ class TestResult(BaseModel):
                 case_result["task_config"] = task_config
             c = TestResult.validate(test_result)
             return c
+
+    def display(self, dbs: list[DB] | None = None):
+        DATA_FORMAT = (" %-14s | %-17s %-20s %14s | %-10s %14s %14s %14s %14s")
+        TITLE_FORMAT = (" %-14s | %-17s %-20s %14s | %-10s %14s %14s %14s %14s") % (
+            "DB", "db_label", "case", "label", "load_dur", "qps", "latency(p99)", "recall", "max_load_count")
+
+        SUMMERY_FORMAT = ("Task summery: run_id=%s, task_label=%s") % (
+            self.run_id[:5], self.task_label)
+
+        fmt = [SUMMERY_FORMAT, TITLE_FORMAT]
+        fmt.append(DATA_FORMAT%(
+            "-"*14,
+            "-"*17,
+            "-"*20,
+            "-"*14,
+            "-"*10,
+            "-"*14,
+            "-"*14,
+            "-"*14,
+            "-"*14,
+        ))
+
+        filter_list = dbs if dbs and isinstance(dbs, list) else None
+
+        sorted_results = sorted(self.results, key=lambda x: (
+            x.task_config.db.name,
+            x.task_config.db_config.db_label,
+            x.task_config.case_config.case_id.name,
+        ), reverse=True)
+        for f in sorted_results:
+            if filter_list and f.task_config.db not in filter_list:
+                continue
+
+            fmt.append(DATA_FORMAT%(
+                f.task_config.db.name,
+                f.task_config.db_config.db_label,
+                f.task_config.case_config.case_id.name,
+                self.task_label,
+                f.metrics.load_duration,
+                f.metrics.qps,
+                f.metrics.serial_latency_p99,
+                f.metrics.recall,
+                f.metrics.max_load_count,
+            ))
+
+        tmp_logger = logging.getLogger("no_color")
+        for f in fmt:
+            tmp_logger.info(f)

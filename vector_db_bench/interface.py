@@ -133,9 +133,9 @@ class BenchMarkRunner:
 
                 drop_old = False if latest_runner and runner == latest_runner else config.DROP_OLD
                 try:
-                    log.info(f"start case: {runner.display()}, drop_old={drop_old}")
+                    log.info(f"[{idx+1}/{running_task.num_cases()}] start case: {runner.display()}, drop_old={drop_old}")
                     case_res.metrics = runner.run(drop_old)
-                    log.info(f"finish case: {runner.display()}, "
+                    log.info(f"[{idx+1}/{running_task.num_cases()}] finish case: {runner.display()}, "
                         f"result={case_res.metrics}, failed={case_res.failed}")
 
                     # cache the latest succeeded runner
@@ -148,7 +148,7 @@ class BenchMarkRunner:
                     if not drop_old:
                         case_res.metrics.load_duration = cached_load_duration if cached_load_duration else 0.0
                 except Exception as e:
-                    log.warning(f"case {runner.display()} failed to run, reason={e}")
+                    log.warning(f"[{idx+1}/{running_task.num_cases()}] case {runner.display()} failed to run, reason={e}")
                     traceback.print_exc()
                     case_res.failed = True
                     continue
@@ -163,7 +163,7 @@ class BenchMarkRunner:
                 task_label=running_task.task_label,
                 results=c_results,
             )
-
+            test_result.display()
             test_result.write_file()
 
             send_conn.send((SIGNAL.SUCCESS, None))

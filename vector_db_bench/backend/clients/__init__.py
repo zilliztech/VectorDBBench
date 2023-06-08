@@ -17,7 +17,6 @@ from .qdrant.qdrant import Qdrant
 from .zilliz_cloud.zilliz_cloud import ZillizCloud
 
 
-
 class DB(Enum):
     """Database types
 
@@ -55,5 +54,4 @@ db2client = {
 
 __all__ = [
     "DB", "VectorDB", "DBConfig", "DBCaseConfig", "IndexType", "MetricType", "EmptyDBCaseConfig",
-
 ]
