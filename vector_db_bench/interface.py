@@ -11,7 +11,7 @@ from enum import Enum
 
 from . import config
 from .metric import Metric
-from .models import TaskConfig, TestResult, CaseResult
+from .models import TaskConfig, TestResult, CaseResult, LoadTimeoutError, ResultLabel
 from .backend.result_collector import ResultCollector
 from .backend.assembler import Assembler
 from .backend.task_runner import TaskRunner
@@ -136,7 +136,7 @@ class BenchMarkRunner:
                     log.info(f"[{idx+1}/{running_task.num_cases()}] start case: {runner.display()}, drop_old={drop_old}")
                     case_res.metrics = runner.run(drop_old)
                     log.info(f"[{idx+1}/{running_task.num_cases()}] finish case: {runner.display()}, "
-                        f"result={case_res.metrics}, failed={case_res.failed}")
+                        f"result={case_res.metrics}, label={case_res.label}")
 
                     # cache the latest succeeded runner
                     latest_runner = runner
@@ -147,10 +147,15 @@ class BenchMarkRunner:
                     # use the cached load duration if this case didn't drop the existing collection
                     if not drop_old:
                         case_res.metrics.load_duration = cached_load_duration if cached_load_duration else 0.0
+                except LoadTimeoutError as e:
+                    log.warning(f"[{idx+1}/{running_task.num_cases()}] case {runner.display()} failed to run, reason={e}")
+                    case_res.label = ResultLabel.OUTOFRANGE
+                    continue
+
                 except Exception as e:
                     log.warning(f"[{idx+1}/{running_task.num_cases()}] case {runner.display()} failed to run, reason={e}")
                     traceback.print_exc()
-                    case_res.failed = True
+                    case_res.label = ResultLabel.FAILED
                     continue
 
                 finally:

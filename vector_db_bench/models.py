@@ -20,6 +20,10 @@ from .metric import Metric
 log = logging.getLogger(__name__)
 
 
+class LoadTimeoutError(TimeoutError):
+    pass
+
+
 class CaseType(Enum):
     """
     Value will be displayed in UI
