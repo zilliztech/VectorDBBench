@@ -9,10 +9,12 @@ import pandas as pd
 
 from ..clients import api
 from ...metric import calc_recall
+from ...models import LoadTimeoutError
 from .. import utils
 from ... import config
 
 NUM_PER_BATCH = config.NUM_PER_BATCH
+LOAD_TIMEOUT = 12 * 60 * 60
 
 log = logging.getLogger(__name__)
 
@@ -63,15 +65,17 @@ class SerialInsertRunner:
 
     def run_endlessness(self) -> int:
         """run forever util DB raises exception or crash"""
+        start_time = time.perf_counter()
         max_load_count, times = 0, 0
         try:
             with self.db.init():
                 self.db.ready_to_load()
-            while True:
+            while time.perf_counter() - start_time < LOAD_TIMEOUT:
                 count = self.insert_data(left_id=max_load_count)
                 max_load_count += count
                 times += 1
                 log.info(f"Loaded {times:3} entire dataset, current max load counts={utils.numerize(max_load_count)}, {max_load_count}")
+            raise LoadTimeoutError("load case timeout and stop")
         except Exception as e:
             log.info(f"load reach limit, insertion counts={utils.numerize(max_load_count)}, {max_load_count}, err={e}")
             traceback.print_exc()
