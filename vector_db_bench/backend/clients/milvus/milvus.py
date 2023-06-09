@@ -57,7 +57,7 @@ class Milvus(VectorDB):
                 consistency_level="Session",
             )
 
-            #  self._pre_load(coll)
+            self._pre_load(coll)
 
         connections.disconnect("default")
 
@@ -116,9 +116,10 @@ class Milvus(VectorDB):
                 self.case_config.index_param(),
                 index_name=self._index_name,
             )
-            #  utility.wait_for_index_building_complete(self.collection_name)
-            #  self.col.load(_refresh=True)
-            self.col.load()
+            utility.wait_for_index_building_complete(self.collection_name)
+            self.col.load(_refresh=True)
+            utility.wait_for_loading_complete(self.collection_name)
+            import time; time.sleep(10)
         except Exception as e:
             log.warning(f"{self.name} optimize error: {e}")
             raise e from None

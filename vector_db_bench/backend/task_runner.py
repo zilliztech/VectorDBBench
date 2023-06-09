@@ -81,8 +81,12 @@ class CaseRunner(BaseModel):
         )
 
     def _pre_run(self, drop_old: bool = True):
-        self.ca.dataset.prepare()
-        self.init_db(drop_old)
+        try:
+            self.ca.dataset.prepare(False)
+            self.init_db(drop_old)
+        except Exception as e:
+            log.warning(f"pre run case error: {e}")
+            raise e from None
 
     def run(self, drop_old: bool = True) -> Metric:
         self._pre_run(drop_old)

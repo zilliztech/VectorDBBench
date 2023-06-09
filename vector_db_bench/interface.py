@@ -1,5 +1,6 @@
 import traceback
 import pathlib
+import signal
 import logging
 import uuid
 import concurrent
@@ -28,7 +29,6 @@ class SIGNAL(Enum):
 
 class BenchMarkRunner:
     def __init__(self):
-        #  self.running_task: dict | None = None
         self.running_task: TaskRunner | None = None
         self.latest_error: str | None = None
 
@@ -192,9 +192,7 @@ class BenchMarkRunner:
             for r in self.running_task.case_runners:
                 r.stop()
 
-            for child_p in psutil.Process().children(recursive=True):
-                log.warning(f"force killing child process: {child_p}")
-                child_p.kill()
+            self.kill_proc_tree(timeout=5)
             self.running_task = None
 
         if self.receive_conn:
@@ -205,10 +203,30 @@ class BenchMarkRunner:
     def _run_async(self, conn: Connection) -> bool:
         log.info(f"task submitted: id={self.running_task.run_id}, {self.running_task.task_label}, case number: {len(self.running_task.case_runners)}")
         global global_result_future
-        executor = concurrent.futures.ProcessPoolExecutor(max_workers=1)
+        executor = concurrent.futures.ProcessPoolExecutor(max_workers=1, mp_context=mp.get_context("spawn"))
         global_result_future = executor.submit(self._async_task_v2, self.running_task, conn)
 
         return True
+
+    def kill_proc_tree(self, sig=signal.SIGTERM, timeout=None, on_terminate=None):
+        """Kill a process tree (including grandchildren) with signal
+        "sig" and return a (gone, still_alive) tuple.
+        "on_terminate", if specified, is a callback function which is
+        called as soon as a child terminates.
+        """
+        children = psutil.Process().children(recursive=True)
+        for p in  children:
+            try:
+                log.warning(f"sending SIGTERM to child process: {p}")
+                p.send_signal(sig)
+            except psutil.NoSuchProcess:
+                pass
+        gone, alive = psutil.wait_procs(children, timeout=timeout,
+                                        callback=on_terminate)
+
+        for p in alive:
+            log.warning(f"force killing child process: {p}")
+            p.kill()
 
 
 benchMarkRunner = BenchMarkRunner()
