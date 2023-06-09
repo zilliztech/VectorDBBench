@@ -177,6 +177,7 @@ class DataSet(BaseModel):
     def __iter__(self):
         return DataSetIterator(self)
 
+
     def _validate_local_file(self):
         if not self.data_dir.exists():
             log.info(f"local file path not exist, creating it: {self.data_dir}")
@@ -190,6 +191,11 @@ class DataSet(BaseModel):
         if len(dataset_info) == 0:
             raise ValueError(f"No data in s3 for dataset: {self.download_dir}")
         path2etag = {info['Key']: info['ETag'].split('"')[1] for info in dataset_info}
+
+        perfix_to_filter = "train" if config.USE_SHUFFLED_DATA else "shuffle_train"
+        filtered_keys = [key for key in path2etag.keys() if key.split("/")[-1].startswith(perfix_to_filter)]
+        for k in filtered_keys:
+            path2etag.pop(k)
 
         # get local files ended with '.parquet'
         file_names = [p.name for p in self.data_dir.glob("*.parquet")]
@@ -272,9 +278,10 @@ class DataSet(BaseModel):
         if check:
             self._validate_local_file()
 
-        self.train_files = sorted([f.name for f in self.data_dir.glob('train*.parquet')])
-        self.test_data = self._read_file("test.parquet")
+        prefix = "shuffle_train" if config.USE_SHUFFLED_DATA else "train"
+        self.train_files = sorted([f.name for f in self.data_dir.glob(f'{prefix}*.parquet')])
         log.debug(f"{self.data.name}: available train files {self.train_files}")
+        self.test_data = self._read_file("test.parquet")
         return True
 
     def get_ground_truth(self, filters: int | float | None = None) -> pd.DataFrame:
