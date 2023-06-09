@@ -41,7 +41,7 @@ class TestDataSet:
         for f in cohere_s:
             log.debug(f"iter to: {f.columns}")
 
-    @pytest.mark.skip("runs locally")
+    #  @pytest.mark.skip("runs locally")
     def test_dataset_download(self):
         cohere_s = ds.get(ds.Name.Cohere, ds.Label.SMALL)
         assert cohere_s.prepare()

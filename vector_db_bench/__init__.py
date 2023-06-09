@@ -15,6 +15,7 @@ class config:
     NUM_PER_BATCH = env.int("NUM_PER_BATCH", 5000)
 
     DROP_OLD = env.bool("DROP_OLD", True)
+    USE_SHUFFLED_DATA = env.bool("USE_SHUFFLED_DATA", True)
 
     RESULTS_LOCAL_DIR = pathlib.Path(__file__).parent.joinpath("results")
 
