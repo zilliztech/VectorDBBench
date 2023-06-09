@@ -31,6 +31,7 @@ class LAION:
     name: str = "LAION"
     dim: int = 768
     metric_type: MetricType = MetricType.COSINE
+    use_shuffled: bool = False
 
     @property
     def dir_name(self) -> str:
@@ -41,6 +42,7 @@ class GIST:
     name: str = "GIST"
     dim: int = 960
     metric_type: MetricType = MetricType.L2
+    use_shuffled: bool = False
 
     @property
     def dir_name(self) -> str:
@@ -51,6 +53,7 @@ class Cohere:
     name: str = "Cohere"
     dim: int = 768
     metric_type: MetricType = MetricType.COSINE
+    use_shuffled: bool = config.USE_SHUFFLED_DATA
 
     @property
     def dir_name(self) -> str:
@@ -61,6 +64,7 @@ class Glove:
     name: str = "Glove"
     dim: int = 200
     metric_type: MetricType = MetricType.COSINE
+    use_shuffled: bool = False
 
     @property
     def dir_name(self) -> str:
@@ -71,6 +75,7 @@ class SIFT:
     name: str = "SIFT"
     dim: int = 128
     metric_type: MetricType = MetricType.COSINE
+    use_shuffled: bool = False
 
     @property
     def dir_name(self) -> str:
@@ -192,7 +197,7 @@ class DataSet(BaseModel):
             raise ValueError(f"No data in s3 for dataset: {self.download_dir}")
         path2etag = {info['Key']: info['ETag'].split('"')[1] for info in dataset_info}
 
-        perfix_to_filter = "train" if config.USE_SHUFFLED_DATA else "shuffle_train"
+        perfix_to_filter = "train" if self.data.use_shuffled else "shuffle_train"
         filtered_keys = [key for key in path2etag.keys() if key.split("/")[-1].startswith(perfix_to_filter)]
         for k in filtered_keys:
             path2etag.pop(k)
@@ -278,7 +283,7 @@ class DataSet(BaseModel):
         if check:
             self._validate_local_file()
 
-        prefix = "shuffle_train" if config.USE_SHUFFLED_DATA else "train"
+        prefix = "shuffle_train" if self.data.use_shuffled else "train"
         self.train_files = sorted([f.name for f in self.data_dir.glob(f'{prefix}*.parquet')])
         log.debug(f"{self.data.name}: available train files {self.train_files}")
         self.test_data = self._read_file("test.parquet")
