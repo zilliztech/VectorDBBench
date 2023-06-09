@@ -29,6 +29,7 @@ caseTextMap = {
     CaseType.PerformanceSHigh.value: (
         "Filtering Search Performance Test (Small Dataset, High Filtering Rate)"
     ),
+    CaseType.Performance100M.value: "Search Performance Test (100M Dataset)",
 }
 
 

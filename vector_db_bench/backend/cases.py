@@ -107,6 +107,11 @@ class PerformanceSHigh(PerformanceCase):
     filter_rate: float | int | None = 0.99
     dataset: ds.DataSet = ds.get(ds.Name.Cohere, ds.Label.SMALL)
 
+class Performance100M(PerformanceCase):
+    case_id: CaseType = CaseType.Performance100M
+    filter_rate: float | int | None = None
+    dataset: ds.DataSet = ds.get(ds.Name.LAION, ds.Label.LARGE)
+
 type2case = {
     CaseType.LoadLDim: LoadLDimCase,
     CaseType.LoadSDim: LoadSDimCase,
@@ -121,4 +126,5 @@ type2case = {
     CaseType.PerformanceLHigh: PerformanceLHigh,
     CaseType.PerformanceMHigh: PerformanceMHigh,
     CaseType.PerformanceSHigh: PerformanceSHigh,
+    CaseType.Performance100M: Performance100M,
 }
