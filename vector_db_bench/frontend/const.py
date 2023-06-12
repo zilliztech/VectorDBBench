@@ -347,8 +347,8 @@ DB_DBLABEL_TO_PRICE = {
     DB.ZillizCloud.value: {
         "1cu-perf": 0.159,
         "8cu-perf": 1.272,
-        "disk-1cu": 0.159,
-        "disk-2cu": 0.318,
+        "1cu-cap": 0.159,
+        "2cu-cap": 0.318,
     },
     DB.Weaviate.value: {
         # "sandox": 0, # emmmm
