@@ -17,7 +17,7 @@ class Elasticsearch(VectorDB):
         dim: int,
         db_config: dict,
         db_case_config: ElasticsearchIndexConfig,
-        indice: str = "vdb_bench_indice_s",  # must be lowercase
+        indice: str = "vdb_bench_indice",  # must be lowercase
         id_col_name: str = "id",
         vector_col_name: str = "vector",
         drop_old: bool = False,

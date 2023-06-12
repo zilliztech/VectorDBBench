@@ -19,6 +19,7 @@ dependencies = [
     "pytz",
     "streamlit-autorefresh",
     "streamlit>=1.23.0",
+    "streamlit_extras",
     "grpcio==1.53.0", # for qdrant-client and pymilvus
     "grpcio-tools==1.53.0", # for qdrant-client and pymilvus
     "pymilvus", # with pandas, numpy, ujson
