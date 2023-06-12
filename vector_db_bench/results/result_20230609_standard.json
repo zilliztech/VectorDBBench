@@ -566,6 +566,62 @@
     {
       "metrics": {
         "max_load_count": 0,
+        "load_duration": 3674.0953,
+        "qps": 0.7636,
+        "serial_latency_p99": 1.9213,
+        "recall": 0.9908
+      },
+      "task_config": {
+        "db": "Weaviate",
+        "db_config": {
+          "db_label": "bus_crit",
+          "url": "**********",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "metric_type": "COSINE",
+          "ef": -1,
+          "efConstruction": null,
+          "maxConnections": null
+        },
+        "case_config": {
+          "case_id": "Filtering Search Performance Test (Medium Dataset, Low Filtering Rate)",
+          "custom_case": null
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 3674.0953,
+        "qps": 32,
+        "serial_latency_p99": 0.1245,
+        "recall": 1.0
+      },
+      "task_config": {
+        "db": "Weaviate",
+        "db_config": {
+          "db_label": "bus_crit",
+          "url": "**********",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "metric_type": "COSINE",
+          "ef": -1,
+          "efConstruction": null,
+          "maxConnections": null
+        },
+        "case_config": {
+          "case_id": "Filtering Search Performance Test (Medium Dataset, High Filtering Rate)",
+          "custom_case": null
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
         "load_duration": 251.0931,
         "qps": 101.6631,
         "serial_latency_p99": 0.03,
@@ -586,6 +642,62 @@
         },
         "case_config": {
           "case_id": "Search Performance Test(Small Dataset)",
+          "custom_case": null
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 251.0931,
+        "qps": 7.6,
+        "serial_latency_p99": 0.583,
+        "recall": 0.9977
+      },
+      "task_config": {
+        "db": "Weaviate",
+        "db_config": {
+          "db_label": "bus_crit",
+          "url": "**********",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "metric_type": "COSINE",
+          "ef": -1,
+          "efConstruction": null,
+          "maxConnections": null
+        },
+        "case_config": {
+          "case_id": "Filtering Search Performance Test (Small Dataset, Low Filtering Rate)",
+          "custom_case": null
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 251.0931,
+        "qps": 102,
+        "serial_latency_p99": 0.0292,
+        "recall": 1.0
+      },
+      "task_config": {
+        "db": "Weaviate",
+        "db_config": {
+          "db_label": "bus_crit",
+          "url": "**********",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "metric_type": "COSINE",
+          "ef": -1,
+          "efConstruction": null,
+          "maxConnections": null
+        },
+        "case_config": {
+          "case_id": "Filtering Search Performance Test (Small Dataset, High Filtering Rate)",
           "custom_case": null
         }
       },
