@@ -10,6 +10,6 @@ class ResultCollector:
             return []
 
         for json_file in result_dir.glob("*.json"):
-            results.append(TestResult.read_file(json_file))
+            results.append(TestResult.read_file(json_file, trans_unit=True))
 
         return results

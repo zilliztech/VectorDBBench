@@ -22,7 +22,8 @@ class Metric:
 
 metricUnitMap = {
     'load_duration': 's',
-    'serial_latency_p99': 's',
+    'serial_latency_p99': 'ms',
+    'max_load_count': 'K'
 }
 
 lowerIsBetterMetricList = [

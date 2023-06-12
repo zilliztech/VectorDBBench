@@ -131,7 +131,7 @@ class TestResult(BaseModel):
             f.write(b)
 
     @classmethod
-    def read_file(cls, full_path: pathlib.Path) -> Self:
+    def read_file(cls, full_path: pathlib.Path, trans_unit: bool = False) -> Self:
         if not full_path.exists():
             raise ValueError(f"No such file: {full_path}")
 
@@ -150,7 +150,15 @@ class TestResult(BaseModel):
                 )(**task_config["db_case_config"])
 
                 case_result["task_config"] = task_config
+
+                if trans_unit:
+                    cur_max_count = case_result['metrics']['max_load_count']
+                    case_result['metrics']['max_load_count'] = cur_max_count/1000 if int(cur_max_count) > 0 else cur_max_count
+
+                    cur_latency = case_result['metrics']['serial_latency_p99']
+                    case_result['metrics']['serial_latency_p99'] = cur_latency*1000 if int(cur_latency) > 0.0 else cur_latency
             c = TestResult.validate(test_result)
+
             return c
 
     def display(self, dbs: list[DB] | None = None):
