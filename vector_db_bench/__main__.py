@@ -11,7 +11,7 @@ def main():
     run_streamlit()
 
 def run_streamlit():
-    cmd = ['streamlit', 'run', f'{os.path.dirname(__file__)}/frontend/run_test.py', '--logger.level', 'info']
+    cmd = ['streamlit', 'run', f'{os.path.dirname(__file__)}/frontend/vdb_benchmark.py', '--logger.level', 'info']
     log.debug(f"cmd: {cmd}")
     try:
         subprocess.run(cmd, check=True)
