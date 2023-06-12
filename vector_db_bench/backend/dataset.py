@@ -82,7 +82,7 @@ class SIFT:
         return f"{self.name}_{self.label}_{utils.numerize(self.size)}".lower()
 
 @dataclass
-class LAION_L(GIST):
+class LAION_L(LAION):
     label: str = "LARGE"
     size: int  = 100_000_000
 

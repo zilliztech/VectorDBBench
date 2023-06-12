@@ -55,6 +55,8 @@ class CaseType(Enum):
         "Filtering Search Performance Test (Small Dataset, High Filtering Rate)"
     )
 
+    Performance100M = ("Search Performance Test(100M Dataset)")
+
 
 class CaseConfigParamType(Enum):
     """

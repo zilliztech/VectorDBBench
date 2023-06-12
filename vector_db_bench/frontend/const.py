@@ -96,6 +96,11 @@ Results will show index building time, recall, and maximum QPS.""",
         "intro": """This case tests the search performance of a vector database with a small dataset (**Cohere 100K vectors**, 768 dimensions) under a high filtering rate (**90% vectors**), at varying parallel levels.
 Results will show index building time, recall, and maximum QPS.""",
     },
+    {
+        "name": CaseType.Performance100M,
+        "intro": """This case tests the search performance of a vector database with a large 100M dataset (**LAION 100M vectors**, 768 dimensions), at varying parallel levels.
+Results will show index building time, recall, and maximum QPS.""",
+    },
 ]
 
 
@@ -305,6 +310,7 @@ CASE_CONFIG_MAP = {
         CaseType.PerformanceLHigh: MilvusPerformanceConfig,
         CaseType.PerformanceMHigh: MilvusPerformanceConfig,
         CaseType.PerformanceSHigh: MilvusPerformanceConfig,
+        CaseType.Performance100M: MilvusPerformanceConfig,
     },
     DB.Weaviate: {
         CaseType.LoadLDim: WeaviateLoadConfig,
@@ -318,6 +324,7 @@ CASE_CONFIG_MAP = {
         CaseType.PerformanceLHigh: WeaviatePerformanceConfig,
         CaseType.PerformanceMHigh: WeaviatePerformanceConfig,
         CaseType.PerformanceSHigh: WeaviatePerformanceConfig,
+        CaseType.Performance100M: WeaviatePerformanceConfig,
     },
     DB.Elasticsearch: {
         CaseType.LoadLDim: ESLoadingConfig,
@@ -331,6 +338,7 @@ CASE_CONFIG_MAP = {
         CaseType.PerformanceLHigh: ESPerformanceConfig,
         CaseType.PerformanceMHigh: ESPerformanceConfig,
         CaseType.PerformanceSHigh: ESPerformanceConfig,
+        CaseType.Performance100M: ESPerformanceConfig,
     },
 }
 
