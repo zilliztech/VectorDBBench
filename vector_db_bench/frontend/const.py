@@ -357,6 +357,7 @@ DB_DBLABEL_TO_PRICE = {
     },
     DB.Elasticsearch.value: {
         "free-5c8g": 0.260,
+        "upTo2.5c8g": 0.4793,
     },
     DB.Qdrant.value: {
         "0.5c4g-1node": 0.052,
