@@ -156,7 +156,7 @@ class TestResult(BaseModel):
                     case_result['metrics']['max_load_count'] = cur_max_count/1000 if int(cur_max_count) > 0 else cur_max_count
 
                     cur_latency = case_result['metrics']['serial_latency_p99']
-                    case_result['metrics']['serial_latency_p99'] = cur_latency*1000 if int(cur_latency) > 0.0 else cur_latency
+                    case_result['metrics']['serial_latency_p99'] = cur_latency*1000 if cur_latency > 0 else cur_latency
             c = TestResult.validate(test_result)
 
             return c
