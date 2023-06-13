@@ -1,7 +1,7 @@
 import streamlit as st
 from vector_db_bench.frontend.const import *
 from vector_db_bench.frontend.pages.components.charts import drawCharts
-from vector_db_bench.frontend.pages.components.header import drawHeader
+from vector_db_bench.frontend.pages.components.headerIcon import drawHeaderIcon
 from vector_db_bench.frontend.pages.components.nav import NavToRunTest
 from vector_db_bench.interface import benchMarkRunner
 from dataclasses import asdict
@@ -15,19 +15,19 @@ from vector_db_bench.frontend.utils import displayCaseText
 
 def main():
     st.set_page_config(
-        page_title="Falcon Mark - Open VectorDB Bench",
-        page_icon="🧊",
+        page_title="VectorDB Benchmark",
+        page_icon="https://assets.zilliz.com/favicon_f7f922fe27.png",
         # layout="wide",
         # initial_sidebar_state="collapsed",
     )
+    
+    # header
+    drawHeaderIcon(st)
 
     allResults = benchMarkRunner.get_results()
 
     st.title("Vector Database Benchmark")
     st.write("description [todo]")
-
-    # header
-    drawHeader(st)
 
     # results selector
     resultSelectorContainer = st.sidebar.container()
