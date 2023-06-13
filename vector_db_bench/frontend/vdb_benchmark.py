@@ -1,16 +1,10 @@
 import streamlit as st
 from vector_db_bench.frontend.const import *
-from vector_db_bench.frontend.pages.components.charts import drawCharts
-from vector_db_bench.frontend.pages.components.headerIcon import drawHeaderIcon
-from vector_db_bench.frontend.pages.components.nav import NavToRunTest
+from vector_db_bench.frontend.components.check_results.headerIcon import drawHeaderIcon
+from vector_db_bench.frontend.components.check_results.nav import NavToRunTest
+from vector_db_bench.frontend.components.check_results.charts import drawCharts
+from vector_db_bench.frontend.components.check_results.filters import getshownData
 from vector_db_bench.interface import benchMarkRunner
-from dataclasses import asdict
-import plotly.express as px
-from plotly.subplots import make_subplots
-import streamlit.components.v1 as components
-from collections import defaultdict
-from vector_db_bench.frontend.pages.components.filters import getshownData
-from vector_db_bench.frontend.utils import displayCaseText
 
 
 def main():
@@ -20,7 +14,7 @@ def main():
         # layout="wide",
         # initial_sidebar_state="collapsed",
     )
-    
+
     # header
     drawHeaderIcon(st)
 
@@ -45,4 +39,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

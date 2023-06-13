@@ -1,8 +1,8 @@
 from vector_db_bench.models import CaseType
 
-
+passwordKeys = ["password", "api_key"]
 def inputIsPassword(key: str) -> bool:
-    return key.lower() == "password" or key.lower() == "pwd"
+    return key.lower() in passwordKeys
 
 
 caseTextMap = {
@@ -29,7 +29,7 @@ caseTextMap = {
     CaseType.PerformanceSHigh.value: (
         "Filtering Search Performance Test (Small Dataset, High Filtering Rate)"
     ),
-    CaseType.Performance100M.value: "Search Performance Test (100M Dataset)",
+    CaseType.Performance100M.value: "Search Performance Test (XLarge Dataset)",
 }
 
 

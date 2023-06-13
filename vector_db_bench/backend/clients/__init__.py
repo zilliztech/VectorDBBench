@@ -31,10 +31,10 @@ class DB(Enum):
 
     Milvus = "Milvus"
     ZillizCloud = "ZillizCloud"
-    WeaviateCloud = "WeaviateCloud"
+    Pinecone = "Pinecone"
     ElasticCloud = "ElasticCloud"
     QdrantCloud = "QdrantCloud"
-    Pinecone = "Pinecone"
+    WeaviateCloud = "WeaviateCloud"
 
 
     @property

@@ -1,5 +1,5 @@
+from vector_db_bench.frontend.components.check_results.data import getChartData
 from vector_db_bench.frontend.utils import displayCaseText
-from vector_db_bench.frontend.pages.components.data import getChartData
 from vector_db_bench.frontend.const import *
 
 
