@@ -1,4 +1,4 @@
-"""Wrapper around the Qdrant vector database over VectorDB"""
+"""Wrapper around the QdrantCloud vector database over VectorDB"""
 
 import logging
 import time
@@ -24,16 +24,16 @@ from qdrant_client import QdrantClient
 log = logging.getLogger(__name__)
 
 
-class Qdrant(VectorDB):
+class QdrantCloud(VectorDB):
     def __init__(
         self,
         dim: int,
         db_config: dict,
         db_case_config: DBCaseConfig,
-        collection_name: str = "QdrantCollection",
+        collection_name: str = "QdrantCloudCollection",
         drop_old: bool = False,
     ):
-        """Initialize wrapper around the Qdrant vector database."""
+        """Initialize wrapper around the QdrantCloud vector database."""
         self.db_config = db_config
         self.case_config = db_case_config
         self.collection_name = collection_name
@@ -43,7 +43,7 @@ class Qdrant(VectorDB):
 
         tmp_client = QdrantClient(**self.db_config)
         if drop_old:
-            log.info(f"Qdrant client drop_old collection: {self.collection_name}")
+            log.info(f"QdrantCloud client drop_old collection: {self.collection_name}")
             tmp_client.delete_collection(self.collection_name)
 
         self._create_collection(dim, tmp_client)
@@ -88,7 +88,7 @@ class Qdrant(VectorDB):
                     log.info(f"Stored vectors: {info.vectors_count}, Indexed vectors: {info.indexed_vectors_count}, Collection status: {info.indexed_vectors_count}")
                     return
         except Exception as e:
-            log.warning(f"Qdrant ready to search error: {e}")
+            log.warning(f"QdrantCloud ready to search error: {e}")
             raise e from None
 
     def _create_collection(self, dim, qdrant_client: int):

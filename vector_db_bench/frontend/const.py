@@ -312,7 +312,7 @@ CASE_CONFIG_MAP = {
         CaseType.PerformanceSHigh: MilvusPerformanceConfig,
         CaseType.Performance100M: MilvusPerformanceConfig,
     },
-    DB.Weaviate: {
+    DB.WeaviateCloud: {
         CaseType.LoadLDim: WeaviateLoadConfig,
         CaseType.LoadSDim: WeaviateLoadConfig,
         CaseType.PerformanceLZero: WeaviatePerformanceConfig,
@@ -326,7 +326,7 @@ CASE_CONFIG_MAP = {
         CaseType.PerformanceSHigh: WeaviatePerformanceConfig,
         CaseType.Performance100M: WeaviatePerformanceConfig,
     },
-    DB.Elasticsearch: {
+    DB.ElasticCloud: {
         CaseType.LoadLDim: ESLoadingConfig,
         CaseType.LoadSDim: ESLoadingConfig,
         CaseType.PerformanceLZero: ESPerformanceConfig,
@@ -350,16 +350,16 @@ DB_DBLABEL_TO_PRICE = {
         "1cu-cap": 0.159,
         "2cu-cap": 0.318,
     },
-    DB.Weaviate.value: {
+    DB.WeaviateCloud.value: {
         # "sandox": 0, # emmmm
         "standard": 10.10,
         "bus_crit": 32.60,
     },
-    DB.Elasticsearch.value: {
+    DB.ElasticCloud.value: {
         "free-5c8g": 0.260,
         "upTo2.5c8g": 0.4793,
     },
-    DB.Qdrant.value: {
+    DB.QdrantCloud.value: {
         "0.5c4g-1node": 0.052,
         "2c8g-1node": 0.166,
         "4c16g-5node": 1.426,

@@ -37,12 +37,12 @@ class TestCases:
     @pytest.mark.skip(reason="replace url and api_key by real value")
     def test_performance_case_small_zero_weaviate(self):
         dataset = ds.get(ds.Name.Cohere, ds.Label.SMALL)
-        db_case_config = DB.Weaviate.case_config_cls()()
+        db_case_config = DB.WeaviateCloud.case_config_cls()()
         db_case_config.metric_type = dataset.data.metric_type
 
         c = cases.PerformanceSZero(run_id=1, db_configs={
-            DB.Weaviate.init_cls,
-            DB.Weaviate.config(url="", api_key="").to_dict(),
+            DB.WeaviateCloud.init_cls,
+            DB.WeaviateCloud.config(url="", api_key="").to_dict(),
             db_case_config,
         })
         c.run()

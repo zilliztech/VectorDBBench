@@ -11,7 +11,7 @@
         "recall": 0.0
       },
       "task_config": {
-        "db": "Elasticsearch",
+        "db": "ElasticCloud",
         "db_config": {
           "db_label": "upTo2.5c8g",
           "cloud_id": "**********",
@@ -41,7 +41,7 @@
         "recall": 0.0
       },
       "task_config": {
-        "db": "Elasticsearch",
+        "db": "ElasticCloud",
         "db_config": {
           "db_label": "upTo2.5c8g",
           "cloud_id": "**********",
@@ -71,7 +71,7 @@
         "recall": 0.9923
       },
       "task_config": {
-        "db": "Elasticsearch",
+        "db": "ElasticCloud",
         "db_config": {
           "db_label": "upTo2.5c8g",
           "cloud_id": "**********",
@@ -101,7 +101,7 @@
         "recall": 0.9924
       },
       "task_config": {
-        "db": "Elasticsearch",
+        "db": "ElasticCloud",
         "db_config": {
           "db_label": "upTo2.5c8g",
           "cloud_id": "**********",
@@ -131,7 +131,7 @@
         "recall": 0.9992
       },
       "task_config": {
-        "db": "Elasticsearch",
+        "db": "ElasticCloud",
         "db_config": {
           "db_label": "upTo2.5c8g",
           "cloud_id": "**********",
@@ -161,7 +161,7 @@
         "recall": 0.9888
       },
       "task_config": {
-        "db": "Elasticsearch",
+        "db": "ElasticCloud",
         "db_config": {
           "db_label": "upTo2.5c8g",
           "cloud_id": "**********",
@@ -191,7 +191,7 @@
         "recall": 0.989
       },
       "task_config": {
-        "db": "Elasticsearch",
+        "db": "ElasticCloud",
         "db_config": {
           "db_label": "upTo2.5c8g",
           "cloud_id": "**********",
@@ -221,7 +221,7 @@
         "recall": 0.9999
       },
       "task_config": {
-        "db": "Elasticsearch",
+        "db": "ElasticCloud",
         "db_config": {
           "db_label": "upTo2.5c8g",
           "cloud_id": "**********",
@@ -1054,7 +1054,7 @@
         "recall": 0
       },
       "task_config": {
-        "db": "Weaviate",
+        "db": "WeaviateCloud",
         "db_config": {
           "db_label": "bus_crit",
           "url": "**********",
@@ -1082,7 +1082,7 @@
         "recall": 0.9909
       },
       "task_config": {
-        "db": "Weaviate",
+        "db": "WeaviateCloud",
         "db_config": {
           "db_label": "bus_crit",
           "url": "**********",
@@ -1110,7 +1110,7 @@
         "recall": 0.9908
       },
       "task_config": {
-        "db": "Weaviate",
+        "db": "WeaviateCloud",
         "db_config": {
           "db_label": "bus_crit",
           "url": "**********",
@@ -1138,7 +1138,7 @@
         "recall": 1.0
       },
       "task_config": {
-        "db": "Weaviate",
+        "db": "WeaviateCloud",
         "db_config": {
           "db_label": "bus_crit",
           "url": "**********",
@@ -1166,7 +1166,7 @@
         "recall": 0.9977
       },
       "task_config": {
-        "db": "Weaviate",
+        "db": "WeaviateCloud",
         "db_config": {
           "db_label": "bus_crit",
           "url": "**********",
@@ -1194,7 +1194,7 @@
         "recall": 0.9977
       },
       "task_config": {
-        "db": "Weaviate",
+        "db": "WeaviateCloud",
         "db_config": {
           "db_label": "bus_crit",
           "url": "**********",
@@ -1222,7 +1222,7 @@
         "recall": 1.0
       },
       "task_config": {
-        "db": "Weaviate",
+        "db": "WeaviateCloud",
         "db_config": {
           "db_label": "bus_crit",
           "url": "**********",
@@ -1250,7 +1250,7 @@
         "recall": 0
       },
       "task_config": {
-        "db": "Weaviate",
+        "db": "WeaviateCloud",
         "db_config": {
           "db_label": "sandbox",
           "url": "**********",
@@ -1278,7 +1278,7 @@
         "recall": 0.9977
       },
       "task_config": {
-        "db": "Weaviate",
+        "db": "WeaviateCloud",
         "db_config": {
           "db_label": "sandbox",
           "url": "**********",
@@ -1306,7 +1306,7 @@
         "recall": 0.9977
       },
       "task_config": {
-        "db": "Weaviate",
+        "db": "WeaviateCloud",
         "db_config": {
           "db_label": "standard",
           "url": "**********",
@@ -1334,7 +1334,7 @@
         "recall": 0.991
       },
       "task_config": {
-        "db": "Weaviate",
+        "db": "WeaviateCloud",
         "db_config": {
           "db_label": "standard",
           "url": "**********",
@@ -1362,7 +1362,7 @@
         "recall": 0
       },
       "task_config": {
-        "db": "Weaviate",
+        "db": "WeaviateCloud",
         "db_config": {
           "db_label": "standard",
           "url": "**********",
@@ -2465,7 +2465,7 @@
         "recall": 0.8197
       },
       "task_config": {
-        "db": "Qdrant",
+        "db": "QdrantCloud",
         "db_config": {
           "db_label": "0.5c4g-1node",
           "url": "**********",
@@ -2491,7 +2491,7 @@
         "recall": 0.7964
       },
       "task_config": {
-        "db": "Qdrant",
+        "db": "QdrantCloud",
         "db_config": {
           "db_label": "2c8g-1node",
           "url": "**********",
@@ -2517,7 +2517,7 @@
         "recall": 0.7861
       },
       "task_config": {
-        "db": "Qdrant",
+        "db": "QdrantCloud",
         "db_config": {
           "db_label": "4c16g-5node",
           "url": "**********",
