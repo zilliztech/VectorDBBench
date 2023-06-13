@@ -21,7 +21,7 @@ class Case(BaseModel):
         case_id(CaseType): default 11 case type plus one custom cases.
         label(CaseLabel): performance or load.
         dataset(DataSet): dataset for this case runner.
-        filter_rate(float | int | None): one of 100 | 90% | 99% | 1% | None
+        filter_rate(float | None): one of 99% | 1% | None
         filters(dict | None): filters for search
     """
 
@@ -29,22 +29,16 @@ class Case(BaseModel):
     label: CaseLabel
     dataset: ds.DataSet
 
-    filter_rate: float | int | None
+    filter_rate: float | None
 
     @property
     def filters(self) -> dict | None:
         if self.filter_rate is not None:
-            if isinstance(self.filter_rate, int) and self.filter_rate == 100:
-                return {
-                    "metadata": f">={self.filter_rate}",
-                    "id": self.filter_rate,
-                }
-            else:
-                ID = round(self.filter_rate * self.dataset.data.size)
-                return {
-                    "metadata": f">={ID}",
-                    "id": ID,
-                }
+            ID = round(self.filter_rate * self.dataset.data.size)
+            return {
+                "metadata": f">={ID}",
+                "id": ID,
+            }
 
         return None
 

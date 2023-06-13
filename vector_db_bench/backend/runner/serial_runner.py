@@ -131,19 +131,7 @@ class SerialSearchRunner:
                 latencies.append(time.perf_counter() - s)
 
                 gt = ground_truth['neighbors_id'][idx]
-
-                # valid_idx for ground_truth for no filter and high filter
-                valid_idx = self.k
-
-                # calculate the ground_truth for low filter, filtering 100 entities.
-                if self.filters and self.filters['id'] == 100:
-                    valid_idx, iter_idx = 0, 0
-                    while iter_idx < self.k and valid_idx < len(gt):
-                        if gt[iter_idx] >= self.filters['id']:
-                            valid_idx += 1
-                        iter_idx += 1
-
-                recalls.append(calc_recall(self.k, gt[:valid_idx], results))
+                recalls.append(calc_recall(self.k, gt[:self.k], results))
 
 
                 if len(latencies) % 100 == 0:
