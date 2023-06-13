@@ -292,10 +292,8 @@ class DataSet(BaseModel):
     def get_ground_truth(self, filters: int | float | None = None) -> pd.DataFrame:
 
         file_name = ""
-        if filters is None or filters == 100:
+        if filters is None:
             file_name = "neighbors.parquet"
-        elif filters == 0.9:
-            file_name = "neighbors_90p.parquet"
         elif filters == 0.01:
             file_name = "neighbors_head_1p.parquet"
         elif filters == 0.99:
