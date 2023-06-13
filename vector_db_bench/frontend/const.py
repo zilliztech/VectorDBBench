@@ -127,6 +127,7 @@ CaseConfigParamInput_IndexType = CaseConfigInput(
             IndexType.IVFFlat.value,
             IndexType.DISKANN.value,
             IndexType.Flat.value,
+            IndexType.AUTOINDEX.value,
         ],
     },
 )
