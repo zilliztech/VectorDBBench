@@ -25,6 +25,21 @@ class MilvusIndexConfig(BaseModel):
         return self.metric_type.value
 
 
+class AutoIndexConfig(MilvusIndexConfig, DBCaseConfig):
+    index: IndexType = IndexType.AUTOINDEX
+
+    def index_param(self) -> dict:
+        return {
+            "metric_type": self.parse_metric(),
+            "index_type": self.index.value,
+            "params": {},
+        }
+
+    def search_param(self) -> dict:
+        return {
+            "metric_type": self.parse_metric(),
+        }
+
 class HNSWConfig(MilvusIndexConfig, DBCaseConfig):
     M: int
     efConstruction: int
@@ -99,6 +114,7 @@ class FLATConfig(MilvusIndexConfig, DBCaseConfig):
         }
 
 _milvus_case_config = {
+    IndexType.AUTOINDEX: AutoIndexConfig,
     IndexType.HNSW: HNSWConfig,
     IndexType.DISKANN: DISKANNConfig,
     IndexType.IVFFlat: IVFFlatConfig,
