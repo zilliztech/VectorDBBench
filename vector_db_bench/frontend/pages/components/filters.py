@@ -49,6 +49,7 @@ def getshownResults(results, st):
 
 def getShowDbsAndCases(result, st):
     # expanderStyles
+    st.markdown("<style> section[data-testid='stSidebar'] div[data-testid='stExpander'] div[data-testid='stVerticalBlock'] { gap: 0.2rem; }  </style>", unsafe_allow_html=True,)
     st.markdown(
         "<style> div[data-testid='stExpander'] {background-color: #ffffff;} </style>",
         unsafe_allow_html=True,
