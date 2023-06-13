@@ -13,7 +13,7 @@ from .config import WeaviateConfig, WeaviateIndexConfig
 log = logging.getLogger(__name__)
 
 
-class Weaviate(VectorDB):
+class WeaviateCloud(VectorDB):
     def __init__(
         self,
         dim: int,

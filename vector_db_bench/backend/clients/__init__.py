@@ -10,10 +10,10 @@ from .api import (
 )
 
 from .milvus.milvus import Milvus
-from .es.elasticsearch import Elasticsearch
+from .elastic_cloud.elastic_cloud import ElasticCloud
 from .pinecone.pinecone import Pinecone
-from .weaviate.weaviate import Weaviate
-from .qdrant.qdrant import Qdrant
+from .weaviate_cloud.weaviate_cloud import WeaviateCloud
+from .qdrant_cloud.qdrant_cloud import QdrantCloud
 from .zilliz_cloud.zilliz_cloud import ZillizCloud
 
 
@@ -31,9 +31,9 @@ class DB(Enum):
 
     Milvus = "Milvus"
     ZillizCloud = "ZillizCloud"
-    Weaviate = "Weaviate"
-    Elasticsearch = "Elasticsearch"
-    Qdrant = "Qdrant"
+    WeaviateCloud = "WeaviateCloud"
+    ElasticCloud = "ElasticCloud"
+    QdrantCloud = "QdrantCloud"
     Pinecone = "Pinecone"
 
 
@@ -45,9 +45,9 @@ class DB(Enum):
 db2client = {
     DB.Milvus: Milvus,
     DB.ZillizCloud: ZillizCloud,
-    DB.Weaviate: Weaviate,
-    DB.Elasticsearch: Elasticsearch,
-    DB.Qdrant: Qdrant,
+    DB.WeaviateCloud: WeaviateCloud,
+    DB.ElasticCloud: ElasticCloud,
+    DB.QdrantCloud: QdrantCloud,
     DB.Pinecone: Pinecone,
 }
 

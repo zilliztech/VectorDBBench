@@ -15,10 +15,10 @@ password = ""
 
 class TestModels:
     def test_insert_and_search(self):
-        assert DB.Elasticsearch.value == "Elasticsearch"
-        assert DB.Elasticsearch.config == ElasticsearchConfig
+        assert DB.ElasticCloud.value == "Elasticsearch"
+        assert DB.ElasticCloud.config == ElasticsearchConfig
 
-        dbcls = DB.Elasticsearch.init_cls
+        dbcls = DB.ElasticCloud.init_cls
         dbConfig = dbcls.config_cls()(cloud_id=cloud_id, password=password)
         dbCaseConfig = dbcls.case_config_cls()(
             metric_type=MetricType.L2, efConstruction=64, M=16, num_candidates=100

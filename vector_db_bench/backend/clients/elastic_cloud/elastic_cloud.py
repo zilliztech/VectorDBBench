@@ -11,7 +11,7 @@ for logger in ("elasticsearch", "elastic_transport"):
 
 log = logging.getLogger(__name__)
 
-class Elasticsearch(VectorDB):
+class ElasticCloud(VectorDB):
     def __init__(
         self,
         dim: int,
