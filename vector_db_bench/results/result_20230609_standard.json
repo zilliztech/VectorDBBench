@@ -2485,6 +2485,58 @@
     {
       "metrics": {
         "max_load_count": 0,
+        "load_duration": 518.1908,
+        "qps": 75.0343,
+        "serial_latency_p99": 0.042,
+        "recall": 0.8122
+      },
+      "task_config": {
+        "db": "QdrantCloud",
+        "db_config": {
+          "db_label": "0.5c4g-1node",
+          "url": "**********",
+          "api_key": "**********",
+          "prefer_grpc": true
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Filtering Search Performance Test (Small Dataset, Low Filtering Rate)",
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 599.7789,
+        "qps": 240.455,
+        "serial_latency_p99": 0.0349,
+        "recall": 0.9112
+      },
+      "task_config": {
+        "db": "QdrantCloud",
+        "db_config": {
+          "db_label": "0.5c4g-1node",
+          "url": "**********",
+          "api_key": "**********",
+          "prefer_grpc": true
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Filtering Search Performance Test (Small Dataset, High Filtering Rate)",
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
         "load_duration": 2559.3758,
         "qps": 76.672,
         "serial_latency_p99": 0.0569,
@@ -2511,6 +2563,58 @@
     {
       "metrics": {
         "max_load_count": 0,
+        "load_duration": 2519.4009,
+        "qps": 51.9266,
+        "serial_latency_p99": 0.0535,
+        "recall": 0.7952
+      },
+      "task_config": {
+        "db": "QdrantCloud",
+        "db_config": {
+          "db_label": "2c8g-1node",
+          "url": "**********",
+          "api_key": "**********",
+          "prefer_grpc": true
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Filtering Search Performance Test (Medium Dataset, Low Filtering Rate)",
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 2528.1643,
+        "qps": 128.3939,
+        "serial_latency_p99": 0.0397,
+        "recall": 0.8613
+      },
+      "task_config": {
+        "db": "QdrantCloud",
+        "db_config": {
+          "db_label": "2c8g-1node",
+          "url": "**********",
+          "api_key": "**********",
+          "prefer_grpc": true
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Filtering Search Performance Test (Medium Dataset, High Filtering Rate)",
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
         "load_duration": 25181.5505,
         "qps": 115.4696,
         "serial_latency_p99": 0.0677,
@@ -2529,6 +2633,58 @@
         },
         "case_config": {
           "case_id": "Search Performance Test(Large Dataset)",
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 24106.79,
+        "qps": 87.881,
+        "serial_latency_p99": 0.0485,
+        "recall": 0.7836
+      },
+      "task_config": {
+        "db": "QdrantCloud",
+        "db_config": {
+          "db_label": "4c16g-5node",
+          "url": "**********",
+          "api_key": "**********",
+          "prefer_grpc": true
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Filtering Search Performance Test (Large Dataset, Low Filtering Rate)",
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 24106.79,
+        "qps": 130.1864,
+        "serial_latency_p99": 0.0411,
+        "recall": 0.8412
+      },
+      "task_config": {
+        "db": "QdrantCloud",
+        "db_config": {
+          "db_label": "4c16g-5node",
+          "url": "**********",
+          "api_key": "**********",
+          "prefer_grpc": true
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Filtering Search Performance Test (Large Dataset, High Filtering Rate)",
           "custom_case": {}
         }
       },
