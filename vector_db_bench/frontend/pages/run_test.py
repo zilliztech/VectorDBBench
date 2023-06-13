@@ -1,5 +1,5 @@
 import streamlit as st
-from vector_db_bench.frontend.components.run_test.autorefresh import autoRefresh
+from vector_db_bench.frontend.components.run_test.autoRefresh import autoRefresh
 from vector_db_bench.frontend.components.run_test.caseSelector import caseSelector
 from vector_db_bench.frontend.components.run_test.dbConfigSetting import dbConfigSettings
 from vector_db_bench.frontend.components.run_test.dbSelector import dbSelector
@@ -19,8 +19,10 @@ def main():
     )
     # header
     drawHeaderIcon(st)
-    
+
+    # hide sidebar
     hideSidebar(st)
+
     # nav to results
     NavToResults(st)
 
@@ -48,7 +50,7 @@ def main():
     # submit
     submitContainer = st.container()
     submitTask(submitContainer, tasks)
-    
+
     # autofresh
     autoRefresh()
 

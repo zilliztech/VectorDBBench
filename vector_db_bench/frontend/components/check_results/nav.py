@@ -9,6 +9,12 @@ def NavToRunTest(st):
         switch_page("run test")
         
         
+def NavToQPSWithPrice(st):
+    navClick = st.button("QPS with Price &nbsp;&nbsp;>")
+    if navClick:
+        switch_page("qps with price")
+        
+        
 def NavToResults(st):
     navClick = st.button("< &nbsp;&nbsp;Back to Results")
     if navClick:

@@ -37,7 +37,7 @@ def getPatternShape(i):
 
 
 MAX_AUTO_REFRESH_COUNT = 999999
-MAX_AUTO_REFRESH_INTERVAL = 000  # 2s
+MAX_AUTO_REFRESH_INTERVAL = 5000  # 2s
 
 
 DB_LIST = [d for d in DB]

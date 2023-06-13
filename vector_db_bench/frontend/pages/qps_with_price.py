@@ -1,9 +1,10 @@
 import streamlit as st
 from vector_db_bench.frontend.const import *
 from vector_db_bench.frontend.components.check_results.headerIcon import drawHeaderIcon
-from vector_db_bench.frontend.components.check_results.nav import NavToQPSWithPrice, NavToRunTest
-from vector_db_bench.frontend.components.check_results.charts import drawCharts
+from vector_db_bench.frontend.components.check_results.nav import NavToResults, NavToRunTest
+from vector_db_bench.frontend.components.check_results.charts import drawChartQpsPerHour, drawMetricChart
 from vector_db_bench.frontend.components.check_results.filters import getshownData
+from vector_db_bench.frontend.utils import displayCaseText
 from vector_db_bench.interface import benchMarkRunner
 
 
@@ -32,10 +33,23 @@ def main():
     # nav
     navContainer = st.sidebar.container()
     NavToRunTest(navContainer)
-    NavToQPSWithPrice(navContainer)
+    NavToResults(navContainer)
 
     # charts
-    drawCharts(st, shownData, failedTasks, showCases)
+    for case in showCases:
+        chartContainer = st.container()
+        data = [data for data in shownData if data["case"] == case]
+        dataWithMetric = []
+        metric = "qps_per_dollar (qps / price)"
+        for d in data:
+            qps = d.get("qps", 0)
+            price = DB_DBLABEL_TO_PRICE.get(d["db"], {}).get(d["db_label"], 0)
+            if qps > 0 and price > 0:
+                d[metric] = d["qps"] / price
+                dataWithMetric.append(d)
+        if len(dataWithMetric) > 0:
+            chartContainer.subheader(displayCaseText(case))
+            drawMetricChart(data, metric, chartContainer)
 
 
 if __name__ == "__main__":

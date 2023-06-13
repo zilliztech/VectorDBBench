@@ -15,9 +15,9 @@ def getshownData(results, st):
     shownResults = getshownResults(results, st)
     showDBNames, showCases = getShowDbsAndCases(shownResults, st)
 
-    shownData = getChartData(shownResults, showDBNames, showCases)
+    shownData, failedTasks = getChartData(shownResults, showDBNames, showCases)
 
-    return shownData, showCases
+    return shownData, failedTasks, showCases
 
 
 def getshownResults(results, st):

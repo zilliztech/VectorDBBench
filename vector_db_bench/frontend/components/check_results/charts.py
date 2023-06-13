@@ -2,9 +2,10 @@ from vector_db_bench.metric import metricOrder, isLowerIsBetterMetric, metricUni
 from vector_db_bench.frontend.const import *
 import plotly.express as px
 from vector_db_bench.frontend.utils import displayCaseText
+from vector_db_bench.models import ResultLabel
 
 
-def drawCharts(st, allData, cases):
+def drawCharts(st, allData, failedTasks, cases):
     st.markdown(
         "<style> .main .streamlit-expanderHeader p {font-size: 20px; font-weight: 600;} </style>",
         unsafe_allow_html=True,
@@ -23,6 +24,24 @@ def drawCharts(st, allData, cases):
         chartContainer = st.expander(displayCaseText(case), True)
         data = [data for data in allData if data["case"] == case]
         drawChart(data, chartContainer)
+
+        errorDBs = failedTasks[case]
+        showFailedDBs(chartContainer, errorDBs)
+
+
+def showFailedDBs(st, errorDBs):
+    failedDBs = [db for db, label in errorDBs.items() if label == ResultLabel.FAILED]
+    timeoutDBs = [
+        db for db, label in errorDBs.items() if label == ResultLabel.OUTOFRANGE
+    ]
+
+    showFailedText(st, 'Failed', failedDBs)
+    showFailedText(st, 'Timeout', timeoutDBs)
+
+
+def showFailedText(st, text, dbs):
+    if len(dbs) > 0:
+        st.markdown(f"<div style='margin: -16px 0 12px 8px; font-size: 16px; font-weight: 600;'>{text}: &nbsp;&nbsp;{', '.join(dbs)}</div>", unsafe_allow_html=True)
 
 
 def drawChart(data, st):
@@ -149,6 +168,78 @@ def drawMetricChart(data, metric, st):
             # yanchor="top",
             # yref="container",
         ),
+    )
+
+    chart.plotly_chart(fig, use_container_width=True)
+
+
+def drawChartQpsPerHour(metric, dataWithMetric, st):
+    title = st.container()
+    title.markdown(
+        f"**{metric}** ({'less' if isLowerIsBetterMetric(metric) else 'more'} is better)"
+    )
+    chart = st.container()
+
+    height = len(dataWithMetric) * 24
+    xmin = 0
+    xmax = max([d.get(metric, 0) for d in dataWithMetric])
+    xpadding = (xmax - xmin) / 16
+    xpadding_multiplier = 1.6
+    xrange = [xmin, xmax + xpadding * xpadding_multiplier]
+    unit = metricUnitMap.get(metric, "")
+    labelToShapeMap = getLabelToShapeMap(dataWithMetric)
+    categoryorder = (
+        "total descending" if isLowerIsBetterMetric(metric) else "total ascending"
+    )
+    fig = px.bar(
+        dataWithMetric,
+        x=metric,
+        y="db_name",
+        color="db",
+        height=height,
+        pattern_shape="db_label",
+        # pattern_shape_sequence=SHAPES,
+        pattern_shape_map=labelToShapeMap,
+        orientation="h",
+        hover_data={
+            "db": False,
+            "db_label": False,
+            "db_name": True,
+        },
+        color_discrete_map=COLOR_MAP,
+        text_auto=True,
+    )
+    fig.update_xaxes(showticklabels=False, visible=False, range=xrange)
+    fig.update_yaxes(
+        # showticklabels=False,
+        # visible=False,
+        title=dict(
+            font=dict(
+                size=1,
+            ),
+            # text="",
+        )
+    )
+    fig.update_traces(
+        textposition="outside",
+        textfont=dict(
+            # color="#fff",
+            size=14,
+        ),
+        marker=dict(
+            pattern=dict(fillmode="overlay", fgcolor="#fff", fgopacity=1, size=7)
+        ),
+        texttemplate="%{x:,.4~r}" + unit,
+    )
+    fig.update_layout(
+        margin=dict(l=0, r=0, t=0, b=0, pad=8),
+        bargap=0.25,
+        showlegend=False,
+        legend=dict(
+            orientation="h", yanchor="bottom", y=1, xanchor="right", x=1, title=""
+        ),
+        # legend=dict(orientation="v", title=""),
+        yaxis={"categoryorder": categoryorder},
     )
 
     chart.plotly_chart(fig, use_container_width=True)
