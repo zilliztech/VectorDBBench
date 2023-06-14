@@ -6,3 +6,4 @@ __pycache__
 .data/
 __MACOSX
 .DS_Store
+build/
