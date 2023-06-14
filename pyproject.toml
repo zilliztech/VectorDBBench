@@ -2,6 +2,9 @@
 requires = ["setuptools>=67.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools.package-data]
+"vectordb_bench.results" = ["*.json"]
+
 [project]
 name = "vectordb-bench"
 authors = [
@@ -42,7 +45,6 @@ test = [
     "ruff",
     "pytest",
 ]
-
 
 [project.urls]
 "repository" = "https://github.com/zilliztech/VectorDBBench"
