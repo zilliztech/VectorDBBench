@@ -1,19 +1,19 @@
 import pytest
 import logging
-from vector_db_bench.models import (
+from vectordb_bench.models import (
     TaskConfig, CaseConfig,
     CaseResult, TestResult,
-    Metric, CaseType, ResultLabel
+    Metric, CaseType
 )
-from vector_db_bench.backend.clients import (
+from vectordb_bench.backend.clients import (
     DB,
     IndexType
 )
 
-from vector_db_bench import config
+from vectordb_bench import config
 
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("vectordb_bench")
 
 
 class TestModels:
@@ -67,5 +67,4 @@ class TestModels:
         result_dir = config.RESULTS_LOCAL_DIR
         for json_file in result_dir.glob("*.json"):
             res = TestResult.read_file(json_file)
-            #  res.display([DB.ZillizCloud])
             res.display()

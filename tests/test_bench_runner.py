@@ -1,7 +1,7 @@
 import time
 import logging
-from vector_db_bench.interface import BenchMarkRunner
-from vector_db_bench.models import (
+from vectordb_bench.interface import BenchMarkRunner
+from vectordb_bench.models import (
     DB, IndexType, CaseType, TaskConfig, CaseConfig,
 )
 

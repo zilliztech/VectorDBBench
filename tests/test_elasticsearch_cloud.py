@@ -1,5 +1,5 @@
 import logging
-from vector_db_bench.models import (
+from vectordb_bench.models import (
     DB,
     MetricType,
     ElasticsearchConfig,
