@@ -1,8 +1,8 @@
 import pytest
 import logging
 
-from vector_db_bench.backend import utils
-from vector_db_bench.metric import calc_recall
+from vectordb_bench.backend import utils
+from vectordb_bench.metric import calc_recall
 
 log = logging.getLogger(__name__)
 
