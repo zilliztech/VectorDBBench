@@ -21,7 +21,7 @@ def main():
     allResults = benchMarkRunner.get_results()
 
     st.title("Vector Database Benchmark")
-    st.write("description [todo]")
+    # st.write("description [todo]")
 
     # results selector
     resultSelectorContainer = st.sidebar.container()

@@ -28,7 +28,7 @@ def main():
 
     # header
     st.title("Run Your Test")
-    st.write("description [todo]")
+    # st.write("description [todo]")
 
     # select db
     dbSelectorContainer = st.container()

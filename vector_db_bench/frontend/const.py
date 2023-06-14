@@ -17,14 +17,6 @@ CASE_CONFIG_INPUT_WIDTH_RADIO = 0.98
 CASE_INTRO_RATIO = 3
 MAX_STREAMLIT_INT = (1 << 53) - 1
 
-COLORS = [
-    "#3B69FE",
-    "#66C8FF",
-    "#35CE73",
-    "#FDC513",
-    "#FE708D",
-    "#8773FB",
-]
 LEGEND_RECT_WIDTH = 24
 LEGEND_RECT_HEIGHT = 16
 LEGEND_TEXT_FONT_SIZE = 14
@@ -51,7 +43,14 @@ DB_TO_ICON = {
     DB.WeaviateCloud: "https://assets.zilliz.com/weaviate_4f6f171ebe.png",
 }
 
-COLOR_MAP = {db.value: COLORS[i] for i, db in enumerate(DB_LIST)}
+COLOR_MAP = {
+    DB.Milvus.value: "#0DCAF0",
+    DB.ZillizCloud.value: "#0D6EFD",
+    DB.ElasticCloud.value: "#fdc613",
+    DB.Pinecone.value: "#6610F2",
+    DB.QdrantCloud.value: "#D91AD9",
+    DB.WeaviateCloud.value: "#20C997",
+}
 
 CASE_LIST = [
     {
