@@ -2,7 +2,7 @@ import streamlit as st
 from vector_db_bench.frontend.const import *
 from vector_db_bench.frontend.components.check_results.headerIcon import drawHeaderIcon
 from vector_db_bench.frontend.components.check_results.nav import NavToResults, NavToRunTest
-from vector_db_bench.frontend.components.check_results.charts import drawChartQpsPerHour, drawMetricChart
+from vector_db_bench.frontend.components.check_results.charts import drawMetricChart
 from vector_db_bench.frontend.components.check_results.filters import getshownData
 from vector_db_bench.frontend.utils import displayCaseText
 from vector_db_bench.interface import benchMarkRunner
