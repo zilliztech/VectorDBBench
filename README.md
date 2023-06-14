@@ -52,12 +52,12 @@ $ ruff check vectordb_bench --fix
 
 ## How does it work?
 ### Result Page
-![image](https://github.com/liliu-z/VectorDBBench/assets/105927039/a8418fb6-0822-4f04-a04d-ab9143815b3e)
+![image](https://github.com/zilliztech/VectorDBBench/assets/105927039/66ab83c4-656e-41a8-a643-d9790faccbeb)
 This is the main page of VectorDBBench, which displays the standard benchmark results we provide. Additionally, results of all tests performed by users themselves will also be shown here. We also offer the ability to select and compare results from multiple tests simultaneously.
 
 The standard benchmark results displayed here include all 12 cases that we currently support for all our clients (Milvus, Zilliz Cloud, Elastic Search, Qdrant Cloud, and Weaviate Cloud). However, as some systems may not be able to complete all the tests successfully due to issues like Out of Memory (OOM) or timeouts, not all clients are included in every case.
 ### Run Test Page
-![image](https://github.com/liliu-z/VectorDBBench/assets/105927039/364e2462-107e-4ce1-aabc-ff2b217ae9b7)
+![image](https://github.com/zilliztech/VectorDBBench/assets/105927039/a789099a-3707-4214-8052-b73463b8f2c6)
 This is the page to run a test:
 1. Initially, you select the systems to be tested - multiple selections are allowed. Once selected, corresponding forms will pop up to gather necessary information for using the chosen databases. The db_label is used to differentiate different instances of the same system. We recommend filling in the host size or instance type here (as we do in our standard results).
 2. The next step is to select the test cases you want to perform. You can select multiple cases at once, and a form to collect corresponding parameters will appear.
@@ -66,7 +66,7 @@ Now we can only run one task at the same time.
 
 ## Module
 ### Code Structure
-![image](https://github.com/liliu-z/VectorDBBench/assets/105927039/8d65c8b4-b9a3-4405-9db8-d27bf1ffda4b)
+![image](https://github.com/zilliztech/VectorDBBench/assets/105927039/8c06512e-5419-4381-b084-9c93aed59639)
 ### Client
 Our client module is designed with flexibility and extensibility in mind, aiming to integrate APIs from different systems seamlessly. As of now, it supports Milvus, Zilliz Cloud, Elastic Search, Pinecone, Qdrant, and Weaviate. Stay tuned for more options, as we are consistently working on extending our reach to other systems.
 ### Benchmark Cases
