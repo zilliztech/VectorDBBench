@@ -1,4 +1,5 @@
 import streamlit as st
+from vectordb_bench.frontend.components.check_results.priceTable import priceTable
 from vectordb_bench.frontend.const import *
 from vectordb_bench.frontend.components.check_results.headerIcon import drawHeaderIcon
 from vectordb_bench.frontend.components.check_results.nav import NavToResults, NavToRunTest
@@ -20,8 +21,8 @@ def main():
 
     allResults = benchMarkRunner.get_results()
 
-    st.title("Vector Database Benchmark")
-    # st.write("description [todo]")
+    st.title("Vector DB Benchmark (QPS / Price)")
+    st.subheader("Price List")
 
     # results selector
     resultSelectorContainer = st.sidebar.container()
@@ -33,6 +34,10 @@ def main():
     navContainer = st.sidebar.container()
     NavToRunTest(navContainer)
     NavToResults(navContainer)
+    
+    # price table
+    priceTableContainer = st.container()
+    priceMap = priceTable(priceTableContainer, shownData)
 
     # charts
     for case in showCases:
@@ -42,7 +47,7 @@ def main():
         metric = "qps_per_dollar (qps / price)"
         for d in data:
             qps = d.get("qps", 0)
-            price = DB_DBLABEL_TO_PRICE.get(d["db"], {}).get(d["db_label"], 0)
+            price = priceMap.get(d["db"], {}).get(d["db_label"], 0)
             if qps > 0 and price > 0:
                 d[metric] = d["qps"] / price
                 dataWithMetric.append(d)
