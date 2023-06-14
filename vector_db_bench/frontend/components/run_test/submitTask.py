@@ -26,7 +26,7 @@ def submitTask(st, tasks):
 
 
 def taskLabelInput(st):
-    defaultTaskLabel = datetime.now().strftime("%Y%m%d-%H%M%S")
+    defaultTaskLabel = datetime.now().strftime("%Y%m%d%H")
     columns = st.columns(TASK_LABEL_INPUT_COLUMNS)
     taskLabel = columns[0].text_input("task_label", defaultTaskLabel, label_visibility="collapsed")
     return taskLabel
