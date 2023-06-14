@@ -26,7 +26,7 @@
           "num_candidates": null
         },
         "case_config": {
-          "case_id": "Capacity Test(Large-dim)",
+          "case_id": "Capacity Test (Large-dim)",
           "custom_case": {}
         }
       },
@@ -56,7 +56,7 @@
           "num_candidates": null
         },
         "case_config": {
-          "case_id": "Capacity Test(Small-dim)",
+          "case_id": "Capacity Test (Small-dim)",
           "custom_case": {}
         }
       },
@@ -86,7 +86,7 @@
           "num_candidates": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test(Small Dataset)",
+          "case_id": "Search Performance Test (Small Dataset)",
           "custom_case": {}
         }
       },
@@ -176,7 +176,7 @@
           "num_candidates": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test(Medium Dataset)",
+          "case_id": "Search Performance Test (Medium Dataset)",
           "custom_case": {}
         }
       },
@@ -262,7 +262,7 @@
           "search_list": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test(Medium Dataset)",
+          "case_id": "Search Performance Test (Medium Dataset)",
           "custom_case": {}
         }
       },
@@ -340,7 +340,7 @@
           "search_list": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test(Large Dataset)",
+          "case_id": "Search Performance Test (Large Dataset)",
           "custom_case": {}
         }
       },
@@ -420,7 +420,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test(Medium Dataset)",
+          "case_id": "Search Performance Test (Medium Dataset)",
           "custom_case": {}
         }
       },
@@ -502,7 +502,7 @@
           "search_list": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test(Small Dataset)",
+          "case_id": "Search Performance Test (Small Dataset)",
           "custom_case": {}
         }
       },
@@ -581,7 +581,7 @@
           "metric_type": "L2"
         },
         "case_config": {
-          "case_id": "Capacity Test(Large-dim)",
+          "case_id": "Capacity Test (Large-dim)",
           "custom_case": {}
         }
       },
@@ -608,7 +608,7 @@
           "metric_type": "L2"
         },
         "case_config": {
-          "case_id": "Capacity Test(Small-dim)",
+          "case_id": "Capacity Test (Small-dim)",
           "custom_case": {}
         }
       },
@@ -635,7 +635,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Search Performance Test(Small Dataset)",
+          "case_id": "Search Performance Test (Small Dataset)",
           "custom_case": {}
         }
       },
@@ -716,7 +716,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Search Performance Test(Medium Dataset)",
+          "case_id": "Search Performance Test (Medium Dataset)",
           "custom_case": {}
         }
       },
@@ -796,7 +796,7 @@
           "search_list": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test(Small Dataset)",
+          "case_id": "Search Performance Test (Small Dataset)",
           "custom_case": {}
         }
       },
@@ -875,7 +875,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Search Performance Test(Small Dataset)",
+          "case_id": "Search Performance Test (Small Dataset)",
           "custom_case": {}
         }
       },
@@ -956,7 +956,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Search Performance Test(Large Dataset)",
+          "case_id": "Search Performance Test (Large Dataset)",
           "custom_case": {}
         }
       },
@@ -1037,7 +1037,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Search Performance Test(Medium Dataset)",
+          "case_id": "Search Performance Test (Medium Dataset)",
           "custom_case": {}
         }
       },
@@ -1119,7 +1119,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Capacity Test(Small-dim)",
+          "case_id": "Capacity Test (Small-dim)",
           "custom_case": null
         }
       },
@@ -1147,7 +1147,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Capacity Test(Large-dim)",
+          "case_id": "Capacity Test (Large-dim)",
           "custom_case": null
         }
       },
@@ -1175,7 +1175,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Search Performance Test(Large Dataset)",
+          "case_id": "Search Performance Test (Large Dataset)",
           "custom_case": null
         }
       },
@@ -1203,7 +1203,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Search Performance Test(Medium Dataset)",
+          "case_id": "Search Performance Test (Medium Dataset)",
           "custom_case": null
         }
       },
@@ -1287,7 +1287,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Search Performance Test(Small Dataset)",
+          "case_id": "Search Performance Test (Small Dataset)",
           "custom_case": null
         }
       },
@@ -1371,7 +1371,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Capacity Test(Small-dim)",
+          "case_id": "Capacity Test (Small-dim)",
           "custom_case": null
         }
       },
@@ -1399,7 +1399,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Capacity Test(Large-dim)",
+          "case_id": "Capacity Test (Large-dim)",
           "custom_case": null
         }
       },
@@ -1427,7 +1427,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Search Performance Test(Medium Dataset)",
+          "case_id": "Search Performance Test (Medium Dataset)",
           "custom_case": null
         }
       },
@@ -1455,7 +1455,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Search Performance Test(Small Dataset)",
+          "case_id": "Search Performance Test (Small Dataset)",
           "custom_case": null
         }
       },
@@ -1483,7 +1483,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Capacity Test(Small-dim)",
+          "case_id": "Capacity Test (Small-dim)",
           "custom_case": null
         }
       },
@@ -1511,7 +1511,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Capacity Test(Large-dim)",
+          "case_id": "Capacity Test (Large-dim)",
           "custom_case": null
         }
       },
@@ -1539,7 +1539,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Search Performance Test(Small Dataset)",
+          "case_id": "Search Performance Test (Small Dataset)",
           "custom_case": null
         }
       },
@@ -1567,7 +1567,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Search Performance Test(Medium Dataset)",
+          "case_id": "Search Performance Test (Medium Dataset)",
           "custom_case": null
         }
       },
@@ -1595,7 +1595,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Search Performance Test(Large Dataset)",
+          "case_id": "Search Performance Test (Large Dataset)",
           "custom_case": null
         }
       },
@@ -1622,7 +1622,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Capacity Test(Small-dim)",
+          "case_id": "Capacity Test (Small-dim)",
           "custom_case": {}
         }
       },
@@ -1649,7 +1649,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Capacity Test(Large-dim)",
+          "case_id": "Capacity Test (Large-dim)",
           "custom_case": {}
         }
       },
@@ -1676,7 +1676,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Search Performance Test(Medium Dataset)",
+          "case_id": "Search Performance Test (Medium Dataset)",
           "custom_case": {}
         }
       },
@@ -1757,7 +1757,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Search Performance Test(Small Dataset)",
+          "case_id": "Search Performance Test (Small Dataset)",
           "custom_case": {}
         }
       },
@@ -1838,7 +1838,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Search Performance Test(Medium Dataset)",
+          "case_id": "Search Performance Test (Medium Dataset)",
           "custom_case": {}
         }
       },
@@ -1919,7 +1919,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Search Performance Test(Small Dataset)",
+          "case_id": "Search Performance Test (Small Dataset)",
           "custom_case": {}
         }
       },
@@ -2000,7 +2000,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Search Performance Test(Large Dataset)",
+          "case_id": "Search Performance Test (Large Dataset)",
           "custom_case": {}
         }
       },
@@ -2082,7 +2082,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Capacity Test(Small-dim)",
+          "case_id": "Capacity Test (Small-dim)",
           "custom_case": {}
         }
       },
@@ -2110,7 +2110,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Capacity Test(Large-dim)",
+          "case_id": "Capacity Test (Large-dim)",
           "custom_case": {}
         }
       },
@@ -2138,7 +2138,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test(Medium Dataset)",
+          "case_id": "Search Performance Test (Medium Dataset)",
           "custom_case": {}
         }
       },
@@ -2166,7 +2166,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test(Small Dataset)",
+          "case_id": "Search Performance Test (Small Dataset)",
           "custom_case": {}
         }
       },
@@ -2250,7 +2250,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test(Small Dataset)",
+          "case_id": "Search Performance Test (Small Dataset)",
           "custom_case": {}
         }
       },
@@ -2278,7 +2278,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test(Medium Dataset)",
+          "case_id": "Search Performance Test (Medium Dataset)",
           "custom_case": {}
         }
       },
@@ -2362,7 +2362,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test(Medium Dataset)",
+          "case_id": "Search Performance Test (Medium Dataset)",
           "custom_case": {}
         }
       },
@@ -2390,7 +2390,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test(Small Dataset)",
+          "case_id": "Search Performance Test (Small Dataset)",
           "custom_case": {}
         }
       },
@@ -2418,7 +2418,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test(Medium Dataset)",
+          "case_id": "Search Performance Test (Medium Dataset)",
           "custom_case": {}
         }
       },
@@ -2446,7 +2446,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test(Small Dataset)",
+          "case_id": "Search Performance Test (Small Dataset)",
           "custom_case": {}
         }
       },
@@ -2474,7 +2474,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test(Small Dataset)",
+          "case_id": "Search Performance Test (Small Dataset)",
           "custom_case": {}
         }
       },
@@ -2502,7 +2502,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test(Small Dataset)",
+          "case_id": "Search Performance Test (Small Dataset)",
           "custom_case": {}
         }
       },
@@ -2586,7 +2586,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test(Large Dataset)",
+          "case_id": "Search Performance Test (Large Dataset)",
           "custom_case": {}
         }
       },
@@ -2670,7 +2670,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test(Medium Dataset)",
+          "case_id": "Search Performance Test (Medium Dataset)",
           "custom_case": {}
         }
       },
@@ -2752,7 +2752,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Search Performance Test(Small Dataset)",
+          "case_id": "Search Performance Test (Small Dataset)",
           "custom_case": {}
         }
       },
@@ -2830,7 +2830,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Search Performance Test(Medium Dataset)",
+          "case_id": "Search Performance Test (Medium Dataset)",
           "custom_case": {}
         }
       },
@@ -2908,7 +2908,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Search Performance Test(Large Dataset)",
+          "case_id": "Search Performance Test (Large Dataset)",
           "custom_case": {}
         }
       },

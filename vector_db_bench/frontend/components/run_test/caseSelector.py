@@ -1,5 +1,4 @@
 from vector_db_bench.frontend.const import *
-from vector_db_bench.frontend.utils import displayCaseText
 
 
 def caseSelector(st, activedDbList):
@@ -31,7 +30,7 @@ def caseSelector(st, activedDbList):
     return activedCaseList, allCaseConfigs
 
 def caseItem(st, allCaseConfigs, case, activedDbList):
-    selected = st.checkbox(displayCaseText(case["name"].value))
+    selected = st.checkbox(case["name"].value)
     st.markdown(
         f"<div style='color: #1D2939; margin: -8px 0 20px {CHECKBOX_INDENT}px; font-size: 14px;'>{case['intro']}</div>",
         unsafe_allow_html=True,
