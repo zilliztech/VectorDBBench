@@ -55,12 +55,12 @@ COLOR_MAP = {db.value: COLORS[i] for i, db in enumerate(DB_LIST)}
 
 CASE_LIST = [
     {
-        "name": CaseType.LoadSDim,
+        "name": CaseType.CapacitySDim,
         "intro": """This case tests the vector database's loading capacity by repeatedly inserting small-dimension vectors (SIFT 100K vectors, <b>128 dimensions</b>) until it is fully loaded.  
 Number of inserted vectors will be reported.""",
     },
     {
-        "name": CaseType.LoadLDim,
+        "name": CaseType.CapacityLDim,
         "divider": True,
         "intro": """This case tests the vector database's loading capacity by repeatedly inserting large-dimension vectors (GIST 100K vectors, <b>960 dimensions</b>) until it is fully loaded.  
 Number of inserted vectors will be reported.
@@ -316,8 +316,8 @@ ESPerformanceConfig = [
 
 CASE_CONFIG_MAP = {
     DB.Milvus: {
-        CaseType.LoadLDim: MilvusLoadConfig,
-        CaseType.LoadSDim: MilvusLoadConfig,
+        CaseType.CapacityLDim: MilvusLoadConfig,
+        CaseType.CapacitySDim: MilvusLoadConfig,
         CaseType.PerformanceLZero: MilvusPerformanceConfig,
         CaseType.PerformanceMZero: MilvusPerformanceConfig,
         CaseType.PerformanceSZero: MilvusPerformanceConfig,
@@ -330,8 +330,8 @@ CASE_CONFIG_MAP = {
         CaseType.Performance100M: MilvusPerformanceConfig,
     },
     DB.WeaviateCloud: {
-        CaseType.LoadLDim: WeaviateLoadConfig,
-        CaseType.LoadSDim: WeaviateLoadConfig,
+        CaseType.CapacityLDim: WeaviateLoadConfig,
+        CaseType.CapacitySDim: WeaviateLoadConfig,
         CaseType.PerformanceLZero: WeaviatePerformanceConfig,
         CaseType.PerformanceMZero: WeaviatePerformanceConfig,
         CaseType.PerformanceSZero: WeaviatePerformanceConfig,
@@ -344,8 +344,8 @@ CASE_CONFIG_MAP = {
         CaseType.Performance100M: WeaviatePerformanceConfig,
     },
     DB.ElasticCloud: {
-        CaseType.LoadLDim: ESLoadingConfig,
-        CaseType.LoadSDim: ESLoadingConfig,
+        CaseType.CapacityLDim: ESLoadingConfig,
+        CaseType.CapacitySDim: ESLoadingConfig,
         CaseType.PerformanceLZero: ESPerformanceConfig,
         CaseType.PerformanceMZero: ESPerformanceConfig,
         CaseType.PerformanceSZero: ESPerformanceConfig,

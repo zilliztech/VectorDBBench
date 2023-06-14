@@ -18,10 +18,11 @@ class config:
     USE_SHUFFLED_DATA = env.bool("USE_SHUFFLED_DATA", True)
 
     RESULTS_LOCAL_DIR = pathlib.Path(__file__).parent.joinpath("results")
+    CASE_TIMEOUT_IN_SECOND = 24 * 60 * 60
 
 
     def display(self) -> str:
-        tmp = [i for i in inspect.getmembers(self) 
+        tmp = [i for i in inspect.getmembers(self)
             if not inspect.ismethod(i[1]) and not i[0].startswith('_') \
         ]
         return tmp

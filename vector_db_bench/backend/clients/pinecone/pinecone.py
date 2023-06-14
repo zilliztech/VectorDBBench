@@ -4,8 +4,6 @@ import logging
 from contextlib import contextmanager
 from typing import Any, Type
 
-import pinecone
-
 from ..api import VectorDB, DBConfig, DBCaseConfig, EmptyDBCaseConfig, IndexType
 from .config import PineconeConfig
 
@@ -28,6 +26,9 @@ class Pinecone(VectorDB):
         self.api_key = db_config["api_key"]
         self.environment = db_config["environment"]
         self.batch_size = int(min(PINECONE_MAX_SIZE_PER_BATCH / (dim * 5), PINECONE_MAX_NUM_PER_BATCH))
+        # Pincone will make connections with server while import
+        # so place the import here.
+        import pinecone
         pinecone.init(
             api_key=self.api_key, environment=self.environment)
         if drop_old:
@@ -58,6 +59,7 @@ class Pinecone(VectorDB):
 
     @contextmanager
     def init(self) -> None:
+        import pinecone
         pinecone.init(
             api_key=self.api_key, environment=self.environment)
         self.index = pinecone.Index(self.index_name)
@@ -98,7 +100,6 @@ class Pinecone(VectorDB):
             pinecone_filters = {}
         else:
             pinecone_filters = {self._metadata_key: {"$gte": filters["id"]}}
-    
         try:
             res = self.index.query(
                 top_k=k,

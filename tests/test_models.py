@@ -3,7 +3,7 @@ import logging
 from vector_db_bench.models import (
     TaskConfig, CaseConfig,
     CaseResult, TestResult,
-    Metric, CaseType, ResultLabel
+    Metric, CaseType
 )
 from vector_db_bench.backend.clients import (
     DB,
@@ -13,7 +13,7 @@ from vector_db_bench.backend.clients import (
 from vector_db_bench import config
 
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("vector_db_bench")
 
 
 class TestModels:
@@ -67,5 +67,4 @@ class TestModels:
         result_dir = config.RESULTS_LOCAL_DIR
         for json_file in result_dir.glob("*.json"):
             res = TestResult.read_file(json_file)
-            #  res.display([DB.ZillizCloud])
             res.display()

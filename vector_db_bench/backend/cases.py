@@ -43,7 +43,7 @@ class Case(BaseModel):
         return None
 
 
-class LoadCase(Case, BaseModel):
+class CapacityCase(Case, BaseModel):
     label: CaseLabel = CaseLabel.Load
     filter_rate: float | int | None = None
 
@@ -51,12 +51,12 @@ class PerformanceCase(Case, BaseModel):
     label: CaseLabel = CaseLabel.Performance
     filter_rate: float | int | None = None
 
-class LoadLDimCase(LoadCase):
-    case_id: CaseType = CaseType.LoadLDim
+class CapacityLDimCase(CapacityCase):
+    case_id: CaseType = CaseType.CapacityLDim
     dataset: ds.DataSet = ds.get(ds.Name.GIST, ds.Label.SMALL)
 
-class LoadSDimCase(LoadCase):
-    case_id: CaseType = CaseType.LoadSDim
+class CapacitySDimCase(CapacityCase):
+    case_id: CaseType = CaseType.CapacitySDim
     dataset: ds.DataSet = ds.get(ds.Name.SIFT, ds.Label.SMALL)
 
 class PerformanceLZero(PerformanceCase):
@@ -107,8 +107,8 @@ class Performance100M(PerformanceCase):
     dataset: ds.DataSet = ds.get(ds.Name.LAION, ds.Label.LARGE)
 
 type2case = {
-    CaseType.LoadLDim: LoadLDimCase,
-    CaseType.LoadSDim: LoadSDimCase,
+    CaseType.CapacityLDim: CapacityLDimCase,
+    CaseType.CapacitySDim: CapacitySDimCase,
 
     CaseType.PerformanceLZero: PerformanceLZero,
     CaseType.PerformanceMZero: PerformanceMZero,

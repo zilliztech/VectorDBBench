@@ -23,14 +23,17 @@ log = logging.getLogger(__name__)
 class LoadTimeoutError(TimeoutError):
     pass
 
+class PerformanceTimeoutError(TimeoutError):
+    pass
+
 
 class CaseType(Enum):
     """
     Value will be displayed in UI
     """
 
-    LoadLDim = "Capacity Test (Large-dim)"
-    LoadSDim = "Capacity Test (Small-dim)"
+    CapacitySDim = "Capacity Test (Large-dim)"
+    CapacityLDim = "Capacity Test (Small-dim)"
 
     Performance100M = "Search Performance Test (XLarge Dataset)"
     PerformanceLZero = "Search Performance Test (Large Dataset)"
@@ -174,69 +177,57 @@ class TestResult(BaseModel):
             return c
 
     def display(self, dbs: list[DB] | None = None):
-        DATA_FORMAT = " %-14s | %-17s %-20s %14s | %-10s %14s %14s %14s %14s"
-        TITLE_FORMAT = (" %-14s | %-17s %-20s %14s | %-10s %14s %14s %14s %14s") % (
-            "DB",
-            "db_label",
-            "case",
-            "label",
-            "load_dur",
-            "qps",
-            "latency(p99)",
-            "recall",
-            "max_load_count",
-        )
-
-        SUMMERY_FORMAT = ("Task summery: run_id=%s, task_label=%s") % (
-            self.run_id[:5],
-            self.task_label,
-        )
-
-        fmt = [SUMMERY_FORMAT, TITLE_FORMAT]
-        fmt.append(
-            DATA_FORMAT
-            % (
-                "-" * 14,
-                "-" * 17,
-                "-" * 20,
-                "-" * 14,
-                "-" * 10,
-                "-" * 14,
-                "-" * 14,
-                "-" * 14,
-                "-" * 14,
-            )
-        )
-
         filter_list = dbs if dbs and isinstance(dbs, list) else None
+        sorted_results = sorted(self.results, key=lambda x: (
+            x.task_config.db.name,
+            x.task_config.db_config.db_label,
+            x.task_config.case_config.case_id.name,
+        ), reverse=True)
 
-        sorted_results = sorted(
-            self.results,
-            key=lambda x: (
-                x.task_config.db.name,
-                x.task_config.db_config.db_label,
-                x.task_config.case_config.case_id.name,
-            ),
-            reverse=True,
+        filtered_results = [r for r in sorted_results  if not filter_list or r.task_config.db not in filter_list]
+
+        def append_return(x, y):
+            x.append(y)
+            return x
+
+        max_db = max(map(len, [f.task_config.db.name for f in filtered_results]))
+        max_db_labels = max(map(len, [f.task_config.db_config.db_label for f in filtered_results])) + 3
+        max_case = max(map(len, [f.task_config.case_config.case_id.name for f in filtered_results]))
+        max_load_dur = max(map(len, [str(f.metrics.load_duration) for f in filtered_results])) + 3
+        max_qps = max(map(len, [str(f.metrics.qps) for f in filtered_results])) + 3
+        max_recall = max(map(len, [str(f.metrics.recall) for f in filtered_results])) + 3
+
+        max_db_labels = 8 if max_db_labels == 0 else max_db_labels
+        max_load_dur = 11 if max_load_dur == 0 else max_load_dur + 3
+        max_qps = 10 if max_qps == 0 else max_load_dur + 3
+        max_recall = 13 if max_recall == 0 else max_recall + 3
+
+        LENGTH = (max_db, max_db_labels, max_case, len(self.task_label), max_load_dur, max_qps, 15, max_recall, 14)
+
+        DATA_FORMAT = (
+            f"%-{max_db}s | %-{max_db_labels}s %-{max_case}s %-{len(self.task_label)}s "
+            f"| %-{max_load_dur}s %-{max_qps}s %-15s %-{max_recall}s %-14s"
         )
-        for f in sorted_results:
-            if filter_list and f.task_config.db not in filter_list:
-                continue
 
-            fmt.append(
-                DATA_FORMAT
-                % (
-                    f.task_config.db.name,
-                    f.task_config.db_config.db_label,
-                    f.task_config.case_config.case_id.name,
-                    self.task_label,
-                    f.metrics.load_duration,
-                    f.metrics.qps,
-                    f.metrics.serial_latency_p99,
-                    f.metrics.recall,
-                    f.metrics.max_load_count,
-                )
-            )
+        TITLE = DATA_FORMAT % (
+            "DB", "db_label", "case", "label", "load_dur", "qps", "latency(p99)", "recall", "max_load_count")
+        SPLIT = DATA_FORMAT%tuple(map(lambda x:"-"*x, LENGTH))
+        SUMMERY_FORMAT = ("Task summery: run_id=%s, task_label=%s") % (self.run_id[:5], self.task_label)
+        fmt = [SUMMERY_FORMAT, TITLE, SPLIT]
+
+
+        for f in filtered_results:
+            fmt.append(DATA_FORMAT%(
+                f.task_config.db.name,
+                f.task_config.db_config.db_label,
+                f.task_config.case_config.case_id.name,
+                self.task_label,
+                f.metrics.load_duration,
+                f.metrics.qps,
+                f.metrics.serial_latency_p99,
+                f.metrics.recall,
+                f.metrics.max_load_count,
+            ))
 
         tmp_logger = logging.getLogger("no_color")
         for f in fmt:

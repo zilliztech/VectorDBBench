@@ -106,7 +106,7 @@ class CaseRunner(BaseModel):
         Returns:
             Metric: the max load count
         """
-        log.info("start to run load case")
+        log.info("Start capacity case")
         # datasets for load tests are quite small, can fit into memory
         # only 1 file
         data_df = [data_df for data_df in self.ca.dataset][0]
@@ -118,9 +118,9 @@ class CaseRunner(BaseModel):
             log.info(f"load reach limit: insertion counts={count}")
             return Metric(max_load_count=count)
         except Exception as e:
-            log.warning(f"run load case error: {e}")
+            log.warning(f"run capacity case error: {e}")
             raise e from None
-        log.info("end run load case")
+        log.info("End capacity case")
 
 
     def _run_perf_case(self, drop_old: bool = True) -> Metric:

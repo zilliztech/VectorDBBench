@@ -12,7 +12,14 @@ from enum import Enum
 
 from . import config
 from .metric import Metric
-from .models import TaskConfig, TestResult, CaseResult, LoadTimeoutError, ResultLabel
+from .models import (
+    TaskConfig,
+    TestResult,
+    CaseResult,
+    LoadTimeoutError,
+    PerformanceTimeoutError,
+    ResultLabel,
+)
 from .backend.result_collector import ResultCollector
 from .backend.assembler import Assembler
 from .backend.task_runner import TaskRunner
@@ -147,7 +154,7 @@ class BenchMarkRunner:
                     # use the cached load duration if this case didn't drop the existing collection
                     if not drop_old:
                         case_res.metrics.load_duration = cached_load_duration if cached_load_duration else 0.0
-                except LoadTimeoutError as e:
+                except (LoadTimeoutError, PerformanceTimeoutError) as e:
                     log.warning(f"[{idx+1}/{running_task.num_cases()}] case {runner.display()} failed to run, reason={e}")
                     case_res.label = ResultLabel.OUTOFRANGE
                     continue

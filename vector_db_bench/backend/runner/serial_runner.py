@@ -14,7 +14,7 @@ from .. import utils
 from ... import config
 
 NUM_PER_BATCH = config.NUM_PER_BATCH
-LOAD_TIMEOUT = 12 * 60 * 60
+LOAD_TIMEOUT = 24 * 60 * 60
 
 log = logging.getLogger(__name__)
 
@@ -62,7 +62,6 @@ class SerialInsertRunner:
             count = future.result()
             return count
 
-
     def run_endlessness(self) -> int:
         """run forever util DB raises exception or crash"""
         start_time = time.perf_counter()
@@ -70,14 +69,17 @@ class SerialInsertRunner:
         try:
             with self.db.init():
                 self.db.ready_to_load()
-            while time.perf_counter() - start_time < LOAD_TIMEOUT:
+            while time.perf_counter() - start_time < config.CASE_TIMEOUT_IN_SECOND:
                 count = self.insert_data(left_id=max_load_count)
                 max_load_count += count
                 times += 1
-                log.info(f"Loaded {times:3} entire dataset, current max load counts={utils.numerize(max_load_count)}, {max_load_count}")
-            raise LoadTimeoutError("load case timeout and stop")
+                log.info(f"Loaded {times} entire dataset, current max load counts={utils.numerize(max_load_count)}, {max_load_count}")
+            raise LoadTimeoutError("capacity case load timeout and stop")
+        except LoadTimeoutError as e:
+            log.info("load timetout, stop the load case")
+            raise e from None
         except Exception as e:
-            log.info(f"load reach limit, insertion counts={utils.numerize(max_load_count)}, {max_load_count}, err={e}")
+            log.info(f"Capacity case load reach limit, insertion counts={utils.numerize(max_load_count)}, {max_load_count}, err={e}")
             traceback.print_exc()
             return max_load_count
 
