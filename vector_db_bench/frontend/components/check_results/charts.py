@@ -1,7 +1,6 @@
 from vector_db_bench.metric import metricOrder, isLowerIsBetterMetric, metricUnitMap
 from vector_db_bench.frontend.const import *
 import plotly.express as px
-from vector_db_bench.frontend.utils import displayCaseText
 from vector_db_bench.models import ResultLabel
 
 
@@ -21,7 +20,7 @@ def drawCharts(st, allData, failedTasks, cases):
         unsafe_allow_html=True,
     )
     for case in cases:
-        chartContainer = st.expander(displayCaseText(case), True)
+        chartContainer = st.expander(case, True)
         data = [data for data in allData if data["case"] == case]
         drawChart(data, chartContainer)
 

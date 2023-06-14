@@ -1,5 +1,4 @@
 from vector_db_bench.frontend.components.check_results.data import getChartData
-from vector_db_bench.frontend.utils import displayCaseText
 from vector_db_bench.frontend.const import *
 
 
@@ -76,7 +75,7 @@ def getShowDbsAndCases(result, st):
         allCases,
         caseFilterContainer,
         col=1,
-        optionLables=[displayCaseText(case) for case in allCases],
+        optionLables=[case for case in allCases],
     )
 
     return showDBNames, showCases

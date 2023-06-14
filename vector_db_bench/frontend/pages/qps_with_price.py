@@ -4,7 +4,6 @@ from vector_db_bench.frontend.components.check_results.headerIcon import drawHea
 from vector_db_bench.frontend.components.check_results.nav import NavToResults, NavToRunTest
 from vector_db_bench.frontend.components.check_results.charts import drawMetricChart
 from vector_db_bench.frontend.components.check_results.filters import getshownData
-from vector_db_bench.frontend.utils import displayCaseText
 from vector_db_bench.interface import benchMarkRunner
 
 
@@ -48,7 +47,7 @@ def main():
                 d[metric] = d["qps"] / price
                 dataWithMetric.append(d)
         if len(dataWithMetric) > 0:
-            chartContainer.subheader(displayCaseText(case))
+            chartContainer.subheader(case)
             drawMetricChart(data, metric, chartContainer)
 
 
