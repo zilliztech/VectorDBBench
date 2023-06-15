@@ -2,12 +2,11 @@ from pydantic import BaseModel, SecretStr
 from ..api import DBConfig, DBCaseConfig, MetricType, IndexType
 
 
-class MilvusConfig(DBConfig, BaseModel):
-    uri: SecretStr | None = "http://localhost:19530"
+class MilvusConfig(DBConfig):
+    uri: SecretStr = "http://localhost:19530"
 
     def to_dict(self) -> dict:
         return {"uri": self.uri.get_secret_value()}
-
 
 
 class MilvusIndexConfig(BaseModel):

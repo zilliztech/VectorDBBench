@@ -2,7 +2,7 @@ import logging
 from contextlib import contextmanager
 from typing import Iterable, Type
 from ..api import VectorDB, DBCaseConfig, DBConfig, IndexType
-from .config import ElasticsearchIndexConfig, ElasticsearchConfig
+from .config import ElasticCloudIndexConfig, ElasticCloudConfig
 from elasticsearch.helpers import bulk
 
 
@@ -16,7 +16,7 @@ class ElasticCloud(VectorDB):
         self,
         dim: int,
         db_config: dict,
-        db_case_config: ElasticsearchIndexConfig,
+        db_case_config: ElasticCloudIndexConfig,
         indice: str = "vdb_bench_indice",  # must be lowercase
         id_col_name: str = "id",
         vector_col_name: str = "vector",
@@ -43,12 +43,12 @@ class ElasticCloud(VectorDB):
 
     @classmethod
     def config_cls(cls) -> Type[DBConfig]:
-        return ElasticsearchConfig
+        return ElasticCloudConfig
 
 
     @classmethod
     def case_config_cls(cls, index_type: IndexType | None = None) -> Type[DBCaseConfig]:
-        return ElasticsearchIndexConfig
+        return ElasticCloudIndexConfig
 
 
     @contextmanager

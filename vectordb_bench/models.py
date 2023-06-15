@@ -151,6 +151,7 @@ class TestResult(BaseModel):
                 task_config = case_result.get("task_config")
                 db = DB(task_config.get("db"))
                 dbcls = db.init_cls
+
                 task_config["db_config"] = dbcls.config_cls()(
                     **task_config["db_config"]
                 )

@@ -1,12 +1,13 @@
-from pydantic import BaseModel, SecretStr
+from pydantic import SecretStr
+
 from ..api import DBCaseConfig, DBConfig
 from ..milvus.config import MilvusIndexConfig, IndexType
 
 
-class ZillizCloudConfig(DBConfig, BaseModel):
-    uri: SecretStr | None = None
+class ZillizCloudConfig(DBConfig):
+    uri: SecretStr
     user: str
-    password: SecretStr | None = None
+    password: SecretStr
 
     def to_dict(self) -> dict:
         return {
