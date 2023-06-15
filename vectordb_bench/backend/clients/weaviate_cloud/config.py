@@ -4,9 +4,9 @@ import weaviate
 from ..api import DBConfig, DBCaseConfig, MetricType
 
 
-class WeaviateConfig(DBConfig, BaseModel):
-    url: SecretStr | None = None
-    api_key: SecretStr | None = None
+class WeaviateConfig(DBConfig):
+    url: SecretStr
+    api_key: SecretStr
 
     def to_dict(self) -> dict:
         return {

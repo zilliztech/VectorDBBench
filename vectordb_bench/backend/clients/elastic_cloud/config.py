@@ -4,9 +4,9 @@ from pydantic import SecretStr, BaseModel
 from ..api import DBConfig, DBCaseConfig, MetricType, IndexType
 
 
-class ElasticsearchConfig(DBConfig, BaseModel):
+class ElasticCloudConfig(DBConfig, BaseModel):
     cloud_id: SecretStr
-    password: SecretStr | None = None
+    password: SecretStr
 
     def to_dict(self) -> dict:
         return {
@@ -20,7 +20,7 @@ class ESElementType(str, Enum):
     byte = "byte"  # 1 byte, -128 to 127
 
 
-class ElasticsearchIndexConfig(BaseModel, DBCaseConfig):
+class ElasticCloudIndexConfig(BaseModel, DBCaseConfig):
     element_type: ESElementType = ESElementType.float
     index: IndexType = IndexType.ES_HNSW  # ES only support 'hnsw'
 

@@ -2,9 +2,9 @@ from pydantic import BaseModel, SecretStr
 from ..api import DBConfig
 
 
-class PineconeConfig(DBConfig, BaseModel):
-    api_key: SecretStr | None = None
-    environment: SecretStr | None = None
+class PineconeConfig(DBConfig):
+    api_key: SecretStr
+    environment: SecretStr
     index_name: str
 
     def to_dict(self) -> dict:

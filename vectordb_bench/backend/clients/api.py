@@ -3,7 +3,7 @@ from enum import Enum
 from typing import Any, Type
 from contextlib import contextmanager
 
-from pydantic import BaseModel
+from pydantic import BaseModel, validator, SecretStr
 
 
 class MetricType(str, Enum):
@@ -32,11 +32,19 @@ class DBConfig(ABC, BaseModel):
             ZillizCloudConfig.db_label = 1cu-perf
     """
 
-    db_label: str | None = None
+    db_label: str = ""
 
     @abstractmethod
     def to_dict(self) -> dict:
         raise NotImplementedError
+
+    @validator("*")
+    def not_empty_field(cls, v, field):
+        if field.name == "db_label":
+            return v
+        if isinstance(v, (str, SecretStr)) and len(v) == 0:
+            raise ValueError("Empty string!")
+        return v
 
 
 class DBCaseConfig(ABC):
