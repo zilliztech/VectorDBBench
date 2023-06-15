@@ -15,7 +15,7 @@ def NavToQPSWithPrice(st):
         switch_page("qps with price")
         
         
-def NavToResults(st):
-    navClick = st.button("< &nbsp;&nbsp;Back to Results")
+def NavToResults(st, key="nav-to-results"):
+    navClick = st.button("< &nbsp;&nbsp;Back to Results", key=key)
     if navClick:
         switch_page("vdb benchmark")

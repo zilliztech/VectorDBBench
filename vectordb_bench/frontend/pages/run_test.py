@@ -55,6 +55,9 @@ def main():
     # submit
     submitContainer = st.container()
     submitTask(submitContainer, tasks, isAllValid)
+    
+    # nav to results
+    NavToResults(st, key="footer-nav-to-results")
 
     # autofresh
     autoRefresh()
