@@ -32,8 +32,8 @@ class CaseType(Enum):
     Value will be displayed in UI
     """
 
-    CapacitySDim = "Capacity Test (Large-dim)"
-    CapacityLDim = "Capacity Test (Small-dim)"
+    CapacitySDim = "Capacity Test (Small-dim)"
+    CapacityLDim = "Capacity Test (Large-dim)"
 
     Performance100M = "Search Performance Test (XLarge Dataset)"
     PerformanceLZero = "Search Performance Test (Large Dataset)"
