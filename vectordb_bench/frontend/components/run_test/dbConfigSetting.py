@@ -1,3 +1,4 @@
+from pydantic import ValidationError
 from vectordb_bench.frontend.const import *
 from vectordb_bench.frontend.utils import inputIsPassword
 
@@ -10,12 +11,25 @@ def dbConfigSettings(st, activedDbList):
     expander = st.expander("Configurations for the selected databases", True)
 
     dbConfigs = {}
+    isAllValid = True
     for activeDb in activedDbList:
         dbConfigSettingItemContainer = expander.container()
         dbConfig = dbConfigSettingItem(dbConfigSettingItemContainer, activeDb)
-        dbConfigs[activeDb] = dbConfig
-        
-    return dbConfigs
+        try:
+            dbConfigs[activeDb] = activeDb.init_cls.config_cls()(**dbConfig)
+        except ValidationError as e:
+            isAllValid = False
+            errTexts = []
+            for err in e.raw_errors:
+                errLocs = err.loc_tuple()
+                errInfo = err.exc
+                errText = f"{', '.join(errLocs)} - {errInfo}"
+                errTexts.append(errText)
+
+            dbConfigSettingItemContainer.error(f"{'; '.join(errTexts)}")
+
+    return dbConfigs, isAllValid
+
 
 def dbConfigSettingItem(st, activeDb):
     st.markdown(
@@ -39,9 +53,8 @@ def dbConfigSettingItem(st, activeDb):
             value=value.get("default", ""),
             type="password" if inputIsPassword(key) else "default",
         )
-    return dbConfigClass(**dbConfig)
+    return dbConfig
 
 
 def moveDBLabelToLast(propertiesItems):
-    propertiesItems.sort(key=lambda x: 1 if x[0] == 'db_label' else 0)
-    
+    propertiesItems.sort(key=lambda x: 1 if x[0] == "db_label" else 0)

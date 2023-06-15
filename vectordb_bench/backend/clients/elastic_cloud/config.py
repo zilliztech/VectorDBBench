@@ -45,8 +45,8 @@ class ElasticsearchIndexConfig(BaseModel, DBCaseConfig):
             "index_options": {
                 "type": self.index.value,
                 "m": self.M,
-                "ef_construction": self.efConstruction
-            }
+                "ef_construction": self.efConstruction,
+            },
         }
         return params
 

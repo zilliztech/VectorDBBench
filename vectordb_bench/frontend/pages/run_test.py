@@ -38,18 +38,22 @@ def main():
     dbConfigs = {}
     if len(activedDbList) > 0:
         dbConfigContainer = st.container()
-        dbConfigs = dbConfigSettings(dbConfigContainer, activedDbList)
+        dbConfigs, isAllValid = dbConfigSettings(dbConfigContainer, activedDbList)
 
     # select case and set db_case_config
     caseSelectorContainer = st.container()
     activedCaseList, allCaseConfigs = caseSelector(caseSelectorContainer, activedDbList)
 
     # generate tasks
-    tasks = generate_tasks(activedDbList, dbConfigs, activedCaseList, allCaseConfigs)
+    tasks = (
+        generate_tasks(activedDbList, dbConfigs, activedCaseList, allCaseConfigs)
+        if isAllValid
+        else []
+    )
 
     # submit
     submitContainer = st.container()
-    submitTask(submitContainer, tasks)
+    submitTask(submitContainer, tasks, isAllValid)
 
     # autofresh
     autoRefresh()

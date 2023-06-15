@@ -3,7 +3,7 @@ from vectordb_bench.frontend.const import *
 from vectordb_bench.interface import benchMarkRunner
 
 
-def submitTask(st, tasks):
+def submitTask(st, tasks, isAllValid):
     st.markdown(
         "<div style='height: 24px;'></div>",
         unsafe_allow_html=True,
@@ -15,34 +15,36 @@ def submitTask(st, tasks):
     )
 
     taskLabel = taskLabelInput(st)
-    
+
     st.markdown(
         "<div style='height: 24px;'></div>",
         unsafe_allow_html=True,
     )
 
     controlPanelContainer = st.container()
-    controlPanel(controlPanelContainer, tasks, taskLabel)
+    controlPanel(controlPanelContainer, tasks, taskLabel, isAllValid)
 
 
 def taskLabelInput(st):
     defaultTaskLabel = datetime.now().strftime("%Y%m%d%H")
     columns = st.columns(TASK_LABEL_INPUT_COLUMNS)
-    taskLabel = columns[0].text_input("task_label", defaultTaskLabel, label_visibility="collapsed")
+    taskLabel = columns[0].text_input(
+        "task_label", defaultTaskLabel, label_visibility="collapsed"
+    )
     return taskLabel
 
 
-def controlPanel(st, tasks, taskLabel):
+def controlPanel(st, tasks, taskLabel, isAllValid):
     isRunning = benchMarkRunner.has_running()
     runHandler = lambda: benchMarkRunner.run(tasks, taskLabel)
     stopHandler = lambda: benchMarkRunner.stop_running()
-    
+
     if isRunning:
         currentTaskId = benchMarkRunner.get_current_task_id()
         tasksCount = benchMarkRunner.get_tasks_count()
         text = f":running: Running Task {currentTaskId} / {tasksCount}"
         st.progress(currentTaskId / tasksCount, text=text)
-        
+
         columns = st.columns(6)
         columns[0].button(
             "Run Your Test",
@@ -55,12 +57,16 @@ def controlPanel(st, tasks, taskLabel):
             on_click=stopHandler,
             type="primary",
         )
-        
+
     else:
         errorText = benchMarkRunner.latest_error or ""
         if len(errorText) > 0:
             st.error(errorText)
-        disabled = True if len(tasks) == 0 else False
+        disabled = True if len(tasks) == 0 or not isAllValid else False
+        if not isAllValid:
+            st.error("Make sure all config is valid.")
+        elif len(tasks) == 0:
+            st.warning("No tests to run.")
         st.button(
             "Run Your Test",
             disabled=disabled,
