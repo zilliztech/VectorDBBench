@@ -36,6 +36,7 @@ def main():
 
     # db config setting
     dbConfigs = {}
+    isAllValid = True
     if len(activedDbList) > 0:
         dbConfigContainer = st.container()
         dbConfigs, isAllValid = dbConfigSettings(dbConfigContainer, activedDbList)
