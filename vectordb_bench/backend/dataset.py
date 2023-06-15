@@ -30,7 +30,7 @@ log = logging.getLogger(__name__)
 class LAION:
     name: str = "LAION"
     dim: int = 768
-    metric_type: MetricType = MetricType.COSINE
+    metric_type: MetricType = MetricType.L2
     use_shuffled: bool = False
 
     @property
