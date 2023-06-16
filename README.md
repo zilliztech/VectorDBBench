@@ -20,7 +20,7 @@ VectorDBBench is not just an offering of benchmark results for mainstream vector
 Understanding the importance of user experience, we provide an intuitive visual interface. This not only empowers users to initiate benchmarks at ease, but also to view comparative result reports, thereby reproducing benchmark results effortlessly.
 To add more relevance and practicality, we provide cost-effectiveness reports particularly for cloud services. This allows for a more realistic and applicable benchmarking process.
 
-Closely mimicking real-world production environments, we've set up diverse testing scenarios including insertion, searching, and filtered searching. To provide you with credible and reliable data, we've included public datasets from actual production scenarios, such as SIFT, GIST, Cohere, and more. It's fascinating to discover how a relatively unknown open-source database might excel in certain circumstances!
+Closely mimicking real-world production environments, we've set up diverse testing scenarios including insertion, searching, and filtered searching. To provide you with credible and reliable data, we've included public datasets from actual production scenarios, such as [SIFT](http://corpus-texmex.irisa.fr/), [GIST](http://corpus-texmex.irisa.fr/), [Cohere](https://huggingface.co/datasets/Cohere/wikipedia-22-12/tree/main/en), and more. It's fascinating to discover how a relatively unknown open-source database might excel in certain circumstances!
 
 Prepare to delve into the world of VectorDBBench, and let it guide you in uncovering your perfect vector database match.  
 
