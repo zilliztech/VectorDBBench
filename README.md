@@ -1,5 +1,8 @@
 # VectorDBBench: A Benchmark Tool for VectorDB
 
+[![version](https://img.shields.io/pypi/v/vectordb-bench.svg?color=blue)](https://pypi.org/project/vectordb-bench/)
+[![Downloads](https://pepy.tech/badge/vectordb-bench)](https://pepy.tech/project/vectordb-bench)
+
 ## Quick Start
 ### Prerequirement
 ``` shell
