@@ -12,6 +12,7 @@ from .backend.clients import (
     DBCaseConfig,
     IndexType,
 )
+from .backend.cases import CaseType
 from .base import BaseModel
 from . import config
 from .metric import Metric
@@ -26,38 +27,6 @@ class LoadTimeoutError(TimeoutError):
 class PerformanceTimeoutError(TimeoutError):
     pass
 
-
-class CaseType(Enum):
-    """
-    Value will be displayed in UI
-    """
-
-    CapacitySDim = "Capacity Test (128 Dim Repeated)"
-    CapacityLDim = "Capacity Test (960 Dim Repeated)"
-
-    Performance100M = "Search Performance Test (100M Dataset, 768 Dim)"
-    PerformanceLZero = "Search Performance Test (10M Dataset, 768 Dim)"
-    PerformanceMZero = "Search Performance Test (1M Dataset, 768 Dim)"
-    PerformanceSZero = "Search Performance Test (100K Dataset, 768 Dim)"
-
-    PerformanceLLow = (
-        "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 1%)"
-    )
-    PerformanceMLow = (
-        "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)"
-    )
-    PerformanceSLow = (
-        "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 1%)"
-    )
-    PerformanceLHigh = (
-        "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 99%)"
-    )
-    PerformanceMHigh = (
-        "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)"
-    )
-    PerformanceSHigh = (
-        "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 99%)"
-    )
 
 
 class CaseConfigParamType(Enum):
