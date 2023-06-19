@@ -1,5 +1,6 @@
 from vectordb_bench.frontend.components.check_results.data import getChartData
 from vectordb_bench.frontend.const import *
+import streamlit as st
 
 
 def getshownData(results, st):
@@ -48,50 +49,86 @@ def getshownResults(results, st):
 
 def getShowDbsAndCases(result, st):
     # expanderStyles
-    st.markdown("<style> section[data-testid='stSidebar'] div[data-testid='stExpander'] div[data-testid='stVerticalBlock'] { gap: 0.2rem; }  </style>", unsafe_allow_html=True,)
     st.markdown(
-        "<style> div[data-testid='stExpander'] {background-color: #ffffff;} </style>",
+        """
+<style>
+    section[data-testid='stSidebar'] div[data-testid='stExpander'] div[data-testid='stVerticalBlock'] { gap: 0.2rem; }
+    div[data-testid='stExpander'] {background-color: #ffffff;}
+    section[data-testid='stSidebar'] .streamlit-expanderHeader p {font-size: 16px; font-weight: 600;}
+    section[data-testid='stSidebar']
+        div[data-testid='stExpander']
+            div[data-testid='stVerticalBlock'] 
+                button {
+                    padding: 0 0.5rem;
+                    margin-bottom: 8px;
+                    float: right;
+                }
+<style>
+        """,
         unsafe_allow_html=True,
     )
-    st.markdown(
-        "<style> section[data-testid='stSidebar'] .streamlit-expanderHeader p {font-size: 16px; font-weight: 600;} </style>",
-        unsafe_allow_html=True,
-    )
+
+    st.markdown
 
     allDbNames = list(set({res.task_config.db_name for res in result}))
     allDbNames.sort()
     allCasesSet = set({res.task_config.case_config.case_id for res in result})
     allCases = [case["name"].value for case in CASE_LIST if case["name"] in allCasesSet]
 
-    # dbFilterContainer = st.container()
-    # dbFilterContainer.subheader("DB Filter")
-    dbFilterContainer = st.expander("DB Filter", True)
-    showDBNames = filterView(allDbNames, dbFilterContainer, col=1)
-
-    # caseFilterContainer = st.container()
-    # caseFilterContainer.subheader("Case Filter")
-    caseFilterContainer = st.expander("Case Filter", True)
-    showCases = filterView(
-        allCases,
-        caseFilterContainer,
+    # DB Filter
+    dbFilterContainer = st.container()
+    showDBNames = filterView(
+        dbFilterContainer,
+        "DB Filter",
+        allDbNames,
         col=1,
-        optionLables=[case for case in allCases],
+        sessionStateKey=DB_SELECT_ALL,
+    )
+
+    # Case Filter
+    caseFilterContainer = st.container()
+    showCases = filterView(
+        caseFilterContainer,
+        "Case Filter",
+        allCases,
+        col=1,
+        sessionStateKey=CASE_SELECT_ALL,
     )
 
     return showDBNames, showCases
 
 
-def filterView(options, st, col, optionLables=None):
-    columns = st.columns(
+def filterView(container, header, options, col, sessionStateKey, optionLables=None):
+    expander = container.expander(header, True)
+    selectAllColumns = expander.columns(SIDEBAR_CONTROL_COLUMNS, gap="small")
+    selectAllButton = selectAllColumns[SIDEBAR_CONTROL_COLUMNS - 2].button(
+        "select all",
+        key=f"{header}-select-all",
+        # type="primary",
+    )
+    clearAllButton = selectAllColumns[SIDEBAR_CONTROL_COLUMNS - 1].button(
+        "clear all",
+        key=f"{header}-clear-all",
+        # type="primary",
+    )
+    if selectAllButton:
+        st.session_state[sessionStateKey] = True
+        st.session_state[getSelectAllKey(sessionStateKey)] += 1
+    if clearAllButton:
+        st.session_state[sessionStateKey] = False
+        st.session_state[getSelectAllKey(sessionStateKey)] += 1
+    columns = expander.columns(
         col,
         gap="small",
     )
-    isActive = {option: True for option in options}
+    isActive = {option: st.session_state[sessionStateKey] for option in options}
     if optionLables is None:
         optionLables = options
     for i, option in enumerate(options):
         isActive[option] = columns[i % col].checkbox(
-            optionLables[i], value=isActive[option]
+            optionLables[i],
+            value=isActive[option],
+            key=f"{optionLables[i]}-{st.session_state[getSelectAllKey(sessionStateKey)]}",
         )
 
     return [option for option in options if isActive[option]]
