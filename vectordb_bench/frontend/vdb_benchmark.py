@@ -1,7 +1,11 @@
 import streamlit as st
 from vectordb_bench.frontend.const import *
+from vectordb_bench.frontend.components.check_results.init_state import init_state
 from vectordb_bench.frontend.components.check_results.headerIcon import drawHeaderIcon
-from vectordb_bench.frontend.components.check_results.nav import NavToQPSWithPrice, NavToRunTest
+from vectordb_bench.frontend.components.check_results.nav import (
+    NavToQPSWithPrice,
+    NavToRunTest,
+)
 from vectordb_bench.frontend.components.check_results.charts import drawCharts
 from vectordb_bench.frontend.components.check_results.filters import getshownData
 from vectordb_bench.interface import benchMarkRunner
@@ -15,6 +19,9 @@ def main():
         # initial_sidebar_state="collapsed",
     )
 
+    # init_state
+    init_state()
+
     # header
     drawHeaderIcon(st)
 
@@ -23,9 +30,11 @@ def main():
     st.title("Vector Database Benchmark")
     # st.write("description [todo]")
 
-    # results selector
+    # results selector and filter
     resultSelectorContainer = st.sidebar.container()
-    shownData, failedTasks, showCases = getshownData(allResults, resultSelectorContainer)
+    shownData, failedTasks, showCases = getshownData(
+        allResults, resultSelectorContainer
+    )
 
     resultSelectorContainer.divider()
 

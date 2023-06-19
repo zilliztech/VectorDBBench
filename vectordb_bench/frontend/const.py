@@ -16,6 +16,13 @@ DB_CONFIG_INPUT_WIDTH_RADIO = 2
 CASE_CONFIG_INPUT_WIDTH_RADIO = 0.98
 CASE_INTRO_RATIO = 3
 MAX_STREAMLIT_INT = (1 << 53) - 1
+SIDEBAR_CONTROL_COLUMNS = 3
+
+DB_SELECT_ALL = "db-select-all"
+CASE_SELECT_ALL = "case-select-all"
+
+def getSelectAllKey(s: str) -> str:
+    return f"{s}-key"
 
 LEGEND_RECT_WIDTH = 24
 LEGEND_RECT_HEIGHT = 16
