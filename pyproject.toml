@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=67.0", "wheel"]
+requires = ["setuptools>=67.0", "wheel", "setuptools_scm[toml]>=6.2"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.package-data]
@@ -38,7 +38,7 @@ dependencies = [
     "s3fs",
     "psutil",
 ]
-version = "0.0.1"
+dynamic = ["version"]
 
 [project.optional-dependencies]
 test = [
@@ -51,3 +51,5 @@ test = [
 
 [project.scripts]
 init_bench = "vectordb_bench.__main__:main"
+
+[tool.setuptools_scm]
