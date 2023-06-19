@@ -32,31 +32,31 @@ class CaseType(Enum):
     Value will be displayed in UI
     """
 
-    CapacitySDim = "Capacity Test (Small-dim)"
-    CapacityLDim = "Capacity Test (Large-dim)"
+    CapacitySDim = "Capacity Test (128 Dim Repeated)"
+    CapacityLDim = "Capacity Test (960 Dim Repeated)"
 
-    Performance100M = "Search Performance Test (XLarge Dataset)"
-    PerformanceLZero = "Search Performance Test (Large Dataset)"
-    PerformanceMZero = "Search Performance Test (Medium Dataset)"
-    PerformanceSZero = "Search Performance Test (Small Dataset)"
+    Performance100M = "Search Performance Test (100M Dataset, 768 Dim)"
+    PerformanceLZero = "Search Performance Test (10M Dataset, 768 Dim)"
+    PerformanceMZero = "Search Performance Test (1M Dataset, 768 Dim)"
+    PerformanceSZero = "Search Performance Test (100K Dataset, 768 Dim)"
 
     PerformanceLLow = (
-        "Filtering Search Performance Test (Large Dataset, Low Filtering Rate)"
+        "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 1%)"
     )
     PerformanceMLow = (
-        "Filtering Search Performance Test (Medium Dataset, Low Filtering Rate)"
+        "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)"
     )
     PerformanceSLow = (
-        "Filtering Search Performance Test (Small Dataset, Low Filtering Rate)"
+        "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 1%)"
     )
     PerformanceLHigh = (
-        "Filtering Search Performance Test (Large Dataset, High Filtering Rate)"
+        "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 99%)"
     )
     PerformanceMHigh = (
-        "Filtering Search Performance Test (Medium Dataset, High Filtering Rate)"
+        "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)"
     )
     PerformanceSHigh = (
-        "Filtering Search Performance Test (Small Dataset, High Filtering Rate)"
+        "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 99%)"
     )
 
 

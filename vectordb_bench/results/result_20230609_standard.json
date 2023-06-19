@@ -26,7 +26,7 @@
           "num_candidates": null
         },
         "case_config": {
-          "case_id": "Capacity Test (Large-dim)",
+          "case_id": "Capacity Test (960 Dim Repeated)",
           "custom_case": {}
         }
       },
@@ -56,7 +56,7 @@
           "num_candidates": null
         },
         "case_config": {
-          "case_id": "Capacity Test (Small-dim)",
+          "case_id": "Capacity Test (128 Dim Repeated)",
           "custom_case": {}
         }
       },
@@ -86,7 +86,7 @@
           "num_candidates": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test (Small Dataset)",
+          "case_id": "Search Performance Test (100K Dataset, 768 Dim)",
           "custom_case": {}
         }
       },
@@ -116,7 +116,7 @@
           "num_candidates": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Small Dataset, Low Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 1%)",
           "custom_case": {}
         }
       },
@@ -146,7 +146,7 @@
           "num_candidates": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Small Dataset, High Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 99%)",
           "custom_case": {}
         }
       },
@@ -176,7 +176,7 @@
           "num_candidates": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test (Medium Dataset)",
+          "case_id": "Search Performance Test (1M Dataset, 768 Dim)",
           "custom_case": {}
         }
       },
@@ -206,7 +206,7 @@
           "num_candidates": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Medium Dataset, Low Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)",
           "custom_case": {}
         }
       },
@@ -236,7 +236,7 @@
           "num_candidates": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Medium Dataset, High Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)",
           "custom_case": {}
         }
       },
@@ -266,7 +266,7 @@
           "num_candidates": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test (Large Dataset)",
+          "case_id": "Search Performance Test (10M Dataset, 768 Dim)",
           "custom_case": {}
         }
       },
@@ -296,7 +296,7 @@
           "num_candidates": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Large Dataset, Low Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 1%)",
           "custom_case": {}
         }
       },
@@ -326,7 +326,7 @@
           "num_candidates": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Large Dataset, High Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 99%)",
           "custom_case": {}
         }
       },
@@ -352,7 +352,7 @@
           "search_list": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test (Medium Dataset)",
+          "case_id": "Search Performance Test (1M Dataset, 768 Dim)",
           "custom_case": {}
         }
       },
@@ -378,7 +378,7 @@
           "search_list": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Medium Dataset, Low Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)",
           "custom_case": {}
         }
       },
@@ -404,7 +404,7 @@
           "search_list": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Medium Dataset, High Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)",
           "custom_case": {}
         }
       },
@@ -430,7 +430,7 @@
           "search_list": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test (Large Dataset)",
+          "case_id": "Search Performance Test (10M Dataset, 768 Dim)",
           "custom_case": {}
         }
       },
@@ -456,7 +456,7 @@
           "search_list": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Large Dataset, Low Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 1%)",
           "custom_case": {}
         }
       },
@@ -482,7 +482,7 @@
           "search_list": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Large Dataset, High Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 99%)",
           "custom_case": {}
         }
       },
@@ -510,7 +510,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test (Medium Dataset)",
+          "case_id": "Search Performance Test (1M Dataset, 768 Dim)",
           "custom_case": {}
         }
       },
@@ -538,7 +538,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Medium Dataset, Low Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)",
           "custom_case": {}
         }
       },
@@ -566,7 +566,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Medium Dataset, High Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)",
           "custom_case": {}
         }
       },
@@ -592,7 +592,7 @@
           "search_list": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test (Small Dataset)",
+          "case_id": "Search Performance Test (100K Dataset, 768 Dim)",
           "custom_case": {}
         }
       },
@@ -618,7 +618,7 @@
           "search_list": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Small Dataset, Low Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 1%)",
           "custom_case": {}
         }
       },
@@ -644,7 +644,7 @@
           "search_list": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Small Dataset, High Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 99%)",
           "custom_case": {}
         }
       },
@@ -671,7 +671,7 @@
           "metric_type": "L2"
         },
         "case_config": {
-          "case_id": "Capacity Test (Large-dim)",
+          "case_id": "Capacity Test (960 Dim Repeated)",
           "custom_case": {}
         }
       },
@@ -698,7 +698,7 @@
           "metric_type": "L2"
         },
         "case_config": {
-          "case_id": "Capacity Test (Small-dim)",
+          "case_id": "Capacity Test (128 Dim Repeated)",
           "custom_case": {}
         }
       },
@@ -725,7 +725,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Search Performance Test (Small Dataset)",
+          "case_id": "Search Performance Test (100K Dataset, 768 Dim)",
           "custom_case": {}
         }
       },
@@ -752,7 +752,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Small Dataset, Low Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 1%)",
           "custom_case": {}
         }
       },
@@ -779,7 +779,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Small Dataset, High Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 99%)",
           "custom_case": {}
         }
       },
@@ -806,7 +806,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Search Performance Test (Medium Dataset)",
+          "case_id": "Search Performance Test (1M Dataset, 768 Dim)",
           "custom_case": {}
         }
       },
@@ -833,7 +833,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Medium Dataset, Low Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)",
           "custom_case": {}
         }
       },
@@ -860,7 +860,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Medium Dataset, High Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)",
           "custom_case": {}
         }
       },
@@ -886,7 +886,7 @@
           "search_list": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test (Small Dataset)",
+          "case_id": "Search Performance Test (100K Dataset, 768 Dim)",
           "custom_case": {}
         }
       },
@@ -912,7 +912,7 @@
           "search_list": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Small Dataset, Low Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 1%)",
           "custom_case": {}
         }
       },
@@ -938,7 +938,7 @@
           "search_list": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Small Dataset, High Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 99%)",
           "custom_case": {}
         }
       },
@@ -965,7 +965,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Search Performance Test (Small Dataset)",
+          "case_id": "Search Performance Test (100K Dataset, 768 Dim)",
           "custom_case": {}
         }
       },
@@ -992,7 +992,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Small Dataset, Low Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 1%)",
           "custom_case": {}
         }
       },
@@ -1019,7 +1019,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Small Dataset, High Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 99%)",
           "custom_case": {}
         }
       },
@@ -1046,7 +1046,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Search Performance Test (Large Dataset)",
+          "case_id": "Search Performance Test (10M Dataset, 768 Dim)",
           "custom_case": {}
         }
       },
@@ -1073,7 +1073,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Large Dataset, Low Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 1%)",
           "custom_case": {}
         }
       },
@@ -1100,7 +1100,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Large Dataset, High Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 99%)",
           "custom_case": {}
         }
       },
@@ -1127,7 +1127,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Search Performance Test (Medium Dataset)",
+          "case_id": "Search Performance Test (1M Dataset, 768 Dim)",
           "custom_case": {}
         }
       },
@@ -1154,7 +1154,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Medium Dataset, Low Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)",
           "custom_case": {}
         }
       },
@@ -1181,7 +1181,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Medium Dataset, High Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)",
           "custom_case": {}
         }
       },
@@ -1209,7 +1209,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Capacity Test (Small-dim)",
+          "case_id": "Capacity Test (128 Dim Repeated)",
           "custom_case": null
         }
       },
@@ -1237,7 +1237,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Capacity Test (Large-dim)",
+          "case_id": "Capacity Test (960 Dim Repeated)",
           "custom_case": null
         }
       },
@@ -1265,7 +1265,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Search Performance Test (Large Dataset)",
+          "case_id": "Search Performance Test (10M Dataset, 768 Dim)",
           "custom_case": null
         }
       },
@@ -1293,7 +1293,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Large Dataset, Low Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 1%)",
           "custom_case": null
         }
       },
@@ -1321,7 +1321,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Large Dataset, High Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 99%)",
           "custom_case": null
         }
       },
@@ -1349,7 +1349,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Search Performance Test (Medium Dataset)",
+          "case_id": "Search Performance Test (1M Dataset, 768 Dim)",
           "custom_case": null
         }
       },
@@ -1377,7 +1377,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Medium Dataset, Low Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)",
           "custom_case": null
         }
       },
@@ -1405,7 +1405,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Medium Dataset, High Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)",
           "custom_case": null
         }
       },
@@ -1433,7 +1433,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Search Performance Test (Small Dataset)",
+          "case_id": "Search Performance Test (100K Dataset, 768 Dim)",
           "custom_case": null
         }
       },
@@ -1461,7 +1461,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Small Dataset, Low Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 1%)",
           "custom_case": null
         }
       },
@@ -1489,7 +1489,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Small Dataset, High Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 99%)",
           "custom_case": null
         }
       },
@@ -1517,7 +1517,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Capacity Test (Small-dim)",
+          "case_id": "Capacity Test (128 Dim Repeated)",
           "custom_case": null
         }
       },
@@ -1545,7 +1545,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Capacity Test (Large-dim)",
+          "case_id": "Capacity Test (960 Dim Repeated)",
           "custom_case": null
         }
       },
@@ -1573,7 +1573,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Search Performance Test (Medium Dataset)",
+          "case_id": "Search Performance Test (1M Dataset, 768 Dim)",
           "custom_case": null
         }
       },
@@ -1601,7 +1601,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Medium Dataset, Low Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)",
           "custom_case": null
         }
       },
@@ -1629,7 +1629,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Medium Dataset, High Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)",
           "custom_case": null
         }
       },
@@ -1657,7 +1657,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Search Performance Test (Small Dataset)",
+          "case_id": "Search Performance Test (100K Dataset, 768 Dim)",
           "custom_case": null
         }
       },
@@ -1685,7 +1685,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Capacity Test (Small-dim)",
+          "case_id": "Capacity Test (128 Dim Repeated)",
           "custom_case": null
         }
       },
@@ -1713,7 +1713,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Capacity Test (Large-dim)",
+          "case_id": "Capacity Test (960 Dim Repeated)",
           "custom_case": null
         }
       },
@@ -1741,7 +1741,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Search Performance Test (Small Dataset)",
+          "case_id": "Search Performance Test (100K Dataset, 768 Dim)",
           "custom_case": null
         }
       },
@@ -1769,7 +1769,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Search Performance Test (Medium Dataset)",
+          "case_id": "Search Performance Test (1M Dataset, 768 Dim)",
           "custom_case": null
         }
       },
@@ -1797,7 +1797,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Search Performance Test (Large Dataset)",
+          "case_id": "Search Performance Test (10M Dataset, 768 Dim)",
           "custom_case": null
         }
       },
@@ -1825,7 +1825,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Large Dataset, Low Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 1%)",
           "custom_case": null
         }
       },
@@ -1853,7 +1853,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Large Dataset, High Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 99%)",
           "custom_case": null
         }
       },
@@ -1880,7 +1880,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Capacity Test (Small-dim)",
+          "case_id": "Capacity Test (128 Dim Repeated)",
           "custom_case": {}
         }
       },
@@ -1907,7 +1907,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Capacity Test (Large-dim)",
+          "case_id": "Capacity Test (960 Dim Repeated)",
           "custom_case": {}
         }
       },
@@ -1934,7 +1934,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Search Performance Test (Medium Dataset)",
+          "case_id": "Search Performance Test (1M Dataset, 768 Dim)",
           "custom_case": {}
         }
       },
@@ -1961,7 +1961,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Medium Dataset, Low Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)",
           "custom_case": {}
         }
       },
@@ -1988,7 +1988,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Medium Dataset, High Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)",
           "custom_case": {}
         }
       },
@@ -2015,7 +2015,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Search Performance Test (Small Dataset)",
+          "case_id": "Search Performance Test (100K Dataset, 768 Dim)",
           "custom_case": {}
         }
       },
@@ -2042,7 +2042,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Small Dataset, Low Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 1%)",
           "custom_case": {}
         }
       },
@@ -2069,7 +2069,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Small Dataset, High Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 99%)",
           "custom_case": {}
         }
       },
@@ -2096,7 +2096,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Search Performance Test (Medium Dataset)",
+          "case_id": "Search Performance Test (1M Dataset, 768 Dim)",
           "custom_case": {}
         }
       },
@@ -2123,7 +2123,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Medium Dataset, Low Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)",
           "custom_case": {}
         }
       },
@@ -2150,7 +2150,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Medium Dataset, High Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)",
           "custom_case": {}
         }
       },
@@ -2177,7 +2177,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Search Performance Test (Small Dataset)",
+          "case_id": "Search Performance Test (100K Dataset, 768 Dim)",
           "custom_case": {}
         }
       },
@@ -2204,7 +2204,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Small Dataset, Low Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 1%)",
           "custom_case": {}
         }
       },
@@ -2231,7 +2231,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Small Dataset, High Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 99%)",
           "custom_case": {}
         }
       },
@@ -2258,7 +2258,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Search Performance Test (Large Dataset)",
+          "case_id": "Search Performance Test (10M Dataset, 768 Dim)",
           "custom_case": {}
         }
       },
@@ -2285,7 +2285,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Large Dataset, Low Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 1%)",
           "custom_case": {}
         }
       },
@@ -2312,7 +2312,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Large Dataset, High Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 99%)",
           "custom_case": {}
         }
       },
@@ -2340,7 +2340,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Capacity Test (Small-dim)",
+          "case_id": "Capacity Test (128 Dim Repeated)",
           "custom_case": {}
         }
       },
@@ -2368,7 +2368,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Capacity Test (Large-dim)",
+          "case_id": "Capacity Test (960 Dim Repeated)",
           "custom_case": {}
         }
       },
@@ -2396,7 +2396,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test (Medium Dataset)",
+          "case_id": "Search Performance Test (1M Dataset, 768 Dim)",
           "custom_case": {}
         }
       },
@@ -2424,7 +2424,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test (Small Dataset)",
+          "case_id": "Search Performance Test (100K Dataset, 768 Dim)",
           "custom_case": {}
         }
       },
@@ -2452,7 +2452,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Small Dataset, Low Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 1%)",
           "custom_case": {}
         }
       },
@@ -2480,7 +2480,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Small Dataset, High Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 99%)",
           "custom_case": {}
         }
       },
@@ -2508,7 +2508,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test (Small Dataset)",
+          "case_id": "Search Performance Test (100K Dataset, 768 Dim)",
           "custom_case": {}
         }
       },
@@ -2536,7 +2536,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test (Medium Dataset)",
+          "case_id": "Search Performance Test (1M Dataset, 768 Dim)",
           "custom_case": {}
         }
       },
@@ -2564,7 +2564,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Medium Dataset, Low Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)",
           "custom_case": {}
         }
       },
@@ -2592,7 +2592,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Medium Dataset, High Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)",
           "custom_case": {}
         }
       },
@@ -2620,7 +2620,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test (Medium Dataset)",
+          "case_id": "Search Performance Test (1M Dataset, 768 Dim)",
           "custom_case": {}
         }
       },
@@ -2648,7 +2648,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test (Small Dataset)",
+          "case_id": "Search Performance Test (100K Dataset, 768 Dim)",
           "custom_case": {}
         }
       },
@@ -2676,7 +2676,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test (Medium Dataset)",
+          "case_id": "Search Performance Test (1M Dataset, 768 Dim)",
           "custom_case": {}
         }
       },
@@ -2704,7 +2704,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test (Small Dataset)",
+          "case_id": "Search Performance Test (100K Dataset, 768 Dim)",
           "custom_case": {}
         }
       },
@@ -2732,7 +2732,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test (Small Dataset)",
+          "case_id": "Search Performance Test (100K Dataset, 768 Dim)",
           "custom_case": {}
         }
       },
@@ -2760,7 +2760,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test (Small Dataset)",
+          "case_id": "Search Performance Test (100K Dataset, 768 Dim)",
           "custom_case": {}
         }
       },
@@ -2788,7 +2788,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Small Dataset, Low Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 1%)",
           "custom_case": {}
         }
       },
@@ -2816,7 +2816,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Small Dataset, High Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 99%)",
           "custom_case": {}
         }
       },
@@ -2844,7 +2844,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test (Large Dataset)",
+          "case_id": "Search Performance Test (10M Dataset, 768 Dim)",
           "custom_case": {}
         }
       },
@@ -2872,7 +2872,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Large Dataset, Low Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 1%)",
           "custom_case": {}
         }
       },
@@ -2900,7 +2900,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Large Dataset, High Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 99%)",
           "custom_case": {}
         }
       },
@@ -2928,7 +2928,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test (Medium Dataset)",
+          "case_id": "Search Performance Test (1M Dataset, 768 Dim)",
           "custom_case": {}
         }
       },
@@ -2956,7 +2956,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Medium Dataset, Low Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)",
           "custom_case": {}
         }
       },
@@ -2984,7 +2984,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Medium Dataset, High Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)",
           "custom_case": {}
         }
       },
@@ -3010,7 +3010,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Search Performance Test (Small Dataset)",
+          "case_id": "Search Performance Test (100K Dataset, 768 Dim)",
           "custom_case": {}
         }
       },
@@ -3036,7 +3036,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Small Dataset, Low Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 1%)",
           "custom_case": {}
         }
       },
@@ -3062,7 +3062,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Small Dataset, High Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 99%)",
           "custom_case": {}
         }
       },
@@ -3088,7 +3088,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Search Performance Test (Medium Dataset)",
+          "case_id": "Search Performance Test (1M Dataset, 768 Dim)",
           "custom_case": {}
         }
       },
@@ -3114,7 +3114,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Medium Dataset, Low Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)",
           "custom_case": {}
         }
       },
@@ -3140,7 +3140,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Medium Dataset, High Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)",
           "custom_case": {}
         }
       },
@@ -3166,7 +3166,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Search Performance Test (Large Dataset)",
+          "case_id": "Search Performance Test (10M Dataset, 768 Dim)",
           "custom_case": {}
         }
       },
@@ -3192,7 +3192,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Large Dataset, Low Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 1%)",
           "custom_case": {}
         }
       },
@@ -3218,7 +3218,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (Large Dataset, High Filtering Rate)",
+          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 99%)",
           "custom_case": {}
         }
       },
