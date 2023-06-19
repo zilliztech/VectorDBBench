@@ -73,7 +73,7 @@ def getShowDbsAndCases(result, st):
     allDbNames = list(set({res.task_config.db_name for res in result}))
     allDbNames.sort()
     allCasesSet = set({res.task_config.case_config.case_id for res in result})
-    allCases = [case["name"].value for case in CASE_LIST if case["name"] in allCasesSet]
+    allCases = [case.value for case in CASE_LIST if case in allCasesSet]
 
     # DB Filter
     dbFilterContainer = st.container()

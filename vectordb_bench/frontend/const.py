@@ -21,8 +21,10 @@ SIDEBAR_CONTROL_COLUMNS = 3
 DB_SELECT_ALL = "db-select-all"
 CASE_SELECT_ALL = "case-select-all"
 
+
 def getSelectAllKey(s: str) -> str:
     return f"{s}-key"
+
 
 LEGEND_RECT_WIDTH = 24
 LEGEND_RECT_HEIGHT = 16
@@ -59,71 +61,27 @@ COLOR_MAP = {
     DB.WeaviateCloud.value: "#20C997",
 }
 
-CASE_LIST = [
-    {
-        "name": CaseType.CapacitySDim,
-        "intro": """This case tests the vector database's loading capacity by repeatedly inserting small-dimension vectors (SIFT 100K vectors, <b>128 dimensions</b>) until it is fully loaded.  
-Number of inserted vectors will be reported.""",
-    },
-    {
-        "name": CaseType.CapacityLDim,
-        "divider": True,
-        "intro": """This case tests the vector database's loading capacity by repeatedly inserting large-dimension vectors (GIST 100K vectors, <b>960 dimensions</b>) until it is fully loaded.  
-Number of inserted vectors will be reported.
-""",
-    },
-    {
-        "name": CaseType.PerformanceSZero,
-        "intro": """This case tests the search performance of a vector database with a small dataset (<b>Cohere 100K vectors</b>, 768 dimensions) at varying parallel levels.
-Results will show index building time, recall, and maximum QPS.""",
-    },
-    {
-        "name": CaseType.PerformanceMZero,
-        "intro": """This case tests the search performance of a vector database with a medium dataset (<b>Cohere 1M vectors</b>, 768 dimensions) at varying parallel levels.
-Results will show index building time, recall, and maximum QPS.""",
-    },
-    {
-        "name": CaseType.PerformanceLZero,
-        "intro": """This case tests the search performance of a vector database with a large dataset (<b>Cohere 10M vectors</b>, 768 dimensions) at varying parallel levels.
-Results will show index building time, recall, and maximum QPS.""",
-    },
-    {
-        "name": CaseType.Performance100M,
-        "divider": True,
-        "intro": """This case tests the search performance of a vector database with a large 100M dataset (<b>LAION 100M vectors</b>, 768 dimensions), at varying parallel levels.
-Results will show index building time, recall, and maximum QPS.""",
-    },
-    {
-        "name": CaseType.PerformanceSLow,
-        "intro": """This case tests the search performance of a vector database with a small dataset (<b>Cohere 100K vectors</b>, 768 dimensions) under a low filtering rate (<b>1% vectors</b>), at varying parallel levels.
-Results will show index building time, recall, and maximum QPS.""",
-    },
-    {
-        "name": CaseType.PerformanceMLow,
-        "intro": """This case tests the search performance of a vector database with a medium dataset (<b>Cohere 1M vectors</b>, 768 dimensions) under a low filtering rate (<b>1% vectors</b>), at varying parallel levels.
-Results will show index building time, recall, and maximum QPS.""",
-    },
-    {
-        "name": CaseType.PerformanceLLow,
-        "intro": """This case tests the search performance of a vector database with a large dataset (<b>Cohere 10M vectors</b>, 768 dimensions) under a low filtering rate (<b>1% vectors</b>), at varying parallel levels.
-Results will show index building time, recall, and maximum QPS.""",
-    },
-    {
-        "name": CaseType.PerformanceSHigh,
-        "intro": """This case tests the search performance of a vector database with a small dataset (<b>Cohere 100K vectors</b>, 768 dimensions) under a high filtering rate (<b>99% vectors</b>), at varying parallel levels.
-Results will show index building time, recall, and maximum QPS.""",
-    },
-    {
-        "name": CaseType.PerformanceMHigh,
-        "intro": """This case tests the search performance of a vector database with a medium dataset (<b>Cohere 1M vectors</b>, 768 dimensions) under a high filtering rate (<b>99% vectors</b>), at varying parallel levels.
-Results will show index building time, recall, and maximum QPS.""",
-    },
-    {
-        "name": CaseType.PerformanceLHigh,
-        "intro": """This case tests the search performance of a vector database with a large dataset (<b>Cohere 10M vectors</b>, 768 dimensions) under a high filtering rate (<b>99% vectors</b>), at varying parallel levels.
-Results will show index building time, recall, and maximum QPS.""",
-    },
+DIVIDER = "DIVIDER"
+
+CASE_LIST_WITH_DIVIDER = [
+    CaseType.CapacitySDim,
+    CaseType.CapacityLDim,
+    DIVIDER,
+    CaseType.PerformanceSZero,
+    CaseType.PerformanceMZero,
+    CaseType.PerformanceLZero,
+    CaseType.Performance100M,
+    DIVIDER,
+    CaseType.PerformanceSLow,
+    CaseType.PerformanceMLow,
+    CaseType.PerformanceLLow,
+    DIVIDER,
+    CaseType.PerformanceSHigh,
+    CaseType.PerformanceMHigh,
+    CaseType.PerformanceLHigh,
 ]
+
+CASE_LIST = [item for item in CASE_LIST_WITH_DIVIDER if isinstance(item, CaseType)]
 
 
 class InputType(IntEnum):

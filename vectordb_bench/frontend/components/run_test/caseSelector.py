@@ -12,34 +12,35 @@ def caseSelector(st, activedDbList):
         unsafe_allow_html=True,
     )
 
-    caseIsActived = {case["name"]: False for case in CASE_LIST}
-    allCaseConfigs = {db: {case["name"]: {} for case in CASE_LIST} for db in DB_LIST}
-    for case in CASE_LIST:
-        caseItemContainer = st.container()
-        caseIsActived[case["name"]] = caseItem(
-            caseItemContainer, allCaseConfigs, case, activedDbList
-        )
-        if case.get("divider"):
+    caseIsActived = {case: False for case in CASE_LIST}
+    allCaseConfigs = {db: {case: {} for case in CASE_LIST} for db in DB_LIST}
+    for caseOrDivider in CASE_LIST_WITH_DIVIDER:
+        if caseOrDivider == DIVIDER:
             caseItemContainer.markdown(
                 "<div style='border: 1px solid #cccccc60; margin-bottom: 24px;'></div>",
                 unsafe_allow_html=True,
             )
-    activedCaseList = [
-        case["name"] for case in CASE_LIST if caseIsActived[case["name"]]
-    ]
+        else:
+            case = caseOrDivider
+            caseItemContainer = st.container()
+            caseIsActived[case] = caseItem(
+                caseItemContainer, allCaseConfigs, case, activedDbList
+            )
+    activedCaseList = [case for case in CASE_LIST if caseIsActived[case]]
     return activedCaseList, allCaseConfigs
 
+
 def caseItem(st, allCaseConfigs, case, activedDbList):
-    selected = st.checkbox(case["name"].value)
+    selected = st.checkbox(case.value)
     st.markdown(
-        f"<div style='color: #1D2939; margin: -8px 0 20px {CHECKBOX_INDENT}px; font-size: 14px;'>{case['intro']}</div>",
+        f"<div style='color: #1D2939; margin: -8px 0 20px {CHECKBOX_INDENT}px; font-size: 14px;'>{case.get()().description}</div>",
         unsafe_allow_html=True,
     )
 
     if selected:
         caseConfigSettingContainer = st.container()
         caseConfigSetting(
-            caseConfigSettingContainer, allCaseConfigs, case["name"], activedDbList
+            caseConfigSettingContainer, allCaseConfigs, case, activedDbList
         )
 
     return selected
