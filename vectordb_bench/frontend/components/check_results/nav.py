@@ -2,7 +2,7 @@ from streamlit_extras.switch_page_button import switch_page
 
 
 def NavToRunTest(st):
-    st.header("Run your test")
+    st.subheader("Run your test")
     st.write("You can set the configs and run your own test.")
     navClick = st.button("Run Your Test &nbsp;&nbsp;>")
     if navClick:
@@ -10,7 +10,7 @@ def NavToRunTest(st):
         
         
 def NavToQuriesPerDollar(st):
-    st.write("Compare qps with price.")
+    st.subheader("Compare qps with price.")
     navClick = st.button("QP$ (Quries per Dollar) &nbsp;&nbsp;>")
     if navClick:
         switch_page("quries_per_dollar")

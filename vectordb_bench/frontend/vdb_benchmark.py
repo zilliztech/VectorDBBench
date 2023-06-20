@@ -1,5 +1,6 @@
 import streamlit as st
 from vectordb_bench.frontend.components.check_results.footer import footer
+from vectordb_bench.frontend.components.get_results.saveAsImage import getResults
 from vectordb_bench.frontend.const import *
 from vectordb_bench.frontend.components.check_results.headerIcon import drawHeaderIcon
 from vectordb_bench.frontend.components.check_results.nav import (
@@ -39,6 +40,10 @@ def main():
     navContainer = st.sidebar.container()
     NavToRunTest(navContainer)
     NavToQuriesPerDollar(navContainer)
+
+    # save or share
+    resultesContainer = st.sidebar.container()
+    getResults(resultesContainer, "vectordb_bench")
 
     # charts
     drawCharts(st, shownData, failedTasks, showCases)
