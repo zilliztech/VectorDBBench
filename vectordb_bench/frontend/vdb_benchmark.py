@@ -1,9 +1,9 @@
 import streamlit as st
+from vectordb_bench.frontend.components.check_results.footer import footer
 from vectordb_bench.frontend.const import *
-from vectordb_bench.frontend.components.check_results.init_state import init_state
 from vectordb_bench.frontend.components.check_results.headerIcon import drawHeaderIcon
 from vectordb_bench.frontend.components.check_results.nav import (
-    NavToQPSWithPrice,
+    NavToQuriesPerDollar,
     NavToRunTest,
 )
 from vectordb_bench.frontend.components.check_results.charts import drawCharts
@@ -18,9 +18,6 @@ def main():
         # layout="wide",
         # initial_sidebar_state="collapsed",
     )
-
-    # init_state
-    init_state()
 
     # header
     drawHeaderIcon(st)
@@ -41,10 +38,13 @@ def main():
     # nav
     navContainer = st.sidebar.container()
     NavToRunTest(navContainer)
-    NavToQPSWithPrice(navContainer)
+    NavToQuriesPerDollar(navContainer)
 
     # charts
     drawCharts(st, shownData, failedTasks, showCases)
+
+    # footer
+    footer(st.container())
 
 
 if __name__ == "__main__":

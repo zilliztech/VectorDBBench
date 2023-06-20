@@ -9,10 +9,11 @@ def NavToRunTest(st):
         switch_page("run test")
         
         
-def NavToQPSWithPrice(st):
-    navClick = st.button("QPS with Price &nbsp;&nbsp;>")
+def NavToQuriesPerDollar(st):
+    st.write("Compare qps with price.")
+    navClick = st.button("QP$ (Quries per Dollar) &nbsp;&nbsp;>")
     if navClick:
-        switch_page("qps with price")
+        switch_page("quries_per_dollar")
         
         
 def NavToResults(st, key="nav-to-results"):
