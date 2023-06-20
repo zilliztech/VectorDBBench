@@ -1,4 +1,5 @@
 import streamlit as st
+from vectordb_bench.frontend.components.check_results.init_state import init_state
 from vectordb_bench.frontend.components.check_results.priceTable import priceTable
 from vectordb_bench.frontend.const import *
 from vectordb_bench.frontend.components.check_results.headerIcon import drawHeaderIcon
@@ -15,6 +16,9 @@ def main():
         # layout="wide",
         # initial_sidebar_state="collapsed",
     )
+    
+     # init_state
+    init_state()
 
     # header
     drawHeaderIcon(st)
