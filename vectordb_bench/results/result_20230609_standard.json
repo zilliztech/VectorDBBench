@@ -2377,34 +2377,6 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 2379.5565,
-        "qps": 232.1813,
-        "serial_latency_p99": 0.0363,
-        "recall": 0.9818
-      },
-      "task_config": {
-        "db": "Milvus",
-        "db_config": {
-          "db_label": "2c8g-hnsw",
-          "uri": "**********"
-        },
-        "db_case_config": {
-          "index": "HNSW",
-          "metric_type": "COSINE",
-          "M": 30,
-          "efConstruction": 360,
-          "ef": 100
-        },
-        "case_config": {
-          "case_id": "Search Performance Test (1M Dataset, 768 Dim)",
-          "custom_case": {}
-        }
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
         "load_duration": 229.3619,
         "qps": 1241.9402,
         "serial_latency_p99": 0.0031,
@@ -2481,34 +2453,6 @@
         },
         "case_config": {
           "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 99%)",
-          "custom_case": {}
-        }
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "load_duration": 218.1418,
-        "qps": 1232.3202,
-        "serial_latency_p99": 0.0025,
-        "recall": 0.9577
-      },
-      "task_config": {
-        "db": "Milvus",
-        "db_config": {
-          "db_label": "2c8g-hnsw",
-          "uri": "**********"
-        },
-        "db_case_config": {
-          "index": "HNSW",
-          "metric_type": "COSINE",
-          "M": 30,
-          "efConstruction": 360,
-          "ef": 100
-        },
-        "case_config": {
-          "case_id": "Search Performance Test (100K Dataset, 768 Dim)",
           "custom_case": {}
         }
       },
@@ -2601,9 +2545,65 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 4229.5853,
+        "load_duration": 4552.5852,
+        "qps": 127.2924,
+        "serial_latency_p99": 0.0107,
+        "recall": 0.975
+      },
+      "task_config": {
+        "db": "Milvus",
+        "db_config": {
+          "db_label": "1c8g-hnsw",
+          "uri": "**********"
+        },
+        "db_case_config": {
+          "index": "HNSW",
+          "metric_type": "COSINE",
+          "M": 30,
+          "efConstruction": 360,
+          "ef": 100
+        },
+        "case_config": {
+          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)",
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 4552.5852,
+        "qps": 105.2414,
+        "serial_latency_p99": 0.0126,
+        "recall": 0.9809
+      },
+      "task_config": {
+        "db": "Milvus",
+        "db_config": {
+          "db_label": "1c8g-hnsw",
+          "uri": "**********"
+        },
+        "db_case_config": {
+          "index": "HNSW",
+          "metric_type": "COSINE",
+          "M": 30,
+          "efConstruction": 360,
+          "ef": 100
+        },
+        "case_config": {
+          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)",
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 4552.5852,
         "qps": 120.3348,
-        "serial_latency_p99": 0.0603,
+        "serial_latency_p99": 0.012,
         "recall": 0.9819
       },
       "task_config": {
@@ -2630,9 +2630,9 @@
       "metrics": {
         "max_load_count": 0,
         "load_duration": 364.6594,
-        "qps": 674.0372,
-        "serial_latency_p99": 0.0027,
-        "recall": 0.9576
+        "qps": 128.745,
+        "serial_latency_p99": 0.0076,
+        "recall": 0.9899
       },
       "task_config": {
         "db": "Milvus",
@@ -2648,35 +2648,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test (100K Dataset, 768 Dim)",
-          "custom_case": {}
-        }
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "load_duration": 0,
-        "qps": 118.9911,
-        "serial_latency_p99": 0.0607,
-        "recall": 0.981
-      },
-      "task_config": {
-        "db": "Milvus",
-        "db_config": {
-          "db_label": "1c8g-hnsw",
-          "uri": "**********"
-        },
-        "db_case_config": {
-          "index": "HNSW",
-          "metric_type": "COSINE",
-          "M": 30,
-          "efConstruction": 360,
-          "ef": 100
-        },
-        "case_config": {
-          "case_id": "Search Performance Test (1M Dataset, 768 Dim)",
+          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 99%)",
           "custom_case": {}
         }
       },
@@ -2686,9 +2658,9 @@
       "metrics": {
         "max_load_count": 0,
         "load_duration": 370.4316,
-        "qps": 646.3226,
-        "serial_latency_p99": 0.0028,
-        "recall": 0.9578
+        "qps": 493.1756,
+        "serial_latency_p99": 0.003,
+        "recall": 0.9562
       },
       "task_config": {
         "db": "Milvus",
@@ -2704,7 +2676,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test (100K Dataset, 768 Dim)",
+          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 1%)",
           "custom_case": {}
         }
       },
@@ -2716,7 +2688,7 @@
         "load_duration": 390.8309,
         "qps": 655.6607,
         "serial_latency_p99": 0.0027,
-        "recall": 0.9581
+        "recall": 0.9576
       },
       "task_config": {
         "db": "Milvus",
