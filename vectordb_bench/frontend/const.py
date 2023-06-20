@@ -64,21 +64,21 @@ COLOR_MAP = {
 DIVIDER = "DIVIDER"
 
 CASE_LIST_WITH_DIVIDER = [
-    CaseType.CapacitySDim,
-    CaseType.CapacityLDim,
-    DIVIDER,
-    CaseType.PerformanceSZero,
-    CaseType.PerformanceMZero,
-    CaseType.PerformanceLZero,
     CaseType.Performance100M,
+    CaseType.PerformanceLZero,
+    CaseType.PerformanceMZero,
+    CaseType.PerformanceSZero,
     DIVIDER,
-    CaseType.PerformanceSLow,
-    CaseType.PerformanceMLow,
     CaseType.PerformanceLLow,
+    CaseType.PerformanceMLow,
+    CaseType.PerformanceSLow,
     DIVIDER,
-    CaseType.PerformanceSHigh,
-    CaseType.PerformanceMHigh,
     CaseType.PerformanceLHigh,
+    CaseType.PerformanceMHigh,
+    CaseType.PerformanceSHigh,
+    DIVIDER,
+    CaseType.CapacityLDim,
+    CaseType.CapacitySDim,
 ]
 
 CASE_LIST = [item for item in CASE_LIST_WITH_DIVIDER if isinstance(item, CaseType)]
