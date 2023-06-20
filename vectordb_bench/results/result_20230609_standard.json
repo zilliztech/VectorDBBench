@@ -65,96 +65,6 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 2434.5387,
-        "qps": 34.3911,
-        "serial_latency_p99": 0.1734,
-        "recall": 0.9923
-      },
-      "task_config": {
-        "db": "ElasticCloud",
-        "db_config": {
-          "db_label": "upTo2.5c8g",
-          "cloud_id": "**********",
-          "password": "**********"
-        },
-        "db_case_config": {
-          "element_type": "float",
-          "index": "hnsw",
-          "metric_type": "COSINE",
-          "efConstruction": 360,
-          "M": 30,
-          "num_candidates": 100
-        },
-        "case_config": {
-          "case_id": "Search Performance Test (100K Dataset, 768 Dim)",
-          "custom_case": {}
-        }
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "load_duration": 2434.5387,
-        "qps": 31.5927,
-        "serial_latency_p99": 0.1646,
-        "recall": 0.9924
-      },
-      "task_config": {
-        "db": "ElasticCloud",
-        "db_config": {
-          "db_label": "upTo2.5c8g",
-          "cloud_id": "**********",
-          "password": "**********"
-        },
-        "db_case_config": {
-          "element_type": "float",
-          "index": "hnsw",
-          "metric_type": "COSINE",
-          "efConstruction": 360,
-          "M": 30,
-          "num_candidates": 100
-        },
-        "case_config": {
-          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 1%)",
-          "custom_case": {}
-        }
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "load_duration": 2434.5387,
-        "qps": 42.3405,
-        "serial_latency_p99": 0.1383,
-        "recall": 0.9992
-      },
-      "task_config": {
-        "db": "ElasticCloud",
-        "db_config": {
-          "db_label": "upTo2.5c8g",
-          "cloud_id": "**********",
-          "password": "**********"
-        },
-        "db_case_config": {
-          "element_type": "float",
-          "index": "hnsw",
-          "metric_type": "COSINE",
-          "efConstruction": 360,
-          "M": 30,
-          "num_candidates": 100
-        },
-        "case_config": {
-          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 99%)",
-          "custom_case": {}
-        }
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
         "load_duration": 26412.1028,
         "qps": 15.2269,
         "serial_latency_p99": 0.8618,
@@ -413,6 +323,84 @@
     {
       "metrics": {
         "max_load_count": 0,
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
+      },
+      "task_config": {
+        "db": "Milvus",
+        "db_config": {
+          "db_label": "2c8g-disk",
+          "uri": "**********"
+        },
+        "db_case_config": {
+          "index": "DISKANN",
+          "metric_type": "COSINE",
+          "search_list": 100
+        },
+        "case_config": {
+          "case_id": "Search Performance Test (10M Dataset, 768 Dim)",
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
+      },
+      "task_config": {
+        "db": "Milvus",
+        "db_config": {
+          "db_label": "2c8g-disk",
+          "uri": "**********"
+        },
+        "db_case_config": {
+          "index": "DISKANN",
+          "metric_type": "COSINE",
+          "search_list": 100
+        },
+        "case_config": {
+          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 1%)",
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
+      },
+      "task_config": {
+        "db": "Milvus",
+        "db_config": {
+          "db_label": "2c8g-disk",
+          "uri": "**********"
+        },
+        "db_case_config": {
+          "index": "DISKANN",
+          "metric_type": "COSINE",
+          "search_list": 100
+        },
+        "case_config": {
+          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 99%)",
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
         "load_duration": 29829.7671,
         "qps": 48.3866,
         "serial_latency_p99": 0.0443,
@@ -574,85 +562,7 @@
     },
     {
       "metrics": {
-        "max_load_count": 0,
-        "load_duration": 398.5015,
-        "qps": 523.0791,
-        "serial_latency_p99": 0.0063,
-        "recall": 0.9513
-      },
-      "task_config": {
-        "db": "Milvus",
-        "db_config": {
-          "db_label": "4c16g-disk",
-          "uri": "**********"
-        },
-        "db_case_config": {
-          "index": "DISKANN",
-          "metric_type": "COSINE",
-          "search_list": 100
-        },
-        "case_config": {
-          "case_id": "Search Performance Test (100K Dataset, 768 Dim)",
-          "custom_case": {}
-        }
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "load_duration": 398.5015,
-        "qps": 487.4188,
-        "serial_latency_p99": 0.0067,
-        "recall": 0.9503
-      },
-      "task_config": {
-        "db": "Milvus",
-        "db_config": {
-          "db_label": "4c16g-disk",
-          "uri": "**********"
-        },
-        "db_case_config": {
-          "index": "DISKANN",
-          "metric_type": "COSINE",
-          "search_list": 100
-        },
-        "case_config": {
-          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 1%)",
-          "custom_case": {}
-        }
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "load_duration": 398.5015,
-        "qps": 473.241,
-        "serial_latency_p99": 0.0045,
-        "recall": 1
-      },
-      "task_config": {
-        "db": "Milvus",
-        "db_config": {
-          "db_label": "4c16g-disk",
-          "uri": "**********"
-        },
-        "db_case_config": {
-          "index": "DISKANN",
-          "metric_type": "COSINE",
-          "search_list": 100
-        },
-        "case_config": {
-          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 99%)",
-          "custom_case": {}
-        }
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 4300000,
+        "max_load_count": 6700000,
         "load_duration": 0,
         "qps": 0,
         "serial_latency_p99": 0,
@@ -699,87 +609,6 @@
         },
         "case_config": {
           "case_id": "Capacity Test (128 Dim Repeated)",
-          "custom_case": {}
-        }
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "load_duration": 752.1779,
-        "qps": 228.6015,
-        "serial_latency_p99": 0.0118,
-        "recall": 0.9491
-      },
-      "task_config": {
-        "db": "ZillizCloud",
-        "db_config": {
-          "db_label": "1cu-cap",
-          "uri": "**********",
-          "user": "root",
-          "password": "**********"
-        },
-        "db_case_config": {
-          "index": "AUTOINDEX",
-          "metric_type": "COSINE"
-        },
-        "case_config": {
-          "case_id": "Search Performance Test (100K Dataset, 768 Dim)",
-          "custom_case": {}
-        }
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "load_duration": 752.1779,
-        "qps": 215.5243,
-        "serial_latency_p99": 0.011,
-        "recall": 0.9486
-      },
-      "task_config": {
-        "db": "ZillizCloud",
-        "db_config": {
-          "db_label": "1cu-cap",
-          "uri": "**********",
-          "user": "root",
-          "password": "**********"
-        },
-        "db_case_config": {
-          "index": "AUTOINDEX",
-          "metric_type": "COSINE"
-        },
-        "case_config": {
-          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 1%)",
-          "custom_case": {}
-        }
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "load_duration": 752.1779,
-        "qps": 245.1032,
-        "serial_latency_p99": 0.0095,
-        "recall": 1
-      },
-      "task_config": {
-        "db": "ZillizCloud",
-        "db_config": {
-          "db_label": "1cu-cap",
-          "uri": "**********",
-          "user": "root",
-          "password": "**********"
-        },
-        "db_case_config": {
-          "index": "AUTOINDEX",
-          "metric_type": "COSINE"
-        },
-        "case_config": {
-          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 99%)",
           "custom_case": {}
         }
       },
@@ -869,93 +698,15 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 752.1779,
-        "qps": 233.6172,
-        "serial_latency_p99": 0.011,
-        "recall": 0.9494
-      },
-      "task_config": {
-        "db": "Milvus",
-        "db_config": {
-          "db_label": "2c8g-disk",
-          "uri": "**********"
-        },
-        "db_case_config": {
-          "index": "DISKANN",
-          "metric_type": "COSINE",
-          "search_list": 100
-        },
-        "case_config": {
-          "case_id": "Search Performance Test (100K Dataset, 768 Dim)",
-          "custom_case": {}
-        }
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "load_duration": 752.1779,
-        "qps": 218.1513,
-        "serial_latency_p99": 0.0104,
-        "recall": 0.9485
-      },
-      "task_config": {
-        "db": "Milvus",
-        "db_config": {
-          "db_label": "2c8g-disk",
-          "uri": "**********"
-        },
-        "db_case_config": {
-          "index": "DISKANN",
-          "metric_type": "COSINE",
-          "search_list": 100
-        },
-        "case_config": {
-          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 1%)",
-          "custom_case": {}
-        }
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "load_duration": 752.1779,
-        "qps": 235.2801,
-        "serial_latency_p99": 0.009,
-        "recall": 1
-      },
-      "task_config": {
-        "db": "Milvus",
-        "db_config": {
-          "db_label": "2c8g-disk",
-          "uri": "**********"
-        },
-        "db_case_config": {
-          "index": "DISKANN",
-          "metric_type": "COSINE",
-          "search_list": 100
-        },
-        "case_config": {
-          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 99%)",
-          "custom_case": {}
-        }
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "load_duration": 427.2816,
-        "qps": 472.2174,
-        "serial_latency_p99": 0.0084,
-        "recall": 0.9776
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
       },
       "task_config": {
         "db": "ZillizCloud",
         "db_config": {
-          "db_label": "2cu-cap",
+          "db_label": "1cu-cap",
           "uri": "**********",
           "user": "root",
           "password": "**********"
@@ -965,24 +716,24 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Search Performance Test (100K Dataset, 768 Dim)",
+          "case_id": "Search Performance Test (10M Dataset, 768 Dim)",
           "custom_case": {}
         }
       },
-      "label": ":)"
+      "label": "x"
     },
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 427.2816,
-        "qps": 447.1405,
-        "serial_latency_p99": 0.0071,
-        "recall": 0.9774
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
       },
       "task_config": {
         "db": "ZillizCloud",
         "db_config": {
-          "db_label": "2cu-cap",
+          "db_label": "1cu-cap",
           "uri": "**********",
           "user": "root",
           "password": "**********"
@@ -992,24 +743,24 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 1%)",
+          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 1%)",
           "custom_case": {}
         }
       },
-      "label": ":)"
+      "label": "x"
     },
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 427.2816,
-        "qps": 476.5357,
-        "serial_latency_p99": 0.0053,
-        "recall": 1
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
       },
       "task_config": {
         "db": "ZillizCloud",
         "db_config": {
-          "db_label": "2cu-cap",
+          "db_label": "1cu-cap",
           "uri": "**********",
           "user": "root",
           "password": "**********"
@@ -1019,16 +770,16 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 99%)",
+          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 99%)",
           "custom_case": {}
         }
       },
-      "label": ":)"
+      "label": "x"
     },
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 22201.8358,
+        "load_duration": 14485.1106,
         "qps": 100.23,
         "serial_latency_p99": 0.0288,
         "recall": 0.972
@@ -1055,7 +806,7 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 22201.8358,
+        "load_duration": 14485.1106,
         "qps": 48.7675,
         "serial_latency_p99": 0.0352,
         "recall": 0.9911
@@ -1082,7 +833,7 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 22201.8358,
+        "load_duration": 14485.1106,
         "qps": 30.5627,
         "serial_latency_p99": 0.0471,
         "recall": 1
@@ -1413,90 +1164,6 @@
     },
     {
       "metrics": {
-        "max_load_count": 0,
-        "load_duration": 251.0931,
-        "qps": 101.6631,
-        "serial_latency_p99": 0.03,
-        "recall": 0.9977
-      },
-      "task_config": {
-        "db": "WeaviateCloud",
-        "db_config": {
-          "db_label": "bus_crit",
-          "url": "**********",
-          "api_key": "**********"
-        },
-        "db_case_config": {
-          "metric_type": "COSINE",
-          "ef": -1,
-          "efConstruction": null,
-          "maxConnections": null
-        },
-        "case_config": {
-          "case_id": "Search Performance Test (100K Dataset, 768 Dim)",
-          "custom_case": null
-        }
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "load_duration": 251.0931,
-        "qps": 7.6,
-        "serial_latency_p99": 0.583,
-        "recall": 0.9977
-      },
-      "task_config": {
-        "db": "WeaviateCloud",
-        "db_config": {
-          "db_label": "bus_crit",
-          "url": "**********",
-          "api_key": "**********"
-        },
-        "db_case_config": {
-          "metric_type": "COSINE",
-          "ef": -1,
-          "efConstruction": null,
-          "maxConnections": null
-        },
-        "case_config": {
-          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 1%)",
-          "custom_case": null
-        }
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "load_duration": 251.0931,
-        "qps": 102,
-        "serial_latency_p99": 0.0292,
-        "recall": 1.0
-      },
-      "task_config": {
-        "db": "WeaviateCloud",
-        "db_config": {
-          "db_label": "bus_crit",
-          "url": "**********",
-          "api_key": "**********"
-        },
-        "db_case_config": {
-          "metric_type": "COSINE",
-          "ef": -1,
-          "efConstruction": null,
-          "maxConnections": null
-        },
-        "case_config": {
-          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 99%)",
-          "custom_case": null
-        }
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
         "max_load_count": 1480000,
         "load_duration": 0,
         "qps": 0,
@@ -1638,10 +1305,10 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 283.6404,
-        "qps": 113.661,
-        "serial_latency_p99": 0.0489,
-        "recall": 0.9977
+        "load_duration": 0,
+        "qps": 0,
+        "serial_latency_p99": 0,
+        "recall": 0
       },
       "task_config": {
         "db": "WeaviateCloud",
@@ -1657,11 +1324,67 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Search Performance Test (100K Dataset, 768 Dim)",
+          "case_id": "Search Performance Test (10M Dataset, 768 Dim)",
           "custom_case": null
         }
       },
-      "label": ":)"
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0,
+        "qps": 0,
+        "serial_latency_p99": 0,
+        "recall": 0
+      },
+      "task_config": {
+        "db": "WeaviateCloud",
+        "db_config": {
+          "db_label": "sandbox",
+          "url": "**********",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "metric_type": "COSINE",
+          "ef": -1,
+          "efConstruction": null,
+          "maxConnections": null
+        },
+        "case_config": {
+          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 1%)",
+          "custom_case": null
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0,
+        "qps": 0,
+        "serial_latency_p99": 0,
+        "recall": 0
+      },
+      "task_config": {
+        "db": "WeaviateCloud",
+        "db_config": {
+          "db_label": "sandbox",
+          "url": "**********",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "metric_type": "COSINE",
+          "ef": -1,
+          "efConstruction": null,
+          "maxConnections": null
+        },
+        "case_config": {
+          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 99%)",
+          "custom_case": null
+        }
+      },
+      "label": "x"
     },
     {
       "metrics": {
@@ -1722,34 +1445,6 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 280.2736,
-        "qps": 73.0806,
-        "serial_latency_p99": 0.0472,
-        "recall": 0.9977
-      },
-      "task_config": {
-        "db": "WeaviateCloud",
-        "db_config": {
-          "db_label": "standard",
-          "url": "**********",
-          "api_key": "**********"
-        },
-        "db_case_config": {
-          "metric_type": "COSINE",
-          "ef": -1,
-          "efConstruction": null,
-          "maxConnections": null
-        },
-        "case_config": {
-          "case_id": "Search Performance Test (100K Dataset, 768 Dim)",
-          "custom_case": null
-        }
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
         "load_duration": 3580.7827,
         "qps": 63.1365,
         "serial_latency_p99": 0.1457,
@@ -1771,6 +1466,62 @@
         "case_config": {
           "case_id": "Search Performance Test (1M Dataset, 768 Dim)",
           "custom_case": null
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 3580.12,
+        "qps": 0.7512,
+        "serial_latency_p99": 1.9838,
+        "recall": 0.9908
+      },
+      "task_config": {
+        "db": "WeaviateCloud",
+        "db_config": {
+          "db_label": "standard",
+          "url": "**********",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "metric_type": "COSINE",
+          "ef": -1,
+          "efConstruction": 128,
+          "maxConnections": 64
+        },
+        "case_config": {
+          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)",
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0,
+        "qps": 30.1358,
+        "serial_latency_p99": 0.1298,
+        "recall": 1
+      },
+      "task_config": {
+        "db": "WeaviateCloud",
+        "db_config": {
+          "db_label": "standard",
+          "url": "**********",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "metric_type": "COSINE",
+          "ef": -1,
+          "efConstruction": 128,
+          "maxConnections": 64
+        },
+        "case_config": {
+          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)",
+          "custom_case": {}
         }
       },
       "label": ":)"
@@ -1916,7 +1667,7 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 2142.6913,
+        "load_duration": 1165.833,
         "qps": 457.3331,
         "serial_latency_p99": 0.0056,
         "recall": 0.9473
@@ -1943,7 +1694,7 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 2142.6913,
+        "load_duration": 1165.833,
         "qps": 308.5526,
         "serial_latency_p99": 0.0077,
         "recall": 0.9805
@@ -1970,7 +1721,7 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 2142.6913,
+        "load_duration": 1165.833,
         "qps": 408.1209,
         "serial_latency_p99": 0.0057,
         "recall": 1
@@ -1997,10 +1748,10 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 254.2501,
-        "qps": 1157.4606,
-        "serial_latency_p99": 0.0033,
-        "recall": 0.958
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
       },
       "task_config": {
         "db": "ZillizCloud",
@@ -2015,19 +1766,19 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Search Performance Test (100K Dataset, 768 Dim)",
+          "case_id": "Search Performance Test (10M Dataset, 768 Dim)",
           "custom_case": {}
         }
       },
-      "label": ":)"
+      "label": "x"
     },
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 254.2501,
-        "qps": 1018.7988,
-        "serial_latency_p99": 0.0041,
-        "recall": 0.958
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
       },
       "task_config": {
         "db": "ZillizCloud",
@@ -2042,19 +1793,19 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 1%)",
+          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 1%)",
           "custom_case": {}
         }
       },
-      "label": ":)"
+      "label": "x"
     },
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 254.2501,
-        "qps": 1517.0827,
-        "serial_latency_p99": 0.0035,
-        "recall": 1
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
       },
       "task_config": {
         "db": "ZillizCloud",
@@ -2069,16 +1820,16 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 99%)",
+          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 99%)",
           "custom_case": {}
         }
       },
-      "label": ":)"
+      "label": "x"
     },
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 2325.0144,
+        "load_duration": 1229.3664,
         "qps": 2867.9092,
         "serial_latency_p99": 0.0037,
         "recall": 0.8769
@@ -2105,7 +1856,7 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 2325.0144,
+        "load_duration": 1229.3664,
         "qps": 1689.5799,
         "serial_latency_p99": 0.0054,
         "recall": 0.9486
@@ -2132,7 +1883,7 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 2325.0144,
+        "load_duration": 1229.3664,
         "qps": 1371.0535,
         "serial_latency_p99": 0.0079,
         "recall": 1
@@ -2159,88 +1910,7 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 221.5923,
-        "qps": 3676.5906,
-        "serial_latency_p99": 0.0046,
-        "recall": 0.9567
-      },
-      "task_config": {
-        "db": "ZillizCloud",
-        "db_config": {
-          "db_label": "8cu-perf",
-          "uri": "**********",
-          "user": "root",
-          "password": "**********"
-        },
-        "db_case_config": {
-          "index": "AUTOINDEX",
-          "metric_type": "COSINE"
-        },
-        "case_config": {
-          "case_id": "Search Performance Test (100K Dataset, 768 Dim)",
-          "custom_case": {}
-        }
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "load_duration": 221.5923,
-        "qps": 3348.3574,
-        "serial_latency_p99": 0.0039,
-        "recall": 0.957
-      },
-      "task_config": {
-        "db": "ZillizCloud",
-        "db_config": {
-          "db_label": "8cu-perf",
-          "uri": "**********",
-          "user": "root",
-          "password": "**********"
-        },
-        "db_case_config": {
-          "index": "AUTOINDEX",
-          "metric_type": "COSINE"
-        },
-        "case_config": {
-          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 1%)",
-          "custom_case": {}
-        }
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "load_duration": 221.5923,
-        "qps": 5113.8498,
-        "serial_latency_p99": 0.0041,
-        "recall": 1
-      },
-      "task_config": {
-        "db": "ZillizCloud",
-        "db_config": {
-          "db_label": "8cu-perf",
-          "uri": "**********",
-          "user": "root",
-          "password": "**********"
-        },
-        "db_case_config": {
-          "index": "AUTOINDEX",
-          "metric_type": "COSINE"
-        },
-        "case_config": {
-          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 99%)",
-          "custom_case": {}
-        }
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "load_duration": 15985.5509,
+        "load_duration": 7772.641,
         "qps": 723.9371,
         "serial_latency_p99": 0.0052,
         "recall": 0.9285
@@ -2267,7 +1937,7 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 15985.5509,
+        "load_duration": 7772.641,
         "qps": 315.5653,
         "serial_latency_p99": 0.0089,
         "recall": 0.9757
@@ -2294,7 +1964,7 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 15985.5509,
+        "load_duration": 7772.641,
         "qps": 147.6055,
         "serial_latency_p99": 0.0132,
         "recall": 1
@@ -2369,90 +2039,6 @@
         },
         "case_config": {
           "case_id": "Capacity Test (960 Dim Repeated)",
-          "custom_case": {}
-        }
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "load_duration": 229.3619,
-        "qps": 1241.9402,
-        "serial_latency_p99": 0.0031,
-        "recall": 0.9578
-      },
-      "task_config": {
-        "db": "Milvus",
-        "db_config": {
-          "db_label": "2c8g-hnsw",
-          "uri": "**********"
-        },
-        "db_case_config": {
-          "index": "HNSW",
-          "metric_type": "COSINE",
-          "M": 30,
-          "efConstruction": 360,
-          "ef": 100
-        },
-        "case_config": {
-          "case_id": "Search Performance Test (100K Dataset, 768 Dim)",
-          "custom_case": {}
-        }
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "load_duration": 229.3619,
-        "qps": 1090.1883,
-        "serial_latency_p99": 0.003,
-        "recall": 0.9579
-      },
-      "task_config": {
-        "db": "Milvus",
-        "db_config": {
-          "db_label": "2c8g-hnsw",
-          "uri": "**********"
-        },
-        "db_case_config": {
-          "index": "HNSW",
-          "metric_type": "COSINE",
-          "M": 30,
-          "efConstruction": 360,
-          "ef": 100
-        },
-        "case_config": {
-          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 1%)",
-          "custom_case": {}
-        }
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "load_duration": 229.3619,
-        "qps": 1610.7467,
-        "serial_latency_p99": 0.0025,
-        "recall": 1
-      },
-      "task_config": {
-        "db": "Milvus",
-        "db_config": {
-          "db_label": "2c8g-hnsw",
-          "uri": "**********"
-        },
-        "db_case_config": {
-          "index": "HNSW",
-          "metric_type": "COSINE",
-          "M": 30,
-          "efConstruction": 360,
-          "ef": 100
-        },
-        "case_config": {
-          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 99%)",
           "custom_case": {}
         }
       },
@@ -2545,15 +2131,15 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 4552.5852,
-        "qps": 127.2924,
-        "serial_latency_p99": 0.0107,
-        "recall": 0.975
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
       },
       "task_config": {
         "db": "Milvus",
         "db_config": {
-          "db_label": "1c8g-hnsw",
+          "db_label": "2c8g-hnsw",
           "uri": "**********"
         },
         "db_case_config": {
@@ -2564,24 +2150,24 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)",
+          "case_id": "Search Performance Test (10M Dataset, 768 Dim)",
           "custom_case": {}
         }
       },
-      "label": ":)"
+      "label": "x"
     },
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 4552.5852,
-        "qps": 105.2414,
-        "serial_latency_p99": 0.0126,
-        "recall": 0.9809
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
       },
       "task_config": {
         "db": "Milvus",
         "db_config": {
-          "db_label": "1c8g-hnsw",
+          "db_label": "2c8g-hnsw",
           "uri": "**********"
         },
         "db_case_config": {
@@ -2592,24 +2178,24 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)",
+          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 1%)",
           "custom_case": {}
         }
       },
-      "label": ":)"
+      "label": "x"
     },
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 4552.5852,
-        "qps": 120.3348,
-        "serial_latency_p99": 0.012,
-        "recall": 0.9819
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
       },
       "task_config": {
         "db": "Milvus",
         "db_config": {
-          "db_label": "1c8g-hnsw",
+          "db_label": "2c8g-hnsw",
           "uri": "**********"
         },
         "db_case_config": {
@@ -2620,179 +2206,11 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test (1M Dataset, 768 Dim)",
+          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 99%)",
           "custom_case": {}
         }
       },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "load_duration": 364.6594,
-        "qps": 128.745,
-        "serial_latency_p99": 0.0076,
-        "recall": 0.9899
-      },
-      "task_config": {
-        "db": "Milvus",
-        "db_config": {
-          "db_label": "1c8g-hnsw",
-          "uri": "**********"
-        },
-        "db_case_config": {
-          "index": "HNSW",
-          "metric_type": "COSINE",
-          "M": 30,
-          "efConstruction": 360,
-          "ef": 100
-        },
-        "case_config": {
-          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 99%)",
-          "custom_case": {}
-        }
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "load_duration": 370.4316,
-        "qps": 493.1756,
-        "serial_latency_p99": 0.003,
-        "recall": 0.9562
-      },
-      "task_config": {
-        "db": "Milvus",
-        "db_config": {
-          "db_label": "1c8g-hnsw",
-          "uri": "**********"
-        },
-        "db_case_config": {
-          "index": "HNSW",
-          "metric_type": "COSINE",
-          "M": 30,
-          "efConstruction": 360,
-          "ef": 100
-        },
-        "case_config": {
-          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 1%)",
-          "custom_case": {}
-        }
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "load_duration": 390.8309,
-        "qps": 655.6607,
-        "serial_latency_p99": 0.0027,
-        "recall": 0.9576
-      },
-      "task_config": {
-        "db": "Milvus",
-        "db_config": {
-          "db_label": "1c8g-hnsw",
-          "uri": "**********"
-        },
-        "db_case_config": {
-          "index": "HNSW",
-          "metric_type": "COSINE",
-          "M": 30,
-          "efConstruction": 360,
-          "ef": 100
-        },
-        "case_config": {
-          "case_id": "Search Performance Test (100K Dataset, 768 Dim)",
-          "custom_case": {}
-        }
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "load_duration": 78.1565,
-        "qps": 4380.5652,
-        "serial_latency_p99": 0.0028,
-        "recall": 0.9581
-      },
-      "task_config": {
-        "db": "Milvus",
-        "db_config": {
-          "db_label": "16c64g-hnsw",
-          "uri": "**********"
-        },
-        "db_case_config": {
-          "index": "HNSW",
-          "metric_type": "COSINE",
-          "M": 30,
-          "efConstruction": 360,
-          "ef": 100
-        },
-        "case_config": {
-          "case_id": "Search Performance Test (100K Dataset, 768 Dim)",
-          "custom_case": {}
-        }
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "load_duration": 78.1565,
-        "qps": 4028.975,
-        "serial_latency_p99": 0.0033,
-        "recall": 0.9582
-      },
-      "task_config": {
-        "db": "Milvus",
-        "db_config": {
-          "db_label": "16c64g-hnsw",
-          "uri": "**********"
-        },
-        "db_case_config": {
-          "index": "HNSW",
-          "metric_type": "COSINE",
-          "M": 30,
-          "efConstruction": 360,
-          "ef": 100
-        },
-        "case_config": {
-          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 1%)",
-          "custom_case": {}
-        }
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "load_duration": 78.1565,
-        "qps": 5740.1221,
-        "serial_latency_p99": 0.0026,
-        "recall": 1
-      },
-      "task_config": {
-        "db": "Milvus",
-        "db_config": {
-          "db_label": "16c64g-hnsw",
-          "uri": "**********"
-        },
-        "db_case_config": {
-          "index": "HNSW",
-          "metric_type": "COSINE",
-          "M": 30,
-          "efConstruction": 360,
-          "ef": 100
-        },
-        "case_config": {
-          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 99%)",
-          "custom_case": {}
-        }
-      },
-      "label": ":)"
+      "label": "x"
     },
     {
       "metrics": {
@@ -2965,84 +2383,6 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 468.3754,
-        "qps": 78.9362,
-        "serial_latency_p99": 0.0385,
-        "recall": 0.8197
-      },
-      "task_config": {
-        "db": "QdrantCloud",
-        "db_config": {
-          "db_label": "0.5c4g-1node",
-          "url": "**********",
-          "api_key": "**********",
-          "prefer_grpc": true
-        },
-        "db_case_config": {
-          "null": null
-        },
-        "case_config": {
-          "case_id": "Search Performance Test (100K Dataset, 768 Dim)",
-          "custom_case": {}
-        }
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "load_duration": 518.1908,
-        "qps": 75.0343,
-        "serial_latency_p99": 0.042,
-        "recall": 0.8122
-      },
-      "task_config": {
-        "db": "QdrantCloud",
-        "db_config": {
-          "db_label": "0.5c4g-1node",
-          "url": "**********",
-          "api_key": "**********",
-          "prefer_grpc": true
-        },
-        "db_case_config": {
-          "null": null
-        },
-        "case_config": {
-          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 1%)",
-          "custom_case": {}
-        }
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "load_duration": 599.7789,
-        "qps": 240.455,
-        "serial_latency_p99": 0.0349,
-        "recall": 0.9112
-      },
-      "task_config": {
-        "db": "QdrantCloud",
-        "db_config": {
-          "db_label": "0.5c4g-1node",
-          "url": "**********",
-          "api_key": "**********",
-          "prefer_grpc": true
-        },
-        "db_case_config": {
-          "null": null
-        },
-        "case_config": {
-          "case_id": "Filtering Search Performance Test (100K Dataset, 768 Dim, Filter 99%)",
-          "custom_case": {}
-        }
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
         "load_duration": 2559.3758,
         "qps": 76.672,
         "serial_latency_p99": 0.0569,
@@ -3107,6 +2447,159 @@
           "url": "**********",
           "api_key": "**********",
           "prefer_grpc": true
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)",
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
+      },
+      "task_config": {
+        "db": "QdrantCloud",
+        "db_config": {
+          "db_label": "2c8g-1node",
+          "url": "**********",
+          "api_key": "**********",
+          "prefer_grpc": true
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Search Performance Test (10M Dataset, 768 Dim)",
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
+      },
+      "task_config": {
+        "db": "QdrantCloud",
+        "db_config": {
+          "db_label": "2c8g-1node",
+          "url": "**********",
+          "api_key": "**********",
+          "prefer_grpc": true
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 1%)",
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
+      },
+      "task_config": {
+        "db": "QdrantCloud",
+        "db_config": {
+          "db_label": "2c8g-1node",
+          "url": "**********",
+          "api_key": "**********",
+          "prefer_grpc": true
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 99%)",
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 2571.4912,
+        "qps": 720.0978,
+        "serial_latency_p99": 0.0347,
+        "recall": 0.7942
+      },
+      "task_config": {
+        "db": "QdrantCloud",
+        "db_config": {
+          "db_label": "4c16g-5node",
+          "url": "**********",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Search Performance Test (1M Dataset, 768 Dim)",
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 2571.4912,
+        "qps": 553.2483,
+        "serial_latency_p99": 0.0356,
+        "recall": 0.7942
+      },
+      "task_config": {
+        "db": "QdrantCloud",
+        "db_config": {
+          "db_label": "4c16g-5node",
+          "url": "**********",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)",
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 2571.4912,
+        "qps": 796.9777,
+        "serial_latency_p99": 0.035,
+        "recall": 0.8587
+      },
+      "task_config": {
+        "db": "QdrantCloud",
+        "db_config": {
+          "db_label": "4c16g-5node",
+          "url": "**********",
+          "api_key": "**********"
         },
         "db_case_config": {
           "null": null
@@ -3195,6 +2688,1098 @@
         }
       },
       "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 5500000,
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "s1.x1",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Capacity Test (960 Dim Repeated)",
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 8300000,
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "s1.x1",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Capacity Test (128 Dim Repeated)",
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 1259.961,
+        "qps": 19.9197,
+        "serial_latency_p99": 0.0697,
+        "recall": 0.8733
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "s1.x1",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Search Performance Test (1M Dataset, 768 Dim)",
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 1259.961,
+        "qps": 19.358,
+        "serial_latency_p99": 0.0697,
+        "recall": 0.8733
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "s1.x1",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)",
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 1259.961,
+        "qps": 29.3414,
+        "serial_latency_p99": 0.0706,
+        "recall": 0.9356
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "s1.x1",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)",
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "s1.x1",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Search Performance Test (10M Dataset, 768 Dim)",
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "s1.x1",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 1%)",
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "s1.x1",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 99%)",
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 1600000,
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p2.x1",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Capacity Test (960 Dim Repeated)",
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 2700000,
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p2.x1",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Capacity Test (128 Dim Repeated)",
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 1450.5834,
+        "qps": 237.946,
+        "serial_latency_p99": 0.0204,
+        "recall": 0.9268
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p2.x1",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Search Performance Test (1M Dataset, 768 Dim)",
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 1450.5834,
+        "qps": 207.6451,
+        "serial_latency_p99": 0.0217,
+        "recall": 0.9268
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p2.x1",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)",
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 1450.5834,
+        "qps": 66.6749,
+        "serial_latency_p99": 0.0322,
+        "recall": 0.9191
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p2.x1",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)",
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p2.x1",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Search Performance Test (10M Dataset, 768 Dim)",
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p2.x1",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 1%)",
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p2.x1",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 99%)",
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 700000,
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p1.x1",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Capacity Test (960 Dim Repeated)",
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 4100000,
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p1.x1",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Capacity Test (128 Dim Repeated)",
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 1235.8487,
+        "qps": 46.4164,
+        "serial_latency_p99": 0.0348,
+        "recall": 0.8733
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p1.x1",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Search Performance Test (1M Dataset, 768 Dim)",
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 1235.8474,
+        "qps": 44.5978,
+        "serial_latency_p99": 0.0394,
+        "recall": 0.8733
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p1.x1",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)",
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 1235.8474,
+        "qps": 127.9003,
+        "serial_latency_p99": 0.0232,
+        "recall": 0.9356
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p1.x1",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)",
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p1.x1",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Search Performance Test (10M Dataset, 768 Dim)",
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p1.x1",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 1%)",
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p1.x1",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 99%)",
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 1450.6205,
+        "qps": 20.7437,
+        "serial_latency_p99": 0.0758,
+        "recall": 0.9291
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "s1.x1-2node",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "benchmark-test"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Search Performance Test (1M Dataset, 768 Dim)",
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 1450.6205,
+        "qps": 20.2993,
+        "serial_latency_p99": 0.0765,
+        "recall": 0.9293
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "s1.x1-2node",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "benchmark-test"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)",
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 1450.6205,
+        "qps": 26.4719,
+        "serial_latency_p99": 0.067,
+        "recall": 1.0
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "s1.x1-2node",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "benchmark-test"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)",
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 14991.9752,
+        "qps": 8.2809,
+        "serial_latency_p99": 0.1549,
+        "recall": 0.8369
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "s1.x1-2node",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "benchmark-test"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Search Performance Test (10M Dataset, 768 Dim)",
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 14991.9752,
+        "qps": 7.6488,
+        "serial_latency_p99": 0.1618,
+        "recall": 0.8369
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "s1.x1-2node",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "benchmark-test"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 1%)",
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 14991.9752,
+        "qps": 16.5246,
+        "serial_latency_p99": 0.0803,
+        "recall": 0.9814
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "s1.x1-2node",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "benchmark-test"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 99%)",
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 1210.2139,
+        "qps": 365.0835,
+        "serial_latency_p99": 0.0236,
+        "recall": 0.945
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p2.x1-8node",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "benchmark-test"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Search Performance Test (1M Dataset, 768 Dim)",
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 1210.2139,
+        "qps": 325.5271,
+        "serial_latency_p99": 0.0251,
+        "recall": 0.9452
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p2.x1-8node",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "benchmark-test"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)",
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 1210.2139,
+        "qps": 596.7942,
+        "serial_latency_p99": 0.0242,
+        "recall": 0.9693
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p2.x1-8node",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "benchmark-test"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)",
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 12658.5938,
+        "qps": 283.5304,
+        "serial_latency_p99": 0.0256,
+        "recall": 0.9246
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p2.x1-8node",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "benchmark-test"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Search Performance Test (10M Dataset, 768 Dim)",
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 12658.5938,
+        "qps": 136.1829,
+        "serial_latency_p99": 0.029,
+        "recall": 0.9245
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p2.x1-8node",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "benchmark-test"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 1%)",
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 12658.5938,
+        "qps": 71.5744,
+        "serial_latency_p99": 0.0345,
+        "recall": 0.963
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p2.x1-8node",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "benchmark-test"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 99%)",
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 1211.8883,
+        "qps": 131.2549,
+        "serial_latency_p99": 0.0302,
+        "recall": 0.9867
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p1.x1-8node",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "benchmark-test"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Search Performance Test (1M Dataset, 768 Dim)",
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 1211.8883,
+        "qps": 127.9337,
+        "serial_latency_p99": 0.0301,
+        "recall": 0.9869
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p1.x1-8node",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "benchmark-test"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)",
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 1211.8883,
+        "qps": 595.8462,
+        "serial_latency_p99": 0.0234,
+        "recall": 1.0
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p1.x1-8node",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "benchmark-test"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)",
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p1.x1-8node",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "benchmark-test"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Search Performance Test (10M Dataset, 768 Dim)",
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p1.x1-8node",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "benchmark-test"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 1%)",
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p1.x1-8node",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "benchmark-test"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 99%)",
+          "custom_case": {}
+        }
+      },
+      "label": "x"
     }
   ]
 }
