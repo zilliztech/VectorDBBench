@@ -103,7 +103,7 @@ def drawMetricChart(data, metric, st):
     xmin = 0
     xmax = max([d.get(metric, 0) for d in dataWithMetric])
     xpadding = (xmax - xmin) / 16
-    xpadding_multiplier = 1.6
+    xpadding_multiplier = 1.8
     xrange = [xmin, xmax + xpadding * xpadding_multiplier]
     unit = metricUnitMap.get(metric, "")
     labelToShapeMap = getLabelToShapeMap(dataWithMetric)
@@ -137,7 +137,7 @@ def drawMetricChart(data, metric, st):
             font=dict(
                 size=1,
             ),
-            # text="",
+            text="",
         )
     )
     fig.update_traces(
