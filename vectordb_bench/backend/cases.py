@@ -16,7 +16,7 @@ class CaseType(Enum):
     Value will be displayed in UI
 
     Example:
-        >>> c = CaseType.CapacitySDim.get()
+        >>> c = CaseType.CapacitySDim.get()()
         >>> assert c is not None
         >>> c.name
         "Capacity Test (128 Dim Repeated)"
@@ -120,7 +120,7 @@ Number of inserted vectors will be reported."""
 class PerformanceLZero(PerformanceCase):
     case_id: CaseType = CaseType.PerformanceLZero
     dataset: ds.DataSet = ds.get(ds.Name.Cohere, ds.Label.LARGE)
-    name: str = "Search Performance Test (100K Dataset, 768 Dim)"
+    name: str = "Search Performance Test (10M Dataset, 768 Dim)"
     description: str = """This case tests the search performance of a vector database with a large dataset (<b>Cohere 10M vectors</b>, 768 dimensions) at varying parallel levels.
 Results will show index building time, recall, and maximum QPS."""
 
@@ -136,7 +136,7 @@ Results will show index building time, recall, and maximum QPS."""
 class PerformanceSZero(PerformanceCase):
     case_id: CaseType = CaseType.PerformanceSZero
     dataset: ds.DataSet = ds.get(ds.Name.Cohere, ds.Label.SMALL)
-    name: str = "Search Performance Test (10M Dataset, 768 Dim)"
+    name: str = "Search Performance Test (100K Dataset, 768 Dim)"
     description: str = """This case tests the search performance of a vector database with a small dataset (<b>Cohere 100K vectors</b>, 768 dimensions) at varying parallel levels.
 Results will show index building time, recall, and maximum QPS."""
 
@@ -210,6 +210,7 @@ type2case = {
     CaseType.CapacityLDim: CapacityLDimCase,
     CaseType.CapacitySDim: CapacitySDimCase,
 
+    CaseType.Performance100M: Performance100M,
     CaseType.PerformanceLZero: PerformanceLZero,
     CaseType.PerformanceMZero: PerformanceMZero,
     CaseType.PerformanceSZero: PerformanceSZero,
@@ -220,5 +221,4 @@ type2case = {
     CaseType.PerformanceLHigh: PerformanceLHigh,
     CaseType.PerformanceMHigh: PerformanceMHigh,
     CaseType.PerformanceSHigh: PerformanceSHigh,
-    CaseType.Performance100M: Performance100M,
 }

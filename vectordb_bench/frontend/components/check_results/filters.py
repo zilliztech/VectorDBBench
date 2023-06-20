@@ -1,9 +1,12 @@
+from vectordb_bench.backend.cases import Case
 from vectordb_bench.frontend.components.check_results.data import getChartData
 from vectordb_bench.frontend.const import *
 import streamlit as st
 
+from vectordb_bench.models import CaseResult, TestResult
 
-def getshownData(results, st):
+
+def getshownData(results: list[TestResult], st):
     # hide the nav
     st.markdown(
         "<style> div[data-testid='stSidebarNav'] {display: none;} </style>",
@@ -20,7 +23,7 @@ def getshownData(results, st):
     return shownData, failedTasks, showCases
 
 
-def getshownResults(results, st):
+def getshownResults(results: list[TestResult], st) -> list[CaseResult]:
     resultSelectOptions = [
         result.task_label
         if result.task_label != result.run_id
@@ -39,7 +42,7 @@ def getshownResults(results, st):
         # label_visibility="hidden",
         default=resultSelectOptions,
     )
-    selectedResult = []
+    selectedResult: list[CaseResult] = []
     for option in selectedResultSelectedOptions:
         result = results[resultSelectOptions.index(option)].results
         selectedResult += result
@@ -47,7 +50,7 @@ def getshownResults(results, st):
     return selectedResult
 
 
-def getShowDbsAndCases(result, st):
+def getShowDbsAndCases(result: list[CaseResult], st) -> tuple[list[str], list[Case]]:
     # expanderStyles
     st.markdown(
         """
@@ -73,7 +76,7 @@ def getShowDbsAndCases(result, st):
     allDbNames = list(set({res.task_config.db_name for res in result}))
     allDbNames.sort()
     allCasesSet = set({res.task_config.case_config.case_id for res in result})
-    allCases = [case.value for case in CASE_LIST if case in allCasesSet]
+    allCases: list[Case] = [case.get()() for case in CASE_LIST if case in allCasesSet]
 
     # DB Filter
     dbFilterContainer = st.container()
@@ -90,9 +93,10 @@ def getShowDbsAndCases(result, st):
     showCases = filterView(
         caseFilterContainer,
         "Case Filter",
-        allCases,
+        [case for case in allCases],
         col=1,
         sessionStateKey=CASE_SELECT_ALL,
+        optionLables=[case.name for case in allCases],
     )
 
     return showDBNames, showCases
@@ -121,14 +125,14 @@ def filterView(container, header, options, col, sessionStateKey, optionLables=No
         col,
         gap="small",
     )
-    isActive = {option: st.session_state[sessionStateKey] for option in options}
     if optionLables is None:
         optionLables = options
-    for i, option in enumerate(options):
+    isActive = {option: st.session_state[sessionStateKey] for option in optionLables}
+    for i, option in enumerate(optionLables):
         isActive[option] = columns[i % col].checkbox(
             optionLables[i],
             value=isActive[option],
             key=f"{optionLables[i]}-{st.session_state[getSelectAllKey(sessionStateKey)]}",
         )
 
-    return [option for option in options if isActive[option]]
+    return [options[i] for i, option in enumerate(optionLables) if isActive[option]]

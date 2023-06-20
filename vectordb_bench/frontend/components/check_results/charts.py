@@ -1,10 +1,11 @@
+from vectordb_bench.backend.cases import Case
 from vectordb_bench.metric import metricOrder, isLowerIsBetterMetric, metricUnitMap
 from vectordb_bench.frontend.const import *
 from vectordb_bench.models import ResultLabel
 import plotly.express as px
 
 
-def drawCharts(st, allData, failedTasks, cases):
+def drawCharts(st, allData, failedTasks, cases: list[Case]):
     st.markdown(
         "<style> .main .streamlit-expanderHeader p {font-size: 20px; font-weight: 600;} </style>",
         unsafe_allow_html=True,
@@ -20,11 +21,11 @@ def drawCharts(st, allData, failedTasks, cases):
         unsafe_allow_html=True,
     )
     for case in cases:
-        chartContainer = st.expander(case, True)
-        data = [data for data in allData if data["case"] == case]
+        chartContainer = st.expander(case.name, True)
+        data = [data for data in allData if data["case_name"] == case.name]
         drawChart(data, chartContainer)
 
-        errorDBs = failedTasks[case]
+        errorDBs = failedTasks[case.name]
         showFailedDBs(chartContainer, errorDBs)
 
 
