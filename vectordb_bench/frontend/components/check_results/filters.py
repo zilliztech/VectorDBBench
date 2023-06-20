@@ -85,7 +85,6 @@ def getShowDbsAndCases(result: list[CaseResult], st) -> tuple[list[str], list[Ca
         "DB Filter",
         allDbNames,
         col=1,
-        sessionStateKey=DB_SELECT_ALL,
     )
 
     # Case Filter
@@ -95,44 +94,51 @@ def getShowDbsAndCases(result: list[CaseResult], st) -> tuple[list[str], list[Ca
         "Case Filter",
         [case for case in allCases],
         col=1,
-        sessionStateKey=CASE_SELECT_ALL,
         optionLables=[case.name for case in allCases],
     )
 
     return showDBNames, showCases
 
 
-def filterView(container, header, options, col, sessionStateKey, optionLables=None):
+def filterView(container, header, options, col, optionLables=None):
+    selectAllState = f"{header}-select-all-state"
+    if selectAllState not in st.session_state:
+        st.session_state[selectAllState] = True
+
+    countKeyState = f"{header}-select-all-count-key"
+    if countKeyState not in st.session_state:
+        st.session_state[countKeyState] = 0
+
     expander = container.expander(header, True)
     selectAllColumns = expander.columns(SIDEBAR_CONTROL_COLUMNS, gap="small")
     selectAllButton = selectAllColumns[SIDEBAR_CONTROL_COLUMNS - 2].button(
         "select all",
-        key=f"{header}-select-all",
+        key=f"{header}-select-all-button",
         # type="primary",
     )
     clearAllButton = selectAllColumns[SIDEBAR_CONTROL_COLUMNS - 1].button(
         "clear all",
-        key=f"{header}-clear-all",
+        key=f"{header}-clear-all-button",
         # type="primary",
     )
     if selectAllButton:
-        st.session_state[sessionStateKey] = True
-        st.session_state[getSelectAllKey(sessionStateKey)] += 1
+        st.session_state[selectAllState] = True
+        st.session_state[countKeyState] += 1
     if clearAllButton:
-        st.session_state[sessionStateKey] = False
-        st.session_state[getSelectAllKey(sessionStateKey)] += 1
+        st.session_state[selectAllState] = False
+        st.session_state[countKeyState] += 1
     columns = expander.columns(
         col,
         gap="small",
     )
     if optionLables is None:
         optionLables = options
-    isActive = {option: st.session_state[sessionStateKey] for option in optionLables}
+    isActive = {option: st.session_state[selectAllState] for option in optionLables}
     for i, option in enumerate(optionLables):
         isActive[option] = columns[i % col].checkbox(
             optionLables[i],
             value=isActive[option],
-            key=f"{optionLables[i]}-{st.session_state[getSelectAllKey(sessionStateKey)]}",
+            key=f"{optionLables[i]}-{st.session_state[countKeyState]}",
         )
 
     return [options[i] for i, option in enumerate(optionLables) if isActive[option]]
