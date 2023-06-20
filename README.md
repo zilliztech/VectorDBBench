@@ -190,7 +190,5 @@ For the system under test, we use the default server-side configuration to maint
 For the Client, we welcome any parameter tuning to obtain better results.
 ### Incomplete Results
 Many databases may not be able to complete all test cases due to issues such as Out of Memory (OOM), crashes, or timeouts. In these scenarios, we will clearly state these occurrences in the test results.
-### Unpublishable Results
-Although we are trying to support as many clients as possible for benchmarking, due to the restrictions imposed by the [Dewitt Clause](https://cube.dev/blog/dewitt-clause-or-can-you-benchmark-a-database), we're unable to publish all benchmark results. This means that users may not be able to fully compare performance data for certain databases on our platform, despite the support we have integrated for these systems. 
 ### Mistake Or Misrepresentation 
 We strive for accuracy in learning and supporting various vector databases, yet there might be oversights or misapplications. For any such occurrences, feel free to [raise an issue](https://github.com/zilliztech/VectorDBBench/issues/new) or make amendments on our GitHub page.
