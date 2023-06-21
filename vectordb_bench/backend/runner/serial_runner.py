@@ -49,7 +49,7 @@ class SerialInsertRunner:
                     embeddings=embeddings,
                     metadata=metadata,
                 )
-                if error != None:
+                if error is not None:
                     raise error
                 log.debug(f"({mp.current_process().name:16}) batch [{batch_id:3}/{num_conc_batches}], Finish inserting {len(metadata)} embeddings")
 
@@ -76,16 +76,15 @@ class SerialInsertRunner:
 
                 log.debug(f"({mp.current_process().name:16}) batch [{batch_id:3}/{num_conc_batches}], Start inserting {len(metadata)} embeddings")
                 while retry_count < LOAD_MAX_TRY_COUNT:
-                    previous_beg, current_beg = 0, 0
                     insert_count, error = self.db.insert_embeddings(
                         embeddings=embeddings[already_insert_count :],
                         metadata=metadata[already_insert_count :],
                     )
                     already_insert_count += insert_count
-                    if error != None:
+                    if error is not None:
                         retry_count += 1
                         time.sleep(WAITTING_TIME)
-                       
+
                         log.info(f"Failed to insert data, try {retry_count} time")
                         if retry_count >= LOAD_MAX_TRY_COUNT:
                             raise error

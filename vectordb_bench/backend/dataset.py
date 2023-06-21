@@ -1,9 +1,7 @@
 """
 Usage:
-    >>> from xxx import dataset as ds
-    >>> gist_s = ds.get(ds.Name.GIST, ds.Label.SMALL)
-    >>> gist_s.dict()
-    dataset: {'data': {'name': 'GIST', 'dim': 128, 'metric_type': 'L2', 'label': 'SMALL', 'size': 50000000}, 'data_dir': 'xxx'}
+    >>> from xxx.dataset import Dataset
+    >>> Dataset.Cohere.get(100_000)
 """
 
 import os
@@ -11,13 +9,11 @@ import logging
 import pathlib
 import math
 from hashlib import md5
-from enum import Enum, auto
-from typing import Any
-
+from enum import Enum
 import s3fs
 import pandas as pd
 from tqdm import tqdm
-from pydantic.dataclasses import dataclass
+from pydantic import validator, PrivateAttr
 
 from ..base import BaseModel
 from .. import config
@@ -26,108 +22,82 @@ from . import utils
 
 log = logging.getLogger(__name__)
 
-@dataclass
-class LAION:
+
+class BaseDataset(BaseModel):
+    name: str
+    size: int
+    dim: int
+    metric_type: MetricType
+    use_shuffled: bool
+    _size_label: dict = PrivateAttr()
+
+    @validator("size")
+    def verify_size(cls, v):
+        if v not in cls._size_label:
+            raise ValueError(f"Size {v} not supported for the dataset, expected: {cls._size_label.keys()}")
+        return v
+
+    @property
+    def label(self) -> str:
+        return self._size_label.get(self.size)
+
+    @property
+    def dir_name(self) -> str:
+        return f"{self.name}_{self.label}_{utils.numerize(self.size)}".lower()
+
+
+class LAION(BaseDataset):
     name: str = "LAION"
     dim: int = 768
     metric_type: MetricType = MetricType.L2
     use_shuffled: bool = False
+    _size_label: dict = {100_000_000: "LARGE"}
 
-    @property
-    def dir_name(self) -> str:
-        return f"{self.name}_{self.label}_{utils.numerize(self.size)}".lower()
 
-@dataclass
-class GIST:
+class GIST(BaseDataset):
     name: str = "GIST"
     dim: int = 960
     metric_type: MetricType = MetricType.L2
     use_shuffled: bool = False
+    _size_label: dict = {
+        100_000: "SMALL",
+        1_000_000: "MEDIUM",
+    }
 
-    @property
-    def dir_name(self) -> str:
-        return f"{self.name}_{self.label}_{utils.numerize(self.size)}".lower()
 
-@dataclass
-class Cohere:
+class Cohere(BaseDataset):
     name: str = "Cohere"
     dim: int = 768
     metric_type: MetricType = MetricType.COSINE
     use_shuffled: bool = config.USE_SHUFFLED_DATA
+    _size_label: dict = {
+        100_000: "SMALL",
+        1_000_000: "MEDIUM",
+        10_000_000: "LARGE",
+    }
 
-    @property
-    def dir_name(self) -> str:
-        return f"{self.name}_{self.label}_{utils.numerize(self.size)}".lower()
 
-@dataclass
-class Glove:
+class Glove(BaseDataset):
     name: str = "Glove"
     dim: int = 200
     metric_type: MetricType = MetricType.COSINE
     use_shuffled: bool = False
+    _size_label: dict = {1_000_000: "MEDIUM"}
 
-    @property
-    def dir_name(self) -> str:
-        return f"{self.name}_{self.label}_{utils.numerize(self.size)}".lower()
 
-@dataclass
-class SIFT:
+class SIFT(BaseDataset):
     name: str = "SIFT"
     dim: int = 128
     metric_type: MetricType = MetricType.COSINE
     use_shuffled: bool = False
-
-    @property
-    def dir_name(self) -> str:
-        return f"{self.name}_{self.label}_{utils.numerize(self.size)}".lower()
-
-@dataclass
-class LAION_L(LAION):
-    label: str = "LARGE"
-    size: int  = 100_000_000
-
-@dataclass
-class GIST_S(GIST):
-    label: str = "SMALL"
-    size: int  = 100_000
-
-@dataclass
-class GIST_M(GIST):
-    label: str = "MEDIUM"
-    size: int  = 1_000_000
-
-@dataclass
-class Cohere_M(Cohere):
-    label: str = "MEDIUM"
-    size: int = 1_000_000
-
-@dataclass
-class Cohere_L(Cohere):
-    label : str = "LARGE"
-    size  : int = 10_000_000
-
-@dataclass
-class Glove_M(Glove):
-    label: str = "MEDIUM"
-    size : int = 1_000_000
-
-@dataclass
-class SIFT_S(SIFT):
-    label: str = "SMALL"
-    size : int = 500_000
-
-@dataclass
-class SIFT_M(SIFT):
-    label: str = "MEDIUM"
-    size : int = 5_000_000
-
-@dataclass
-class SIFT_L(SIFT):
-    label: str = "LARGE"
-    size : int = 50_000_000
+    _size_label: dict = {
+        500_000: "SMALL",
+        5_000_000: "MEDIUM",
+        50_000_000: "LARGE",
+    }
 
 
-class DataSet(BaseModel):
+class DatasetManager(BaseModel):
     """Download dataset if not int the local directory. Provide data for cases.
 
     DataSet is iterable, each iteration will return the next batch of data in pandas.DataFrame
@@ -137,12 +107,12 @@ class DataSet(BaseModel):
         >>> for data in cohere_s:
         >>>    print(data.columns)
     """
-    data:   GIST | Cohere | Glove | SIFT | Any
+    data:   BaseDataset
     test_data: pd.DataFrame | None = None
     train_files : list[str] = []
 
     def __eq__(self, obj):
-        if isinstance(obj, DataSet):
+        if isinstance(obj, DatasetManager):
             return self.data.name == obj.data.name and \
                 self.data.label == obj.data.label
         return False
@@ -307,7 +277,7 @@ class DataSet(BaseModel):
 
 
 class DataSetIterator:
-    def __init__(self, dataset: DataSet):
+    def __init__(self, dataset: DatasetManager):
         self._ds = dataset
         self._idx = 0  # file number
         self._curr: pd.DataFrame | None = None
@@ -341,41 +311,22 @@ class DataSetIterator:
         self._curr = None
         raise StopIteration
 
+class Dataset(Enum):
+    """
+    Value is Dataset classes, DO NOT use it
+    Example:
+        >>> all_dataset = [ds.name for ds in Dataset]
+        >>> Dataset.COHERE.manager(100_000)
+        >>> Dataset.COHERE.get(100_000)
+    """
+    LAION = LAION
+    GIST = GIST
+    COHERE = Cohere
+    GLOVE = Glove
+    SIFT = SIFT
 
-class Name(Enum):
-    GIST = auto()
-    Cohere = auto()
-    Glove = auto()
-    SIFT = auto()
-    LAION = auto()
+    def get(self, size: int) -> BaseDataset:
+        return self.value(size=size)
 
-
-class Label(Enum):
-    SMALL = auto()
-    MEDIUM = auto()
-    LARGE = auto()
-
-_global_ds_mapping = {
-    Name.GIST: {
-        Label.SMALL: DataSet(data=GIST_S()),
-        Label.MEDIUM: DataSet(data=GIST_M()),
-    },
-    Name.Cohere: {
-        Label.MEDIUM: DataSet(data=Cohere_M()),
-        Label.LARGE: DataSet(data=Cohere_L()),
-    },
-    Name.Glove:{
-        Label.MEDIUM: DataSet(data=Glove_M()),
-    },
-    Name.SIFT: {
-        Label.SMALL: DataSet(data=SIFT_S()),
-        Label.MEDIUM: DataSet(data=SIFT_M()),
-        Label.LARGE: DataSet(data=SIFT_L()),
-    },
-    Name.LAION: {
-        Label.LARGE: DataSet(data=LAION_L()),
-    },
-}
-
-def get(ds: Name, label: Label):
-    return _global_ds_mapping.get(ds, {}).get(label)
+    def manager(self, size: int) -> DatasetManager:
+        return DatasetManager(data=self.get(size))
