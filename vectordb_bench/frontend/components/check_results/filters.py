@@ -1,6 +1,8 @@
 from vectordb_bench.backend.cases import Case
 from vectordb_bench.frontend.components.check_results.data import getChartData
-from vectordb_bench.frontend.const import *
+from vectordb_bench.frontend.components.check_results.expanderStyle import initSidebarExanderStyle
+from vectordb_bench.frontend.const.dbCaseConfigs import CASE_LIST
+from vectordb_bench.frontend.const.styles import *
 import streamlit as st
 
 from vectordb_bench.models import CaseResult, TestResult
@@ -51,28 +53,7 @@ def getshownResults(results: list[TestResult], st) -> list[CaseResult]:
 
 
 def getShowDbsAndCases(result: list[CaseResult], st) -> tuple[list[str], list[Case]]:
-    # expanderStyles
-    st.markdown(
-        """
-<style>
-    section[data-testid='stSidebar'] div[data-testid='stExpander'] div[data-testid='stVerticalBlock'] { gap: 0.2rem; }
-    div[data-testid='stExpander'] {background-color: #ffffff;}
-    section[data-testid='stSidebar'] .streamlit-expanderHeader p {font-size: 16px; font-weight: 600;}
-    section[data-testid='stSidebar']
-        div[data-testid='stExpander']
-            div[data-testid='stVerticalBlock'] 
-                button {
-                    padding: 0 0.5rem;
-                    margin-bottom: 8px;
-                    float: right;
-                }
-<style>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    st.markdown
-
+    initSidebarExanderStyle(st)
     allDbNames = list(set({res.task_config.db_name for res in result}))
     allDbNames.sort()
     allCasesSet = set({res.task_config.case_config.case_id for res in result})

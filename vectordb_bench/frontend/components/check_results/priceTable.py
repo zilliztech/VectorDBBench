@@ -1,8 +1,9 @@
 from vectordb_bench.backend.clients import DB
-from vectordb_bench.frontend.const import DB_DBLABEL_TO_PRICE
 import pandas as pd
 from collections import defaultdict
 import streamlit as st
+
+from vectordb_bench.frontend.const.dbPrices import DB_DBLABEL_TO_PRICE
 
 
 def priceTable(container, data):
@@ -25,7 +26,7 @@ def priceTable(container, data):
     )
     height = len(table) * 35 + 38
 
-    expander = container.expander("You can edit the price.")
+    expander = container.expander("Price List (Editable).")
     editTable = expander.data_editor(
         table,
         use_container_width=True,

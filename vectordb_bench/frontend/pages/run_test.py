@@ -4,19 +4,17 @@ from vectordb_bench.frontend.components.run_test.caseSelector import caseSelecto
 from vectordb_bench.frontend.components.run_test.dbConfigSetting import dbConfigSettings
 from vectordb_bench.frontend.components.run_test.dbSelector import dbSelector
 from vectordb_bench.frontend.components.run_test.generateTasks import generate_tasks
-from vectordb_bench.frontend.components.check_results.headerIcon import drawHeaderIcon
 from vectordb_bench.frontend.components.run_test.hideSidebar import hideSidebar
-from vectordb_bench.frontend.components.check_results.nav import NavToResults
 from vectordb_bench.frontend.components.run_test.submitTask import submitTask
+from vectordb_bench.frontend.components.check_results.nav import NavToResults
+from vectordb_bench.frontend.components.check_results.headerIcon import drawHeaderIcon
+from vectordb_bench.frontend.components.check_results.stPageConfig import initRunTestPageConfig
 
 
 def main():
-    st.set_page_config(
-        page_title="VectorDB Benchmark",
-        page_icon="https://assets.zilliz.com/favicon_f7f922fe27.png",
-        # layout="wide",
-        initial_sidebar_state="collapsed",
-    )
+    # set page config
+    initRunTestPageConfig(st)
+    
     # header
     drawHeaderIcon(st)
 
@@ -55,7 +53,7 @@ def main():
     # submit
     submitContainer = st.container()
     submitTask(submitContainer, tasks, isAllValid)
-    
+
     # nav to results
     NavToResults(st, key="footer-nav-to-results")
 

@@ -1,5 +1,5 @@
 from streamlit_autorefresh import st_autorefresh
-from vectordb_bench.frontend.const import *
+from vectordb_bench.frontend.const.styles import *
 
 
 def autoRefresh():
