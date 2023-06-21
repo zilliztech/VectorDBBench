@@ -58,7 +58,7 @@ $ ruff check vectordb_bench --fix
 ![image](https://github.com/zilliztech/VectorDBBench/assets/105927039/66ab83c4-656e-41a8-a643-d9790faccbeb)
 This is the main page of VectorDBBench, which displays the standard benchmark results we provide. Additionally, results of all tests performed by users themselves will also be shown here. We also offer the ability to select and compare results from multiple tests simultaneously.
 
-The standard benchmark results displayed here include all 12 cases that we currently support for all our clients (Milvus, Zilliz Cloud, Elastic Search, Qdrant Cloud, and Weaviate Cloud). However, as some systems may not be able to complete all the tests successfully due to issues like Out of Memory (OOM) or timeouts, not all clients are included in every case.
+The standard benchmark results displayed here include all 9 cases that we currently support for all our clients (Milvus, Zilliz Cloud, Elastic Search, Qdrant Cloud, and Weaviate Cloud). However, as some systems may not be able to complete all the tests successfully due to issues like Out of Memory (OOM) or timeouts, not all clients are included in every case.
 ### Run Test Page
 ![image](https://github.com/zilliztech/VectorDBBench/assets/105927039/a789099a-3707-4214-8052-b73463b8f2c6)
 This is the page to run a test:
@@ -73,7 +73,7 @@ Now we can only run one task at the same time.
 ### Client
 Our client module is designed with flexibility and extensibility in mind, aiming to integrate APIs from different systems seamlessly. As of now, it supports Milvus, Zilliz Cloud, Elastic Search, Pinecone, Qdrant, and Weaviate. Stay tuned for more options, as we are consistently working on extending our reach to other systems.
 ### Benchmark Cases
-We've developed an array of 12 comprehensive benchmark cases to test vector databases' various capabilities, each designed to give you a different piece of the puzzle. These cases are categorized into three main types:
+We've developed an array of 9 comprehensive benchmark cases to test vector databases' various capabilities, each designed to give you a different piece of the puzzle. These cases are categorized into three main types:
 #### Capacity Case
 - **Large Dim:** Tests the database's loading capacity by inserting large-dimension vectors (GIST 100K vectors, 960 dimensions) until fully loaded. The final number of inserted vectors is reported.
 - **Small Dim:** Similar to the Large Dim case but uses small-dimension vectors (SIFT 100K vectors, 128 dimensions).
@@ -81,14 +81,11 @@ We've developed an array of 12 comprehensive benchmark cases to test vector data
 - **XLarge Dataset:** Measures search performance with a massive dataset (LAION 100M vectors, 768 dimensions) at varying parallel levels. The results include index building time, recall, latency, and maximum QPS.
 - **Large Dataset:** Similar to the XLarge Dataset case, but uses a slightly smaller dataset (Cohere 10M vectors, 768 dimensions).
 - **Medium Dataset:** A case using a medium dataset (Cohere 1M vectors, 768 dimensions).
-- **Small Dataset:** This case uses a small dataset (Cohere 100K vectors, 768 dimensions).
 #### Filtering Search Performance Case
 - **Large Dataset, Low Filtering Rate:** Evaluates search performance with a large dataset (Cohere 10M vectors, 768 dimensions) under a low filtering rate (1% vectors) at different parallel levels.
 - **Medium Dataset, Low Filtering Rate:** This case uses a medium dataset (Cohere 1M vectors, 768 dimensions) with a similar low filtering rate.
-- **Small Dataset, Low Filtering Rate:** This case uses a small dataset (Cohere 100K vectors, 768 dimensions) with a low filtering rate.
 - **Large Dataset, High Filtering Rate:** It tests with a large dataset (Cohere 10M vectors, 768 dimensions) but under a high filtering rate (99% vectors).
 - **Medium Dataset, High Filtering Rate:** This case uses a medium dataset (Cohere 1M vectors, 768 dimensions) with a high filtering rate.
-- **Small Dataset, High Filtering Rate:** Finally, this case uses a small dataset (Cohere 100K vectors, 768 dimensions) under a high filtering rate.
 For a quick reference, here is a table summarizing the key aspects of each case:
 
 Case No. | Case Type | Dataset Size | Dataset Type | Filtering Rate | Results |
@@ -98,13 +95,10 @@ Case No. | Case Type | Dataset Size | Dataset Type | Filtering Rate | Results |
 3 | Search Performance Case | XLarge Dataset | LAION 100M vectors, 768 dimensions | N/A | Index building time, recall, latency, maximum QPS |
 4 | Search Performance Case | Large Dataset | Cohere 10M vectors, 768 dimensions | N/A | Index building time, recall, latency, maximum QPS |
 5 | Search Performance Case | Medium Dataset | Cohere 1M vectors, 768 dimensions | N/A | Index building time, recall, latency, maximum QPS |
-6 | Search Performance Case | Small Dataset | Cohere 100K vectors, 768 dimensions | N/A | Index building time, recall, latency, maximum QPS |
-7 | Filtering Search Performance Case | Large Dataset, Low Filtering Rate | Cohere 10M vectors, 768 dimensions | 1% vectors | Index building time, recall, latency, maximum QPS |
-8 | Filtering Search Performance Case | Medium Dataset, Low Filtering Rate | Cohere 1M vectors, 768 dimensions | 1% vectors | Index building time, recall, latency, maximum QPS |
-9 | Filtering Search Performance Case | Small Dataset, Low Filtering Rate | Cohere 100K vectors, 768 dimensions | 1% vectors | Index building time, recall, latency, maximum QPS |
-10 | Filtering Search Performance Case | Large Dataset, High Filtering Rate | Cohere 10M vectors, 768 dimensions | 99% vectors | Index building time, recall, latency, maximum QPS |
-11 | Filtering Search Performance Case | Medium Dataset, High Filtering Rate | Cohere 1M vectors, 768 dimensions | 99% vectors | Index building time, recall, latency, maximum QPS |
-12 | Filtering Search Performance Case | Small Dataset, High Filtering Rate | Cohere 100K vectors, 768 dimensions | 99% vectors | Index building time, recall, latency, maximum QPS |
+6 | Filtering Search Performance Case | Large Dataset, Low Filtering Rate | Cohere 10M vectors, 768 dimensions | 1% vectors | Index building time, recall, latency, maximum QPS |
+7 | Filtering Search Performance Case | Medium Dataset, Low Filtering Rate | Cohere 1M vectors, 768 dimensions | 1% vectors | Index building time, recall, latency, maximum QPS |
+8 | Filtering Search Performance Case | Large Dataset, High Filtering Rate | Cohere 10M vectors, 768 dimensions | 99% vectors | Index building time, recall, latency, maximum QPS |
+9 | Filtering Search Performance Case | Medium Dataset, High Filtering Rate | Cohere 1M vectors, 768 dimensions | 99% vectors | Index building time, recall, latency, maximum QPS |
 
 Each case provides an in-depth examination of a vector database's abilities, providing you a comprehensive view of the database's performance.
 
@@ -125,7 +119,7 @@ VectorDBBench aims to provide a more comprehensive, multi-faceted testing enviro
 
 1. Navigate to the vectordb_bench/backend/clients directory.
 2. Create a new folder for your client, for example, "new_client".
-3. Inside the "new_client" folder, create two files: new_client.py and config.py. 
+3. Inside the "new_client" folder, create two files: new_client.py and config.py.
 
 **Step 2: Implement new_client.py and config.py**
 

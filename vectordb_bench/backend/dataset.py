@@ -97,11 +97,6 @@ class GIST_M(GIST):
     size: int  = 1_000_000
 
 @dataclass
-class Cohere_S(Cohere):
-    label: str = "SMALL"
-    size: int  = 100_000
-
-@dataclass
 class Cohere_M(Cohere):
     label: str = "MEDIUM"
     size: int = 1_000_000
@@ -110,11 +105,6 @@ class Cohere_M(Cohere):
 class Cohere_L(Cohere):
     label : str = "LARGE"
     size  : int = 10_000_000
-
-@dataclass
-class Glove_S(Glove):
-    label: str = "SMALL"
-    size : int = 100_000
 
 @dataclass
 class Glove_M(Glove):
@@ -371,12 +361,10 @@ _global_ds_mapping = {
         Label.MEDIUM: DataSet(data=GIST_M()),
     },
     Name.Cohere: {
-        Label.SMALL: DataSet(data=Cohere_S()),
         Label.MEDIUM: DataSet(data=Cohere_M()),
         Label.LARGE: DataSet(data=Cohere_L()),
     },
     Name.Glove:{
-        Label.SMALL: DataSet(data=Glove_S()),
         Label.MEDIUM: DataSet(data=Glove_M()),
     },
     Name.SIFT: {
