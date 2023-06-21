@@ -1,4 +1,4 @@
-from .cases import type2case, CaseLabel
+from .cases import CaseLabel
 from .task_runner import CaseRunner, RunningStatus, TaskRunner
 from ..models import TaskConfig
 from ..backend.clients import EmptyDBCaseConfig
@@ -11,7 +11,7 @@ log = logging.getLogger(__name__)
 class Assembler:
     @classmethod
     def assemble(cls, run_id , task: TaskConfig) -> CaseRunner:
-        c_cls = type2case.get(task.case_config.case_id)
+        c_cls = task.case_config.case_id.case_cls
 
         c = c_cls()
         if type(task.db_case_config) != EmptyDBCaseConfig:

@@ -57,7 +57,7 @@ def getShowDbsAndCases(result: list[CaseResult], st) -> tuple[list[str], list[Ca
     allDbNames = list(set({res.task_config.db_name for res in result}))
     allDbNames.sort()
     allCasesSet = set({res.task_config.case_config.case_id for res in result})
-    allCases: list[Case] = [case.get()() for case in CASE_LIST if case in allCasesSet]
+    allCases: list[Case] = [case.case_cls() for case in CASE_LIST if case in allCasesSet]
 
     # DB Filter
     dbFilterContainer = st.container()

@@ -58,7 +58,7 @@ def mergeTasks(tasks: list[CaseResult]):
             db = metricInfo["db"]
             db_label = metricInfo["db_label"]
             label = metricInfo["label"]
-            case_name = case_id.get()().name
+            case_name = case_id.case_name
             if label == ResultLabel.NORMAL:
                 mergedTasks.append(
                     {

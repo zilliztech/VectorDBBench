@@ -33,7 +33,7 @@ def caseSelector(st, activedDbList):
 
 
 def caseItem(st, allCaseConfigs, case: CaseType, activedDbList):
-    selected = st.checkbox(case.get()().name)
+    selected = st.checkbox(case.casename)
     st.markdown(
         f"<div style='color: #1D2939; margin: -8px 0 20px {CHECKBOX_INDENT}px; font-size: 14px;'>{case.get()().description}</div>",
         unsafe_allow_html=True,
