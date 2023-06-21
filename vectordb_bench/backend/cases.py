@@ -44,6 +44,13 @@ class CaseType(Enum):
         if c is not None:
             return c().name
         raise ValueError("Case unsupported")
+    
+    @property
+    def case_description(self) -> str:
+        c = self.case_cls
+        if c is not None:
+            return c().description
+        raise ValueError("Case unsupported")
 
 
 class CaseLabel(Enum):
