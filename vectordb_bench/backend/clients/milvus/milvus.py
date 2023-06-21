@@ -13,6 +13,7 @@ from .config import MilvusConfig, _milvus_case_config
 
 log = logging.getLogger(__name__)
 
+MILVUS_LOAD_REQS_SIZE = 1.5 * 1024 *1024
 
 class Milvus(VectorDB):
     def __init__(
@@ -29,6 +30,7 @@ class Milvus(VectorDB):
         self.db_config = db_config
         self.case_config = db_case_config
         self.collection_name = collection_name
+        self.batch_size = int(MILVUS_LOAD_REQS_SIZE / (dim *4))
 
         self._primary_field = "pk"
         self._scalar_field = "id"
@@ -139,22 +141,26 @@ class Milvus(VectorDB):
         embeddings: Iterable[list[float]],
         metadata: list[int],
         **kwargs: Any,
-    ) -> int:
+    ) -> (int, Exception):
         """Insert embeddings into Milvus. should call self.init() first"""
         # use the first insert_embeddings to init collection
         assert self.col is not None
-        insert_data = [
-                metadata,
-                metadata,
-                embeddings,
-        ]
-
+        assert len(embeddings) == len(metadata)
+        insert_count = 0
         try:
-            res = self.col.insert(insert_data, **kwargs)
-            return len(res.primary_keys)
+            for batch_start_offset in range(0, len(embeddings), self.batch_size):
+                batch_end_offset = min(batch_start_offset + self.batch_size, len(embeddings))
+                insert_data = [
+                        metadata[batch_start_offset : batch_end_offset],
+                        metadata[batch_start_offset : batch_end_offset],
+                        embeddings[batch_start_offset : batch_end_offset],
+                ]
+                res = self.col.insert(insert_data, **kwargs)
+                insert_count += len(res.primary_keys)
         except MilvusException as e:
             log.warning("Failed to insert data")
-            raise e from None
+            return (insert_count, e)
+        return (insert_count, None)
 
     def search_embedding(
         self,

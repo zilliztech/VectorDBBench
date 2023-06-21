@@ -76,17 +76,22 @@ class Pinecone(VectorDB):
         self,
         embeddings: list[list[float]],
         metadata: list[int],
-    ) -> list[str]:
+    ) -> (int, Exception):
         assert len(embeddings) == len(metadata)
-        for batch_start_offset in range(0, len(embeddings), self.batch_size):
-            batch_end_offset = min(batch_start_offset + self.batch_size, len(embeddings))
-            insert_datas = []
-            for i in range(batch_start_offset, batch_end_offset):
-                insert_data = (str(metadata[i]), embeddings[i], {
-                            self._metadata_key: metadata[i]})
-                insert_datas.append(insert_data)
-            self.index.upsert(insert_datas)
-        return len(embeddings)
+        insert_count = 0
+        try:
+            for batch_start_offset in range(0, len(embeddings), self.batch_size):
+                batch_end_offset = min(batch_start_offset + self.batch_size, len(embeddings))
+                insert_datas = []
+                for i in range(batch_start_offset, batch_end_offset):
+                    insert_data = (str(metadata[i]), embeddings[i], {
+                                self._metadata_key: metadata[i]})
+                    insert_datas.append(insert_data)
+                self.index.upsert(insert_datas)
+                insert_count += batch_end_offset - batch_start_offset
+        except Exception as e:
+            return (insert_count, e)
+        return (len(embeddings), None)
 
     def search_embedding(
         self,

@@ -117,7 +117,7 @@ class QdrantCloud(VectorDB):
         embeddings: list[list[float]],
         metadata: list[int],
         **kwargs: Any,
-    ) -> list[str]:
+    ) -> (int, Exception):
         """Insert embeddings into Milvus. should call self.init() first"""
         assert self.qdrant_client is not None
         try:
@@ -127,11 +127,10 @@ class QdrantCloud(VectorDB):
                 wait=True,
                 points=Batch(ids=metadata, payloads=[{self._primary_field: v} for v in metadata], vectors=embeddings)
             )
-
-            return len(metadata)
+            return (len(metadata), None)
         except Exception as e:
             log.info(f"Failed to insert data, {e}")
-            raise e from None
+            return (0, e)
 
     def search_embedding(
         self,

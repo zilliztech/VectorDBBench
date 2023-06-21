@@ -15,6 +15,8 @@ from ... import config
 
 NUM_PER_BATCH = config.NUM_PER_BATCH
 LOAD_TIMEOUT = 24 * 60 * 60
+LOAD_MAX_TRY_COUNT = 10
+WAITTING_TIME = 60
 
 log = logging.getLogger(__name__)
 
@@ -43,14 +45,56 @@ class SerialInsertRunner:
                 embeddings = all_embeddings[batch_id*NUM_PER_BATCH: (batch_id+1)*NUM_PER_BATCH]
 
                 log.debug(f"({mp.current_process().name:16}) batch [{batch_id:3}/{num_conc_batches}], Start inserting {len(metadata)} embeddings")
-                insert_count = self.db.insert_embeddings(
+                insert_count, error = self.db.insert_embeddings(
                     embeddings=embeddings,
                     metadata=metadata,
                 )
+                if error != None:
+                    raise error
                 log.debug(f"({mp.current_process().name:16}) batch [{batch_id:3}/{num_conc_batches}], Finish inserting {len(metadata)} embeddings")
 
                 assert insert_count == len(metadata)
                 count += insert_count
+            log.info(f"({mp.current_process().name:16}) Finish inserting {len(all_embeddings)} embeddings in batch {NUM_PER_BATCH}")
+        return count
+
+    def endless_insert_data(self, left_id: int = 0) -> int:
+        with self.db.init():
+            all_embeddings = self.shared_emb
+
+            # unique id for endlessness insertion
+            all_metadata = [i+left_id for i in self.train_id]
+
+            num_conc_batches = math.ceil(len(all_embeddings)/NUM_PER_BATCH)
+            log.info(f"({mp.current_process().name:16}) Start inserting {len(all_embeddings)} embeddings in batch {NUM_PER_BATCH}")
+            count = 0
+            for batch_id in range(self.seq_batches):
+                retry_count = 0
+                already_insert_count = 0
+                metadata = all_metadata[batch_id*NUM_PER_BATCH : (batch_id+1)*NUM_PER_BATCH]
+                embeddings = all_embeddings[batch_id*NUM_PER_BATCH : (batch_id+1)*NUM_PER_BATCH]
+
+                log.debug(f"({mp.current_process().name:16}) batch [{batch_id:3}/{num_conc_batches}], Start inserting {len(metadata)} embeddings")
+                while retry_count < LOAD_MAX_TRY_COUNT:
+                    previous_beg, current_beg = 0, 0
+                    insert_count, error = self.db.insert_embeddings(
+                        embeddings=embeddings[already_insert_count :],
+                        metadata=metadata[already_insert_count :],
+                    )
+                    already_insert_count += insert_count
+                    if error != None:
+                        retry_count += 1
+                        time.sleep(WAITTING_TIME)
+                       
+                        log.info(f"Failed to insert data, try {retry_count} time")
+                        if retry_count >= LOAD_MAX_TRY_COUNT:
+                            raise error
+                    else:
+                        break
+                log.debug(f"({mp.current_process().name:16}) batch [{batch_id:3}/{num_conc_batches}], Finish inserting {len(metadata)} embeddings")
+
+                assert already_insert_count == len(metadata)
+                count += already_insert_count
             log.info(f"({mp.current_process().name:16}) Finish inserting {len(all_embeddings)} embeddings in batch {NUM_PER_BATCH}")
         return count
 
@@ -70,7 +114,7 @@ class SerialInsertRunner:
             with self.db.init():
                 self.db.ready_to_load()
             while time.perf_counter() - start_time < config.CASE_TIMEOUT_IN_SECOND:
-                count = self.insert_data(left_id=max_load_count)
+                count = self.endless_insert_data(left_id=max_load_count)
                 max_load_count += count
                 times += 1
                 log.info(f"Loaded {times} entire dataset, current max load counts={utils.numerize(max_load_count)}, {max_load_count}")
