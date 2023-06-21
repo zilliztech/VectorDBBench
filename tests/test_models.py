@@ -24,7 +24,7 @@ class TestModels:
                 db=DB.Milvus,
                 db_config=DB.Milvus.config(),
                 db_case_config=DB.Milvus.case_config_cls(index=IndexType.Flat)(),
-                case_config=CaseConfig(case_id=CaseType.PerformanceLZero),
+                case_config=CaseConfig(case_id=CaseType.Performance10M),
             ),
             metrics=Metric(),
         )

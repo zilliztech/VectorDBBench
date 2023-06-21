@@ -26,7 +26,7 @@
           "num_candidates": null
         },
         "case_config": {
-          "case_id": "Capacity Test (960 Dim Repeated)",
+          "case_id": 2,
           "custom_case": {}
         }
       },
@@ -56,7 +56,7 @@
           "num_candidates": null
         },
         "case_config": {
-          "case_id": "Capacity Test (128 Dim Repeated)",
+          "case_id": 1,
           "custom_case": {}
         }
       },
@@ -86,7 +86,7 @@
           "num_candidates": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test (1M Dataset, 768 Dim)",
+          "case_id": 5,
           "custom_case": {}
         }
       },
@@ -116,7 +116,7 @@
           "num_candidates": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)",
+          "case_id": 7,
           "custom_case": {}
         }
       },
@@ -146,7 +146,7 @@
           "num_candidates": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)",
+          "case_id": 9,
           "custom_case": {}
         }
       },
@@ -176,7 +176,7 @@
           "num_candidates": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test (10M Dataset, 768 Dim)",
+          "case_id": 4,
           "custom_case": {}
         }
       },
@@ -206,7 +206,7 @@
           "num_candidates": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 1%)",
+          "case_id": 6,
           "custom_case": {}
         }
       },
@@ -236,7 +236,7 @@
           "num_candidates": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 99%)",
+          "case_id": 8,
           "custom_case": {}
         }
       },
@@ -262,7 +262,7 @@
           "search_list": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test (1M Dataset, 768 Dim)",
+          "case_id": 5,
           "custom_case": {}
         }
       },
@@ -288,7 +288,7 @@
           "search_list": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)",
+          "case_id": 7,
           "custom_case": {}
         }
       },
@@ -314,7 +314,7 @@
           "search_list": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)",
+          "case_id": 9,
           "custom_case": {}
         }
       },
@@ -340,7 +340,7 @@
           "search_list": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test (10M Dataset, 768 Dim)",
+          "case_id": 4,
           "custom_case": {}
         }
       },
@@ -366,7 +366,7 @@
           "search_list": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 1%)",
+          "case_id": 6,
           "custom_case": {}
         }
       },
@@ -392,7 +392,7 @@
           "search_list": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 99%)",
+          "case_id": 8,
           "custom_case": {}
         }
       },
@@ -418,7 +418,7 @@
           "search_list": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test (10M Dataset, 768 Dim)",
+          "case_id": 4,
           "custom_case": {}
         }
       },
@@ -444,7 +444,7 @@
           "search_list": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 1%)",
+          "case_id": 6,
           "custom_case": {}
         }
       },
@@ -470,7 +470,7 @@
           "search_list": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 99%)",
+          "case_id": 8,
           "custom_case": {}
         }
       },
@@ -498,7 +498,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test (1M Dataset, 768 Dim)",
+          "case_id": 5,
           "custom_case": {}
         }
       },
@@ -526,7 +526,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)",
+          "case_id": 7,
           "custom_case": {}
         }
       },
@@ -554,7 +554,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)",
+          "case_id": 9,
           "custom_case": {}
         }
       },
@@ -581,7 +581,7 @@
           "metric_type": "L2"
         },
         "case_config": {
-          "case_id": "Capacity Test (960 Dim Repeated)",
+          "case_id": 2,
           "custom_case": {}
         }
       },
@@ -608,7 +608,7 @@
           "metric_type": "L2"
         },
         "case_config": {
-          "case_id": "Capacity Test (128 Dim Repeated)",
+          "case_id": 1,
           "custom_case": {}
         }
       },
@@ -635,7 +635,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Search Performance Test (1M Dataset, 768 Dim)",
+          "case_id": 5,
           "custom_case": {}
         }
       },
@@ -662,7 +662,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)",
+          "case_id": 7,
           "custom_case": {}
         }
       },
@@ -689,7 +689,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)",
+          "case_id": 9,
           "custom_case": {}
         }
       },
@@ -716,7 +716,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Search Performance Test (10M Dataset, 768 Dim)",
+          "case_id": 4,
           "custom_case": {}
         }
       },
@@ -743,7 +743,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 1%)",
+          "case_id": 6,
           "custom_case": {}
         }
       },
@@ -770,7 +770,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 99%)",
+          "case_id": 8,
           "custom_case": {}
         }
       },
@@ -797,7 +797,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Search Performance Test (10M Dataset, 768 Dim)",
+          "case_id": 4,
           "custom_case": {}
         }
       },
@@ -824,7 +824,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 1%)",
+          "case_id": 6,
           "custom_case": {}
         }
       },
@@ -851,7 +851,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 99%)",
+          "case_id": 8,
           "custom_case": {}
         }
       },
@@ -878,7 +878,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Search Performance Test (1M Dataset, 768 Dim)",
+          "case_id": 5,
           "custom_case": {}
         }
       },
@@ -905,7 +905,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)",
+          "case_id": 7,
           "custom_case": {}
         }
       },
@@ -932,7 +932,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)",
+          "case_id": 9,
           "custom_case": {}
         }
       },
@@ -960,7 +960,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Capacity Test (128 Dim Repeated)",
+          "case_id": 1,
           "custom_case": null
         }
       },
@@ -988,7 +988,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Capacity Test (960 Dim Repeated)",
+          "case_id": 2,
           "custom_case": null
         }
       },
@@ -1016,7 +1016,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Search Performance Test (10M Dataset, 768 Dim)",
+          "case_id": 4,
           "custom_case": null
         }
       },
@@ -1044,7 +1044,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 1%)",
+          "case_id": 6,
           "custom_case": null
         }
       },
@@ -1072,7 +1072,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 99%)",
+          "case_id": 8,
           "custom_case": null
         }
       },
@@ -1100,7 +1100,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Search Performance Test (1M Dataset, 768 Dim)",
+          "case_id": 5,
           "custom_case": null
         }
       },
@@ -1128,7 +1128,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)",
+          "case_id": 7,
           "custom_case": null
         }
       },
@@ -1156,7 +1156,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)",
+          "case_id": 9,
           "custom_case": null
         }
       },
@@ -1184,7 +1184,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Capacity Test (128 Dim Repeated)",
+          "case_id": 1,
           "custom_case": null
         }
       },
@@ -1212,7 +1212,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Capacity Test (960 Dim Repeated)",
+          "case_id": 2,
           "custom_case": null
         }
       },
@@ -1240,7 +1240,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Search Performance Test (1M Dataset, 768 Dim)",
+          "case_id": 5,
           "custom_case": null
         }
       },
@@ -1268,7 +1268,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)",
+          "case_id": 7,
           "custom_case": null
         }
       },
@@ -1296,7 +1296,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)",
+          "case_id": 9,
           "custom_case": null
         }
       },
@@ -1324,7 +1324,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Search Performance Test (10M Dataset, 768 Dim)",
+          "case_id": 4,
           "custom_case": null
         }
       },
@@ -1352,7 +1352,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 1%)",
+          "case_id": 6,
           "custom_case": null
         }
       },
@@ -1380,7 +1380,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 99%)",
+          "case_id": 8,
           "custom_case": null
         }
       },
@@ -1408,7 +1408,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Capacity Test (128 Dim Repeated)",
+          "case_id": 1,
           "custom_case": null
         }
       },
@@ -1436,7 +1436,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Capacity Test (960 Dim Repeated)",
+          "case_id": 2,
           "custom_case": null
         }
       },
@@ -1464,7 +1464,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Search Performance Test (1M Dataset, 768 Dim)",
+          "case_id": 5,
           "custom_case": null
         }
       },
@@ -1492,7 +1492,7 @@
           "maxConnections": 64
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)",
+          "case_id": 7,
           "custom_case": {}
         }
       },
@@ -1520,7 +1520,7 @@
           "maxConnections": 64
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)",
+          "case_id": 9,
           "custom_case": {}
         }
       },
@@ -1548,7 +1548,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Search Performance Test (10M Dataset, 768 Dim)",
+          "case_id": 4,
           "custom_case": null
         }
       },
@@ -1576,7 +1576,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 1%)",
+          "case_id": 6,
           "custom_case": null
         }
       },
@@ -1604,7 +1604,7 @@
           "maxConnections": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 99%)",
+          "case_id": 8,
           "custom_case": null
         }
       },
@@ -1631,7 +1631,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Capacity Test (128 Dim Repeated)",
+          "case_id": 1,
           "custom_case": {}
         }
       },
@@ -1658,7 +1658,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Capacity Test (960 Dim Repeated)",
+          "case_id": 2,
           "custom_case": {}
         }
       },
@@ -1685,7 +1685,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Search Performance Test (1M Dataset, 768 Dim)",
+          "case_id": 5,
           "custom_case": {}
         }
       },
@@ -1712,7 +1712,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)",
+          "case_id": 7,
           "custom_case": {}
         }
       },
@@ -1739,7 +1739,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)",
+          "case_id": 9,
           "custom_case": {}
         }
       },
@@ -1766,7 +1766,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Search Performance Test (10M Dataset, 768 Dim)",
+          "case_id": 4,
           "custom_case": {}
         }
       },
@@ -1793,7 +1793,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 1%)",
+          "case_id": 6,
           "custom_case": {}
         }
       },
@@ -1820,7 +1820,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 99%)",
+          "case_id": 8,
           "custom_case": {}
         }
       },
@@ -1847,7 +1847,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Search Performance Test (1M Dataset, 768 Dim)",
+          "case_id": 5,
           "custom_case": {}
         }
       },
@@ -1874,7 +1874,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)",
+          "case_id": 7,
           "custom_case": {}
         }
       },
@@ -1901,7 +1901,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)",
+          "case_id": 9,
           "custom_case": {}
         }
       },
@@ -1928,7 +1928,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Search Performance Test (10M Dataset, 768 Dim)",
+          "case_id": 4,
           "custom_case": {}
         }
       },
@@ -1955,7 +1955,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 1%)",
+          "case_id": 6,
           "custom_case": {}
         }
       },
@@ -1982,7 +1982,7 @@
           "metric_type": "COSINE"
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 99%)",
+          "case_id": 8,
           "custom_case": {}
         }
       },
@@ -2010,7 +2010,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Capacity Test (128 Dim Repeated)",
+          "case_id": 1,
           "custom_case": {}
         }
       },
@@ -2038,7 +2038,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Capacity Test (960 Dim Repeated)",
+          "case_id": 2,
           "custom_case": {}
         }
       },
@@ -2066,7 +2066,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test (1M Dataset, 768 Dim)",
+          "case_id": 5,
           "custom_case": {}
         }
       },
@@ -2094,7 +2094,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)",
+          "case_id": 7,
           "custom_case": {}
         }
       },
@@ -2122,7 +2122,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)",
+          "case_id": 9,
           "custom_case": {}
         }
       },
@@ -2150,7 +2150,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test (10M Dataset, 768 Dim)",
+          "case_id": 4,
           "custom_case": {}
         }
       },
@@ -2178,7 +2178,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 1%)",
+          "case_id": 6,
           "custom_case": {}
         }
       },
@@ -2206,7 +2206,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 99%)",
+          "case_id": 8,
           "custom_case": {}
         }
       },
@@ -2234,7 +2234,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test (10M Dataset, 768 Dim)",
+          "case_id": 4,
           "custom_case": {}
         }
       },
@@ -2262,7 +2262,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 1%)",
+          "case_id": 6,
           "custom_case": {}
         }
       },
@@ -2290,7 +2290,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 99%)",
+          "case_id": 8,
           "custom_case": {}
         }
       },
@@ -2318,7 +2318,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Search Performance Test (1M Dataset, 768 Dim)",
+          "case_id": 5,
           "custom_case": {}
         }
       },
@@ -2346,7 +2346,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)",
+          "case_id": 7,
           "custom_case": {}
         }
       },
@@ -2374,7 +2374,7 @@
           "ef": 100
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)",
+          "case_id": 9,
           "custom_case": {}
         }
       },
@@ -2400,7 +2400,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Search Performance Test (1M Dataset, 768 Dim)",
+          "case_id": 5,
           "custom_case": {}
         }
       },
@@ -2426,7 +2426,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)",
+          "case_id": 7,
           "custom_case": {}
         }
       },
@@ -2452,7 +2452,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)",
+          "case_id": 9,
           "custom_case": {}
         }
       },
@@ -2478,7 +2478,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Search Performance Test (10M Dataset, 768 Dim)",
+          "case_id": 4,
           "custom_case": {}
         }
       },
@@ -2504,7 +2504,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 1%)",
+          "case_id": 6,
           "custom_case": {}
         }
       },
@@ -2530,7 +2530,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 99%)",
+          "case_id": 8,
           "custom_case": {}
         }
       },
@@ -2555,7 +2555,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Search Performance Test (1M Dataset, 768 Dim)",
+          "case_id": 5,
           "custom_case": {}
         }
       },
@@ -2580,7 +2580,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)",
+          "case_id": 7,
           "custom_case": {}
         }
       },
@@ -2605,7 +2605,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)",
+          "case_id": 9,
           "custom_case": {}
         }
       },
@@ -2631,7 +2631,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Search Performance Test (10M Dataset, 768 Dim)",
+          "case_id": 4,
           "custom_case": {}
         }
       },
@@ -2657,7 +2657,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 1%)",
+          "case_id": 6,
           "custom_case": {}
         }
       },
@@ -2683,7 +2683,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 99%)",
+          "case_id": 8,
           "custom_case": {}
         }
       },
@@ -2709,7 +2709,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Capacity Test (960 Dim Repeated)",
+          "case_id": 2,
           "custom_case": {}
         }
       },
@@ -2735,7 +2735,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Capacity Test (128 Dim Repeated)",
+          "case_id": 1,
           "custom_case": {}
         }
       },
@@ -2761,7 +2761,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Search Performance Test (1M Dataset, 768 Dim)",
+          "case_id": 5,
           "custom_case": {}
         }
       },
@@ -2787,7 +2787,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)",
+          "case_id": 7,
           "custom_case": {}
         }
       },
@@ -2813,7 +2813,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)",
+          "case_id": 9,
           "custom_case": {}
         }
       },
@@ -2839,7 +2839,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Search Performance Test (10M Dataset, 768 Dim)",
+          "case_id": 4,
           "custom_case": {}
         }
       },
@@ -2865,7 +2865,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 1%)",
+          "case_id": 6,
           "custom_case": {}
         }
       },
@@ -2891,7 +2891,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 99%)",
+          "case_id": 8,
           "custom_case": {}
         }
       },
@@ -2917,7 +2917,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Capacity Test (960 Dim Repeated)",
+          "case_id": 2,
           "custom_case": {}
         }
       },
@@ -2943,7 +2943,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Capacity Test (128 Dim Repeated)",
+          "case_id": 1,
           "custom_case": {}
         }
       },
@@ -2969,7 +2969,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Search Performance Test (1M Dataset, 768 Dim)",
+          "case_id": 5,
           "custom_case": {}
         }
       },
@@ -2995,7 +2995,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)",
+          "case_id": 7,
           "custom_case": {}
         }
       },
@@ -3021,7 +3021,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)",
+          "case_id": 9,
           "custom_case": {}
         }
       },
@@ -3047,7 +3047,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Search Performance Test (10M Dataset, 768 Dim)",
+          "case_id": 4,
           "custom_case": {}
         }
       },
@@ -3073,7 +3073,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 1%)",
+          "case_id": 6,
           "custom_case": {}
         }
       },
@@ -3099,7 +3099,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 99%)",
+          "case_id": 8,
           "custom_case": {}
         }
       },
@@ -3125,7 +3125,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Capacity Test (960 Dim Repeated)",
+          "case_id": 2,
           "custom_case": {}
         }
       },
@@ -3151,7 +3151,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Capacity Test (128 Dim Repeated)",
+          "case_id": 1,
           "custom_case": {}
         }
       },
@@ -3177,7 +3177,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Search Performance Test (1M Dataset, 768 Dim)",
+          "case_id": 5,
           "custom_case": {}
         }
       },
@@ -3203,7 +3203,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)",
+          "case_id": 7,
           "custom_case": {}
         }
       },
@@ -3229,7 +3229,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)",
+          "case_id": 9,
           "custom_case": {}
         }
       },
@@ -3255,7 +3255,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Search Performance Test (10M Dataset, 768 Dim)",
+          "case_id": 4,
           "custom_case": {}
         }
       },
@@ -3281,7 +3281,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 1%)",
+          "case_id": 6,
           "custom_case": {}
         }
       },
@@ -3307,7 +3307,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 99%)",
+          "case_id": 8,
           "custom_case": {}
         }
       },
@@ -3333,7 +3333,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Search Performance Test (1M Dataset, 768 Dim)",
+          "case_id": 5,
           "custom_case": {}
         }
       },
@@ -3359,7 +3359,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)",
+          "case_id": 7,
           "custom_case": {}
         }
       },
@@ -3385,7 +3385,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)",
+          "case_id": 9,
           "custom_case": {}
         }
       },
@@ -3411,7 +3411,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Search Performance Test (10M Dataset, 768 Dim)",
+          "case_id": 4,
           "custom_case": {}
         }
       },
@@ -3437,7 +3437,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 1%)",
+          "case_id": 6,
           "custom_case": {}
         }
       },
@@ -3463,7 +3463,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 99%)",
+          "case_id": 8,
           "custom_case": {}
         }
       },
@@ -3489,7 +3489,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Search Performance Test (1M Dataset, 768 Dim)",
+          "case_id": 5,
           "custom_case": {}
         }
       },
@@ -3515,7 +3515,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)",
+          "case_id": 7,
           "custom_case": {}
         }
       },
@@ -3541,7 +3541,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)",
+          "case_id": 9,
           "custom_case": {}
         }
       },
@@ -3567,7 +3567,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Search Performance Test (10M Dataset, 768 Dim)",
+          "case_id": 4,
           "custom_case": {}
         }
       },
@@ -3593,7 +3593,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 1%)",
+          "case_id": 6,
           "custom_case": {}
         }
       },
@@ -3619,7 +3619,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 99%)",
+          "case_id": 8,
           "custom_case": {}
         }
       },
@@ -3645,7 +3645,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Search Performance Test (1M Dataset, 768 Dim)",
+          "case_id": 5,
           "custom_case": {}
         }
       },
@@ -3671,7 +3671,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)",
+          "case_id": 7,
           "custom_case": {}
         }
       },
@@ -3697,7 +3697,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)",
+          "case_id": 9,
           "custom_case": {}
         }
       },
@@ -3723,7 +3723,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Search Performance Test (10M Dataset, 768 Dim)",
+          "case_id": 4,
           "custom_case": {}
         }
       },
@@ -3749,7 +3749,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 1%)",
+          "case_id": 6,
           "custom_case": {}
         }
       },
@@ -3775,7 +3775,7 @@
           "null": null
         },
         "case_config": {
-          "case_id": "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 99%)",
+          "case_id": 8,
           "custom_case": {}
         }
       },

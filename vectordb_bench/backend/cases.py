@@ -13,39 +13,37 @@ Case = typing.TypeVar("Case")
 
 class CaseType(Enum):
     """
-    Value will be displayed in UI
-
     Example:
-        >>> c = CaseType.CapacitySDim.get()()
+        >>> case_cls = CaseType.CapacityDim128.case_cls
         >>> assert c is not None
-        >>> c.name
+        >>> CaseType.CapacityDim128.case_name
         "Capacity Test (128 Dim Repeated)"
-        >>> c.description
-        ""
     """
 
-    CapacitySDim = "Capacity Test (128 Dim Repeated)"
-    CapacityLDim = "Capacity Test (960 Dim Repeated)"
+    CapacityDim128 = 1
+    CapacityDim960 = 2
 
-    Performance100M = "Search Performance Test (100M Dataset, 768 Dim)"
-    PerformanceLZero = "Search Performance Test (10M Dataset, 768 Dim)"
-    PerformanceMZero = "Search Performance Test (1M Dataset, 768 Dim)"
+    Performance100M = 3
+    Performance10M = 4
+    Performance1M = 5
 
-    PerformanceLLow = (
-        "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 1%)"
-    )
-    PerformanceMLow = (
-        "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)"
-    )
-    PerformanceLHigh = (
-        "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 99%)"
-    )
-    PerformanceMHigh = (
-        "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)"
-    )
+    Performance10M1P = 6
+    Performance1M1P = 7
+    Performance10M99P = 8
+    Performance1M99P = 9
 
-    def get(self) -> Case:
+    Custom = 100
+
+    @property
+    def case_cls(self, custom_configs: dict | None = None) -> Case:
         return type2case.get(self)
+
+    @property
+    def case_name(self) -> str:
+        c = self.case_cls
+        if c is not None:
+            return c().name
+        raise ValueError("Case unsupported")
 
 
 class CaseLabel(Enum):
@@ -57,7 +55,7 @@ class Case(BaseModel):
     """Undifined case
 
     Fields:
-        case_id(CaseType): default 11 case type plus one custom cases.
+        case_id(CaseType): default 9 case type plus one custom cases.
         label(CaseLabel): performance or load.
         dataset(DataSet): dataset for this case runner.
         filter_rate(float | None): one of 99% | 1% | None
@@ -86,48 +84,48 @@ class Case(BaseModel):
 
 class CapacityCase(Case, BaseModel):
     label: CaseLabel = CaseLabel.Load
-    filter_rate: float | int | None = None
+    filter_rate: float | None = None
 
 
 class PerformanceCase(Case, BaseModel):
     label: CaseLabel = CaseLabel.Performance
-    filter_rate: float | int | None = None
+    filter_rate: float | None = None
 
 
-class CapacityLDimCase(CapacityCase):
-    case_id: CaseType = CaseType.CapacityLDim
+class CapacityDim960(CapacityCase):
+    case_id: CaseType = CaseType.CapacityDim960
     dataset: ds.DataSet = ds.get(ds.Name.GIST, ds.Label.SMALL)
     name: str = "Capacity Test (960 Dim Repeated)"
     description: str = """This case tests the vector database's loading capacity by repeatedly inserting large-dimension vectors (GIST 100K vectors, <b>960 dimensions</b>) until it is fully loaded.
 Number of inserted vectors will be reported."""
 
 
-class CapacitySDimCase(CapacityCase):
-    case_id: CaseType = CaseType.CapacitySDim
+class CapacityDim128(CapacityCase):
+    case_id: CaseType = CaseType.CapacityDim128
     dataset: ds.DataSet = ds.get(ds.Name.SIFT, ds.Label.SMALL)
     name: str = "Capacity Test (128 Dim Repeated)"
     description: str = """This case tests the vector database's loading capacity by repeatedly inserting small-dimension vectors (SIFT 100K vectors, <b>128 dimensions</b>) until it is fully loaded.
 Number of inserted vectors will be reported."""
 
 
-class PerformanceLZero(PerformanceCase):
-    case_id: CaseType = CaseType.PerformanceLZero
+class Performance10M(PerformanceCase):
+    case_id: CaseType = CaseType.Performance10M
     dataset: ds.DataSet = ds.get(ds.Name.Cohere, ds.Label.LARGE)
     name: str = "Search Performance Test (10M Dataset, 768 Dim)"
     description: str = """This case tests the search performance of a vector database with a large dataset (<b>Cohere 10M vectors</b>, 768 dimensions) at varying parallel levels.
 Results will show index building time, recall, and maximum QPS."""
 
 
-class PerformanceMZero(PerformanceCase):
-    case_id: CaseType = CaseType.PerformanceMZero
+class Performance1M(PerformanceCase):
+    case_id: CaseType = CaseType.Performance1M
     dataset: ds.DataSet = ds.get(ds.Name.Cohere, ds.Label.MEDIUM)
     name: str = "Search Performance Test (1M Dataset, 768 Dim)"
     description: str = """This case tests the search performance of a vector database with a medium dataset (<b>Cohere 1M vectors</b>, 768 dimensions) at varying parallel levels.
 Results will show index building time, recall, and maximum QPS."""
 
 
-class PerformanceLLow(PerformanceCase):
-    case_id: CaseType = CaseType.PerformanceLLow
+class Performance10M1P(PerformanceCase):
+    case_id: CaseType = CaseType.Performance10M1P
     filter_rate: float | int | None = 0.01
     dataset: ds.DataSet = ds.get(ds.Name.Cohere, ds.Label.LARGE)
     name: str = "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 1%)"
@@ -135,8 +133,8 @@ class PerformanceLLow(PerformanceCase):
 Results will show index building time, recall, and maximum QPS."""
 
 
-class PerformanceMLow(PerformanceCase):
-    case_id: CaseType = CaseType.PerformanceMLow
+class Performance1M1P(PerformanceCase):
+    case_id: CaseType = CaseType.Performance1M1P
     filter_rate: float | int | None = 0.01
     dataset: ds.DataSet = ds.get(ds.Name.Cohere, ds.Label.MEDIUM)
     name: str = "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)"
@@ -144,8 +142,8 @@ class PerformanceMLow(PerformanceCase):
 Results will show index building time, recall, and maximum QPS."""
 
 
-class PerformanceLHigh(PerformanceCase):
-    case_id: CaseType = CaseType.PerformanceLHigh
+class Performance10M99P(PerformanceCase):
+    case_id: CaseType = CaseType.Performance10M99P
     filter_rate: float | int | None = 0.99
     dataset: ds.DataSet = ds.get(ds.Name.Cohere, ds.Label.LARGE)
     name: str = "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 99%)"
@@ -153,8 +151,8 @@ class PerformanceLHigh(PerformanceCase):
 Results will show index building time, recall, and maximum QPS."""
 
 
-class PerformanceMHigh(PerformanceCase):
-    case_id: CaseType = CaseType.PerformanceMHigh
+class Performance1M99P(PerformanceCase):
+    case_id: CaseType = CaseType.Performance1M99P
     filter_rate: float | int | None = 0.99
     dataset: ds.DataSet = ds.get(ds.Name.Cohere, ds.Label.MEDIUM)
     name: str = "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)"
@@ -173,15 +171,15 @@ Results will show index building time, recall, and maximum QPS."""
 
 
 type2case = {
-    CaseType.CapacityLDim: CapacityLDimCase,
-    CaseType.CapacitySDim: CapacitySDimCase,
+    CaseType.CapacityDim960: CapacityDim960,
+    CaseType.CapacityDim128: CapacityDim128,
 
     CaseType.Performance100M: Performance100M,
-    CaseType.PerformanceLZero: PerformanceLZero,
-    CaseType.PerformanceMZero: PerformanceMZero,
+    CaseType.Performance10M: Performance10M,
+    CaseType.Performance1M: Performance1M,
 
-    CaseType.PerformanceLLow: PerformanceLLow,
-    CaseType.PerformanceMLow: PerformanceMLow,
-    CaseType.PerformanceLHigh: PerformanceLHigh,
-    CaseType.PerformanceMHigh: PerformanceMHigh,
+    CaseType.Performance10M1P: Performance10M1P,
+    CaseType.Performance1M1P: Performance1M1P,
+    CaseType.Performance10M99P: Performance10M99P,
+    CaseType.Performance1M99P: Performance1M99P,
 }
