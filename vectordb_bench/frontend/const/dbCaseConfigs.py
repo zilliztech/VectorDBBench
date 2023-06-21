@@ -1,61 +1,17 @@
 from enum import IntEnum
-from vectordb_bench.models import DB, CaseType, IndexType, CaseConfigParamType
-from pydantic import BaseModel
 import typing
+from pydantic import BaseModel
+from vectordb_bench.backend.cases import CaseType
+from vectordb_bench.backend.clients import DB
+from vectordb_bench.backend.clients.api import IndexType
 
-# style const
-DB_SELECTOR_COLUMNS = 6
-DB_CONFIG_SETTING_COLUMNS = 3
-CASE_CONFIG_SETTING_COLUMNS = 4
-CHECKBOX_INDENT = 30
-TASK_LABEL_INPUT_COLUMNS = 2
-CHECKBOX_MAX_COLUMNS = 4
-DB_CONFIG_INPUT_MAX_COLUMNS = 2
-CASE_CONFIG_INPUT_MAX_COLUMNS = 3
-DB_CONFIG_INPUT_WIDTH_RADIO = 2
-CASE_CONFIG_INPUT_WIDTH_RADIO = 0.98
-CASE_INTRO_RATIO = 3
+from vectordb_bench.models import CaseConfigParamType
+
 MAX_STREAMLIT_INT = (1 << 53) - 1
-SIDEBAR_CONTROL_COLUMNS = 3
-
-
-LEGEND_RECT_WIDTH = 24
-LEGEND_RECT_HEIGHT = 16
-LEGEND_TEXT_FONT_SIZE = 14
-
-PATTERN_SHAPES = ["", "+", "\\", "x", ".", "|", "/", "-"]
-
-
-def getPatternShape(i):
-    return PATTERN_SHAPES[i % len(PATTERN_SHAPES)]
-
-
-MAX_AUTO_REFRESH_COUNT = 999999
-MAX_AUTO_REFRESH_INTERVAL = 5000  # 2s
-
 
 DB_LIST = [d for d in DB]
 
-DB_TO_ICON = {
-    DB.Milvus: "https://assets.zilliz.com/milvus_c30b0d1994.png",
-    DB.ZillizCloud: "https://assets.zilliz.com/zilliz_5f4cc9b050.png",
-    DB.ElasticCloud: "https://assets.zilliz.com/elasticsearch_beffeadc29.png",
-    DB.Pinecone: "https://assets.zilliz.com/pinecone_94d8154979.png",
-    DB.QdrantCloud: "https://assets.zilliz.com/qdrant_b691674fcd.png",
-    DB.WeaviateCloud: "https://assets.zilliz.com/weaviate_4f6f171ebe.png",
-}
-
-COLOR_MAP = {
-    DB.Milvus.value: "#0DCAF0",
-    DB.ZillizCloud.value: "#0D6EFD",
-    DB.ElasticCloud.value: "#fdc613",
-    DB.Pinecone.value: "#6610F2",
-    DB.QdrantCloud.value: "#D91AD9",
-    DB.WeaviateCloud.value: "#20C997",
-}
-
 DIVIDER = "DIVIDER"
-
 CASE_LIST_WITH_DIVIDER = [
     CaseType.Performance100M,
     CaseType.PerformanceLZero,
@@ -72,7 +28,6 @@ CASE_LIST_WITH_DIVIDER = [
 ]
 
 CASE_LIST = [item for item in CASE_LIST_WITH_DIVIDER if isinstance(item, CaseType)]
-
 
 class InputType(IntEnum):
     Text = 20001
@@ -301,37 +256,5 @@ CASE_CONFIG_MAP = {
         CaseType.PerformanceMLow: ESPerformanceConfig,
         CaseType.PerformanceLHigh: ESPerformanceConfig,
         CaseType.PerformanceMHigh: ESPerformanceConfig,
-    },
-}
-
-DB_DBLABEL_TO_PRICE = {
-    DB.Milvus.value: {},
-    DB.ZillizCloud.value: {
-        "1cu-perf": 0.159,
-        "8cu-perf": 1.272,
-        "1cu-cap": 0.159,
-        "2cu-cap": 0.318,
-    },
-    DB.WeaviateCloud.value: {
-        # "sandox": 0,
-        "standard": 10.10,
-        "bus_crit": 32.60,
-    },
-    DB.ElasticCloud.value: {
-        "upTo2.5c8g": 0.4793,
-    },
-    DB.QdrantCloud.value: {
-        "0.5c4g-1node": 0.052,
-        "2c8g-1node": 0.166,
-        "4c16g-5node": 1.426,
-    },
-    DB.Pinecone.value: {
-        "s1.x1": 0.0973,
-        "s1.x2": 0.194,
-        "p1.x1": 0.0973,
-        "p2.x1": 0.146,
-        "p2.x1-8node": 1.168,
-        "p1.x1-8node": 0.779,
-        "s1.x1-2node": 0.195,
     },
 }

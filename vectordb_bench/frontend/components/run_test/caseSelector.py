@@ -1,5 +1,6 @@
-from vectordb_bench.frontend.const import *
+from vectordb_bench.frontend.const.styles import *
 from vectordb_bench.backend.cases import CaseType
+from vectordb_bench.frontend.const.dbCaseConfigs import *
 
 
 def caseSelector(st, activedDbList):

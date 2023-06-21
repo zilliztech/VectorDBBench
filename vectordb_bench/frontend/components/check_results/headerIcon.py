@@ -1,17 +1,21 @@
+from vectordb_bench.frontend.const.styles import HEADER_ICON
+
+
 def drawHeaderIcon(st):
-    st.markdown("""
+    st.markdown(
+        f"""
 <div class="headerIconContainer"></div>
 
 <style>
-.headerIconContainer {
+.headerIconContainer {{
     position: absolute;
     top: -50px;
     height: 50px;
     width: 100%;
     border-bottom: 2px solid #E8EAEE;
-    background-image: url(https://assets.zilliz.com/vdb_benchmark_db790b5387.png);
+    background-image: url({HEADER_ICON});
     background-repeat: no-repeat;
-}
+}}
 </style
 """,
         unsafe_allow_html=True,

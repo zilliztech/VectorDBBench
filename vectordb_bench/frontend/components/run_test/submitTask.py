@@ -1,5 +1,5 @@
 from datetime import datetime
-from vectordb_bench.frontend.const import *
+from vectordb_bench.frontend.const.styles import *
 from vectordb_bench.interface import benchMarkRunner
 
 

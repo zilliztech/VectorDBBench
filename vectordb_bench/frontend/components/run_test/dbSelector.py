@@ -1,5 +1,5 @@
-
-from vectordb_bench.frontend.const import *
+from vectordb_bench.frontend.const.styles import *
+from vectordb_bench.frontend.const.dbCaseConfigs import DB_LIST
 
 
 def dbSelector(st):
@@ -12,10 +12,10 @@ def dbSelector(st):
         "<div style='color: #647489; margin-bottom: 24px; margin-top: -12px;'>Choose at least one case you want to run the test for. </div>",
         unsafe_allow_html=True,
     )
-    
+
     dbContainerColumns = st.columns(DB_SELECTOR_COLUMNS, gap="small")
     dbIsActived = {db: False for db in DB_LIST}
-    
+
     # style - image; column gap; checkbox font;
     st.markdown(
         """
@@ -32,5 +32,5 @@ def dbSelector(st):
         dbIsActived[db] = column.checkbox(db.name)
         column.image(DB_TO_ICON.get(db, ""))
     activedDbList = [db for db in DB_LIST if dbIsActived[db]]
-    
+
     return activedDbList
