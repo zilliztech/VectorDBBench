@@ -99,12 +99,12 @@ class WeaviateCloud(VectorDB):
         embeddings: Iterable[list[float]],
         metadata: list[int],
         **kwargs: Any,
-    ) -> int:
+    ) -> (int, Exception):
         """Insert embeddings into Weaviate"""
         assert self.client.schema.exists(self.collection_name)
-
+        insert_count = 0
         try:
-            with self.client.batch as batch:
+            with self.client.batch as batch:               
                 batch.batch_size = len(metadata)
                 batch.dynamic = True
                 res = []
@@ -114,10 +114,11 @@ class WeaviateCloud(VectorDB):
                         class_name=self.collection_name,
                         vector=embeddings[i]
                     ))
-                return len(res)
+                    insert_count += 1
+                return (len(res), None)
         except WeaviateBaseError as e:
             log.warning(f"Failed to insert data, error: {str(e)}")
-            raise e from None
+            return (insert_count, e)
 
     def search_embedding(
         self,

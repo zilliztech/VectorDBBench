@@ -83,7 +83,7 @@ class ElasticCloud(VectorDB):
         self,
         embeddings: Iterable[list[float]],
         metadata: list[int],
-    ) -> int:
+    ) -> (int, Exception):
         """Insert the embeddings to the elasticsearch."""
         assert self.client is not None, "should self.init() first"
 
@@ -99,10 +99,10 @@ class ElasticCloud(VectorDB):
         ]
         try:
             bulk_insert_res = bulk(self.client, insert_data)
-            return bulk_insert_res[0]
+            return (bulk_insert_res[0], None)
         except Exception as e:
             log.warning(f"Failed to insert data: {self.indice} error: {str(e)}")
-            raise e from None
+            return (0, e)
 
     def search_embedding(
         self,
