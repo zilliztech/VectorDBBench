@@ -55,7 +55,7 @@ $ ruff check vectordb_bench --fix
 
 ## How does it work?
 ### Result Page
-![image](https://github.com/zilliztech/VectorDBBench/assets/105927039/66ab83c4-656e-41a8-a643-d9790faccbeb)
+![image](https://github.com/zilliztech/VectorDBBench/assets/105927039/7f5cdae7-f9f2-4a81-b2e0-e5c6268cd970)
 This is the main page of VectorDBBench, which displays the standard benchmark results we provide. Additionally, results of all tests performed by users themselves will also be shown here. We also offer the ability to select and compare results from multiple tests simultaneously.
 
 The standard benchmark results displayed here include all 9 cases that we currently support for all our clients (Milvus, Zilliz Cloud, Elastic Search, Qdrant Cloud, and Weaviate Cloud). However, as some systems may not be able to complete all the tests successfully due to issues like Out of Memory (OOM) or timeouts, not all clients are included in every case.
