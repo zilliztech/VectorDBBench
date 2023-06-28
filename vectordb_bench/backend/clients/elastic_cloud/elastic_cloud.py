@@ -1,4 +1,5 @@
 import logging
+import time
 from contextlib import contextmanager
 from typing import Iterable, Type
 from ..api import VectorDB, DBCaseConfig, DBConfig, IndexType
@@ -56,7 +57,7 @@ class ElasticCloud(VectorDB):
     def init(self) -> None:
         """connect to elasticsearch"""
         from elasticsearch import Elasticsearch
-        self.client = Elasticsearch(**self.db_config, request_timeout=30)
+        self.client = Elasticsearch(**self.db_config, request_timeout=180)
 
         yield
         # self.client.transport.close()
@@ -65,8 +66,9 @@ class ElasticCloud(VectorDB):
 
     def _create_indice(self, client) -> None:
         mappings = {
+            "_source": {"excludes": [self.vector_col_name]},
             "properties": {
-                self.id_col_name: {"type": "integer"},
+                self.id_col_name: {"type": "integer", "store": True},
                 self.vector_col_name: {
                     "dims": self.dim,
                     **self.case_config.index_param(),
@@ -137,8 +139,16 @@ class ElasticCloud(VectorDB):
         }
         size = k
         try:
-            search_res = self.client.search(index=self.indice, knn=knn, size=size)
-            res = [d["_source"][self.id_col_name] for d in search_res["hits"]["hits"]]
+            res = self.client.search(
+                index=self.indice,
+                knn=knn,
+                size=size,
+                _source=False,
+                docvalue_fields=[self.id_col_name],
+                stored_fields="_none_",
+                filter_path=[f"hits.hits.fields.{self.id_col_name}"],
+            )
+            res = [h["fields"][self.id_col_name][0] for h in res["hits"]["hits"]]
 
             return res
         except Exception as e:
@@ -147,7 +157,16 @@ class ElasticCloud(VectorDB):
 
     def optimize(self):
         """optimize will be called between insertion and search in performance cases."""
-        pass
+        assert self.client is not None, "should self.init() first"
+        self.client.indices.refresh(index=self.indice)
+        force_merge_task_id = self.client.indices.forcemerge(index=self.indice, max_num_segments=1, wait_for_completion=False)['task']
+        log.info(f"Elasticsearch force merge task id: {force_merge_task_id}")
+        SECONDS_WAITING_FOR_FORCE_MERGE_API_CALL_SEC = 30
+        while True:
+            time.sleep(SECONDS_WAITING_FOR_FORCE_MERGE_API_CALL_SEC)
+            task_status = self.client.tasks.get(task_id=force_merge_task_id)
+            if task_status['completed']:
+                return
 
     def ready_to_load(self):
         """ready_to_load will be called before load in load cases."""
