@@ -97,6 +97,17 @@ class SIFT(BaseDataset):
         50_000_000: "LARGE",
     }
 
+class OpenAI(BaseDataset):
+    name: str = "OpenAI"
+    dim: int = 1536
+    metric_type: MetricType = MetricType.COSINE
+    use_shuffled: bool = False
+    _size_label: dict = {
+        50_000: "SMALL",
+        500_000: "MEDIUM",
+        5_000_000: "LARGE",
+    }
+
 
 class DatasetManager(BaseModel):
     """Download dataset if not int the local directory. Provide data for cases.
@@ -319,6 +330,7 @@ class Dataset(Enum):
     COHERE = Cohere
     GLOVE = Glove
     SIFT = SIFT
+    OPENAI = OpenAI
 
     def get(self, size: int) -> BaseDataset:
         return self.value(size=size)
