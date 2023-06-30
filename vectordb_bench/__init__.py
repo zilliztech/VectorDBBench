@@ -20,10 +20,12 @@ class config:
     RESULTS_LOCAL_DIR = pathlib.Path(__file__).parent.joinpath("results")
 
     CAPACITY_TIMEOUT_IN_SECONDS =  24 * 3600 # 24h
+    LOAD_TIMEOUT_DEFAULT        = 2.5 * 3600 # 2.5h
     LOAD_TIMEOUT_1M             = 2.5 * 3600 # 2.5h
     LOAD_TIMEOUT_10M            =  25 * 3600 # 25h
     LOAD_TIMEOUT_100M           = 250 * 3600 # 10.41d
 
+    OPTIMIZE_TIMEOUT_DEFAULT    = 15 * 60   # 15min
     OPTIMIZE_TIMEOUT_1M         =  15 * 60   # 15min
     OPTIMIZE_TIMEOUT_10M        = 2.5 * 3600 # 2.5h
     OPTIMIZE_TIMEOUT_100M       =  25 * 3600 # 1.04d
