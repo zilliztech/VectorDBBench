@@ -7,3 +7,5 @@ __pycache__
 __MACOSX
 .DS_Store
 build/
+venv/
+.idea/

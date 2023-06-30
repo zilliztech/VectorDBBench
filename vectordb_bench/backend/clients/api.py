@@ -73,7 +73,7 @@ class VectorDB(ABC):
 
     In each process, the benchmark cases ensure VectorDB.init() calls before any other methods operations
 
-    insert_embeddings, search_embedding, and, ready_to_search will be timed for each call.
+    insert_embeddings, search_embedding, and, optimize will be timed for each call.
 
     Examples:
         >>> milvus = Milvus()
@@ -166,13 +166,14 @@ class VectorDB(ABC):
 
     # TODO: remove
     @abstractmethod
-    def ready_to_search(self):
-        """ready_to_search will be called between insertion and search in performance cases.
+    def optimize(self):
+        """optimize will be called between insertion and search in performance cases.
 
         Should be blocked until the vectorDB is ready to be tested on
         heavy performance cases.
 
-        Time(insert the dataset) + Time(ready_to_search) will be recorded as "load_duration" metric
+        Time(insert the dataset) + Time(optimize) will be recorded as "load_duration" metric
+        Optimize's execution time is limited, the limited time is based on cases.
         """
         raise NotImplementedError
 

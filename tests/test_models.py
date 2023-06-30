@@ -65,6 +65,6 @@ class TestModels:
 
     def test_test_result_display(self):
         result_dir = config.RESULTS_LOCAL_DIR
-        for json_file in result_dir.glob("*.json"):
+        for json_file in result_dir.glob("result*.json"):
             res = TestResult.read_file(json_file)
             res.display()

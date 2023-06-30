@@ -167,20 +167,21 @@ class TestResult(BaseModel):
         max_qps = max(map(len, [str(f.metrics.qps) for f in filtered_results])) + 3
         max_recall = max(map(len, [str(f.metrics.recall) for f in filtered_results])) + 3
 
-        max_db_labels = 8 if max_db_labels == 0 else max_db_labels
-        max_load_dur = 11 if max_load_dur == 0 else max_load_dur + 3
-        max_qps = 10 if max_qps == 0 else max_load_dur + 3
-        max_recall = 13 if max_recall == 0 else max_recall + 3
+        max_db_labels = 8 if max_db_labels < 8 else max_db_labels
+        max_load_dur = 11 if max_load_dur < 11 else max_load_dur
+        max_qps = 10 if max_qps < 10 else max_qps
+        max_recall = 13 if max_recall < 13 else max_recall
 
-        LENGTH = (max_db, max_db_labels, max_case, len(self.task_label), max_load_dur, max_qps, 15, max_recall, 14)
+        LENGTH = (max_db, max_db_labels, max_case, len(self.task_label), max_load_dur, max_qps, 15, max_recall, 14, 5)
 
         DATA_FORMAT = (
-            f"%-{max_db}s | %-{max_db_labels}s %-{max_case}s %-{len(self.task_label)}s "
-            f"| %-{max_load_dur}s %-{max_qps}s %-15s %-{max_recall}s %-14s"
+            f"%-{max_db}s | %-{max_db_labels}s %-{max_case}s %-{len(self.task_label)}s"
+            f" | %-{max_load_dur}s %-{max_qps}s %-15s %-{max_recall}s %-14s"
+            f" | %-5s"
         )
 
         TITLE = DATA_FORMAT % (
-            "DB", "db_label", "case", "label", "load_dur", "qps", "latency(p99)", "recall", "max_load_count")
+            "DB", "db_label", "case", "label", "load_dur", "qps", "latency(p99)", "recall", "max_load_count", "label")
         SPLIT = DATA_FORMAT%tuple(map(lambda x:"-"*x, LENGTH))
         SUMMERY_FORMAT = ("Task summery: run_id=%s, task_label=%s") % (self.run_id[:5], self.task_label)
         fmt = [SUMMERY_FORMAT, TITLE, SPLIT]
@@ -197,6 +198,7 @@ class TestResult(BaseModel):
                 f.metrics.serial_latency_p99,
                 f.metrics.recall,
                 f.metrics.max_load_count,
+                f.label.value,
             ))
 
         tmp_logger = logging.getLogger("no_color")

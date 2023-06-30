@@ -1,4 +1,5 @@
 import logging
+import psutil
 import traceback
 import concurrent
 import numpy as np
@@ -7,7 +8,7 @@ from enum import Enum, auto
 from . import utils
 from .cases import Case, CaseLabel
 from ..base import BaseModel
-from ..models import TaskConfig
+from ..models import TaskConfig, PerformanceTimeoutError
 
 from .clients import (
     api,
@@ -92,38 +93,37 @@ class CaseRunner(BaseModel):
         self._pre_run(drop_old)
 
         if self.ca.label == CaseLabel.Load:
-            return self._run_load_case()
+            return self._run_capacity_case()
         elif self.ca.label == CaseLabel.Performance:
             return self._run_perf_case(drop_old)
         else:
-            log.warning(f"unknown case type: {self.ca.label}")
-            raise ValueError(f"Unknown case type: {self.ca.label}")
+            msg = f"unknown case type: {self.ca.label}"
+            log.warning(msg)
+            raise ValueError(msg)
 
-
-    def _run_load_case(self) -> Metric:
-        """ run load cases
+    def _run_capacity_case(self) -> Metric:
+        """ run capacity cases
 
         Returns:
             Metric: the max load count
         """
         log.info("Start capacity case")
-        # datasets for load tests are quite small, can fit into memory
-        # only 1 file
-        data_df = [data_df for data_df in self.ca.dataset][0]
-
-        all_embeddings, all_metadata = np.stack(data_df["emb"]).tolist(), data_df['id'].tolist()
-        runner = SerialInsertRunner(self.db, all_embeddings, all_metadata)
         try:
+            runner = SerialInsertRunner(self.db, self.ca.dataset, self.normalize, self.ca.load_timeout)
             count = runner.run_endlessness()
-            log.info(f"load reach limit: insertion counts={count}")
-            return Metric(max_load_count=count)
         except Exception as e:
-            log.warning(f"run capacity case error: {e}")
+            log.warning(f"Failed to run capacity case, reason = {e}")
             raise e from None
-        log.info("End capacity case")
-
+        else:
+            log.info(f"Capacity case loading dataset reaches VectorDB's limit: max capacity = {count}")
+            return Metric(max_load_count=count)
 
     def _run_perf_case(self, drop_old: bool = True) -> Metric:
+        """ run performance cases
+
+        Returns:
+            Metric: load_duration, recall, serial_latency_p99, and, qps
+        """
         try:
             m = Metric()
             if drop_old:
@@ -134,38 +134,24 @@ class CaseRunner(BaseModel):
             self._init_search_runner()
             m.recall, m.serial_latency_p99 = self._serial_search()
             m.qps = self._conc_search()
-
-            log.info(f"got results: {m}")
-            return m
         except Exception as e:
-            log.warning(f"performance case run error: {e}")
+            log.warning(f"Failed to run performance case, reason = {e}")
             traceback.print_exc()
-            raise e
+            raise e from None
+        else:
+            log.info(f"Performance case got result: {m}")
+            return m
 
     @utils.time_it
     def _load_train_data(self):
         """Insert train data and get the insert_duration"""
-        for data_df in self.ca.dataset:
-            try:
-                all_metadata = data_df['id'].tolist()
-
-                emb_np = np.stack(data_df['emb'])
-                if self.normalize:
-                    log.debug("normalize the 100k train data")
-                    all_embeddings = emb_np / np.linalg.norm(emb_np, axis=1)[:, np.newaxis].tolist()
-                else:
-                    all_embeddings = emb_np.tolist()
-
-                del(emb_np)
-                log.debug(f"normalized size: {len(all_embeddings)}, {len(all_metadata)}")
-
-                runner = SerialInsertRunner(self.db, all_embeddings, all_metadata)
-                runner.run()
-            except Exception as e:
-                raise e from None
-            finally:
-                runner = None
-
+        try:
+            runner = SerialInsertRunner(self.db, self.ca.dataset, self.normalize, self.ca.load_timeout)
+            runner.run()
+        except Exception as e:
+            raise e from None
+        finally:
+            runner = None
 
     def _serial_search(self) -> tuple[float, float]:
         """Performance serial tests, search the entire test data once,
@@ -200,15 +186,20 @@ class CaseRunner(BaseModel):
     def _task(self) -> None:
         """"""
         with self.db.init():
-            self.db.ready_to_search()
+            self.db.optimize()
 
     def _optimize(self) -> float:
         with concurrent.futures.ProcessPoolExecutor(max_workers=1) as executor:
             future = executor.submit(self._task)
             try:
-                return future.result()[1]
+                return future.result(timeout=self.ca.optimize_timeout)[1]
+            except TimeoutError as e:
+                log.warning(f"VectorDB optimize timeout in {self.ca.optimize_timeout}")
+                for pid, _ in executor._processes.items():
+                    psutil.Process(pid).kill()
+                raise PerformanceTimeoutError("Performance case optimize timeout") from e
             except Exception as e:
-                log.warning(f"VectorDB ready_to_search error: {e}")
+                log.warning(f"VectorDB optimize error: {e}")
                 raise e from None
 
     def _init_search_runner(self):
