@@ -143,8 +143,8 @@ class ElasticCloud(VectorDB):
             log.warning(f"Failed to search: {self.indice} error: {str(e)}")
             raise e from None
 
-    def ready_to_search(self):
-        """ready_to_search will be called between insertion and search in performance cases."""
+    def optimize(self):
+        """optimize will be called between insertion and search in performance cases."""
         pass
 
     def ready_to_load(self):

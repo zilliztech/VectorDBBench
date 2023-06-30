@@ -2,8 +2,10 @@ import typing
 import logging
 from enum import Enum, auto
 
+from vectordb_bench import config
+from vectordb_bench.base import BaseModel
+
 from .dataset import Dataset, DatasetManager
-from ..base import BaseModel
 
 
 log = logging.getLogger(__name__)
@@ -75,6 +77,9 @@ class Case(BaseModel):
     description: str
     dataset: DatasetManager
 
+    load_timeout: float | int
+    optimize_timeout: float | int | None
+
     filter_rate: float | None
 
     @property
@@ -92,6 +97,8 @@ class Case(BaseModel):
 class CapacityCase(Case, BaseModel):
     label: CaseLabel = CaseLabel.Load
     filter_rate: float | None = None
+    load_timeout: float | int = config.CAPACITY_TIMEOUT_IN_SECONDS
+    optimize_timeout: float | int | None = None
 
 
 class PerformanceCase(Case, BaseModel):
@@ -121,6 +128,8 @@ class Performance10M(PerformanceCase):
     name: str = "Search Performance Test (10M Dataset, 768 Dim)"
     description: str = """This case tests the search performance of a vector database with a large dataset (<b>Cohere 10M vectors</b>, 768 dimensions) at varying parallel levels.
 Results will show index building time, recall, and maximum QPS."""
+    load_timeout: float | int = config.LOAD_TIMEOUT_10M
+    optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_10M
 
 
 class Performance1M(PerformanceCase):
@@ -129,6 +138,8 @@ class Performance1M(PerformanceCase):
     name: str = "Search Performance Test (1M Dataset, 768 Dim)"
     description: str = """This case tests the search performance of a vector database with a medium dataset (<b>Cohere 1M vectors</b>, 768 dimensions) at varying parallel levels.
 Results will show index building time, recall, and maximum QPS."""
+    load_timeout: float | int = config.LOAD_TIMEOUT_1M
+    optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_1M
 
 
 class Performance10M1P(PerformanceCase):
@@ -138,6 +149,8 @@ class Performance10M1P(PerformanceCase):
     name: str = "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 1%)"
     description: str = """This case tests the search performance of a vector database with a large dataset (<b>Cohere 10M vectors</b>, 768 dimensions) under a low filtering rate (<b>1% vectors</b>), at varying parallel levels.
 Results will show index building time, recall, and maximum QPS."""
+    load_timeout: float | int = config.LOAD_TIMEOUT_10M
+    optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_10M
 
 
 class Performance1M1P(PerformanceCase):
@@ -147,6 +160,8 @@ class Performance1M1P(PerformanceCase):
     name: str = "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)"
     description: str = """This case tests the search performance of a vector database with a medium dataset (<b>Cohere 1M vectors</b>, 768 dimensions) under a low filtering rate (<b>1% vectors</b>), at varying parallel levels.
 Results will show index building time, recall, and maximum QPS."""
+    load_timeout: float | int = config.LOAD_TIMEOUT_1M
+    optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_1M
 
 
 class Performance10M99P(PerformanceCase):
@@ -156,6 +171,8 @@ class Performance10M99P(PerformanceCase):
     name: str = "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 99%)"
     description: str = """This case tests the search performance of a vector database with a large dataset (<b>Cohere 10M vectors</b>, 768 dimensions) under a high filtering rate (<b>99% vectors</b>), at varying parallel levels.
 Results will show index building time, recall, and maximum QPS."""
+    load_timeout: float | int = config.LOAD_TIMEOUT_10M
+    optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_10M
 
 
 class Performance1M99P(PerformanceCase):
@@ -165,6 +182,8 @@ class Performance1M99P(PerformanceCase):
     name: str = "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)"
     description: str = """This case tests the search performance of a vector database with a medium dataset (<b>Cohere 1M vectors</b>, 768 dimensions) under a high filtering rate (<b>99% vectors</b>), at varying parallel levels.
 Results will show index building time, recall, and maximum QPS."""
+    load_timeout: float | int = config.LOAD_TIMEOUT_1M
+    optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_1M
 
 
 
@@ -175,6 +194,8 @@ class Performance100M(PerformanceCase):
     name: str = "Search Performance Test (100M Dataset, 768 Dim)"
     description: str = """This case tests the search performance of a vector database with a large 100M dataset (<b>LAION 100M vectors</b>, 768 dimensions), at varying parallel levels.
 Results will show index building time, recall, and maximum QPS."""
+    load_timeout: float | int = config.LOAD_TIMEOUT_100M
+    optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_100M
 
 
 type2case = {

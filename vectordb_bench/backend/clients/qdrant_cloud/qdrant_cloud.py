@@ -74,7 +74,7 @@ class QdrantCloud(VectorDB):
         pass
 
 
-    def ready_to_search(self):
+    def optimize(self):
         assert self.qdrant_client, "Please call self.init() before"
         # wait for vectors to be fully indexed
         SECONDS_WAITING_FOR_INDEXING_API_CALL = 5

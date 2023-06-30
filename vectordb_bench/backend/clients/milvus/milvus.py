@@ -53,7 +53,7 @@ class Milvus(VectorDB):
             log.info(f"{self.name} create collection: {self.collection_name}")
 
             # Create the collection
-            coll = Collection(
+            Collection(
                 name=self.collection_name,
                 schema=CollectionSchema(fields),
                 consistency_level="Session",
@@ -108,6 +108,14 @@ class Milvus(VectorDB):
     def _optimize(self):
         log.info(f"{self.name} optimizing before search")
         try:
+            self.col.load()
+        except Exception as e:
+            log.warning(f"{self.name} optimize error: {e}")
+            raise e from None
+
+    def _post_insert(self):
+        log.info(f"{self.name} post insert before optimize")
+        try:
             self.col.flush()
             self.col.compact()
             self.col.wait_for_compaction_completed()
@@ -119,10 +127,6 @@ class Milvus(VectorDB):
                 index_name=self._index_name,
             )
             utility.wait_for_index_building_complete(self.collection_name)
-            self.col.load()
-            #  self.col.load(_refresh=True)
-            #  utility.wait_for_loading_complete(self.collection_name)
-            #  import time; time.sleep(10)
         except Exception as e:
             log.warning(f"{self.name} optimize error: {e}")
             raise e from None
@@ -132,7 +136,7 @@ class Milvus(VectorDB):
         self._pre_load(self.col)
         pass
 
-    def ready_to_search(self):
+    def optimize(self):
         assert self.col, "Please call self.init() before"
         self._optimize()
 
@@ -157,6 +161,8 @@ class Milvus(VectorDB):
                 ]
                 res = self.col.insert(insert_data, **kwargs)
                 insert_count += len(res.primary_keys)
+            if kwargs.get("last_batch"):
+                self._post_insert()
         except MilvusException as e:
             log.warning("Failed to insert data")
             return (insert_count, e)

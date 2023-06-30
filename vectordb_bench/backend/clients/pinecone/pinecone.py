@@ -69,7 +69,7 @@ class Pinecone(VectorDB):
     def ready_to_load(self):
         pass
 
-    def ready_to_search(self):
+    def optimize(self):
         pass
 
     def insert_embeddings(

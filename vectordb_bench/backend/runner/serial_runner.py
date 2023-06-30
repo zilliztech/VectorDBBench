@@ -4,77 +4,90 @@ import traceback
 import concurrent
 import multiprocessing as mp
 import math
+import psutil
+
 import numpy as np
 import pandas as pd
 
 from ..clients import api
 from ...metric import calc_recall
-from ...models import LoadTimeoutError
+from ...models import LoadTimeoutError, PerformanceTimeoutError
 from .. import utils
 from ... import config
+from vectordb_bench.backend.dataset import DatasetManager
 
 NUM_PER_BATCH = config.NUM_PER_BATCH
-LOAD_TIMEOUT = 24 * 60 * 60
 LOAD_MAX_TRY_COUNT = 10
 WAITTING_TIME = 60
 
 log = logging.getLogger(__name__)
 
-
 class SerialInsertRunner:
-    def __init__(self, db: api.VectorDB, train_emb: list[list[float]], train_id: list[int]):
-        log.debug(f"Dataset shape: {len(train_emb)}")
+    def __init__(self, db: api.VectorDB, dataset: DatasetManager, normalize: bool, timeout: float | None = None):
+        self.timeout = timeout if isinstance(timeout, (int, float)) else None
+        self.dataset = dataset
         self.db = db
-        self.shared_emb = train_emb
-        self.train_id = train_id
+        self.normalize = normalize
 
-        self.seq_batches = math.ceil(len(train_emb)/NUM_PER_BATCH)
+    def task(self):
+        count = 0
+        for data_df in self.dataset:
+            all_metadata = data_df['id'].tolist()
 
-    def insert_data(self, left_id: int = 0) -> int:
+            emb_np = np.stack(data_df['emb'])
+            if self.normalize:
+                log.debug("normalize the 100k train data")
+                all_embeddings = emb_np / np.linalg.norm(emb_np, axis=1)[:, np.newaxis].tolist()
+            else:
+                all_embeddings = emb_np.tolist()
+            del(emb_np)
+            log.debug(f"batch dataset size: {len(all_embeddings)}, {len(all_metadata)}")
+
+            last = self.dataset.data.size - count == len(all_metadata)
+            count += self._insert_data(self, all_embeddings, all_metadata, last)
+
+
+    def _insert_data(self, db: api.VectorDB, all_embeddings: list[list[float]], all_metadata: list[int], last: bool) -> int:
+        NUM_BATCHES = math.ceil(len(all_embeddings)/NUM_PER_BATCH)
+
         with self.db.init():
-            all_embeddings = self.shared_emb
-
-            # unique id for endlessness insertion
-            all_metadata = [i+left_id for i in self.train_id]
-
-            num_conc_batches = math.ceil(len(all_embeddings)/NUM_PER_BATCH)
             log.info(f"({mp.current_process().name:16}) Start inserting {len(all_embeddings)} embeddings in batch {NUM_PER_BATCH}")
             count = 0
-            for batch_id in range(self.seq_batches):
+            for batch_id in range(NUM_BATCHES):
                 metadata = all_metadata[batch_id*NUM_PER_BATCH: (batch_id+1)*NUM_PER_BATCH]
                 embeddings = all_embeddings[batch_id*NUM_PER_BATCH: (batch_id+1)*NUM_PER_BATCH]
 
-                log.debug(f"({mp.current_process().name:16}) batch [{batch_id:3}/{num_conc_batches}], Start inserting {len(metadata)} embeddings")
+                last_batch = last and (batch_id == NUM_BATCHES - 1)
+                log.debug(f"({mp.current_process().name:16}) batch [{batch_id:3}/{NUM_BATCHES}], Start inserting {len(metadata)} embeddings")
                 insert_count, error = self.db.insert_embeddings(
                     embeddings=embeddings,
                     metadata=metadata,
+                    last_batch=last_batch,
                 )
                 if error is not None:
                     raise error
-                log.debug(f"({mp.current_process().name:16}) batch [{batch_id:3}/{num_conc_batches}], Finish inserting {len(metadata)} embeddings")
 
+                log.debug(f"({mp.current_process().name:16}) batch [{batch_id:3}/{NUM_BATCHES}], Finish inserting {len(metadata)} embeddings")
                 assert insert_count == len(metadata)
                 count += insert_count
             log.info(f"({mp.current_process().name:16}) Finish inserting {len(all_embeddings)} embeddings in batch {NUM_PER_BATCH}")
         return count
 
-    def endless_insert_data(self, left_id: int = 0) -> int:
+    def endless_insert_data(self, all_embeddings, all_metadata, left_id: int = 0) -> int:
         with self.db.init():
-            all_embeddings = self.shared_emb
-
             # unique id for endlessness insertion
-            all_metadata = [i+left_id for i in self.train_id]
+            all_metadata = [i+left_id for i in all_metadata]
 
-            num_conc_batches = math.ceil(len(all_embeddings)/NUM_PER_BATCH)
+            NUM_BATCHES = math.ceil(len(all_embeddings)/NUM_PER_BATCH)
             log.info(f"({mp.current_process().name:16}) Start inserting {len(all_embeddings)} embeddings in batch {NUM_PER_BATCH}")
             count = 0
-            for batch_id in range(self.seq_batches):
+            for batch_id in range(NUM_BATCHES):
                 retry_count = 0
                 already_insert_count = 0
                 metadata = all_metadata[batch_id*NUM_PER_BATCH : (batch_id+1)*NUM_PER_BATCH]
                 embeddings = all_embeddings[batch_id*NUM_PER_BATCH : (batch_id+1)*NUM_PER_BATCH]
 
-                log.debug(f"({mp.current_process().name:16}) batch [{batch_id:3}/{num_conc_batches}], Start inserting {len(metadata)} embeddings")
+                log.debug(f"({mp.current_process().name:16}) batch [{batch_id:3}/{NUM_BATCHES}], Start inserting {len(metadata)} embeddings")
                 while retry_count < LOAD_MAX_TRY_COUNT:
                     insert_count, error = self.db.insert_embeddings(
                         embeddings=embeddings[already_insert_count :],
@@ -90,7 +103,7 @@ class SerialInsertRunner:
                             raise error
                     else:
                         break
-                log.debug(f"({mp.current_process().name:16}) batch [{batch_id:3}/{num_conc_batches}], Finish inserting {len(metadata)} embeddings")
+                log.debug(f"({mp.current_process().name:16}) batch [{batch_id:3}/{NUM_BATCHES}], Finish inserting {len(metadata)} embeddings")
 
                 assert already_insert_count == len(metadata)
                 count += already_insert_count
@@ -101,30 +114,46 @@ class SerialInsertRunner:
     def _insert_all_batches(self) -> int:
         """Performance case only"""
         with concurrent.futures.ProcessPoolExecutor(mp_context=mp.get_context('spawn'), max_workers=1) as executor:
-            future = executor.submit(self.insert_data)
-            count = future.result()
-            return count
+            future = executor.submit(self.task)
+            try:
+                count = future.result(timeout=self.timeout)
+            except TimeoutError as e:
+                msg = f"VectorDB load dataset timeout in {self.timeout}"
+                log.warning(msg)
+                for pid, _ in executor._processes.items():
+                    psutil.Process(pid).kill()
+                raise PerformanceTimeoutError(msg) from e
+            except Exception as e:
+                log.warning(f"VectorDB optimize error: {e}")
+                raise e from None
+            else:
+                return count
 
     def run_endlessness(self) -> int:
         """run forever util DB raises exception or crash"""
+        # datasets for load tests are quite small, can fit into memory
+        # only 1 file
+        data_df = [data_df for data_df in self.dataset][0]
+        all_embeddings, all_metadata = np.stack(data_df["emb"]).tolist(), data_df['id'].tolist()
+
         start_time = time.perf_counter()
         max_load_count, times = 0, 0
         try:
             with self.db.init():
                 self.db.ready_to_load()
-            while time.perf_counter() - start_time < config.CASE_TIMEOUT_IN_SECOND:
-                count = self.endless_insert_data(left_id=max_load_count)
+            while time.perf_counter() - start_time < self.timeout:
+                count = self.endless_insert_data(all_embeddings, all_metadata, left_id=max_load_count)
                 max_load_count += count
                 times += 1
                 log.info(f"Loaded {times} entire dataset, current max load counts={utils.numerize(max_load_count)}, {max_load_count}")
-            raise LoadTimeoutError("capacity case load timeout and stop")
-        except LoadTimeoutError as e:
-            log.info("load timetout, stop the load case")
-            raise e from None
         except Exception as e:
             log.info(f"Capacity case load reach limit, insertion counts={utils.numerize(max_load_count)}, {max_load_count}, err={e}")
             traceback.print_exc()
             return max_load_count
+        else:
+            msg = f"capacity case load timeout in {self.timeout}s"
+            log.info(msg)
+            raise LoadTimeoutError(msg)
 
     def run(self) -> int:
         count, dur = self._insert_all_batches()
