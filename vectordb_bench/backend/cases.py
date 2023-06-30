@@ -34,6 +34,10 @@ class CaseType(Enum):
     Performance10M99P = 8
     Performance1M99P = 9
 
+    Performance50K = 10
+    Performance500K = 11
+    Performance5M = 12
+
     Custom = 100
 
     @property
@@ -186,7 +190,6 @@ Results will show index building time, recall, and maximum QPS."""
     optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_1M
 
 
-
 class Performance100M(PerformanceCase):
     case_id: CaseType = CaseType.Performance100M
     filter_rate: float | int | None = None
@@ -196,6 +199,33 @@ class Performance100M(PerformanceCase):
 Results will show index building time, recall, and maximum QPS."""
     load_timeout: float | int = config.LOAD_TIMEOUT_100M
     optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_100M
+
+
+class Performance50K(PerformanceCase):
+    case_id: CaseType = CaseType.Performance50K
+    filter_rate: float | int | None = None
+    dataset: DatasetManager = Dataset.OPENAI.manager(50_000)
+    name: str = "Search Performance Test (50K Dataset, 1536 Dim)"
+    description: str = """This case tests the search performance of a vector database with a medium 50K dataset (<b>OpenAI 50K vectors</b>, 1536 dimensions), at varying parallel levels.
+Results will show index building time, recall, and maximum QPS."""
+
+
+class Performance500K(PerformanceCase):
+    case_id: CaseType = CaseType.Performance500K
+    filter_rate: float | int | None = None
+    dataset: DatasetManager = Dataset.OPENAI.manager(500_000)
+    name: str = "Search Performance Test (500K Dataset, 1536 Dim)"
+    description: str = """This case tests the search performance of a vector database with a medium 500K dataset (<b>OpenAI 500K vectors</b>, 1536 dimensions), at varying parallel levels.
+Results will show index building time, recall, and maximum QPS."""
+
+
+class Performance5M(PerformanceCase):
+    case_id: CaseType = CaseType.Performance5M
+    filter_rate: float | int | None = None
+    dataset: DatasetManager = Dataset.OPENAI.manager(5_000_000)
+    name: str = "Search Performance Test (5M Dataset, 1536 Dim)"
+    description: str = """This case tests the search performance of a vector database with a medium 5M dataset (<b>OpenAI 5M vectors</b>, 1536 dimensions), at varying parallel levels.
+Results will show index building time, recall, and maximum QPS."""
 
 
 type2case = {
@@ -210,4 +240,8 @@ type2case = {
     CaseType.Performance1M1P: Performance1M1P,
     CaseType.Performance10M99P: Performance10M99P,
     CaseType.Performance1M99P: Performance1M99P,
+
+    CaseType.Performance50K: Performance50K,
+    CaseType.Performance500K: Performance500K,
+    CaseType.Performance5M: Performance5M,
 }
