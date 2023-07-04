@@ -7,13 +7,14 @@ Usage:
 import os
 import logging
 import pathlib
-import math
 from hashlib import md5
 from enum import Enum
 import s3fs
 import pandas as pd
 from tqdm import tqdm
 from pydantic import validator, PrivateAttr
+import polars as pl
+from pyarrow.parquet import ParquetFile
 
 from ..base import BaseModel
 from .. import config
@@ -88,9 +89,10 @@ class Glove(BaseDataset):
 class SIFT(BaseDataset):
     name: str = "SIFT"
     dim: int = 128
-    metric_type: MetricType = MetricType.COSINE
+    metric_type: MetricType = MetricType.L2
     use_shuffled: bool = False
     _size_label: dict = {
+
         500_000: "SMALL",
         5_000_000: "MEDIUM",
         50_000_000: "LARGE",
@@ -264,52 +266,49 @@ class DatasetManager(BaseModel):
 
     def _read_file(self, file_name: str) -> pd.DataFrame:
         """read one file from disk into memory"""
-        import pyarrow.parquet as pq
-
+        log.info(f"Read the entire file into memory: {file_name}")
         p = pathlib.Path(self.data_dir, file_name)
-        log.info(f"reading file into memory: {p}")
         if not p.exists():
             log.warning(f"No such file: {p}")
             return pd.DataFrame()
-        data = pq.read_table(p)
-        df = data.to_pandas()
-        return df
+
+        return pl.read_parquet(p)
 
 
 class DataSetIterator:
     def __init__(self, dataset: DatasetManager):
         self._ds = dataset
         self._idx = 0  # file number
-        self._curr: pd.DataFrame | None = None
+        self._cur = None
         self._sub_idx = [0 for i in range(len(self._ds.train_files))] # iter num for each file
+
+    def _get_iter(self, file_name: str):
+        p = pathlib.Path(self._ds.data_dir, file_name)
+        log.info(f"Get iterator for {p.name}")
+        if not p.exists():
+            raise IndexError(f"No such file {p}")
+            log.warning(f"No such file: {p}")
+        return ParquetFile(p).iter_batches(config.NUM_PER_BATCH)
 
     def __next__(self) -> pd.DataFrame:
         """return the data in the next file of the training list"""
         if self._idx < len(self._ds.train_files):
-            _sub = self._sub_idx[self._idx]
-            if _sub == 0 and self._idx == 0: # init
+            if self._cur is None:
                 file_name = self._ds.train_files[self._idx]
-                self._curr = self._ds._read_file(file_name)
-                self._iter_num = math.ceil(self._curr.shape[0]/100_000)
+                self._cur = self._get_iter(file_name)
 
-            if _sub == self._iter_num:
+            try:
+                return next(self._cur).to_pandas()
+            except StopIteration:
                 if self._idx == len(self._ds.train_files) - 1:
-                    self._curr = None
-                    raise StopIteration
-                else:
-                    self._idx += 1
-                    _sub = self._sub_idx[self._idx]
+                    raise StopIteration from None
 
-                    self._curr = None
-                    file_name = self._ds.train_files[self._idx]
-                    self._curr = self._ds._read_file(file_name)
-
-            sub_df = self._curr[_sub*100_000: (_sub+1)*100_000]
-            self._sub_idx[self._idx] += 1
-            log.info(f"Get the [{_sub+1}/{self._iter_num}] batch of {self._idx+1}/{len(self._ds.train_files)} train file")
-            return sub_df
-        self._curr = None
+                self._idx += 1
+                file_name = self._ds.train_files[self._idx]
+                self._cur = self._get_iter(file_name)
+                return next(self._cur).to_pandas()
         raise StopIteration
+
 
 class Dataset(Enum):
     """

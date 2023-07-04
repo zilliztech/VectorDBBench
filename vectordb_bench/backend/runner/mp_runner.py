@@ -102,7 +102,7 @@ class MultiProcessingSearchRunner:
 
                         with cond:
                             cond.notify_all()
-                            log.info(f"Syncing all process and start concurency search, concurency={conc}")
+                            log.info(f"Syncing all process and start concurrency search, concurrency={conc}")
 
                         start = time.perf_counter()
                         all_count = sum([r.result()[0] for r in future_iter])
@@ -113,9 +113,9 @@ class MultiProcessingSearchRunner:
 
                 if qps > max_qps:
                     max_qps = qps
-                    log.info(f"update largest qps with concurrency {conc}: current max_qps={max_qps}")
+                    log.info(f"Update largest qps with concurrency {conc}: current max_qps={max_qps}")
         except Exception as e:
-            log.warning(f"fail to search all concurrencies: {self.concurrencies}, max_qps before failure={max_qps}, reason={e}")
+            log.warning(f"Fail to search all concurrencies: {self.concurrencies}, max_qps before failure={max_qps}, reason={e}")
             traceback.print_exc()
 
             # No results available, raise exception
