@@ -130,6 +130,11 @@ class CaseRunner(BaseModel):
                 _, load_dur = self._load_train_data()
                 build_dur = self._optimize()
                 m.load_duration = round(load_dur+build_dur, 4)
+                log.info(
+                    f"Finish loading the entire dataset into VectorDB,"
+                    f" insert_duration={load_dur}, optimize_duration={build_dur}"
+                    f" load_duration(insert + optimize) = {m.load_duration}"
+                )
 
             self._init_search_runner()
             m.recall, m.serial_latency_p99 = self._serial_search()

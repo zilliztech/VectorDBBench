@@ -37,6 +37,7 @@ dependencies = [
     "scikit-learn",
     "s3fs",
     "psutil",
+    "polars",
 ]
 dynamic = ["version"]
 

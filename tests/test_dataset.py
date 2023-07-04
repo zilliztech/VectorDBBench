@@ -27,3 +27,10 @@ class TestDataSet:
         coheres = [Dataset.COHERE.manager(i) for i in [100_000, 1_000_000, 10_000_000]]
         for t in coheres:
             t._validate_local_file()
+
+    def test_iter_cohere(self):
+        cohere_10m = Dataset.COHERE.manager(10_000_000)
+        cohere_10m.prepare(False)
+        for i in cohere_10m:
+            log.debug(i.head(1))
+

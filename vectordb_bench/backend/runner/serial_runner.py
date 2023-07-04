@@ -29,49 +29,39 @@ class SerialInsertRunner:
         self.db = db
         self.normalize = normalize
 
-    def task(self):
+    def task(self) -> int:
         count = 0
-        for data_df in self.dataset:
-            all_metadata = data_df['id'].tolist()
-
-            emb_np = np.stack(data_df['emb'])
-            if self.normalize:
-                log.debug("normalize the 100k train data")
-                all_embeddings = emb_np / np.linalg.norm(emb_np, axis=1)[:, np.newaxis].tolist()
-            else:
-                all_embeddings = emb_np.tolist()
-            del(emb_np)
-            log.debug(f"batch dataset size: {len(all_embeddings)}, {len(all_metadata)}")
-
-            last = self.dataset.data.size - count == len(all_metadata)
-            count += self._insert_data(self, all_embeddings, all_metadata, last)
-
-
-    def _insert_data(self, db: api.VectorDB, all_embeddings: list[list[float]], all_metadata: list[int], last: bool) -> int:
-        NUM_BATCHES = math.ceil(len(all_embeddings)/NUM_PER_BATCH)
-
         with self.db.init():
-            log.info(f"({mp.current_process().name:16}) Start inserting {len(all_embeddings)} embeddings in batch {NUM_PER_BATCH}")
-            count = 0
-            for batch_id in range(NUM_BATCHES):
-                metadata = all_metadata[batch_id*NUM_PER_BATCH: (batch_id+1)*NUM_PER_BATCH]
-                embeddings = all_embeddings[batch_id*NUM_PER_BATCH: (batch_id+1)*NUM_PER_BATCH]
+            log.info(f"({mp.current_process().name:16}) Start inserting embeddings in batch {config.NUM_PER_BATCH}")
+            start = time.perf_counter()
+            for data_df in self.dataset:
+                all_metadata = data_df['id'].tolist()
 
-                last_batch = last and (batch_id == NUM_BATCHES - 1)
-                log.debug(f"({mp.current_process().name:16}) batch [{batch_id:3}/{NUM_BATCHES}], Start inserting {len(metadata)} embeddings")
+                emb_np = np.stack(data_df['emb'])
+                if self.normalize:
+                    log.debug("normalize the 100k train data")
+                    all_embeddings = emb_np / np.linalg.norm(emb_np, axis=1)[:, np.newaxis].tolist()
+                else:
+                    all_embeddings = emb_np.tolist()
+                del(emb_np)
+                log.debug(f"batch dataset size: {len(all_embeddings)}, {len(all_metadata)}")
+
+                last_batch = self.dataset.data.size - count == len(all_metadata)
                 insert_count, error = self.db.insert_embeddings(
-                    embeddings=embeddings,
-                    metadata=metadata,
+                    embeddings=all_embeddings,
+                    metadata=all_metadata,
                     last_batch=last_batch,
                 )
                 if error is not None:
                     raise error
 
-                log.debug(f"({mp.current_process().name:16}) batch [{batch_id:3}/{NUM_BATCHES}], Finish inserting {len(metadata)} embeddings")
-                assert insert_count == len(metadata)
+                assert insert_count == len(all_metadata)
                 count += insert_count
-            log.info(f"({mp.current_process().name:16}) Finish inserting {len(all_embeddings)} embeddings in batch {NUM_PER_BATCH}")
-        return count
+                if count % 100_000 == 0:
+                    log.info(f"({mp.current_process().name:16}) Loaded {count} embeddings into VectorDB")
+
+            log.info(f"({mp.current_process().name:16}) Finish loading all dataset into VectorDB, dur={time.perf_counter()-start}")
+            return count
 
     def endless_insert_data(self, all_embeddings, all_metadata, left_id: int = 0) -> int:
         with self.db.init():
@@ -185,7 +175,7 @@ class SerialSearchRunner:
             test_data, ground_truth = args
 
             log.debug(f"test dataset size: {len(test_data)}")
-            log.info(f"ground truth size: {ground_truth.columns}, shape: {ground_truth.shape}")
+            log.debug(f"ground truth size: {ground_truth.columns}, shape: {ground_truth.shape}")
 
             latencies, recalls = [], []
             for idx, emb in enumerate(test_data):
