@@ -6,7 +6,7 @@ from contextlib import contextmanager
 from typing import Any, Type
 
 from ..api import VectorDB, DBConfig, DBCaseConfig, EmptyDBCaseConfig, IndexType
-from .config import QdrantConfig
+from .config import QdrantConfig, QdrantIndexConfig
 from qdrant_client.http.models import (
     CollectionStatus,
     Distance,
@@ -55,7 +55,7 @@ class QdrantCloud(VectorDB):
 
     @classmethod
     def case_config_cls(cls, index_type: IndexType | None = None) -> Type[DBCaseConfig]:
-        return EmptyDBCaseConfig
+        return QdrantIndexConfig
 
     @contextmanager
     def init(self) -> None:
@@ -97,7 +97,7 @@ class QdrantCloud(VectorDB):
         try:
             qdrant_client.create_collection(
                 collection_name=self.collection_name,
-                vectors_config=VectorParams(size=dim, distance=Distance.EUCLID)
+                vectors_config=VectorParams(size=dim, distance=self.case_config.index_param()["distance"])
             )
 
             qdrant_client.create_payload_index(
