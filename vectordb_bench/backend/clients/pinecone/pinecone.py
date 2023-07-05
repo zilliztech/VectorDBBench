@@ -2,7 +2,7 @@
 
 import logging
 from contextlib import contextmanager
-from typing import Any, Type
+from typing import Type
 
 from ..api import VectorDB, DBConfig, DBCaseConfig, EmptyDBCaseConfig, IndexType
 from .config import PineconeConfig
@@ -20,6 +20,7 @@ class Pinecone(VectorDB):
         db_config: dict,
         db_case_config: DBCaseConfig,
         drop_old: bool = False,
+        **kwargs,
     ):
         """Initialize wrapper around the milvus vector database."""
         self.index_name = db_config["index_name"]
@@ -76,6 +77,7 @@ class Pinecone(VectorDB):
         self,
         embeddings: list[list[float]],
         metadata: list[int],
+        **kwargs,
     ) -> (int, Exception):
         assert len(embeddings) == len(metadata)
         insert_count = 0
@@ -99,7 +101,6 @@ class Pinecone(VectorDB):
         k: int = 100,
         filters: dict | None = None,
         timeout: int | None = None,
-        **kwargs: Any,
     ) -> list[tuple[int, float]]:
         if filters is None:
             pinecone_filters = {}

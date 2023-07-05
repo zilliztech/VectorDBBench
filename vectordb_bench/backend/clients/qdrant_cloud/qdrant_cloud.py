@@ -3,13 +3,12 @@
 import logging
 import time
 from contextlib import contextmanager
-from typing import Any, Type
+from typing import Type
 
-from ..api import VectorDB, DBConfig, DBCaseConfig, EmptyDBCaseConfig, IndexType
+from ..api import VectorDB, DBConfig, DBCaseConfig, IndexType
 from .config import QdrantConfig, QdrantIndexConfig
 from qdrant_client.http.models import (
     CollectionStatus,
-    Distance,
     VectorParams,
     PayloadSchemaType,
     Batch,
@@ -32,6 +31,7 @@ class QdrantCloud(VectorDB):
         db_case_config: DBCaseConfig,
         collection_name: str = "QdrantCloudCollection",
         drop_old: bool = False,
+        **kwargs,
     ):
         """Initialize wrapper around the QdrantCloud vector database."""
         self.db_config = db_config
@@ -116,7 +116,7 @@ class QdrantCloud(VectorDB):
         self,
         embeddings: list[list[float]],
         metadata: list[int],
-        **kwargs: Any,
+        **kwargs,
     ) -> (int, Exception):
         """Insert embeddings into Milvus. should call self.init() first"""
         assert self.qdrant_client is not None
@@ -138,7 +138,6 @@ class QdrantCloud(VectorDB):
         k: int = 100,
         filters: dict | None = None,
         timeout: int | None = None,
-        **kwargs: Any,
     ) -> list[int]:
         """Perform a search on a query embedding and return results with score.
         Should call self.init() first.

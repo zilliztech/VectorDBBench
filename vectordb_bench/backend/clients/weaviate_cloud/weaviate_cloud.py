@@ -1,7 +1,7 @@
 """Wrapper around the Weaviate vector database over VectorDB"""
 
 import logging
-from typing import Any, Iterable, Type
+from typing import Iterable, Type
 from contextlib import contextmanager
 
 from weaviate.exceptions import WeaviateBaseError
@@ -21,6 +21,7 @@ class WeaviateCloud(VectorDB):
         db_case_config: DBCaseConfig,
         collection_name: str = "VectorDBBenchCollection",
         drop_old: bool = False,
+        **kwargs,
     ):
         """Initialize wrapper around the weaviate vector database."""
         self.db_config = db_config
@@ -98,13 +99,13 @@ class WeaviateCloud(VectorDB):
         self,
         embeddings: Iterable[list[float]],
         metadata: list[int],
-        **kwargs: Any,
+        **kwargs,
     ) -> (int, Exception):
         """Insert embeddings into Weaviate"""
         assert self.client.schema.exists(self.collection_name)
         insert_count = 0
         try:
-            with self.client.batch as batch:               
+            with self.client.batch as batch:
                 batch.batch_size = len(metadata)
                 batch.dynamic = True
                 res = []
@@ -126,7 +127,6 @@ class WeaviateCloud(VectorDB):
         k: int = 100,
         filters: dict | None = None,
         timeout: int | None = None,
-        **kwargs: Any,
     ) -> list[int]:
         """Perform a search on a query embedding and return results with distance.
         Should call self.init() first.

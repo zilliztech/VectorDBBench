@@ -21,6 +21,7 @@ class ElasticCloud(VectorDB):
         id_col_name: str = "id",
         vector_col_name: str = "vector",
         drop_old: bool = False,
+        **kwargs,
     ):
         self.dim = dim
         self.db_config = db_config
@@ -83,6 +84,7 @@ class ElasticCloud(VectorDB):
         self,
         embeddings: Iterable[list[float]],
         metadata: list[int],
+        **kwargs,
     ) -> (int, Exception):
         """Insert the embeddings to the elasticsearch."""
         assert self.client is not None, "should self.init() first"
