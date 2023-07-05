@@ -14,7 +14,8 @@ class ZillizCloud(Milvus):
         db_case_config: DBCaseConfig,
         collection_name: str = "ZillizCloudVectorDBBench",
         drop_old: bool = False,
-        name: str = "ZillizCloud"
+        name: str = "ZillizCloud",
+        **kwargs, 
     ):
         super().__init__(
             dim=dim,
@@ -23,6 +24,7 @@ class ZillizCloud(Milvus):
             collection_name=collection_name,
             drop_old=drop_old,
             name=name,
+            **kwargs,
         )
 
     @classmethod

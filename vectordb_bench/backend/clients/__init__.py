@@ -51,6 +51,9 @@ db2client = {
     DB.Pinecone: Pinecone,
 }
 
+for db in DB:
+    assert issubclass(db.init_cls, VectorDB)
+
 
 __all__ = [
     "DB", "VectorDB", "DBConfig", "DBCaseConfig", "IndexType", "MetricType", "EmptyDBCaseConfig",

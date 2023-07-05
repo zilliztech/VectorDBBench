@@ -90,9 +90,12 @@ class VectorDB(ABC):
         db_case_config: DBCaseConfig | None,
         collection_name: str,
         drop_old: bool = False,
-        **kwargs
+        **kwargs,
     ) -> None:
-        """Initialize wrapper around the vector database client
+        """Initialize wrapper around the vector database client.
+
+        Please drop the existing collection if drop_old is True. And create collection
+        if collection not in the Vector Database
 
         Args:
             dim(int): the dimension of the dataset
@@ -130,7 +133,7 @@ class VectorDB(ABC):
         self,
         embeddings: list[list[float]],
         metadata: list[int],
-        kwargs: Any,
+        **kwargs,
     ) -> (int, Exception):
         """Insert the embeddings to the vector database. The default number of embeddings for
         each insert_embeddings is 5000.
@@ -138,7 +141,7 @@ class VectorDB(ABC):
         Args:
             embeddings(list[list[float]]): list of embedding to add to the vector database.
             metadatas(list[int]): metadata associated with the embeddings, for filtering.
-            kwargs(Any): vector database specific parameters.
+            **kwargs(Any): vector database specific parameters.
 
         Returns:
             int: inserted data count

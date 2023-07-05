@@ -2,7 +2,7 @@
 
 import logging
 from contextlib import contextmanager
-from typing import Any, Iterable, Type
+from typing import Iterable, Type
 
 from pymilvus import Collection, utility
 from pymilvus import CollectionSchema, DataType, FieldSchema, MilvusException
@@ -24,6 +24,7 @@ class Milvus(VectorDB):
         collection_name: str = "VectorDBBenchCollection",
         drop_old: bool = False,
         name: str = "Milvus",
+        **kwargs,
     ):
         """Initialize wrapper around the milvus vector database."""
         self.name = name
@@ -144,7 +145,7 @@ class Milvus(VectorDB):
         self,
         embeddings: Iterable[list[float]],
         metadata: list[int],
-        **kwargs: Any,
+        **kwargs,
     ) -> (int, Exception):
         """Insert embeddings into Milvus. should call self.init() first"""
         # use the first insert_embeddings to init collection
@@ -159,7 +160,7 @@ class Milvus(VectorDB):
                         metadata[batch_start_offset : batch_end_offset],
                         embeddings[batch_start_offset : batch_end_offset],
                 ]
-                res = self.col.insert(insert_data, **kwargs)
+                res = self.col.insert(insert_data)
                 insert_count += len(res.primary_keys)
             if kwargs.get("last_batch"):
                 self._post_insert()
