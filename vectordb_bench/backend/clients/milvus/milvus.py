@@ -165,7 +165,7 @@ class Milvus(VectorDB):
             if kwargs.get("last_batch"):
                 self._post_insert()
         except MilvusException as e:
-            log.warning("Failed to insert data")
+            log.info(f"Failed to insert data: {e}")
             return (insert_count, e)
         return (insert_count, None)
 

@@ -127,10 +127,11 @@ class QdrantCloud(VectorDB):
                 wait=True,
                 points=Batch(ids=metadata, payloads=[{self._primary_field: v} for v in metadata], vectors=embeddings)
             )
-            return (len(metadata), None)
         except Exception as e:
             log.info(f"Failed to insert data, {e}")
-            return (0, e)
+            return 0, e
+        else:
+            return len(metadata), None
 
     def search_embedding(
         self,

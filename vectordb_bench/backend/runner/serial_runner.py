@@ -114,8 +114,8 @@ class SerialInsertRunner:
                     psutil.Process(pid).kill()
                 raise PerformanceTimeoutError(msg) from e
             except Exception as e:
-                log.warning(f"VectorDB optimize error: {e}")
-                raise e from None
+                log.warning(f"VectorDB load dataset error: {e}")
+                raise e from e
             else:
                 return count
 

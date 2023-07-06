@@ -189,7 +189,6 @@ class CaseRunner(BaseModel):
 
     @utils.time_it
     def _task(self) -> None:
-        """"""
         with self.db.init():
             self.db.optimize()
 
