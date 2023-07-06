@@ -2744,10 +2744,10 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 1259.961,
-        "qps": 19.9197,
-        "serial_latency_p99": 0.0697,
-        "recall": 0.8733
+        "load_duration": 1129.4487,
+        "qps": 18.7634,
+        "serial_latency_p99": 0.1537,
+        "recall": 0.8737
       },
       "task_config": {
         "db": "Pinecone",
@@ -2770,10 +2770,10 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 1259.961,
-        "qps": 19.358,
-        "serial_latency_p99": 0.0697,
-        "recall": 0.8733
+        "load_duration": 1129.4487,
+        "qps": 18.3619,
+        "serial_latency_p99": 0.0798,
+        "recall": 0.8741
       },
       "task_config": {
         "db": "Pinecone",
@@ -2796,10 +2796,10 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 1259.961,
-        "qps": 29.3414,
-        "serial_latency_p99": 0.0706,
-        "recall": 0.9356
+        "load_duration": 1129.4487,
+        "qps": 25.2744,
+        "serial_latency_p99": 0.0612,
+        "recall": 0.9979
       },
       "task_config": {
         "db": "Pinecone",
@@ -2952,10 +2952,10 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 1450.5834,
-        "qps": 237.946,
-        "serial_latency_p99": 0.0204,
-        "recall": 0.9268
+        "load_duration": 1582.9409,
+        "qps": 261.798,
+        "serial_latency_p99": 0.0231,
+        "recall": 0.9262
       },
       "task_config": {
         "db": "Pinecone",
@@ -2978,10 +2978,10 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 1450.5834,
-        "qps": 207.6451,
-        "serial_latency_p99": 0.0217,
-        "recall": 0.9268
+        "load_duration": 1582.9409,
+        "qps": 166.1851,
+        "serial_latency_p99": 0.0239,
+        "recall": 0.9264
       },
       "task_config": {
         "db": "Pinecone",
@@ -3004,10 +3004,10 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 1450.5834,
-        "qps": 66.6749,
-        "serial_latency_p99": 0.0322,
-        "recall": 0.9191
+        "load_duration": 1582.9409,
+        "qps": 121.7169,
+        "serial_latency_p99": 0.029,
+        "recall": 0.9693
       },
       "task_config": {
         "db": "Pinecone",
@@ -3160,10 +3160,10 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 1235.8487,
-        "qps": 46.4164,
-        "serial_latency_p99": 0.0348,
-        "recall": 0.8733
+        "load_duration": 1123.9889,
+        "qps": 46.6189,
+        "serial_latency_p99": 0.0431,
+        "recall": 0.8737
       },
       "task_config": {
         "db": "Pinecone",
@@ -3186,10 +3186,10 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 1235.8474,
-        "qps": 44.5978,
-        "serial_latency_p99": 0.0394,
-        "recall": 0.8733
+        "load_duration": 1123.9889,
+        "qps": 42.4856,
+        "serial_latency_p99": 0.044,
+        "recall": 0.8741
       },
       "task_config": {
         "db": "Pinecone",
@@ -3212,10 +3212,10 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 1235.8474,
-        "qps": 127.9003,
-        "serial_latency_p99": 0.0232,
-        "recall": 0.9356
+        "load_duration": 1123.9889,
+        "qps": 138.9479,
+        "serial_latency_p99": 0.0262,
+        "recall": 0.9979
       },
       "task_config": {
         "db": "Pinecone",
@@ -3394,9 +3394,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 14991.9752,
-        "qps": 8.2809,
-        "serial_latency_p99": 0.1549,
+        "load_duration": 11374.7189,
+        "qps": 8.6675,
+        "serial_latency_p99": 0.1802,
         "recall": 0.8369
       },
       "task_config": {
@@ -3420,9 +3420,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 14991.9752,
-        "qps": 7.6488,
-        "serial_latency_p99": 0.1618,
+        "load_duration": 11374.7189,
+        "qps": 7.8121,
+        "serial_latency_p99": 0.1677,
         "recall": 0.8369
       },
       "task_config": {
@@ -3446,9 +3446,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 14991.9752,
-        "qps": 16.5246,
-        "serial_latency_p99": 0.0803,
+        "load_duration": 11374.7189,
+        "qps": 16.869,
+        "serial_latency_p99": 0.0878,
         "recall": 0.9814
       },
       "task_config": {
@@ -3550,9 +3550,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 12658.5938,
-        "qps": 283.5304,
-        "serial_latency_p99": 0.0256,
+        "load_duration": 14165.6504,
+        "qps": 303.2044,
+        "serial_latency_p99": 0.0274,
         "recall": 0.9246
       },
       "task_config": {
@@ -3576,10 +3576,10 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 12658.5938,
-        "qps": 136.1829,
-        "serial_latency_p99": 0.029,
-        "recall": 0.9245
+        "load_duration": 14165.6504,
+        "qps": 136.0345,
+        "serial_latency_p99": 0.0319,
+        "recall": 0.9244
       },
       "task_config": {
         "db": "Pinecone",
@@ -3602,9 +3602,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 12658.5938,
-        "qps": 71.5744,
-        "serial_latency_p99": 0.0345,
+        "load_duration": 14165.6504,
+        "qps": 66.7221,
+        "serial_latency_p99": 0.0421,
         "recall": 0.963
       },
       "task_config": {
