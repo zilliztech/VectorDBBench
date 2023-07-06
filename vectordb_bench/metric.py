@@ -19,7 +19,6 @@ class Metric:
     qps: float = 0.0
     serial_latency_p99: float = 0.0
     recall: float = 0.0
-    quries_per_dollar: float = 0.0
 
 
 QURIES_PER_DOLLAR_METRIC = "QP$ (Quries per Dollar)"
