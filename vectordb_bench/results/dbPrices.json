@@ -16,6 +16,7 @@
   "QdrantCloud": {
     "0.5c4g-1node": 0.052,
     "2c8g-1node": 0.166,
+    "4c16g-1node": 0.2852,
     "4c16g-5node": 1.426
   },
   "Pinecone": {
