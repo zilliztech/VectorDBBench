@@ -245,10 +245,10 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 5869.4929,
-        "qps": 89.4473,
-        "serial_latency_p99": 0.0219,
-        "recall": 0.9875
+        "load_duration": 6003.7507,
+        "qps": 100.6667,
+        "serial_latency_p99": 0.0211,
+        "recall": 0.9909
       },
       "task_config": {
         "db": "Milvus",
@@ -271,10 +271,10 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 5869.4929,
-        "qps": 87.8616,
-        "serial_latency_p99": 0.0215,
-        "recall": 0.9871
+        "load_duration": 6003.7507,
+        "qps": 101.1399,
+        "serial_latency_p99": 0.0197,
+        "recall": 0.9907
       },
       "task_config": {
         "db": "Milvus",
@@ -297,9 +297,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 5869.4929,
-        "qps": 62.5257,
-        "serial_latency_p99": 0.0261,
+        "load_duration": 6003.7507,
+        "qps": 52.2606,
+        "serial_latency_p99": 0.0183,
         "recall": 1
       },
       "task_config": {
@@ -401,10 +401,10 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 29829.7671,
-        "qps": 48.3866,
-        "serial_latency_p99": 0.0443,
-        "recall": 0.9909
+        "load_duration": 18790.8759,
+        "qps": 61.0661,
+        "serial_latency_p99": 0.0498,
+        "recall": 0.9911
       },
       "task_config": {
         "db": "Milvus",
@@ -427,10 +427,10 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 29829.7671,
-        "qps": 48.8021,
-        "serial_latency_p99": 0.0347,
-        "recall": 0.9909
+        "load_duration": 18790.8759,
+        "qps": 58.9326,
+        "serial_latency_p99": 0.0446,
+        "recall": 0.9911
       },
       "task_config": {
         "db": "Milvus",
@@ -453,9 +453,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 29829.7671,
-        "qps": 30.5848,
-        "serial_latency_p99": 0.0473,
+        "load_duration": 18790.8759,
+        "qps": 42.5977,
+        "serial_latency_p99": 0.0549,
         "recall": 1
       },
       "task_config": {
@@ -479,10 +479,10 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 1455.573,
-        "qps": 290.695,
-        "serial_latency_p99": 0.0075,
-        "recall": 0.9801
+        "load_duration": 1782.0061,
+        "qps": 536.0726,
+        "serial_latency_p99": 0.0082,
+        "recall": 0.9728
       },
       "task_config": {
         "db": "Milvus",
@@ -507,10 +507,10 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 1455.573,
-        "qps": 284.9882,
-        "serial_latency_p99": 0.0087,
-        "recall": 0.9803
+        "load_duration": 1782.0061,
+        "qps": 467.179,
+        "serial_latency_p99": 0.007,
+        "recall": 0.9697
       },
       "task_config": {
         "db": "Milvus",
@@ -536,8 +536,8 @@
       "metrics": {
         "max_load_count": 0,
         "load_duration": 1455.573,
-        "qps": 390.2579,
-        "serial_latency_p99": 0.0073,
+        "qps": 431.7512,
+        "serial_latency_p99": 0.0083,
         "recall": 1
       },
       "task_config": {
@@ -2215,10 +2215,10 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 5530.3545,
-        "qps": 133.6633,
-        "serial_latency_p99": 0.0133,
-        "recall": 0.9842
+        "load_duration": 5713.7159,
+        "qps": 178.6585,
+        "serial_latency_p99": 0.0137,
+        "recall": 0.9843
       },
       "task_config": {
         "db": "Milvus",
@@ -2243,10 +2243,10 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 5530.3545,
-        "qps": 127.0729,
-        "serial_latency_p99": 0.0154,
-        "recall": 0.9843
+        "load_duration": 5713.7159,
+        "qps": 178.3732,
+        "serial_latency_p99": 0.015,
+        "recall": 0.9844
       },
       "task_config": {
         "db": "Milvus",
@@ -2271,9 +2271,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 5530.3545,
-        "qps": 182.826,
-        "serial_latency_p99": 0.0122,
+        "load_duration": 5713.7159,
+        "qps": 229.3526,
+        "serial_latency_p99": 0.0125,
         "recall": 1
       },
       "task_config": {
@@ -2299,10 +2299,10 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 607.0437,
-        "qps": 1118.5178,
-        "serial_latency_p99": 0.0043,
-        "recall": 0.9796
+        "load_duration": 581.8141,
+        "qps": 1258.7043,
+        "serial_latency_p99": 0.0049,
+        "recall": 0.9799
       },
       "task_config": {
         "db": "Milvus",
@@ -2327,10 +2327,10 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 607.0437,
-        "qps": 963.5486,
-        "serial_latency_p99": 0.0048,
-        "recall": 0.9799
+        "load_duration": 581.8141,
+        "qps": 1075.8776,
+        "serial_latency_p99": 0.0053,
+        "recall": 0.98
       },
       "task_config": {
         "db": "Milvus",
@@ -2355,9 +2355,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "load_duration": 607.0437,
-        "qps": 1381.2118,
-        "serial_latency_p99": 0.0039,
+        "load_duration": 581.8141,
+        "qps": 1494.8493,
+        "serial_latency_p99": 0.0047,
         "recall": 1
       },
       "task_config": {
