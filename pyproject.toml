@@ -38,6 +38,8 @@ dependencies = [
     "s3fs",
     "psutil",
     "polars",
+    "pgvector",
+    "sqlalchemy"
 ]
 dynamic = ["version"]
 
