@@ -3,6 +3,7 @@
 [![version](https://img.shields.io/pypi/v/vectordb-bench.svg?color=blue)](https://pypi.org/project/vectordb-bench/)
 [![Downloads](https://pepy.tech/badge/vectordb-bench)](https://pepy.tech/project/vectordb-bench)
 
+**Leaderboard:** https://zilliz.com/benchmark
 ## Quick Start
 ### Prerequirement
 ``` shell
@@ -26,6 +27,24 @@ To add more relevance and practicality, we provide cost-effectiveness reports pa
 Closely mimicking real-world production environments, we've set up diverse testing scenarios including insertion, searching, and filtered searching. To provide you with credible and reliable data, we've included public datasets from actual production scenarios, such as [SIFT](http://corpus-texmex.irisa.fr/), [GIST](http://corpus-texmex.irisa.fr/), [Cohere](https://huggingface.co/datasets/Cohere/wikipedia-22-12/tree/main/en), and more. It's fascinating to discover how a relatively unknown open-source database might excel in certain circumstances!
 
 Prepare to delve into the world of VectorDBBench, and let it guide you in uncovering your perfect vector database match.  
+
+## Leaderboard
+### Introduction
+To facilitate the presentation of test results and provide a comprehensive performance analysis report, we offer a [leaderboard page](https://zilliz.com/benchmark). It allows us to choose from QPS, QP$, and latency metrics, and provides a comprehensive assessment of a system's performance based on the test results of various cases and a set of scoring mechanisms (to be introduced later). On this leaderboard, we can select the systems and models to be compared, and filter out cases we do not want to consider. Comprehensive scores are always ranked from best to worst, and the specific test results of each query will be presented in the list below.
+
+### Scoring Rules
+
+1. For each case, select a base value and score each system based on relative values. 
+    - For QPS and QP$, we use the highest value as the reference, denoted as `base_QPS` or `base_QP$`, and the score of each system is `(QPS/base_QPS) * 100` or `(QP$/base_QP$) * 100`. 
+    - For Latency, we use the lowest value as the reference, that is, `base_Latency`, and the score of each system is `(Latency + 10ms)/(base_Latency + 10ms)`. 
+
+    We want to give equal weight to different cases, and not let a case with high absolute result values become the sole reason for the overall scoring. Therefore, when scoring different systems in each case, we need to use relative values. 
+
+    Also, for Latency, we add 10ms to the numerator and denominator to ensure that if every system performs particularly well in a case, its advantage will not be infinitely magnified when latency tends to 0.
+
+2. For systems that fail or timeout in a particular case, we will give them a score based on a value worse than the worst result by a factor of two. For example, in QPS or QP$, it would be half the lowest value. For Latency, it would be twice the maximum value.
+
+3. For each system, we will take the geometric mean of its scores in all cases as its comprehensive score for a particular metric.
 
 ## Build on your own
 ### Install requirements
