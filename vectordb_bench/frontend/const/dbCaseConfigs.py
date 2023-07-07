@@ -29,6 +29,7 @@ CASE_LIST_WITH_DIVIDER = [
 
 CASE_LIST = [item for item in CASE_LIST_WITH_DIVIDER if isinstance(item, CaseType)]
 
+
 class InputType(IntEnum):
     Text = 20001
     Number = 20002
@@ -185,6 +186,26 @@ CaseConfigParamInput_Nprobe = CaseConfigInput(
     == IndexType.IVFFlat.value,
 )
 
+CaseConfigParamInput_Lists = CaseConfigInput(
+    label=CaseConfigParamType.lists,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 65536,
+        "value": 10,
+    },
+)
+
+CaseConfigParamInput_Probes = CaseConfigInput(
+    label=CaseConfigParamType.probes,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 65536,
+        "value": 1,
+    },
+)
+
 
 MilvusLoadConfig = [
     CaseConfigParamInput_IndexType,
@@ -192,8 +213,6 @@ MilvusLoadConfig = [
     CaseConfigParamInput_EFConstruction_Milvus,
     CaseConfigParamInput_Nlist,
 ]
-
-
 MilvusPerformanceConfig = [
     CaseConfigParamInput_IndexType,
     CaseConfigParamInput_M,
@@ -208,7 +227,6 @@ WeaviateLoadConfig = [
     CaseConfigParamInput_MaxConnections,
     CaseConfigParamInput_EFConstruction_Weaviate,
 ]
-
 WeaviatePerformanceConfig = [
     CaseConfigParamInput_MaxConnections,
     CaseConfigParamInput_EFConstruction_Weaviate,
@@ -216,12 +234,14 @@ WeaviatePerformanceConfig = [
 ]
 
 ESLoadingConfig = [CaseConfigParamInput_EFConstruction_ES, CaseConfigParamInput_M_ES]
-
 ESPerformanceConfig = [
     CaseConfigParamInput_EFConstruction_ES,
     CaseConfigParamInput_M_ES,
     CaseConfigParamInput_NumCandidates_ES,
 ]
+
+PgVectorLoadingConfig = [CaseConfigParamInput_Lists]
+PgVectorPerformanceConfig = [CaseConfigParamInput_Lists, CaseConfigParamInput_Probes]
 
 CASE_CONFIG_MAP = {
     DB.Milvus: {
@@ -256,5 +276,16 @@ CASE_CONFIG_MAP = {
         CaseType.Performance1M1P: ESPerformanceConfig,
         CaseType.Performance10M99P: ESPerformanceConfig,
         CaseType.Performance1M99P: ESPerformanceConfig,
+    },
+    DB.PgVector: {
+        CaseType.CapacityDim960: PgVectorLoadingConfig,
+        CaseType.CapacityDim128: PgVectorLoadingConfig,
+        CaseType.Performance100M: PgVectorPerformanceConfig,
+        CaseType.Performance10M: PgVectorPerformanceConfig,
+        CaseType.Performance1M: PgVectorPerformanceConfig,
+        CaseType.Performance10M1P: PgVectorPerformanceConfig,
+        CaseType.Performance1M1P: PgVectorPerformanceConfig,
+        CaseType.Performance10M99P: PgVectorPerformanceConfig,
+        CaseType.Performance1M99P: PgVectorPerformanceConfig,
     },
 }

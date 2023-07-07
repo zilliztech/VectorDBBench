@@ -39,6 +39,7 @@ DB_TO_ICON = {
     DB.Pinecone: "https://assets.zilliz.com/pinecone_94d8154979.png",
     DB.QdrantCloud: "https://assets.zilliz.com/qdrant_b691674fcd.png",
     DB.WeaviateCloud: "https://assets.zilliz.com/weaviate_4f6f171ebe.png",
+    DB.PgVector: "https://assets.zilliz.com/milvus_c30b0d1994.png",
 }
 
 
@@ -49,4 +50,5 @@ COLOR_MAP = {
     DB.Pinecone.value: "#6610F2",
     DB.QdrantCloud.value: "#D91AD9",
     DB.WeaviateCloud.value: "#20C997",
+    DB.PgVector.value: "#999",
 }

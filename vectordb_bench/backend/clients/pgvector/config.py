@@ -15,7 +15,7 @@ class PgVectorConfig(DBConfig):
         pwd_str = self.password.get_secret_value()
         url_str = self.url.get_secret_value()
         return {
-            "url" : POSTGRE_URL_PLACEHOLDER%(user_str, pwd_str, url_str, db_name)
+            "url" : POSTGRE_URL_PLACEHOLDER%(user_str, pwd_str, url_str, self.db_name)
         }
 
 class PgVectorIndexConfig(BaseModel, DBCaseConfig):
@@ -46,7 +46,7 @@ class PgVectorIndexConfig(BaseModel, DBCaseConfig):
     
     def search_param(self) -> dict:
         return {
-            "probes" : probes,
+            "probes" : self.probes,
             "metric_fun" : self.parse_metric_fun_str()
         }
 
