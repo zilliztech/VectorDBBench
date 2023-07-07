@@ -43,6 +43,8 @@ class CaseConfigParamType(Enum):
     Nprobe = "nprobe"
     MaxConnections = "maxConnections"
     numCandidates = "num_candidates"
+    lists = "lists"
+    probes = "probes"
 
 
 class CustomizedCase(BaseModel):
