@@ -2,10 +2,9 @@ from pydantic import BaseModel, SecretStr
 from ..api import DBConfig, DBCaseConfig, MetricType
 
 POSTGRE_URL_PLACEHOLDER = "postgresql://%s:%s@%s/%s"
-INDEX_TYPE = "ivfflat"
 
 class PgVectorConfig(DBConfig):
-    user_name: SecretStr
+    user_name: SecretStr = "postgres"
     password: SecretStr
     url: SecretStr
     db_name: str
@@ -20,8 +19,8 @@ class PgVectorConfig(DBConfig):
 
 class PgVectorIndexConfig(BaseModel, DBCaseConfig):
     metric_type: MetricType | None = None
-    lists: int | None = 10
-    probes: int | None = 1
+    lists: int | None = 1000
+    probes: int | None = 10
 
     def parse_metric(self) -> str: 
         if self.metric_type == MetricType.L2:
@@ -39,9 +38,8 @@ class PgVectorIndexConfig(BaseModel, DBCaseConfig):
 
     def index_param(self) -> dict:
         return {
-            "postgresql_using" : INDEX_TYPE,
-            "postgresql_with" : {'lists': self.lists},
-            "postgresql_ops": self.parse_metric()
+            "lists" : self.lists,
+            "metric" : self.parse_metric()
         }
     
     def search_param(self) -> dict:
@@ -49,5 +47,3 @@ class PgVectorIndexConfig(BaseModel, DBCaseConfig):
             "probes" : self.probes,
             "metric_fun" : self.parse_metric_fun_str()
         }
-
-    
