@@ -32,7 +32,8 @@ const stApp = streamlitDoc.querySelector('.main > .block-container');
 const buttons = Array.from(streamlitDoc.querySelectorAll('.stButton > button'));
 const imgButton = buttons.find(el => el.innerText === '{buttonText}');
 
-imgButton.innerText = 'Creating Image...';
+if (imgButton)
+    imgButton.innerText = 'Creating Image...';
 
 html2canvas(stApp, {{ allowTaint: false, useCORS: true }}).then(function (canvas) {{
     a = document.createElement('a');
@@ -40,7 +41,8 @@ html2canvas(stApp, {{ allowTaint: false, useCORS: true }}).then(function (canvas
     a.download = '{pageName}.png';
     a.click();
     
-    imgButton.innerText = '{buttonText}';
+    if (imgButton)
+        imgButton.innerText = '{buttonText}';
 }})
 </script>""",
             height=0,
