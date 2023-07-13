@@ -1,0 +1,6 @@
+filters:
+  ".*":
+    approvers:
+      - XuanYang-cn
+    reviewers:
+      - XuanYang-cn
