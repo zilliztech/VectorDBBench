@@ -40,6 +40,7 @@ dependencies = [
     "polars",
     "pgvector",
     "sqlalchemy",
+    "redis",
     "chromadb",
 ]
 dynamic = ["version"]
