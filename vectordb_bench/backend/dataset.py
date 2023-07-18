@@ -101,7 +101,7 @@ class OpenAI(BaseDataset):
     name: str = "OpenAI"
     dim: int = 1536
     metric_type: MetricType = MetricType.COSINE
-    use_shuffled: bool = False
+    use_shuffled: bool = config.USE_SHUFFLED_DATA
     _size_label: dict = {
         50_000: "SMALL",
         500_000: "MEDIUM",
