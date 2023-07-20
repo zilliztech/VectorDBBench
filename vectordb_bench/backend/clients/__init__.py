@@ -16,6 +16,7 @@ from .weaviate_cloud.weaviate_cloud import WeaviateCloud
 from .qdrant_cloud.qdrant_cloud import QdrantCloud
 from .zilliz_cloud.zilliz_cloud import ZillizCloud
 from .pgvector.pgvector import PgVector
+from .chroma.chroma import ChromaClient
 
 class DB(Enum):
     """Database types
@@ -36,6 +37,7 @@ class DB(Enum):
     QdrantCloud = "QdrantCloud"
     WeaviateCloud = "WeaviateCloud"
     PgVector = "PgVector"
+    Chroma = "Chroma"
 
 
     @property
@@ -50,7 +52,8 @@ db2client = {
     DB.ElasticCloud: ElasticCloud,
     DB.QdrantCloud: QdrantCloud,
     DB.Pinecone: Pinecone,
-    DB.PgVector: PgVector
+    DB.PgVector: PgVector,
+    DB.Chroma: ChromaClient
 }
 
 for db in DB:
