@@ -43,6 +43,7 @@ DB_TO_ICON = {
     DB.QdrantCloud: "https://assets.zilliz.com/qdrant_b691674fcd.png",
     DB.WeaviateCloud: "https://assets.zilliz.com/weaviate_4f6f171ebe.png",
     DB.PgVector: "https://assets.zilliz.com/PG_Vector_d464f2ef5f.png",
+    DB.Chroma: "https://assets.zilliz.com/chroma_ceb3f06ed7.png", 
 }
 
 # RedisCloud color: #0D6EFD
