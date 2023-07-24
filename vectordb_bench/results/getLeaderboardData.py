@@ -29,6 +29,7 @@ def main():
                 "case": d.task_config.case_config.case_id.case_name,
                 "qps": d.metrics.qps,
                 "latency": d.metrics.serial_latency_p99,
+                "recall": d.metrics.recall,
                 "label": taskLabelToCode[d.label],
             }
             for d in results
