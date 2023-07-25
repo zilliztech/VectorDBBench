@@ -176,7 +176,7 @@ class BenchMarkRunner:
                 results=c_results,
             )
             test_result.display()
-            test_result.write_file()
+            test_result.flush()
 
             send_conn.send((SIGNAL.SUCCESS, None))
             send_conn.close()

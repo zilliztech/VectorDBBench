@@ -1,0 +1,507 @@
+{
+  "run_id": "5c1e8bd468224ffda1b39b08cdc342c3",
+  "task_label": "standard",
+  "results": [
+    {
+      "metrics": {
+        "max_load_count": 4000000,
+        "load_duration": 0,
+        "qps": 0,
+        "serial_latency_p99": 0,
+        "recall": 0
+      },
+      "task_config": {
+        "db": "QdrantCloud",
+        "db_config": {
+          "db_label": "2c8g-1node",
+          "url": "**********",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "metric_type": null
+        },
+        "case_config": {
+          "case_id": 1,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 900000,
+        "load_duration": 0,
+        "qps": 0,
+        "serial_latency_p99": 0,
+        "recall": 0
+      },
+      "task_config": {
+        "db": "QdrantCloud",
+        "db_config": {
+          "db_label": "2c8g-1node",
+          "url": "**********",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "metric_type": null
+        },
+        "case_config": {
+          "case_id": 2,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0,
+        "qps": 0,
+        "serial_latency_p99": 0,
+        "recall": 0
+      },
+      "task_config": {
+        "db": "QdrantCloud",
+        "db_config": {
+          "db_label": "2c8g-1node",
+          "url": "**********",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "metric_type": null
+        },
+        "case_config": {
+          "case_id": 5,
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0,
+        "qps": 0,
+        "serial_latency_p99": 0,
+        "recall": 0
+      },
+      "task_config": {
+        "db": "QdrantCloud",
+        "db_config": {
+          "db_label": "2c8g-1node",
+          "url": "**********",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "metric_type": null
+        },
+        "case_config": {
+          "case_id": 7,
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0,
+        "qps": 0,
+        "serial_latency_p99": 0,
+        "recall": 0
+      },
+      "task_config": {
+        "db": "QdrantCloud",
+        "db_config": {
+          "db_label": "2c8g-1node",
+          "url": "**********",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "metric_type": null
+        },
+        "case_config": {
+          "case_id": 9,
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0,
+        "qps": 0,
+        "serial_latency_p99": 0,
+        "recall": 0
+      },
+      "task_config": {
+        "db": "QdrantCloud",
+        "db_config": {
+          "db_label": "2c8g-1node",
+          "url": "**********",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "metric_type": null
+        },
+        "case_config": {
+          "case_id": 4,
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0,
+        "qps": 0,
+        "serial_latency_p99": 0,
+        "recall": 0
+      },
+      "task_config": {
+        "db": "QdrantCloud",
+        "db_config": {
+          "db_label": "2c8g-1node",
+          "url": "**********",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "metric_type": null
+        },
+        "case_config": {
+          "case_id": 6,
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0,
+        "qps": 0,
+        "serial_latency_p99": 0,
+        "recall": 0
+      },
+      "task_config": {
+        "db": "QdrantCloud",
+        "db_config": {
+          "db_label": "2c8g-1node",
+          "url": "**********",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "metric_type": null
+        },
+        "case_config": {
+          "case_id": 8,
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 1647.857,
+        "qps": 537.4975,
+        "serial_latency_p99": 0.0189,
+        "recall": 0.8903
+      },
+      "task_config": {
+        "db": "QdrantCloud",
+        "db_config": {
+          "db_label": "4c16g-5node",
+          "url": "**********",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "metric_type": null
+        },
+        "case_config": {
+          "case_id": 5,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 1647.857,
+        "qps": 372.0466,
+        "serial_latency_p99": 0.0178,
+        "recall": 0.8904
+      },
+      "task_config": {
+        "db": "QdrantCloud",
+        "db_config": {
+          "db_label": "4c16g-5node",
+          "url": "**********",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "metric_type": null
+        },
+        "case_config": {
+          "case_id": 7,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 1647.857,
+        "qps": 1156.2898,
+        "serial_latency_p99": 0.0144,
+        "recall": 0.9989
+      },
+      "task_config": {
+        "db": "QdrantCloud",
+        "db_config": {
+          "db_label": "4c16g-5node",
+          "url": "**********",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "metric_type": null
+        },
+        "case_config": {
+          "case_id": 9,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 14623.578,
+        "qps": 110.248,
+        "serial_latency_p99": 0.069,
+        "recall": 0.898
+      },
+      "task_config": {
+        "db": "QdrantCloud",
+        "db_config": {
+          "db_label": "4c16g-5node",
+          "url": "**********",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "metric_type": null
+        },
+        "case_config": {
+          "case_id": 4,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 14623.578,
+        "qps": 87.2601,
+        "serial_latency_p99": 0.0278,
+        "recall": 0.898
+      },
+      "task_config": {
+        "db": "QdrantCloud",
+        "db_config": {
+          "db_label": "4c16g-5node",
+          "url": "**********",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "metric_type": null
+        },
+        "case_config": {
+          "case_id": 6,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 14623.578,
+        "qps": 125.7846,
+        "serial_latency_p99": 0.0231,
+        "recall": 0.975
+      },
+      "task_config": {
+        "db": "QdrantCloud",
+        "db_config": {
+          "db_label": "4c16g-5node",
+          "url": "**********",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "metric_type": null
+        },
+        "case_config": {
+          "case_id": 8,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 1503.1147,
+        "qps": 240.7209,
+        "serial_latency_p99": 0.0174,
+        "recall": 0.8887
+      },
+      "task_config": {
+        "db": "QdrantCloud",
+        "db_config": {
+          "db_label": "4c16g-1node",
+          "url": "**********",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "metric_type": null
+        },
+        "case_config": {
+          "case_id": 5,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 1503.1147,
+        "qps": 189.4399,
+        "serial_latency_p99": 0.0175,
+        "recall": 0.8889
+      },
+      "task_config": {
+        "db": "QdrantCloud",
+        "db_config": {
+          "db_label": "4c16g-1node",
+          "url": "**********",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "metric_type": null
+        },
+        "case_config": {
+          "case_id": 7,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 1503.1147,
+        "qps": 313.5116,
+        "serial_latency_p99": 0.0161,
+        "recall": 0.9999
+      },
+      "task_config": {
+        "db": "QdrantCloud",
+        "db_config": {
+          "db_label": "4c16g-1node",
+          "url": "**********",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "metric_type": null
+        },
+        "case_config": {
+          "case_id": 9,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0,
+        "qps": 0,
+        "serial_latency_p99": 0,
+        "recall": 0
+      },
+      "task_config": {
+        "db": "QdrantCloud",
+        "db_config": {
+          "db_label": "4c16g-1node",
+          "url": "**********",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "metric_type": null
+        },
+        "case_config": {
+          "case_id": 4,
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0,
+        "qps": 0,
+        "serial_latency_p99": 0,
+        "recall": 0
+      },
+      "task_config": {
+        "db": "QdrantCloud",
+        "db_config": {
+          "db_label": "4c16g-1node",
+          "url": "**********",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "metric_type": null
+        },
+        "case_config": {
+          "case_id": 6,
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0,
+        "qps": 0,
+        "serial_latency_p99": 0,
+        "recall": 0
+      },
+      "task_config": {
+        "db": "QdrantCloud",
+        "db_config": {
+          "db_label": "4c16g-1node",
+          "url": "**********",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "metric_type": null
+        },
+        "case_config": {
+          "case_id": 8,
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    }
+  ],
+  "file_fmt": "result_{}_{}_{}.json"
+}
