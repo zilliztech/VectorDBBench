@@ -1,0 +1,247 @@
+{
+  "run_id": "5c1e8bd468224ffda1b39b08cdc342c3",
+  "task_label": "standard",
+  "results": [
+    {
+      "metrics": {
+        "max_load_count": 3200000,
+        "load_duration": 0,
+        "qps": 0,
+        "serial_latency_p99": 0,
+        "recall": 0
+      },
+      "task_config": {
+        "db": "ElasticCloud",
+        "db_config": {
+          "db_label": "upTo2.5c8g",
+          "cloud_id": "**********",
+          "password": "**********"
+        },
+        "db_case_config": {
+          "element_type": "float",
+          "index": "hnsw",
+          "metric_type": "L2",
+          "efConstruction": 360,
+          "M": 30,
+          "num_candidates": null
+        },
+        "case_config": {
+          "case_id": 2,
+          "custom_case": {}
+        }
+      },
+      "label": "?"
+    },
+    {
+      "metrics": {
+        "max_load_count": 8600000,
+        "load_duration": 0,
+        "qps": 0,
+        "serial_latency_p99": 0,
+        "recall": 0
+      },
+      "task_config": {
+        "db": "ElasticCloud",
+        "db_config": {
+          "db_label": "upTo2.5c8g",
+          "cloud_id": "**********",
+          "password": "**********"
+        },
+        "db_case_config": {
+          "element_type": "float",
+          "index": "hnsw",
+          "metric_type": "COSINE",
+          "efConstruction": 360,
+          "M": 30,
+          "num_candidates": null
+        },
+        "case_config": {
+          "case_id": 1,
+          "custom_case": {}
+        }
+      },
+      "label": "?"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 26412.1028,
+        "qps": 15.2269,
+        "serial_latency_p99": 0.8618,
+        "recall": 0.9888
+      },
+      "task_config": {
+        "db": "ElasticCloud",
+        "db_config": {
+          "db_label": "upTo2.5c8g",
+          "cloud_id": "**********",
+          "password": "**********"
+        },
+        "db_case_config": {
+          "element_type": "float",
+          "index": "hnsw",
+          "metric_type": "COSINE",
+          "efConstruction": 360,
+          "M": 30,
+          "num_candidates": 100
+        },
+        "case_config": {
+          "case_id": 5,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 26412.1028,
+        "qps": 15.1749,
+        "serial_latency_p99": 0.7743,
+        "recall": 0.989
+      },
+      "task_config": {
+        "db": "ElasticCloud",
+        "db_config": {
+          "db_label": "upTo2.5c8g",
+          "cloud_id": "**********",
+          "password": "**********"
+        },
+        "db_case_config": {
+          "element_type": "float",
+          "index": "hnsw",
+          "metric_type": "COSINE",
+          "efConstruction": 360,
+          "M": 30,
+          "num_candidates": 100
+        },
+        "case_config": {
+          "case_id": 7,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 26412.1028,
+        "qps": 27.6181,
+        "serial_latency_p99": 0.3055,
+        "recall": 0.9999
+      },
+      "task_config": {
+        "db": "ElasticCloud",
+        "db_config": {
+          "db_label": "upTo2.5c8g",
+          "cloud_id": "**********",
+          "password": "**********"
+        },
+        "db_case_config": {
+          "element_type": "float",
+          "index": "hnsw",
+          "metric_type": "COSINE",
+          "efConstruction": 360,
+          "M": 30,
+          "num_candidates": 100
+        },
+        "case_config": {
+          "case_id": 9,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0,
+        "qps": 0,
+        "serial_latency_p99": 0,
+        "recall": 0
+      },
+      "task_config": {
+        "db": "ElasticCloud",
+        "db_config": {
+          "db_label": "upTo2.5c8g",
+          "cloud_id": "**********",
+          "password": "**********"
+        },
+        "db_case_config": {
+          "element_type": "float",
+          "index": "hnsw",
+          "metric_type": "COSINE",
+          "efConstruction": 360,
+          "M": 30,
+          "num_candidates": 100
+        },
+        "case_config": {
+          "case_id": 4,
+          "custom_case": {}
+        }
+      },
+      "label": "?"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0,
+        "qps": 0,
+        "serial_latency_p99": 0,
+        "recall": 0
+      },
+      "task_config": {
+        "db": "ElasticCloud",
+        "db_config": {
+          "db_label": "upTo2.5c8g",
+          "cloud_id": "**********",
+          "password": "**********"
+        },
+        "db_case_config": {
+          "element_type": "float",
+          "index": "hnsw",
+          "metric_type": "COSINE",
+          "efConstruction": 360,
+          "M": 30,
+          "num_candidates": 100
+        },
+        "case_config": {
+          "case_id": 6,
+          "custom_case": {}
+        }
+      },
+      "label": "?"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0,
+        "qps": 0,
+        "serial_latency_p99": 0,
+        "recall": 0
+      },
+      "task_config": {
+        "db": "ElasticCloud",
+        "db_config": {
+          "db_label": "upTo2.5c8g",
+          "cloud_id": "**********",
+          "password": "**********"
+        },
+        "db_case_config": {
+          "element_type": "float",
+          "index": "hnsw",
+          "metric_type": "COSINE",
+          "efConstruction": 360,
+          "M": 30,
+          "num_candidates": 100
+        },
+        "case_config": {
+          "case_id": 8,
+          "custom_case": {}
+        }
+      },
+      "label": "?"
+    }
+  ],
+  "file_fmt": "result_{}_{}_{}.json"
+}

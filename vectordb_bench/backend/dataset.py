@@ -92,7 +92,6 @@ class SIFT(BaseDataset):
     metric_type: MetricType = MetricType.L2
     use_shuffled: bool = False
     _size_label: dict = {
-
         500_000: "SMALL",
         5_000_000: "MEDIUM",
         50_000_000: "LARGE",
@@ -102,11 +101,11 @@ class SIFT(BaseDataset):
 class DatasetManager(BaseModel):
     """Download dataset if not int the local directory. Provide data for cases.
 
-    DataSet is iterable, each iteration will return the next batch of data in pandas.DataFrame
+    DatasetManager is iterable, each iteration will return the next batch of data in pandas.DataFrame
 
     Examples:
-        >>> cohere_s = DataSet(data=Cohere_S)
-        >>> for data in cohere_s:
+        >>> cohere = Dataset.COHERE.manager(100_000)
+        >>> for data in cohere:
         >>>    print(data.columns)
     """
     data:   BaseDataset
@@ -115,8 +114,7 @@ class DatasetManager(BaseModel):
 
     def __eq__(self, obj):
         if isinstance(obj, DatasetManager):
-            return self.data.name == obj.data.name and \
-                self.data.label == obj.data.label
+            return self.data.name == obj.data.name and self.data.label == obj.data.label
         return False
 
     @property
@@ -124,7 +122,7 @@ class DatasetManager(BaseModel):
         """ data local directory: config.DATASET_LOCAL_DIR/{dataset_name}/{dataset_dirname}
 
         Examples:
-            >>> sift_s = DataSet(data=SIFT_L())
+            >>> sift_s = Dataset.SIFT.manager(500_000)
             >>> sift_s.relative_path
             '/tmp/vectordb_bench/dataset/sift/sift_small_500k/'
         """
@@ -135,7 +133,7 @@ class DatasetManager(BaseModel):
         """ data s3 directory: config.DEFAULT_DATASET_URL/{dataset_dirname}
 
         Examples:
-            >>> sift_s = DataSet(data=SIFT_L())
+            >>> sift_s = Dataset.SIFT.manager(500_000)
             >>> sift_s.download_dir
             'assets.zilliz.com/benchmark/sift_small_500k'
         """
@@ -143,7 +141,6 @@ class DatasetManager(BaseModel):
 
     def __iter__(self):
         return DataSetIterator(self)
-
 
     def _validate_local_file(self):
         if not self.data_dir.exists():
@@ -238,7 +235,6 @@ class DatasetManager(BaseModel):
              - train*.parquet: for training
              - test.parquet: for testing
              - neighbors.parquet: ground_truth of the test.parquet
-             - neighbors_90p.parquet: ground_truth of the test.parquet after filtering 90% data
              - neighbors_head_1p.parquet: ground_truth of the test.parquet after filtering 1% data
              - neighbors_99p.parquet: ground_truth of the test.parquet after filtering 99% data
         """

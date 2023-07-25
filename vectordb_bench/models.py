@@ -84,19 +84,42 @@ class CaseResult(BaseModel):
 
 
 class TestResult(BaseModel):
-    """ROOT/result_{date.today()}_{task_label}.json"""
-
     run_id: str
     task_label: str
     results: list[CaseResult]
 
-    def write_file(self):
-        result_dir = config.RESULTS_LOCAL_DIR
+    file_fmt: str = "result_{}_{}_{}.json" # result_20230718_statndard_milvus.json
+
+    def flush(self):
+        db2case = self.get_db_results()
+
+        result_root = config.RESULTS_LOCAL_DIR
+        for db, result in db2case.items():
+            self.write_db_file(
+                result_dir=result_root.joinpath(db.value),
+                partial=TestResult(
+                    run_id=self.run_id,
+                    task_label=self.task_label,
+                    results=result),
+                db=db.value.lower(),
+            )
+
+
+    def get_db_results(self) -> dict[DB, CaseResult]:
+        db2case = {}
+        for res in self.results:
+            if res.task_config.db in db2case:
+                db2case[res.task_config.db].append(res)
+            else:
+                db2case[res.task_config.db] = [res]
+        return db2case
+
+    def write_db_file(self, result_dir: pathlib.Path, partial: Self, db: str):
         if not result_dir.exists():
             log.info(f"local result directory not exist, creating it: {result_dir}")
             result_dir.mkdir(parents=True)
 
-        file_name = f'result_{date.today().strftime("%Y%m%d")}_{self.task_label}.json'
+        file_name = self.file_fmt.format(date.today().strftime("%Y%m%d"), partial.task_label, db)
         result_file = result_dir.joinpath(file_name)
         if result_file.exists():
             log.warning(
@@ -105,7 +128,7 @@ class TestResult(BaseModel):
 
         log.info(f"write results to disk {result_file}")
         with open(result_file, "w") as f:
-            b = self.json(exclude={"db_config": {"password", "api_key"}})
+            b = partial.json(exclude={"db_config": {"password", "api_key"}})
             f.write(b)
 
     @classmethod

@@ -30,17 +30,16 @@ class TestModels:
         )
 
         test_result = TestResult(run_id=10000, results=[result])
-        test_result.write_file()
+        test_result.flush()
 
         with pytest.raises(ValueError):
             result = TestResult.read_file('nosuchfile.json')
 
     def test_test_result_read_write(self):
         result_dir = config.RESULTS_LOCAL_DIR
-        for json_file in result_dir.glob("*.json"):
+        for json_file in result_dir.rglob("result*.json"):
             res = TestResult.read_file(json_file)
-            res.task_label = f"Milvus-{res.run_id}"
-            res.write_file()
+            res.flush()
 
     def test_test_result_merge(self):
         result_dir = config.RESULTS_LOCAL_DIR
@@ -61,10 +60,11 @@ class TestModels:
             task_label="standard",
             results=all_results,
         )
-        tr.write_file()
+        tr.flush()
 
     def test_test_result_display(self):
         result_dir = config.RESULTS_LOCAL_DIR
-        for json_file in result_dir.glob("result*.json"):
+        for json_file in result_dir.rglob("result*.json"):
+            log.info(json_file)
             res = TestResult.read_file(json_file)
             res.display()

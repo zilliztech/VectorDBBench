@@ -1,0 +1,763 @@
+{
+  "run_id": "5c1e8bd468224ffda1b39b08cdc342c3",
+  "task_label": "standard",
+  "results": [
+    {
+      "metrics": {
+        "max_load_count": 6700000,
+        "load_duration": 0,
+        "qps": 0,
+        "serial_latency_p99": 0,
+        "recall": 0
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "1cu-cap",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********"
+        },
+        "db_case_config": {
+          "index": "AUTOINDEX",
+          "metric_type": "L2"
+        },
+        "case_config": {
+          "case_id": 2,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 12700000,
+        "load_duration": 0,
+        "qps": 0,
+        "serial_latency_p99": 0,
+        "recall": 0
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "1cu-cap",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********"
+        },
+        "db_case_config": {
+          "index": "AUTOINDEX",
+          "metric_type": "L2"
+        },
+        "case_config": {
+          "case_id": 1,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 2412.0463,
+        "qps": 330.0144,
+        "serial_latency_p99": 0.009,
+        "recall": 0.9507
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "1cu-cap",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********"
+        },
+        "db_case_config": {
+          "index": "AUTOINDEX",
+          "metric_type": "COSINE"
+        },
+        "case_config": {
+          "case_id": 5,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 2412.0463,
+        "qps": 271.6585,
+        "serial_latency_p99": 0.0101,
+        "recall": 0.9678
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "1cu-cap",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********"
+        },
+        "db_case_config": {
+          "index": "AUTOINDEX",
+          "metric_type": "COSINE"
+        },
+        "case_config": {
+          "case_id": 7,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 2412.0463,
+        "qps": 216.5226,
+        "serial_latency_p99": 0.0129,
+        "recall": 1
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "1cu-cap",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********"
+        },
+        "db_case_config": {
+          "index": "AUTOINDEX",
+          "metric_type": "COSINE"
+        },
+        "case_config": {
+          "case_id": 9,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0,
+        "qps": 0,
+        "serial_latency_p99": 0,
+        "recall": 0
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "1cu-cap",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********"
+        },
+        "db_case_config": {
+          "index": "AUTOINDEX",
+          "metric_type": "COSINE"
+        },
+        "case_config": {
+          "case_id": 4,
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0,
+        "qps": 0,
+        "serial_latency_p99": 0,
+        "recall": 0
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "1cu-cap",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********"
+        },
+        "db_case_config": {
+          "index": "AUTOINDEX",
+          "metric_type": "COSINE"
+        },
+        "case_config": {
+          "case_id": 6,
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0,
+        "qps": 0,
+        "serial_latency_p99": 0,
+        "recall": 0
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "1cu-cap",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********"
+        },
+        "db_case_config": {
+          "index": "AUTOINDEX",
+          "metric_type": "COSINE"
+        },
+        "case_config": {
+          "case_id": 8,
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 14521.4008,
+        "qps": 123.9553,
+        "serial_latency_p99": 0.023,
+        "recall": 0.971
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "2cu-cap",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********"
+        },
+        "db_case_config": {
+          "index": "AUTOINDEX",
+          "metric_type": "COSINE"
+        },
+        "case_config": {
+          "case_id": 4,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 14521.4008,
+        "qps": 59.1479,
+        "serial_latency_p99": 0.0445,
+        "recall": 0.9906
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "2cu-cap",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********"
+        },
+        "db_case_config": {
+          "index": "AUTOINDEX",
+          "metric_type": "COSINE"
+        },
+        "case_config": {
+          "case_id": 6,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 14521.4008,
+        "qps": 40.999,
+        "serial_latency_p99": 0.0553,
+        "recall": 1
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "2cu-cap",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********"
+        },
+        "db_case_config": {
+          "index": "AUTOINDEX",
+          "metric_type": "COSINE"
+        },
+        "case_config": {
+          "case_id": 8,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 2340.5671,
+        "qps": 579.9416,
+        "serial_latency_p99": 0.0094,
+        "recall": 0.9213
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "2cu-cap",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********"
+        },
+        "db_case_config": {
+          "index": "AUTOINDEX",
+          "metric_type": "COSINE"
+        },
+        "case_config": {
+          "case_id": 5,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 2340.5671,
+        "qps": 425.2529,
+        "serial_latency_p99": 0.0113,
+        "recall": 0.9686
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "2cu-cap",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********"
+        },
+        "db_case_config": {
+          "index": "AUTOINDEX",
+          "metric_type": "COSINE"
+        },
+        "case_config": {
+          "case_id": 7,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 2340.5671,
+        "qps": 397.0539,
+        "serial_latency_p99": 0.0138,
+        "recall": 1
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "2cu-cap",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********"
+        },
+        "db_case_config": {
+          "index": "AUTOINDEX",
+          "metric_type": "COSINE"
+        },
+        "case_config": {
+          "case_id": 9,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 5000000,
+        "load_duration": 0,
+        "qps": 0,
+        "serial_latency_p99": 0,
+        "recall": 0
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "1cu-perf",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********"
+        },
+        "db_case_config": {
+          "index": "AUTOINDEX",
+          "metric_type": "COSINE"
+        },
+        "case_config": {
+          "case_id": 1,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 1200000,
+        "load_duration": 0,
+        "qps": 0,
+        "serial_latency_p99": 0,
+        "recall": 0
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "1cu-perf",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********"
+        },
+        "db_case_config": {
+          "index": "AUTOINDEX",
+          "metric_type": "COSINE"
+        },
+        "case_config": {
+          "case_id": 2,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 1100.6681,
+        "qps": 516.27,
+        "serial_latency_p99": 0.007,
+        "recall": 0.9463
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "1cu-perf",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********"
+        },
+        "db_case_config": {
+          "index": "AUTOINDEX",
+          "metric_type": "COSINE"
+        },
+        "case_config": {
+          "case_id": 5,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 1100.6681,
+        "qps": 354.8416,
+        "serial_latency_p99": 0.01,
+        "recall": 0.9802
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "1cu-perf",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********"
+        },
+        "db_case_config": {
+          "index": "AUTOINDEX",
+          "metric_type": "COSINE"
+        },
+        "case_config": {
+          "case_id": 7,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 1100.6681,
+        "qps": 427.5229,
+        "serial_latency_p99": 0.0087,
+        "recall": 1
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "1cu-perf",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********"
+        },
+        "db_case_config": {
+          "index": "AUTOINDEX",
+          "metric_type": "COSINE"
+        },
+        "case_config": {
+          "case_id": 9,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0,
+        "qps": 0,
+        "serial_latency_p99": 0,
+        "recall": 0
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "1cu-perf",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********"
+        },
+        "db_case_config": {
+          "index": "AUTOINDEX",
+          "metric_type": "COSINE"
+        },
+        "case_config": {
+          "case_id": 4,
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0,
+        "qps": 0,
+        "serial_latency_p99": 0,
+        "recall": 0
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "1cu-perf",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********"
+        },
+        "db_case_config": {
+          "index": "AUTOINDEX",
+          "metric_type": "COSINE"
+        },
+        "case_config": {
+          "case_id": 6,
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0,
+        "qps": 0,
+        "serial_latency_p99": 0,
+        "recall": 0
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "1cu-perf",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********"
+        },
+        "db_case_config": {
+          "index": "AUTOINDEX",
+          "metric_type": "COSINE"
+        },
+        "case_config": {
+          "case_id": 8,
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 1575.253,
+        "qps": 2884.689,
+        "serial_latency_p99": 0.0053,
+        "recall": 0.8801
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "8cu-perf",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********"
+        },
+        "db_case_config": {
+          "index": "AUTOINDEX",
+          "metric_type": "COSINE"
+        },
+        "case_config": {
+          "case_id": 5,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 1853.989,
+        "qps": 1689.5799,
+        "serial_latency_p99": 0.0066,
+        "recall": 0.9493
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "8cu-perf",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********"
+        },
+        "db_case_config": {
+          "index": "AUTOINDEX",
+          "metric_type": "COSINE"
+        },
+        "case_config": {
+          "case_id": 7,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 1575.253,
+        "qps": 1517.6792,
+        "serial_latency_p99": 0.01,
+        "recall": 1
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "8cu-perf",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********"
+        },
+        "db_case_config": {
+          "index": "AUTOINDEX",
+          "metric_type": "COSINE"
+        },
+        "case_config": {
+          "case_id": 9,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 7635.0576,
+        "qps": 822.5318,
+        "serial_latency_p99": 0.0056,
+        "recall": 0.9294
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "8cu-perf",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********"
+        },
+        "db_case_config": {
+          "index": "AUTOINDEX",
+          "metric_type": "COSINE"
+        },
+        "case_config": {
+          "case_id": 4,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 7635.0576,
+        "qps": 378.9146,
+        "serial_latency_p99": 0.0103,
+        "recall": 0.9758
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "8cu-perf",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********"
+        },
+        "db_case_config": {
+          "index": "AUTOINDEX",
+          "metric_type": "COSINE"
+        },
+        "case_config": {
+          "case_id": 6,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 7635.0576,
+        "qps": 218.6854,
+        "serial_latency_p99": 0.0162,
+        "recall": 1
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "8cu-perf",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********"
+        },
+        "db_case_config": {
+          "index": "AUTOINDEX",
+          "metric_type": "COSINE"
+        },
+        "case_config": {
+          "case_id": 8,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    }
+  ],
+  "file_fmt": "result_{}_{}_{}.json"
+}
