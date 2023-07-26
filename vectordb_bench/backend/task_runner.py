@@ -48,7 +48,7 @@ class CaseRunner(BaseModel):
     status: RunningStatus
 
     db: api.VectorDB | None = None
-    test_emb: np.ndarray | None = None
+    test_emb: list[list[float]] | None = None
     search_runner: MultiProcessingSearchRunner | None = None
     serial_search_runner: SerialSearchRunner | None = None
 
@@ -210,13 +210,13 @@ class CaseRunner(BaseModel):
         test_emb = np.stack(self.ca.dataset.test_data["emb"])
         if self.normalize:
             test_emb = test_emb / np.linalg.norm(test_emb, axis=1)[:, np.newaxis]
-        self.test_emb = test_emb
+        self.test_emb = test_emb.tolist()
 
         gt_df = self.ca.dataset.get_ground_truth(self.ca.filter_rate)
 
         self.serial_search_runner = SerialSearchRunner(
             db=self.db,
-            test_data=self.test_emb.tolist(),
+            test_data=self.test_emb,
             ground_truth=gt_df,
             filters=self.ca.filters,
         )
