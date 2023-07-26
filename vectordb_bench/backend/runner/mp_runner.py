@@ -4,9 +4,7 @@ import concurrent
 import multiprocessing as mp
 import logging
 from typing import Iterable
-import numpy as np
 from ..clients import api
-from .. import utils
 from ... import config
 
 
@@ -25,7 +23,7 @@ class MultiProcessingSearchRunner:
     def __init__(
         self,
         db: api.VectorDB,
-        test_data: np.ndarray,
+        test_data: list[list[float]],
         k: int = 100,
         filters: dict | None = None,
         concurrencies: Iterable[int] = (1, 5, 10, 15, 20, 25, 30, 35),
@@ -37,17 +35,16 @@ class MultiProcessingSearchRunner:
         self.concurrencies = concurrencies
         self.duration = duration
 
-        self.test_data = utils.SharedNumpyArray(test_data)
+        self.test_data = test_data
         log.debug(f"test dataset columns: {len(test_data)}")
 
-    def search(self, test_np: utils.SharedNumpyArray, q: mp.Queue, cond: mp.Condition) -> tuple[int, float]:
+    def search(self, test_data: list[list[float]], q: mp.Queue, cond: mp.Condition) -> tuple[int, float]:
         # sync all process
         q.put(1)
         with cond:
             cond.wait()
 
         with self.db.init():
-            test_data = test_np.read().tolist()
             num, idx = len(test_data), 0
 
             start_time = time.perf_counter()
@@ -135,6 +132,4 @@ class MultiProcessingSearchRunner:
         return self._run_all_concurrencies_mem_efficient()
 
     def stop(self) -> None:
-        if self.test_data:
-            self.test_data.unlink()
-            self.test_data = None
+        pass
