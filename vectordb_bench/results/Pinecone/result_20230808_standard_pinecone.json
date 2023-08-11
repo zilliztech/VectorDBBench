@@ -1,0 +1,943 @@
+{
+  "run_id": "5c1e8bd468224ffda1b39b08cdc342c3",
+  "task_label": "standard",
+  "results": [
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 1439.0,
+        "qps": 228.4,
+        "serial_latency_p99": 0.0222,
+        "recall": 0.9348
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p2.x1",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": 10,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p2.x1",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": 11,
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 1439.0,
+        "qps": 181.5,
+        "serial_latency_p99": 0.0261,
+        "recall": 0.9345
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p2.x1",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": 12,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p2.x1",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": 13,
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 1439.0,
+        "qps": 205.7,
+        "serial_latency_p99": 0.0242,
+        "recall": 0.9586
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p2.x1",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": 14,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p2.x1",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": 15,
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 1409.0,
+        "qps": 67.63,
+        "serial_latency_p99": 0.036,
+        "recall": 0.8064
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p1.x1",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": 10,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p1.x1",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": 11,
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 1409.0,
+        "qps": 63.35,
+        "serial_latency_p99": 0.0384,
+        "recall": 0.8065
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p1.x1",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": 12,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p1.x1",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": 13,
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 1409.0,
+        "qps": 176.7,
+        "serial_latency_p99": 0.0276,
+        "recall": 1.0
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p1.x1",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": 14,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p1.x1",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": 15,
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 1125.0,
+        "qps": 15.33,
+        "serial_latency_p99": 0.0849,
+        "recall": 0.8064
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "s1.x1",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": 10,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "s1.x1",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": 11,
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 1125.0,
+        "qps": 15.13,
+        "serial_latency_p99": 0.0867,
+        "recall": 0.8065
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "s1.x1",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": 12,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "s1.x1",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": 13,
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 1125.0,
+        "qps": 17.41,
+        "serial_latency_p99": 0.0743,
+        "recall": 1.0
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "s1.x1",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": 14,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "s1.x1",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": 15,
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 1383.0,
+        "qps": 16.34,
+        "serial_latency_p99": 0.0887,
+        "recall": 0.879
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "s1.x1-2node",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": 10,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 13960.0,
+        "qps": 10.45,
+        "serial_latency_p99": 0.1268,
+        "recall": 0.8208
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "s1.x1-2node",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": 11,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 1383.0,
+        "qps": 16.18,
+        "serial_latency_p99": 0.0875,
+        "recall": 0.8793
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "s1.x1-2node",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": 12,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 13960.0,
+        "qps": 9.8,
+        "serial_latency_p99": 0.1309,
+        "recall": 0.8212
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "s1.x1-2node",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": 13,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 1383.0,
+        "qps": 36.11,
+        "serial_latency_p99": 0.0551,
+        "recall": 1.0
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "s1.x1-2node",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": 14,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 13960.0,
+        "qps": 14.84,
+        "serial_latency_p99": 0.0927,
+        "recall": 0.96
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "s1.x1-2node",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": 15,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 1132.0,
+        "qps": 322.7,
+        "serial_latency_p99": 0.0264,
+        "recall": 0.9478
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p2.x1-8node",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": 10,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 11430.0,
+        "qps": 265.5,
+        "serial_latency_p99": 0.0269,
+        "recall": 0.9332
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p2.x1-8node",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": 11,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 1132.0,
+        "qps": 303.8,
+        "serial_latency_p99": 0.0273,
+        "recall": 0.9478
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p2.x1-8node",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": 12,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 11430.0,
+        "qps": 180.2,
+        "serial_latency_p99": 0.0282,
+        "recall": 0.9335
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p2.x1-8node",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": 13,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 1132.0,
+        "qps": 730.7,
+        "serial_latency_p99": 0.0246,
+        "recall": 0.9586
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p2.x1-8node",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": 14,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 11430.0,
+        "qps": 104.3,
+        "serial_latency_p99": 0.0317,
+        "recall": 0.9563
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p2.x1-8node",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": 15,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p1.x1-8node",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": 10,
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p1.x1-8node",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": 11,
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 1396.0,
+        "qps": 147.7,
+        "serial_latency_p99": 0.0353,
+        "recall": 0.9707
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p1.x1-8node",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": 12,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p1.x1-8node",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": 13,
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 1396.0,
+        "qps": 782.5,
+        "serial_latency_p99": 0.0259,
+        "recall": 1.0
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p1.x1-8node",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": 14,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "p1.x1-8node",
+          "api_key": "**********",
+          "environment": "**********",
+          "index_name": "test_index"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": 15,
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    }
+  ],
+  "file_fmt": "result_{}_{}_{}.json"
+}

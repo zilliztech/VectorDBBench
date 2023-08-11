@@ -1,0 +1,343 @@
+{
+  "run_id": "5c1e8bd468224ffda1b39b08cdc342c3",
+  "task_label": "standard",
+  "results": [
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 2973.0,
+        "qps": 46.8622,
+        "serial_latency_p99": 0.123,
+        "recall": 0.9957
+      },
+      "task_config": {
+        "db": "WeaviateCloud",
+        "db_config": {
+          "db_label": "standard",
+          "url": "**********",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "metric_type": "COSINE",
+          "ef": -1,
+          "efConstruction": 128,
+          "maxConnections": 64
+        },
+        "case_config": {
+          "case_id": 10,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
+      },
+      "task_config": {
+        "db": "WeaviateCloud",
+        "db_config": {
+          "db_label": "standard",
+          "url": "**********",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "metric_type": "COSINE",
+          "ef": -1,
+          "efConstruction": 128,
+          "maxConnections": 64
+        },
+        "case_config": {
+          "case_id": 11,
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 2973.0,
+        "qps": 1.8388,
+        "serial_latency_p99": 1.0635,
+        "recall": 0.9957
+      },
+      "task_config": {
+        "db": "WeaviateCloud",
+        "db_config": {
+          "db_label": "standard",
+          "url": "**********",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "metric_type": "COSINE",
+          "ef": -1,
+          "efConstruction": 128,
+          "maxConnections": 64
+        },
+        "case_config": {
+          "case_id": 12,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
+      },
+      "task_config": {
+        "db": "WeaviateCloud",
+        "db_config": {
+          "db_label": "standard",
+          "url": "**********",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "metric_type": "COSINE",
+          "ef": -1,
+          "efConstruction": 128,
+          "maxConnections": 64
+        },
+        "case_config": {
+          "case_id": 13,
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 2973.0,
+        "qps": 45.0666,
+        "serial_latency_p99": 0.1092,
+        "recall": 1.0
+      },
+      "task_config": {
+        "db": "WeaviateCloud",
+        "db_config": {
+          "db_label": "standard",
+          "url": "**********",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "metric_type": "COSINE",
+          "ef": -1,
+          "efConstruction": 128,
+          "maxConnections": 64
+        },
+        "case_config": {
+          "case_id": 14,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
+      },
+      "task_config": {
+        "db": "WeaviateCloud",
+        "db_config": {
+          "db_label": "standard",
+          "url": "**********",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "metric_type": "COSINE",
+          "ef": -1,
+          "efConstruction": 128,
+          "maxConnections": 64
+        },
+        "case_config": {
+          "case_id": 15,
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 3292.0,
+        "qps": 43.5017,
+        "serial_latency_p99": 0.2287,
+        "recall": 0.9957
+      },
+      "task_config": {
+        "db": "WeaviateCloud",
+        "db_config": {
+          "db_label": "bus_crit",
+          "url": "**********",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "metric_type": "COSINE",
+          "ef": -1,
+          "efConstruction": 128,
+          "maxConnections": 64
+        },
+        "case_config": {
+          "case_id": 10,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
+      },
+      "task_config": {
+        "db": "WeaviateCloud",
+        "db_config": {
+          "db_label": "bus_crit",
+          "url": "**********",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "metric_type": "COSINE",
+          "ef": -1,
+          "efConstruction": 128,
+          "maxConnections": 64
+        },
+        "case_config": {
+          "case_id": 11,
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 3292.0,
+        "qps": 1.5668,
+        "serial_latency_p99": 1.1144,
+        "recall": 0.9957
+      },
+      "task_config": {
+        "db": "WeaviateCloud",
+        "db_config": {
+          "db_label": "bus_crit",
+          "url": "**********",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "metric_type": "COSINE",
+          "ef": -1,
+          "efConstruction": 128,
+          "maxConnections": 64
+        },
+        "case_config": {
+          "case_id": 12,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
+      },
+      "task_config": {
+        "db": "WeaviateCloud",
+        "db_config": {
+          "db_label": "bus_crit",
+          "url": "**********",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "metric_type": "COSINE",
+          "ef": -1,
+          "efConstruction": 128,
+          "maxConnections": 64
+        },
+        "case_config": {
+          "case_id": 13,
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 3292.0,
+        "qps": 41.5443,
+        "serial_latency_p99": 0.159,
+        "recall": 1.0
+      },
+      "task_config": {
+        "db": "WeaviateCloud",
+        "db_config": {
+          "db_label": "bus_crit",
+          "url": "**********",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "metric_type": "COSINE",
+          "ef": -1,
+          "efConstruction": 128,
+          "maxConnections": 64
+        },
+        "case_config": {
+          "case_id": 14,
+          "custom_case": {}
+        }
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0,
+        "recall": 0.0
+      },
+      "task_config": {
+        "db": "WeaviateCloud",
+        "db_config": {
+          "db_label": "bus_crit",
+          "url": "**********",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "metric_type": "COSINE",
+          "ef": -1,
+          "efConstruction": 128,
+          "maxConnections": 64
+        },
+        "case_config": {
+          "case_id": 15,
+          "custom_case": {}
+        }
+      },
+      "label": "x"
+    }
+  ],
+  "file_fmt": "result_{}_{}_{}.json"
+}
