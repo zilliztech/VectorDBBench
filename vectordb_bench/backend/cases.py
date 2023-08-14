@@ -25,22 +25,22 @@ class CaseType(Enum):
     CapacityDim128 = 1
     CapacityDim960 = 2
 
-    Performance100M = 3
-    Performance10M = 4
-    Performance1M = 5
+    Performance768D100M = 3
+    Performance768D10M = 4
+    Performance768D1M = 5
 
-    Performance10M1P = 6
-    Performance1M1P = 7
-    Performance10M99P = 8
-    Performance1M99P = 9
+    Performance768D10M1P = 6
+    Performance768D1M1P = 7
+    Performance768D10M99P = 8
+    Performance768D1M99P = 9
 
-    Performance500K = 10
-    Performance5M = 11
+    Performance1536D500K = 10
+    Performance1536D5M = 11
 
-    Performance500K1P = 12
-    Performance5M1P = 13
-    Performance500K99P = 14
-    Performance5M99P = 15
+    Performance1536D500K1P = 12
+    Performance1536D5M1P = 13
+    Performance1536D500K99P = 14
+    Performance1536D5M99P = 15
 
     Custom = 100
 
@@ -131,164 +131,164 @@ class CapacityDim128(CapacityCase):
 Number of inserted vectors will be reported."""
 
 
-class Performance10M(PerformanceCase):
-    case_id: CaseType = CaseType.Performance10M
+class Performance768D10M(PerformanceCase):
+    case_id: CaseType = CaseType.Performance768D10M
     dataset: DatasetManager = Dataset.COHERE.manager(10_000_000)
     name: str = "Search Performance Test (10M Dataset, 768 Dim)"
     description: str = """This case tests the search performance of a vector database with a large dataset (<b>Cohere 10M vectors</b>, 768 dimensions) at varying parallel levels.
 Results will show index building time, recall, and maximum QPS."""
-    load_timeout: float | int = config.LOAD_TIMEOUT_10M
-    optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_10M
+    load_timeout: float | int = config.LOAD_TIMEOUT_768D_10M
+    optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_768D_10M
 
 
-class Performance1M(PerformanceCase):
-    case_id: CaseType = CaseType.Performance1M
+class Performance768D1M(PerformanceCase):
+    case_id: CaseType = CaseType.Performance768D1M
     dataset: DatasetManager = Dataset.COHERE.manager(1_000_000)
     name: str = "Search Performance Test (1M Dataset, 768 Dim)"
     description: str = """This case tests the search performance of a vector database with a medium dataset (<b>Cohere 1M vectors</b>, 768 dimensions) at varying parallel levels.
 Results will show index building time, recall, and maximum QPS."""
-    load_timeout: float | int = config.LOAD_TIMEOUT_1M
-    optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_1M
+    load_timeout: float | int = config.LOAD_TIMEOUT_768D_1M
+    optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_768D_1M
 
 
-class Performance10M1P(PerformanceCase):
-    case_id: CaseType = CaseType.Performance10M1P
+class Performance768D10M1P(PerformanceCase):
+    case_id: CaseType = CaseType.Performance768D10M1P
     filter_rate: float | int | None = 0.01
     dataset: DatasetManager = Dataset.COHERE.manager(10_000_000)
     name: str = "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 1%)"
     description: str = """This case tests the search performance of a vector database with a large dataset (<b>Cohere 10M vectors</b>, 768 dimensions) under a low filtering rate (<b>1% vectors</b>), at varying parallel levels.
 Results will show index building time, recall, and maximum QPS."""
-    load_timeout: float | int = config.LOAD_TIMEOUT_10M
-    optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_10M
+    load_timeout: float | int = config.LOAD_TIMEOUT_768D_10M
+    optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_768D_10M
 
 
-class Performance1M1P(PerformanceCase):
-    case_id: CaseType = CaseType.Performance1M1P
+class Performance768D1M1P(PerformanceCase):
+    case_id: CaseType = CaseType.Performance768D1M1P
     filter_rate: float | int | None = 0.01
     dataset: DatasetManager = Dataset.COHERE.manager(1_000_000)
     name: str = "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 1%)"
     description: str = """This case tests the search performance of a vector database with a medium dataset (<b>Cohere 1M vectors</b>, 768 dimensions) under a low filtering rate (<b>1% vectors</b>), at varying parallel levels.
 Results will show index building time, recall, and maximum QPS."""
-    load_timeout: float | int = config.LOAD_TIMEOUT_1M
-    optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_1M
+    load_timeout: float | int = config.LOAD_TIMEOUT_768D_1M
+    optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_768D_1M
 
 
-class Performance10M99P(PerformanceCase):
-    case_id: CaseType = CaseType.Performance10M99P
+class Performance768D10M99P(PerformanceCase):
+    case_id: CaseType = CaseType.Performance768D10M99P
     filter_rate: float | int | None = 0.99
     dataset: DatasetManager = Dataset.COHERE.manager(10_000_000)
     name: str = "Filtering Search Performance Test (10M Dataset, 768 Dim, Filter 99%)"
     description: str = """This case tests the search performance of a vector database with a large dataset (<b>Cohere 10M vectors</b>, 768 dimensions) under a high filtering rate (<b>99% vectors</b>), at varying parallel levels.
 Results will show index building time, recall, and maximum QPS."""
-    load_timeout: float | int = config.LOAD_TIMEOUT_10M
-    optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_10M
+    load_timeout: float | int = config.LOAD_TIMEOUT_768D_10M
+    optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_768D_10M
 
 
-class Performance1M99P(PerformanceCase):
-    case_id: CaseType = CaseType.Performance1M99P
+class Performance768D1M99P(PerformanceCase):
+    case_id: CaseType = CaseType.Performance768D1M99P
     filter_rate: float | int | None = 0.99
     dataset: DatasetManager = Dataset.COHERE.manager(1_000_000)
     name: str = "Filtering Search Performance Test (1M Dataset, 768 Dim, Filter 99%)"
     description: str = """This case tests the search performance of a vector database with a medium dataset (<b>Cohere 1M vectors</b>, 768 dimensions) under a high filtering rate (<b>99% vectors</b>), at varying parallel levels.
 Results will show index building time, recall, and maximum QPS."""
-    load_timeout: float | int = config.LOAD_TIMEOUT_1M
-    optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_1M
+    load_timeout: float | int = config.LOAD_TIMEOUT_768D_1M
+    optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_768D_1M
 
 
-class Performance100M(PerformanceCase):
-    case_id: CaseType = CaseType.Performance100M
+class Performance768D100M(PerformanceCase):
+    case_id: CaseType = CaseType.Performance768D100M
     filter_rate: float | int | None = None
     dataset: DatasetManager = Dataset.LAION.manager(100_000_000)
     name: str = "Search Performance Test (100M Dataset, 768 Dim)"
     description: str = """This case tests the search performance of a vector database with a large 100M dataset (<b>LAION 100M vectors</b>, 768 dimensions), at varying parallel levels.
 Results will show index building time, recall, and maximum QPS."""
-    load_timeout: float | int = config.LOAD_TIMEOUT_100M
-    optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_100M
+    load_timeout: float | int = config.LOAD_TIMEOUT_768D_100M
+    optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_768D_100M
 
 
-class Performance500K(PerformanceCase):
-    case_id: CaseType = CaseType.Performance500K
+class Performance1536D500K(PerformanceCase):
+    case_id: CaseType = CaseType.Performance1536D500K
     filter_rate: float | int | None = None
     dataset: DatasetManager = Dataset.OPENAI.manager(500_000)
     name: str = "Search Performance Test (500K Dataset, 1536 Dim)"
     description: str = """This case tests the search performance of a vector database with a medium 500K dataset (<b>OpenAI 500K vectors</b>, 1536 dimensions), at varying parallel levels.
 Results will show index building time, recall, and maximum QPS."""
-    load_timeout: float | int = config.LOAD_TIMEOUT_1M
-    optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_1M
+    load_timeout: float | int = config.LOAD_TIMEOUT_1536D_500K
+    optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_1536D_500K
 
 
-class Performance5M(PerformanceCase):
-    case_id: CaseType = CaseType.Performance5M
+class Performance1536D5M(PerformanceCase):
+    case_id: CaseType = CaseType.Performance1536D5M
     filter_rate: float | int | None = None
     dataset: DatasetManager = Dataset.OPENAI.manager(5_000_000)
     name: str = "Search Performance Test (5M Dataset, 1536 Dim)"
     description: str = """This case tests the search performance of a vector database with a medium 5M dataset (<b>OpenAI 5M vectors</b>, 1536 dimensions), at varying parallel levels.
 Results will show index building time, recall, and maximum QPS."""
-    load_timeout: float | int = config.LOAD_TIMEOUT_10M
-    optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_10M
+    load_timeout: float | int = config.LOAD_TIMEOUT_1536D_5M
+    optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_1536D_5M
 
 
-class Performance500K1P(PerformanceCase):
-    case_id: CaseType = CaseType.Performance500K1P
+class Performance1536D500K1P(PerformanceCase):
+    case_id: CaseType = CaseType.Performance1536D500K1P
     filter_rate: float | int | None = 0.01
     dataset: DatasetManager = Dataset.OPENAI.manager(500_000)
     name: str = "Filtering Search Performance Test (500K Dataset, 1536 Dim, Filter 1%)"
     description: str = """This case tests the search performance of a vector database with a large dataset (<b>OpenAI 500K vectors</b>, 1536 dimensions) under a low filtering rate (<b>1% vectors</b>), at varying parallel levels.
 Results will show index building time, recall, and maximum QPS."""
-    load_timeout: float | int = config.LOAD_TIMEOUT_1M
-    optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_1M
+    load_timeout: float | int = config.LOAD_TIMEOUT_1536D_500K
+    optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_1536D_500K
 
-class Performance5M1P(PerformanceCase):
-    case_id: CaseType = CaseType.Performance5M1P
+class Performance1536D5M1P(PerformanceCase):
+    case_id: CaseType = CaseType.Performance1536D5M1P
     filter_rate: float | int | None = 0.01
     dataset: DatasetManager = Dataset.OPENAI.manager(5_000_000)
     name: str = "Filtering Search Performance Test (5M Dataset, 1536 Dim, Filter 1%)"
     description: str = """This case tests the search performance of a vector database with a large dataset (<b>OpenAI 5M vectors</b>, 1536 dimensions) under a low filtering rate (<b>1% vectors</b>), at varying parallel levels.
 Results will show index building time, recall, and maximum QPS."""
-    load_timeout: float | int = config.LOAD_TIMEOUT_10M
-    optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_10M
+    load_timeout: float | int = config.LOAD_TIMEOUT_1536D_5M
+    optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_1536D_5M
 
-class Performance500K99P(PerformanceCase):
-    case_id: CaseType = CaseType.Performance500K99P
+class Performance1536D500K99P(PerformanceCase):
+    case_id: CaseType = CaseType.Performance1536D500K99P
     filter_rate: float | int | None = 0.99
     dataset: DatasetManager = Dataset.OPENAI.manager(500_000)
     name: str = "Filtering Search Performance Test (500K Dataset, 1536 Dim, Filter 99%)"
     description: str = """This case tests the search performance of a vector database with a medium dataset (<b>OpenAI 500K vectors</b>, 1536 dimensions) under a high filtering rate (<b>99% vectors</b>), at varying parallel levels.
 Results will show index building time, recall, and maximum QPS."""
-    load_timeout: float | int = config.LOAD_TIMEOUT_1M
-    optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_1M
+    load_timeout: float | int = config.LOAD_TIMEOUT_1536D_500K
+    optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_1536D_500K
 
-class Performance5M99P(PerformanceCase):
-    case_id: CaseType = CaseType.Performance5M99P
+class Performance1536D5M99P(PerformanceCase):
+    case_id: CaseType = CaseType.Performance1536D5M99P
     filter_rate: float | int | None = 0.99
     dataset: DatasetManager = Dataset.OPENAI.manager(5_000_000)
     name: str = "Filtering Search Performance Test (5M Dataset, 1536 Dim, Filter 99%)"
     description: str = """This case tests the search performance of a vector database with a medium dataset (<b>OpenAI 5M vectors</b>, 1536 dimensions) under a high filtering rate (<b>99% vectors</b>), at varying parallel levels.
 Results will show index building time, recall, and maximum QPS."""
-    load_timeout: float | int = config.LOAD_TIMEOUT_10M
-    optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_10M
+    load_timeout: float | int = config.LOAD_TIMEOUT_1536D_5M
+    optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_1536D_5M
 
 
 type2case = {
     CaseType.CapacityDim960: CapacityDim960,
     CaseType.CapacityDim128: CapacityDim128,
 
-    CaseType.Performance100M: Performance100M,
-    CaseType.Performance10M: Performance10M,
-    CaseType.Performance1M: Performance1M,
+    CaseType.Performance768D100M: Performance768D100M,
+    CaseType.Performance768D10M: Performance768D10M,
+    CaseType.Performance768D1M: Performance768D1M,
 
-    CaseType.Performance10M1P: Performance10M1P,
-    CaseType.Performance1M1P: Performance1M1P,
-    CaseType.Performance10M99P: Performance10M99P,
-    CaseType.Performance1M99P: Performance1M99P,
+    CaseType.Performance768D10M1P: Performance768D10M1P,
+    CaseType.Performance768D1M1P: Performance768D1M1P,
+    CaseType.Performance768D10M99P: Performance768D10M99P,
+    CaseType.Performance768D1M99P: Performance768D1M99P,
 
-    CaseType.Performance500K: Performance500K,
-    CaseType.Performance5M: Performance5M,
+    CaseType.Performance1536D500K: Performance1536D500K,
+    CaseType.Performance1536D5M: Performance1536D5M,
 
-    CaseType.Performance500K1P: Performance500K1P,
-    CaseType.Performance5M1P: Performance5M1P,
+    CaseType.Performance1536D500K1P: Performance1536D500K1P,
+    CaseType.Performance1536D5M1P: Performance1536D5M1P,
 
-    CaseType.Performance500K99P: Performance500K99P,
-    CaseType.Performance5M99P: Performance5M99P,
+    CaseType.Performance1536D500K99P: Performance1536D500K99P,
+    CaseType.Performance1536D5M99P: Performance1536D5M99P,
 
 }
