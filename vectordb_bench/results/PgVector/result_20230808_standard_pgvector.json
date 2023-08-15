@@ -13,7 +13,7 @@
       "task_config": {
         "db": "PgVector",
         "db_config": {
-          "db_label": "2c8g-60gdisk",
+          "db_label": "2c8g",
           "user_name": "**********",
           "password": "**********",
           "url": "**********",
@@ -42,7 +42,7 @@
       "task_config": {
         "db": "PgVector",
         "db_config": {
-          "db_label": "2c8g-60gdisk",
+          "db_label": "2c8g",
           "user_name": "**********",
           "password": "**********",
           "url": "**********",
@@ -71,7 +71,7 @@
       "task_config": {
         "db": "PgVector",
         "db_config": {
-          "db_label": "2c8g-60gdisk",
+          "db_label": "2c8g",
           "user_name": "**********",
           "password": "**********",
           "url": "**********",
@@ -100,7 +100,7 @@
       "task_config": {
         "db": "PgVector",
         "db_config": {
-          "db_label": "2c8g-60gdisk",
+          "db_label": "2c8g",
           "user_name": "**********",
           "password": "**********",
           "url": "**********",
@@ -129,7 +129,7 @@
       "task_config": {
         "db": "PgVector",
         "db_config": {
-          "db_label": "2c8g-60gdisk",
+          "db_label": "2c8g",
           "user_name": "**********",
           "password": "**********",
           "url": "**********",
@@ -158,7 +158,7 @@
       "task_config": {
         "db": "PgVector",
         "db_config": {
-          "db_label": "2c8g-60gdisk",
+          "db_label": "2c8g",
           "user_name": "**********",
           "password": "**********",
           "url": "**********",
