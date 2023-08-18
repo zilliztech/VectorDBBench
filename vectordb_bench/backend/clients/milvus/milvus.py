@@ -1,6 +1,7 @@
 """Wrapper around the Milvus vector database over VectorDB"""
 
 import logging
+import time
 from contextlib import contextmanager
 from typing import Iterable, Type
 
@@ -54,12 +55,17 @@ class Milvus(VectorDB):
             log.info(f"{self.name} create collection: {self.collection_name}")
 
             # Create the collection
-            Collection(
+            col = Collection(
                 name=self.collection_name,
                 schema=CollectionSchema(fields),
                 consistency_level="Session",
             )
 
+            col.create_index(
+                self._vector_field,
+                self.case_config.index_param(),
+                index_name=self._index_name,
+            )
             #  self._pre_load(coll)
 
         connections.disconnect("default")
@@ -118,16 +124,26 @@ class Milvus(VectorDB):
         log.info(f"{self.name} post insert before optimize")
         try:
             self.col.flush()
-            self.col.compact()
-            self.col.wait_for_compaction_completed()
-
             # wait for index done and load refresh
             self.col.create_index(
                 self._vector_field,
                 self.case_config.index_param(),
                 index_name=self._index_name,
             )
+
             utility.wait_for_index_building_complete(self.collection_name)
+            def wait_index():
+                while True:
+                    progress = utility.index_building_progress(self.collection_name)
+                    if progress.get("pending_index_rows", -1) == 0:
+                        break
+                    time.sleep(5)
+
+            wait_index()
+            self.col.compact()
+            self.col.wait_for_compaction_completed()
+            wait_index()
+
         except Exception as e:
             log.warning(f"{self.name} optimize error: {e}")
             raise e from None
