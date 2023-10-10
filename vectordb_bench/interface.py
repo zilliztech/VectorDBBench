@@ -41,6 +41,7 @@ class BenchMarkRunner:
 
     def run(self, tasks: list[TaskConfig], task_label: str | None = None) -> bool:
         """run all the tasks in the configs, write one result into the path"""
+        self.latest_error = ""
         if self.running_task is not None:
             log.warning("There're still tasks running in the background")
             return False
@@ -58,8 +59,15 @@ class BenchMarkRunner:
 
         self.receive_conn, send_conn = mp.Pipe()
         self.latest_error = ""
-        self.running_task = Assembler.assemble_all(run_id, task_label, tasks)
-        self.running_task.display()
+
+        try:
+            self.running_task = Assembler.assemble_all(run_id, task_label, tasks)
+            self.running_task.display()
+        except ModuleNotFoundError as e:
+            msg = f"Please install client for database, error={e}"
+            log.warning(msg)
+            self.latest_error = msg
+            return True
 
         return self._run_async(send_conn)
 
@@ -100,7 +108,6 @@ class BenchMarkRunner:
         if self.running_task:
             return self.running_task.num_cases()
         return 0
-
 
     def get_current_task_id(self) -> int:
         """ the index of current running task

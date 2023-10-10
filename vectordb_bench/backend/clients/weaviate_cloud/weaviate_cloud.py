@@ -1,14 +1,13 @@
 """Wrapper around the Weaviate vector database over VectorDB"""
 
 import logging
-from typing import Iterable, Type
+from typing import Iterable
 from contextlib import contextmanager
 
+import weaviate
 from weaviate.exceptions import WeaviateBaseError
 
-from ..api import VectorDB, DBConfig, DBCaseConfig, IndexType
-from .config import WeaviateConfig, WeaviateIndexConfig
-
+from ..api import VectorDB, DBCaseConfig
 
 log = logging.getLogger(__name__)
 
@@ -24,6 +23,7 @@ class WeaviateCloud(VectorDB):
         **kwargs,
     ):
         """Initialize wrapper around the weaviate vector database."""
+        db_config.update("auth_client_secret", weaviate.AuthApiKey(api_key=db_config.get("auth_client_secret")))
         self.db_config = db_config
         self.case_config = db_case_config
         self.collection_name = collection_name
@@ -44,14 +44,6 @@ class WeaviateCloud(VectorDB):
                 raise e from None
         self._create_collection(client)
         client = None
-
-    @classmethod
-    def config_cls(cls) -> Type[DBConfig]:
-        return WeaviateConfig
-
-    @classmethod
-    def case_config_cls(cls, index_type: IndexType | None = None) -> Type[DBCaseConfig]:
-        return WeaviateIndexConfig
 
     @contextmanager
     def init(self) -> None:

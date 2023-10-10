@@ -33,7 +33,7 @@ class TestChroma:
         assert DB.Chroma.value == "Chroma"
 
         dbcls = DB.Chroma.init_cls
-        dbConfig = dbcls.config_cls()
+        dbConfig = DB.Chroma.config_cls
         
 
         dim = 16

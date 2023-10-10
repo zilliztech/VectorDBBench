@@ -1,9 +1,9 @@
 import logging
 import time
 from contextlib import contextmanager
-from typing import Iterable, Type
-from ..api import VectorDB, DBCaseConfig, DBConfig, IndexType
-from .config import ElasticCloudIndexConfig, ElasticCloudConfig
+from typing import Iterable
+from ..api import VectorDB
+from .config import ElasticCloudIndexConfig
 from elasticsearch.helpers import bulk
 
 
@@ -41,17 +41,6 @@ class ElasticCloud(VectorDB):
             if is_existed_res.raw:
                 client.indices.delete(index=self.indice)
             self._create_indice(client)
-
-
-    @classmethod
-    def config_cls(cls) -> Type[DBConfig]:
-        return ElasticCloudConfig
-
-
-    @classmethod
-    def case_config_cls(cls, index_type: IndexType | None = None) -> Type[DBCaseConfig]:
-        return ElasticCloudIndexConfig
-
 
     @contextmanager
     def init(self) -> None:

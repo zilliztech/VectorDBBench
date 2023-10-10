@@ -10,9 +10,35 @@
 python >= 3.11
 ```
 ### Install
-``` shell
+**Install vectordb-bench with only PyMilvus**
+```shell
 pip install vectordb-bench
 ```
+
+**Install all database clients**
+
+``` shell
+pip install vectordb-bench[all]
+```
+**Install the specific database client**
+
+```shell
+pip install vectordb-bench[pinecone]
+```
+All the database client supported
+
+|Optional database client|install command|
+|---------------|---------------|
+|pymilvus(*default*)|`pip install vectordb-bench`|
+|all|`pip install vectordb-bench[all]`|
+|qdrant|`pip install vectordb-bench[qdrant]`|
+|pinecone|`pip install vectordb-bench[pinecone]`|
+|weaviate|`pip install vectordb-bench[weaviate]`|
+|elastic|`pip install vectordb-bench[elastic]`|
+|pgvector|`pip install vectordb-bench[pgvector]`|
+|redis|`pip install vectordb-bench[redis]`|
+|chromadb|`pip install vectordb-bench[chromadb]`|
+
 ### Run
 
 ``` shell
@@ -50,6 +76,8 @@ To facilitate the presentation of test results and provide a comprehensive perfo
 ### Install requirements
 ``` shell
 pip install -e '.[test]'
+
+pip install -e '.[pinecone]'
 ```
 ### Run test server
 ```
@@ -185,27 +213,41 @@ In this final step, you will import your DB client into clients/__init__.py and 
 2. Add your NewClient to the DB enum. 
 3. Update the db2client dictionary by adding an entry for your NewClient.
 Example implementation in clients/__init__.py:
+
 ```python
 #clients/__init__.py
 
-from .new_client.new_client import NewClient
-
-#Add NewClient to the DB enum
+# Add NewClient to the DB enum
 class DB(Enum):
     ...
     DB.NewClient = "NewClient"
 
-#Add NewClient to the db2client dictionary
-db2client = {
-    DB.Milvus: Milvus,
-    ...
-    DB.NewClient: NewClient
-}
+    @property
+    def init_cls(self) -> Type[VectorDB]:
+        ...
+        if self == DB.NewClient:
+            from .new_client.new_client import NewClient
+            return NewClient
+        ...
+
+    @property
+    def config_cls(self) -> Type[DBConfig]:
+        ...
+        if self == DB.NewClient:
+            from .new_client.config import NewClientConfig
+            return NewClientConfig
+        ...
+
+    def case_config_cls(self, ...)
+        if self == DB.NewClient:
+            from .new_client.config import NewClientCaseConfig
+            return NewClientCaseConfig
+
 ```
 That's it! You have successfully added a new DB client to the vectordb_bench project.
 
 ## Rules
-### Installation 
+### Installation
 The system under test can be installed in any form to achieve optimal performance. This includes but is not limited to binary deployment, Docker, and cloud services.
 ### Fine-Tuning
 For the system under test, we use the default server-side configuration to maintain the authenticity and representativeness of our results.
