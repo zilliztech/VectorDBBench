@@ -1,11 +1,8 @@
 import chromadb
 import logging 
-import numpy as np
 from contextlib import contextmanager
-from typing import Any, Type
-from ..api import VectorDB, DBConfig, DBCaseConfig, EmptyDBCaseConfig, IndexType
-from .config import ChromaConfig
-from chromadb.config import Settings
+from typing import Any
+from ..api import VectorDB, DBCaseConfig
 
 log = logging.getLogger(__name__)
 class ChromaClient(VectorDB):
@@ -40,13 +37,6 @@ class ChromaClient(VectorDB):
                 drop_old = False
                 log.info(f"Chroma client drop_old collection: {self.collection_name}")
 
-
-    def config_cls() -> Type[DBConfig]:
-        return ChromaConfig
-    
-    def case_config_cls(index_type: IndexType | None = None) -> Type[DBCaseConfig]:
-        return EmptyDBCaseConfig
-    
     @contextmanager
     def init(self) -> None:
         """ create and destory connections to database.

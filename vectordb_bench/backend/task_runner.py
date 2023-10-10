@@ -12,8 +12,6 @@ from ..models import TaskConfig, PerformanceTimeoutError
 
 from .clients import (
     api,
-    ZillizCloud,
-    Milvus,
     MetricType
 )
 from ..metric import Metric
@@ -68,7 +66,7 @@ class CaseRunner(BaseModel):
     @property
     def normalize(self) -> bool:
         assert self.db
-        return isinstance(self.db, (Milvus, ZillizCloud)) and \
+        return self.db.need_normalize_cosine() and \
             self.ca.dataset.data.metric_type == MetricType.COSINE
 
     def init_db(self, drop_old: bool = True) -> None:
@@ -83,8 +81,11 @@ class CaseRunner(BaseModel):
 
     def _pre_run(self, drop_old: bool = True):
         try:
-            self.ca.dataset.prepare()
             self.init_db(drop_old)
+            self.ca.dataset.prepare()
+        except ModuleNotFoundError as e:
+            log.warning(f"pre run case error: please install client for db: {self.config.db}, error={e}")
+            raise e from None
         except Exception as e:
             log.warning(f"pre run case error: {e}")
             raise e from None

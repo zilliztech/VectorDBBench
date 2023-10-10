@@ -9,15 +9,6 @@ from .api import (
     MetricType,
 )
 
-from .milvus.milvus import Milvus
-from .elastic_cloud.elastic_cloud import ElasticCloud
-from .pinecone.pinecone import Pinecone
-from .weaviate_cloud.weaviate_cloud import WeaviateCloud
-from .qdrant_cloud.qdrant_cloud import QdrantCloud
-from .zilliz_cloud.zilliz_cloud import ZillizCloud
-from .pgvector.pgvector import PgVector
-from .redis.redis import Redis
-from .chroma.chroma import ChromaClient
 
 class DB(Enum):
     """Database types
@@ -44,23 +35,109 @@ class DB(Enum):
 
     @property
     def init_cls(self) -> Type[VectorDB]:
-        return db2client.get(self)
+        """Import while in use"""
+        if self == DB.Milvus:
+            from .milvus.milvus import Milvus
+            return Milvus
 
+        if self == DB.ZillizCloud:
+            from .zilliz_cloud.zilliz_cloud import ZillizCloud
+            return ZillizCloud
 
-db2client = {
-    DB.Milvus: Milvus,
-    DB.ZillizCloud: ZillizCloud,
-    DB.WeaviateCloud: WeaviateCloud,
-    DB.ElasticCloud: ElasticCloud,
-    DB.QdrantCloud: QdrantCloud,
-    DB.Pinecone: Pinecone,
-    DB.PgVector: PgVector,
-    DB.Redis: Redis,
-    DB.Chroma: ChromaClient
-}
+        if self == DB.Pinecone:
+            from .pinecone.pinecone import Pinecone
+            return Pinecone
 
-for db in DB:
-    assert issubclass(db.init_cls, VectorDB)
+        if self == DB.ElasticCloud:
+            from .elastic_cloud.elastic_cloud import ElasticCloud
+            return ElasticCloud
+
+        if self == DB.QdrantCloud:
+            from .qdrant_cloud.qdrant_cloud import QdrantClient
+            return QdrantClient
+
+        if self == DB.WeaviateCloud:
+            from .weaviate_cloud.weaviate_cloud import WeaviateCloud
+            return WeaviateCloud
+
+        if self == DB.PgVector:
+            from .pgvector.pgvector import PgVector
+            return PgVector
+
+        if self == DB.Redis:
+            from .redis.redis import Redis
+            return Redis
+
+        if self == DB.Chroma:
+            from .chroma.chroma import ChromaClient
+            return ChromaClient
+
+    @property
+    def config_cls(self) -> Type[DBConfig]:
+        """Import while in use"""
+        if self == DB.Milvus:
+            from .milvus.config import MilvusConfig
+            return MilvusConfig
+
+        if self == DB.ZillizCloud:
+            from .zilliz_cloud.config import ZillizCloudConfig
+            return ZillizCloudConfig
+
+        if self == DB.Pinecone:
+            from .pinecone.config import PineconeConfig
+            return PineconeConfig
+
+        if self == DB.ElasticCloud:
+            from .elastic_cloud.config import ElasticCloudConfig
+            return ElasticCloudConfig
+
+        if self == DB.QdrantCloud:
+            from .qdrant_cloud.config import QdrantConfig
+            return QdrantConfig
+
+        if self == DB.WeaviateCloud:
+            from .weaviate_cloud.config import WeaviateConfig
+            return WeaviateConfig
+
+        if self == DB.PgVector:
+            from .pgvector.config import PgVectorConfig
+            return PgVectorConfig
+
+        if self == DB.Redis:
+            from .redis.config import RedisConfig
+            return RedisConfig
+
+        if self == DB.Chroma:
+            from .chroma.config import ChromaConfig
+            return ChromaConfig
+
+    def case_config_cls(self, index_type: IndexType | None = None) -> Type[DBCaseConfig]:
+        if self == DB.Milvus:
+            from .milvus.config import _milvus_case_config
+            return _milvus_case_config.get(index_type)
+
+        if self == DB.ZillizCloud:
+            from .zilliz_cloud.config import AutoIndexConfig
+            return AutoIndexConfig
+
+        if self == DB.ElasticCloud:
+            from .elastic_cloud.config import ElasticCloudIndexConfig
+            return ElasticCloudIndexConfig
+
+        if self == DB.QdrantCloud:
+            from .qdrant_cloud.config import QdrantIndexConfig
+            return QdrantIndexConfig
+
+        if self == DB.WeaviateCloud:
+            from .weaviate_cloud.config import WeaviateIndexConfig
+            return WeaviateIndexConfig
+
+        if self == DB.PgVector:
+            from .pgvector.config import PgVectorIndexConfig
+            return PgVectorIndexConfig
+
+        # DB.Pinecone, DB.Chroma, DB.Redis
+        return EmptyDBCaseConfig
 
 
 __all__ = [

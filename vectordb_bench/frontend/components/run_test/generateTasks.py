@@ -12,7 +12,7 @@ def generate_tasks(activedDbList, dbConfigs, activedCaseList, allCaseConfigs):
                         case_id=case.value,
                         custom_case={},
                     ),
-                    db_case_config=db.init_cls.case_config_cls(
+                    db_case_config=db.case_config_cls(
                         allCaseConfigs[db][case].get(CaseConfigParamType.IndexType, None)
                     )(**{key.value: value for key, value in allCaseConfigs[db][case].items()}),
                 )

@@ -41,6 +41,10 @@ class Assembler:
                 db2runner[db] = []
             db2runner[db].append(r)
 
+        # check dbclient installed
+        for k in db2runner.keys():
+            _ = k.init_cls
+
         # sort by dataset size
         for k in db2runner.keys():
             db2runner[k].sort(key=lambda x:x.ca.dataset.data.size)

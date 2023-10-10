@@ -70,15 +70,6 @@ class Milvus(VectorDB):
 
         connections.disconnect("default")
 
-    @classmethod
-    def config_cls(cls) -> Type[DBConfig]:
-        return MilvusConfig
-
-    @classmethod
-    def case_config_cls(cls, index_type: IndexType | None = None) -> Type[DBCaseConfig]:
-        return _milvus_case_config.get(index_type)
-
-
     @contextmanager
     def init(self) -> None:
         """
@@ -156,6 +147,10 @@ class Milvus(VectorDB):
     def optimize(self):
         assert self.col, "Please call self.init() before"
         self._optimize()
+
+    def need_normalize_cosine(self) -> bool:
+        """Wheather this database need to normalize dataset to support COSINE"""
+        return True
 
     def insert_embeddings(
         self,

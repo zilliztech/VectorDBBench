@@ -16,7 +16,7 @@ def dbConfigSettings(st, activedDbList):
         dbConfigSettingItemContainer = expander.container()
         dbConfig = dbConfigSettingItem(dbConfigSettingItemContainer, activeDb)
         try:
-            dbConfigs[activeDb] = activeDb.init_cls.config_cls()(**dbConfig)
+            dbConfigs[activeDb] = activeDb.config_cls(**dbConfig)
         except ValidationError as e:
             isAllValid = False
             errTexts = []
@@ -38,8 +38,7 @@ def dbConfigSettingItem(st, activeDb):
     )
     columns = st.columns(DB_CONFIG_SETTING_COLUMNS)
 
-    activeDbCls = activeDb.init_cls
-    dbConfigClass = activeDbCls.config_cls()
+    dbConfigClass = activeDb.config_cls
     properties = dbConfigClass.schema().get("properties")
     propertiesItems = list(properties.items())
     moveDBLabelToLast(propertiesItems)

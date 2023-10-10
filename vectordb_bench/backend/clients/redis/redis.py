@@ -67,13 +67,6 @@ class Redis(VectorDB):
             rs = conn.ft(INDEX_NAME)
             rs.create_index(schema, definition=definition)
 
-
-    def config_cls() -> Type[DBConfig]:
-        return RedisConfig
-    
-    def case_config_cls(index_type: IndexType | None = None) -> Type[DBCaseConfig]:
-        return EmptyDBCaseConfig
-    
     @contextmanager
     def init(self) -> None:
         """ create and destory connections to database.
