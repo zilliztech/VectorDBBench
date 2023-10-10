@@ -105,18 +105,6 @@ class VectorDB(ABC):
         """
         raise NotImplementedError
 
-    @classmethod
-    @abstractmethod
-    def config_cls(self) -> Type[DBConfig]:
-        raise NotImplementedError
-
-
-    @classmethod
-    @abstractmethod
-    def case_config_cls(self, index_type: IndexType | None = None) -> Type[DBCaseConfig]:
-        raise NotImplementedError
-
-
     @abstractmethod
     @contextmanager
     def init(self) -> None:
@@ -127,6 +115,10 @@ class VectorDB(ABC):
             >>>     self.insert_embeddings()
         """
         raise NotImplementedError
+
+    def need_normalize_cosine(self) -> bool:
+        """Wheather this database need to normalize dataset to support COSINE"""
+        return False
 
     @abstractmethod
     def insert_embeddings(

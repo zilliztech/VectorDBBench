@@ -1,7 +1,6 @@
 from pydantic import BaseModel, SecretStr
 
 from ..api import DBConfig, DBCaseConfig, MetricType
-from qdrant_client.models import Distance
 
 
 class QdrantConfig(DBConfig):
@@ -20,10 +19,12 @@ class QdrantIndexConfig(BaseModel, DBCaseConfig):
 
     def parse_metric(self) -> str:
         if self.metric_type == MetricType.L2:
-            return Distance.EUCLID
-        elif self.metric_type == MetricType.IP:
-            return Distance.DOT
-        return Distance.COSINE
+            return "Euclid"
+
+        if self.metric_type == MetricType.IP:
+            return "Dot"
+
+        return "Cosine"
 
     def index_param(self) -> dict:
         params = {"distance": self.parse_metric()}

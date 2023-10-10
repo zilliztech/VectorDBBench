@@ -19,8 +19,8 @@ class TestModels:
         assert DB.ElasticCloud.config == ElasticsearchConfig
 
         dbcls = DB.ElasticCloud.init_cls
-        dbConfig = dbcls.config_cls()(cloud_id=cloud_id, password=password)
-        dbCaseConfig = dbcls.case_config_cls()(
+        dbConfig = DB.ElasticCloud.config_cls(cloud_id=cloud_id, password=password)
+        dbCaseConfig = DB.ElasticCloud.case_config_cls()(
             metric_type=MetricType.L2, efConstruction=64, M=16, num_candidates=100
         )
 

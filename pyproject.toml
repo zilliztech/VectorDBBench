@@ -24,24 +24,15 @@ dependencies = [
     "streamlit-autorefresh",
     "streamlit>=1.23.0",
     "streamlit_extras",
-    "grpcio==1.53.0", # for qdrant-client and pymilvus
-    "grpcio-tools==1.53.0", # for qdrant-client and pymilvus
-    "pymilvus", # with pandas, numpy, ujson
-    "qdrant-client",
-    "pinecone-client",
-    "weaviate-client",
-    "elasticsearch",
-    "plotly",
-    "pydantic==v1.10.7", # for qdrant-client
-    "environs",
-    "scikit-learn",
+    "tqdm",
     "s3fs",
     "psutil",
     "polars",
-    "pgvector",
-    "sqlalchemy",
-    "redis",
-    "chromadb",
+    "plotly",
+    "environs",
+    "pydantic<v2",
+    "scikit-learn",
+    "pymilvus", # with pandas, numpy, ujson
 ]
 dynamic = ["version"]
 
@@ -50,6 +41,27 @@ test = [
     "ruff",
     "pytest",
 ]
+
+all = [
+    "grpcio==1.53.0", # for qdrant-client and pymilvus
+    "grpcio-tools==1.53.0", # for qdrant-client and pymilvus
+    "qdrant-client",
+    "pinecone-client",
+    "weaviate-client",
+    "elasticsearch",
+    "pgvector",
+    "sqlalchemy",
+    "redis",
+    "chromadb",
+]
+
+qdrant = [ "qdrant-client" ]
+pinecone = [ "pinecone-client" ]
+weaviate = [ "weaviate-client" ]
+elastic = [ "elasticsearch" ]
+pgvector = [ "pgvector", "sqlalchemy" ]
+redis = [ "redis" ]
+chromadb = [ "chromadb" ]
 
 [project.urls]
 "repository" = "https://github.com/zilliztech/VectorDBBench"

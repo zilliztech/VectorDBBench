@@ -144,12 +144,11 @@ class TestResult(BaseModel):
             for case_result in test_result["results"]:
                 task_config = case_result.get("task_config")
                 db = DB(task_config.get("db"))
-                dbcls = db.init_cls
 
-                task_config["db_config"] = dbcls.config_cls()(
+                task_config["db_config"] = db.config_cls(
                     **task_config["db_config"]
                 )
-                task_config["db_case_config"] = dbcls.case_config_cls(
+                task_config["db_case_config"] = db.case_config_cls(
                     index_type=task_config["db_case_config"].get("index", None),
                 )(**task_config["db_case_config"])
 

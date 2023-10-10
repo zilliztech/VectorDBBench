@@ -3,10 +3,8 @@
 import logging
 import time
 from contextlib import contextmanager
-from typing import Type
 
-from ..api import VectorDB, DBConfig, DBCaseConfig, IndexType
-from .config import QdrantConfig, QdrantIndexConfig
+from ..api import VectorDB, DBCaseConfig
 from qdrant_client.http.models import (
     CollectionStatus,
     VectorParams,
@@ -48,14 +46,6 @@ class QdrantCloud(VectorDB):
 
         self._create_collection(dim, tmp_client)
         tmp_client = None
-
-    @classmethod
-    def config_cls(cls) -> Type[DBConfig]:
-        return QdrantConfig
-
-    @classmethod
-    def case_config_cls(cls, index_type: IndexType | None = None) -> Type[DBCaseConfig]:
-        return QdrantIndexConfig
 
     @contextmanager
     def init(self) -> None:

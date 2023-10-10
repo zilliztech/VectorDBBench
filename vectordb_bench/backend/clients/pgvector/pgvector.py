@@ -1,14 +1,11 @@
 """Wrapper around the Pgvector vector database over VectorDB"""
 
 import logging
-import time
 from contextlib import contextmanager
-from typing import Any, Type
-from functools import wraps
+from typing import Any
 
-from ..api import VectorDB, DBConfig, DBCaseConfig, IndexType
+from ..api import VectorDB, DBCaseConfig
 from pgvector.sqlalchemy import Vector
-from .config import PgVectorConfig, PgVectorIndexConfig
 from sqlalchemy import (
     MetaData,
     create_engine,
@@ -66,15 +63,6 @@ class PgVector(VectorDB):
             # self.pg_table.drop(pg_engine, checkfirst=True)
             pq_metadata.drop_all(pg_engine)
             self._create_table(dim, pg_engine)
-
-    
-    @classmethod
-    def config_cls(cls) -> Type[DBConfig]:
-        return PgVectorConfig
-
-    @classmethod
-    def case_config_cls(cls, index_type: IndexType | None = None) -> Type[DBCaseConfig]:
-        return PgVectorIndexConfig
 
     @contextmanager
     def init(self) -> None:
