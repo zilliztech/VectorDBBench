@@ -207,8 +207,8 @@ class TestResult(BaseModel):
         TITLE = DATA_FORMAT % (
             "DB", "db_label", "case", "label", "load_dur", "qps", "latency(p99)", "recall", "max_load_count", "label")
         SPLIT = DATA_FORMAT%tuple(map(lambda x:"-"*x, LENGTH))
-        SUMMERY_FORMAT = ("Task summery: run_id=%s, task_label=%s") % (self.run_id[:5], self.task_label)
-        fmt = [SUMMERY_FORMAT, TITLE, SPLIT]
+        SUMMARY_FORMAT = ("Task summary: run_id=%s, task_label=%s") % (self.run_id[:5], self.task_label)
+        fmt = [SUMMARY_FORMAT, TITLE, SPLIT]
 
 
         for f in filtered_results:
