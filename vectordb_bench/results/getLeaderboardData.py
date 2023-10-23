@@ -43,7 +43,7 @@ def main():
             db_label = d["db_label"]
             qps = d["qps"]
             price = DB_DBLABEL_TO_PRICE.get(db, {}).get(db_label, 0)
-            d["qp$"] = qps / price if price > 0 else 0.0
+            d["qp$"] = (qps / price * 3600) if price > 0 else 0.0
 
         with open(pathlib.Path(config.RESULTS_LOCAL_DIR, "leaderboard.json"), "w") as f:
             ujson.dump(data, f)
