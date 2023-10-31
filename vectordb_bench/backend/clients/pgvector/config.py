@@ -6,15 +6,19 @@ POSTGRE_URL_PLACEHOLDER = "postgresql://%s:%s@%s/%s"
 class PgVectorConfig(DBConfig):
     user_name: SecretStr = "postgres"
     password: SecretStr
-    url: SecretStr
+    host: str = "localhost"
+    port: int = 5432
     db_name: str
 
     def to_dict(self) -> dict:
         user_str = self.user_name.get_secret_value()
         pwd_str = self.password.get_secret_value()
-        url_str = self.url.get_secret_value()
         return {
-            "url" : POSTGRE_URL_PLACEHOLDER%(user_str, pwd_str, url_str, self.db_name)
+            "host" : self.host,
+            "port" : self.port,
+            "dbname" : self.db_name,
+            "user" : user_str,
+            "password" : pwd_str
         }
 
 class PgVectorIndexConfig(BaseModel, DBCaseConfig):
@@ -28,6 +32,13 @@ class PgVectorIndexConfig(BaseModel, DBCaseConfig):
         elif self.metric_type == MetricType.IP:
             return "vector_ip_ops"
         return "vector_cosine_ops"
+    
+    def parse_metric_fun_op(self) -> str:
+        if self.metric_type == MetricType.L2:
+            return "<->"
+        elif self.metric_type == MetricType.IP:
+            return "<#>"
+        return "<=>"
     
     def parse_metric_fun_str(self) -> str: 
         if self.metric_type == MetricType.L2:
@@ -45,5 +56,6 @@ class PgVectorIndexConfig(BaseModel, DBCaseConfig):
     def search_param(self) -> dict:
         return {
             "probes" : self.probes,
-            "metric_fun" : self.parse_metric_fun_str()
+            "metric_fun" : self.parse_metric_fun_str(),
+            "metric_fun_op" : self.parse_metric_fun_op(),
         }
