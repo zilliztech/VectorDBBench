@@ -23,6 +23,7 @@ class PgVector(VectorDB):
         drop_old: bool = False,
         **kwargs,
     ):
+        self.name = "PgVector"
         self.db_config = db_config
         self.case_config = db_case_config
         self.table_name = collection_name
@@ -86,6 +87,11 @@ class PgVector(VectorDB):
 
     def optimize(self):
         pass
+    
+    def _post_insert(self):
+        log.info(f"{self.name} post insert before optimize")
+        self._drop_index()
+        self._create_index()
 
     def ready_to_search(self):
         pass
@@ -138,6 +144,10 @@ class PgVector(VectorDB):
             csv_buffer.seek(0)
             self.cursor.copy_expert(f"COPY public.\"{self.table_name}\" FROM STDIN WITH (FORMAT CSV)", csv_buffer)
             self.conn.commit()
+            
+            if kwargs.get("last_batch"):
+                self._post_insert()
+                
             return len(metadata), None
         except Exception as e:
             log.warning(f"Failed to insert data into pgvector table ({self.table_name}), error: {e}")   
