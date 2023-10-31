@@ -1,8 +1,10 @@
 """Wrapper around the Pgvector vector database over VectorDB"""
 
+import io
 import logging
 from contextlib import contextmanager
 from typing import Any
+import pandas as pd
 import psycopg2
 import psycopg2.extras
 
@@ -126,8 +128,15 @@ class PgVector(VectorDB):
         assert self.cursor is not None, "Cursor is not initialized"
 
         try:
-            items = [dict(id = metadata[i], embedding=embeddings[i]) for i in range(len(metadata))]
-            psycopg2.extras.execute_batch(self.cursor, f'INSERT INTO public."{self.table_name}" (id, embedding) VALUES (%(id)s, %(embedding)s)', items)
+            items = {
+                "id": metadata,
+                "embedding": embeddings
+            }
+            df = pd.DataFrame(items)
+            csv_buffer = io.StringIO()
+            df.to_csv(csv_buffer, index=False, header=False)
+            csv_buffer.seek(0)
+            self.cursor.copy_expert(f"COPY public.\"{self.table_name}\" FROM STDIN WITH (FORMAT CSV)", csv_buffer)
             self.conn.commit()
             return len(metadata), None
         except Exception as e:
