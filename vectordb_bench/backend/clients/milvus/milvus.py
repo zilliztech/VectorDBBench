@@ -88,21 +88,6 @@ class Milvus(VectorDB):
         yield
         connections.disconnect("default")
 
-    def _pre_load(self, coll: Collection):
-        if not coll.has_index(index_name=self._index_name):
-            log.info(f"{self.name} create index and load")
-            try:
-                coll.create_index(
-                    self._vector_field,
-                    self.case_config.index_param(),
-                    index_name=self._index_name,
-                )
-
-                coll.load()
-            except Exception as e:
-                log.warning(f"{self.name} pre load error: {e}")
-                raise e from None
-
     def _optimize(self):
         log.info(f"{self.name} optimizing before search")
         try:
@@ -142,7 +127,23 @@ class Milvus(VectorDB):
     def ready_to_load(self):
         assert self.col, "Please call self.init() before"
         self._pre_load(self.col)
-        pass
+
+    def _pre_load(self, coll: Collection):
+        try:
+            if not coll.has_index(index_name=self._index_name):
+                log.info(f"{self.name} create index")
+                    coll.create_index(
+                        self._vector_field,
+                        self.case_config.index_param(),
+                        index_name=self._index_name,
+                    )
+
+            coll.load()
+            log.info(f"{self.name} load")
+        except Exception as e:
+            log.warning(f"{self.name} pre load error: {e}")
+            raise e from None
+
 
     def optimize(self):
         assert self.col, "Please call self.init() before"
