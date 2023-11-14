@@ -24,7 +24,7 @@ CASE_LIST_WITH_DIVIDER = [
     CaseType.Performance768D1M1P,
     DIVIDER,
     CaseType.Performance1536D5M1P,
-    CaseType.Performance1536D500K1P,    
+    CaseType.Performance1536D500K1P,
     DIVIDER,
     CaseType.Performance768D10M99P,
     CaseType.Performance768D1M99P,
@@ -109,6 +109,18 @@ CaseConfigParamInput_EFConstruction_ES = CaseConfigInput(
         "max": 512,
         "value": 360,
     },
+)
+
+CaseConfigParamInput_EFConstruction_PgVectoRS = CaseConfigInput(
+    label=CaseConfigParamType.EFConstruction,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 8,
+        "max": 512,
+        "value": 360,
+    },
+    isDisplayed=lambda config: config[CaseConfigParamType.IndexType]
+    == IndexType.HNSW.value,
 )
 
 CaseConfigParamInput_M_ES = CaseConfigInput(
@@ -215,6 +227,23 @@ CaseConfigParamInput_Probes = CaseConfigInput(
     },
 )
 
+CaseConfigParamInput_QuantizationType_PgVectoRS = CaseConfigInput(
+    label=CaseConfigParamType.quantizationType,
+    inputType=InputType.Option,
+    inputConfig={
+        "options": ["trivial", "scalar", "product"],
+    },
+)
+
+CaseConfigParamInput_QuantizationRatio_PgVectoRS = CaseConfigInput(
+    label=CaseConfigParamType.quantizationRatio,
+    inputType=InputType.Option,
+    inputConfig={
+        "options": ["x4", "x8", "x16", "x32", "x64"],
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.quantizationType, None)
+    == "product",
+)
 
 MilvusLoadConfig = [
     CaseConfigParamInput_IndexType,
@@ -252,6 +281,25 @@ ESPerformanceConfig = [
 PgVectorLoadingConfig = [CaseConfigParamInput_Lists]
 PgVectorPerformanceConfig = [CaseConfigParamInput_Lists, CaseConfigParamInput_Probes]
 
+PgVectoRSLoadingConfig = [
+    CaseConfigParamInput_IndexType,
+    CaseConfigParamInput_M,
+    CaseConfigParamInput_EFConstruction_PgVectoRS,
+    CaseConfigParamInput_Nlist,
+    CaseConfigParamInput_QuantizationType_PgVectoRS,
+    CaseConfigParamInput_QuantizationRatio_PgVectoRS,
+]
+
+PgVectoRSPerformanceConfig = [
+    CaseConfigParamInput_IndexType,
+    CaseConfigParamInput_M,
+    CaseConfigParamInput_EFConstruction_PgVectoRS,
+    CaseConfigParamInput_Nlist,
+    CaseConfigParamInput_Nprobe,
+    CaseConfigParamInput_QuantizationType_PgVectoRS,
+    CaseConfigParamInput_QuantizationRatio_PgVectoRS,
+]
+
 CASE_CONFIG_MAP = {
     DB.Milvus: {
         CaseType.CapacityDim960: MilvusLoadConfig,
@@ -268,7 +316,7 @@ CASE_CONFIG_MAP = {
         CaseType.Performance1536D5M1P: MilvusPerformanceConfig,
         CaseType.Performance1536D500K1P: MilvusPerformanceConfig,
         CaseType.Performance1536D5M99P: MilvusPerformanceConfig,
-        CaseType.Performance1536D500K99P: MilvusPerformanceConfig,        
+        CaseType.Performance1536D500K99P: MilvusPerformanceConfig,
     },
     DB.WeaviateCloud: {
         CaseType.CapacityDim960: WeaviateLoadConfig,
@@ -320,5 +368,22 @@ CASE_CONFIG_MAP = {
         CaseType.Performance1536D500K1P: PgVectorPerformanceConfig,
         CaseType.Performance1536D5M99P: PgVectorPerformanceConfig,
         CaseType.Performance1536D500K99P: PgVectorPerformanceConfig,
+    },
+    DB.PgVectoRS: {
+        CaseType.CapacityDim960: PgVectoRSLoadingConfig,
+        CaseType.CapacityDim128: PgVectoRSLoadingConfig,
+        CaseType.Performance768D100M: PgVectoRSPerformanceConfig,
+        CaseType.Performance768D10M: PgVectoRSPerformanceConfig,
+        CaseType.Performance768D1M: PgVectoRSPerformanceConfig,
+        CaseType.Performance768D10M1P: PgVectoRSPerformanceConfig,
+        CaseType.Performance768D1M1P: PgVectoRSPerformanceConfig,
+        CaseType.Performance768D10M99P: PgVectoRSPerformanceConfig,
+        CaseType.Performance768D1M99P: PgVectoRSPerformanceConfig,
+        CaseType.Performance1536D5M: PgVectoRSPerformanceConfig,
+        CaseType.Performance1536D500K: PgVectoRSPerformanceConfig,
+        CaseType.Performance1536D5M1P: PgVectoRSPerformanceConfig,
+        CaseType.Performance1536D500K1P: PgVectoRSPerformanceConfig,
+        CaseType.Performance1536D5M99P: PgVectorPerformanceConfig,
+        CaseType.Performance1536D500K99P: PgVectoRSPerformanceConfig,
     },
 }

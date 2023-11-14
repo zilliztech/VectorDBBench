@@ -53,6 +53,7 @@ all = [
     "sqlalchemy",
     "redis",
     "chromadb",
+    "psycopg2",
 ]
 
 qdrant = [ "qdrant-client" ]
@@ -60,6 +61,7 @@ pinecone = [ "pinecone-client" ]
 weaviate = [ "weaviate-client" ]
 elastic = [ "elasticsearch" ]
 pgvector = [ "pgvector", "sqlalchemy" ]
+pgvecto_rs = [ "psycopg2" ]
 redis = [ "redis" ]
 chromadb = [ "chromadb" ]
 
