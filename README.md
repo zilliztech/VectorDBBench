@@ -36,6 +36,7 @@ All the database client supported
 |weaviate|`pip install vectordb-bench[weaviate]`|
 |elastic|`pip install vectordb-bench[elastic]`|
 |pgvector|`pip install vectordb-bench[pgvector]`|
+|pgvecto.rs|`pip install vectordb-bench[pgvecto_rs]`|
 |redis|`pip install vectordb-bench[redis]`|
 |chromadb|`pip install vectordb-bench[chromadb]`|
 
