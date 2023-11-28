@@ -132,11 +132,11 @@ class Milvus(VectorDB):
         try:
             if not coll.has_index(index_name=self._index_name):
                 log.info(f"{self.name} create index")
-                    coll.create_index(
-                        self._vector_field,
-                        self.case_config.index_param(),
-                        index_name=self._index_name,
-                    )
+                coll.create_index(
+                    self._vector_field,
+                    self.case_config.index_param(),
+                    index_name=self._index_name,
+                )
 
             coll.load()
             log.info(f"{self.name} load")
