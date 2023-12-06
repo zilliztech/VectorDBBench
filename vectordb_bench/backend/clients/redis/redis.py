@@ -103,8 +103,7 @@ class Redis(VectorDB):
         Should call self.init() first.
         """
 
-        batch_size = 100 # Adjust this as needed, but don't make too big
-        result_len = 0
+        batch_size = 1000 # Adjust this as needed, but don't make too big
         try:
             with self.conn.pipeline(transaction=False) as pipe:
                 for i, embedding in enumerate(embeddings):
@@ -117,10 +116,9 @@ class Redis(VectorDB):
                     # Execute the pipe so we don't keep too much in memory at once
                     if i % batch_size == 0:
                         res = pipe.execute()
-                        result_len += len(res)
 
                 res = pipe.execute()
-                result_len += len(res)
+                result_len = i + 1
         except Exception as e:
             return 0, e
         
