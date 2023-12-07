@@ -63,7 +63,7 @@ To facilitate the presentation of test results and provide a comprehensive perfo
 
 1. For each case, select a base value and score each system based on relative values. 
     - For QPS and QP$, we use the highest value as the reference, denoted as `base_QPS` or `base_QP$`, and the score of each system is `(QPS/base_QPS) * 100` or `(QP$/base_QP$) * 100`. 
-    - For Latency, we use the lowest value as the reference, that is, `base_Latency`, and the score of each system is `(Latency + 10ms)/(base_Latency + 10ms)`. 
+    - For Latency, we use the lowest value as the reference, that is, `base_Latency`, and the score of each system is `(base_Latency + 10ms)/(Latency + 10ms) * 100`. 
 
     We want to give equal weight to different cases, and not let a case with high absolute result values become the sole reason for the overall scoring. Therefore, when scoring different systems in each case, we need to use relative values. 
 
