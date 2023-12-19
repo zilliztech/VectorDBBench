@@ -29,8 +29,8 @@ class Redis(VectorDB):
         self.collection_name = INDEX_NAME
 
         # Create a redis connection, if db has password configured, add it to the connection here and in init():
-        # password=self.db_config["password"]
-        conn = redis.Redis(host=self.db_config["host"], port=self.db_config["port"], db=0)
+        password=self.db_config["password"]
+        conn = redis.Redis(host=self.db_config["host"], port=self.db_config["port"], password=password, db=0)
         
 
         if drop_old:
@@ -54,7 +54,7 @@ class Redis(VectorDB):
                 TagField("id"),                   
                 NumericField("metadata"),              
                 VectorField("vector",                  # Vector Field Name
-                    "FLAT", {                          # Vector Index Type: FLAT or HNSW
+                    "HNSW", {                          # Vector Index Type: FLAT or HNSW
                         "TYPE": "FLOAT32",             # FLOAT32 or FLOAT64
                         "DIM": vector_dimensions,      # Number of Vector Dimensions
                         "DISTANCE_METRIC": "COSINE",   # Vector Search Distance Metric
@@ -75,7 +75,7 @@ class Redis(VectorDB):
             >>> with self.init():
             >>>     self.insert_embeddings()
         """
-        self.conn = redis.Redis(host=self.db_config["host"], port=self.db_config["port"], db=0)
+        self.conn = redis.Redis(host=self.db_config["host"], port=self.db_config["port"], password=self.db_config["password"], db=0)
         yield
         self.conn.close()
         self.conn = None
@@ -94,7 +94,6 @@ class Redis(VectorDB):
 
 
     def insert_embeddings(
-
         self,
         embeddings: list[list[float]],
         metadata: list[int],
@@ -103,8 +102,10 @@ class Redis(VectorDB):
         """Insert embeddings into the database.
         Should call self.init() first.
         """
+
+        batch_size = 1000 # Adjust this as needed, but don't make too big
         try:
-            with self.conn.pipeline() as pipe:
+            with self.conn.pipeline(transaction=False) as pipe:
                 for i, embedding in enumerate(embeddings):
                     embedding = np.array(embedding).astype(np.float32)
                     pipe.hset(metadata[i], mapping = {
@@ -112,11 +113,16 @@ class Redis(VectorDB):
                         "metadata": metadata[i], 
                         "vector": embedding.tobytes(),
                     })
+                    # Execute the pipe so we don't keep too much in memory at once
+                    if i % batch_size == 0:
+                        res = pipe.execute()
+
                 res = pipe.execute()
+                result_len = i + 1
         except Exception as e:
             return 0, e
         
-        return len(res), None
+        return result_len, None
     
     def search_embedding(
         self,
