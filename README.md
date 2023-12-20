@@ -126,7 +126,7 @@ Our client module is designed with flexibility and extensibility in mind, aiming
 We've developed an array of 15 comprehensive benchmark cases to test vector databases' various capabilities, each designed to give you a different piece of the puzzle. These cases are categorized into three main types:
 #### Capacity Case
 - **Large Dim:** Tests the database's loading capacity by inserting large-dimension vectors (GIST 100K vectors, 960 dimensions) until fully loaded. The final number of inserted vectors is reported.
-- **Small Dim:** Similar to the Large Dim case but uses small-dimension vectors (SIFT 100K vectors, 128 dimensions).
+- **Small Dim:** Similar to the Large Dim case but uses small-dimension vectors (SIFT 500K vectors, 128 dimensions).
 #### Search Performance Case
 - **XLarge Dataset:** Measures search performance with a massive dataset (LAION 100M vectors, 768 dimensions) at varying parallel levels. The results include index building time, recall, latency, and maximum QPS.
 - **Large Dataset:** Similar to the XLarge Dataset case, but uses a slightly smaller dataset (10M-768dim, 5M-1536dim).
@@ -140,7 +140,7 @@ For a quick reference, here is a table summarizing the key aspects of each case:
 
 Case No. | Case Type | Dataset Size  | Filtering Rate | Results |
 |----------|-----------|--------------|----------------|---------|
-1 | Capacity Case | SIFT 100K vectors, 128 dimensions | N/A | Number of inserted vectors |
+1 | Capacity Case | SIFT 500K vectors, 128 dimensions | N/A | Number of inserted vectors |
 2 | Capacity Case | GIST 100K vectors, 960 dimensions | N/A | Number of inserted vectors |
 3 | Search Performance Case | LAION 100M vectors, 768 dimensions | N/A | Index building time, recall, latency, maximum QPS |
 4 | Search Performance Case | Cohere 10M vectors, 768 dimensions | N/A | Index building time, recall, latency, maximum QPS |
