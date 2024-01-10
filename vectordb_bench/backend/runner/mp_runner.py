@@ -26,7 +26,7 @@ class MultiProcessingSearchRunner:
         test_data: list[list[float]],
         k: int = 100,
         filters: dict | None = None,
-        concurrencies: Iterable[int] = (1, 5, 10, 15, 20, 25, 30, 35),
+        concurrencies: Iterable[int] = config.NUM_CONCURRENCY,
         duration: int = 30,
     ):
         self.db = db
