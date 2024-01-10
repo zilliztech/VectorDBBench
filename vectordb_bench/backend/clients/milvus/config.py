@@ -19,8 +19,8 @@ class MilvusIndexConfig(BaseModel):
         if not self.metric_type:
             return ""
 
-        if self.metric_type == MetricType.COSINE:
-            return MetricType.L2.value
+        # if self.metric_type == MetricType.COSINE:
+        #     return MetricType.L2.value
         return self.metric_type.value
 
 
@@ -38,6 +38,7 @@ class AutoIndexConfig(MilvusIndexConfig, DBCaseConfig):
         return {
             "metric_type": self.parse_metric(),
         }
+
 
 class HNSWConfig(MilvusIndexConfig, DBCaseConfig):
     M: int
@@ -112,11 +113,87 @@ class FLATConfig(MilvusIndexConfig, DBCaseConfig):
             "params": {},
         }
 
+
+class GPUIVFFlatConfig(MilvusIndexConfig, DBCaseConfig):
+    nlist: int = 1024
+    nprobe: int = 64
+    index: IndexType = IndexType.GPU_IVF_FLAT
+
+    def index_param(self) -> dict:
+        return {
+            "metric_type": self.parse_metric(),
+            "index_type": self.index.value,
+            "params": {"nlist": self.nlist},
+        }
+
+    def search_param(self) -> dict:
+        return {
+            "metric_type": self.parse_metric(),
+            "params": {"nprobe": self.nprobe},
+        }
+
+
+class GPUIVFPQConfig(MilvusIndexConfig, DBCaseConfig):
+    nlist: int = 1024
+    m: int = 0
+    nbits: int = 8
+    nprobe: int = 32
+    index: IndexType = IndexType.GPU_IVF_PQ
+
+    def index_param(self) -> dict:
+        return {
+            "metric_type": self.parse_metric(),
+            "index_type": self.index.value,
+            "params": {"nlist": self.nlist, "m": self.m, "nbits": self.nbits},
+        }
+
+    def search_param(self) -> dict:
+        return {
+            "metric_type": self.parse_metric(),
+            "params": {"nprobe": self.nprobe},
+        }
+
+
+class GPUCAGRAConfig(MilvusIndexConfig, DBCaseConfig):
+    intermediate_graph_degree: int = 64
+    graph_degree: int = 32
+    itopk_size: int = 128
+    team_size: int = 0
+    search_width: int = 4
+    min_iterations: int = 0
+    max_iterations: int = 0
+    index: IndexType = IndexType.GPU_CAGRA
+
+    def index_param(self) -> dict:
+        return {
+            "metric_type": self.parse_metric(),
+            "index_type": self.index.value,
+            "params": {
+                "intermediate_graph_degree": self.intermediate_graph_degree,
+                "graph_degree": self.graph_degree,
+            },
+        }
+
+    def search_param(self) -> dict:
+        return {
+            "metric_type": self.parse_metric(),
+            "params": {
+                "team_size": self.team_size,
+                "search_width": self.search_width,
+                "itopk_size": self.itopk_size,
+                "min_iterations": self.min_iterations,
+                "max_iterations": self.max_iterations,
+            },
+        }
+
+
 _milvus_case_config = {
     IndexType.AUTOINDEX: AutoIndexConfig,
     IndexType.HNSW: HNSWConfig,
     IndexType.DISKANN: DISKANNConfig,
     IndexType.IVFFlat: IVFFlatConfig,
     IndexType.Flat: FLATConfig,
+    IndexType.GPU_IVF_FLAT: GPUIVFFlatConfig,
+    IndexType.GPU_IVF_PQ: GPUIVFPQConfig,
+    IndexType.GPU_CAGRA: GPUCAGRAConfig,
 }
-
