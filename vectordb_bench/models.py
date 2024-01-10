@@ -47,6 +47,15 @@ class CaseConfigParamType(Enum):
     probes = "probes"
     quantizationType = "quantizationType"
     quantizationRatio = "quantizationRatio"
+    m = "m"
+    nbits = "nbits"
+    intermediate_graph_degree = "intermediate_graph_degree"
+    graph_degree = "graph_degree"
+    itopk_size = "itopk_size"
+    team_size = "team_size"
+    search_width = "search_width"
+    min_iterations = "min_iterations"
+    max_iterations = "max_iterations"
 
 
 class CustomizedCase(BaseModel):
@@ -90,7 +99,7 @@ class TestResult(BaseModel):
     task_label: str
     results: list[CaseResult]
 
-    file_fmt: str = "result_{}_{}_{}.json" # result_20230718_statndard_milvus.json
+    file_fmt: str = "result_{}_{}_{}.json"  # result_20230718_statndard_milvus.json
 
     def flush(self):
         db2case = self.get_db_results()
@@ -100,9 +109,8 @@ class TestResult(BaseModel):
             self.write_db_file(
                 result_dir=result_root.joinpath(db.value),
                 partial=TestResult(
-                    run_id=self.run_id,
-                    task_label=self.task_label,
-                    results=result),
+                    run_id=self.run_id, task_label=self.task_label, results=result
+                ),
                 db=db.value.lower(),
             )
 
@@ -120,7 +128,9 @@ class TestResult(BaseModel):
             log.info(f"local result directory not exist, creating it: {result_dir}")
             result_dir.mkdir(parents=True)
 
-        file_name = self.file_fmt.format(date.today().strftime("%Y%m%d"), partial.task_label, db)
+        file_name = self.file_fmt.format(
+            date.today().strftime("%Y%m%d"), partial.task_label, db
+        )
         result_file = result_dir.joinpath(file_name)
         if result_file.exists():
             log.warning(
@@ -146,9 +156,7 @@ class TestResult(BaseModel):
                 task_config = case_result.get("task_config")
                 db = DB(task_config.get("db"))
 
-                task_config["db_config"] = db.config_cls(
-                    **task_config["db_config"]
-                )
+                task_config["db_config"] = db.config_cls(**task_config["db_config"])
                 task_config["db_case_config"] = db.case_config_cls(
                     index_type=task_config["db_case_config"].get("index", None),
                 )(**task_config["db_case_config"])
@@ -173,31 +181,59 @@ class TestResult(BaseModel):
 
     def display(self, dbs: list[DB] | None = None):
         filter_list = dbs if dbs and isinstance(dbs, list) else None
-        sorted_results = sorted(self.results, key=lambda x: (
-            x.task_config.db.name,
-            x.task_config.db_config.db_label,
-            x.task_config.case_config.case_id.name,
-        ), reverse=True)
+        sorted_results = sorted(
+            self.results,
+            key=lambda x: (
+                x.task_config.db.name,
+                x.task_config.db_config.db_label,
+                x.task_config.case_config.case_id.name,
+            ),
+            reverse=True,
+        )
 
-        filtered_results = [r for r in sorted_results  if not filter_list or r.task_config.db not in filter_list]
+        filtered_results = [
+            r
+            for r in sorted_results
+            if not filter_list or r.task_config.db not in filter_list
+        ]
 
         def append_return(x, y):
             x.append(y)
             return x
 
         max_db = max(map(len, [f.task_config.db.name for f in filtered_results]))
-        max_db_labels = max(map(len, [f.task_config.db_config.db_label for f in filtered_results])) + 3
-        max_case = max(map(len, [f.task_config.case_config.case_id.name for f in filtered_results]))
-        max_load_dur = max(map(len, [str(f.metrics.load_duration) for f in filtered_results])) + 3
+        max_db_labels = (
+            max(map(len, [f.task_config.db_config.db_label for f in filtered_results]))
+            + 3
+        )
+        max_case = max(
+            map(len, [f.task_config.case_config.case_id.name for f in filtered_results])
+        )
+        max_load_dur = (
+            max(map(len, [str(f.metrics.load_duration) for f in filtered_results])) + 3
+        )
         max_qps = max(map(len, [str(f.metrics.qps) for f in filtered_results])) + 3
-        max_recall = max(map(len, [str(f.metrics.recall) for f in filtered_results])) + 3
+        max_recall = (
+            max(map(len, [str(f.metrics.recall) for f in filtered_results])) + 3
+        )
 
         max_db_labels = 8 if max_db_labels < 8 else max_db_labels
         max_load_dur = 11 if max_load_dur < 11 else max_load_dur
         max_qps = 10 if max_qps < 10 else max_qps
         max_recall = 13 if max_recall < 13 else max_recall
 
-        LENGTH = (max_db, max_db_labels, max_case, len(self.task_label), max_load_dur, max_qps, 15, max_recall, 14, 5)
+        LENGTH = (
+            max_db,
+            max_db_labels,
+            max_case,
+            len(self.task_label),
+            max_load_dur,
+            max_qps,
+            15,
+            max_recall,
+            14,
+            5,
+        )
 
         DATA_FORMAT = (
             f"%-{max_db}s | %-{max_db_labels}s %-{max_case}s %-{len(self.task_label)}s"
@@ -206,25 +242,40 @@ class TestResult(BaseModel):
         )
 
         TITLE = DATA_FORMAT % (
-            "DB", "db_label", "case", "label", "load_dur", "qps", "latency(p99)", "recall", "max_load_count", "label")
-        SPLIT = DATA_FORMAT%tuple(map(lambda x:"-"*x, LENGTH))
-        SUMMARY_FORMAT = ("Task summary: run_id=%s, task_label=%s") % (self.run_id[:5], self.task_label)
+            "DB",
+            "db_label",
+            "case",
+            "label",
+            "load_dur",
+            "qps",
+            "latency(p99)",
+            "recall",
+            "max_load_count",
+            "label",
+        )
+        SPLIT = DATA_FORMAT % tuple(map(lambda x: "-" * x, LENGTH))
+        SUMMARY_FORMAT = ("Task summary: run_id=%s, task_label=%s") % (
+            self.run_id[:5],
+            self.task_label,
+        )
         fmt = [SUMMARY_FORMAT, TITLE, SPLIT]
 
-
         for f in filtered_results:
-            fmt.append(DATA_FORMAT%(
-                f.task_config.db.name,
-                f.task_config.db_config.db_label,
-                f.task_config.case_config.case_id.name,
-                self.task_label,
-                f.metrics.load_duration,
-                f.metrics.qps,
-                f.metrics.serial_latency_p99,
-                f.metrics.recall,
-                f.metrics.max_load_count,
-                f.label.value,
-            ))
+            fmt.append(
+                DATA_FORMAT
+                % (
+                    f.task_config.db.name,
+                    f.task_config.db_config.db_label,
+                    f.task_config.case_config.case_id.name,
+                    self.task_label,
+                    f.metrics.load_duration,
+                    f.metrics.qps,
+                    f.metrics.serial_latency_p99,
+                    f.metrics.recall,
+                    f.metrics.max_load_count,
+                    f.label.value,
+                )
+            )
 
         tmp_logger = logging.getLogger("no_color")
         for f in fmt:

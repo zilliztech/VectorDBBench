@@ -151,7 +151,7 @@ class Milvus(VectorDB):
 
     def need_normalize_cosine(self) -> bool:
         """Wheather this database need to normalize dataset to support COSINE"""
-        return True
+        return False
 
     def insert_embeddings(
         self,
