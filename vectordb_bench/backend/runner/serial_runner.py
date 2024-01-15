@@ -40,7 +40,7 @@ class SerialInsertRunner:
                 emb_np = np.stack(data_df['emb'])
                 if self.normalize:
                     log.debug("normalize the 100k train data")
-                    all_embeddings = emb_np / np.linalg.norm(emb_np, axis=1)[:, np.newaxis].tolist()
+                    all_embeddings = (emb_np / np.linalg.norm(emb_np, axis=1)[:, np.newaxis]).tolist()
                 else:
                     all_embeddings = emb_np.tolist()
                 del(emb_np)
