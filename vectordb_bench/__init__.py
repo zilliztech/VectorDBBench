@@ -11,6 +11,7 @@ class config:
     LOG_LEVEL = env.str("LOG_LEVEL", "INFO")
 
     DEFAULT_DATASET_URL = env.str("DEFAULT_DATASET_URL", "assets.zilliz.com/benchmark/")
+    DEFAULT_DATASET_URL_ALIYUN = env.str("DEFAULT_DATASET_URL", "assets.zilliz.com.cn/benchmark/")
     DATASET_LOCAL_DIR = env.path("DATASET_LOCAL_DIR", "/tmp/vectordb_bench/dataset")
     NUM_PER_BATCH = env.int("NUM_PER_BATCH", 5000)
 
