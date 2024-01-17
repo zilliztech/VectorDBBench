@@ -38,6 +38,14 @@ class BenchMarkRunner:
     def __init__(self):
         self.running_task: TaskRunner | None = None
         self.latest_error: str | None = None
+        self.drop_old: bool = True
+        
+    def set_drop_old(self, drop_old: bool):
+        self.drop_old = drop_old
+    
+    def set_download_address(self, use_aliyun: bool):
+        # todo
+        pass
 
     def run(self, tasks: list[TaskConfig], task_label: str | None = None) -> bool:
         """run all the tasks in the configs, write one result into the path"""
@@ -145,7 +153,12 @@ class BenchMarkRunner:
                     task_config=runner.config,
                 )
 
-                drop_old = False if latest_runner and runner == latest_runner else config.DROP_OLD
+                # drop_old = False if latest_runner and runner == latest_runner else config.DROP_OLD
+                drop_old = config.DROP_OLD
+                if latest_runner and runner == latest_runner:
+                    drop_old = False
+                elif not self.drop_old:
+                    drop_old = False
                 try:
                     log.info(f"[{idx+1}/{running_task.num_cases()}] start case: {runner.display()}, drop_old={drop_old}")
                     case_res.metrics = runner.run(drop_old)
