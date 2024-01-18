@@ -4,14 +4,11 @@ Usage:
     >>> Dataset.Cohere.get(100_000)
 """
 
-import os
+from collections import namedtuple
 import logging
 import pathlib
-from hashlib import md5
 from enum import Enum
-import s3fs
 import pandas as pd
-from tqdm import tqdm
 from pydantic import validator, PrivateAttr
 import polars as pl
 from pyarrow.parquet import ParquetFile
@@ -20,8 +17,12 @@ from ..base import BaseModel
 from .. import config
 from ..backend.clients import MetricType
 from . import utils
+from .data_source import DatasetSource, DatasetReader
 
 log = logging.getLogger(__name__)
+
+
+SizeLabel = namedtuple('SizeLabel', ['size', 'label', 'files'])
 
 
 class BaseDataset(BaseModel):
@@ -30,7 +31,7 @@ class BaseDataset(BaseModel):
     dim: int
     metric_type: MetricType
     use_shuffled: bool
-    _size_label: dict = PrivateAttr()
+    _size_label: dict[int, SizeLabel] = PrivateAttr()
 
     @validator("size")
     def verify_size(cls, v):
@@ -40,11 +41,41 @@ class BaseDataset(BaseModel):
 
     @property
     def label(self) -> str:
-        return self._size_label.get(self.size)
+        return self._size_label.get(self.size).label
 
     @property
     def dir_name(self) -> str:
         return f"{self.name}_{self.label}_{utils.numerize(self.size)}".lower()
+
+    @property
+    def files(self) -> str:
+        return self._size_label.get(self.size).files
+
+
+def get_files(train_count: int, use_shuffled: bool, with_gt: bool = True) -> list[str]:
+    prefix = "shuffle_train" if use_shuffled else "train"
+    middle = f"of-{train_count}"
+    surfix = "parquet"
+
+    train_files = []
+    if train_count > 1:
+        just_size = len(str(train_count))
+        for i in range(train_count):
+            sub_file = f"{prefix}-{str(i).rjust(just_size, '0')}-{middle}.{surfix}"
+            train_files.append(sub_file)
+    else:
+        train_files.append(f"{prefix}.{surfix}")
+
+    files = ['test.parquet']
+    if with_gt:
+        files.extend([
+            'neighbors.parquet',
+            'neighbors_tail_1p.parquet',
+            'neighbors_head_1p.parquet',
+        ])
+
+    files.extend(train_files)
+    return files
 
 
 class LAION(BaseDataset):
@@ -52,7 +83,9 @@ class LAION(BaseDataset):
     dim: int = 768
     metric_type: MetricType = MetricType.L2
     use_shuffled: bool = False
-    _size_label: dict = {100_000_000: "LARGE"}
+    _size_label: dict = {
+        100_000_000: SizeLabel(100_000_000, "LARGE", get_files(100, False)),
+    }
 
 
 class GIST(BaseDataset):
@@ -61,8 +94,8 @@ class GIST(BaseDataset):
     metric_type: MetricType = MetricType.L2
     use_shuffled: bool = False
     _size_label: dict = {
-        100_000: "SMALL",
-        1_000_000: "MEDIUM",
+        100_000: SizeLabel(100_000, "SMALL", get_files(1, False, False)),
+        1_000_000: SizeLabel(1_000_000, "MEDIUM", get_files(1, False, False)),
     }
 
 
@@ -72,9 +105,9 @@ class Cohere(BaseDataset):
     metric_type: MetricType = MetricType.COSINE
     use_shuffled: bool = config.USE_SHUFFLED_DATA
     _size_label: dict = {
-        100_000: "SMALL",
-        1_000_000: "MEDIUM",
-        10_000_000: "LARGE",
+        100_000: SizeLabel(100_000, "SMALL", get_files(1, config.USE_SHUFFLED_DATA)),
+        1_000_000: SizeLabel(1_000_000, "MEDIUM", get_files(1, config.USE_SHUFFLED_DATA)),
+        10_000_000: SizeLabel(10_000_000, "LARGE", get_files(10, config.USE_SHUFFLED_DATA)),
     }
 
 
@@ -83,7 +116,7 @@ class Glove(BaseDataset):
     dim: int = 200
     metric_type: MetricType = MetricType.COSINE
     use_shuffled: bool = False
-    _size_label: dict = {1_000_000: "MEDIUM"}
+    _size_label: dict = {1_000_000: SizeLabel(1_000_000, "MEDIUM", get_files(1, False, False))}
 
 
 class SIFT(BaseDataset):
@@ -92,10 +125,11 @@ class SIFT(BaseDataset):
     metric_type: MetricType = MetricType.L2
     use_shuffled: bool = False
     _size_label: dict = {
-        500_000: "SMALL",
-        5_000_000: "MEDIUM",
-        50_000_000: "LARGE",
+        500_000: SizeLabel(500_000, "SMALL", get_files(1, False, False)),
+        5_000_000: SizeLabel(5_000_000, "MEDIUM", get_files(1, False, False)),
+        #  50_000_000: SizeLabel(50_000_000, "LARGE", get_files(50, False, False)),
     }
+
 
 class OpenAI(BaseDataset):
     name: str = "OpenAI"
@@ -103,14 +137,14 @@ class OpenAI(BaseDataset):
     metric_type: MetricType = MetricType.COSINE
     use_shuffled: bool = config.USE_SHUFFLED_DATA
     _size_label: dict = {
-        50_000: "SMALL",
-        500_000: "MEDIUM",
-        5_000_000: "LARGE",
+        50_000: SizeLabel(50_000, "SMALL", get_files(1, config.USE_SHUFFLED_DATA)),
+        500_000: SizeLabel(500_000, "MEDIUM", get_files(1, config.USE_SHUFFLED_DATA)),
+        5_000_000: SizeLabel(5_000_000, "LARGE", get_files(10, config.USE_SHUFFLED_DATA)),
     }
 
 
 class DatasetManager(BaseModel):
-    """Download dataset if not int the local directory. Provide data for cases.
+    """Download dataset if not in the local directory. Provide data for cases.
 
     DatasetManager is iterable, each iteration will return the next batch of data in pandas.DataFrame
 
@@ -122,11 +156,15 @@ class DatasetManager(BaseModel):
     data:   BaseDataset
     test_data: pd.DataFrame | None = None
     train_files : list[str] = []
+    reader: DatasetReader | None = None
 
     def __eq__(self, obj):
         if isinstance(obj, DatasetManager):
             return self.data.name == obj.data.name and self.data.label == obj.data.label
         return False
+
+    def set_reader(self, reader: DatasetReader):
+        self.reader = reader
 
     @property
     def data_dir(self) -> pathlib.Path:
@@ -139,108 +177,12 @@ class DatasetManager(BaseModel):
         """
         return pathlib.Path(config.DATASET_LOCAL_DIR, self.data.name.lower(), self.data.dir_name.lower())
 
-    @property
-    def download_dir(self) -> str:
-        """ data s3 directory: config.DEFAULT_DATASET_URL/{dataset_dirname}
-
-        Examples:
-            >>> sift_s = Dataset.SIFT.manager(500_000)
-            >>> sift_s.download_dir
-            'assets.zilliz.com/benchmark/sift_small_500k'
-        """
-        return f"{config.DEFAULT_DATASET_URL}{self.data.dir_name}"
-
     def __iter__(self):
         return DataSetIterator(self)
 
-    def _validate_local_file(self):
-        if not self.data_dir.exists():
-            log.info(f"local file path not exist, creating it: {self.data_dir}")
-            self.data_dir.mkdir(parents=True)
-
-        fs = s3fs.S3FileSystem(
-            anon=True,
-            client_kwargs={'region_name': 'us-west-2'}
-        )
-        dataset_info = fs.ls(self.download_dir, detail=True)
-        if len(dataset_info) == 0:
-            raise ValueError(f"No data in s3 for dataset: {self.download_dir}")
-        path2etag = {info['Key']: info['ETag'].split('"')[1] for info in dataset_info}
-
-        perfix_to_filter = "train" if self.data.use_shuffled else "shuffle_train"
-        filtered_keys = [key for key in path2etag.keys() if key.split("/")[-1].startswith(perfix_to_filter)]
-        for k in filtered_keys:
-            path2etag.pop(k)
-
-        # get local files ended with '.parquet'
-        file_names = [p.name for p in self.data_dir.glob("*.parquet")]
-        log.info(f"local files: {file_names}")
-        log.info(f"s3 files: {path2etag.keys()}")
-        downloads = []
-        if len(file_names) == 0:
-            log.info("no local files, set all to downloading lists")
-            downloads = path2etag.keys()
-        else:
-            # if local file exists, check the etag of local file with s3,
-            # make sure data files aren't corrupted.
-            for name in tqdm([key.split("/")[-1] for key in path2etag.keys()]):
-                s3_path = f"{self.download_dir}/{name}"
-                local_path = self.data_dir.joinpath(name)
-                log.debug(f"s3 path: {s3_path}, local_path: {local_path}")
-                if not local_path.exists():
-                    log.info(f"local file not exists: {local_path}, add to downloading lists")
-                    downloads.append(s3_path)
-
-                elif not self.match_etag(path2etag.get(s3_path), local_path):
-                    log.info(f"local file etag not match with s3 file: {local_path}, add to downloading lists")
-                    downloads.append(s3_path)
-
-        for s3_file in tqdm(downloads):
-            log.debug(f"downloading file {s3_file} to {self.data_dir}")
-            fs.download(s3_file, self.data_dir.as_posix())
-
-    def match_etag(self, expected_etag: str, local_file) -> bool:
-        """Check if local files' etag match with S3"""
-        def factor_of_1MB(filesize, num_parts):
-            x = filesize / int(num_parts)
-            y = x % 1048576
-            return int(x + 1048576 - y)
-
-        def calc_etag(inputfile, partsize):
-            md5_digests = []
-            with open(inputfile, 'rb') as f:
-                for chunk in iter(lambda: f.read(partsize), b''):
-                    md5_digests.append(md5(chunk).digest())
-            return md5(b''.join(md5_digests)).hexdigest() + '-' + str(len(md5_digests))
-
-        def possible_partsizes(filesize, num_parts):
-            return lambda partsize: partsize < filesize and (float(filesize) / float(partsize)) <= num_parts
-
-        filesize = os.path.getsize(local_file)
-        le = ""
-        if '-' not in expected_etag: # no spliting uploading
-            with open(local_file, 'rb') as f:
-                le = md5(f.read()).hexdigest()
-                log.debug(f"calculated local etag {le}, expected etag: {expected_etag}")
-                return expected_etag == le
-        else:
-            num_parts = int(expected_etag.split('-')[-1])
-            partsizes = [ ## Default Partsizes Map
-                8388608, # aws_cli/boto3
-                15728640, # s3cmd
-                factor_of_1MB(filesize, num_parts) # Used by many clients to upload large files
-            ]
-
-            for partsize in filter(possible_partsizes(filesize, num_parts), partsizes):
-                le = calc_etag(local_file, partsize)
-                log.debug(f"calculated local etag {le}, expected etag: {expected_etag}")
-                if expected_etag == le:
-                    return True
-        return False
-
-    def prepare(self, check=True) -> bool:
-        """Download the dataset from S3
-         url = f"{config.DEFAULT_DATASET_URL}/{self.data.dir_name}"
+    def prepare(self, source: DatasetSource=DatasetSource.S3, check: bool=True) -> bool:
+        """Download the dataset from DatasetSource
+         url = f"{source}/{self.data.dir_name}"
 
          download files from url to self.data_dir, there'll be 4 types of files in the data_dir
              - train*.parquet: for training
@@ -248,9 +190,20 @@ class DatasetManager(BaseModel):
              - neighbors.parquet: ground_truth of the test.parquet
              - neighbors_head_1p.parquet: ground_truth of the test.parquet after filtering 1% data
              - neighbors_99p.parquet: ground_truth of the test.parquet after filtering 99% data
+
+        Args:
+            source(DatasetSource): S3 or AliyunOSS, default as S3
+            check(bool): Whether to do etags check
+
+        Returns:
+            bool: whether the dataset is successfully prepared
+
         """
-        if check:
-            self._validate_local_file()
+        source.reader().read(
+            dataset=self.data.dir_name.lower(),
+            files=self.data.files,
+            local_ds_root=self.data_dir,
+        )
 
         prefix = "shuffle_train" if self.data.use_shuffled else "train"
         self.train_files = sorted([f.name for f in self.data_dir.glob(f'{prefix}*.parquet')])

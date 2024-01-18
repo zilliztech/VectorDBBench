@@ -17,6 +17,7 @@ from .clients import (
 from ..metric import Metric
 from .runner import MultiProcessingSearchRunner
 from .runner import SerialSearchRunner, SerialInsertRunner
+from .data_source  import DatasetSource
 
 
 log = logging.getLogger(__name__)
@@ -44,6 +45,7 @@ class CaseRunner(BaseModel):
     config: TaskConfig
     ca: Case
     status: RunningStatus
+    dataset_source: DatasetSource
 
     db: api.VectorDB | None = None
     test_emb: list[list[float]] | None = None
@@ -59,7 +61,7 @@ class CaseRunner(BaseModel):
             return False
 
     def display(self) -> dict:
-        c_dict = self.ca.dict(include={'label':True, 'filters': True,'dataset':{'data': True} })
+        c_dict = self.ca.dict(include={'label':True, 'filters': True,'dataset':{'data': {'name': True, 'size': True, 'dim': True, 'metric_type': True, 'label': True}} })
         c_dict['db'] = self.config.db_name
         return c_dict
 
@@ -82,7 +84,7 @@ class CaseRunner(BaseModel):
     def _pre_run(self, drop_old: bool = True):
         try:
             self.init_db(drop_old)
-            self.ca.dataset.prepare()
+            self.ca.dataset.prepare(self.dataset_source)
         except ModuleNotFoundError as e:
             log.warning(f"pre run case error: please install client for db: {self.config.db}, error={e}")
             raise e from None
