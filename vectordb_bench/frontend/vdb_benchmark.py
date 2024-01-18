@@ -20,6 +20,7 @@ def main():
     allResults = benchMarkRunner.get_results()
 
     st.title("Vector Database Benchmark")
+    st.caption("Note that all testing was completed in July 2023, except for the times already noted.")
 
     # results selector and filter
     resultSelectorContainer = st.sidebar.container()
