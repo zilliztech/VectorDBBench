@@ -326,6 +326,48 @@ CaseConfigParamInput_max_iterations = CaseConfigInput(
     in [IndexType.GPU_CAGRA.value],
 )
 
+CaseConfigParamInput_build_algo = CaseConfigInput(
+    label=CaseConfigParamType.build_algo,
+    inputType=InputType.Option,
+    inputConfig={
+        "options": ["IVF_PQ", "NN_DESCENT"],
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    in [IndexType.GPU_CAGRA.value],
+)
+
+
+CaseConfigParamInput_cache_dataset_on_device = CaseConfigInput(
+    label=CaseConfigParamType.cache_dataset_on_device,
+    inputType=InputType.Option,
+    inputConfig={
+        "options": ["false", "true"],
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    in [
+        IndexType.GPU_CAGRA.value,
+        IndexType.GPU_IVF_PQ.value,
+        IndexType.GPU_IVF_FLAT.value,
+    ],
+)
+
+CaseConfigParamInput_refine_ratio = CaseConfigInput(
+    label=CaseConfigParamType.refine_ratio,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1.0,
+        "max": 2.0,
+        "value": 1.0,
+        "step": 0.01,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    in [
+        IndexType.GPU_CAGRA.value,
+        IndexType.GPU_IVF_PQ.value,
+        IndexType.GPU_IVF_FLAT.value,
+    ],
+)
+
 CaseConfigParamInput_Lists = CaseConfigInput(
     label=CaseConfigParamType.lists,
     inputType=InputType.Number,
@@ -373,6 +415,8 @@ MilvusLoadConfig = [
     CaseConfigParamInput_Nbits_PQ,
     CaseConfigParamInput_intermediate_graph_degree,
     CaseConfigParamInput_graph_degree,
+    CaseConfigParamInput_build_algo,
+    CaseConfigParamInput_cache_dataset_on_device,
 ]
 MilvusPerformanceConfig = [
     CaseConfigParamInput_IndexType,
@@ -391,6 +435,9 @@ MilvusPerformanceConfig = [
     CaseConfigParamInput_search_width,
     CaseConfigParamInput_min_iterations,
     CaseConfigParamInput_max_iterations,
+    CaseConfigParamInput_build_algo,
+    CaseConfigParamInput_cache_dataset_on_device,
+    CaseConfigParamInput_refine_ratio,
 ]
 
 WeaviateLoadConfig = [
