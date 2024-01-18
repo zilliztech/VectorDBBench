@@ -98,11 +98,6 @@ class Milvus(VectorDB):
 
     def _post_insert(self):
         log.info(f"{self.name} post insert before optimize")
-        
-        if self.case_config.index in [IndexType.GPU_CAGRA, IndexType.GPU_IVF_FLAT, IndexType.GPU_IVF_PQ]:
-            log.debug("skip compaction for gpu index type.")
-            return  
-        
         try:
             self.col.flush()
             # wait for index done and load refresh
@@ -121,9 +116,14 @@ class Milvus(VectorDB):
                     time.sleep(5)
 
             wait_index()
-            self.col.compact()
-            self.col.wait_for_compaction_completed()
-            wait_index()
+            
+            # Skip compaction if use GPU indexType
+            if self.case_config.index in [IndexType.GPU_CAGRA, IndexType.GPU_IVF_FLAT, IndexType.GPU_IVF_PQ]:
+                log.debug("skip compaction for gpu index type.")
+            else :
+                self.col.compact()
+                self.col.wait_for_compaction_completed()
+                wait_index()
 
         except Exception as e:
             log.warning(f"{self.name} optimize error: {e}")
