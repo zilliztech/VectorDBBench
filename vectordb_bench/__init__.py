@@ -8,10 +8,12 @@ env = environs.Env()
 env.read_env(".env")
 
 class config:
+    ALIYUN_OSS_URL = "assets.zilliz.com.cn/benchmark/"
+    AWS_S3_URL = "assets.zilliz.com/benchmark/"
+
     LOG_LEVEL = env.str("LOG_LEVEL", "INFO")
 
-    DEFAULT_DATASET_URL = env.str("DEFAULT_DATASET_URL", "assets.zilliz.com/benchmark/")
-    DEFAULT_DATASET_URL_ALIYUN = env.str("DEFAULT_DATASET_URL", "assets.zilliz.com.cn/benchmark/")
+    DEFAULT_DATASET_URL = env.str("DEFAULT_DATASET_URL", AWS_S3_URL)
     DATASET_LOCAL_DIR = env.path("DATASET_LOCAL_DIR", "/tmp/vectordb_bench/dataset")
     NUM_PER_BATCH = env.int("NUM_PER_BATCH", 5000)
 

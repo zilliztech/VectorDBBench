@@ -1,7 +1,6 @@
 import logging
 from logging import config
 
-
 def init(log_level):
     LOGGING = {
         'version': 1,
