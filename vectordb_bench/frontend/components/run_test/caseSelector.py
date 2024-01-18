@@ -78,8 +78,8 @@ def caseConfigSetting(st, allCaseConfigs, case, activedDbList):
                 elif config.inputType == InputType.Number:
                     caseConfig[config.label] = column.number_input(
                         config.label.value,
-                        format="%d",
-                        step=1,
+                        # format="%d",
+                        step=config.inputConfig.get("step", 1),
                         min_value=config.inputConfig["min"],
                         max_value=config.inputConfig["max"],
                         key=key,
