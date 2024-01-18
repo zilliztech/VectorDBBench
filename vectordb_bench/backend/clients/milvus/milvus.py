@@ -3,13 +3,13 @@
 import logging
 import time
 from contextlib import contextmanager
-from typing import Iterable, Type
+from typing import Iterable
 
 from pymilvus import Collection, utility
 from pymilvus import CollectionSchema, DataType, FieldSchema, MilvusException
 
-from ..api import VectorDB, DBCaseConfig, DBConfig, IndexType
-from .config import MilvusConfig, _milvus_case_config
+from ..api import VectorDB, IndexType
+from .config import MilvusIndexConfig
 
 
 log = logging.getLogger(__name__)
@@ -21,7 +21,7 @@ class Milvus(VectorDB):
         self,
         dim: int,
         db_config: dict,
-        db_case_config: DBCaseConfig,
+        db_case_config: MilvusIndexConfig,
         collection_name: str = "VectorDBBenchCollection",
         drop_old: bool = False,
         name: str = "Milvus",
@@ -98,6 +98,11 @@ class Milvus(VectorDB):
 
     def _post_insert(self):
         log.info(f"{self.name} post insert before optimize")
+        
+        if self.case_config.index in [IndexType.GPU_CAGRA, IndexType.GPU_IVF_FLAT, IndexType.GPU_IVF_PQ]:
+            log.debug("skip compaction for gpu index type.")
+            return  
+        
         try:
             self.col.flush()
             # wait for index done and load refresh
