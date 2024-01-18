@@ -2,6 +2,7 @@ from .cases import CaseLabel
 from .task_runner import CaseRunner, RunningStatus, TaskRunner
 from ..models import TaskConfig
 from ..backend.clients import EmptyDBCaseConfig
+from ..backend.data_source  import DatasetSource
 import logging
 
 
@@ -10,7 +11,7 @@ log = logging.getLogger(__name__)
 
 class Assembler:
     @classmethod
-    def assemble(cls, run_id , task: TaskConfig) -> CaseRunner:
+    def assemble(cls, run_id , task: TaskConfig, source: DatasetSource) -> CaseRunner:
         c_cls = task.case_config.case_id.case_cls
 
         c = c_cls()
@@ -22,14 +23,21 @@ class Assembler:
             config=task,
             ca=c,
             status=RunningStatus.PENDING,
+            dataset_source=source,
         )
 
         return runner
 
     @classmethod
-    def assemble_all(cls, run_id: str, task_label: str, tasks: list[TaskConfig]) -> TaskRunner:
+    def assemble_all(
+        cls,
+        run_id: str,
+        task_label: str,
+        tasks: list[TaskConfig],
+        source: DatasetSource,
+    ) -> TaskRunner:
         """group by case type, db, and case dataset"""
-        runners = [cls.assemble(run_id, task) for task in tasks]
+        runners = [cls.assemble(run_id, task, source) for task in tasks]
         load_runners = [r for r in runners if r.ca.label == CaseLabel.Load]
         perf_runners = [r for r in runners if r.ca.label == CaseLabel.Performance]
 

@@ -26,6 +26,7 @@ dependencies = [
     "streamlit_extras",
     "tqdm",
     "s3fs",
+    "oss2",
     "psutil",
     "polars",
     "plotly",
