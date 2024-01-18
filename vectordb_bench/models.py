@@ -56,6 +56,9 @@ class CaseConfigParamType(Enum):
     search_width = "search_width"
     min_iterations = "min_iterations"
     max_iterations = "max_iterations"
+    build_algo = "build_algo"
+    cache_dataset_on_device = "cache_dataset_on_device"
+    refine_ratio = "refine_ratio"
 
 
 class CustomizedCase(BaseModel):
