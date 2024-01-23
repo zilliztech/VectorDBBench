@@ -56,3 +56,12 @@ These sub-pages may help you.
 - `/library_results` show all the `library` test results.
 
 Note that, VDBBench does **not yet support filtering tests and capacity tests** for library type clients.
+
+Some config examples of pyknowhere GPU_Index
+- GPU_IVF_FLAT
+  - "nlist": 1024, "nprobe": 64, "cache_dataset_on_device": "false", "refine_ratio": 1.0
+- GPU_IVF_PQ
+  - "nlist": 1024, "nprobe": 64, "nbits": 8, "m": 0, "cache_dataset_on_device": "false", "refine_ratio": 1.0
+- GPU_CAGRA
+  - "intermediate_graph_degree": 64, "graph_degree": 32, "build_algo": "IVF_PQ", "cache_dataset_on_device": "false", "itopk_size": 128, "team_size": 0, "search_width": 4, "min_iterations": 0, "max_iterations": 0, "refine_ratio": 1.0
+  - `build_algo`: `"NN_DESCENT"` or `"IVF_PQ"`
