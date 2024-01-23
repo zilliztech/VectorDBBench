@@ -22,7 +22,7 @@ sudo apt update \
 rm -rf build \
 && mkdir build \
 && cd build \
-&& conan install .. --build=missing -o with_diskann=True -s compiler.libcxx=libstdc++11 -s build_type=Release \
+&& conan install .. --build=missing -o with_raft=True -s compiler.libcxx=libstdc++11 -s build_type=Release \
 && conan build ..
 && cd ..
 ```
