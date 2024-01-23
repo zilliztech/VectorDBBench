@@ -34,6 +34,8 @@ class KnowhereIndexConfig(BaseModel, DBCaseConfig):
     search_list_size: int | None = None
 
     def parse_metric(self) -> str:
+        if self.metric_type == MetricType.COSINE:
+            return MetricType.L2.value
         return self.metric_type.value
 
     def index_param(self) -> dict:
