@@ -9,3 +9,4 @@ __MACOSX
 build/
 venv/
 .idea/
+tmp_knowhere/

@@ -29,7 +29,7 @@ class SerialInsertRunner:
         self.db = db
         self.normalize = normalize
 
-    def task(self) -> int:
+    def insert_batch(self) -> int:
         count = 0
         with self.db.init():
             log.info(f"({mp.current_process().name:16}) Start inserting embeddings in batch {config.NUM_PER_BATCH}")
@@ -59,11 +59,42 @@ class SerialInsertRunner:
                 count += insert_count
                 if count % 100_000 == 0:
                     log.info(f"({mp.current_process().name:16}) Loaded {count} embeddings into VectorDB")
+            dur = time.perf_counter() - start
+            log.info(f"({mp.current_process().name:16}) Finish loading all dataset into VectorDB, dur={dur}")
+            return count, dur
+    
+    def insert_once(self):
+        with self.db.init():
+            log.info(
+                f"({mp.current_process().name:16}) Start inserting all embeddings at once."
+            )
+            all_metadata = []
+            all_embeddings = []
+            for data_df in self.dataset:
+                all_metadata += data_df["id"].tolist()
+                all_embeddings += data_df["emb"].tolist()
+  
+            all_embeddings = np.array(all_embeddings).astype(np.float32)
+            log.info(
+                f"Read all vectors - {all_embeddings.shape}, {all_embeddings.dtype}"
+            )
+            start = time.perf_counter()
+            insert_count, error = self.db.insert_embeddings(
+                embeddings=all_embeddings,
+                metadata=all_metadata,
+            )
+            if error is not None:
+                raise error
+            assert insert_count == all_embeddings.shape[0]
+            dur = time.perf_counter() - start
 
-            log.info(f"({mp.current_process().name:16}) Finish loading all dataset into VectorDB, dur={time.perf_counter()-start}")
-            return count
+            log.info(
+                f"({mp.current_process().name:16}) Finish loading all dataset, dur={dur}"
+            )
+            return insert_count, dur
 
     def endless_insert_data(self, all_embeddings, all_metadata, left_id: int = 0) -> int:
+        assert self.testType != api.TestType.LIBRARY
         with self.db.init():
             # unique id for endlessness insertion
             all_metadata = [i+left_id for i in all_metadata]
@@ -100,13 +131,17 @@ class SerialInsertRunner:
             log.info(f"({mp.current_process().name:16}) Finish inserting {len(all_embeddings)} embeddings in batch {NUM_PER_BATCH}")
         return count
 
-    @utils.time_it
-    def _insert_all_batches(self) -> int:
+    def _insert_all_batches(self, test_type: api.TestType = api.TestType.DATABASE) -> int:
         """Performance case only"""
         with concurrent.futures.ProcessPoolExecutor(mp_context=mp.get_context('spawn'), max_workers=1) as executor:
-            future = executor.submit(self.task)
+            task = (
+                self.insert_batch
+                if test_type == api.TestType.DATABASE
+                else self.insert_once
+            )
+            future = executor.submit(task)
             try:
-                count = future.result(timeout=self.timeout)
+                count, dur = future.result(timeout=self.timeout)
             except TimeoutError as e:
                 msg = f"VectorDB load dataset timeout in {self.timeout}"
                 log.warning(msg)
@@ -117,7 +152,7 @@ class SerialInsertRunner:
                 log.warning(f"VectorDB load dataset error: {e}")
                 raise e from e
             else:
-                return count
+                return count, dur
 
     def run_endlessness(self) -> int:
         """run forever util DB raises exception or crash"""
@@ -145,9 +180,9 @@ class SerialInsertRunner:
             log.info(msg)
             raise LoadTimeoutError(msg)
 
-    def run(self) -> int:
-        count, dur = self._insert_all_batches()
-        return count
+    def run(self, test_type: api.TestType = api.TestType.DATABASE) -> int:
+        count, dur = self._insert_all_batches(test_type)
+        return count, dur
 
 
 class SerialSearchRunner:
@@ -158,6 +193,7 @@ class SerialSearchRunner:
         ground_truth: pd.DataFrame,
         k: int = 100,
         filters: dict | None = None,
+        valid_ids: list[int] | None = None,
     ):
         self.db = db
         self.k = k
@@ -168,8 +204,9 @@ class SerialSearchRunner:
         else:
             self.test_data = test_data
         self.ground_truth = ground_truth
+        self.valid_ids = valid_ids
 
-    def search(self, args: tuple[list, pd.DataFrame]):
+    def search_with_single_query(self, args: tuple[list, pd.DataFrame]):
         log.info(f"{mp.current_process().name:14} start search the entire test_data to get recall and latency")
         with self.db.init():
             test_data, ground_truth = args
@@ -214,13 +251,76 @@ class SerialSearchRunner:
             f"p99={p99}"
          )
         return (avg_recall, p99)
+    
+    def search_with_large_nq(self, args: tuple[list, pd.DataFrame]):
+        NQ = config.LIBRARY_TEST_NQ
+        log.info(
+            f"{mp.current_process().name:14} start search the entire test_data to get recall and latency (nq={NQ})"
+        )
+        with self.db.init():
+            test_data, ground_truth = args
 
+            log.debug(f"test dataset size: {len(test_data)}")
+            log.debug(
+                f"ground truth size: {ground_truth.columns}, shape: {ground_truth.shape}"
+            )
 
-    def _run_in_subprocess(self) -> tuple[float, float]:
+            try:
+                querydata = np.array(test_data)
+                # repeat until more than NQ
+                while querydata.shape[0] < NQ:
+                    querydata = np.append(querydata, test_data, axis=0)
+                query = querydata[:NQ].astype(np.float32)
+                if self.valid_ids is not None:
+                    self.db.convert_to_bitset(self.valid_ids)
+                start_time = time.perf_counter()
+                results = self.db.search_embeddings(
+                    query,
+                    self.k,
+                    self.filters,
+                )
+                latency = time.perf_counter() - start_time
+                log.info(f"Get search Results, latency: {latency}")
+
+                log.info("start to compute recall")
+                gt = ground_truth["neighbors_id"]
+                if len(gt) > 0 and len(gt[0]) > 0 and not isinstance(gt[0][0], int):
+                    gt = [[int(item[0]) for item in row] for row in gt]
+                recalls = [
+                    calc_recall(
+                        min(self.k, len(gt[i])),
+                        gt[i][: self.k],
+                        result,
+                    )
+                    for i, result in enumerate(results[: min(len(gt), len(results))])
+                ]
+
+            except Exception as e:
+                log.warning(f"VectorDB search_embedding error: {e}")
+                traceback.print_exc(chain=True)
+                raise e from None
+
+        avg_recall = round(np.mean(recalls), 4)
+        qps = round(NQ / latency, 4)
+        log.info(
+            f"{mp.current_process().name:14} search entire test_data: "
+            f"cost={int(latency)}s, "
+            f"queries={len(test_data)}, "
+            f"avg_recall={avg_recall}, "
+            f"qps={qps}"
+        )
+        return (avg_recall, qps)
+
+    def _run_in_subprocess(self, test_type: api.TestType = api.TestType.DATABASE):
         with concurrent.futures.ProcessPoolExecutor(max_workers=1) as executor:
-            future = executor.submit(self.search, (self.test_data, self.ground_truth))
+            search_handler = (
+                self.search_with_single_query
+                if test_type == api.TestType.DATABASE
+                else self.search_with_large_nq
+            )
+            future = executor.submit(search_handler, (self.test_data, self.ground_truth))
             result = future.result()
             return result
 
-    def run(self) -> tuple[float, float]:
-        return self._run_in_subprocess()
+    def run(self, test_type: api.TestType = api.TestType.DATABASE):
+        return self._run_in_subprocess(test_type)

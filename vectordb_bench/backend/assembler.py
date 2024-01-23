@@ -1,3 +1,4 @@
+from vectordb_bench.backend.clients.api import TestType
 from .cases import CaseLabel
 from .task_runner import CaseRunner, RunningStatus, TaskRunner
 from ..models import TaskConfig
@@ -17,6 +18,10 @@ class Assembler:
         c = c_cls()
         if type(task.db_case_config) != EmptyDBCaseConfig:
             task.db_case_config.metric_type = c.dataset.data.metric_type
+            
+        if task.db_config.test_type == TestType.LIBRARY and c.dataset.data.use_shuffled:
+            log.error(f"Should not use shuffle data for library tests.")
+            return None
 
         runner = CaseRunner(
             run_id=run_id,
@@ -37,7 +42,7 @@ class Assembler:
         source: DatasetSource,
     ) -> TaskRunner:
         """group by case type, db, and case dataset"""
-        runners = [cls.assemble(run_id, task, source) for task in tasks]
+        runners = [cls.assemble(run_id, task, source) for task in tasks if task is not None]
         load_runners = [r for r in runners if r.ca.label == CaseLabel.Load]
         perf_runners = [r for r in runners if r.ca.label == CaseLabel.Performance]
 

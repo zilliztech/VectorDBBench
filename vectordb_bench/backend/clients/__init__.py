@@ -32,6 +32,7 @@ class DB(Enum):
     PgVectoRS = "PgVectoRS"
     Redis = "Redis"
     Chroma = "Chroma"
+    Knowhere = "Knowhere"
 
 
     @property
@@ -77,6 +78,10 @@ class DB(Enum):
             from .chroma.chroma import ChromaClient
             return ChromaClient
 
+        if self == DB.Knowhere:
+            from .knowhere.knowhere import Knowhere
+            return Knowhere
+
     @property
     def config_cls(self) -> Type[DBConfig]:
         """Import while in use"""
@@ -120,6 +125,10 @@ class DB(Enum):
             from .chroma.config import ChromaConfig
             return ChromaConfig
 
+        if self == DB.Knowhere:
+            from .knowhere.config import KnowhereConfig
+            return KnowhereConfig
+
     def case_config_cls(self, index_type: IndexType | None = None) -> Type[DBCaseConfig]:
         if self == DB.Milvus:
             from .milvus.config import _milvus_case_config
@@ -148,6 +157,10 @@ class DB(Enum):
         if self == DB.PgVectoRS:
             from .pgvecto_rs.config import _pgvecto_rs_case_config
             return _pgvecto_rs_case_config.get(index_type)
+
+        if self == DB.Knowhere:
+            from .knowhere.config import KnowhereIndexConfig
+            return KnowhereIndexConfig
 
         # DB.Pinecone, DB.Chroma, DB.Redis
         return EmptyDBCaseConfig

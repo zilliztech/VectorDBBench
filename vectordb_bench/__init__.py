@@ -16,9 +16,10 @@ class config:
     DEFAULT_DATASET_URL = env.str("DEFAULT_DATASET_URL", AWS_S3_URL)
     DATASET_LOCAL_DIR = env.path("DATASET_LOCAL_DIR", "/tmp/vectordb_bench/dataset")
     NUM_PER_BATCH = env.int("NUM_PER_BATCH", 5000)
+    LIBRARY_TEST_NQ = env.int("LIBRARY_TEST_NQ", 10_000)
 
     DROP_OLD = env.bool("DROP_OLD", True)
-    USE_SHUFFLED_DATA = env.bool("USE_SHUFFLED_DATA", True)
+    USE_SHUFFLED_DATA = env.bool("USE_SHUFFLED_DATA", False)
     NUM_CONCURRENCY = [1, 5, 10, 15, 20, 25, 30, 35]
 
     RESULTS_LOCAL_DIR = pathlib.Path(__file__).parent.joinpath("results")

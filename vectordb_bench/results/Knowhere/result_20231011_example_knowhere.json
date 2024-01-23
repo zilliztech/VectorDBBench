@@ -1,0 +1,293 @@
+{
+    "run_id": "5ad7f4691ea14ecebf6cd975ce73d08d",
+    "task_label": "example",
+    "results": [
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "load_duration": 118.4832,
+                "qps": 60.0899,
+                "serial_latency_p99": 0.0,
+                "recall": 0.951
+            },
+            "task_config": {
+                "db": "Knowhere",
+                "db_config": {
+                    "db_label": "IVF_Flat-1024-64",
+                    "test_type": "LIBRARY",
+                    "index_type": "IVFFLAT",
+                    "config": "\"nlist\": 1024, \"nprobe\": 64"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE"
+                },
+                "case_config": {
+                    "case_id": 5,
+                    "custom_case": {}
+                }
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "load_duration": 423.6654,
+                "qps": 1071.3152,
+                "serial_latency_p99": 0.0,
+                "recall": 0.8849
+            },
+            "task_config": {
+                "db": "Knowhere",
+                "db_config": {
+                    "db_label": "HNSW-M24-EF100",
+                    "test_type": "LIBRARY",
+                    "index_type": "HNSW",
+                    "config": "\"M\": 24, \"efConstruction\": 100, \"ef\": 100"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE"
+                },
+                "case_config": {
+                    "case_id": 5,
+                    "custom_case": {}
+                }
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "load_duration": 431.5858,
+                "qps": 444.8923,
+                "serial_latency_p99": 0.0,
+                "recall": 0.966
+            },
+            "task_config": {
+                "db": "Knowhere",
+                "db_config": {
+                    "db_label": "HNSW-M24-EF300",
+                    "test_type": "LIBRARY",
+                    "index_type": "HNSW",
+                    "config": "\"M\": 24, \"efConstruction\": 100, \"ef\": 300"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE"
+                },
+                "case_config": {
+                    "case_id": 5,
+                    "custom_case": {}
+                }
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "load_duration": 463.3672,
+                "qps": 1065.8162,
+                "serial_latency_p99": 0.0,
+                "recall": 0.8988
+            },
+            "task_config": {
+                "db": "Knowhere",
+                "db_config": {
+                    "db_label": "HNSW-M32-EF100",
+                    "test_type": "LIBRARY",
+                    "index_type": "HNSW",
+                    "config": "\"M\": 32, \"efConstruction\": 100, \"ef\": 100"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE"
+                },
+                "case_config": {
+                    "case_id": 5,
+                    "custom_case": {}
+                }
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "load_duration": 479.8147,
+                "qps": 785.9159,
+                "serial_latency_p99": 0.0,
+                "recall": 0.9367
+            },
+            "task_config": {
+                "db": "Knowhere",
+                "db_config": {
+                    "db_label": "HNSW-M32-EF150",
+                    "test_type": "LIBRARY",
+                    "index_type": "HNSW",
+                    "config": "\"M\": 32, \"efConstruction\": 100, \"ef\": 150"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE"
+                },
+                "case_config": {
+                    "case_id": 5,
+                    "custom_case": {}
+                }
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "load_duration": 474.5512,
+                "qps": 579.563,
+                "serial_latency_p99": 0.0,
+                "recall": 0.9547
+            },
+            "task_config": {
+                "db": "Knowhere",
+                "db_config": {
+                    "db_label": "HNSW-M32-EF200",
+                    "test_type": "LIBRARY",
+                    "index_type": "HNSW",
+                    "config": "\"M\": 32, \"efConstruction\": 100, \"ef\": 200"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE"
+                },
+                "case_config": {
+                    "case_id": 5,
+                    "custom_case": {}
+                }
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "load_duration": 468.1975,
+                "qps": 411.2827,
+                "serial_latency_p99": 0.0,
+                "recall": 0.9724
+            },
+            "task_config": {
+                "db": "Knowhere",
+                "db_config": {
+                    "db_label": "HNSW-M32-EF300",
+                    "test_type": "LIBRARY",
+                    "index_type": "HNSW",
+                    "config": "\"M\": 32, \"efConstruction\": 100, \"ef\": 300"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE"
+                },
+                "case_config": {
+                    "case_id": 5,
+                    "custom_case": {}
+                }
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "load_duration": 569.3753,
+                "qps": 961.7794,
+                "serial_latency_p99": 0.0,
+                "recall": 0.9097
+            },
+            "task_config": {
+                "db": "Knowhere",
+                "db_config": {
+                    "db_label": "HNSW-M48-EF100",
+                    "test_type": "LIBRARY",
+                    "index_type": "HNSW",
+                    "config": "\"M\": 48, \"efConstruction\": 100, \"ef\": 100"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE"
+                },
+                "case_config": {
+                    "case_id": 5,
+                    "custom_case": {}
+                }
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "load_duration": 160.3352,
+                "qps": 1402.8921,
+                "serial_latency_p99": 0.0,
+                "recall": 0.7016
+            },
+            "task_config": {
+                "db": "Knowhere",
+                "db_config": {
+                    "db_label": "Scann-1024-64-100",
+                    "test_type": "LIBRARY",
+                    "index_type": "SCANN",
+                    "config": "\"nlist\": 1024, \"nprobe\": 64, \"reorder_k\": 100"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE"
+                },
+                "case_config": {
+                    "case_id": 5,
+                    "custom_case": {}
+                }
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "load_duration": 163.5323,
+                "qps": 930.8908,
+                "serial_latency_p99": 0.0,
+                "recall": 0.8087
+            },
+            "task_config": {
+                "db": "Knowhere",
+                "db_config": {
+                    "db_label": "Scann-1024-64-150",
+                    "test_type": "LIBRARY",
+                    "index_type": "SCANN",
+                    "config": "\"nlist\": 1024, \"nprobe\": 64, \"reorder_k\": 150"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE"
+                },
+                "case_config": {
+                    "case_id": 5,
+                    "custom_case": {}
+                }
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "load_duration": 146.9401,
+                "qps": 920.167,
+                "serial_latency_p99": 0.0,
+                "recall": 0.7112
+            },
+            "task_config": {
+                "db": "Knowhere",
+                "db_config": {
+                    "db_label": "Scann-1024-128-100",
+                    "test_type": "LIBRARY",
+                    "index_type": "SCANN",
+                    "config": "\"nlist\": 1024, \"nprobe\": 128, \"reorder_k\": 100"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE"
+                },
+                "case_config": {
+                    "case_id": 5,
+                    "custom_case": {}
+                }
+            },
+            "label": ":)"
+        }
+    ],
+    "file_fmt": "result_{}_{}_{}.json"
+}

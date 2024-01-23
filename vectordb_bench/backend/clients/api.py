@@ -23,6 +23,14 @@ class IndexType(str, Enum):
     GPU_IVF_PQ = "GPU_IVF_PQ"
     GPU_CAGRA = "GPU_CAGRA"
 
+class TestType(str, Enum):
+    """
+    - Database: Concurrent Test for QPS, with single-nq (nq=1).
+    - Library: Serial Test for QPS, with large-nq (nq>=10,000).
+    """
+
+    DATABASE = "DATABASE"
+    LIBRARY = "LIBRARY"
 
 class DBConfig(ABC, BaseModel):
     """DBConfig contains the connection info of vector database
@@ -33,9 +41,12 @@ class DBConfig(ABC, BaseModel):
             MilvusConfig.db_label = 2c8g
             MilvusConfig.db_label = 16c64g
             ZillizCloudConfig.db_label = 1cu-perf
+        
+        test_type(TestType | str): DATABASE (default) or LIBRARY
     """
 
     db_label: str = ""
+    test_type: TestType = TestType.DATABASE
 
     @abstractmethod
     def to_dict(self) -> dict:
@@ -48,6 +59,10 @@ class DBConfig(ABC, BaseModel):
         if isinstance(v, (str, SecretStr)) and len(v) == 0:
             raise ValueError("Empty string!")
         return v
+    
+    @property
+    def config_json(self):
+        return self.to_dict()
 
 
 class DBCaseConfig(ABC):
@@ -164,6 +179,30 @@ class VectorDB(ABC):
             list[int]: list of k most similar embeddings IDs to the query embedding.
         """
         raise NotImplementedError
+    
+    @abstractmethod
+    def search_embeddings(
+        self,
+        query: list[list[float]],
+        k: int = 100,
+        filters: dict | None = None,
+    ) -> list[int]:
+        """Get k most similar embeddings to query vectors.
+
+        Args:
+            query(list[list[float]]): query embeddings to look up documents similar to.
+            k(int): Number of most similar embeddings to return. Defaults to 100.
+            filters(dict, optional): filtering expression to filter the data while searching.
+
+        Returns:
+            list[int]: list of k most similar embeddings IDs to the query embedding.
+        """
+        raise NotImplementedError
+    
+    def get_filters(self, case):
+        # Compatible with previous filter case (1p, 99p)
+        # DB client need overwrite the function when test hyrid_search case
+        return case.filters
 
     # TODO: remove
     @abstractmethod
