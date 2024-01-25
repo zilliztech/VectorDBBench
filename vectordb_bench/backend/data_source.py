@@ -69,7 +69,6 @@ class AliyunOSSReader(DatasetReader):
         if check_etag:
             return match_etag(info.etag.strip('"').lower(), local)
 
-
         return True
 
     def read(self, dataset: str, files: list[str], local_ds_root: pathlib.Path, check_etag: bool = False):
@@ -84,7 +83,8 @@ class AliyunOSSReader(DatasetReader):
                 remote_file = pathlib.Path("benchmark", dataset, file)
                 local_file = local_ds_root.joinpath(file)
 
-                if (not local_file.exists()) or (not self.validate_file(remote_file, local_file, check_etag)):
+                # Don't check etags for Dataset from Aliyun OSS
+                if (not local_file.exists()) or (not self.validate_file(remote_file, local_file, False)):
                     log.info(f"local file: {local_file} not match with remote: {remote_file}; add to downloading list")
                     downloads.append((remote_file, local_file))
 
