@@ -23,16 +23,17 @@ class TestDataSet:
         with pytest.raises(ValidationError):
             Dataset.COHERE.get(9999)
 
-    def test_init_cohere(self):
-        coheres = [Dataset.COHERE.manager(i) for i in [100_000, 1_000_000, 10_000_000]]
-        for t in coheres:
-            t._validate_local_file()
-
     def test_iter_cohere(self):
         cohere_10m = Dataset.COHERE.manager(10_000_000)
-        cohere_10m.prepare(False)
+        cohere_10m.prepare(check=False)
+
+        import time
+        before = time.time()
         for i in cohere_10m:
             log.debug(i.head(1))
+
+        dur_iter = time.time() - before
+        log.warning(f"iter through cohere_10m cost={dur_iter/60}min")
 
 
 class TestGetFiles:

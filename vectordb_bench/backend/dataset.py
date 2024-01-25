@@ -203,6 +203,7 @@ class DatasetManager(BaseModel):
             dataset=self.data.dir_name.lower(),
             files=self.data.files,
             local_ds_root=self.data_dir,
+            check_etag=check,
         )
 
         prefix = "shuffle_train" if self.data.use_shuffled else "train"
