@@ -1,7 +1,7 @@
 from enum import IntEnum
 import typing
 from pydantic import BaseModel
-from vectordb_bench.backend.cases import CaseType
+from vectordb_bench.backend.cases import CaseLabel, CaseType
 from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.clients.api import IndexType
 
@@ -406,6 +406,16 @@ CaseConfigParamInput_QuantizationRatio_PgVectoRS = CaseConfigInput(
     == "product",
 )
 
+CaseConfigParamInput_ZillizLevel = CaseConfigInput(
+    label=CaseConfigParamType.level,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 3,
+        "value": 1,
+    },
+)
+
 MilvusLoadConfig = [
     CaseConfigParamInput_IndexType,
     CaseConfigParamInput_M,
@@ -479,90 +489,32 @@ PgVectoRSPerformanceConfig = [
     CaseConfigParamInput_QuantizationRatio_PgVectoRS,
 ]
 
+ZillizCloudPerformanceConfig = [
+    CaseConfigParamInput_ZillizLevel,
+]
+
 CASE_CONFIG_MAP = {
     DB.Milvus: {
-        CaseType.CapacityDim960: MilvusLoadConfig,
-        CaseType.CapacityDim128: MilvusLoadConfig,
-        CaseType.Performance768D100M: MilvusPerformanceConfig,
-        CaseType.Performance768D10M: MilvusPerformanceConfig,
-        CaseType.Performance768D1M: MilvusPerformanceConfig,
-        CaseType.Performance768D10M1P: MilvusPerformanceConfig,
-        CaseType.Performance768D1M1P: MilvusPerformanceConfig,
-        CaseType.Performance768D10M99P: MilvusPerformanceConfig,
-        CaseType.Performance768D1M99P: MilvusPerformanceConfig,
-        CaseType.Performance1536D5M: MilvusPerformanceConfig,
-        CaseType.Performance1536D500K: MilvusPerformanceConfig,
-        CaseType.Performance1536D5M1P: MilvusPerformanceConfig,
-        CaseType.Performance1536D500K1P: MilvusPerformanceConfig,
-        CaseType.Performance1536D5M99P: MilvusPerformanceConfig,
-        CaseType.Performance1536D500K99P: MilvusPerformanceConfig,
+        CaseLabel.Load: MilvusLoadConfig,
+        CaseLabel.Performance: MilvusPerformanceConfig,
+    },
+    DB.ZillizCloud: {
+        CaseLabel.Performance: ZillizCloudPerformanceConfig,
     },
     DB.WeaviateCloud: {
-        CaseType.CapacityDim960: WeaviateLoadConfig,
-        CaseType.CapacityDim128: WeaviateLoadConfig,
-        CaseType.Performance768D100M: WeaviatePerformanceConfig,
-        CaseType.Performance768D10M: WeaviatePerformanceConfig,
-        CaseType.Performance768D1M: WeaviatePerformanceConfig,
-        CaseType.Performance768D10M1P: WeaviatePerformanceConfig,
-        CaseType.Performance768D1M1P: WeaviatePerformanceConfig,
-        CaseType.Performance768D10M99P: WeaviatePerformanceConfig,
-        CaseType.Performance768D1M99P: WeaviatePerformanceConfig,
-        CaseType.Performance1536D5M: WeaviatePerformanceConfig,
-        CaseType.Performance1536D500K: WeaviatePerformanceConfig,
-        CaseType.Performance1536D5M1P: WeaviatePerformanceConfig,
-        CaseType.Performance1536D500K1P: WeaviatePerformanceConfig,
-        CaseType.Performance1536D5M99P: WeaviatePerformanceConfig,
-        CaseType.Performance1536D500K99P: WeaviatePerformanceConfig,
+        CaseLabel.Load: WeaviateLoadConfig,
+        CaseLabel.Performance: WeaviatePerformanceConfig,
     },
     DB.ElasticCloud: {
-        CaseType.CapacityDim960: ESLoadingConfig,
-        CaseType.CapacityDim128: ESLoadingConfig,
-        CaseType.Performance768D100M: ESPerformanceConfig,
-        CaseType.Performance768D10M: ESPerformanceConfig,
-        CaseType.Performance768D1M: ESPerformanceConfig,
-        CaseType.Performance768D10M1P: ESPerformanceConfig,
-        CaseType.Performance768D1M1P: ESPerformanceConfig,
-        CaseType.Performance768D10M99P: ESPerformanceConfig,
-        CaseType.Performance768D1M99P: ESPerformanceConfig,
-        CaseType.Performance1536D5M: ESPerformanceConfig,
-        CaseType.Performance1536D500K: ESPerformanceConfig,
-        CaseType.Performance1536D5M1P: ESPerformanceConfig,
-        CaseType.Performance1536D500K1P: ESPerformanceConfig,
-        CaseType.Performance1536D5M99P: ESPerformanceConfig,
-        CaseType.Performance1536D500K99P: ESPerformanceConfig,
+        CaseLabel.Load: ESLoadingConfig,
+        CaseLabel.Performance: ESPerformanceConfig,
     },
     DB.PgVector: {
-        CaseType.CapacityDim960: PgVectorLoadingConfig,
-        CaseType.CapacityDim128: PgVectorLoadingConfig,
-        CaseType.Performance768D100M: PgVectorPerformanceConfig,
-        CaseType.Performance768D10M: PgVectorPerformanceConfig,
-        CaseType.Performance768D1M: PgVectorPerformanceConfig,
-        CaseType.Performance768D10M1P: PgVectorPerformanceConfig,
-        CaseType.Performance768D1M1P: PgVectorPerformanceConfig,
-        CaseType.Performance768D10M99P: PgVectorPerformanceConfig,
-        CaseType.Performance768D1M99P: PgVectorPerformanceConfig,
-        CaseType.Performance1536D5M: PgVectorPerformanceConfig,
-        CaseType.Performance1536D500K: PgVectorPerformanceConfig,
-        CaseType.Performance1536D5M1P: PgVectorPerformanceConfig,
-        CaseType.Performance1536D500K1P: PgVectorPerformanceConfig,
-        CaseType.Performance1536D5M99P: PgVectorPerformanceConfig,
-        CaseType.Performance1536D500K99P: PgVectorPerformanceConfig,
+        CaseLabel.Load: PgVectorLoadingConfig,
+        CaseLabel.Performance: PgVectorPerformanceConfig,
     },
     DB.PgVectoRS: {
-        CaseType.CapacityDim960: PgVectoRSLoadingConfig,
-        CaseType.CapacityDim128: PgVectoRSLoadingConfig,
-        CaseType.Performance768D100M: PgVectoRSPerformanceConfig,
-        CaseType.Performance768D10M: PgVectoRSPerformanceConfig,
-        CaseType.Performance768D1M: PgVectoRSPerformanceConfig,
-        CaseType.Performance768D10M1P: PgVectoRSPerformanceConfig,
-        CaseType.Performance768D1M1P: PgVectoRSPerformanceConfig,
-        CaseType.Performance768D10M99P: PgVectoRSPerformanceConfig,
-        CaseType.Performance768D1M99P: PgVectoRSPerformanceConfig,
-        CaseType.Performance1536D5M: PgVectoRSPerformanceConfig,
-        CaseType.Performance1536D500K: PgVectoRSPerformanceConfig,
-        CaseType.Performance1536D5M1P: PgVectoRSPerformanceConfig,
-        CaseType.Performance1536D500K1P: PgVectoRSPerformanceConfig,
-        CaseType.Performance1536D5M99P: PgVectorPerformanceConfig,
-        CaseType.Performance1536D500K99P: PgVectoRSPerformanceConfig,
+        CaseLabel.Load: PgVectoRSLoadingConfig,
+        CaseLabel.Performance: PgVectoRSPerformanceConfig,
     },
 }

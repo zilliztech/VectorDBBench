@@ -59,6 +59,7 @@ class CaseConfigParamType(Enum):
     build_algo = "build_algo"
     cache_dataset_on_device = "cache_dataset_on_device"
     refine_ratio = "refine_ratio"
+    level = "level"
 
 
 class CustomizedCase(BaseModel):
