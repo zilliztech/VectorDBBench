@@ -19,6 +19,7 @@ class ZillizCloudConfig(DBConfig):
 
 class AutoIndexConfig(MilvusIndexConfig, DBCaseConfig):
     index: IndexType = IndexType.AUTOINDEX
+    level: int = 1
 
     def index_param(self) -> dict:
         return {
@@ -30,6 +31,9 @@ class AutoIndexConfig(MilvusIndexConfig, DBCaseConfig):
     def search_param(self) -> dict:
         return {
             "metric_type": self.parse_metric(),
+            "params": {
+                "level": self.level,
+            }
         }
 
 
