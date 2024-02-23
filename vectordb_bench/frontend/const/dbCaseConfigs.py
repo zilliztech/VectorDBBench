@@ -1,10 +1,12 @@
-from enum import IntEnum
 import typing
+from enum import IntEnum
+
 from pydantic import BaseModel
+from transwarp_hippo_api.hippo_type import IndexType as HippoIndexType
+
 from vectordb_bench.backend.cases import CaseLabel, CaseType
 from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.clients.api import IndexType
-
 from vectordb_bench.models import CaseConfigParamType
 
 MAX_STREAMLIT_INT = (1 << 53) - 1
@@ -419,6 +421,156 @@ CaseConfigParamInput_ZillizLevel = CaseConfigInput(
     },
 )
 
+CaseConfigParamInput_IndexType_Hippo = CaseConfigInput(
+    label=CaseConfigParamType.IndexType,
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [
+            HippoIndexType.HNSW.value,
+            HippoIndexType.FLAT.value,
+            HippoIndexType.IVF_FLAT.value,
+            HippoIndexType.IVF_SQ.value,
+            HippoIndexType.IVF_PQ.value,
+            HippoIndexType.ANNOY.value,
+        ],
+    },
+)
+
+CaseConfigParamInput_M_Hippo = CaseConfigInput(
+    label=CaseConfigParamType.M,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 4,
+        "max": 64,
+        "value": 30,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    == HippoIndexType.HNSW.value,
+)
+
+CaseConfigParamInput_EFConstruction_Hippo = CaseConfigInput(
+    label=CaseConfigParamType.ef_construction,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 8,
+        "max": 512,
+        "value": 360,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    == HippoIndexType.HNSW.value,
+)
+
+CaseConfigParamInput_EFSearch_Hippo = CaseConfigInput(
+    label=CaseConfigParamType.ef_search,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 100,
+        "max": MAX_STREAMLIT_INT,
+        "value": 100,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    == HippoIndexType.HNSW.value,
+)
+
+CaseConfigParamInput_Nlist_Hippo = CaseConfigInput(
+    label=CaseConfigParamType.Nlist,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 65536,
+        "value": 1024,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    in [
+        HippoIndexType.IVF_FLAT.value,
+        HippoIndexType.IVF_SQ.value,
+        HippoIndexType.IVF_PQ.value,
+        # TODO: add ivf_pq_fs
+    ],
+)
+
+CaseConfigParamInput_Nprobe_Hippo = CaseConfigInput(
+    label=CaseConfigParamType.Nprobe,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 65536,
+        "value": 64,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    in [
+        HippoIndexType.IVF_FLAT.value,
+        HippoIndexType.IVF_SQ.value,
+        HippoIndexType.IVF_PQ.value,
+        # TODO: add ivf_pq_fs
+    ],
+)
+
+CaseConfigParamInput_m_Hippo = CaseConfigInput(
+    label=CaseConfigParamType.m,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 1024,
+        "value": 16,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    in [
+        HippoIndexType.IVF_PQ.value,
+        # TODO: add ivf_pq_fs
+    ],
+)
+
+CaseConfigParamInput_nbits_Hippo = CaseConfigInput(
+    label=CaseConfigParamType.nbits,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 16,
+        "value": 8,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    in [
+        HippoIndexType.IVF_PQ.value,
+    ],
+)
+
+CaseConfigParamInput_k_factor_Hippo = CaseConfigInput(
+    label=CaseConfigParamType.k_factor,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 1000,
+        "value": 100,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    in [
+        HippoIndexType.IVF_PQ.value,
+        HippoIndexType.IVF_SQ.value,
+        # TODO: add ivf_pq_fs
+    ],
+)
+
+CaseConfigParamInput_index_slow_refine_Hippo = CaseConfigInput(
+    label=CaseConfigParamType.index_slow_refine,
+    inputType=InputType.Option,
+    inputConfig={"options": [False, True]},
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    in [
+        HippoIndexType.IVF_PQ.value,
+        HippoIndexType.IVF_SQ.value,
+        # TODO: add ivf_pq_fs
+    ],
+)
+
+CaseConfigParamInput_sq_type_Hippo = CaseConfigInput(
+    label=CaseConfigParamType.sq_type,
+    inputType=InputType.Text,
+    inputConfig={"value": ""},
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    == HippoIndexType.IVF_SQ.value,
+)
+
 MilvusLoadConfig = [
     CaseConfigParamInput_IndexType,
     CaseConfigParamInput_M,
@@ -496,6 +648,29 @@ ZillizCloudPerformanceConfig = [
     CaseConfigParamInput_ZillizLevel,
 ]
 
+HippoLoadConfig = [
+    CaseConfigParamInput_IndexType_Hippo,
+    CaseConfigParamInput_M_Hippo,
+    CaseConfigParamInput_EFConstruction_Hippo,
+    CaseConfigParamInput_EFSearch_Hippo,
+    CaseConfigParamInput_Nlist_Hippo,
+    CaseConfigParamInput_m_Hippo,
+    CaseConfigParamInput_nbits_Hippo,
+]
+HippoPerformanceConfig = [
+    CaseConfigParamInput_IndexType_Hippo,
+    CaseConfigParamInput_M_Hippo,
+    CaseConfigParamInput_EFConstruction_Hippo,
+    CaseConfigParamInput_EFSearch_Hippo,
+    CaseConfigParamInput_Nlist_Hippo,
+    CaseConfigParamInput_Nprobe_Hippo,
+    CaseConfigParamInput_m_Hippo,
+    CaseConfigParamInput_nbits_Hippo,
+    CaseConfigParamInput_k_factor_Hippo,
+    CaseConfigParamInput_index_slow_refine_Hippo,
+    CaseConfigParamInput_sq_type_Hippo,
+]
+
 CASE_CONFIG_MAP = {
     DB.Milvus: {
         CaseLabel.Load: MilvusLoadConfig,
@@ -519,5 +694,9 @@ CASE_CONFIG_MAP = {
     DB.PgVectoRS: {
         CaseLabel.Load: PgVectoRSLoadingConfig,
         CaseLabel.Performance: PgVectoRSPerformanceConfig,
+    },
+    DB.Hippo: {
+        CaseLabel.Load: HippoLoadConfig,
+        CaseLabel.Performance: HippoPerformanceConfig,
     },
 }

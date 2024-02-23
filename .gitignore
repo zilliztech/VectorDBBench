@@ -9,3 +9,24 @@ __MACOSX
 build/
 venv/
 .idea/
+
+# result files
+vectordb_bench/results/**
+
+# vscode files
+.vscode/*
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/*.code-snippets
+!.vscode/c_cpp_properties.json
+
+# Local History for Visual Studio Code
+.history/
+
+# Built Visual Studio Code Extensions
+*.vsix
+
+# ruff files
+.ruff_cache
