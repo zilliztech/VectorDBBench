@@ -16,6 +16,7 @@ class IndexType(str, Enum):
     HNSW = "HNSW"
     DISKANN = "DISKANN"
     IVFFlat = "IVF_FLAT"
+    IVFSQ8 = "IVF_SQ8"
     Flat = "FLAT"
     AUTOINDEX = "AUTOINDEX"
     ES_HNSW = "hnsw"
