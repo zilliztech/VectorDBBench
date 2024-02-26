@@ -30,7 +30,7 @@ def dbSelector(st):
     for i, db in enumerate(DB_LIST):
         column = dbContainerColumns[i % DB_SELECTOR_COLUMNS]
         dbIsActived[db] = column.checkbox(db.name)
-        column.image(DB_TO_ICON.get(db, ""))
+        column.image(DB_TO_ICON.get(db, ""), width=100)
     activedDbList = [db for db in DB_LIST if dbIsActived[db]]
 
     return activedDbList

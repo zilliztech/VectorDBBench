@@ -60,6 +60,8 @@ class CaseConfigParamType(Enum):
     cache_dataset_on_device = "cache_dataset_on_device"
     refine_ratio = "refine_ratio"
     level = "level"
+    ef_construction = "ef_construction"
+    ef_search = "ef_search"
 
 
 class CustomizedCase(BaseModel):

@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from vectordb_bench.backend.cases import CaseLabel, CaseType
 from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.clients.api import IndexType
+from transwarp_hippo_api.hippo_type import IndexType as HippoIndexType
 
 from vectordb_bench.models import CaseConfigParamType
 
@@ -416,6 +417,91 @@ CaseConfigParamInput_ZillizLevel = CaseConfigInput(
     },
 )
 
+CaseConfigParamInput_IndexType_Hippo = CaseConfigInput(
+    label=CaseConfigParamType.IndexType,
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [
+            HippoIndexType.HNSW.value,
+            HippoIndexType.FLAT.value,
+            HippoIndexType.IVF_FLAT.value,
+            HippoIndexType.IVF_SQ.value,
+            HippoIndexType.IVF_PQ.value,
+            HippoIndexType.ANNOY.value,
+        ],
+    },
+)
+
+CaseConfigParamInput_M_Hippo = CaseConfigInput(
+    label=CaseConfigParamType.M,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 4,
+        "max": 96,
+        "value": 30,
+    },
+)
+
+CaseConfigParamInput_EFConstruction_Hippo = CaseConfigInput(
+    label=CaseConfigParamType.ef_construction,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 8,
+        "max": 512,
+        "value": 360,
+    },
+)
+
+CaseConfigParamInput_EFSearch_Hippo = CaseConfigInput(
+    label=CaseConfigParamType.ef_search,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 100,
+        "max": 32768,
+        "value": 100,
+    },
+)
+
+CaseConfigParamInput_Nlist_Hippo = CaseConfigInput(
+    label=CaseConfigParamType.Nlist,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 65536,
+        "value": 1024,
+    },
+)
+
+CaseConfigParamInput_Nprobe_Hippo = CaseConfigInput(
+    label=CaseConfigParamType.Nprobe,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 65536,
+        "value": 64,
+    },
+)
+
+CaseConfigParamInput_m_Hippo = CaseConfigInput(
+    label=CaseConfigParamType.m,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 1024,
+        "value": 16,
+    },
+)
+
+CaseConfigParamInput_nbits_Hippo = CaseConfigInput(
+    label=CaseConfigParamType.nbits,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 16,
+        "value": 8,
+    },
+)
+
 MilvusLoadConfig = [
     CaseConfigParamInput_IndexType,
     CaseConfigParamInput_M,
@@ -493,6 +579,27 @@ ZillizCloudPerformanceConfig = [
     CaseConfigParamInput_ZillizLevel,
 ]
 
+HippoLoadConfig = [
+    CaseConfigParamInput_IndexType_Hippo,
+    CaseConfigParamInput_M_Hippo,
+    CaseConfigParamInput_EFConstruction_Hippo,
+    CaseConfigParamInput_EFSearch_Hippo,
+    CaseConfigParamInput_Nlist_Hippo,
+    CaseConfigParamInput_Nprobe_Hippo,
+    CaseConfigParamInput_m_Hippo,
+    CaseConfigParamInput_nbits_Hippo,
+]
+HippoPerformanceConfig = [
+    CaseConfigParamInput_IndexType_Hippo,
+    CaseConfigParamInput_M_Hippo,
+    CaseConfigParamInput_EFConstruction_Hippo,
+    CaseConfigParamInput_EFSearch_Hippo,
+    CaseConfigParamInput_Nlist_Hippo,
+    CaseConfigParamInput_Nprobe_Hippo,
+    CaseConfigParamInput_m_Hippo,
+    CaseConfigParamInput_nbits_Hippo,
+]
+
 CASE_CONFIG_MAP = {
     DB.Milvus: {
         CaseLabel.Load: MilvusLoadConfig,
@@ -517,4 +624,8 @@ CASE_CONFIG_MAP = {
         CaseLabel.Load: PgVectoRSLoadingConfig,
         CaseLabel.Performance: PgVectoRSPerformanceConfig,
     },
+    DB.Hippo: {
+        CaseLabel.Load: HippoLoadConfig,
+        CaseLabel.Performance: HippoPerformanceConfig,
+    }
 }
