@@ -106,21 +106,9 @@ class ChromaClient(VectorDB):
         """
         if filters:
             # assumes benchmark test filters of format: {'metadata': '>=10000', 'id': 10000}
-            metadata_value = filters.get("metadata")
             id_value = filters.get("id")
-            if metadata_value and id_value:
-                results = self.collection.query(
-                    query_embeddings=query, n_results=k, 
-                    where={"$and": [{"id": {"$eq": id_value}}, 
-                                    {"id": {"$gt": metadata_value}}
-                                    ]}
-                )
-            elif metadata_value:
-                results = self.collection.query(query_embeddings=query, n_results=k, 
-                                                where={"id": {"$gt": metadata_value}})
-            else:
-                results = self.collection.query(query_embeddings=query, n_results=k, 
-                                                where={"id": {"$eq": id_value}})
+            results = self.collection.query(query_embeddings=query, n_results=k, 
+                                                where={"id": {"$gt": id_value}})
             #return list of id's in results
             return [int(i) for i in results.get('ids')[0]]
         results = self.collection.query(query_embeddings=query, n_results=k)
