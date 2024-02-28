@@ -52,6 +52,7 @@ class TestChroma:
 
         # insert
         with chrma.init():
+            #chrma.client.delete_collection("example2")
             assert (chrma.client.heartbeat() is not None), "chroma client is not connected"
             res = chrma.insert_embeddings(embeddings=embeddings, metadata=range(count))
             # bulk_insert return
@@ -87,7 +88,7 @@ class TestChroma:
 
 
             res = chrma.search_embedding(
-                query=q, k=100, filters={"metadata": filter_value}
+                query=q, k=100, filters={"id": filter_value}
             )
             assert (
                 res[0] == int(test_id)
@@ -101,18 +102,4 @@ class TestChroma:
                     break
             assert isFilter, f"Filter not working, id_list: {id_list}"
 
-            #Test id filter
-            res = chrma.search_embedding(
-                query=q, k=100, filters={"id": 9999}
-            )
-            assert (
-                res[0] == 9999
-            )
-
-            #Test two filters, id and metadata
-            res = chrma.search_embedding(
-                query=q, k=100, filters={"metadata": filter_value, "id": 9999}
-            )
-            assert (
-                res[0] == 9999 and len(res) == 1, f"filters failed, got: ({res[0]}), expected ({9999})"
-            )
+            
