@@ -90,6 +90,19 @@ OR:
 ```shell
 $ init_bench
 ```
+
+OR:
+
+If you are using [dev container](https://code.visualstudio.com/docs/devcontainers/containers), create
+the following dataset directory first:
+
+```shell
+# Mount local ~/vectordb_bench/dataset to contain's /tmp/vectordb_bench/dataset.
+# If you are not comfortable with the path name, feel free to change it in devcontainer.json
+mkdir -p ~/vectordb_bench/dataset
+```
+After reopen the repository in container, run `python -m vectordb_bench` in the container's bash.
+
 ### Check coding styles
 ```shell
 $ ruff check vectordb_bench
