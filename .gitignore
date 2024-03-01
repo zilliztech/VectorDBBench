@@ -10,9 +10,6 @@ build/
 venv/
 .idea/
 
-# result files
-vectordb_bench/results/**
-
 # vscode files
 .vscode/*
 !.vscode/tasks.json
@@ -27,6 +24,3 @@ vectordb_bench/results/**
 
 # Built Visual Studio Code Extensions
 *.vsix
-
-# ruff files
-.ruff_cache
