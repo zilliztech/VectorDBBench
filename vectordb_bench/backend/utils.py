@@ -42,3 +42,33 @@ def time_it(func):
         delta = time.perf_counter() - pref
         return result, delta
     return inner
+
+
+def compose_train_files(train_count: int, use_shuffled: bool) -> list[str]:
+    prefix = "shuffle_train" if use_shuffled else "train"
+    middle = f"of-{train_count}"
+    surfix = "parquet"
+
+    train_files = []
+    if train_count > 1:
+        just_size = 2
+        for i in range(train_count):
+            sub_file = f"{prefix}-{str(i).rjust(just_size, '0')}-{middle}.{surfix}"
+            train_files.append(sub_file)
+    else:
+        train_files.append(f"{prefix}.{surfix}")
+
+    return train_files
+
+
+def compose_gt_file(filters: int | float | str | None = None) -> str:
+    if filters is None:
+        return "neighbors.parquet"
+
+    if filters == 0.01:
+        return "neighbors_head_1p.parquet"
+
+    if filters == 0.99:
+        return "neighbors_tail_1p.parquet"
+
+    raise ValueError(f"Filters not supported: {filters}")
