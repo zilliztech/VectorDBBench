@@ -37,3 +37,30 @@ class TestUtils:
         log.info(f"recall: {res}, expected: {expected}")
         assert res == expected
 
+
+class TestGetFiles:
+    @pytest.mark.parametrize("train_count", [
+        1,
+        10,
+        50,
+        100,
+    ])
+    def test_train_count(self, train_count):
+        files = utils.compose_train_files(train_count, True)
+        log.info(files)
+
+        assert len(files) == train_count
+
+    @pytest.mark.parametrize("use_shuffled", [True, False])
+    def test_use_shuffled(self, use_shuffled):
+        files = utils.compose_train_files(1, use_shuffled)
+        log.info(files)
+
+        trains = [f for f in files if "train" in f]
+        if use_shuffled:
+            for t in trains:
+                assert "shuffle_train" in t
+        else:
+            for t in trains:
+                assert "shuffle" not in t
+                assert "train" in t
