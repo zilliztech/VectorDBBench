@@ -22,7 +22,7 @@ from .data_source import DatasetSource, DatasetReader
 log = logging.getLogger(__name__)
 
 
-SizeLabel = namedtuple('SizeLabel', ['size', 'label', 'files'])
+SizeLabel = namedtuple('SizeLabel', ['size', 'label', 'file_count'])
 
 
 class BaseDataset(BaseModel):
@@ -31,6 +31,7 @@ class BaseDataset(BaseModel):
     dim: int
     metric_type: MetricType
     use_shuffled: bool
+    with_gt: bool = False
     _size_label: dict[int, SizeLabel] = PrivateAttr()
 
     @validator("size")
@@ -48,34 +49,8 @@ class BaseDataset(BaseModel):
         return f"{self.name}_{self.label}_{utils.numerize(self.size)}".lower()
 
     @property
-    def files(self) -> str:
-        return self._size_label.get(self.size).files
-
-
-def get_files(train_count: int, use_shuffled: bool, with_gt: bool = True) -> list[str]:
-    prefix = "shuffle_train" if use_shuffled else "train"
-    middle = f"of-{train_count}"
-    surfix = "parquet"
-
-    train_files = []
-    if train_count > 1:
-        just_size = len(str(train_count))
-        for i in range(train_count):
-            sub_file = f"{prefix}-{str(i).rjust(just_size, '0')}-{middle}.{surfix}"
-            train_files.append(sub_file)
-    else:
-        train_files.append(f"{prefix}.{surfix}")
-
-    files = ['test.parquet']
-    if with_gt:
-        files.extend([
-            'neighbors.parquet',
-            'neighbors_tail_1p.parquet',
-            'neighbors_head_1p.parquet',
-        ])
-
-    files.extend(train_files)
-    return files
+    def file_count(self) -> int:
+        return self._size_label.get(self.size).file_count
 
 
 class LAION(BaseDataset):
@@ -83,8 +58,9 @@ class LAION(BaseDataset):
     dim: int = 768
     metric_type: MetricType = MetricType.L2
     use_shuffled: bool = False
+    with_gt: bool = True
     _size_label: dict = {
-        100_000_000: SizeLabel(100_000_000, "LARGE", get_files(100, False)),
+        100_000_000: SizeLabel(100_000_000, "LARGE", 100),
     }
 
 
@@ -94,8 +70,8 @@ class GIST(BaseDataset):
     metric_type: MetricType = MetricType.L2
     use_shuffled: bool = False
     _size_label: dict = {
-        100_000: SizeLabel(100_000, "SMALL", get_files(1, False, False)),
-        1_000_000: SizeLabel(1_000_000, "MEDIUM", get_files(1, False, False)),
+        100_000: SizeLabel(100_000, "SMALL", 1),
+        1_000_000: SizeLabel(1_000_000, "MEDIUM", 1),
     }
 
 
@@ -104,10 +80,11 @@ class Cohere(BaseDataset):
     dim: int = 768
     metric_type: MetricType = MetricType.COSINE
     use_shuffled: bool = config.USE_SHUFFLED_DATA
+    with_gt: bool = True,
     _size_label: dict = {
-        100_000: SizeLabel(100_000, "SMALL", get_files(1, config.USE_SHUFFLED_DATA)),
-        1_000_000: SizeLabel(1_000_000, "MEDIUM", get_files(1, config.USE_SHUFFLED_DATA)),
-        10_000_000: SizeLabel(10_000_000, "LARGE", get_files(10, config.USE_SHUFFLED_DATA)),
+        100_000: SizeLabel(100_000, "SMALL", 1),
+        1_000_000: SizeLabel(1_000_000, "MEDIUM", 1),
+        10_000_000: SizeLabel(10_000_000, "LARGE", 10),
     }
 
 
@@ -116,7 +93,7 @@ class Glove(BaseDataset):
     dim: int = 200
     metric_type: MetricType = MetricType.COSINE
     use_shuffled: bool = False
-    _size_label: dict = {1_000_000: SizeLabel(1_000_000, "MEDIUM", get_files(1, False, False))}
+    _size_label: dict = {1_000_000: SizeLabel(1_000_000, "MEDIUM", 1)}
 
 
 class SIFT(BaseDataset):
@@ -125,9 +102,9 @@ class SIFT(BaseDataset):
     metric_type: MetricType = MetricType.L2
     use_shuffled: bool = False
     _size_label: dict = {
-        500_000: SizeLabel(500_000, "SMALL", get_files(1, False, False)),
-        5_000_000: SizeLabel(5_000_000, "MEDIUM", get_files(1, False, False)),
-        #  50_000_000: SizeLabel(50_000_000, "LARGE", get_files(50, False, False)),
+        500_000: SizeLabel(500_000, "SMALL", 1,),
+        5_000_000: SizeLabel(5_000_000, "MEDIUM", 1),
+        #  50_000_000: SizeLabel(50_000_000, "LARGE", 50),
     }
 
 
@@ -136,10 +113,11 @@ class OpenAI(BaseDataset):
     dim: int = 1536
     metric_type: MetricType = MetricType.COSINE
     use_shuffled: bool = config.USE_SHUFFLED_DATA
+    with_gt: bool = True,
     _size_label: dict = {
-        50_000: SizeLabel(50_000, "SMALL", get_files(1, config.USE_SHUFFLED_DATA)),
-        500_000: SizeLabel(500_000, "MEDIUM", get_files(1, config.USE_SHUFFLED_DATA)),
-        5_000_000: SizeLabel(5_000_000, "LARGE", get_files(10, config.USE_SHUFFLED_DATA)),
+        50_000: SizeLabel(50_000, "SMALL", 1),
+        500_000: SizeLabel(500_000, "MEDIUM", 1),
+        5_000_000: SizeLabel(5_000_000, "LARGE", 10),
     }
 
 
@@ -155,6 +133,7 @@ class DatasetManager(BaseModel):
     """
     data:   BaseDataset
     test_data: pd.DataFrame | None = None
+    gt_data: pd.DataFrame | None = None
     train_files : list[str] = []
     reader: DatasetReader | None = None
 
@@ -180,50 +159,51 @@ class DatasetManager(BaseModel):
     def __iter__(self):
         return DataSetIterator(self)
 
-    def prepare(self, source: DatasetSource=DatasetSource.S3, check: bool=True) -> bool:
+    # TODO passing use_shuffle from outside
+    def prepare(self,
+        source: DatasetSource=DatasetSource.S3,
+        check: bool=True,
+        filters: int | float | str | None = None,
+    ) -> bool:
         """Download the dataset from DatasetSource
          url = f"{source}/{self.data.dir_name}"
 
-         download files from url to self.data_dir, there'll be 4 types of files in the data_dir
-             - train*.parquet: for training
-             - test.parquet: for testing
-             - neighbors.parquet: ground_truth of the test.parquet
-             - neighbors_head_1p.parquet: ground_truth of the test.parquet after filtering 1% data
-             - neighbors_99p.parquet: ground_truth of the test.parquet after filtering 99% data
-
         Args:
             source(DatasetSource): S3 or AliyunOSS, default as S3
-            check(bool): Whether to do etags check
+            check(bool): Whether to do etags check, default as ture
+            filters(Optional[int | float | str]): combined with dataset's with_gt to
+              compose the correct ground_truth file
 
         Returns:
             bool: whether the dataset is successfully prepared
 
         """
+        file_count, use_shuffled = self.data.file_count, self.data.use_shuffled
+
+        train_files = utils.compose_train_files(file_count, use_shuffled)
+        all_files = train_files
+
+        gt_file, test_file = None, None
+        if self.data.with_gt:
+            gt_file, test_file = utils.compose_gt_file(filters), "test.parquet"
+            all_files.extend([gt_file, test_file])
+
         source.reader().read(
             dataset=self.data.dir_name.lower(),
-            files=self.data.files,
+            files=all_files,
             local_ds_root=self.data_dir,
             check_etag=check,
         )
 
-        prefix = "shuffle_train" if self.data.use_shuffled else "train"
+        if gt_file is not None and test_file is not None:
+            self.test_data = self._read_file(test_file)
+            self.gt_data = self._read_file(gt_file)
+
+        prefix = "shuffle_train" if use_shuffled else "train"
         self.train_files = sorted([f.name for f in self.data_dir.glob(f'{prefix}*.parquet')])
         log.debug(f"{self.data.name}: available train files {self.train_files}")
-        self.test_data = self._read_file("test.parquet")
+
         return True
-
-    def get_ground_truth(self, filters: int | float | None = None) -> pd.DataFrame:
-
-        file_name = ""
-        if filters is None:
-            file_name = "neighbors.parquet"
-        elif filters == 0.01:
-            file_name = "neighbors_head_1p.parquet"
-        elif filters == 0.99:
-            file_name = "neighbors_tail_1p.parquet"
-        else:
-            raise ValueError(f"Filters not supported: {filters}")
-        return self._read_file(file_name)
 
     def _read_file(self, file_name: str) -> pd.DataFrame:
         """read one file from disk into memory"""
