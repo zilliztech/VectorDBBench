@@ -6,7 +6,8 @@ build-backend = "setuptools.build_meta"
 "vectordb_bench.results" = ["*.json"]
 
 [tool.setuptools.packages.find]
-where = ["vectordb_bench"]
+where = ["."]
+include = ["vectordb_bench"]
 
 [project]
 name = "vectordb-bench"
