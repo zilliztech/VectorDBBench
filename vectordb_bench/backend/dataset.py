@@ -162,7 +162,6 @@ class DatasetManager(BaseModel):
     # TODO passing use_shuffle from outside
     def prepare(self,
         source: DatasetSource=DatasetSource.S3,
-        check: bool=True,
         filters: int | float | str | None = None,
     ) -> bool:
         """Download the dataset from DatasetSource
@@ -170,7 +169,6 @@ class DatasetManager(BaseModel):
 
         Args:
             source(DatasetSource): S3 or AliyunOSS, default as S3
-            check(bool): Whether to do etags check, default as ture
             filters(Optional[int | float | str]): combined with dataset's with_gt to
               compose the correct ground_truth file
 
@@ -192,7 +190,6 @@ class DatasetManager(BaseModel):
             dataset=self.data.dir_name.lower(),
             files=all_files,
             local_ds_root=self.data_dir,
-            check_etag=check,
         )
 
         if gt_file is not None and test_file is not None:
