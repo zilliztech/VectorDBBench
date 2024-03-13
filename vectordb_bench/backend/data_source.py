@@ -76,11 +76,11 @@ class AliyunOSSReader(DatasetReader):
         if not local_ds_root.exists():
             log.info(f"local dataset root path not exist, creating it: {local_ds_root}")
             local_ds_root.mkdir(parents=True)
-            downloads = [(pathlib.Path("benchmark", dataset, f), local_ds_root.joinpath(f)) for f in files]
+            downloads = [(pathlib.PurePosixPath("benchmark", dataset, f), local_ds_root.joinpath(f)) for f in files]
 
         else:
             for file in files:
-                remote_file = pathlib.Path("benchmark", dataset, file)
+                remote_file = pathlib.PurePosixPath("benchmark", dataset, file)
                 local_file = local_ds_root.joinpath(file)
 
                 # Don't check etags for Dataset from Aliyun OSS
@@ -93,8 +93,8 @@ class AliyunOSSReader(DatasetReader):
 
         log.info(f"Start to downloading files, total count: {len(downloads)}")
         for remote_file, local_file in tqdm(downloads):
-            log.debug(f"downloading file {remote_file} to {local_ds_root}")
-            self.bucket.get_object_to_file(remote_file.as_posix(), local_file.as_posix())
+            log.debug(f"downloading file {remote_file} to {local_file}")
+            self.bucket.get_object_to_file(remote_file.as_posix(), local_file.absolute())
 
         log.info(f"Succeed to download all files, downloaded file count = {len(downloads)}")
 
@@ -125,11 +125,11 @@ class AwsS3Reader(DatasetReader):
         if not local_ds_root.exists():
             log.info(f"local dataset root path not exist, creating it: {local_ds_root}")
             local_ds_root.mkdir(parents=True)
-            downloads = [pathlib.Path(self.remote_root, dataset, f) for f in files]
+            downloads = [pathlib.PurePosixPath(self.remote_root, dataset, f) for f in files]
 
         else:
             for file in files:
-                remote_file = pathlib.Path(self.remote_root, dataset, file)
+                remote_file = pathlib.PurePosixPath(self.remote_root, dataset, file)
                 local_file = local_ds_root.joinpath(file)
 
                 if (not local_file.exists()) or (not self.validate_file(remote_file, local_file, check_etag)):
