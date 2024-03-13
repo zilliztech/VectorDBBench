@@ -26,7 +26,7 @@ class TestDataSet:
 
     def test_iter_cohere(self):
         cohere_10m = Dataset.COHERE.manager(10_000_000)
-        cohere_10m.prepare(check=False)
+        cohere_10m.prepare()
 
         import time
         before = time.time()
@@ -40,7 +40,7 @@ class TestDataSet:
     def test_iter_laion(self):
         laion_100m = Dataset.LAION.manager(100_000_000)
         from vectordb_bench.backend.data_source import DatasetSource
-        laion_100m.prepare(source=DatasetSource.AliyunOSS, check=False)
+        laion_100m.prepare(source=DatasetSource.AliyunOSS)
 
         import time
         before = time.time()
@@ -66,7 +66,6 @@ class TestDataSet:
             openai_50k.data.dir_name.lower(),
             files=files,
             local_ds_root=openai_50k.data_dir,
-            check_etag=False,
         )
 
         os.remove(file_path)
@@ -74,6 +73,5 @@ class TestDataSet:
             openai_50k.data.dir_name.lower(),
             files=files,
             local_ds_root=openai_50k.data_dir,
-            check_etag=False,
         )
 

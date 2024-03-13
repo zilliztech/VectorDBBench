@@ -19,10 +19,10 @@ class TestReader:
         log.info(f"test case: {t.name}, {ca.name}")
 
         filters = ca.filter_rate
-        ca.dataset.prepare(source=DatasetSource.AliyunOSS, check=False, filters=filters)
+        ca.dataset.prepare(source=DatasetSource.AliyunOSS, filters=filters)
         ali_trains = ca.dataset.train_files
 
-        ca.dataset.prepare(check=False, filters=filters)
+        ca.dataset.prepare(filters=filters)
         s3_trains = ca.dataset.train_files
 
         assert ali_trains == s3_trains
