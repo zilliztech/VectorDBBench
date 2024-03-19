@@ -8,7 +8,7 @@ import pandas as pd
 import psycopg2
 import psycopg2.extras
 
-from ..api import VectorDB, DBCaseConfig
+from ..api import IndexType, VectorDB, DBCaseConfig
 
 log = logging.getLogger(__name__) 
 
@@ -108,7 +108,14 @@ class PgVector(VectorDB):
         assert self.cursor is not None, "Cursor is not initialized"
         
         index_param = self.case_config.index_param()
-        self.cursor.execute(f'CREATE INDEX IF NOT EXISTS {self._index_name} ON public."{self.table_name}" USING ivfflat (embedding {index_param["metric"]}) WITH (lists={index_param["lists"]});')
+        if self.case_config.index == IndexType.HNSW:
+            log.debug(f'Creating HNSW index. m={index_param["m"]}, ef_construction={index_param["ef_construction"]}')
+            self.cursor.execute(f'CREATE INDEX IF NOT EXISTS {self._index_name} ON public."{self.table_name}" USING hnsw (embedding {index_param["metric"]}) WITH (m={index_param["m"]}, ef_construction={index_param["ef_construction"]});')
+        elif self.case_config.index == IndexType.IVFFlat:
+            log.debug(f'Creating IVFFLAT index. list={index_param["lists"]}')
+            self.cursor.execute(f'CREATE INDEX IF NOT EXISTS {self._index_name} ON public."{self.table_name}" USING ivfflat (embedding {index_param["metric"]}) WITH (lists={index_param["lists"]});')
+        else:
+            assert "Invalid index type {self.case_config.index}"
         self.conn.commit()
         
     def _create_table(self, dim : int):
@@ -164,8 +171,15 @@ class PgVector(VectorDB):
         assert self.cursor is not None, "Cursor is not initialized"
 
         search_param =self.case_config.search_param()
-        self.cursor.execute(f'SET ivfflat.probes = {search_param["probes"]}')
-        self.cursor.execute(f"SELECT id FROM public.\"{self.table_name}\" ORDER BY embedding {search_param['metric_fun_op']} '{query}' LIMIT {k};")
+
+        if self.case_config.index == IndexType.HNSW:
+            self.cursor.execute(f'SET hnsw.ef_search = {search_param["ef"]}')
+            self.cursor.execute(f"SELECT id FROM public.\"{self.table_name}\" ORDER BY embedding {search_param['metric_fun_op']} '{query}' LIMIT {k};")
+        elif self.case_config.index == IndexType.IVFFlat:
+            self.cursor.execute(f'SET ivfflat.probes = {search_param["probes"]}')
+            self.cursor.execute(f"SELECT id FROM public.\"{self.table_name}\" ORDER BY embedding {search_param['metric_fun_op']} '{query}' LIMIT {k};")
+        else:
+            assert "Invalid index type {self.case_config.index}"
         self.conn.commit()
         result = self.cursor.fetchall()
 
