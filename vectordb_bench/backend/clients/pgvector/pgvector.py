@@ -109,10 +109,10 @@ class PgVector(VectorDB):
         
         index_param = self.case_config.index_param()
         if self.case_config.index == IndexType.HNSW:
-            log.debug(f'Creating HNSW index. m={index_param["m"]}, ef_construction={index_param["ef_construction"]}')
+            log.debug(f'Creating HNSW index. m={index_param["m"]}, ef_construction={index_param["ef_construction"]}.')
             self.cursor.execute(f'CREATE INDEX IF NOT EXISTS {self._index_name} ON public."{self.table_name}" USING hnsw (embedding {index_param["metric"]}) WITH (m={index_param["m"]}, ef_construction={index_param["ef_construction"]});')
         elif self.case_config.index == IndexType.IVFFlat:
-            log.debug(f'Creating IVFFLAT index. list={index_param["lists"]}')
+            log.debug(f'Creating IVFFLAT index. list={index_param["lists"]}.')
             self.cursor.execute(f'CREATE INDEX IF NOT EXISTS {self._index_name} ON public."{self.table_name}" USING ivfflat (embedding {index_param["metric"]}) WITH (lists={index_param["lists"]});')
         else:
             assert "Invalid index type {self.case_config.index}"
