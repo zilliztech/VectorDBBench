@@ -20,6 +20,7 @@
           "db_name": "**********"
         },
         "db_case_config": {
+          "index": "IVF_FLAT",
           "metric_type": "L2",
           "lists": 10,
           "probes": 2
@@ -49,6 +50,7 @@
           "db_name": "**********"
         },
         "db_case_config": {
+          "index": "IVF_FLAT",
           "metric_type": "L2",
           "lists": 10,
           "probes": 2
@@ -78,6 +80,7 @@
           "db_name": "**********"
         },
         "db_case_config": {
+          "index": "IVF_FLAT",
           "metric_type": "COSINE",
           "lists": 10,
           "probes": 2
@@ -107,6 +110,7 @@
           "db_name": "**********"
         },
         "db_case_config": {
+          "index": "IVF_FLAT",
           "metric_type": "COSINE",
           "lists": 10,
           "probes": 2
@@ -136,6 +140,7 @@
           "db_name": "**********"
         },
         "db_case_config": {
+          "index": "IVF_FLAT",
           "metric_type": "COSINE",
           "lists": 10,
           "probes": 2
@@ -165,6 +170,7 @@
           "db_name": "**********"
         },
         "db_case_config": {
+          "index": "IVF_FLAT",
           "metric_type": "COSINE",
           "lists": 10,
           "probes": 2
@@ -194,6 +200,7 @@
           "db_name": "**********"
         },
         "db_case_config": {
+          "index": "IVF_FLAT",
           "metric_type": "COSINE",
           "lists": 10,
           "probes": 2
@@ -223,6 +230,7 @@
           "db_name": "**********"
         },
         "db_case_config": {
+          "index": "IVF_FLAT",
           "metric_type": "COSINE",
           "lists": 10,
           "probes": 2
