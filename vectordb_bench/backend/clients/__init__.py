@@ -142,8 +142,8 @@ class DB(Enum):
             return WeaviateIndexConfig
 
         if self == DB.PgVector:
-            from .pgvector.config import PgVectorIndexConfig
-            return PgVectorIndexConfig
+            from .pgvector.config import _pgvector_case_config
+            return _pgvector_case_config.get(index_type)
 
         if self == DB.PgVectoRS:
             from .pgvecto_rs.config import _pgvecto_rs_case_config
