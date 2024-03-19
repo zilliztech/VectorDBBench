@@ -20,6 +20,7 @@
           "db_name": "**********"
         },
         "db_case_config": {
+          "index": "IVF_FLAT",
           "metric_type": "L2",
           "lists": 10,
           "probes": 2
@@ -51,7 +52,8 @@
         "db_case_config": {
           "metric_type": "L2",
           "lists": 10,
-          "probes": 2
+          "probes": 2,
+          "index": "IVF_FLAT"
         },
         "case_config": {
           "case_id": 11,
@@ -80,7 +82,8 @@
         "db_case_config": {
           "metric_type": "L2",
           "lists": 10,
-          "probes": 2
+          "probes": 2,
+          "index": "IVF_FLAT"
         },
         "case_config": {
           "case_id": 12,
@@ -107,6 +110,7 @@
           "db_name": "**********"
         },
         "db_case_config": {
+          "index": "IVF_FLAT",
           "metric_type": "L2",
           "lists": 10,
           "probes": 2
@@ -136,6 +140,7 @@
           "db_name": "**********"
         },
         "db_case_config": {
+          "index": "IVF_FLAT",
           "metric_type": "L2",
           "lists": 10,
           "probes": 2
@@ -165,6 +170,7 @@
           "db_name": "**********"
         },
         "db_case_config": {
+          "index": "IVF_FLAT",
           "metric_type": "L2",
           "lists": 10,
           "probes": 2
