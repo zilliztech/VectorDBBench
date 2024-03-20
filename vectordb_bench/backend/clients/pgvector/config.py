@@ -24,31 +24,29 @@ class PgVectorConfig(DBConfig):
 class PgVectorIndexConfig(BaseModel, DBCaseConfig):
     metric_type: MetricType | None = None
     index: IndexType
-    lists: int | None = 1000
-    probes: int | None = 10
 
-    def parse_metric(self) -> str: 
+    def parse_metric(self) -> str:
         if self.metric_type == MetricType.L2:
             return "vector_l2_ops"
         elif self.metric_type == MetricType.IP:
             return "vector_ip_ops"
         return "vector_cosine_ops"
-    
+
     def parse_metric_fun_op(self) -> str:
         if self.metric_type == MetricType.L2:
             return "<->"
         elif self.metric_type == MetricType.IP:
             return "<#>"
         return "<=>"
-    
-    def parse_metric_fun_str(self) -> str: 
+
+    def parse_metric_fun_str(self) -> str:
         if self.metric_type == MetricType.L2:
             return "l2_distance"
         elif self.metric_type == MetricType.IP:
             return "max_inner_product"
         return "cosine_distance"
 
-    
+
 
 class HNSWConfig(PgVectorIndexConfig):
     M: int
@@ -79,8 +77,8 @@ class HNSWConfig(PgVectorIndexConfig):
 
 
 class IVFFlatConfig(PgVectorIndexConfig):
-    lists: int
-    probes: int | None = None
+    lists: int | None = 1000
+    probes: int | None = 10
     index: IndexType = IndexType.IVFFlat
 
     def index_param(self) -> dict:
