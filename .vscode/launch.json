@@ -1,0 +1,28 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Streamlit",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "streamlit",
+            "args": [
+                "run",
+                "vectordb_bench/frontend/vdb_benchmark.py",
+                "--logger.level",
+                "info",
+                "--theme.base",
+                "light",
+                "--theme.primaryColor",
+                "#3670F2",
+                "--theme.secondaryBackgroundColor",
+                "#F0F2F6",
+            ],
+            "subProcess": true,
+            "justMyCode": false
+        }
+    ]
+}

@@ -1,22 +1,21 @@
 import logging
 import pathlib
 from datetime import date
-from typing import Self
 from enum import Enum
+from typing import Self
 
 import ujson
 
+from . import config
+from .backend.cases import CaseType
 from .backend.clients import (
     DB,
-    DBConfig,
     DBCaseConfig,
+    DBConfig,
     IndexType,
 )
-from .backend.cases import CaseType
 from .base import BaseModel
-from . import config
 from .metric import Metric
-
 
 log = logging.getLogger(__name__)
 
@@ -60,6 +59,11 @@ class CaseConfigParamType(Enum):
     cache_dataset_on_device = "cache_dataset_on_device"
     refine_ratio = "refine_ratio"
     level = "level"
+    ef_construction = "ef_construction"
+    ef_search = "ef_search"
+    k_factor = "k_factor"
+    index_slow_refine = "index_slow_refine"
+    sq_type = "sq_type"
 
 
 class CustomizedCase(BaseModel):
