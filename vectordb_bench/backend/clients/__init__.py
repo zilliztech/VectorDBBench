@@ -54,8 +54,8 @@ class DB(Enum):
             return ElasticCloud
 
         if self == DB.QdrantCloud:
-            from .qdrant_cloud.qdrant_cloud import QdrantClient
-            return QdrantClient
+            from .qdrant_cloud.qdrant_cloud import QdrantCloud
+            return QdrantCloud
 
         if self == DB.WeaviateCloud:
             from .weaviate_cloud.weaviate_cloud import WeaviateCloud
