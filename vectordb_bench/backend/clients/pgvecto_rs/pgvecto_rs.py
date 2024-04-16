@@ -1,17 +1,16 @@
-"""Wrapper around the Pgvector vector database over VectorDB"""
+"""Wrapper around the Pgvecto.rs vector database over VectorDB"""
 
 import io
 import logging
 from contextlib import contextmanager
 from typing import Any
 import pandas as pd
-
 import psycopg2
+import psycopg2.extras
 
 from ..api import VectorDB, DBCaseConfig
 
 log = logging.getLogger(__name__)
-
 
 class PgVectoRS(VectorDB):
     """Use SQLAlchemy instructions"""
@@ -66,6 +65,8 @@ class PgVectoRS(VectorDB):
         self.conn = psycopg2.connect(**self.db_config)
         self.conn.autocommit = False
         self.cursor = self.conn.cursor()
+        self.cursor.execute('SET search_path = "$user", public, vectors')
+        self.conn.commit()
 
         try:
             yield
@@ -113,7 +114,7 @@ class PgVectoRS(VectorDB):
             self.conn.commit()
         except Exception as e:
             log.warning(
-                f"Failed to create pgvector table: {self.table_name} error: {e}"
+                f"Failed to create pgvecto.rs table: {self.table_name} error: {e}"
             )
             raise e from None
 
@@ -127,13 +128,10 @@ class PgVectoRS(VectorDB):
                 f'CREATE TABLE IF NOT EXISTS public."{self.table_name}" \
                     (id Integer PRIMARY KEY, embedding vector({dim}));'
             )
-            self.cursor.execute(
-                f'ALTER TABLE public."{self.table_name}" ALTER COLUMN embedding SET STORAGE PLAIN;'
-            )
             self.conn.commit()
         except Exception as e:
             log.warning(
-                f"Failed to create pgvector table: {self.table_name} error: {e}"
+                f"Failed to create pgvecto.rs table: {self.table_name} error: {e}"
             )
             raise e from None
 
@@ -146,22 +144,24 @@ class PgVectoRS(VectorDB):
         assert self.conn is not None, "Connection is not initialized"
         assert self.cursor is not None, "Cursor is not initialized"
 
+        assert self.conn is not None, "Connection is not initialized"
+        assert self.cursor is not None, "Cursor is not initialized"
+
         try:
-            items = {"id": metadata, "embedding": embeddings}
+            items = {
+                "id": metadata,
+                "embedding": embeddings
+            }
             df = pd.DataFrame(items)
             csv_buffer = io.StringIO()
             df.to_csv(csv_buffer, index=False, header=False)
             csv_buffer.seek(0)
-            self.cursor.copy_expert(
-                f'COPY public."{self.table_name}" FROM STDIN WITH (FORMAT CSV)',
-                csv_buffer,
-            )
+            self.cursor.copy_expert(f"COPY public.\"{self.table_name}\" FROM STDIN WITH (FORMAT CSV)", csv_buffer)
             self.conn.commit()
             return len(metadata), None
         except Exception as e:
-            log.warning(
-                f"Failed to insert data into pgvector table ({self.table_name}), error: {e}"
-            )
+            log.warning(f"Failed to insert data into pgvecto.rs table ({self.table_name}), error: {e}")
+            return 0, e
 
     def search_embedding(
         self,
