@@ -17,7 +17,7 @@ def main():
     allResults: list[TestResult] = benchMarkRunner.get_results()
     results: list[CaseResult] = []
     for result in allResults:
-        if result.task_label == "standard":
+        if "standard" in result.task_label:
             results += result.results
 
     if allResults is not None:
