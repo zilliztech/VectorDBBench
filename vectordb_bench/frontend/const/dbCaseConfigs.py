@@ -397,6 +397,11 @@ CaseConfigParamInput_QuantizationType_PgVectoRS = CaseConfigInput(
     inputConfig={
         "options": ["trivial", "scalar", "product"],
     },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    in [
+        IndexType.HNSW.value,
+        IndexType.IVFFlat.value,
+    ],
 )
 
 CaseConfigParamInput_QuantizationRatio_PgVectoRS = CaseConfigInput(
@@ -406,7 +411,11 @@ CaseConfigParamInput_QuantizationRatio_PgVectoRS = CaseConfigInput(
         "options": ["x4", "x8", "x16", "x32", "x64"],
     },
     isDisplayed=lambda config: config.get(CaseConfigParamType.quantizationType, None)
-    == "product",
+    == "product" and config.get(CaseConfigParamType.IndexType, None)
+    in [
+        IndexType.HNSW.value,
+        IndexType.IVFFlat.value,
+    ],
 )
 
 CaseConfigParamInput_ZillizLevel = CaseConfigInput(
