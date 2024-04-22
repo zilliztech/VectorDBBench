@@ -43,8 +43,7 @@ class QdrantCloud(VectorDB):
         if drop_old:
             log.info(f"QdrantCloud client drop_old collection: {self.collection_name}")
             tmp_client.delete_collection(self.collection_name)
-
-        self._create_collection(dim, tmp_client)
+            self._create_collection(dim, tmp_client)
         tmp_client = None
 
     @contextmanager
@@ -110,13 +109,18 @@ class QdrantCloud(VectorDB):
     ) -> (int, Exception):
         """Insert embeddings into Milvus. should call self.init() first"""
         assert self.qdrant_client is not None
+        QDRANT_BATCH_SIZE = 500
         try:
             # TODO: counts
-            _ = self.qdrant_client.upsert(
-                collection_name=self.collection_name,
-                wait=True,
-                points=Batch(ids=metadata, payloads=[{self._primary_field: v} for v in metadata], vectors=embeddings)
-            )
+            for offset in range(0, len(embeddings), QDRANT_BATCH_SIZE):
+                vectors = embeddings[offset: offset + QDRANT_BATCH_SIZE]
+                ids = metadata[offset: offset + QDRANT_BATCH_SIZE]
+                payloads=[{self._primary_field: v} for v in ids]
+                _ = self.qdrant_client.upsert(
+                    collection_name=self.collection_name,
+                    wait=True,
+                    points=Batch(ids=ids, payloads=payloads, vectors=vectors),
+                )
         except Exception as e:
             log.info(f"Failed to insert data, {e}")
             return 0, e
