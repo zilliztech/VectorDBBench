@@ -56,15 +56,8 @@ class HNSWConfig(PgVectorIndexConfig):
 
     def index_param(self) -> dict:
         return {
-            "metric_type": self.parse_metric(),
-            "index_type": self.index.value,
-            "params": {"M": self.M, "efConstruction": self.efConstruction},
-        }
-
-    def index_param(self) -> dict:
-        return {
             "m" : self.M,
-            "efConstruction" : self.efConstruction,
+            "ef_construction" : self.efConstruction,
             "metric" : self.parse_metric()
         }
 
