@@ -18,12 +18,14 @@ class Metric:
     load_duration: float = 0.0  # duration to load all dataset into DB
     qps: float = 0.0
     serial_latency_p99: float = 0.0
+    serial_latency_avg: float = 0.0
     recall: float = 0.0
 
 
 QURIES_PER_DOLLAR_METRIC = "QP$ (Quries per Dollar)"
 LOAD_DURATION_METRIC = "load_duration"
 SERIAL_LATENCY_P99_METRIC = "serial_latency_p99"
+SERIAL_LATENCY_AVG_METRIC = "serial_latency_avg"
 MAX_LOAD_COUNT_METRIC = "max_load_count"
 QPS_METRIC = "qps"
 RECALL_METRIC = "recall"
@@ -31,6 +33,7 @@ RECALL_METRIC = "recall"
 metricUnitMap = {
     LOAD_DURATION_METRIC: "s",
     SERIAL_LATENCY_P99_METRIC: "ms",
+    SERIAL_LATENCY_AVG_METRIC: "ms",
     MAX_LOAD_COUNT_METRIC: "K",
     QURIES_PER_DOLLAR_METRIC: "K",
 }
@@ -38,6 +41,7 @@ metricUnitMap = {
 lowerIsBetterMetricList = [
     LOAD_DURATION_METRIC,
     SERIAL_LATENCY_P99_METRIC,
+    SERIAL_LATENCY_AVG_METRIC,
 ]
 
 metricOrder = [
@@ -45,6 +49,7 @@ metricOrder = [
     RECALL_METRIC,
     LOAD_DURATION_METRIC,
     SERIAL_LATENCY_P99_METRIC,
+    SERIAL_LATENCY_AVG_METRIC,
     MAX_LOAD_COUNT_METRIC,
 ]
 

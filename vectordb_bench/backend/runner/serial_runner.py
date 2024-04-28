@@ -47,6 +47,7 @@ class SerialInsertRunner:
                 log.debug(f"batch dataset size: {len(all_embeddings)}, {len(all_metadata)}")
 
                 last_batch = self.dataset.data.size - count == len(all_metadata)
+                log.info(f"last_batch: {last_batch} data size: {self.dataset.data.size} count: {count}")
                 insert_count, error = self.db.insert_embeddings(
                     embeddings=all_embeddings,
                     metadata=all_metadata,
@@ -114,7 +115,7 @@ class SerialInsertRunner:
                     psutil.Process(pid).kill()
                 raise PerformanceTimeoutError(msg) from e
             except Exception as e:
-                log.warning(f"VectorDB load dataset error: {e}")
+                log.error("VectorDB load dataset error: ", exc_info=e)
                 raise e from e
             else:
                 return count
@@ -169,7 +170,7 @@ class SerialSearchRunner:
             self.test_data = test_data
         self.ground_truth = ground_truth
 
-    def search(self, args: tuple[list, pd.DataFrame]):
+    def search(self, args: tuple[list, pd.DataFrame]) -> tuple[float, float, float]:
         log.info(f"{mp.current_process().name:14} start search the entire test_data to get recall and latency")
         with self.db.init():
             test_data, ground_truth = args
@@ -213,14 +214,14 @@ class SerialSearchRunner:
             f"avg_latency={avg_latency}, "
             f"p99={p99}"
          )
-        return (avg_recall, p99)
+        return (avg_recall, p99, avg_latency)
 
 
-    def _run_in_subprocess(self) -> tuple[float, float]:
+    def _run_in_subprocess(self) -> tuple[float, float, float]:
         with concurrent.futures.ProcessPoolExecutor(max_workers=1) as executor:
             future = executor.submit(self.search, (self.test_data, self.ground_truth))
             result = future.result()
             return result
 
-    def run(self) -> tuple[float, float]:
+    def run(self) -> tuple[float, float, float]:
         return self._run_in_subprocess()

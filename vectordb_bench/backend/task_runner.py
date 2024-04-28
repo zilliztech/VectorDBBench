@@ -58,7 +58,7 @@ class CaseRunner(BaseModel):
                 self.config.db == obj.config.db and \
                 self.config.db_case_config == obj.config.db_case_config and \
                 self.ca.dataset == obj.ca.dataset
-            return False
+        return False
 
     def display(self) -> dict:
         c_dict = self.ca.dict(include={'label':True, 'filters': True,'dataset':{'data': {'name': True, 'size': True, 'dim': True, 'metric_type': True, 'label': True}} })
@@ -140,7 +140,7 @@ class CaseRunner(BaseModel):
                 )
 
             self._init_search_runner()
-            m.recall, m.serial_latency_p99 = self._serial_search()
+            m.recall, m.serial_latency_p99, m.serial_latency_avg = self._serial_search()
             m.qps = self._conc_search()
         except Exception as e:
             log.warning(f"Failed to run performance case, reason = {e}")
@@ -161,7 +161,7 @@ class CaseRunner(BaseModel):
         finally:
             runner = None
 
-    def _serial_search(self) -> tuple[float, float]:
+    def _serial_search(self) -> tuple[float, float, float]:
         """Performance serial tests, search the entire test data once,
         calculate the recall, serial_latency_p99
 
@@ -193,7 +193,7 @@ class CaseRunner(BaseModel):
     @utils.time_it
     def _task(self) -> None:
         with self.db.init():
-            self.db.optimize()
+            self.db.optimize(filters=self.ca.filters)
 
     def _optimize(self) -> float:
         with concurrent.futures.ProcessPoolExecutor(max_workers=1) as executor:
