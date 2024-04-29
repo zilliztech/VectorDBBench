@@ -46,11 +46,9 @@ class SerialInsertRunner:
                 del(emb_np)
                 log.debug(f"batch dataset size: {len(all_embeddings)}, {len(all_metadata)}")
 
-                last_batch = self.dataset.data.size - count == len(all_metadata)
                 insert_count, error = self.db.insert_embeddings(
                     embeddings=all_embeddings,
                     metadata=all_metadata,
-                    last_batch=last_batch,
                 )
                 if error is not None:
                     raise error
