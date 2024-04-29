@@ -89,6 +89,7 @@ class Milvus(VectorDB):
         connections.disconnect("default")
 
     def _optimize(self):
+        self._post_insert()
         log.info(f"{self.name} optimizing before search")
         try:
             self.col.load()
@@ -116,7 +117,7 @@ class Milvus(VectorDB):
                     time.sleep(5)
 
             wait_index()
-            
+
             # Skip compaction if use GPU indexType
             if self.case_config.index in [IndexType.GPU_CAGRA, IndexType.GPU_IVF_FLAT, IndexType.GPU_IVF_PQ]:
                 log.debug("skip compaction for gpu index type.")
@@ -179,8 +180,6 @@ class Milvus(VectorDB):
                 ]
                 res = self.col.insert(insert_data)
                 insert_count += len(res.primary_keys)
-            if kwargs.get("last_batch"):
-                self._post_insert()
         except MilvusException as e:
             log.info(f"Failed to insert data: {e}")
             return (insert_count, e)
