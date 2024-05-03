@@ -65,25 +65,28 @@ def caseConfigSetting(st, allCaseConfigs, case, activedDbList):
                 key = "%s-%s-%s" % (db, case, config.label.value)
                 if config.inputType == InputType.Text:
                     caseConfig[config.label] = column.text_input(
-                        config.label.value,
+                        config.displayLabel if config.displayLabel else config.label.value,
                         key=key,
+                        help=config.inputHelp,
                         value=config.inputConfig["value"],
                     )
                 elif config.inputType == InputType.Option:
                     caseConfig[config.label] = column.selectbox(
-                        config.label.value,
+                        config.displayLabel if config.displayLabel else config.label.value,
                         config.inputConfig["options"],
                         key=key,
+                        help=config.inputHelp,
                     )
                 elif config.inputType == InputType.Number:
                     caseConfig[config.label] = column.number_input(
-                        config.label.value,
+                        config.displayLabel if config.displayLabel else config.label.value,
                         # format="%d",
                         step=config.inputConfig.get("step", 1),
                         min_value=config.inputConfig["min"],
                         max_value=config.inputConfig["max"],
                         key=key,
                         value=config.inputConfig["value"],
+                        help=config.inputHelp,
                     )
                 k += 1
         if k == 0:
