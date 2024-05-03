@@ -1,8 +1,8 @@
 import logging
 import pathlib
 from datetime import date
-from typing import Self
-from enum import Enum
+from enum import Enum, StrEnum, auto
+from typing import List, Self, Sequence, Set
 
 import ujson
 
@@ -37,8 +37,10 @@ class CaseConfigParamType(Enum):
     IndexType = "IndexType"
     M = "M"
     EFConstruction = "efConstruction"
+    ef_construction = "ef_construction"
     EF = "ef"
     SearchList = "search_list"
+    ef_search = "ef_search"
     Nlist = "nlist"
     Nprobe = "nprobe"
     MaxConnections = "maxConnections"
@@ -60,7 +62,8 @@ class CaseConfigParamType(Enum):
     cache_dataset_on_device = "cache_dataset_on_device"
     refine_ratio = "refine_ratio"
     level = "level"
-
+    maintenance_work_mem = "maintenance_work_mem"
+    max_parallel_workers = "max_parallel_workers"
 
 class CustomizedCase(BaseModel):
     pass
