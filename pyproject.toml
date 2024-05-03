@@ -59,13 +59,14 @@ all = [
     "redis",
     "chromadb",
     "psycopg2",
+    "psycopg",
 ]
 
 qdrant = [ "qdrant-client" ]
 pinecone = [ "pinecone-client" ]
 weaviate = [ "weaviate-client" ]
 elastic = [ "elasticsearch" ]
-pgvector = [ "pgvector", "psycopg2" ]
+pgvector = [ "pgvector", "psycopg" ]
 pgvecto_rs = [ "psycopg2" ]
 redis = [ "redis" ]
 chromadb = [ "chromadb" ]
