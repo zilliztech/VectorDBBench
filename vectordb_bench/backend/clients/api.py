@@ -47,7 +47,7 @@ class DBConfig(ABC, BaseModel):
     def not_empty_field(cls, v, field):
         if field.name == "db_label":
             return v
-        if isinstance(v, (str, SecretStr)) and len(v) == 0:
+        if not v and isinstance(v, (str, SecretStr)):
             raise ValueError("Empty string!")
         return v
 

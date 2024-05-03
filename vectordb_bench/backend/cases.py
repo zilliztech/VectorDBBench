@@ -1,6 +1,7 @@
 import typing
 import logging
 from enum import Enum, auto
+from typing import Type
 
 from vectordb_bench import config
 from vectordb_bench.base import BaseModel
@@ -10,7 +11,7 @@ from .dataset import Dataset, DatasetManager
 
 log = logging.getLogger(__name__)
 
-Case = typing.TypeVar("Case")
+# Case = typing.TypeVar("Case")
 
 
 class CaseType(Enum):
@@ -42,11 +43,15 @@ class CaseType(Enum):
     Performance1536D500K99P = 14
     Performance1536D5M99P = 15
 
+    Performance1536D50K = 50
+
     Custom = 100
 
     @property
-    def case_cls(self, custom_configs: dict | None = None) -> Case:
-        return type2case.get(self)
+    def case_cls(self, custom_configs: dict | None = None) -> Type["Case"]:
+        if self not in type2case:
+            raise NotImplementedError(f"Case {self} has not implemented. You can add it manually to vectordb_bench.backend.cases.type2case or define a custom_configs['custom_cls']")
+        return type2case[self]
 
     @property
     def case_name(self) -> str:
@@ -69,7 +74,7 @@ class CaseLabel(Enum):
 
 
 class Case(BaseModel):
-    """Undifined case
+    """Undefined case
 
     Fields:
         case_id(CaseType): default 9 case type plus one custom cases.
@@ -86,9 +91,9 @@ class Case(BaseModel):
     dataset: DatasetManager
 
     load_timeout: float | int
-    optimize_timeout: float | int | None
+    optimize_timeout: float | int | None = None
 
-    filter_rate: float | None
+    filter_rate: float | None = None
 
     @property
     def filters(self) -> dict | None:
@@ -115,20 +120,23 @@ class PerformanceCase(Case, BaseModel):
     load_timeout: float | int = config.LOAD_TIMEOUT_DEFAULT
     optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_DEFAULT
 
+
 class CapacityDim960(CapacityCase):
     case_id: CaseType = CaseType.CapacityDim960
     dataset: DatasetManager = Dataset.GIST.manager(100_000)
     name: str = "Capacity Test (960 Dim Repeated)"
-    description: str = """This case tests the vector database's loading capacity by repeatedly inserting large-dimension vectors (GIST 100K vectors, <b>960 dimensions</b>) until it is fully loaded.
-Number of inserted vectors will be reported."""
+    description: str = """This case tests the vector database's loading capacity by repeatedly inserting large-dimension 
+     vectors (GIST 100K vectors, <b>960 dimensions</b>) until it is fully loaded. Number of inserted vectors will be 
+     reported."""
 
 
 class CapacityDim128(CapacityCase):
     case_id: CaseType = CaseType.CapacityDim128
     dataset: DatasetManager = Dataset.SIFT.manager(500_000)
     name: str = "Capacity Test (128 Dim Repeated)"
-    description: str = """This case tests the vector database's loading capacity by repeatedly inserting small-dimension vectors (SIFT 100K vectors, <b>128 dimensions</b>) until it is fully loaded.
-Number of inserted vectors will be reported."""
+    description: str = """This case tests the vector database's loading capacity by repeatedly inserting small-dimension
+     vectors (SIFT 100K vectors, <b>128 dimensions</b>) until it is fully loaded. Number of inserted vectors will be 
+     reported."""
 
 
 class Performance768D10M(PerformanceCase):
@@ -238,6 +246,7 @@ Results will show index building time, recall, and maximum QPS."""
     load_timeout: float | int = config.LOAD_TIMEOUT_1536D_500K
     optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_1536D_500K
 
+
 class Performance1536D5M1P(PerformanceCase):
     case_id: CaseType = CaseType.Performance1536D5M1P
     filter_rate: float | int | None = 0.01
@@ -247,6 +256,7 @@ class Performance1536D5M1P(PerformanceCase):
 Results will show index building time, recall, and maximum QPS."""
     load_timeout: float | int = config.LOAD_TIMEOUT_1536D_5M
     optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_1536D_5M
+
 
 class Performance1536D500K99P(PerformanceCase):
     case_id: CaseType = CaseType.Performance1536D500K99P
@@ -258,6 +268,7 @@ Results will show index building time, recall, and maximum QPS."""
     load_timeout: float | int = config.LOAD_TIMEOUT_1536D_500K
     optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_1536D_500K
 
+
 class Performance1536D5M99P(PerformanceCase):
     case_id: CaseType = CaseType.Performance1536D5M99P
     filter_rate: float | int | None = 0.99
@@ -267,6 +278,17 @@ class Performance1536D5M99P(PerformanceCase):
 Results will show index building time, recall, and maximum QPS."""
     load_timeout: float | int = config.LOAD_TIMEOUT_1536D_5M
     optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_1536D_5M
+
+
+class Performance1536D50K(PerformanceCase):
+    case_id: CaseType = CaseType.Performance1536D50K
+    filter_rate: float | int | None = None
+    dataset: DatasetManager = Dataset.OPENAI.manager(50_000)
+    name: str = "Search Performance Test (50K Dataset, 1536 Dim)"
+    description: str = """This case tests the search performance of a vector database with a medium 50K dataset (<b>OpenAI 50K vectors</b>, 1536 dimensions), at varying parallel levels.
+Results will show index building time, recall, and maximum QPS."""
+    load_timeout: float | int = 3600
+    optimize_timeout: float | int | None = 15 * 60
 
 
 type2case = {
@@ -290,5 +312,5 @@ type2case = {
 
     CaseType.Performance1536D500K99P: Performance1536D500K99P,
     CaseType.Performance1536D5M99P: Performance1536D5M99P,
-
+    CaseType.Performance1536D50K: Performance1536D50K,
 }

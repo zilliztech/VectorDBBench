@@ -8,7 +8,7 @@ from enum import Enum, auto
 from . import utils
 from .cases import Case, CaseLabel
 from ..base import BaseModel
-from ..models import TaskConfig, PerformanceTimeoutError
+from ..models import TaskConfig, PerformanceTimeoutError, TaskStage
 
 from .clients import (
     api,
@@ -29,7 +29,7 @@ class RunningStatus(Enum):
 
 
 class CaseRunner(BaseModel):
-    """ DataSet, filter_rate, db_class with db config
+    """DataSet, filter_rate, db_class with db config
 
     Fields:
         run_id(str): run_id of this case runner,
@@ -49,8 +49,9 @@ class CaseRunner(BaseModel):
 
     db: api.VectorDB | None = None
     test_emb: list[list[float]] | None = None
-    search_runner: MultiProcessingSearchRunner | None = None
     serial_search_runner: SerialSearchRunner | None = None
+    search_runner: MultiProcessingSearchRunner | None = None
+    final_search_runner: MultiProcessingSearchRunner | None = None
 
     def __eq__(self, obj):
         if isinstance(obj, CaseRunner):
@@ -58,7 +59,7 @@ class CaseRunner(BaseModel):
                 self.config.db == obj.config.db and \
                 self.config.db_case_config == obj.config.db_case_config and \
                 self.ca.dataset == obj.ca.dataset
-            return False
+        return False
 
     def display(self) -> dict:
         c_dict = self.ca.dict(include={'label':True, 'filters': True,'dataset':{'data': {'name': True, 'size': True, 'dim': True, 'metric_type': True, 'label': True}} })
@@ -79,20 +80,25 @@ class CaseRunner(BaseModel):
             db_config=self.config.db_config.to_dict(),
             db_case_config=self.config.db_case_config,
             drop_old=drop_old,
-        )
+        )  # type:ignore
+
 
     def _pre_run(self, drop_old: bool = True):
         try:
             self.init_db(drop_old)
             self.ca.dataset.prepare(self.dataset_source, filters=self.ca.filter_rate)
         except ModuleNotFoundError as e:
-            log.warning(f"pre run case error: please install client for db: {self.config.db}, error={e}")
+            log.warning(
+                f"pre run case error: please install client for db: {self.config.db}, error={e}"
+            )
             raise e from None
         except Exception as e:
             log.warning(f"pre run case error: {e}")
             raise e from None
 
     def run(self, drop_old: bool = True) -> Metric:
+        log.info("Starting run")
+
         self._pre_run(drop_old)
 
         if self.ca.label == CaseLabel.Load:
@@ -105,31 +111,35 @@ class CaseRunner(BaseModel):
             raise ValueError(msg)
 
     def _run_capacity_case(self) -> Metric:
-        """ run capacity cases
+        """run capacity cases
 
         Returns:
             Metric: the max load count
         """
+        assert self.db is not None
         log.info("Start capacity case")
         try:
-            runner = SerialInsertRunner(self.db, self.ca.dataset, self.normalize, self.ca.load_timeout)
+            runner = SerialInsertRunner(
+                self.db, self.ca.dataset, self.normalize, self.ca.load_timeout
+            )
             count = runner.run_endlessness()
         except Exception as e:
             log.warning(f"Failed to run capacity case, reason = {e}")
             raise e from None
         else:
-            log.info(f"Capacity case loading dataset reaches VectorDB's limit: max capacity = {count}")
+            log.info(
+                f"Capacity case loading dataset reaches VectorDB's limit: max capacity = {count}"
+            )
             return Metric(max_load_count=count)
 
     def _run_perf_case(self, drop_old: bool = True) -> Metric:
-        """ run performance cases
+        """run performance cases
 
         Returns:
             Metric: load_duration, recall, serial_latency_p99, and, qps
         """
-        try:
-            m = Metric()
-            if drop_old:
+        '''
+                    if drop_old:
                 _, load_dur = self._load_train_data()
                 build_dur = self._optimize()
                 m.load_duration = round(load_dur+build_dur, 4)
@@ -142,6 +152,47 @@ class CaseRunner(BaseModel):
             self._init_search_runner()
             m.qps = self._conc_search()
             m.recall, m.serial_latency_p99 = self._serial_search()
+        '''
+
+        log.info("Start performance case")
+        try:
+            m = Metric()
+            if drop_old:
+                if TaskStage.LOAD in self.config.stages:
+                    # self._load_train_data()
+                    _, load_dur = self._load_train_data()
+                    build_dur = self._optimize()
+                    m.load_duration = round(load_dur + build_dur, 4)
+                    log.info(
+                        f"Finish loading the entire dataset into VectorDB,"
+                        f" insert_duration={load_dur}, optimize_duration={build_dur}"
+                        f" load_duration(insert + optimize) = {m.load_duration}"
+                    )
+                else:
+                    log.info("Data loading skipped")
+            if (
+                TaskStage.SEARCH_SERIAL in self.config.stages
+                or TaskStage.SEARCH_CONCURRENT in self.config.stages
+            ):
+                self._init_search_runner()
+                if TaskStage.SEARCH_SERIAL in self.config.stages:
+                    search_results = self._serial_search()
+                    '''
+                    m.recall = search_results.recall
+                    m.serial_latencies = search_results.serial_latencies
+                    '''
+                    m.recall, m.serial_latency_p99 = search_results
+                if TaskStage.SEARCH_CONCURRENT in self.config.stages:
+                    search_results = self._conc_search()
+                    '''
+                    m.max_qps = search_results.max_qps
+                    m.max_qps_concurrency = search_results.max_qps_concurrency
+                    m.max_qps_latencies = search_results.max_qps_latencies
+                    m.min_latency = search_results.min_latency
+                    m.min_latency_concurrency = search_results.min_latency_concurrency
+                    m.min_latency_qps = search_results.min_latency_qps
+                    '''
+                    m.qps = search_results
         except Exception as e:
             log.warning(f"Failed to run performance case, reason = {e}")
             traceback.print_exc()
@@ -217,18 +268,23 @@ class CaseRunner(BaseModel):
 
         gt_df = self.ca.dataset.gt_data
 
-        self.serial_search_runner = SerialSearchRunner(
-            db=self.db,
-            test_data=self.test_emb,
-            ground_truth=gt_df,
-            filters=self.ca.filters,
-        )
-
-        self.search_runner =  MultiProcessingSearchRunner(
-            db=self.db,
-            test_data=self.test_emb,
-            filters=self.ca.filters,
-        )
+        if TaskStage.SEARCH_SERIAL in self.config.stages:
+            self.serial_search_runner = SerialSearchRunner(
+                db=self.db,
+                test_data=self.test_emb,
+                ground_truth=gt_df,
+                filters=self.ca.filters,
+                k=self.config.case_config.k,
+            )
+        if TaskStage.SEARCH_CONCURRENT in self.config.stages:
+            self.search_runner = MultiProcessingSearchRunner(
+                db=self.db,
+                test_data=self.test_emb,
+                filters=self.ca.filters,
+                concurrencies=self.config.case_config.concurrency_search_config.num_concurrency,
+                duration=self.config.case_config.concurrency_search_config.concurrency_duration,
+                k=self.config.case_config.k,
+            )
 
     def stop(self):
         if self.search_runner:

@@ -9,7 +9,7 @@ from vectordb_bench.models import CaseConfigParamType
 
 MAX_STREAMLIT_INT = (1 << 53) - 1
 
-DB_LIST = [d for d in DB]
+DB_LIST = [d for d in DB if d != DB.Test]
 
 DIVIDER = "DIVIDER"
 CASE_LIST_WITH_DIVIDER = [
