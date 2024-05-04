@@ -26,7 +26,7 @@ classifiers = [
 dependencies = [
     "pytz",
     "streamlit-autorefresh",
-    "streamlit>=1.23.0",
+    "streamlit==1.31.1",
     "streamlit_extras",
     "tqdm",
     "s3fs",
