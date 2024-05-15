@@ -3,9 +3,11 @@ import logging
 from enum import Enum, auto
 
 from vectordb_bench import config
+from vectordb_bench.backend.clients.api import MetricType
 from vectordb_bench.base import BaseModel
+from vectordb_bench.frontend.components.custom.getCustomConfig import CustomDatasetConfig
 
-from .dataset import Dataset, DatasetManager
+from .dataset import CustomDataset, Dataset, DatasetManager
 
 
 log = logging.getLogger(__name__)
@@ -43,23 +45,24 @@ class CaseType(Enum):
     Performance1536D5M99P = 15
 
     Custom = 100
+    PerformanceCustomDataset = 101
 
-    @property
     def case_cls(self, custom_configs: dict | None = None) -> Case:
-        return type2case.get(self)
+        if custom_configs is None:
+            return type2case.get(self)()
+        else:
+            return type2case.get(self)(**custom_configs)
 
-    @property
-    def case_name(self) -> str:
-        c = self.case_cls
+    def case_name(self, custom_configs: dict | None = None) -> str:
+        c = self.case_cls(custom_configs)
         if c is not None:
-            return c().name
+            return c.name
         raise ValueError("Case unsupported")
 
-    @property
-    def case_description(self) -> str:
-        c = self.case_cls
+    def case_description(self, custom_configs: dict | None = None) -> str:
+        c = self.case_cls(custom_configs)
         if c is not None:
-            return c().description
+            return c.description
         raise ValueError("Case unsupported")
 
 
@@ -114,6 +117,7 @@ class PerformanceCase(Case, BaseModel):
     filter_rate: float | None = None
     load_timeout: float | int = config.LOAD_TIMEOUT_DEFAULT
     optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_DEFAULT
+
 
 class CapacityDim960(CapacityCase):
     case_id: CaseType = CaseType.CapacityDim960
@@ -238,6 +242,7 @@ Results will show index building time, recall, and maximum QPS."""
     load_timeout: float | int = config.LOAD_TIMEOUT_1536D_500K
     optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_1536D_500K
 
+
 class Performance1536D5M1P(PerformanceCase):
     case_id: CaseType = CaseType.Performance1536D5M1P
     filter_rate: float | int | None = 0.01
@@ -247,6 +252,7 @@ class Performance1536D5M1P(PerformanceCase):
 Results will show index building time, recall, and maximum QPS."""
     load_timeout: float | int = config.LOAD_TIMEOUT_1536D_5M
     optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_1536D_5M
+
 
 class Performance1536D500K99P(PerformanceCase):
     case_id: CaseType = CaseType.Performance1536D500K99P
@@ -258,6 +264,7 @@ Results will show index building time, recall, and maximum QPS."""
     load_timeout: float | int = config.LOAD_TIMEOUT_1536D_500K
     optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_1536D_500K
 
+
 class Performance1536D5M99P(PerformanceCase):
     case_id: CaseType = CaseType.Performance1536D5M99P
     filter_rate: float | int | None = 0.99
@@ -267,6 +274,40 @@ class Performance1536D5M99P(PerformanceCase):
 Results will show index building time, recall, and maximum QPS."""
     load_timeout: float | int = config.LOAD_TIMEOUT_1536D_5M
     optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_1536D_5M
+
+
+def metric_type_map(s: str) -> MetricType:
+    if s.lower() == 'cosine':
+        return MetricType.COSINE
+    if s.lower() == 'l2' or s.lower() == "euclidean":
+        return MetricType.L2
+    if s.lower() == 'ip':
+        return MetricType.IP
+    err_msg = f"Not support metric_type: {s}"
+    log.error(err_msg)
+    raise RuntimeError(err_msg)
+
+
+class PerformanceCustomDataset(PerformanceCase):
+    case_id: CaseType = CaseType.PerformanceCustomDataset
+    name: str = "Performance With Custom Dataset"
+    description: str = ""
+    dataset: DatasetManager
+
+    def __init__(self, name, description, load_timeout, optimize_timeout, dataset_config, **kwargs):
+        dataset_config = CustomDatasetConfig(**dataset_config)
+        dataset = CustomDataset(
+            name=dataset_config.name,
+            size=dataset_config.size,
+            dim=dataset_config.dim,
+            metric_type=metric_type_map(dataset_config.metric_type),
+            use_shuffled=dataset_config.use_shuffled,
+            with_gt=dataset_config.with_gt,
+            dir=dataset_config.dir,
+            file_num=dataset_config.file_count,
+        )
+        super().__init__(name=name, description=description, load_timeout=load_timeout,
+                         optimize_timeout=optimize_timeout, dataset=DatasetManager(data=dataset))
 
 
 type2case = {
@@ -291,4 +332,5 @@ type2case = {
     CaseType.Performance1536D500K99P: Performance1536D500K99P,
     CaseType.Performance1536D5M99P: Performance1536D5M99P,
 
+    CaseType.PerformanceCustomDataset: PerformanceCustomDataset,
 }

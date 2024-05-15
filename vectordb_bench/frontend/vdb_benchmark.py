@@ -6,7 +6,7 @@ from vectordb_bench.frontend.components.check_results.nav import NavToQuriesPerD
 from vectordb_bench.frontend.components.check_results.charts import drawCharts
 from vectordb_bench.frontend.components.check_results.filters import getshownData
 from vectordb_bench.frontend.components.get_results.saveAsImage import getResults
-from vectordb_bench.frontend.const.styles import *
+from vectordb_bench.frontend.config.styles import *
 from vectordb_bench.interface import benchMarkRunner
 
 
@@ -24,7 +24,7 @@ def main():
 
     # results selector and filter
     resultSelectorContainer = st.sidebar.container()
-    shownData, failedTasks, showCases = getshownData(
+    shownData, failedTasks, showCaseNames = getshownData(
         allResults, resultSelectorContainer
     )
 
@@ -40,7 +40,7 @@ def main():
     getResults(resultesContainer, "vectordb_bench")
 
     # charts
-    drawCharts(st, shownData, failedTasks, showCases)
+    drawCharts(st, shownData, failedTasks, showCaseNames)
 
     # footer
     footer(st.container())
