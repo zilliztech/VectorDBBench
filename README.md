@@ -220,7 +220,41 @@ class NewDBCaseConfig(DBCaseConfig):
     # Implement optional case-specific configuration fields
     # ...
 ```
-**Step 3: Importing the DB Client and Updating Initialization**
+**Step 3: Implement new_client/cli.py and vectordb_bench/cli/vectordbbench.py**
+
+In this step you will enable the test to be run from the command line.
+1. Navigate to the vectordb_bench/backend/clients/"new_client" directory.
+2. Inside the "new_client" folder, create a cli.py file.
+from typing import Unpack
+```python
+from ....cli.cli import (
+    CommonTypedDict,
+    cli,
+    click_parameter_decorators_from_typed_dict,
+    run,
+)
+from .. import DB
+from ..new_client.config import NewClientConfig, NewClientIndexConfig
+
+
+class TestTypedDict(CommonTypedDict):
+    ...
+
+
+@cli.command()
+@click_parameter_decorators_from_typed_dict(TestTypedDict)
+def NewClient(**parameters: Unpack[TestTypedDict]):
+    run(
+        db=DB.Test,
+        db_config=NewClientConfig(db_label=parameters["db_label"]),
+        db_case_config=NewClientIndexConfig(),
+        **parameters,
+    )
+```
+3. Update db_config and db_case_config to match new_client requirements
+4. Add the new_client to vectordb_bench/cli/vectordbbench.py 
+
+**Step 4: Importing the DB Client and Updating Initialization**
 
 In this final step, you will import your DB client into clients/__init__.py and update the initialization process.
 1. Open clients/__init__.py and import your NewClient from new_client.py.

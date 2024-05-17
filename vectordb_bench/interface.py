@@ -1,38 +1,33 @@
-import traceback
+import concurrent.futures
+import logging
+import multiprocessing as mp
 import pathlib
 import signal
-import logging
+import traceback
 import uuid
-import concurrent
-import multiprocessing as mp
+from enum import Enum
 from multiprocessing.connection import Connection
 
 import psutil
-from enum import Enum
 
 from . import config
-from .metric import Metric
-from .models import (
-    TaskConfig,
-    TestResult,
-    CaseResult,
-    LoadTimeoutError,
-    PerformanceTimeoutError,
-    ResultLabel,
-)
-from .backend.result_collector import ResultCollector
 from .backend.assembler import Assembler
-from .backend.task_runner import TaskRunner
 from .backend.data_source import DatasetSource
+from .backend.result_collector import ResultCollector
+from .backend.task_runner import TaskRunner
+from .metric import Metric
+from .models import (CaseResult, LoadTimeoutError, PerformanceTimeoutError,
+                     ResultLabel, TaskConfig, TaskStage, TestResult)
 
 log = logging.getLogger(__name__)
 
 global_result_future: concurrent.futures.Future | None = None
 
+
 class SIGNAL(Enum):
-    SUCCESS=0
-    ERROR=1
-    WIP=2
+    SUCCESS = 0
+    ERROR = 1
+    WIP = 2
 
 
 class BenchMarkRunner:
@@ -42,8 +37,10 @@ class BenchMarkRunner:
         self.drop_old: bool = True
         self.dataset_source: DatasetSource = DatasetSource.S3
 
+
     def set_drop_old(self, drop_old: bool):
         self.drop_old = drop_old
+
 
     def set_download_address(self, use_aliyun: bool):
         if use_aliyun:
@@ -152,13 +149,13 @@ class BenchMarkRunner:
             latest_runner, cached_load_duration = None, None
             for idx, runner in enumerate(running_task.case_runners):
                 case_res = CaseResult(
-                    result_id=idx,
                     metrics=Metric(),
                     task_config=runner.config,
                 )
 
                 # drop_old = False if latest_runner and runner == latest_runner else config.DROP_OLD
-                drop_old = config.DROP_OLD
+                # drop_old = config.DROP_OLD
+                drop_old = TaskStage.DROP_OLD in runner.config.stages
                 if latest_runner and runner == latest_runner:
                     drop_old = False
                 elif not self.drop_old:
@@ -167,7 +164,7 @@ class BenchMarkRunner:
                     log.info(f"[{idx+1}/{running_task.num_cases()}] start case: {runner.display()}, drop_old={drop_old}")
                     case_res.metrics = runner.run(drop_old)
                     log.info(f"[{idx+1}/{running_task.num_cases()}] finish case: {runner.display()}, "
-                        f"result={case_res.metrics}, label={case_res.label}")
+                             f"result={case_res.metrics}, label={case_res.label}")
 
                     # cache the latest succeeded runner
                     latest_runner = runner
@@ -193,7 +190,6 @@ class BenchMarkRunner:
                     c_results.append(case_res)
                     send_conn.send((SIGNAL.WIP, idx))
 
-
             test_result = TestResult(
                 run_id=running_task.run_id,
                 task_label=running_task.task_label,
@@ -204,7 +200,7 @@ class BenchMarkRunner:
 
             send_conn.send((SIGNAL.SUCCESS, None))
             send_conn.close()
-            log.info(f"Succes to finish task: label={running_task.task_label}, run_id={running_task.run_id}")
+            log.info(f"Success to finish task: label={running_task.task_label}, run_id={running_task.run_id}")
 
         except Exception as e:
             err_msg = f"An error occurs when running task={running_task.task_label}, run_id={running_task.run_id}, err={e}"
@@ -246,7 +242,7 @@ class BenchMarkRunner:
         called as soon as a child terminates.
         """
         children = psutil.Process().children(recursive=True)
-        for p in  children:
+        for p in children:
             try:
                 log.warning(f"sending SIGTERM to child process: {p}")
                 p.send_signal(sig)

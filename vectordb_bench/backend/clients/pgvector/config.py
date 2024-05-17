@@ -109,7 +109,6 @@ class PgVectorIndexConfig(BaseModel, DBCaseConfig):
     def _optionally_build_set_options(
         set_mapping: Mapping[str, Any]
     ) -> Sequence[dict[str, Any]]:
-        """Walk through options, creating 'SET 'key1 = "value1";' commands"""
         session_options = []
         for setting_name, value in set_mapping.items():
             if value:

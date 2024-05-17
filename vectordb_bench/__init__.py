@@ -1,11 +1,13 @@
-import environs
 import inspect
 import pathlib
+
+import environs
+
 from . import log_util
 
-
 env = environs.Env()
-env.read_env(".env")
+env.read_env(".env", False)
+
 
 class config:
     ALIYUN_OSS_URL = "assets.zilliz.com.cn/benchmark/"
@@ -19,9 +21,16 @@ class config:
 
     DROP_OLD = env.bool("DROP_OLD", True)
     USE_SHUFFLED_DATA = env.bool("USE_SHUFFLED_DATA", True)
-    NUM_CONCURRENCY = [1, 5, 10, 15, 20, 25, 30, 35]
 
-    RESULTS_LOCAL_DIR = pathlib.Path(__file__).parent.joinpath("results")
+    NUM_CONCURRENCY = env.list("NUM_CONCURRENCY",  [1, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100], subcast=int )
+
+    CONCURRENCY_DURATION = 30
+
+    RESULTS_LOCAL_DIR = env.path(
+        "RESULTS_LOCAL_DIR", pathlib.Path(__file__).parent.joinpath("results")
+    )
+
+    K_DEFAULT = 100  # default return top k nearest neighbors during search
 
     CAPACITY_TIMEOUT_IN_SECONDS = 24 * 3600 # 24h
     LOAD_TIMEOUT_DEFAULT        = 2.5 * 3600 # 2.5h
