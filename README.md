@@ -45,6 +45,15 @@ All the database client supported
 ``` shell
 init_bench
 ```
+
+OR:
+
+### Run from the command line.
+
+``` shell
+vectordbbench --help
+```
+
 ## What is VectorDBBench
 VectorDBBench is not just an offering of benchmark results for mainstream vector databases and cloud services, it's your go-to tool for the ultimate performance and cost-effectiveness comparison. Designed with ease-of-use in mind, VectorDBBench is devised to help users, even non-professionals, reproduce results or test new systems, making the hunt for the optimal choice amongst a plethora of cloud services and open-source vector databases a breeze.
 
@@ -103,6 +112,8 @@ mkdir -p ~/vectordb_bench/dataset
 ```
 After reopen the repository in container, run `python -m vectordb_bench` in the container's bash.
 
+
+
 ### Check coding styles
 ```shell
 $ ruff check vectordb_bench
@@ -113,6 +124,7 @@ Add `--fix` if you want to fix the coding styles automatically
 ```shell
 $ ruff check vectordb_bench --fix
 ```
+
 
 ## How does it work?
 ### Result Page
