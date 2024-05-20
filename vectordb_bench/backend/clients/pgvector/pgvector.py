@@ -32,6 +32,7 @@ class PgVector(VectorDB):
         db_case_config: PgVectorIndexConfig,
         collection_name: str = "pg_vector_collection",
         drop_old: bool = False,
+        **kwargs,
     ):
         self.name = "PgVector"
         self.db_config = db_config

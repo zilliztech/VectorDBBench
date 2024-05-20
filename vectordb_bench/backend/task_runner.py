@@ -184,14 +184,6 @@ class CaseRunner(BaseModel):
                     m.recall, m.serial_latency_p99 = search_results
                 if TaskStage.SEARCH_CONCURRENT in self.config.stages:
                     search_results = self._conc_search()
-                    '''
-                    m.max_qps = search_results.max_qps
-                    m.max_qps_concurrency = search_results.max_qps_concurrency
-                    m.max_qps_latencies = search_results.max_qps_latencies
-                    m.min_latency = search_results.min_latency
-                    m.min_latency_concurrency = search_results.min_latency_concurrency
-                    m.min_latency_qps = search_results.min_latency_qps
-                    '''
                     m.qps = search_results
         except Exception as e:
             log.warning(f"Failed to run performance case, reason = {e}")

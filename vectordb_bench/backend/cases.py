@@ -11,8 +11,6 @@ from .dataset import Dataset, DatasetManager
 
 log = logging.getLogger(__name__)
 
-# Case = typing.TypeVar("Case")
-
 
 class CaseType(Enum):
     """

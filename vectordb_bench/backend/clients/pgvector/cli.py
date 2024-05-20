@@ -61,7 +61,6 @@ def PgVectorIVFFlat(
 ):
     from .config import PgVectorConfig, PgVectorIVFFlatConfig
 
-    # https://github.com/pgvector/pgvector?tab=readme-ov-file#ivfflat
     run(
         db=DB.PgVector,
         db_config=PgVectorConfig(
@@ -89,7 +88,6 @@ def PgVectorHNSW(
 ):
     from .config import PgVectorConfig, PgVectorHNSWConfig
 
-    # https://github.com/pgvector/pgvector?tab=readme-ov-file#ivfflat
     run(
         db=DB.PgVector,
         db_config=PgVectorConfig(

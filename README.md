@@ -112,8 +112,6 @@ mkdir -p ~/vectordb_bench/dataset
 ```
 After reopen the repository in container, run `python -m vectordb_bench` in the container's bash.
 
-
-
 ### Check coding styles
 ```shell
 $ ruff check vectordb_bench
@@ -124,7 +122,6 @@ Add `--fix` if you want to fix the coding styles automatically
 ```shell
 $ ruff check vectordb_bench --fix
 ```
-
 
 ## How does it work?
 ### Result Page
