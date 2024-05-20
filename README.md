@@ -51,7 +51,69 @@ OR:
 ### Run from the command line.
 
 ``` shell
-vectordbbench --help
+vectordbbench [OPTIONS] COMMAND [ARGS]...
+```
+To list the clients that are runnable via the commandline option, execute: `vectordbbench --help`
+``` text
+$ vectordbbench --help
+Usage: vectordbbench [OPTIONS] COMMAND [ARGS]...
+
+Options:
+  --help  Show this message and exit.
+
+Commands:
+  pgvectorhnsw
+  pgvectorivfflat
+  test
+  weaviate
+```
+To list the options for each command, execute `vectordbbench [command] --help`
+
+```text
+$ vectordbbench pgvectorhnsw --help
+Usage: vectordbbench pgvectorhnsw [OPTIONS]
+
+Options:
+  --drop-old / --skip-drop-old    Drop old or skip  [default: drop-old]
+  --load / --skip-load            Load or skip  [default: load]
+  --search-serial / --skip-search-serial
+                                  Search serial or skip  [default: search-
+                                  serial]
+  --search-concurrent / --skip-search-concurrent
+                                  Search concurrent or skip  [default: search-
+                                  concurrent]
+  --case-type [CapacityDim128|CapacityDim960|Performance768D100M|Performance768D10M|Performance768D1M|Performance768D10M1P|Performance768D1M1P|Performance768D10M99P|Performance768D1M99P|Performance1536D500K|Performance1536D5M|Performance1536D500K1P|Performance1536D5M1P|Performance1536D500K99P|Performance1536D5M99P|Performance1536D50K]
+                                  Case type
+  --db-label TEXT                 Db label, default: date in ISO format
+                                  [default: 2024-05-20T20:26:31.113290]
+  --dry-run                       Print just the configuration and exit
+                                  without running the tasks
+  --k INTEGER                     K value for number of nearest neighbors to
+                                  search  [default: 100]
+  --concurrency-duration INTEGER  Adjusts the duration in seconds of each
+                                  concurrency search  [default: 30]
+  --num-concurrency TEXT          Comma-separated list of concurrency values
+                                  to test during concurrent search  [default:
+                                  1,10,20]
+  --user-name TEXT                Db username  [required]
+  --password TEXT                 Db password  [required]
+  --host TEXT                     Db host  [required]
+  --db-name TEXT                  Db name  [required]
+  --maintenance-work-mem TEXT     Sets the maximum memory to be used for
+                                  maintenance operations (index creation). Can
+                                  be entered as string with unit like '64GB'
+                                  or as an integer number of KB.This will set
+                                  the parameters:
+                                  max_parallel_maintenance_workers,
+                                  max_parallel_workers &
+                                  table(parallel_workers)
+  --max-parallel-workers INTEGER  Sets the maximum number of parallel
+                                  processes per maintenance operation (index
+                                  creation)
+  --m INTEGER                     hnsw m
+  --ef-construction INTEGER       hnsw ef-construction
+  --ef-search INTEGER             hnsw ef-search
+  --help                          Show this message and exit.
 ```
 
 ## What is VectorDBBench
