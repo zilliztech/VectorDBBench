@@ -72,6 +72,7 @@ pgvector = [ "psycopg", "psycopg-binary", "pgvector" ]
 pgvecto_rs = [ "psycopg2" ]
 redis = [ "redis" ]
 chromadb = [ "chromadb" ]
+zilliz_cloud = []
 
 [project.urls]
 "repository" = "https://github.com/zilliztech/VectorDBBench"

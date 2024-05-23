@@ -1,36 +1,33 @@
 from typing import Annotated, Unpack
 
 import click
+import os
 from pydantic import SecretStr
 
-from ....cli.cli import (
+from vectordb_bench.cli.cli import (
     CommonTypedDict,
     cli,
     click_parameter_decorators_from_typed_dict,
     run,
 )
-from .. import DB
+from vectordb_bench.backend.clients import DB
 
 
 class ZillizTypedDict(CommonTypedDict):
     uri: Annotated[
         str, click.option("--uri", type=str, help="Zilliz uri", required=True)
     ]
-    user: Annotated[
-        str,
-        click.option("--user", type=str, help="Zilliz user", required=True),
+    user_name: Annotated[
+        str, click.option("--user-name", type=str, help="Db username", required=True)
     ]
     password: Annotated[
         str,
-        click.option("--password", type=str, help="Zilliz password", required=True),
-    ]
-    index_type: Annotated[
-        str,
-        click.option("--index_type", type=str, help="Zilliz index type", required=True),
-    ]
-    metric_type: Annotated[
-        str,
-        click.option("--password", type=str, help="Zilliz password", required=True),
+        click.option("--password",
+                     type=str,
+                     help="Zilliz password",
+                     default=lambda: os.environ.get("ZILLIZ_PASSWORD", ""),
+                     show_default="$ZILLIZ_PASSWORD",
+                     ),
     ]
     level: Annotated[
         str,
@@ -49,10 +46,11 @@ def Zilliz(**parameters: Unpack[ZillizTypedDict]):
         db_config=ZillizCloudConfig(
             db_label=parameters["db_label"],
             uri=SecretStr(parameters["uri"]),
-            user=SecretStr(parameters["user"]),
+            user=parameters["user_name"],
             password=SecretStr(parameters["password"]),
         ),
         db_case_config=AutoIndexConfig(
-            params={parameters["limit"]},
+            params={parameters["level"]},
         ),
+        **parameters,
     )
