@@ -16,7 +16,7 @@ from vectordb_bench.backend.clients import DB
 
 class MilvusTypedDict(TypedDict):
     uri: Annotated[
-        str, click.option("--uri", type=str, help="Milvus uri", required=True)
+        str, click.option("--uri", type=str, help="uri connection string", required=True)
     ]
 
 
@@ -125,7 +125,7 @@ def MilvusIVFSQ8Config(**parameters: Unpack[MilvusIVFFlatTypedDict]):
 class MilvusDISKANNTypedDict(TypedDict, MilvusTypedDict):
     search_list: Annotated[
         str, click.option("--search-list",
-                          type=int, help="search_list",
+                          type=int,
                           required=True)
     ]
 
@@ -151,12 +151,12 @@ def MilvusDISKANN(**parameters: Unpack[MilvusDISKANNTypedDict]):
 class MilvusGPUIVFTypedDict(TypedDict, MilvusTypedDict, MilvusIVFFlatTypedDict):
     cache_dataset_on_device: Annotated[
         str, click.option("--cache-dataset-on-device",
-                          type=str, help="Milvus cache_dataset_on_device",
+                          type=str,
                           required=True)
     ]
     refine_ratio: Annotated[
         str, click.option("--refine-ratio",
-                          type=float, help="Milvus refine_ratio",
+                          type=float,
                           required=True)
     ]
 
@@ -190,7 +190,7 @@ class MilvusGPUIVFPQTypedDict(TypedDict, MilvusTypedDict, MilvusIVFFlatTypedDict
     ]
     bits: Annotated[
         str, click.option("--bits",
-                          type=int, help="bits",
+                          type=int,
                           required=True)
     ]
 
@@ -221,42 +221,42 @@ def MilvusGPUIVFPQ(**parameters: Unpack[MilvusGPUIVFPQTypedDict]):
 class MilvusGPUCAGRATypedDict(TypedDict, MilvusTypedDict, MilvusGPUIVFTypedDict):
     intermediate_graph_degree: Annotated[
         str, click.option("--intermediate-graph-degree",
-                          type=int, help="intermediate_graph_degree",
+                          type=int,
                           required=True)
     ]
     graph_degree: Annotated[
         str, click.option("--graph-degree",
-                          type=int, help="graph_degree",
+                          type=int,
                           required=True)
     ]
     build_algo: Annotated[
         str, click.option("--build_algo",
-                          type=str, help="build_algo",
+                          type=str,
                           required=True)
     ]
     team_size: Annotated[
         str, click.option("--team-size",
-                          type=int, help="team_size",
+                          type=int,
                           required=True)
     ]
     search_width: Annotated[
         str, click.option("--search-width",
-                          type=int, help="search_width",
+                          type=int,
                           required=True)
     ]
     itopk_size: Annotated[
         str, click.option("--itopk-size",
-                          type=int, help="itopk_size",
+                          type=int,
                           required=True)
     ]
     min_iterations: Annotated[
         str, click.option("--min-iterations",
-                          type=int, help="min_iterations",
+                          type=int,
                           required=True)
     ]
     max_iterations: Annotated[
         str, click.option("--max-iterations",
-                          type=int, help="max_iterations",
+                          type=int,
                           required=True)
     ]
 
