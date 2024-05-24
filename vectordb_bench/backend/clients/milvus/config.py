@@ -14,13 +14,17 @@ class MilvusIndexConfig(BaseModel):
 
     index: IndexType
     metric_type: MetricType | None = None
+    
+    @property
+    def is_gpu_index(self) -> bool:
+        return self.index in [IndexType.GPU_CAGRA, IndexType.GPU_IVF_FLAT, IndexType.GPU_IVF_PQ]
 
     def parse_metric(self) -> str:
         if not self.metric_type:
             return ""
 
-        # if self.metric_type == MetricType.COSINE:
-        #     return MetricType.L2.value
+        if self.is_gpu_index and self.metric_type == MetricType.COSINE:
+            return MetricType.L2.value
         return self.metric_type.value
 
 
