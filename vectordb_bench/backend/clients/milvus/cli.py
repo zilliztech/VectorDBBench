@@ -6,13 +6,15 @@ from pydantic import SecretStr
 from vectordb_bench.cli.cli import (
     CommonTypedDict,
     HNSWFlavor1,
-    IVFFlatTypedDict,
+    IVFFlatTypedDictN,
     cli,
     click_parameter_decorators_from_typed_dict,
     run,
+    update_parameters_with_defaults,
 )
 from vectordb_bench.backend.clients import DB
 
+DBTYPE = DB.Milvus
 
 class MilvusTypedDict(TypedDict):
     uri: Annotated[
@@ -29,8 +31,9 @@ class MilvusAutoIndexTypedDict(CommonTypedDict, MilvusTypedDict):
 def MilvusAutoIndex(**parameters: Unpack[MilvusAutoIndexTypedDict]):
     from .config import MilvusConfig, AutoIndexConfig
 
+    parameters=update_parameters_with_defaults(DBTYPE,parameters)
     run(
-        db=DB.Milvus,
+        db=DBTYPE,
         db_config=MilvusConfig(
             db_label=parameters["db_label"],
             uri=SecretStr(parameters["uri"]),
@@ -45,8 +48,9 @@ def MilvusAutoIndex(**parameters: Unpack[MilvusAutoIndexTypedDict]):
 def MilvusFlat(**parameters: Unpack[MilvusAutoIndexTypedDict]):
     from .config import MilvusConfig, FLATConfig
 
+    parameters=update_parameters_with_defaults(DB.PgVector,parameters)
     run(
-        db=DB.Milvus,
+        db=DBTYPE,
         db_config=MilvusConfig(
             db_label=parameters["db_label"],
             uri=SecretStr(parameters["uri"]),
@@ -65,8 +69,9 @@ class MilvusHNSWTypedDict(CommonTypedDict, MilvusTypedDict, HNSWFlavor1):
 def MilvusHNSW(**parameters: Unpack[MilvusHNSWTypedDict]):
     from .config import MilvusConfig, HNSWConfig
 
+    parameters=update_parameters_with_defaults(DB.PgVector,parameters)
     run(
-        db=DB.Milvus,
+        db=DBTYPE,
         db_config=MilvusConfig(
             db_label=parameters["db_label"],
             uri=SecretStr(parameters["uri"]),
@@ -80,7 +85,7 @@ def MilvusHNSW(**parameters: Unpack[MilvusHNSWTypedDict]):
     )
 
 
-class MilvusIVFFlatTypedDict(CommonTypedDict, MilvusTypedDict, IVFFlatTypedDict):
+class MilvusIVFFlatTypedDict(CommonTypedDict, MilvusTypedDict, IVFFlatTypedDictN):
     ...
 
 
@@ -89,8 +94,9 @@ class MilvusIVFFlatTypedDict(CommonTypedDict, MilvusTypedDict, IVFFlatTypedDict)
 def MilvusIVFFlat(**parameters: Unpack[MilvusIVFFlatTypedDict]):
     from .config import MilvusConfig, IVFFlatConfig
 
+    parameters=update_parameters_with_defaults(DB.PgVector,parameters)
     run(
-        db=DB.Milvus,
+        db=DBTYPE,
         db_config=MilvusConfig(
             db_label=parameters["db_label"],
             uri=SecretStr(parameters["uri"]),
@@ -108,8 +114,9 @@ def MilvusIVFFlat(**parameters: Unpack[MilvusIVFFlatTypedDict]):
 def MilvusIVFSQ8Config(**parameters: Unpack[MilvusIVFFlatTypedDict]):
     from .config import MilvusConfig, IVFSQ8Config
 
+    parameters=update_parameters_with_defaults(DB.PgVector,parameters)
     run(
-        db=DB.Milvus,
+        db=DBTYPE,
         db_config=MilvusConfig(
             db_label=parameters["db_label"],
             uri=SecretStr(parameters["uri"]),
@@ -126,7 +133,7 @@ class MilvusDISKANNTypedDict(TypedDict, MilvusTypedDict):
     search_list: Annotated[
         str, click.option("--search-list",
                           type=int,
-                          required=True)
+                          required=False)
     ]
 
 
@@ -135,8 +142,9 @@ class MilvusDISKANNTypedDict(TypedDict, MilvusTypedDict):
 def MilvusDISKANN(**parameters: Unpack[MilvusDISKANNTypedDict]):
     from .config import MilvusConfig, DISKANNConfig
 
+    parameters=update_parameters_with_defaults(DB.PgVector,parameters)
     run(
-        db=DB.Milvus,
+        db=DBTYPE,
         db_config=MilvusConfig(
             db_label=parameters["db_label"],
             uri=SecretStr(parameters["uri"]),
@@ -152,12 +160,12 @@ class MilvusGPUIVFTypedDict(TypedDict, MilvusTypedDict, MilvusIVFFlatTypedDict):
     cache_dataset_on_device: Annotated[
         str, click.option("--cache-dataset-on-device",
                           type=str,
-                          required=True)
+                          required=False)
     ]
     refine_ratio: Annotated[
         str, click.option("--refine-ratio",
                           type=float,
-                          required=True)
+                          required=False)
     ]
 
 
@@ -166,15 +174,18 @@ class MilvusGPUIVFTypedDict(TypedDict, MilvusTypedDict, MilvusIVFFlatTypedDict):
 def MilvusGPUIVFFlat(**parameters: Unpack[MilvusGPUIVFTypedDict]):
     from .config import MilvusConfig, GPUIVFFlatConfig
 
+    parameters=update_parameters_with_defaults(DBTYPE,parameters)
+
+    parameters=update_parameters_with_defaults(DB.PgVector,parameters)
     run(
-        db=DB.Milvus,
+        db=DBTYPE,
         db_config=MilvusConfig(
             db_label=parameters["db_label"],
             uri=SecretStr(parameters["uri"]),
         ),
         db_case_config=GPUIVFFlatConfig(
-            nlist=parameters["lists"],
-            nprobe=parameters["probes"],
+            nlist=parameters["nlist"],
+            nprobe=parameters["nprobe"],
             cache_dataset_on_device=parameters["cache_dataset_on_device"],
             refine_ratio=parameters.get("refine_ratio"),
         ),
@@ -186,12 +197,12 @@ class MilvusGPUIVFPQTypedDict(TypedDict, MilvusTypedDict, MilvusIVFFlatTypedDict
     m: Annotated[
         str, click.option("--m",
                           type=int, help="hnsw m",
-                          required=True)
+                          required=False)
     ]
-    bits: Annotated[
+    nbits: Annotated[
         str, click.option("--bits",
                           type=int,
-                          required=True)
+                          required=False)
     ]
 
 
@@ -200,8 +211,9 @@ class MilvusGPUIVFPQTypedDict(TypedDict, MilvusTypedDict, MilvusIVFFlatTypedDict
 def MilvusGPUIVFPQ(**parameters: Unpack[MilvusGPUIVFPQTypedDict]):
     from .config import MilvusConfig, GPUIVFPQConfig
 
+    parameters=update_parameters_with_defaults(DB.PgVector,parameters)
     run(
-        db=DB.Milvus,
+        db=DBTYPE,
         db_config=MilvusConfig(
             db_label=parameters["db_label"],
             uri=SecretStr(parameters["uri"]),
@@ -222,42 +234,42 @@ class MilvusGPUCAGRATypedDict(TypedDict, MilvusTypedDict, MilvusGPUIVFTypedDict)
     intermediate_graph_degree: Annotated[
         str, click.option("--intermediate-graph-degree",
                           type=int,
-                          required=True)
+                          required=False)
     ]
     graph_degree: Annotated[
         str, click.option("--graph-degree",
                           type=int,
-                          required=True)
+                          required=False)
     ]
     build_algo: Annotated[
         str, click.option("--build_algo",
                           type=str,
-                          required=True)
+                          required=False)
     ]
     team_size: Annotated[
         str, click.option("--team-size",
                           type=int,
-                          required=True)
+                          required=False)
     ]
     search_width: Annotated[
         str, click.option("--search-width",
                           type=int,
-                          required=True)
+                          required=False)
     ]
     itopk_size: Annotated[
         str, click.option("--itopk-size",
                           type=int,
-                          required=True)
+                          required=False)
     ]
     min_iterations: Annotated[
         str, click.option("--min-iterations",
                           type=int,
-                          required=True)
+                          required=False)
     ]
     max_iterations: Annotated[
         str, click.option("--max-iterations",
                           type=int,
-                          required=True)
+                          required=False)
     ]
 
 
@@ -266,8 +278,9 @@ class MilvusGPUCAGRATypedDict(TypedDict, MilvusTypedDict, MilvusGPUIVFTypedDict)
 def MilvusGPUCAGRA(**parameters: Unpack[MilvusGPUCAGRATypedDict]):
     from .config import MilvusConfig, GPUCAGRAConfig
 
+    parameters=update_parameters_with_defaults(DB.PgVector,parameters)
     run(
-        db=DB.Milvus,
+        db=DBTYPE,
         db_config=MilvusConfig(
             db_label=parameters["db_label"],
             uri=SecretStr(parameters["uri"]),

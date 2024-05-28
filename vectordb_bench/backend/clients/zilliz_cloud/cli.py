@@ -8,14 +8,14 @@ from vectordb_bench.cli.cli import (
     CommonTypedDict,
     cli,
     click_parameter_decorators_from_typed_dict,
-    run,
+    run, update_parameters_with_defaults,
 )
 from vectordb_bench.backend.clients import DB
 
 
 class ZillizTypedDict(CommonTypedDict):
     uri: Annotated[
-        str, click.option("--uri", type=str, help="Zilliz uri", required=True)
+        str, click.option("--uri", type=str, help="uri connection string", required=True)
     ]
     user_name: Annotated[
         str, click.option("--user-name", type=str, help="Db username", required=True)
@@ -31,7 +31,7 @@ class ZillizTypedDict(CommonTypedDict):
     ]
     level: Annotated[
         str,
-        click.option("--level", type=str, help="Zilliz index level", required=True),
+        click.option("--level", type=str, help="Zilliz index level", required=False),
     ]
 
 
@@ -40,6 +40,8 @@ class ZillizTypedDict(CommonTypedDict):
 @click_parameter_decorators_from_typed_dict(ZillizTypedDict)
 def Zilliz(**parameters: Unpack[ZillizTypedDict]):
     from .config import ZillizCloudConfig, AutoIndexConfig
+
+    parameters=update_parameters_with_defaults(DB.PgVector,parameters)
 
     run(
         db=DB.ZillizCloud,

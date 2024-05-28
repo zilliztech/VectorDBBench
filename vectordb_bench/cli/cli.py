@@ -29,6 +29,8 @@ from ..models import (
     TaskConfig,
     TaskStage,
 )
+from vectordb_bench.frontend.const.dbCaseConfigs import CASE_CONFIG_MAP
+from vectordb_bench.frontend.const.dbCaseConfigs import CASE_LIST
 
 
 def click_parameter_decorators_from_typed_dict(
@@ -127,6 +129,30 @@ def parse_task_stages(
 
 
 log = logging.getLogger(__name__)
+
+
+def update_parameters_with_defaults(db: DB, parameters: dict[str,any]) -> dict[str,any]:
+    """A convenience method that accepts a dictionary of parameters and will return the same, updated with default values
+    from CASE_CONFIG_MAP, where the parameter not is not in dictionary passed.
+        Args:
+            db: Database type,  e.g.  DB.PgVector
+            parameters: dictionary of parameterName:value
+        Returns:
+            parameters updated with default values
+
+
+        For clarity, the key names of the parameters will be used to determine the default values of the input parameters.
+        The parameter key defined by the click.option definitions, must match exactly the CaseConfigParamInput label value
+        defined in CASE_CONFIG_MAP
+        
+        """
+    case = [case for case in CASE_LIST if case.name == parameters.get('case_type')]
+    if case:
+        defaults={x.label.value: x.inputConfig.get('value')
+                  for x in CASE_CONFIG_MAP.get(db,{}).get(case[0].case_cls().label,[])}
+        parameters.update({pname:defaults[pname] for pname in defaults
+                           if pname in parameters and not parameters[pname] })
+    return parameters
 
 
 class CommonTypedDict(TypedDict):
@@ -256,6 +282,14 @@ class IVFFlatTypedDict(TypedDict):
     ]
     probes: Annotated[
         Optional[int], click.option("--probes", type=int, help="ivfflat probes")
+    ]
+
+class IVFFlatTypedDictN(TypedDict):
+    nlist: Annotated[
+        Optional[int], click.option("--lists", "nlist", type=int, help="ivfflat lists")
+    ]
+    nprobe: Annotated[
+        Optional[int], click.option("--probes","nprobe", type=int, help="ivfflat probes")
     ]
 
 

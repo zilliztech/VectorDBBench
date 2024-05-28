@@ -1,6 +1,7 @@
 from typing import Annotated, Optional, TypedDict, Unpack
 
 import click
+import os
 from pydantic import SecretStr
 
 from ....cli.cli import (
@@ -10,6 +11,7 @@ from ....cli.cli import (
     cli,
     click_parameter_decorators_from_typed_dict,
     run,
+    update_parameters_with_defaults,
 )
 from vectordb_bench.backend.clients import DB
 
@@ -19,8 +21,15 @@ class PgVectorTypedDict(TypedDict):
         str, click.option("--user-name", type=str, help="Db username", required=True)
     ]
     password: Annotated[
-        str, click.option("--password", type=str, help="Db password", required=True)
+        str,
+        click.option("--password",
+                     type=str,
+                     help="Postgres database password",
+                     default=lambda: os.environ.get("POSTGRES_PASSWORD", ""),
+                     show_default="$POSTGRES_PASSWORD",
+                     ),
     ]
+
     host: Annotated[
         str, click.option("--host", type=str, help="Db host", required=True)
     ]
@@ -60,6 +69,7 @@ def PgVectorIVFFlat(
     **parameters: Unpack[PgVectorIVFFlatTypedDict],
 ):
     from .config import PgVectorConfig, PgVectorIVFFlatConfig
+    parameters=update_parameters_with_defaults(DB.PgVector,parameters)
 
     run(
         db=DB.PgVector,
@@ -87,7 +97,7 @@ def PgVectorHNSW(
     **parameters: Unpack[PgVectorHNSWTypedDict],
 ):
     from .config import PgVectorConfig, PgVectorHNSWConfig
-
+    parameters=update_parameters_with_defaults(DB.PgVector,parameters)
     run(
         db=DB.PgVector,
         db_config=PgVectorConfig(
