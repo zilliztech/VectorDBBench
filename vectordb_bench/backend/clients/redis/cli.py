@@ -9,6 +9,7 @@ from ....cli.cli import (
     cli,
     click_parameter_decorators_from_typed_dict,
     run,
+    update_parameters_with_defaults,
 )
 from .. import DB
 
@@ -57,7 +58,7 @@ class RedisHNSWTypedDict(CommonTypedDict, RedisTypedDict, HNSWFlavor2):
 @click_parameter_decorators_from_typed_dict(RedisHNSWTypedDict)
 def Redis(**parameters: Unpack[RedisHNSWTypedDict]):
     from .config import RedisConfig
-
+    parameters = update_parameters_with_defaults(DB.Redis,parameters)
     run(
         db=DB.Redis,
         db_config=RedisConfig(
