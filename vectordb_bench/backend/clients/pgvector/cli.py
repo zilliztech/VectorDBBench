@@ -11,7 +11,6 @@ from ....cli.cli import (
     cli,
     click_parameter_decorators_from_typed_dict,
     run,
-    update_parameters_with_defaults,
 )
 from vectordb_bench.backend.clients import DB
 
@@ -69,7 +68,6 @@ def PgVectorIVFFlat(
     **parameters: Unpack[PgVectorIVFFlatTypedDict],
 ):
     from .config import PgVectorConfig, PgVectorIVFFlatConfig
-    parameters=update_parameters_with_defaults(DB.PgVector,parameters)
 
     run(
         db=DB.PgVector,
@@ -97,7 +95,7 @@ def PgVectorHNSW(
     **parameters: Unpack[PgVectorHNSWTypedDict],
 ):
     from .config import PgVectorConfig, PgVectorHNSWConfig
-    parameters=update_parameters_with_defaults(DB.PgVector,parameters)
+
     run(
         db=DB.PgVector,
         db_config=PgVectorConfig(

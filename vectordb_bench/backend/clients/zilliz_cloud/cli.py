@@ -8,7 +8,7 @@ from vectordb_bench.cli.cli import (
     CommonTypedDict,
     cli,
     click_parameter_decorators_from_typed_dict,
-    run, update_parameters_with_defaults,
+    run,
 )
 from vectordb_bench.backend.clients import DB
 
@@ -35,13 +35,10 @@ class ZillizTypedDict(CommonTypedDict):
     ]
 
 
-
 @cli.command()
 @click_parameter_decorators_from_typed_dict(ZillizTypedDict)
 def Zilliz(**parameters: Unpack[ZillizTypedDict]):
     from .config import ZillizCloudConfig, AutoIndexConfig
-
-    parameters=update_parameters_with_defaults(DB.PgVector,parameters)
 
     run(
         db=DB.ZillizCloud,
