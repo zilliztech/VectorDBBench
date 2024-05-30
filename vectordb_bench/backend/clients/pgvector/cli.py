@@ -15,7 +15,7 @@ from ....cli.cli import (
 from vectordb_bench.backend.clients import DB
 
 
-class PgVectorTypedDict(TypedDict):
+class PgVectorTypedDict(CommonTypedDict):
     user_name: Annotated[
         str, click.option("--user-name", type=str, help="Db username", required=True)
     ]
@@ -58,7 +58,7 @@ class PgVectorTypedDict(TypedDict):
     ]
 
 
-class PgVectorIVFFlatTypedDict(CommonTypedDict, PgVectorTypedDict, IVFFlatTypedDict):
+class PgVectorIVFFlatTypedDict(PgVectorTypedDict, IVFFlatTypedDict):
     ...
 
 
@@ -85,7 +85,7 @@ def PgVectorIVFFlat(
     )
 
 
-class PgVectorHNSWTypedDict(CommonTypedDict, PgVectorTypedDict, HNSWFlavor1):
+class PgVectorHNSWTypedDict(PgVectorTypedDict, HNSWFlavor1):
     ...
 
 

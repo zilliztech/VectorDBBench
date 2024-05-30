@@ -29,6 +29,10 @@ class config:
     RESULTS_LOCAL_DIR = env.path(
         "RESULTS_LOCAL_DIR", pathlib.Path(__file__).parent.joinpath("results")
     )
+    CONFIG_LOCAL_DIR = env.path(
+        "CONFIG_LOCAL_DIR", pathlib.Path(__file__).parent.joinpath("config-files")
+    )
+
 
     K_DEFAULT = 100  # default return top k nearest neighbors during search
 

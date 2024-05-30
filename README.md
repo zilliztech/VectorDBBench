@@ -74,6 +74,7 @@ $ vectordbbench pgvectorhnsw --help
 Usage: vectordbbench pgvectorhnsw [OPTIONS]
 
 Options:
+  --config-file PATH              Read configuration from yaml file
   --drop-old / --skip-drop-old    Drop old or skip  [default: drop-old]
   --load / --skip-load            Load or skip  [default: load]
   --search-serial / --skip-search-serial
@@ -115,6 +116,41 @@ Options:
   --ef-search INTEGER             hnsw ef-search
   --help                          Show this message and exit.
 ```
+#### Using a configuration file.
+
+The vectordbbench command can optional read some or all options from a yaml formatted configuration file.
+
+By default configuration files are expected to be in vectordb_bench/config-files/, this can be overridden by setting  
+the environment variable CONFIG_LOCAL_DIR or by passing a the full path to the file. 
+
+The required format is:
+```yaml
+commandname:
+   parameter_name: parameter_value
+   parameter_name: parameter_value
+```
+Example:
+```yaml
+pgvectorhnsw:
+  db_label: pgConfigTest
+  user_name: vectordbbench
+  password: vectordbbench
+  db_name:  vectordbbench
+  host: localhost
+  m: 16
+  ef_construction: 128
+  ef_search: 128
+milvushnsw:
+  skip_search_serial: True
+  case_type: Performance1536D50K
+  uri: http://localhost:19530
+  m: 16
+  ef_construction: 128
+  ef_search: 128
+  drop_old: False
+  load: False
+```
+*Note: Options passed on the command line will override the configuration file*
 
 ## What is VectorDBBench
 VectorDBBench is not just an offering of benchmark results for mainstream vector databases and cloud services, it's your go-to tool for the ultimate performance and cost-effectiveness comparison. Designed with ease-of-use in mind, VectorDBBench is devised to help users, even non-professionals, reproduce results or test new systems, making the hunt for the optimal choice amongst a plethora of cloud services and open-source vector databases a breeze.

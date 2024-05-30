@@ -13,6 +13,8 @@ from typing import (
     Unpack,
     get_origin,
     get_type_hints,
+    Dict,
+    Any,
 )
 
 import click
@@ -29,6 +31,27 @@ from ..models import (
     TaskConfig,
     TaskStage,
 )
+import os
+from yaml import load
+try:
+    from yaml import CLoader as Loader
+except ImportError:
+    from yaml import Loader
+
+
+def click_get_defaults_from_file(ctx, param, value):
+    if value:
+        if os.path.exists(value):
+            input_file = value
+        else:
+            input_file = os.path.join(config.CONFIG_LOCAL_DIR,value)
+        try:
+            with open(input_file, 'r') as f:
+                _config: Dict[str, Dict[str, Any]] = load(f.read(), Loader=Loader)
+                ctx.default_map = _config.get(ctx.command.name,{})
+        except Exception as e:
+            raise click.BadParameter(f"Failed to load config file: {e}")
+    return value
 
 
 def click_parameter_decorators_from_typed_dict(
@@ -130,6 +153,15 @@ log = logging.getLogger(__name__)
 
 
 class CommonTypedDict(TypedDict):
+    config_file: Annotated[
+        bool,
+        click.option('--config-file',
+                     type=click.Path(),
+                     callback=click_get_defaults_from_file,
+                     is_eager=True,
+                     expose_value=False,
+                     help='Read configuration from yaml file'),
+    ]
     drop_old: Annotated[
         bool,
         click.option(
