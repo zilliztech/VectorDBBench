@@ -58,14 +58,13 @@ class PgVector(VectorDB):
                 self.case_config.create_index_after_load,
             )
         ):
-            err = f"{self.name} config must create an index using create_index_before_load and/or create_index_after_load"
+            err = f"{self.name} config must create an index using create_index_before_load or create_index_after_load"
             log.error(err)
             raise RuntimeError(
                 f"{err}\n{pprint.pformat(self.db_config)}\n{pprint.pformat(self.case_config)}"
             )
 
         if drop_old:
-            # self.pg_table.drop(pg_engine, checkfirst=True)
             self._drop_index()
             self._drop_table()
             self._create_table(dim)
@@ -257,7 +256,10 @@ class PgVector(VectorDB):
             with_clause = sql.Composed(())
 
         index_create_sql = sql.SQL(
-            "CREATE INDEX IF NOT EXISTS {index_name} ON public.{table_name} USING {index_type} (embedding {embedding_metric})"
+            """
+            CREATE INDEX IF NOT EXISTS {index_name} ON public.{table_name} 
+            USING {index_type} (embedding {embedding_metric})
+            """
         ).format(
             index_name=sql.Identifier(self._index_name),
             table_name=sql.Identifier(self.table_name),
