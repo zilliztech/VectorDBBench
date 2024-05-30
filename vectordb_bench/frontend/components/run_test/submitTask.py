@@ -37,22 +37,30 @@ def taskLabelInput(st):
 def advancedSettings(st):
     container = st.columns([1, 2])
     index_already_exists = container[0].checkbox("Index already exists", value=False)
-    container[1].caption("if actived, inserting and building will be skipped.")
+    container[1].caption("if selected, inserting and building will be skipped.")
 
     container = st.columns([1, 2])
     use_aliyun = container[0].checkbox("Dataset from Aliyun (Shanghai)", value=False)
     container[1].caption(
-        "if actived, the dataset will be downloaded from Aliyun OSS shanghai, default AWS S3 aws-us-west."
+        "if selected, the dataset will be downloaded from Aliyun OSS shanghai, default AWS S3 aws-us-west."
     )
 
-    return index_already_exists, use_aliyun
+    container = st.columns([1, 2])
+    k = container[0].number_input("k",min_value=1, value=100, label_visibility="collapsed")
+    container[1].caption(
+        "K value for number of nearest neighbors to search"
+    )
+
+    return index_already_exists, use_aliyun, k
 
 
 def controlPanel(st, tasks, taskLabel, isAllValid):
-    index_already_exists, use_aliyun = advancedSettings(st)
+    index_already_exists, use_aliyun, k = advancedSettings(st)
 
     def runHandler():
         benchMarkRunner.set_drop_old(not index_already_exists)
+        for task in tasks:
+            task.case_config.k = k
         benchMarkRunner.set_download_address(use_aliyun)
         benchMarkRunner.run(tasks, taskLabel)
 

@@ -1,3 +1,5 @@
+from streamlit.runtime.media_file_storage import MediaFileStorageError
+
 from vectordb_bench.frontend.const.styles import *
 from vectordb_bench.frontend.const.dbCaseConfigs import DB_LIST
 
@@ -30,7 +32,11 @@ def dbSelector(st):
     for i, db in enumerate(DB_LIST):
         column = dbContainerColumns[i % DB_SELECTOR_COLUMNS]
         dbIsActived[db] = column.checkbox(db.name)
-        column.image(DB_TO_ICON.get(db, ""))
+        try:
+            column.image(DB_TO_ICON.get(db, ""))
+        except MediaFileStorageError as e:
+            column.warning(f"{db.name} image not available")
+            pass
     activedDbList = [db for db in DB_LIST if dbIsActived[db]]
 
     return activedDbList
