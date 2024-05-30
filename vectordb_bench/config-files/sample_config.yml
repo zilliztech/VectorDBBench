@@ -1,0 +1,17 @@
+pgvectorhnsw:
+  db_label: pgConfigTest
+  user_name: vectordbbench
+  db_name:  vectordbbench
+  host: localhost
+  m: 16
+  ef_construction: 128
+  ef_search: 128
+milvushnsw:
+  skip_search_serial: True
+  case_type: Performance1536D50K
+  uri: http://localhost:19530
+  m: 16
+  ef_construction: 128
+  ef_search: 128
+  drop_old: False
+  load: False

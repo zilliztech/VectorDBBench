@@ -8,7 +8,7 @@ from typing import Iterable
 from pymilvus import Collection, utility
 from pymilvus import CollectionSchema, DataType, FieldSchema, MilvusException
 
-from ..api import VectorDB
+from ..api import VectorDB, IndexType
 from .config import MilvusIndexConfig
 
 
@@ -122,10 +122,18 @@ class Milvus(VectorDB):
             if self.case_config.is_gpu_index:
                 log.debug("skip compaction for gpu index type.")
             else :
-                self.col.compact()
-                self.col.wait_for_compaction_completed()
+                try:
+                    self.col.compact()
+                    self.col.wait_for_compaction_completed()
+                except Exception as e:
+                    log.warning(f"{self.name} compact error: {e}")
+                    if hasattr(e, 'code'):
+                        if e.code().name == 'PERMISSION_DENIED':
+                            log.warning(f"Skip compact due to permission denied.")
+                            pass
+                    else:
+                        raise e
                 wait_index()
-
         except Exception as e:
             log.warning(f"{self.name} optimize error: {e}")
             raise e from None
@@ -143,7 +151,6 @@ class Milvus(VectorDB):
                     self.case_config.index_param(),
                     index_name=self._index_name,
                 )
-
             coll.load()
             log.info(f"{self.name} load")
         except Exception as e:
@@ -160,7 +167,7 @@ class Milvus(VectorDB):
         if self.case_config.is_gpu_index:
             log.info(f"current gpu_index only supports IP / L2, cosine dataset need normalize.")
             return True
-        
+
         return False
 
     def insert_embeddings(

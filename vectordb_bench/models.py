@@ -17,7 +17,6 @@ from .base import BaseModel
 from . import config
 from .metric import Metric
 
-
 log = logging.getLogger(__name__)
 
 
@@ -65,8 +64,14 @@ class CaseConfigParamType(Enum):
     maintenance_work_mem = "maintenance_work_mem"
     max_parallel_workers = "max_parallel_workers"
 
+
 class CustomizedCase(BaseModel):
     pass
+
+
+class ConcurrencySearchConfig(BaseModel):
+    num_concurrency: List[int] = config.NUM_CONCURRENCY
+    concurrency_duration: int = config.CONCURRENCY_DURATION
 
 
 class CaseConfig(BaseModel):
@@ -74,6 +79,40 @@ class CaseConfig(BaseModel):
 
     case_id: CaseType
     custom_case: dict | None = None
+    k: int | None = config.K_DEFAULT
+    concurrency_search_config: ConcurrencySearchConfig = ConcurrencySearchConfig()
+
+    '''
+    @property
+    def k(self):
+        """K search parameter, default is config.K_DEFAULT"""
+        return self._k
+
+    #
+    @k.setter
+    def k(self, value):
+        self._k = value
+    '''
+
+class TaskStage(StrEnum):
+    """Enumerations of various stages of the task"""
+
+    DROP_OLD = auto()
+    LOAD = auto()
+    SEARCH_SERIAL = auto()
+    SEARCH_CONCURRENT = auto()
+
+    def __repr__(self) -> str:
+        return str.__repr__(self.value)
+
+
+# TODO: Add CapacityCase enums and adjust TaskRunner to utilize
+ALL_TASK_STAGES = [
+    TaskStage.DROP_OLD,
+    TaskStage.LOAD,
+    TaskStage.SEARCH_SERIAL,
+    TaskStage.SEARCH_CONCURRENT,
+]
 
 
 class TaskConfig(BaseModel):
@@ -81,6 +120,7 @@ class TaskConfig(BaseModel):
     db_config: DBConfig
     db_case_config: DBCaseConfig
     case_config: CaseConfig
+    stages: List[TaskStage] = ALL_TASK_STAGES
 
     @property
     def db_name(self):
@@ -210,18 +250,18 @@ class TestResult(BaseModel):
 
         max_db = max(map(len, [f.task_config.db.name for f in filtered_results]))
         max_db_labels = (
-            max(map(len, [f.task_config.db_config.db_label for f in filtered_results]))
-            + 3
+                max(map(len, [f.task_config.db_config.db_label for f in filtered_results]))
+                + 3
         )
         max_case = max(
             map(len, [f.task_config.case_config.case_id.name for f in filtered_results])
         )
         max_load_dur = (
-            max(map(len, [str(f.metrics.load_duration) for f in filtered_results])) + 3
+                max(map(len, [str(f.metrics.load_duration) for f in filtered_results])) + 3
         )
         max_qps = max(map(len, [str(f.metrics.qps) for f in filtered_results])) + 3
         max_recall = (
-            max(map(len, [str(f.metrics.recall) for f in filtered_results])) + 3
+                max(map(len, [str(f.metrics.recall) for f in filtered_results])) + 3
         )
 
         max_db_labels = 8 if max_db_labels < 8 else max_db_labels

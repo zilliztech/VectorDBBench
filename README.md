@@ -45,6 +45,115 @@ All the database client supported
 ``` shell
 init_bench
 ```
+
+OR:
+
+### Run from the command line.
+
+``` shell
+vectordbbench [OPTIONS] COMMAND [ARGS]...
+```
+To list the clients that are runnable via the commandline option, execute: `vectordbbench --help`
+``` text
+$ vectordbbench --help
+Usage: vectordbbench [OPTIONS] COMMAND [ARGS]...
+
+Options:
+  --help  Show this message and exit.
+
+Commands:
+  pgvectorhnsw
+  pgvectorivfflat
+  test
+  weaviate
+```
+To list the options for each command, execute `vectordbbench [command] --help`
+
+```text
+$ vectordbbench pgvectorhnsw --help
+Usage: vectordbbench pgvectorhnsw [OPTIONS]
+
+Options:
+  --config-file PATH              Read configuration from yaml file
+  --drop-old / --skip-drop-old    Drop old or skip  [default: drop-old]
+  --load / --skip-load            Load or skip  [default: load]
+  --search-serial / --skip-search-serial
+                                  Search serial or skip  [default: search-
+                                  serial]
+  --search-concurrent / --skip-search-concurrent
+                                  Search concurrent or skip  [default: search-
+                                  concurrent]
+  --case-type [CapacityDim128|CapacityDim960|Performance768D100M|Performance768D10M|Performance768D1M|Performance768D10M1P|Performance768D1M1P|Performance768D10M99P|Performance768D1M99P|Performance1536D500K|Performance1536D5M|Performance1536D500K1P|Performance1536D5M1P|Performance1536D500K99P|Performance1536D5M99P|Performance1536D50K]
+                                  Case type
+  --db-label TEXT                 Db label, default: date in ISO format
+                                  [default: 2024-05-20T20:26:31.113290]
+  --dry-run                       Print just the configuration and exit
+                                  without running the tasks
+  --k INTEGER                     K value for number of nearest neighbors to
+                                  search  [default: 100]
+  --concurrency-duration INTEGER  Adjusts the duration in seconds of each
+                                  concurrency search  [default: 30]
+  --num-concurrency TEXT          Comma-separated list of concurrency values
+                                  to test during concurrent search  [default:
+                                  1,10,20]
+  --user-name TEXT                Db username  [required]
+  --password TEXT                 Db password  [required]
+  --host TEXT                     Db host  [required]
+  --db-name TEXT                  Db name  [required]
+  --maintenance-work-mem TEXT     Sets the maximum memory to be used for
+                                  maintenance operations (index creation). Can
+                                  be entered as string with unit like '64GB'
+                                  or as an integer number of KB.This will set
+                                  the parameters:
+                                  max_parallel_maintenance_workers,
+                                  max_parallel_workers &
+                                  table(parallel_workers)
+  --max-parallel-workers INTEGER  Sets the maximum number of parallel
+                                  processes per maintenance operation (index
+                                  creation)
+  --m INTEGER                     hnsw m
+  --ef-construction INTEGER       hnsw ef-construction
+  --ef-search INTEGER             hnsw ef-search
+  --help                          Show this message and exit.
+```
+#### Using a configuration file.
+
+The vectordbbench command can optionally read some or all the options from a yaml formatted configuration file.
+
+By default, configuration files are expected to be in vectordb_bench/config-files/, this can be overridden by setting  
+the environment variable CONFIG_LOCAL_DIR or by passing the full path to the file. 
+
+The required format is:
+```yaml
+commandname:
+   parameter_name: parameter_value
+   parameter_name: parameter_value
+```
+Example:
+```yaml
+pgvectorhnsw:
+  db_label: pgConfigTest
+  user_name: vectordbbench
+  password: vectordbbench
+  db_name:  vectordbbench
+  host: localhost
+  m: 16
+  ef_construction: 128
+  ef_search: 128
+milvushnsw:
+  skip_search_serial: True
+  case_type: Performance1536D50K
+  uri: http://localhost:19530
+  m: 16
+  ef_construction: 128
+  ef_search: 128
+  drop_old: False
+  load: False
+```
+> Notes: 
+> - Options passed on the command line will override the configuration file*
+> - Parameter names use an _ not -
+
 ## What is VectorDBBench
 VectorDBBench is not just an offering of benchmark results for mainstream vector databases and cloud services, it's your go-to tool for the ultimate performance and cost-effectiveness comparison. Designed with ease-of-use in mind, VectorDBBench is devised to help users, even non-professionals, reproduce results or test new systems, making the hunt for the optimal choice amongst a plethora of cloud services and open-source vector databases a breeze.
 
@@ -220,6 +329,7 @@ class NewDBCaseConfig(DBCaseConfig):
     # Implement optional case-specific configuration fields
     # ...
 ```
+
 **Step 3: Importing the DB Client and Updating Initialization**
 
 In this final step, you will import your DB client into clients/__init__.py and update the initialization process.
@@ -258,6 +368,83 @@ class DB(Enum):
             return NewClientCaseConfig
 
 ```
+**Step 4: Implement new_client/cli.py and vectordb_bench/cli/vectordbbench.py**
+
+In this (optional, but encouraged) step you will enable the test to be run from the command line.
+1. Navigate to the vectordb_bench/backend/clients/"client" directory.
+2. Inside the "client" folder, create a cli.py file.
+Using zilliz as an example cli.py:
+```python
+from typing import Annotated, Unpack
+
+import click
+import os
+from pydantic import SecretStr
+
+from vectordb_bench.cli.cli import (
+    CommonTypedDict,
+    cli,
+    click_parameter_decorators_from_typed_dict,
+    run,
+)
+from vectordb_bench.backend.clients import DB
+
+
+class ZillizTypedDict(CommonTypedDict):
+    uri: Annotated[
+        str, click.option("--uri", type=str, help="uri connection string", required=True)
+    ]
+    user_name: Annotated[
+        str, click.option("--user-name", type=str, help="Db username", required=True)
+    ]
+    password: Annotated[
+        str,
+        click.option("--password",
+                     type=str,
+                     help="Zilliz password",
+                     default=lambda: os.environ.get("ZILLIZ_PASSWORD", ""),
+                     show_default="$ZILLIZ_PASSWORD",
+                     ),
+    ]
+    level: Annotated[
+        str,
+        click.option("--level", type=str, help="Zilliz index level", required=False),
+    ]
+
+
+@cli.command()
+@click_parameter_decorators_from_typed_dict(ZillizTypedDict)
+def ZillizAutoIndex(**parameters: Unpack[ZillizTypedDict]):
+    from .config import ZillizCloudConfig, AutoIndexConfig
+
+    run(
+        db=DB.ZillizCloud,
+        db_config=ZillizCloudConfig(
+            db_label=parameters["db_label"],
+            uri=SecretStr(parameters["uri"]),
+            user=parameters["user_name"],
+            password=SecretStr(parameters["password"]),
+        ),
+        db_case_config=AutoIndexConfig(
+            params={parameters["level"]},
+        ),
+        **parameters,
+    )
+```
+3. Update cli by adding:
+   1. Add database specific options as an Annotated TypedDict, see ZillizTypedDict above.  
+   2. Add index configuration specific options as an Annotated TypedDict. (example: vectordb_bench/backend/clients/pgvector/cli.py)
+      1. May not be needed if there is only one index config.
+      2. Repeat for each index configuration, nesting them if possible.  
+   2. Add a index config specific function for each index type,  see Zilliz above.  The function name, in lowercase, will be the command name passed to the vectordbbench command.
+   3. Update db_config and db_case_config to match client requirements
+   4. Continue to add new functions for each index config.
+   5. Import the client cli module and command to vectordb_bench/cli/vectordbbench.py (for databases with multiple commands (index configs), this only needs to be done for one command)  
+
+> cli modules with multiple index configs:
+> - pgvector: vectordb_bench/backend/clients/pgvector/cli.py
+> - milvus: vectordb_bench/backend/clients/milvus/cli.py
+
 That's it! You have successfully added a new DB client to the vectordb_bench project.
 
 ## Rules
