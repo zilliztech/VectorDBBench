@@ -37,7 +37,7 @@ class ZillizTypedDict(CommonTypedDict):
 
 @cli.command()
 @click_parameter_decorators_from_typed_dict(ZillizTypedDict)
-def Zilliz(**parameters: Unpack[ZillizTypedDict]):
+def ZillizAutoIndex(**parameters: Unpack[ZillizTypedDict]):
     from .config import ZillizCloudConfig, AutoIndexConfig
 
     run(

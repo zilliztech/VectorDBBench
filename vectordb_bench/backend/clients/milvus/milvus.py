@@ -118,7 +118,7 @@ class Milvus(VectorDB):
 
             wait_index()
 
-            # Skip compaction if use GPU indexType
+            # Skip compaction if using GPU indexType
             if self.case_config.index in [IndexType.GPU_CAGRA, IndexType.GPU_IVF_FLAT, IndexType.GPU_IVF_PQ]:
                 log.debug("skip compaction for gpu index type.")
             else :

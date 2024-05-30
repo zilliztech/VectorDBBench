@@ -16,9 +16,7 @@ from typing import (
     Dict,
     Any,
 )
-
 import click
-
 from .. import config
 from ..backend.clients import DB
 from ..interface import benchMarkRunner, global_result_future
@@ -44,11 +42,11 @@ def click_get_defaults_from_file(ctx, param, value):
         if os.path.exists(value):
             input_file = value
         else:
-            input_file = os.path.join(config.CONFIG_LOCAL_DIR,value)
+            input_file = os.path.join(config.CONFIG_LOCAL_DIR, value)
         try:
             with open(input_file, 'r') as f:
                 _config: Dict[str, Dict[str, Any]] = load(f.read(), Loader=Loader)
-                ctx.default_map = _config.get(ctx.command.name,{})
+                ctx.default_map = _config.get(ctx.command.name, {})
         except Exception as e:
             raise click.BadParameter(f"Failed to load config file: {e}")
     return value
