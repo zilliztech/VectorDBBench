@@ -1,0 +1,1 @@
+streamlit_image_coordinates

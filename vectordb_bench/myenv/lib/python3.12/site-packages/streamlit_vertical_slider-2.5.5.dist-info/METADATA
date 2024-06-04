@@ -1,0 +1,73 @@
+Metadata-Version: 2.1
+Name: streamlit-vertical-slider
+Version: 2.5.5
+Summary: Creates a customizable vertical slider
+Home-page: https://github.com/sqlinsights/streamlit-vertical-slider
+Author: Carlos D. Serrano
+Author-email: sqlinsights@gmail.com
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: streamlit (>=1.22.0)
+
+# streamlit-vertical-slider
+
+Creates a constinuous vertical slider with color customizations. 
+
+---
+## Update ⚠️
+
+### Version 2.5
+- Fixed issue where default value was not been sent back to Streamlit
+- Refactor label into a tooltip reducing the width of the widget by 30%
+- Adjusted default size of track, rail and thumb to match Streamlit's native slider.
+- Slider Color can now be a tuple in order to create a gradient. 
+- Matched the label style to native Streamlit slider label. 
+
+### Version 2.0  
+Changes:
+ - Adds optional `label` argument
+ - Adds optional `thumb_shape` argument (circle, square, pill)
+ - Adds optional `height` argument, defaults to 200
+ - Upgrade to Material-UI v5
+ - Centralized labels and values
+ - Support for Dark Mode
+
+
+![light](https://github.com/sqlinsights/streamlit-vertical-slider/raw/main/light.png)
+
+![dark](https://github.com/sqlinsights/streamlit-vertical-slider/raw/main/dark_mode.png)
+
+![sample](https://github.com/sqlinsights/streamlit-vertical-slider/raw/main/sample.gif)
+
+Please update by:
+```shell
+pip install --upgrade streamlit-vertical-slider
+```
+
+---
+## Installation
+```shell
+pip install streamlit-vertical-slider
+```
+## Usage
+
+```python
+import streamlit as st
+from  streamlit_vertical_slider import vertical_slider 
+
+vertical_slider(
+    label = "Your widget label",  #Optional
+    key = "vert_01" ,
+    height = 300, #Optional - Defaults to 300
+    thumb_shape = "square", #Optional - Defaults to "circle"
+    step = 1, #Optional - Defaults to 1
+    default_value=5 ,#Optional - Defaults to 0
+    min_value= 0, # Defaults to 0
+    max_value= 10, # Defaults to 10
+    track_color = "blue", #Optional - Defaults to Streamlit Red
+    slider_color = ('red','blue'), #Optional
+    thumb_color= "orange", #Optional - Defaults to Streamlit Red
+    value_always_visible = True ,#Optional - Defaults to False
+)
+```

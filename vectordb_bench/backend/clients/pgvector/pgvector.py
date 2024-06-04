@@ -6,10 +6,9 @@ from contextlib import contextmanager
 from typing import Any, Generator, Optional, Tuple, Sequence
 
 import numpy as np
-import psycopg
-from pgvector.psycopg import register_vector
-from psycopg import Connection, Cursor, sql
-
+from psycopg import sql
+import psycopg2
+from pgvector.psycopg2 import register_vector
 from ..api import VectorDB
 from .config import PgVectorConfigDict, PgVectorIndexConfig
 
@@ -19,8 +18,8 @@ log = logging.getLogger(__name__)
 class PgVector(VectorDB):
     """Use psycopg instructions"""
 
-    conn: psycopg.Connection[Any] | None = None
-    cursor: psycopg.Cursor[Any] | None = None
+    conn = None
+    cursor = None
 
     # TODO add filters support
     _unfiltered_search: sql.Composed
@@ -77,9 +76,10 @@ class PgVector(VectorDB):
         self.cursor = None
         self.conn = None
 
+
     @staticmethod
-    def _create_connection(**kwargs) -> Tuple[Connection, Cursor]:
-        conn = psycopg.connect(**kwargs)
+    def _create_connection(**kwargs):
+        conn = psycopg2.connect(**kwargs)
         register_vector(conn)
         conn.autocommit = False
         cursor = conn.cursor()
@@ -166,6 +166,8 @@ class PgVector(VectorDB):
         log.debug(drop_index_sql.as_string(self.cursor))
         self.cursor.execute(drop_index_sql)
         self.conn.commit()
+
+        
 
     def _set_parallel_index_build_param(self):
         assert self.conn is not None, "Connection is not initialized"

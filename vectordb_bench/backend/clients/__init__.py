@@ -32,7 +32,7 @@ class DB(Enum):
     PgVectoRS = "PgVectoRS"
     Redis = "Redis"
     Chroma = "Chroma"
-
+    Alloy = "Alloy"
 
     @property
     def init_cls(self) -> Type[VectorDB]:
@@ -76,6 +76,10 @@ class DB(Enum):
         if self == DB.Chroma:
             from .chroma.chroma import ChromaClient
             return ChromaClient
+        
+        if self == DB.Alloy:
+            from .alloydb.alloy import alloyDB
+            return alloyDB
 
     @property
     def config_cls(self) -> Type[DBConfig]:
@@ -119,6 +123,10 @@ class DB(Enum):
         if self == DB.Chroma:
             from .chroma.config import ChromaConfig
             return ChromaConfig
+        
+        if self == DB.Alloy:
+            from .alloydb.config import PgVectorConfig
+            return PgVectorConfig
 
     def case_config_cls(self, index_type: IndexType | None = None) -> Type[DBCaseConfig]:
         if self == DB.Milvus:
@@ -148,6 +156,10 @@ class DB(Enum):
         if self == DB.PgVectoRS:
             from .pgvecto_rs.config import _pgvecto_rs_case_config
             return _pgvecto_rs_case_config.get(index_type)
+        
+        if self == DB.Alloy:
+            from .alloydb.config import _pgvector_case_config
+            return _pgvector_case_config.get(index_type)
 
         # DB.Pinecone, DB.Chroma, DB.Redis
         return EmptyDBCaseConfig

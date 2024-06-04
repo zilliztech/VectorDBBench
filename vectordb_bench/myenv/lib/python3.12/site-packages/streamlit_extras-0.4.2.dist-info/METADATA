@@ -1,0 +1,89 @@
+Metadata-Version: 2.1
+Name: streamlit-extras
+Version: 0.4.2
+Summary: A library to discover, try, install and share Streamlit extras
+License: Apache-2.0
+Keywords: python,streamlit,ui,data
+Author: Arnaud Miribel
+Author-email: arnaudmiribel@gmail.com
+Requires-Python: >=3.8, !=2.7.*, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*, !=3.6.*, !=3.7.*
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Requires-Dist: entrypoints (>=0.4)
+Requires-Dist: htbuilder (>=0.6.2)
+Requires-Dist: markdownlit (>=0.0.5)
+Requires-Dist: prometheus-client (>=0.14.0)
+Requires-Dist: protobuf (!=3.20.2)
+Requires-Dist: st-annotated-text (>=3.0.0)
+Requires-Dist: streamlit (>=1.0.0)
+Requires-Dist: streamlit-camera-input-live (>=0.2.0)
+Requires-Dist: streamlit-card (>=0.0.4)
+Requires-Dist: streamlit-embedcode (>=0.1.2)
+Requires-Dist: streamlit-faker (>=0.0.2)
+Requires-Dist: streamlit-image-coordinates (>=0.1.1,<0.2.0)
+Requires-Dist: streamlit-keyup (>=0.1.9)
+Requires-Dist: streamlit-toggle-switch (>=1.0.2)
+Requires-Dist: streamlit-vertical-slider (>=2.5.5)
+Requires-Dist: validators (>=0.20.0)
+Description-Content-Type: text/markdown
+
+
+<a href="https://extras.streamlitapp.com" title="Python Version"><img src="https://static.streamlit.io/badges/streamlit_badge_black_white.svg"></a><br>
+<a href="https://github.com/arnaudmiribel/streamlit-extras/" title="Python Version"><img src="https://img.shields.io/badge/Python-3.9%2B-blue&style=flat"></a>
+<a href="https://badge.fury.io/py/streamlit-extras"><img src="https://badge.fury.io/py/streamlit-extras.svg" alt="PyPI version" height="18"></a>
+<a href="https://hits.seeyoufarm.com"><img src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Farnaudmiribel%2Fstreamlit-extras&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=visits&edge_flat=false"/></a>
+
+
+# 🪢 streamlit-extras
+
+
+<strong>A Python library with useful Streamlit extras</strong>
+
+`streamlit-extras` is a Python library putting together useful Streamlit bits of code (<b><i>extras</i></b>).
+
+![CleanShot 2023-10-18 at 14 56 43](https://github.com/arnaudmiribel/streamlit-extras/assets/7164864/14f20cf6-033c-4143-9f29-d0e95bf7dca1)
+
+
+## Highlights
+
+- 📙&nbsp; <b>Discover:</b> Visit our <a href="https://arnaudmiribel.github.io/streamlit-extras/">documentation</a> to discover all extras.
+- ⬇️&nbsp; <b>Install:</b> `streamlit-extras` is a PyPI package with all extras included. Get them all using pip!
+- 🫴&nbsp; <b>Share:</b> Go ahead and share your own extras, it's just [a PR away](https://arnaudmiribel.github.io/streamlit-extras/contributing/)!
+
+## Getting Started
+
+### Installation
+
+```
+pip install streamlit-extras
+```
+
+### Usage
+
+Here's an example with one of the easiest extras around, <a href="https://arnaudmiribel.github.io/streamlit-extras/extras/stoggle/">stoggle</a>
+```python
+from streamlit_extras.stoggle import stoggle
+
+stoggle(
+    "Click me!",
+    """🥷 Surprise! Here's some additional content""",
+)
+```
+
+<img src="https://user-images.githubusercontent.com/16867691/192553812-f91c801b-e820-470b-84c6-4563504c6ce5.gif"></img>
+
+## Documentation
+
+Visit <a href="https://arnaudmiribel.github.io/streamlit-extras/">https://arnaudmiribel.github.io/streamlit-extras</a>
+
+## Contribution
+
+PRs are welcome! Guidelines <a href="https://arnaudmiribel.github.io/streamlit-extras/contributing/">here</a>
+
+<sup>README template taken from <a href="https://github.com/LukasMasuch/streamlit-pydantic">LukasMasuch/streamlit-pydantic</a></sup>
+

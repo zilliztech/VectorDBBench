@@ -1,0 +1,1 @@
+test_search_embedding(conn, cursor, query, 10)

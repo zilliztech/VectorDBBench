@@ -31,6 +31,7 @@ class SerialInsertRunner:
 
     def task(self) -> int:
         count = 0
+        
         with self.db.init():
             log.info(f"({mp.current_process().name:16}) Start inserting embeddings in batch {config.NUM_PER_BATCH}")
             start = time.perf_counter()

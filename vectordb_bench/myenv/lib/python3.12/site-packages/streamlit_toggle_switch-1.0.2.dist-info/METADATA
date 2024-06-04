@@ -1,0 +1,16 @@
+Metadata-Version: 2.1
+Name: streamlit-toggle-switch
+Version: 1.0.2
+Summary: Creates a customizable toggle
+Home-page: https://github.com/sqlinsights/streamlit-toggle-switch
+Author: Carlos D. Serrano
+Author-email: sqlinsights@gmail.com
+License: UNKNOWN
+Platform: UNKNOWN
+Requires-Python: >=3.6
+Description-Content-Type: text/plain
+License-File: LICENSE
+Requires-Dist: streamlit (>=0.63)
+
+UNKNOWN
+

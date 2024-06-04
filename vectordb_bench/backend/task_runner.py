@@ -194,6 +194,7 @@ class CaseRunner(BaseModel):
     def _task(self) -> None:
         with self.db.init():
             self.db.optimize()
+    
 
     def _optimize(self) -> float:
         with concurrent.futures.ProcessPoolExecutor(max_workers=1) as executor:
