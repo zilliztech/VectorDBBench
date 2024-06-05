@@ -8,7 +8,7 @@ from vectordb_bench.frontend.components.check_results.nav import NavToResults, N
 from vectordb_bench.frontend.components.check_results.charts import drawMetricChart
 from vectordb_bench.frontend.components.check_results.filters import getshownData
 from vectordb_bench.frontend.components.get_results.saveAsImage import getResults
-from vectordb_bench.frontend.const.styles import *
+from vectordb_bench.frontend.config.styles import *
 from vectordb_bench.interface import benchMarkRunner
 from vectordb_bench.metric import QURIES_PER_DOLLAR_METRIC
 
@@ -26,7 +26,7 @@ def main():
 
     # results selector
     resultSelectorContainer = st.sidebar.container()
-    shownData, _, showCases = getshownData(allResults, resultSelectorContainer)
+    shownData, _, showCaseNames = getshownData(allResults, resultSelectorContainer)
 
     resultSelectorContainer.divider()
 
@@ -45,8 +45,8 @@ def main():
     priceMap = priceTable(priceTableContainer, shownData)
 
     # charts
-    for case in showCases:
-        data = [data for data in shownData if data["case_name"] == case.name]
+    for caseName in showCaseNames:
+        data = [data for data in shownData if data["case_name"] == caseName]
         dataWithMetric = []
         metric = QURIES_PER_DOLLAR_METRIC
         for d in data:
@@ -56,7 +56,7 @@ def main():
                 d[metric] = d["qps"] / price * 3.6
                 dataWithMetric.append(d)
         if len(dataWithMetric) > 0:
-            chartContainer = st.expander(case.name, True)
+            chartContainer = st.expander(caseName, True)
             drawMetricChart(data, metric, chartContainer)
 
     # footer

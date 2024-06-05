@@ -22,6 +22,7 @@ class config:
     NUM_CONCURRENCY = [1, 5, 10, 15, 20, 25, 30, 35]
 
     RESULTS_LOCAL_DIR = pathlib.Path(__file__).parent.joinpath("results")
+    CUSTOM_CONFIG_DIR = pathlib.Path(__file__).parent.joinpath("custom/custom_case.json")
 
     CAPACITY_TIMEOUT_IN_SECONDS = 24 * 3600 # 24h
     LOAD_TIMEOUT_DEFAULT        = 2.5 * 3600 # 2.5h

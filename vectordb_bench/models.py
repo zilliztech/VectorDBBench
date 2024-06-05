@@ -74,6 +74,9 @@ class CaseConfig(BaseModel):
 
     case_id: CaseType
     custom_case: dict | None = None
+    
+    def __hash__(self) -> int:
+        return hash(self.json())
 
 
 class TaskConfig(BaseModel):

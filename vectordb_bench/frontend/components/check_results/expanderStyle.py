@@ -1,7 +1,7 @@
 def initMainExpanderStyle(st):
     st.markdown(
         """<style>
-            .main .streamlit-expanderHeader p {font-size: 20px; font-weight: 600;}
+            .main div[data-testid='stExpander'] p {font-size: 18px; font-weight: 600;}
             .main div[data-testid='stExpander'] {
                 background-color: #F6F8FA;
                 border: 1px solid #A9BDD140;

@@ -3,7 +3,7 @@ import pandas as pd
 from collections import defaultdict
 import streamlit as st
 
-from vectordb_bench.frontend.const.dbPrices import DB_DBLABEL_TO_PRICE
+from vectordb_bench.frontend.config.dbPrices import DB_DBLABEL_TO_PRICE
 
 
 def priceTable(container, data):

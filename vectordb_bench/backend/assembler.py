@@ -14,7 +14,7 @@ class Assembler:
     def assemble(cls, run_id , task: TaskConfig, source: DatasetSource) -> CaseRunner:
         c_cls = task.case_config.case_id.case_cls
 
-        c = c_cls()
+        c = c_cls(task.case_config.custom_case)
         if type(task.db_case_config) != EmptyDBCaseConfig:
             task.db_case_config.metric_type = c.dataset.data.metric_type
 
