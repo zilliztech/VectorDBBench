@@ -339,9 +339,10 @@ class PgVector(VectorDB):
         assert self.conn is not None, "Connection is not initialized"
         assert self.cursor is not None, "Cursor is not initialized"
 
+        q = np.asarray(query)
         # TODO add filters support
         result = self.cursor.execute(
-            self._unfiltered_search, (query, k), prepare=True, binary=True
+            self._unfiltered_search, (q, k), prepare=True, binary=True
         )
 
         return [int(i[0]) for i in result.fetchall()]
