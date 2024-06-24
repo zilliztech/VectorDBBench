@@ -32,6 +32,7 @@ class DB(Enum):
     PgVectoRS = "PgVectoRS"
     Redis = "Redis"
     Chroma = "Chroma"
+    TencentVDB = "TencentVDB"
 
 
     @property
@@ -76,6 +77,10 @@ class DB(Enum):
         if self == DB.Chroma:
             from .chroma.chroma import ChromaClient
             return ChromaClient
+        
+        if self == DB.TencentVDB:
+            from .tencent.tencent_vdb import TencentVDB
+            return TencentVDB
 
     @property
     def config_cls(self) -> Type[DBConfig]:
@@ -119,6 +124,10 @@ class DB(Enum):
         if self == DB.Chroma:
             from .chroma.config import ChromaConfig
             return ChromaConfig
+        
+        if self == DB.TencentVDB:
+            from .tencent.config import TencentVDBConfig
+            return TencentVDBConfig
 
     def case_config_cls(self, index_type: IndexType | None = None) -> Type[DBCaseConfig]:
         if self == DB.Milvus:
@@ -148,6 +157,10 @@ class DB(Enum):
         if self == DB.PgVectoRS:
             from .pgvecto_rs.config import _pgvecto_rs_case_config
             return _pgvecto_rs_case_config.get(index_type)
+        
+        if self == DB.TencentVDB:
+            from .tencent.config import TencentVDBIndexConfig
+            return TencentVDBIndexConfig
 
         # DB.Pinecone, DB.Chroma, DB.Redis
         return EmptyDBCaseConfig
