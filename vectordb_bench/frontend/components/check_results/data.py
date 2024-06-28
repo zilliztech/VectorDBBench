@@ -87,15 +87,18 @@ def mergeMetrics(metrics_1: dict, metrics_2: dict) -> dict:
 
 
 def getBetterMetric(metric, value_1, value_2):
-    if value_1 < 1e-7:
-        return value_2
-    if value_2 < 1e-7:
+    try:
+        if value_1 < 1e-7:
+            return value_2
+        if value_2 < 1e-7:
+            return value_1
+        return (
+            min(value_1, value_2)
+            if isLowerIsBetterMetric(metric)
+            else max(value_1, value_2)
+        )
+    except Exception:
         return value_1
-    return (
-        min(value_1, value_2)
-        if isLowerIsBetterMetric(metric)
-        else max(value_1, value_2)
-    )
 
 
 def getBetterLabel(label_1: ResultLabel, label_2: ResultLabel):
