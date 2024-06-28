@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 
 from ..clients import api
-from ...metric import calc_recall
+from ...metric import calc_ndcg, calc_recall, get_ideal_dcg
 from ...models import LoadTimeoutError, PerformanceTimeoutError
 from .. import utils
 from ... import config
@@ -171,11 +171,12 @@ class SerialSearchRunner:
         log.info(f"{mp.current_process().name:14} start search the entire test_data to get recall and latency")
         with self.db.init():
             test_data, ground_truth = args
+            ideal_dcg = get_ideal_dcg(self.k)
 
             log.debug(f"test dataset size: {len(test_data)}")
             log.debug(f"ground truth size: {ground_truth.columns}, shape: {ground_truth.shape}")
 
-            latencies, recalls = [], []
+            latencies, recalls, ndcgs = [], [], []
             for idx, emb in enumerate(test_data):
                 s = time.perf_counter()
                 try:
@@ -194,6 +195,7 @@ class SerialSearchRunner:
 
                 gt = ground_truth['neighbors_id'][idx]
                 recalls.append(calc_recall(self.k, gt[:self.k], results))
+                ndcgs.append(calc_ndcg(gt[:self.k], results, ideal_dcg))
 
 
                 if len(latencies) % 100 == 0:
@@ -201,6 +203,7 @@ class SerialSearchRunner:
 
         avg_latency = round(np.mean(latencies), 4)
         avg_recall = round(np.mean(recalls), 4)
+        avg_ndcg = round(np.mean(ndcgs), 4)
         cost = round(np.sum(latencies), 4)
         p99 = round(np.percentile(latencies, 99), 4)
         log.info(
@@ -208,10 +211,11 @@ class SerialSearchRunner:
             f"cost={cost}s, "
             f"queries={len(latencies)}, "
             f"avg_recall={avg_recall}, "
+            f"avg_ndcg={avg_ndcg},"
             f"avg_latency={avg_latency}, "
             f"p99={p99}"
          )
-        return (avg_recall, p99)
+        return (avg_recall, avg_ndcg, p99)
 
 
     def _run_in_subprocess(self) -> tuple[float, float]:

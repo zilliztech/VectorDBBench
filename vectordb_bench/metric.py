@@ -1,7 +1,7 @@
 import logging
 import numpy as np
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 log = logging.getLogger(__name__)
@@ -19,6 +19,10 @@ class Metric:
     qps: float = 0.0
     serial_latency_p99: float = 0.0
     recall: float = 0.0
+    ndcg: float = 0.0
+    conc_num_list: list[int] = field(default_factory=list)
+    conc_qps_list: list[float] = field(default_factory=list)
+    conc_latency_p99_list: list[float] = field(default_factory=list)
 
 
 QURIES_PER_DOLLAR_METRIC = "QP$ (Quries per Dollar)"
@@ -60,3 +64,21 @@ def calc_recall(count: int, ground_truth: list[int], got: list[int]) -> float:
             recalls[i] = 1
 
     return np.mean(recalls)
+
+
+def get_ideal_dcg(k: int):
+    ideal_dcg = 0
+    for i in range(k):
+        ideal_dcg += 1 / np.log2(i+2)
+
+    return ideal_dcg
+
+
+def calc_ndcg(ground_truth: list[int], got: list[int], ideal_dcg: float) -> float:
+    dcg = 0
+    ground_truth = list(ground_truth)
+    for id in set(got):
+        if id in ground_truth:
+            idx = ground_truth.index(id)
+            dcg += 1 / np.log2(idx+2)
+    return dcg / ideal_dcg
