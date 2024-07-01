@@ -62,6 +62,8 @@ all = [
     "psycopg2",
     "psycopg",
     "psycopg-binary",
+    "opensearch-dsl==2.1.0",
+    "opensearch-py==2.6.0",
 ]
 
 qdrant = [ "qdrant-client" ]
@@ -72,6 +74,7 @@ pgvector = [ "psycopg", "psycopg-binary", "pgvector" ]
 pgvecto_rs = [ "psycopg2" ]
 redis = [ "redis" ]
 chromadb = [ "chromadb" ]
+awsopensearch = [ "awsopensearch" ]
 zilliz_cloud = []
 
 [project.urls]

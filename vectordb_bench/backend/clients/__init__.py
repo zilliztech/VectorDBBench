@@ -32,6 +32,7 @@ class DB(Enum):
     PgVectoRS = "PgVectoRS"
     Redis = "Redis"
     Chroma = "Chroma"
+    AWSOpenSearch = "OpenSearch"
     Test = "test"
 
 
@@ -78,6 +79,10 @@ class DB(Enum):
             from .chroma.chroma import ChromaClient
             return ChromaClient
 
+        if self == DB.AWSOpenSearch:
+            from .aws_opensearch.aws_opensearch import AWSOpenSearch
+            return AWSOpenSearch
+
     @property
     def config_cls(self) -> Type[DBConfig]:
         """Import while in use"""
@@ -121,6 +126,10 @@ class DB(Enum):
             from .chroma.config import ChromaConfig
             return ChromaConfig
 
+        if self == DB.AWSOpenSearch:
+            from .aws_opensearch.config import AWSOpenSearchConfig
+            return AWSOpenSearchConfig
+
     def case_config_cls(self, index_type: IndexType | None = None) -> Type[DBCaseConfig]:
         if self == DB.Milvus:
             from .milvus.config import _milvus_case_config
@@ -149,6 +158,10 @@ class DB(Enum):
         if self == DB.PgVectoRS:
             from .pgvecto_rs.config import _pgvecto_rs_case_config
             return _pgvecto_rs_case_config.get(index_type)
+
+        if self == DB.AWSOpenSearch:
+            from .aws_opensearch.config import AWSOpenSearchIndexConfig
+            return AWSOpenSearchIndexConfig
 
         # DB.Pinecone, DB.Chroma, DB.Redis
         return EmptyDBCaseConfig
