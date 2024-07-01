@@ -27,18 +27,19 @@ pip install vectordb-bench[pinecone]
 ```
 All the database client supported
 
-|Optional database client|install command|
-|---------------|---------------|
-|pymilvus(*default*)|`pip install vectordb-bench`|
-|all|`pip install vectordb-bench[all]`|
-|qdrant|`pip install vectordb-bench[qdrant]`|
-|pinecone|`pip install vectordb-bench[pinecone]`|
-|weaviate|`pip install vectordb-bench[weaviate]`|
-|elastic|`pip install vectordb-bench[elastic]`|
-|pgvector|`pip install vectordb-bench[pgvector]`|
-|pgvecto.rs|`pip install vectordb-bench[pgvecto_rs]`|
-|redis|`pip install vectordb-bench[redis]`|
-|chromadb|`pip install vectordb-bench[chromadb]`|
+| Optional database client | install command                             |
+|--------------------------|---------------------------------------------|
+| pymilvus(*default*)      | `pip install vectordb-bench`                |
+| all                      | `pip install vectordb-bench[all]`           |
+| qdrant                   | `pip install vectordb-bench[qdrant]`        |
+| pinecone                 | `pip install vectordb-bench[pinecone]`      |
+| weaviate                 | `pip install vectordb-bench[weaviate]`      |
+| elastic                  | `pip install vectordb-bench[elastic]`       |
+| pgvector                 | `pip install vectordb-bench[pgvector]`      |
+| pgvecto.rs               | `pip install vectordb-bench[pgvecto_rs]`    |
+| redis                    | `pip install vectordb-bench[redis]`         |
+| chromadb                 | `pip install vectordb-bench[chromadb]`      |
+| awsopensearch            | `pip install vectordb-bench[awsopensearch]` |
 
 ### Run
 
