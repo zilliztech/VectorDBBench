@@ -26,7 +26,7 @@ class MemoryDBTypedDict(TypedDict):
             is_flag=True,
             show_default=True,
             default=True,
-            help="Enable or disable SSL for Redis",
+            help="Enable or disable SSL for MemoryDB",
         ),
     ]
     ssl_ca_certs: Annotated[
@@ -44,7 +44,7 @@ class MemoryDBTypedDict(TypedDict):
             is_flag=True,
             show_default=True,
             default=False,
-            help="Cluster Mode Disabled (CMD) for Redis doesn't use Cluster conn",
+            help="Cluster Mode Disabled (CMD), use this flag when testing locally on a single node instance. In production, MemoryDB only supports CME mode",
         ),
     ]
 
