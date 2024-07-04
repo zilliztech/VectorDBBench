@@ -15,6 +15,7 @@ class MetricType(str, Enum):
 class IndexType(str, Enum):
     HNSW = "HNSW"
     DISKANN = "DISKANN"
+    STREAMING_DISKANN = "DISKANN"
     IVFFlat = "IVF_FLAT"
     IVFSQ8 = "IVF_SQ8"
     Flat = "FLAT"

@@ -148,6 +148,7 @@ class InputType(IntEnum):
     Text = 20001
     Number = 20002
     Option = 20003
+    Float = 20004
 
 
 class CaseConfigInput(BaseModel):
@@ -169,6 +170,7 @@ CaseConfigParamInput_IndexType = CaseConfigInput(
             IndexType.IVFFlat.value,
             IndexType.IVFSQ8.value,
             IndexType.DISKANN.value,
+            IndexType.STREAMING_DISKANN.value,
             IndexType.Flat.value,
             IndexType.AUTOINDEX.value,
             IndexType.GPU_IVF_FLAT.value,
@@ -176,6 +178,104 @@ CaseConfigParamInput_IndexType = CaseConfigInput(
             IndexType.GPU_CAGRA.value,
         ],
     },
+)
+
+
+CaseConfigParamInput_IndexType_PgVectorScale = CaseConfigInput(
+    label=CaseConfigParamType.IndexType,
+    inputHelp="Select Index Type",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [
+            IndexType.STREAMING_DISKANN.value,
+        ],
+    },
+)
+
+
+CaseConfigParamInput_storage_layout = CaseConfigInput(
+    label=CaseConfigParamType.storage_layout,
+    inputHelp="Select Storage Layout",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [
+            "memory_optimized",
+            "plain",
+        ],
+    },
+)
+
+CaseConfigParamInput_num_neighbors = CaseConfigInput(
+    label=CaseConfigParamType.num_neighbors,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 10,
+        "max": 300,
+        "value": 50,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    == IndexType.STREAMING_DISKANN.value,
+)
+
+CaseConfigParamInput_search_list_size = CaseConfigInput(
+    label=CaseConfigParamType.search_list_size,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 10,
+        "max": 300,
+        "value": 100,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    == IndexType.STREAMING_DISKANN.value,
+)
+
+CaseConfigParamInput_max_alpha = CaseConfigInput(
+    label=CaseConfigParamType.max_alpha,
+    inputType=InputType.Float,
+    inputConfig={
+        "min": 0.1,
+        "max": 2.0,
+        "value": 1.2,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    == IndexType.STREAMING_DISKANN.value,
+)
+
+CaseConfigParamInput_num_dimensions = CaseConfigInput(
+    label=CaseConfigParamType.num_dimensions,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 0,
+        "max": 2000,
+        "value": 0,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    == IndexType.STREAMING_DISKANN.value,
+)
+
+CaseConfigParamInput_query_search_list_size = CaseConfigInput(
+    label=CaseConfigParamType.query_search_list_size,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 50,
+        "max": 150,
+        "value": 100,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    == IndexType.STREAMING_DISKANN.value,
+)
+
+
+CaseConfigParamInput_query_rescore = CaseConfigInput(
+    label=CaseConfigParamType.query_rescore,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 0,
+        "max": 150,
+        "value": 50,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    == IndexType.STREAMING_DISKANN.value,
 )
 
 CaseConfigParamInput_IndexType_PgVector = CaseConfigInput(
@@ -426,6 +526,7 @@ CaseConfigParamInput_M_PQ = CaseConfigInput(
     isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
     in [IndexType.GPU_IVF_PQ.value],
 )
+
 
 CaseConfigParamInput_Nbits_PQ = CaseConfigInput(
     label=CaseConfigParamType.nbits,
@@ -770,6 +871,24 @@ ZillizCloudPerformanceConfig = [
     CaseConfigParamInput_ZillizLevel,
 ]
 
+PgVectorScaleLoadingConfig = [
+    CaseConfigParamInput_IndexType_PgVectorScale,
+    CaseConfigParamInput_num_neighbors,
+    CaseConfigParamInput_storage_layout,
+    CaseConfigParamInput_search_list_size,
+    CaseConfigParamInput_max_alpha,
+]
+
+PgVectorScalePerformanceConfig = [
+    CaseConfigParamInput_IndexType_PgVectorScale,
+    CaseConfigParamInput_num_neighbors,
+    CaseConfigParamInput_storage_layout,
+    CaseConfigParamInput_search_list_size,
+    CaseConfigParamInput_max_alpha,
+    CaseConfigParamInput_query_rescore,
+    CaseConfigParamInput_query_search_list_size,
+]
+
 CASE_CONFIG_MAP = {
     DB.Milvus: {
         CaseLabel.Load: MilvusLoadConfig,
@@ -793,5 +912,9 @@ CASE_CONFIG_MAP = {
     DB.PgVectoRS: {
         CaseLabel.Load: PgVectoRSLoadingConfig,
         CaseLabel.Performance: PgVectoRSPerformanceConfig,
+    },
+    DB.PgVectorScale: {
+        CaseLabel.Load: PgVectorScaleLoadingConfig,
+        CaseLabel.Performance: PgVectorScalePerformanceConfig,
     },
 }
