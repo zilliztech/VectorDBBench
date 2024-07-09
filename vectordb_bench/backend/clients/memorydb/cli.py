@@ -62,9 +62,7 @@ def MemoryDB(**parameters: Unpack[MemoryDBHNSWTypedDict]):
         db=DB.MemoryDB,
         db_config=MemoryDBConfig(
             db_label=parameters["db_label"],
-            password=SecretStr(parameters["password"])
-            if parameters["password"]
-            else None,
+            password=SecretStr(parameters["password"]) if parameters["password"] else None,
             host=SecretStr(parameters["host"]),
             port=parameters["port"],
             ssl=parameters["ssl"],
