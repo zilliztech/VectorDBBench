@@ -24,7 +24,7 @@ class MemoryDBConfig(DBConfig):
 
 class MemoryDBIndexConfig(BaseModel, DBCaseConfig):
     metric_type: MetricType | None = None
-    insert_batch_size: int | None = 10  # Adjust this as needed, but don't make too big
+    insert_batch_size: int | None = None
 
     def parse_metric(self) -> str:
         if self.metric_type == MetricType.L2:

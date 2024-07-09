@@ -44,7 +44,16 @@ class MemoryDBTypedDict(TypedDict):
             is_flag=True,
             show_default=True,
             default=False,
-            help="Cluster Mode Disabled (CMD), use this flag when testing locally on a single node instance. In production, MemoryDB only supports CME mode",
+            help="Cluster Mode Disabled (CMD), use this flag when testing locally on a single node instance. In production, MemoryDB only supports cluster mode (CME)",
+        ),
+    ]
+    insert_batch_size: Annotated[
+        int,
+        click.option(
+            "--insert-batch-size",
+            type=int,
+            default=10,
+            help="Batch size for inserting data. Adjust this as needed, but don't make it too big",
         ),
     ]
 
@@ -73,6 +82,7 @@ def MemoryDB(**parameters: Unpack[MemoryDBHNSWTypedDict]):
             M=parameters["m"],
             ef_construction=parameters["ef_construction"],
             ef_runtime=parameters["ef_runtime"],
+            insert_batch_size=parameters["insert_batch_size"]
         ),
         **parameters,
     )
