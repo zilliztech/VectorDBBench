@@ -1,0 +1,18 @@
+[
+    {
+        "name": "My Dataset (Performace Case)",
+        "description": "this is a customized dataset.",
+        "load_timeout": 36000,
+        "optimize_timeout": 36000,
+        "dataset_config": {
+            "name": "My Dataset",
+            "dir": "/my_dataset_path",
+            "size": 1000000,
+            "dim": 1024,
+            "metric_type": "L2",
+            "file_count": 1,
+            "use_shuffled": false,
+            "with_gt": true
+        }
+    }
+]

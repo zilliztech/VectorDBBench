@@ -1,4 +1,4 @@
-from vectordb_bench.frontend.const.styles import HEADER_ICON
+from vectordb_bench.frontend.config.styles import HEADER_ICON
 
 
 def drawHeaderIcon(st):

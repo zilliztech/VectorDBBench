@@ -1,26 +1,27 @@
-
-
-from vectordb_bench.backend.cases import Case
-from vectordb_bench.frontend.components.check_results.expanderStyle import initMainExpanderStyle
+from vectordb_bench.frontend.components.check_results.expanderStyle import (
+    initMainExpanderStyle,
+)
 import plotly.express as px
 
-from vectordb_bench.frontend.const.styles import COLOR_MAP
+from vectordb_bench.frontend.config.styles import COLOR_MAP
 
 
-def drawChartsByCase(allData, cases: list[Case], st):
+def drawChartsByCase(allData, showCaseNames: list[str], st):
     initMainExpanderStyle(st)
-    for case in cases:
-        chartContainer = st.expander(case.name, True)
-        caseDataList = [
-            data for data in allData if data["case_name"] == case.name]
-        data = [{
-            "conc_num": caseData["conc_num_list"][i],
-            "qps": caseData["conc_qps_list"][i],
-            "latency_p99": caseData["conc_latency_p99_list"][i] * 1000,
-            "db_name": caseData["db_name"],
-            "db": caseData["db"]
-
-        } for caseData in caseDataList for i in range(len(caseData["conc_num_list"]))]
+    for caseName in showCaseNames:
+        chartContainer = st.expander(caseName, True)
+        caseDataList = [data for data in allData if data["case_name"] == caseName]
+        data = [
+            {
+                "conc_num": caseData["conc_num_list"][i],
+                "qps": caseData["conc_qps_list"][i],
+                "latency_p99": caseData["conc_latency_p99_list"][i] * 1000,
+                "db_name": caseData["db_name"],
+                "db": caseData["db"],
+            }
+            for caseData in caseDataList
+            for i in range(len(caseData["conc_num_list"]))
+        ]
         drawChart(data, chartContainer)
 
 
@@ -38,7 +39,7 @@ def getRange(metric, data, padding_multipliers):
 def drawChart(data, st):
     if len(data) == 0:
         return
-    
+
     x = "latency_p99"
     xrange = getRange(x, data, [0.05, 0.1])
 
@@ -63,7 +64,6 @@ def drawChart(data, st):
         line_group=line_group,
         text=text,
         markers=True,
-        # color_discrete_map=color_discrete_map,
         hover_data={
             "conc_num": True,
         },
@@ -71,12 +71,9 @@ def drawChart(data, st):
     )
     fig.update_xaxes(range=xrange, title_text="Latency P99 (ms)")
     fig.update_yaxes(range=yrange, title_text="QPS")
-    fig.update_traces(textposition="bottom right",
-                      texttemplate="conc-%{text:,.4~r}")
-    # fig.update_layout(
-    #     margin=dict(l=0, r=0, t=40, b=0, pad=8),
-    #     legend=dict(
-    #         orientation="h", yanchor="bottom", y=1, xanchor="right", x=1, title=""
-    #     ),
-    # )
-    st.plotly_chart(fig, use_container_width=True,)
+    fig.update_traces(textposition="bottom right", texttemplate="conc-%{text:,.4~r}")
+
+    st.plotly_chart(
+        fig,
+        use_container_width=True,
+    )

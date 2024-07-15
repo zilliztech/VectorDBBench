@@ -33,6 +33,7 @@ class BaseDataset(BaseModel):
     use_shuffled: bool
     with_gt: bool = False
     _size_label: dict[int, SizeLabel] = PrivateAttr()
+    isCustom: bool = False
 
     @validator("size")
     def verify_size(cls, v):
@@ -52,7 +53,27 @@ class BaseDataset(BaseModel):
     def file_count(self) -> int:
         return self._size_label.get(self.size).file_count
 
+class CustomDataset(BaseDataset):
+    dir: str
+    file_num: int
+    isCustom: bool = True
+    
+    @validator("size")
+    def verify_size(cls, v):
+        return v
+    
+    @property
+    def label(self) -> str:
+        return "Custom"
 
+    @property
+    def dir_name(self) -> str:
+        return self.dir
+
+    @property
+    def file_count(self) -> int:
+        return self.file_num
+    
 class LAION(BaseDataset):
     name: str = "LAION"
     dim: int = 768
@@ -186,11 +207,12 @@ class DatasetManager(BaseModel):
             gt_file, test_file = utils.compose_gt_file(filters), "test.parquet"
             all_files.extend([gt_file, test_file])
 
-        source.reader().read(
-            dataset=self.data.dir_name.lower(),
-            files=all_files,
-            local_ds_root=self.data_dir,
-        )
+        if not self.data.isCustom:
+            source.reader().read(
+                dataset=self.data.dir_name.lower(),
+                files=all_files,
+                local_ds_root=self.data_dir,
+            )
 
         if gt_file is not None and test_file is not None:
             self.test_data = self._read_file(test_file)
