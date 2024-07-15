@@ -2,7 +2,7 @@ from vectordb_bench import config
 import ujson
 import pathlib
 from vectordb_bench.backend.cases import CaseType
-from vectordb_bench.frontend.const.dbPrices import DB_DBLABEL_TO_PRICE
+from vectordb_bench.frontend.config.dbPrices import DB_DBLABEL_TO_PRICE
 from vectordb_bench.interface import benchMarkRunner
 from vectordb_bench.models import CaseResult, ResultLabel, TestResult
 

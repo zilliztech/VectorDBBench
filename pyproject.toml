@@ -80,4 +80,5 @@ zilliz_cloud = []
 [project.scripts]
 init_bench = "vectordb_bench.__main__:main"
 vectordbbench = "vectordb_bench.cli.vectordbbench:cli"
+
 [tool.setuptools_scm]

@@ -1,13 +1,9 @@
 from pydantic import ValidationError
-from vectordb_bench.frontend.const.styles import *
+from vectordb_bench.frontend.config.styles import *
 from vectordb_bench.frontend.utils import inputIsPassword
 
 
 def dbConfigSettings(st, activedDbList):
-    st.markdown(
-        "<style> .streamlit-expanderHeader p {font-size: 20px; font-weight: 600;}</style>",
-        unsafe_allow_html=True,
-    )
     expander = st.expander("Configurations for the selected databases", True)
 
     dbConfigs = {}

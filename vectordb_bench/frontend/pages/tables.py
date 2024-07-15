@@ -1,7 +1,7 @@
 import streamlit as st
 from vectordb_bench.frontend.components.check_results.headerIcon import drawHeaderIcon
 from vectordb_bench.frontend.components.tables.data import getNewResults
-from vectordb_bench.frontend.const.styles import FAVICON
+from vectordb_bench.frontend.config.styles import FAVICON
 
 
 def main():

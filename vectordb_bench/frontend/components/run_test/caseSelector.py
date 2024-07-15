@@ -1,9 +1,13 @@
-from vectordb_bench.frontend.const.styles import *
+
+from vectordb_bench.frontend.config.styles import *
 from vectordb_bench.backend.cases import CaseType
-from vectordb_bench.frontend.const.dbCaseConfigs import *
+from vectordb_bench.frontend.config.dbCaseConfigs import *
+from collections import defaultdict
+
+from vectordb_bench.frontend.utils import addHorizontalLine
 
 
-def caseSelector(st, activedDbList):
+def caseSelector(st, activedDbList: list[DB]):
     st.markdown(
         "<div style='height: 24px;'></div>",
         unsafe_allow_html=True,
@@ -14,41 +18,49 @@ def caseSelector(st, activedDbList):
         unsafe_allow_html=True,
     )
 
-    caseIsActived = {case: False for case in CASE_LIST}
-    allCaseConfigs = {db: {case: {} for case in CASE_LIST} for db in DB_LIST}
-    for caseOrDivider in CASE_LIST_WITH_DIVIDER:
-        if caseOrDivider == DIVIDER:
-            caseItemContainer.markdown(
-                "<div style='border: 1px solid #cccccc60; margin-bottom: 24px;'></div>",
-                unsafe_allow_html=True,
-            )
+    activedCaseList: list[CaseConfig] = []
+    dbToCaseClusterConfigs = defaultdict(lambda: defaultdict(dict))
+    dbToCaseConfigs = defaultdict(lambda: defaultdict(dict))
+    caseClusters = UI_CASE_CLUSTERS + [get_custom_case_cluter()]
+    for caseCluster in caseClusters:
+        activedCaseList += caseClusterExpander(
+            st, caseCluster, dbToCaseClusterConfigs, activedDbList)
+    for db in dbToCaseClusterConfigs:
+        for uiCaseItem in dbToCaseClusterConfigs[db]:
+            for case in uiCaseItem.cases:
+                dbToCaseConfigs[db][case] = dbToCaseClusterConfigs[db][uiCaseItem]
+
+    return activedCaseList, dbToCaseConfigs
+
+
+def caseClusterExpander(st, caseCluster: UICaseItemCluster, dbToCaseClusterConfigs, activedDbList: list[DB]):
+    expander = st.expander(caseCluster.label, False)
+    activedCases: list[CaseConfig] = []
+    for uiCaseItem in caseCluster.uiCaseItems:
+        if uiCaseItem.isLine:
+            addHorizontalLine(expander)
         else:
-            case = caseOrDivider
-            caseItemContainer = st.container()
-            caseIsActived[case] = caseItem(
-                caseItemContainer, allCaseConfigs, case, activedDbList
-            )
-    activedCaseList = [case for case in CASE_LIST if caseIsActived[case]]
-    return activedCaseList, allCaseConfigs
+            activedCases += caseItemCheckbox(expander,
+                                             dbToCaseClusterConfigs, uiCaseItem, activedDbList)
+    return activedCases
 
 
-def caseItem(st, allCaseConfigs, case: CaseType, activedDbList):
-    selected = st.checkbox(case.case_name)
+def caseItemCheckbox(st, dbToCaseClusterConfigs, uiCaseItem: UICaseItem, activedDbList: list[DB]):
+    selected = st.checkbox(uiCaseItem.label)
     st.markdown(
-        f"<div style='color: #1D2939; margin: -8px 0 20px {CHECKBOX_INDENT}px; font-size: 14px;'>{case.case_description}</div>",
+        f"<div style='color: #1D2939; margin: -8px 0 20px {CHECKBOX_INDENT}px; font-size: 14px;'>{uiCaseItem.description}</div>",
         unsafe_allow_html=True,
     )
 
     if selected:
-        caseConfigSettingContainer = st.container()
         caseConfigSetting(
-            caseConfigSettingContainer, allCaseConfigs, case, activedDbList
+            st.container(), dbToCaseClusterConfigs, uiCaseItem, activedDbList
         )
 
-    return selected
+    return uiCaseItem.cases if selected else []
 
 
-def caseConfigSetting(st, allCaseConfigs, case, activedDbList):
+def caseConfigSetting(st, dbToCaseClusterConfigs, uiCaseItem: UICaseItem, activedDbList: list[DB]):
     for db in activedDbList:
         columns = st.columns(1 + CASE_CONFIG_SETTING_COLUMNS)
         # column 0 - title
@@ -57,12 +69,12 @@ def caseConfigSetting(st, allCaseConfigs, case, activedDbList):
             f"<div style='margin: 0 0 24px {CHECKBOX_INDENT}px; font-size: 18px; font-weight: 600;'>{db.name}</div>",
             unsafe_allow_html=True,
         )
-        caseConfig = allCaseConfigs[db][case]
         k = 0
-        for config in CASE_CONFIG_MAP.get(db, {}).get(case.case_cls().label, []):
+        caseConfig = dbToCaseClusterConfigs[db][uiCaseItem]
+        for config in CASE_CONFIG_MAP.get(db, {}).get(uiCaseItem.caseLabel, []):
             if config.isDisplayed(caseConfig):
                 column = columns[1 + k % CASE_CONFIG_SETTING_COLUMNS]
-                key = "%s-%s-%s" % (db, case, config.label.value)
+                key = "%s-%s-%s" % (db, uiCaseItem.label, config.label.value)
                 if config.inputType == InputType.Text:
                     caseConfig[config.label] = column.text_input(
                         config.displayLabel if config.displayLabel else config.label.value,

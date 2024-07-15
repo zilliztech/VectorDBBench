@@ -5,6 +5,7 @@ from vectordb_bench.frontend.components.run_test.dbConfigSetting import dbConfig
 from vectordb_bench.frontend.components.run_test.dbSelector import dbSelector
 from vectordb_bench.frontend.components.run_test.generateTasks import generate_tasks
 from vectordb_bench.frontend.components.run_test.hideSidebar import hideSidebar
+from vectordb_bench.frontend.components.run_test.initStyle import initStyle
 from vectordb_bench.frontend.components.run_test.submitTask import submitTask
 from vectordb_bench.frontend.components.check_results.nav import NavToResults
 from vectordb_bench.frontend.components.check_results.headerIcon import drawHeaderIcon
@@ -14,6 +15,9 @@ from vectordb_bench.frontend.components.check_results.stPageConfig import initRu
 def main():
     # set page config
     initRunTestPageConfig(st)
+    
+    # init style
+    initStyle(st)
     
     # header
     drawHeaderIcon(st)
