@@ -4,6 +4,8 @@ import concurrent
 import multiprocessing as mp
 import logging
 from typing import Iterable
+
+import numpy as np
 from ..clients import api
 from ... import config
 
@@ -49,6 +51,7 @@ class MultiProcessingSearchRunner:
 
             start_time = time.perf_counter()
             count = 0
+            latencies = []
             while time.perf_counter() < start_time + self.duration:
                 s = time.perf_counter()
                 try:
@@ -61,7 +64,8 @@ class MultiProcessingSearchRunner:
                     log.warning(f"VectorDB search_embedding error: {e}")
                     traceback.print_exc(chain=True)
                     raise e from None
-
+                
+                latencies.append(time.perf_counter() - s)
                 count += 1
                 # loop through the test data
                 idx = idx + 1 if idx < num - 1 else 0
@@ -75,7 +79,7 @@ class MultiProcessingSearchRunner:
             f"actual_dur={total_dur}s, count={count}, qps in this process: {round(count / total_dur, 4):3}"
          )
 
-        return (count, total_dur)
+        return (count, total_dur, latencies)
 
     @staticmethod
     def get_mp_context():
@@ -85,6 +89,9 @@ class MultiProcessingSearchRunner:
 
     def _run_all_concurrencies_mem_efficient(self) -> float:
         max_qps = 0
+        conc_num_list = []
+        conc_qps_list = []
+        conc_latency_p99_list = []
         try:
             for conc in self.concurrencies:
                 with mp.Manager() as m:
@@ -103,9 +110,14 @@ class MultiProcessingSearchRunner:
 
                         start = time.perf_counter()
                         all_count = sum([r.result()[0] for r in future_iter])
+                        latencies = sum([r.result()[2] for r in future_iter], start=[])
+                        latency_p99 = np.percentile(latencies, 0.99)
                         cost = time.perf_counter() - start
 
                         qps = round(all_count / cost, 4)
+                        conc_num_list.append(conc)
+                        conc_qps_list.append(qps)
+                        conc_latency_p99_list.append(latency_p99)
                         log.info(f"End search in concurrency {conc}: dur={cost}s, total_count={all_count}, qps={qps}")
 
                 if qps > max_qps:
@@ -122,7 +134,7 @@ class MultiProcessingSearchRunner:
         finally:
             self.stop()
 
-        return max_qps
+        return max_qps, conc_num_list, conc_qps_list, conc_latency_p99_list
 
     def run(self) -> float:
         """

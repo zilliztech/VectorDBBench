@@ -25,6 +25,8 @@ def run_streamlit():
         "#3670F2",
         "--theme.secondaryBackgroundColor",
         "#F0F2F6",
+        "--server.port",
+        "8080",
     ]
     log.debug(f"cmd: {cmd}")
     try:

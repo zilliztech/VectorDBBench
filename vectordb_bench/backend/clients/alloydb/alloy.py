@@ -41,8 +41,8 @@ class alloyDB(VectorDB):
         self.conn, self.cursor = self._create_connection(**self.db_config)
 
         # create vector extension
-        self.cursor.execute("CREATE EXTENSION IF NOT EXISTS vector")
         self.conn.commit()
+        print(self.conn)
 
         if drop_old:
             # self.pg_table.drop(pg_engine, checkfirst=True)
@@ -69,9 +69,14 @@ class alloyDB(VectorDB):
             password = kwargs['password']
         )
         conn.autocommit = False
-        register_vector(conn)
         cursor = conn.cursor()
+        cursor.execute("CREATE EXTENSION IF NOT EXISTS vector;")
+        conn.commit()
+        register_vector(conn)
+
         #cursor.execute(';')
+        assert conn is not None, "Connection is not initialized"
+        assert cursor is not None, "Cursor is not initialized"
         return conn, cursor
 
 
