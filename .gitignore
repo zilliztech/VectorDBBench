@@ -9,4 +9,7 @@ __MACOSX
 build/
 venv/
 .idea/
-myenv/
+vectordb_bench/myenv/
+test.py 
+testclient.py
+requirements.txt
