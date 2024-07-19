@@ -14,5 +14,7 @@ COPY --from=builder-image /usr/local/lib/python3.11/site-packages /usr/local/lib
 WORKDIR /opt/code
 COPY . .
 ENV PYTHONPATH /opt/code
+RUN sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list
+RUN apt-get update && apt-get install libpq5 -y
 
 ENTRYPOINT ["python3", "-m", "vectordb_bench"]

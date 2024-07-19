@@ -1,13 +1,6 @@
 grpcio==1.53.0
 grpcio-tools==1.53.0
-qdrant-client
-pinecone-client
-weaviate-client
-elasticsearch
-pgvector
-sqlalchemy
-redis
-chromadb
+pgvecto.rs @ git+https://github.com/cutecutecat/pgvecto.rs-py@django-types
 pytz
 streamlit-autorefresh
 streamlit>=1.23.0
@@ -21,3 +14,4 @@ environs
 pydantic<v2
 scikit-learn
 pymilvus
+psycopg
