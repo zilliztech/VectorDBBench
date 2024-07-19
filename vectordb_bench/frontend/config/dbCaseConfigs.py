@@ -753,4 +753,8 @@ CASE_CONFIG_MAP = {
         CaseLabel.Load: PgVectoRSLoadingConfig,
         CaseLabel.Performance: PgVectoRSPerformanceConfig,
     },
+    DB.Alloy: {
+        CaseLabel.Load: PgVectorLoadingConfig,
+        CaseLabel.Performance: PgVectorPerformanceConfig,
+    }
 }
