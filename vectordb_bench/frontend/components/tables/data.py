@@ -1,5 +1,4 @@
 from dataclasses import asdict
-from vectordb_bench.backend.cases import CaseType
 from vectordb_bench.interface import benchMarkRunner
 from vectordb_bench.models import CaseResult, ResultLabel
 import pandas as pd

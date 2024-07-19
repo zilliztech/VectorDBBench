@@ -8,7 +8,7 @@ from typing import Iterable
 from pymilvus import Collection, utility
 from pymilvus import CollectionSchema, DataType, FieldSchema, MilvusException
 
-from ..api import VectorDB, IndexType
+from ..api import VectorDB
 from .config import MilvusIndexConfig
 
 
@@ -129,7 +129,7 @@ class Milvus(VectorDB):
                     log.warning(f"{self.name} compact error: {e}")
                     if hasattr(e, 'code'):
                         if e.code().name == 'PERMISSION_DENIED':
-                            log.warning(f"Skip compact due to permission denied.")
+                            log.warning("Skip compact due to permission denied.")
                             pass
                     else:
                         raise e
@@ -165,7 +165,7 @@ class Milvus(VectorDB):
     def need_normalize_cosine(self) -> bool:
         """Wheather this database need to normalize dataset to support COSINE"""
         if self.case_config.is_gpu_index:
-            log.info(f"current gpu_index only supports IP / L2, cosine dataset need normalize.")
+            log.info("current gpu_index only supports IP / L2, cosine dataset need normalize.")
             return True
 
         return False

@@ -190,8 +190,21 @@ CaseConfigParamInput_IndexType_PgVector = CaseConfigInput(
     },
 )
 
+CaseConfigParamInput_IndexType_PgVectoRS = CaseConfigInput(
+    label=CaseConfigParamType.IndexType,
+    inputHelp="Select Index Type",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [
+            IndexType.HNSW.value,
+            IndexType.IVFFlat.value,
+            IndexType.Flat.value,
+        ],
+    },
+)
+
 CaseConfigParamInput_M = CaseConfigInput(
-    label=CaseConfigParamType.M,
+    label=CaseConfigParamType.m,
     inputType=InputType.Number,
     inputConfig={
         "min": 4,
@@ -272,14 +285,26 @@ CaseConfigParamInput_max_parallel_workers_PgVector = CaseConfigInput(
 
 
 CaseConfigParamInput_EFConstruction_PgVectoRS = CaseConfigInput(
-    label=CaseConfigParamType.EFConstruction,
+    label=CaseConfigParamType.ef_construction,
     inputType=InputType.Number,
     inputConfig={
-        "min": 8,
-        "max": 512,
-        "value": 360,
+        "min": 10,
+        "max": 2000,
+        "value": 300,
     },
-    isDisplayed=lambda config: config[CaseConfigParamType.IndexType]
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_EFSearch_PgVectoRS = CaseConfigInput(
+    label=CaseConfigParamType.ef_search,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 65535,
+        "value": 100,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
     == IndexType.HNSW.value,
 )
 
@@ -598,6 +623,7 @@ CaseConfigParamInput_EFSearch_PgVector = CaseConfigInput(
     == IndexType.HNSW.value,
 )
 
+
 CaseConfigParamInput_QuantizationType_PgVectoRS = CaseConfigInput(
     label=CaseConfigParamType.quantizationType,
     inputType=InputType.Option,
@@ -624,6 +650,18 @@ CaseConfigParamInput_QuantizationRatio_PgVectoRS = CaseConfigInput(
         IndexType.HNSW.value,
         IndexType.IVFFlat.value,
     ],
+)
+
+CaseConfigParamInput_max_parallel_workers_PgVectorRS = CaseConfigInput(
+    label=CaseConfigParamType.max_parallel_workers,
+    displayLabel="Max parallel workers",
+    inputHelp="Recommended value: (cpu cores - 1). This will set the parameters: [optimizing.optimizing_threads]",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 0,
+        "max": 1024,
+        "value": 16,
+    },
 )
 
 CaseConfigParamInput_ZillizLevel = CaseConfigInput(
@@ -707,22 +745,25 @@ PgVectorPerformanceConfig = [
 ]
 
 PgVectoRSLoadingConfig = [
-    CaseConfigParamInput_IndexType,
+    CaseConfigParamInput_IndexType_PgVectoRS,
     CaseConfigParamInput_M,
     CaseConfigParamInput_EFConstruction_PgVectoRS,
     CaseConfigParamInput_Nlist,
     CaseConfigParamInput_QuantizationType_PgVectoRS,
     CaseConfigParamInput_QuantizationRatio_PgVectoRS,
+    CaseConfigParamInput_max_parallel_workers_PgVectorRS,
 ]
 
 PgVectoRSPerformanceConfig = [
-    CaseConfigParamInput_IndexType,
+    CaseConfigParamInput_IndexType_PgVectoRS,
     CaseConfigParamInput_M,
     CaseConfigParamInput_EFConstruction_PgVectoRS,
+    CaseConfigParamInput_EFSearch_PgVectoRS,
     CaseConfigParamInput_Nlist,
     CaseConfigParamInput_Nprobe,
     CaseConfigParamInput_QuantizationType_PgVectoRS,
     CaseConfigParamInput_QuantizationRatio_PgVectoRS,
+    CaseConfigParamInput_max_parallel_workers_PgVectorRS,
 ]
 
 ZillizCloudPerformanceConfig = [

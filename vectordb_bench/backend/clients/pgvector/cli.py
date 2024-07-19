@@ -1,4 +1,4 @@
-from typing import Annotated, Optional, TypedDict, Unpack
+from typing import Annotated, Optional, Unpack
 
 import click
 import os

@@ -1,8 +1,7 @@
 import logging
 from contextlib import contextmanager
-from typing import Any, Type
-from ..api import VectorDB, DBConfig, DBCaseConfig, EmptyDBCaseConfig, IndexType
-from .config import RedisConfig
+from typing import Any
+from ..api import VectorDB, DBCaseConfig, IndexType
 import redis
 from redis.commands.search.field import TagField, VectorField, NumericField
 from redis.commands.search.indexDefinition import IndexDefinition, IndexType

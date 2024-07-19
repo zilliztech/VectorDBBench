@@ -1,4 +1,3 @@
-import typing
 import logging
 from enum import Enum, auto
 from typing import Type
