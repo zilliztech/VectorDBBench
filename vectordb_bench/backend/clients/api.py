@@ -38,6 +38,22 @@ class DBConfig(ABC, BaseModel):
     """
 
     db_label: str = ""
+    version: str = ""
+    note: str = ""
+
+    @staticmethod
+    def common_short_configs() -> list[str]:
+        """
+        short input, such as `db_label`, `version`
+        """
+        return ["version", "db_label"]
+
+    @staticmethod
+    def common_long_configs() -> list[str]:
+        """
+        long input, such as `note`
+        """
+        return ["note"]
 
     @abstractmethod
     def to_dict(self) -> dict:
@@ -45,7 +61,10 @@ class DBConfig(ABC, BaseModel):
 
     @validator("*")
     def not_empty_field(cls, v, field):
-        if field.name == "db_label":
+        if (
+            field.name in cls.common_short_configs()
+            or field.name in cls.common_long_configs()
+        ):
             return v
         if not v and isinstance(v, (str, SecretStr)):
             raise ValueError("Empty string!")
