@@ -2,7 +2,7 @@ import logging
 import pathlib
 from datetime import date
 from enum import Enum, StrEnum, auto
-from typing import List, Self, Sequence, Set
+from typing import List, Self
 
 import ujson
 
@@ -10,7 +10,6 @@ from .backend.clients import (
     DB,
     DBConfig,
     DBCaseConfig,
-    IndexType,
 )
 from .backend.cases import CaseType
 from .base import BaseModel
@@ -128,9 +127,14 @@ class TaskConfig(BaseModel):
 
     @property
     def db_name(self):
-        db = self.db.value
+        db_name = f"{self.db.value}"
         db_label = self.db_config.db_label
-        return f"{db}-{db_label}" if db_label else db
+        if db_label:
+            db_name += f"-{db_label}"
+        version = self.db_config.version
+        if version:
+            db_name += f"-{version}"
+        return db_name
 
 
 class ResultLabel(Enum):
