@@ -4,9 +4,13 @@ from enum import Enum, auto
 from typing import Type
 
 from vectordb_bench import config
+from vectordb_bench.backend.clients.api import MetricType
 from vectordb_bench.base import BaseModel
+from vectordb_bench.frontend.components.custom.getCustomConfig import (
+    CustomDatasetConfig,
+)
 
-from .dataset import Dataset, DatasetManager
+from .dataset import CustomDataset, Dataset, DatasetManager
 
 
 log = logging.getLogger(__name__)
@@ -44,25 +48,24 @@ class CaseType(Enum):
     Performance1536D50K = 50
 
     Custom = 100
+    PerformanceCustomDataset = 101
 
-    @property
     def case_cls(self, custom_configs: dict | None = None) -> Type["Case"]:
-        if self not in type2case:
-            raise NotImplementedError(f"Case {self} has not implemented. You can add it manually to vectordb_bench.backend.cases.type2case or define a custom_configs['custom_cls']")
-        return type2case[self]
+        if custom_configs is None:
+            return type2case.get(self)()
+        else:
+            return type2case.get(self)(**custom_configs)
 
-    @property
-    def case_name(self) -> str:
-        c = self.case_cls
+    def case_name(self, custom_configs: dict | None = None) -> str:
+        c = self.case_cls(custom_configs)
         if c is not None:
-            return c().name
+            return c.name
         raise ValueError("Case unsupported")
 
-    @property
-    def case_description(self) -> str:
-        c = self.case_cls
+    def case_description(self, custom_configs: dict | None = None) -> str:
+        c = self.case_cls(custom_configs)
         if c is not None:
-            return c().description
+            return c.description
         raise ValueError("Case unsupported")
 
 
@@ -289,26 +292,69 @@ Results will show index building time, recall, and maximum QPS."""
     optimize_timeout: float | int | None = 15 * 60
 
 
+def metric_type_map(s: str) -> MetricType:
+    if s.lower() == "cosine":
+        return MetricType.COSINE
+    if s.lower() == "l2" or s.lower() == "euclidean":
+        return MetricType.L2
+    if s.lower() == "ip":
+        return MetricType.IP
+    err_msg = f"Not support metric_type: {s}"
+    log.error(err_msg)
+    raise RuntimeError(err_msg)
+
+
+class PerformanceCustomDataset(PerformanceCase):
+    case_id: CaseType = CaseType.PerformanceCustomDataset
+    name: str = "Performance With Custom Dataset"
+    description: str = ""
+    dataset: DatasetManager
+
+    def __init__(
+        self,
+        name,
+        description,
+        load_timeout,
+        optimize_timeout,
+        dataset_config,
+        **kwargs,
+    ):
+        dataset_config = CustomDatasetConfig(**dataset_config)
+        dataset = CustomDataset(
+            name=dataset_config.name,
+            size=dataset_config.size,
+            dim=dataset_config.dim,
+            metric_type=metric_type_map(dataset_config.metric_type),
+            use_shuffled=dataset_config.use_shuffled,
+            with_gt=dataset_config.with_gt,
+            dir=dataset_config.dir,
+            file_num=dataset_config.file_count,
+        )
+        super().__init__(
+            name=name,
+            description=description,
+            load_timeout=load_timeout,
+            optimize_timeout=optimize_timeout,
+            dataset=DatasetManager(data=dataset),
+        )
+
+
 type2case = {
     CaseType.CapacityDim960: CapacityDim960,
     CaseType.CapacityDim128: CapacityDim128,
-
     CaseType.Performance768D100M: Performance768D100M,
     CaseType.Performance768D10M: Performance768D10M,
     CaseType.Performance768D1M: Performance768D1M,
-
     CaseType.Performance768D10M1P: Performance768D10M1P,
     CaseType.Performance768D1M1P: Performance768D1M1P,
     CaseType.Performance768D10M99P: Performance768D10M99P,
     CaseType.Performance768D1M99P: Performance768D1M99P,
-
     CaseType.Performance1536D500K: Performance1536D500K,
     CaseType.Performance1536D5M: Performance1536D5M,
-
     CaseType.Performance1536D500K1P: Performance1536D500K1P,
     CaseType.Performance1536D5M1P: Performance1536D5M1P,
-
     CaseType.Performance1536D500K99P: Performance1536D500K99P,
     CaseType.Performance1536D5M99P: Performance1536D5M99P,
     CaseType.Performance1536D50K: Performance1536D50K,
+    CaseType.PerformanceCustomDataset: PerformanceCustomDataset,
 }

@@ -27,19 +27,20 @@ pip install vectordb-bench[pinecone]
 ```
 All the database client supported
 
-|Optional database client|install command|
-|---------------|---------------|
-|pymilvus(*default*)|`pip install vectordb-bench`|
-|all|`pip install vectordb-bench[all]`|
-|qdrant|`pip install vectordb-bench[qdrant]`|
-|pinecone|`pip install vectordb-bench[pinecone]`|
-|weaviate|`pip install vectordb-bench[weaviate]`|
-|elastic|`pip install vectordb-bench[elastic]`|
-|pgvector|`pip install vectordb-bench[pgvector]`|
-|pgvecto.rs|`pip install vectordb-bench[pgvecto_rs]`|
-|redis|`pip install vectordb-bench[redis]`|
-|memorydb| `pip install vectordb-bench[memorydb]`|
-|chromadb|`pip install vectordb-bench[chromadb]`|
+| Optional database client | install command                             |
+|--------------------------|---------------------------------------------|
+| pymilvus(*default*)      | `pip install vectordb-bench`                |
+| all                      | `pip install vectordb-bench[all]`           |
+| qdrant                   | `pip install vectordb-bench[qdrant]`        |
+| pinecone                 | `pip install vectordb-bench[pinecone]`      |
+| weaviate                 | `pip install vectordb-bench[weaviate]`      |
+| elastic                  | `pip install vectordb-bench[elastic]`       |
+| pgvector                 | `pip install vectordb-bench[pgvector]`      |
+| pgvecto.rs               | `pip install vectordb-bench[pgvecto_rs]`    |
+| redis                    | `pip install vectordb-bench[redis]`         |
+| memorydb                 | `pip install vectordb-bench[memorydb]`      |
+| chromadb                 | `pip install vectordb-bench[chromadb]`      |
+| awsopensearch            | `pip install vectordb-bench[awsopensearch]` |
 
 ### Run
 
@@ -281,6 +282,24 @@ Case No. | Case Type | Dataset Size  | Filtering Rate | Results |
 
 
 Each case provides an in-depth examination of a vector database's abilities, providing you a comprehensive view of the database's performance.
+
+#### Custom Dataset for Performance case
+
+Through the `/custom` page, users can customize their own performance case using local datasets. After saving, the corresponding case can be selected from the `/run_test` page to perform the test.
+
+![image](fig/custom_dataset.png)
+![image](fig/custom_case_run_test.png)
+
+We have strict requirements for the data set format, please follow them.
+- `Folder Path` - The path to the folder containing all the files. Please ensure that all files in the folder are in the `Parquet` format.
+  - Vectors data files: The file must be named `train.parquet` and should have two columns: `id` as an incrementing `int` and `emb` as an array of `float32`.
+  - Query test vectors: The file must be named `test.parquet` and should have two columns: `id` as an incrementing `int` and `emb` as an array of `float32`.
+  - Ground truth file: The file must be named `neighbors.parquet` and should have two columns: `id` corresponding to query vectors and `neighbors_id` as an array of `int`.
+
+- `Train File Count` - If the vector file is too large, you can consider splitting it into multiple files. The naming format for the split files should be `train-[index]-of-[file_count].parquet`. For example, `train-01-of-10.parquet` represents the second file (0-indexed) among 10 split files.
+
+- `Use Shuffled Data` - If you check this option, the vector data files need to be modified. VectorDBBench will load the data labeled with `shuffle`. For example, use `shuffle_train.parquet` instead of `train.parquet` and `shuffle_train-04-of-10.parquet` instead of `train-04-of-10.parquet`. The `id` column in the shuffled data can be in any order.
+
 
 ## Goals
 Our goals of this benchmark are:

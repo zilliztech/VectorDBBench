@@ -94,6 +94,10 @@ class CaseConfig(BaseModel):
         self._k = value
     '''
 
+    def __hash__(self) -> int:
+        return hash(self.json())
+
+
 class TaskStage(StrEnum):
     """Enumerations of various stages of the task"""
 
@@ -250,18 +254,18 @@ class TestResult(BaseModel):
 
         max_db = max(map(len, [f.task_config.db.name for f in filtered_results]))
         max_db_labels = (
-                max(map(len, [f.task_config.db_config.db_label for f in filtered_results]))
-                + 3
+            max(map(len, [f.task_config.db_config.db_label for f in filtered_results]))
+            + 3
         )
         max_case = max(
             map(len, [f.task_config.case_config.case_id.name for f in filtered_results])
         )
         max_load_dur = (
-                max(map(len, [str(f.metrics.load_duration) for f in filtered_results])) + 3
+            max(map(len, [str(f.metrics.load_duration) for f in filtered_results])) + 3
         )
         max_qps = max(map(len, [str(f.metrics.qps) for f in filtered_results])) + 3
         max_recall = (
-                max(map(len, [str(f.metrics.recall) for f in filtered_results])) + 3
+            max(map(len, [str(f.metrics.recall) for f in filtered_results])) + 3
         )
 
         max_db_labels = 8 if max_db_labels < 8 else max_db_labels

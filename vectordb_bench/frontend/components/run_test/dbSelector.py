@@ -1,7 +1,6 @@
 from streamlit.runtime.media_file_storage import MediaFileStorageError
-
-from vectordb_bench.frontend.const.styles import *
-from vectordb_bench.frontend.const.dbCaseConfigs import DB_LIST
+from vectordb_bench.frontend.config.styles import DB_SELECTOR_COLUMNS, DB_TO_ICON
+from vectordb_bench.frontend.config.dbCaseConfigs import DB_LIST
 
 
 def dbSelector(st):
@@ -18,17 +17,6 @@ def dbSelector(st):
     dbContainerColumns = st.columns(DB_SELECTOR_COLUMNS, gap="small")
     dbIsActived = {db: False for db in DB_LIST}
 
-    # style - image; column gap; checkbox font;
-    st.markdown(
-        """
-        <style>
-            div[data-testid='stImage'] {margin: auto;}
-            div[data-testid='stHorizontalBlock'] {gap: 8px;}
-            .stCheckbox p { color: #000; font-size: 18px; font-weight: 600; }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
     for i, db in enumerate(DB_LIST):
         column = dbContainerColumns[i % DB_SELECTOR_COLUMNS]
         dbIsActived[db] = column.checkbox(db.name)

@@ -62,6 +62,8 @@ all = [
     "psycopg2",
     "psycopg",
     "psycopg-binary",
+    "opensearch-dsl==2.1.0",
+    "opensearch-py==2.6.0",
 ]
 
 qdrant = [ "qdrant-client" ]
@@ -73,6 +75,7 @@ pgvecto_rs = [ "psycopg2" ]
 redis = [ "redis" ]
 memorydb = [ "memorydb" ]
 chromadb = [ "chromadb" ]
+awsopensearch = [ "awsopensearch" ]
 zilliz_cloud = []
 
 [project.urls]
@@ -81,4 +84,5 @@ zilliz_cloud = []
 [project.scripts]
 init_bench = "vectordb_bench.__main__:main"
 vectordbbench = "vectordb_bench.cli.vectordbbench:cli"
+
 [tool.setuptools_scm]
