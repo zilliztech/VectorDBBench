@@ -2,7 +2,7 @@ import logging
 import pathlib
 from datetime import date
 from enum import Enum, StrEnum, auto
-from typing import List, Self, Sequence, Set
+from typing import List, Self
 
 import ujson
 
@@ -10,7 +10,6 @@ from .backend.clients import (
     DB,
     DBConfig,
     DBCaseConfig,
-    IndexType,
 )
 from .backend.cases import CaseType
 from .base import BaseModel
@@ -46,8 +45,8 @@ class CaseConfigParamType(Enum):
     numCandidates = "num_candidates"
     lists = "lists"
     probes = "probes"
-    quantizationType = "quantizationType"
-    quantizationRatio = "quantizationRatio"
+    quantizationType = "quantization_type"
+    quantizationRatio = "quantization_ratio"
     m = "m"
     nbits = "nbits"
     intermediate_graph_degree = "intermediate_graph_degree"
