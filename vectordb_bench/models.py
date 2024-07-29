@@ -2,7 +2,7 @@ import logging
 import pathlib
 from datetime import date
 from enum import Enum, StrEnum, auto
-from typing import List, Self, Sequence, Set
+from typing import List, Self
 
 import ujson
 
@@ -10,7 +10,6 @@ from .backend.clients import (
     DB,
     DBConfig,
     DBCaseConfig,
-    IndexType,
 )
 from .backend.cases import CaseType
 from .base import BaseModel
@@ -63,6 +62,7 @@ class CaseConfigParamType(Enum):
     level = "level"
     maintenance_work_mem = "maintenance_work_mem"
     max_parallel_workers = "max_parallel_workers"
+    adapt_for_cpu = "adapt_for_cpu"
 
 
 class CustomizedCase(BaseModel):

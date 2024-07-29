@@ -325,7 +325,7 @@ CaseConfigParamInput_EF_Milvus = CaseConfigInput(
         "value": 100,
     },
     isDisplayed=lambda config: config[CaseConfigParamType.IndexType]
-    == IndexType.HNSW.value,
+    in [IndexType.HNSW.value, IndexType.GPU_CAGRA.value],
 )
 
 CaseConfigParamInput_EF_Weaviate = CaseConfigInput(
@@ -508,6 +508,16 @@ CaseConfigParamInput_build_algo = CaseConfigInput(
     in [IndexType.GPU_CAGRA.value],
 )
 
+CaseConfigParamInput_adapt_for_cpu = CaseConfigInput(
+    label=CaseConfigParamType.adapt_for_cpu,
+    inputType=InputType.Option,
+    inputConfig={
+        "options": ["false", "true"],
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    in [IndexType.GPU_CAGRA.value],
+)
+
 
 CaseConfigParamInput_cache_dataset_on_device = CaseConfigInput(
     label=CaseConfigParamType.cache_dataset_on_device,
@@ -647,6 +657,7 @@ MilvusLoadConfig = [
     CaseConfigParamInput_graph_degree,
     CaseConfigParamInput_build_algo,
     CaseConfigParamInput_cache_dataset_on_device,
+    CaseConfigParamInput_adapt_for_cpu,
 ]
 MilvusPerformanceConfig = [
     CaseConfigParamInput_IndexType,
@@ -668,6 +679,7 @@ MilvusPerformanceConfig = [
     CaseConfigParamInput_build_algo,
     CaseConfigParamInput_cache_dataset_on_device,
     CaseConfigParamInput_refine_ratio,
+    CaseConfigParamInput_adapt_for_cpu,
 ]
 
 WeaviateLoadConfig = [

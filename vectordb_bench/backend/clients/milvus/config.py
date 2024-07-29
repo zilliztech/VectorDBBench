@@ -14,10 +14,14 @@ class MilvusIndexConfig(BaseModel):
 
     index: IndexType
     metric_type: MetricType | None = None
-    
+
     @property
     def is_gpu_index(self) -> bool:
-        return self.index in [IndexType.GPU_CAGRA, IndexType.GPU_IVF_FLAT, IndexType.GPU_IVF_PQ]
+        return self.index in [
+            IndexType.GPU_CAGRA,
+            IndexType.GPU_IVF_FLAT,
+            IndexType.GPU_IVF_PQ,
+        ]
 
     def parse_metric(self) -> str:
         if not self.metric_type:
@@ -99,7 +103,8 @@ class IVFFlatConfig(MilvusIndexConfig, DBCaseConfig):
             "metric_type": self.parse_metric(),
             "params": {"nprobe": self.nprobe},
         }
-        
+
+
 class IVFSQ8Config(MilvusIndexConfig, DBCaseConfig):
     nlist: int
     nprobe: int | None = None
@@ -196,10 +201,12 @@ class GPUCAGRAConfig(MilvusIndexConfig, DBCaseConfig):
     search_width: int = 4
     min_iterations: int = 0
     max_iterations: int = 0
-    build_algo: str = "IVF_PQ" # IVF_PQ; NN_DESCENT;
+    build_algo: str = "IVF_PQ"  # IVF_PQ; NN_DESCENT;
     cache_dataset_on_device: str
     refine_ratio: float | None = None
     index: IndexType = IndexType.GPU_CAGRA
+    adapt_for_cpu: str = "false"  # false; true;
+    ef: int = 128
 
     def index_param(self) -> dict:
         return {
@@ -210,6 +217,7 @@ class GPUCAGRAConfig(MilvusIndexConfig, DBCaseConfig):
                 "graph_degree": self.graph_degree,
                 "build_algo": self.build_algo,
                 "cache_dataset_on_device": self.cache_dataset_on_device,
+                "adapt_for_cpu": self.adapt_for_cpu,
             },
         }
 
@@ -223,6 +231,7 @@ class GPUCAGRAConfig(MilvusIndexConfig, DBCaseConfig):
                 "min_iterations": self.min_iterations,
                 "max_iterations": self.max_iterations,
                 "refine_ratio": self.refine_ratio,
+                "ef": self.ef,
             },
         }
 
