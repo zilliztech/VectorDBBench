@@ -24,7 +24,10 @@ def getFilterTasks(
         task
         for task in tasks
         if task.task_config.db_name in dbNames
-        and task.task_config.case_config.case_id.case_cls(task.task_config.case_config.custom_case).name in caseNames
+        and task.task_config.case_config.case_id.case_cls(
+            task.task_config.case_config.custom_case
+        ).name
+        in caseNames
     ]
     return filterTasks
 
@@ -35,17 +38,20 @@ def mergeTasks(tasks: list[CaseResult]):
         db_name = task.task_config.db_name
         db = task.task_config.db.value
         db_label = task.task_config.db_config.db_label or ""
-        case = task.task_config.case_config.case_id.case_cls(task.task_config.case_config.custom_case)
+        version = task.task_config.db_config.version or ""
+        case = task.task_config.case_config.case_id.case_cls(
+            task.task_config.case_config.custom_case
+        )
         dbCaseMetricsMap[db_name][case.name] = {
             "db": db,
             "db_label": db_label,
+            "version": version,
             "metrics": mergeMetrics(
                 dbCaseMetricsMap[db_name][case.name].get("metrics", {}),
                 asdict(task.metrics),
             ),
             "label": getBetterLabel(
-                dbCaseMetricsMap[db_name][case.name].get(
-                    "label", ResultLabel.FAILED),
+                dbCaseMetricsMap[db_name][case.name].get("label", ResultLabel.FAILED),
                 task.label,
             ),
         }
@@ -57,6 +63,7 @@ def mergeTasks(tasks: list[CaseResult]):
             metrics = metricInfo["metrics"]
             db = metricInfo["db"]
             db_label = metricInfo["db_label"]
+            version = metricInfo["version"]
             label = metricInfo["label"]
             if label == ResultLabel.NORMAL:
                 mergedTasks.append(
@@ -64,6 +71,7 @@ def mergeTasks(tasks: list[CaseResult]):
                         "db_name": db_name,
                         "db": db,
                         "db_label": db_label,
+                        "version": version,
                         "case_name": case_name,
                         "metricsSet": set(metrics.keys()),
                         **metrics,
@@ -79,8 +87,7 @@ def mergeMetrics(metrics_1: dict, metrics_2: dict) -> dict:
     metrics = {**metrics_1}
     for key, value in metrics_2.items():
         metrics[key] = (
-            getBetterMetric(
-                key, value, metrics[key]) if key in metrics else value
+            getBetterMetric(key, value, metrics[key]) if key in metrics else value
         )
 
     return metrics
