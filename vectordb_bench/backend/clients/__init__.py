@@ -31,6 +31,7 @@ class DB(Enum):
     PgVector = "PgVector"
     PgVectoRS = "PgVectoRS"
     Redis = "Redis"
+    MemoryDB = "MemoryDB"
     Chroma = "Chroma"
     AWSOpenSearch = "OpenSearch"
     Test = "test"
@@ -74,6 +75,10 @@ class DB(Enum):
         if self == DB.Redis:
             from .redis.redis import Redis
             return Redis
+        
+        if self == DB.MemoryDB:
+            from .memorydb.memorydb import MemoryDB
+            return MemoryDB
 
         if self == DB.Chroma:
             from .chroma.chroma import ChromaClient
@@ -121,6 +126,10 @@ class DB(Enum):
         if self == DB.Redis:
             from .redis.config import RedisConfig
             return RedisConfig
+        
+        if self == DB.MemoryDB:
+            from .memorydb.config import MemoryDBConfig
+            return MemoryDBConfig
 
         if self == DB.Chroma:
             from .chroma.config import ChromaConfig
