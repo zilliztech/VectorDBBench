@@ -41,10 +41,7 @@ class PgVectorScale(VectorDB):
         self._primary_field = "id"
         self._vector_field = "embedding"
 
-        self.conn, self.cursor = self._create_connection(**self.db_config)
-
-        self.cursor.execute("CREATE EXTENSION IF NOT EXISTS vectorscale CASCADE")
-        self.conn.commit()
+        self.conn, self.cursor = self._create_connection(**self.db_config)        
 
         log.info(f"{self.name} config values: {self.db_config}\n{self.case_config}")
         if not any(
@@ -74,6 +71,8 @@ class PgVectorScale(VectorDB):
     @staticmethod
     def _create_connection(**kwargs) -> Tuple[Connection, Cursor]:
         conn = psycopg.connect(**kwargs)
+        conn.cursor().execute("CREATE EXTENSION IF NOT EXISTS vectorscale CASCADE")
+        conn.commit()
         register_vector(conn)
         conn.autocommit = False
         cursor = conn.cursor()
