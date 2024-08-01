@@ -30,6 +30,7 @@ class DB(Enum):
     WeaviateCloud = "WeaviateCloud"
     PgVector = "PgVector"
     PgVectoRS = "PgVectoRS"
+    PgVectorScale = "PgVectorScale"
     Redis = "Redis"
     MemoryDB = "MemoryDB"
     Chroma = "Chroma"
@@ -71,6 +72,10 @@ class DB(Enum):
         if self == DB.PgVectoRS:
             from .pgvecto_rs.pgvecto_rs import PgVectoRS
             return PgVectoRS
+        
+        if self == DB.PgVectorScale:
+            from .pgvectorscale.pgvectorscale import PgVectorScale
+            return PgVectorScale
 
         if self == DB.Redis:
             from .redis.redis import Redis
@@ -123,6 +128,10 @@ class DB(Enum):
             from .pgvecto_rs.config import PgVectoRSConfig
             return PgVectoRSConfig
 
+        if self == DB.PgVectorScale:
+            from .pgvectorscale.config import PgVectorScaleConfig
+            return PgVectorScaleConfig
+
         if self == DB.Redis:
             from .redis.config import RedisConfig
             return RedisConfig
@@ -171,6 +180,10 @@ class DB(Enum):
         if self == DB.AWSOpenSearch:
             from .aws_opensearch.config import AWSOpenSearchIndexConfig
             return AWSOpenSearchIndexConfig
+
+        if self == DB.PgVectorScale:
+            from .pgvectorscale.config import _pgvectorscale_case_config
+            return _pgvectorscale_case_config.get(index_type)
 
         # DB.Pinecone, DB.Chroma, DB.Redis
         return EmptyDBCaseConfig
