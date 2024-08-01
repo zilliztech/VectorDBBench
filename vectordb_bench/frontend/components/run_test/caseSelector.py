@@ -100,6 +100,16 @@ def caseConfigSetting(st, dbToCaseClusterConfigs, uiCaseItem: UICaseItem, active
                         value=config.inputConfig["value"],
                         help=config.inputHelp,
                     )
+                elif config.inputType == InputType.Float:
+                    caseConfig[config.label] = column.number_input(
+                        config.displayLabel if config.displayLabel else config.label.value,
+                        step=config.inputConfig.get("step", 0.1),
+                        min_value=config.inputConfig["min"],
+                        max_value=config.inputConfig["max"],
+                        key=key,
+                        value=config.inputConfig["value"],
+                        help=config.inputHelp,
+                    )
                 k += 1
         if k == 0:
             columns[1].write("Auto")

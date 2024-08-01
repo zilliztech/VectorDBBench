@@ -62,6 +62,14 @@ class CaseConfigParamType(Enum):
     level = "level"
     maintenance_work_mem = "maintenance_work_mem"
     max_parallel_workers = "max_parallel_workers"
+    storage_layout = "storage_layout"
+    num_neighbors = "num_neighbors"
+    search_list_size = "search_list_size"
+    max_alpha = "max_alpha"
+    num_dimensions = "num_dimensions"
+    num_bits_per_dimension = "num_bits_per_dimension"
+    query_search_list_size = "query_search_list_size"
+    query_rescore = "query_rescore"
 
 
 class CustomizedCase(BaseModel):
