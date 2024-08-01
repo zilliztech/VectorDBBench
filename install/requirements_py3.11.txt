@@ -5,6 +5,7 @@ pinecone-client
 weaviate-client
 elasticsearch
 pgvector
+pgvecto_rs[psycopg3]>=0.2.1
 sqlalchemy
 redis
 chromadb

@@ -1,30 +1,53 @@
-from typing import Literal
+from abc import abstractmethod
+from typing import TypedDict
+
 from pydantic import BaseModel, SecretStr
-from ..api import DBConfig, DBCaseConfig, MetricType, IndexType
+from pgvecto_rs.types import IndexOption, Ivf, Hnsw, Flat, Quantization
+from pgvecto_rs.types.index import QuantizationType, QuantizationRatio
+
+from ..api import DBConfig, DBCaseConfig, IndexType, MetricType
 
 POSTGRE_URL_PLACEHOLDER = "postgresql://%s:%s@%s/%s"
 
 
+class PgVectorRSConfigDict(TypedDict):
+    """These keys will be directly used as kwargs in psycopg connection string,
+    so the names must match exactly psycopg API"""
+
+    user: str
+    password: str
+    host: str
+    port: int
+    dbname: str
+
+
 class PgVectoRSConfig(DBConfig):
-    user_name: SecretStr = "postgres"
+    user_name: str = "postgres"
     password: SecretStr
     host: str = "localhost"
     port: int = 5432
     db_name: str
 
     def to_dict(self) -> dict:
-        user_str = self.user_name.get_secret_value()
+        user_str = self.user_name
         pwd_str = self.password.get_secret_value()
         return {
             "host": self.host,
             "port": self.port,
             "dbname": self.db_name,
             "user": user_str,
-            "password": pwd_str
+            "password": pwd_str,
         }
+
 
 class PgVectoRSIndexConfig(BaseModel, DBCaseConfig):
     metric_type: MetricType | None = None
+    create_index_before_load: bool = False
+    create_index_after_load: bool = True
+
+    max_parallel_workers: int | None = None
+    quantization_type: QuantizationType | None = None
+    quantization_ratio: QuantizationRatio | None = None
 
     def parse_metric(self) -> str:
         if self.metric_type == MetricType.L2:
@@ -40,88 +63,100 @@ class PgVectoRSIndexConfig(BaseModel, DBCaseConfig):
             return "<#>"
         return "<=>"
 
-class PgVectoRSQuantConfig(PgVectoRSIndexConfig):
-    quantizationType: Literal["trivial", "scalar", "product"]
-    quantizationRatio: None | Literal["x4", "x8", "x16", "x32", "x64"]
+    def search_param(self) -> dict:
+        return {
+            "metric_fun_op": self.parse_metric_fun_op(),
+        }
 
-    def parse_quantization(self) -> str:
-        if self.quantizationType == "trivial":
-            return "quantization = { trivial = { } }"
-        elif self.quantizationType == "scalar":
-            return "quantization = { scalar = { } }"
-        else:
-            return f'quantization = {{ product = {{ ratio = "{self.quantizationRatio}" }} }}'
+    @abstractmethod
+    def index_param(self) -> dict[str, str]: ...
+
+    @abstractmethod
+    def session_param(self) -> dict[str, str | int]: ...
 
 
-class HNSWConfig(PgVectoRSQuantConfig):
-    M: int
-    efConstruction: int
+class PgVectoRSHNSWConfig(PgVectoRSIndexConfig):
     index: IndexType = IndexType.HNSW
+    m: int | None = None
+    ef_search: int | None
+    ef_construction: int | None = None
 
-    def index_param(self) -> dict:
-        options = f"""
-[indexing.hnsw]
-m = {self.M}
-ef_construction = {self.efConstruction}
-{self.parse_quantization()}
-"""
-        return {"options": options, "metric": self.parse_metric()}
+    def index_param(self) -> dict[str, str]:
+        if self.quantization_type is None:
+            quantization = None
+        else:
+            quantization = Quantization(
+                typ=self.quantization_type, ratio=self.quantization_ratio
+            )
 
-    def search_param(self) -> dict:
-        return {"metrics_op": self.parse_metric_fun_op()}
+        option = IndexOption(
+            index=Hnsw(
+                m=self.m,
+                ef_construction=self.ef_construction,
+                quantization=quantization,
+            ),
+            threads=self.max_parallel_workers,
+        )
+        return {"options": option.dumps(), "metric": self.parse_metric()}
+
+    def session_param(self) -> dict[str, str | int]:
+        session_parameters = {}
+        if self.ef_search is not None:
+            session_parameters["vectors.hnsw_ef_search"] = str(self.ef_search)
+        return session_parameters
 
 
-class IVFFlatConfig(PgVectoRSQuantConfig):
-    nlist: int
-    nprobe: int | None = None
+class PgVectoRSIVFFlatConfig(PgVectoRSIndexConfig):
     index: IndexType = IndexType.IVFFlat
+    probes: int | None
+    lists: int | None
 
-    def index_param(self) -> dict:
-        options = f"""
-[indexing.ivf]
-nlist = {self.nlist}
-nsample = {self.nprobe if self.nprobe else 10}
-{self.parse_quantization()}
-"""
-        return {"options": options, "metric": self.parse_metric()}
+    def index_param(self) -> dict[str, str]:
+        if self.quantization_type is None:
+            quantization = None
+        else:
+            quantization = Quantization(
+                typ=self.quantization_type, ratio=self.quantization_ratio
+            )
 
-    def search_param(self) -> dict:
-        return {"metrics_op": self.parse_metric_fun_op()}
+        option = IndexOption(
+            index=Ivf(nlist=self.lists, quantization=quantization),
+            threads=self.max_parallel_workers,
+        )
+        return {"options": option.dumps(), "metric": self.parse_metric()}
 
-class IVFFlatSQ8Config(PgVectoRSIndexConfig):
-    nlist: int
-    nprobe: int | None = None
-    index: IndexType = IndexType.IVFSQ8
+    def session_param(self) -> dict[str, str | int]:
+        session_parameters = {}
+        if self.probes is not None:
+            session_parameters["vectors.ivf_nprobe"] = str(self.probes)
+        return session_parameters
 
-    def index_param(self) -> dict:
-        options = f"""
-[indexing.ivf]
-nlist = {self.nlist}
-nsample = {self.nprobe if self.nprobe else 10}
-quantization = {{ scalar = {{ }} }}
-"""
-        return {"options": options, "metric": self.parse_metric()}
 
-    def search_param(self) -> dict:
-        return {"metrics_op": self.parse_metric_fun_op()}
-
-class FLATConfig(PgVectoRSQuantConfig):
+class PgVectoRSFLATConfig(PgVectoRSIndexConfig):
     index: IndexType = IndexType.Flat
 
-    def index_param(self) -> dict:
-        options = f"""
-[indexing.flat]
-{self.parse_quantization()}
-"""
-        return {"options": options, "metric": self.parse_metric()}
+    def index_param(self) -> dict[str, str]:
+        if self.quantization_type is None:
+            quantization = None
+        else:
+            quantization = Quantization(
+                typ=self.quantization_type, ratio=self.quantization_ratio
+            )
 
-    def search_param(self) -> dict:
-        return {"metrics_op": self.parse_metric_fun_op()}
+        option = IndexOption(
+            index=Flat(
+                quantization=quantization,
+            ),
+            threads=self.max_parallel_workers,
+        )
+        return {"options": option.dumps(), "metric": self.parse_metric()}
+
+    def session_param(self) -> dict[str, str | int]:
+        return {}
 
 
 _pgvecto_rs_case_config = {
-    IndexType.HNSW: HNSWConfig,
-    IndexType.IVFFlat: IVFFlatConfig,
-    IndexType.IVFSQ8: IVFFlatSQ8Config,
-    IndexType.Flat: FLATConfig,
+    IndexType.HNSW: PgVectoRSHNSWConfig,
+    IndexType.IVFFlat: PgVectoRSIVFFlatConfig,
+    IndexType.Flat: PgVectoRSFLATConfig,
 }
