@@ -3,6 +3,9 @@ from typing import Annotated, TypedDict, Unpack
 import click
 from pydantic import SecretStr
 
+from .config import RedisHNSWConfig
+
+
 from ....cli.cli import (
     CommonTypedDict,
     HNSWFlavor2,
@@ -69,6 +72,11 @@ def Redis(**parameters: Unpack[RedisHNSWTypedDict]):
             ssl=parameters["ssl"],
             ssl_ca_certs=parameters["ssl_ca_certs"],
             cmd=parameters["cmd"],
+        ),        
+        db_case_config=RedisHNSWConfig(
+            M=parameters["m"],
+            efConstruction=parameters["ef_construction"],
+            ef=parameters["ef_runtime"],
         ),
         **parameters,
     )
