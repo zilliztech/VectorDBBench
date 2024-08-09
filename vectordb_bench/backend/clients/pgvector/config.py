@@ -59,11 +59,18 @@ class PgVectorIndexConfig(BaseModel, DBCaseConfig):
     create_index_after_load: bool = True
 
     def parse_metric(self) -> str:
-        if self.metric_type == MetricType.L2:
-            return "vector_l2_ops"
-        elif self.metric_type == MetricType.IP:
-            return "vector_ip_ops"
-        return "vector_cosine_ops"
+        if self.quantization_type == "halfvec":
+            if self.metric_type == MetricType.L2:
+                return "halfvec_l2_ops"
+            elif self.metric_type == MetricType.IP:
+                return "halfvec_ip_ops"
+            return "halfvec_cosine_ops"
+        else:
+            if self.metric_type == MetricType.L2:
+                return "vector_l2_ops"
+            elif self.metric_type == MetricType.IP:
+                return "vector_ip_ops"
+            return "vector_cosine_ops"
 
     def parse_metric_fun_op(self) -> LiteralString:
         if self.metric_type == MetricType.L2:
@@ -143,9 +150,12 @@ class PgVectorIVFFlatConfig(PgVectorIndexConfig):
     index: IndexType = IndexType.ES_IVFFlat
     maintenance_work_mem: Optional[str] = None
     max_parallel_workers: Optional[int] = None
+    quantization_type: Optional[str] = None
 
     def index_param(self) -> PgVectorIndexParam:
         index_parameters = {"lists": self.lists}
+        if self.quantization_type == "none":
+            self.quantization_type = None
         return {
             "metric": self.parse_metric(),
             "index_type": self.index.value,
@@ -154,6 +164,7 @@ class PgVectorIVFFlatConfig(PgVectorIndexConfig):
             ),
             "maintenance_work_mem": self.maintenance_work_mem,
             "max_parallel_workers": self.max_parallel_workers,
+            "quantization_type": self.quantization_type,
         }
 
     def search_param(self) -> PgVectorSearchParam:
@@ -183,9 +194,12 @@ class PgVectorHNSWConfig(PgVectorIndexConfig):
     index: IndexType = IndexType.ES_HNSW
     maintenance_work_mem: Optional[str] = None
     max_parallel_workers: Optional[int] = None
+    quantization_type: Optional[str] = None
 
     def index_param(self) -> PgVectorIndexParam:
         index_parameters = {"m": self.m, "ef_construction": self.ef_construction}
+        if self.quantization_type == "none":
+            self.quantization_type = None
         return {
             "metric": self.parse_metric(),
             "index_type": self.index.value,
@@ -194,6 +208,7 @@ class PgVectorHNSWConfig(PgVectorIndexConfig):
             ),
             "maintenance_work_mem": self.maintenance_work_mem,
             "max_parallel_workers": self.max_parallel_workers,
+            "quantization_type": self.quantization_type,
         }
 
     def search_param(self) -> PgVectorSearchParam:

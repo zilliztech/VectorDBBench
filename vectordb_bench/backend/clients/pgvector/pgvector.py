@@ -112,25 +112,63 @@ class PgVector(VectorDB):
                 self.cursor.execute(command)
             self.conn.commit()
 
-        self._filtered_search = sql.Composed(
-            [
-                sql.SQL(
-                    "SELECT id FROM public.{table_name} WHERE id >= %s ORDER BY embedding "
-                    ).format(table_name=sql.Identifier(self.table_name)),
-                sql.SQL(self.case_config.search_param()["metric_fun_op"]),
-                sql.SQL(" %s::vector LIMIT %s::int"),
-            ]
-        )
+        index_param = self.case_config.index_param()
+        # The following sections assume that the quantization_type value matches the quantization function name
+        if index_param["quantization_type"] != None:
+            self._filtered_search = sql.Composed(
+                [
+                    sql.SQL(
+                        "SELECT id FROM public.{table_name} WHERE id >= %s ORDER BY embedding::{quantization_type}({dim}) "
+                    ).format(
+                        table_name=sql.Identifier(self.table_name),
+                        quantization_type=sql.SQL(index_param["quantization_type"]),
+                        dim=sql.Literal(self.dim),
+                    ),
+                    sql.SQL(self.case_config.search_param()["metric_fun_op"]),
+                    sql.SQL(" %s::{quantization_type}({dim}) LIMIT %s::int").format(
+                        quantization_type=sql.SQL(index_param["quantization_type"]),
+                        dim=sql.Literal(self.dim),
+                    ),
+                ]
+            )
+        else:
+            self._filtered_search = sql.Composed(
+                [
+                    sql.SQL(
+                        "SELECT id FROM public.{table_name} WHERE id >= %s ORDER BY embedding "
+                        ).format(table_name=sql.Identifier(self.table_name)),
+                    sql.SQL(self.case_config.search_param()["metric_fun_op"]),
+                    sql.SQL(" %s::vector LIMIT %s::int"),
+                ]
+            )
 
-        self._unfiltered_search = sql.Composed(
-            [
-                sql.SQL("SELECT id FROM public.{} ORDER BY embedding ").format(
-                    sql.Identifier(self.table_name)
-                ),
-                sql.SQL(self.case_config.search_param()["metric_fun_op"]),
-                sql.SQL(" %s::vector LIMIT %s::int"),
-            ]
-        )
+        if index_param["quantization_type"] != None:
+            self._unfiltered_search = sql.Composed(
+                [
+                    sql.SQL(
+                        "SELECT id FROM public.{table_name} ORDER BY embedding::{quantization_type}({dim}) "
+                    ).format(
+                        table_name=sql.Identifier(self.table_name),
+                        quantization_type=sql.SQL(index_param["quantization_type"]),
+                        dim=sql.Literal(self.dim),
+                    ),
+                    sql.SQL(self.case_config.search_param()["metric_fun_op"]),
+                    sql.SQL(" %s::{quantization_type}({dim}) LIMIT %s::int").format(
+                        quantization_type=sql.SQL(index_param["quantization_type"]),
+                        dim=sql.Literal(self.dim),
+                    ),
+                ]
+            )
+        else:
+            self._unfiltered_search = sql.Composed(
+                [
+                    sql.SQL("SELECT id FROM public.{} ORDER BY embedding ").format(
+                        sql.Identifier(self.table_name)
+                    ),
+                    sql.SQL(self.case_config.search_param()["metric_fun_op"]),
+                    sql.SQL(" %s::vector LIMIT %s::int"),
+                ]
+            )
 
         try:
             yield
@@ -265,17 +303,34 @@ class PgVector(VectorDB):
         else:
             with_clause = sql.Composed(())
 
-        index_create_sql = sql.SQL(
-            """
-            CREATE INDEX IF NOT EXISTS {index_name} ON public.{table_name} 
-            USING {index_type} (embedding {embedding_metric})
-            """
-        ).format(
-            index_name=sql.Identifier(self._index_name),
-            table_name=sql.Identifier(self.table_name),
-            index_type=sql.Identifier(index_param["index_type"]),
-            embedding_metric=sql.Identifier(index_param["metric"]),
-        )
+        if index_param["quantization_type"] != None:
+            index_create_sql = sql.SQL(
+                """
+                CREATE INDEX IF NOT EXISTS {index_name} ON public.{table_name} 
+                USING {index_type} ((embedding::{quantization_type}({dim})) {embedding_metric})
+                """
+            ).format(
+                index_name=sql.Identifier(self._index_name),
+                table_name=sql.Identifier(self.table_name),
+                index_type=sql.Identifier(index_param["index_type"]),
+                # This assumes that the quantization_type value matches the quantization function name
+                quantization_type=sql.SQL(index_param["quantization_type"]),
+                dim=self.dim,
+                embedding_metric=sql.Identifier(index_param["metric"]),
+            )
+        else:
+            index_create_sql = sql.SQL(
+                """
+                CREATE INDEX IF NOT EXISTS {index_name} ON public.{table_name} 
+                USING {index_type} (embedding {embedding_metric})
+                """
+            ).format(
+                index_name=sql.Identifier(self._index_name),
+                table_name=sql.Identifier(self.table_name),
+                index_type=sql.Identifier(index_param["index_type"]),
+                embedding_metric=sql.Identifier(index_param["metric"]),
+            )
+
         index_create_sql_with_with_clause = (
             index_create_sql + with_clause
         ).join(" ")

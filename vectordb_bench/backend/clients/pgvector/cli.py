@@ -56,7 +56,15 @@ class PgVectorTypedDict(CommonTypedDict):
             required=False,
         ),
     ]
-
+    quantization_type: Annotated[
+        Optional[str],
+        click.option(
+            "--quantization-type",
+            type=click.Choice(["none", "halfvec"]),
+            help="quantization type for vectors",
+            required=False,
+        ),
+    ]
 
 class PgVectorIVFFlatTypedDict(PgVectorTypedDict, IVFFlatTypedDict):
     ...
@@ -79,7 +87,10 @@ def PgVectorIVFFlat(
             db_name=parameters["db_name"],
         ),
         db_case_config=PgVectorIVFFlatConfig(
-            metric_type=None, lists=parameters["lists"], probes=parameters["probes"]
+            metric_type=None,
+            lists=parameters["lists"],
+            probes=parameters["probes"],
+            quantization_type=parameters["quantization_type"],
         ),
         **parameters,
     )
@@ -111,6 +122,7 @@ def PgVectorHNSW(
             ef_search=parameters["ef_search"],
             maintenance_work_mem=parameters["maintenance_work_mem"],
             max_parallel_workers=parameters["max_parallel_workers"],
+            quantization_type=parameters["quantization_type"],
         ),
         **parameters,
     )
