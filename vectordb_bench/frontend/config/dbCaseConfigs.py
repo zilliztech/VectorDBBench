@@ -738,6 +738,19 @@ CaseConfigParamInput_QuantizationType_PgVectoRS = CaseConfigInput(
     ],
 )
 
+CaseConfigParamInput_QuantizationType_PgVector = CaseConfigInput(
+    label=CaseConfigParamType.quantizationType,
+    inputType=InputType.Option,
+    inputConfig={
+        "options": ["none", "halfvec"],
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    in [
+        IndexType.HNSW.value,
+        IndexType.IVFFlat.value,
+    ],
+)
+
 CaseConfigParamInput_QuantizationRatio_PgVectoRS = CaseConfigInput(
     label=CaseConfigParamType.quantizationRatio,
     inputType=InputType.Option,
@@ -831,6 +844,7 @@ PgVectorLoadingConfig = [
     CaseConfigParamInput_Lists_PgVector,
     CaseConfigParamInput_m,
     CaseConfigParamInput_EFConstruction_PgVector,
+    CaseConfigParamInput_QuantizationType_PgVector,
     CaseConfigParamInput_maintenance_work_mem_PgVector,
     CaseConfigParamInput_max_parallel_workers_PgVector,
 ]
@@ -841,6 +855,7 @@ PgVectorPerformanceConfig = [
     CaseConfigParamInput_EFSearch_PgVector,
     CaseConfigParamInput_Lists_PgVector,
     CaseConfigParamInput_Probes_PgVector,
+    CaseConfigParamInput_QuantizationType_PgVector,
     CaseConfigParamInput_maintenance_work_mem_PgVector,
     CaseConfigParamInput_max_parallel_workers_PgVector,
 ]
