@@ -180,6 +180,16 @@ CaseConfigParamInput_IndexType = CaseConfigInput(
     },
 )
 
+CaseConfigParamInput_IndexType_PgDiskANN = CaseConfigInput(
+    label=CaseConfigParamType.IndexType,
+    inputHelp="Select Index Type",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [
+            IndexType.DISKANN.value,
+        ],
+    },
+)
 
 CaseConfigParamInput_IndexType_PgVectorScale = CaseConfigInput(
     label=CaseConfigParamType.IndexType,
@@ -203,6 +213,42 @@ CaseConfigParamInput_storage_layout = CaseConfigInput(
             "plain",
         ],
     },
+)
+
+CaseConfigParamInput_max_neighbors = CaseConfigInput(
+    label=CaseConfigParamType.max_neighbors,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 10,
+        "max": 300,
+        "value": 32,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    == IndexType.DISKANN.value,
+)
+
+CaseConfigParamInput_l_value_ib = CaseConfigInput(
+    label=CaseConfigParamType.l_value_ib,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 10,
+        "max": 300,
+        "value": 50,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    == IndexType.DISKANN.value,
+)
+
+CaseConfigParamInput_l_value_is = CaseConfigInput(
+    label=CaseConfigParamType.l_value_is,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 10,
+        "max": 300,
+        "value": 40,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    == IndexType.DISKANN.value,
 )
 
 CaseConfigParamInput_num_neighbors = CaseConfigInput(
@@ -904,6 +950,13 @@ PgVectorScalePerformanceConfig = [
     CaseConfigParamInput_query_search_list_size,
 ]
 
+PgDiskANNPerformanceConfig = [
+    CaseConfigParamInput_IndexType_PgDiskANN,
+    CaseConfigParamInput_max_neighbors,
+    CaseConfigParamInput_l_value_ib,
+    CaseConfigParamInput_l_value_is,
+]
+
 CASE_CONFIG_MAP = {
     DB.Milvus: {
         CaseLabel.Load: MilvusLoadConfig,
@@ -931,5 +984,8 @@ CASE_CONFIG_MAP = {
     DB.PgVectorScale: {
         CaseLabel.Load: PgVectorScaleLoadingConfig,
         CaseLabel.Performance: PgVectorScalePerformanceConfig,
+    },
+    DB.PgDiskANN: {
+        CaseLabel.Performance: PgDiskANNPerformanceConfig,
     },
 }
