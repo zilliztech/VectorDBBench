@@ -279,7 +279,7 @@ class PgVectorScale(VectorDB):
         q = np.asarray(query)
         if filters:
             gt = filters.get("id")
-            self.cursor.execute(
+            result = self.cursor.execute(
                 self._filtered_search, (gt, q, k), prepare=True, binary=True
             )
         else:
