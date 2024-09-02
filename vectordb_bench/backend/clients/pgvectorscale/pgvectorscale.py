@@ -22,6 +22,9 @@ class PgVectorScale(VectorDB):
     conn: psycopg.Connection[Any] | None = None
     coursor: psycopg.Cursor[Any] | None = None
 
+    _unfiltered_search: sql.Composed
+    _filtered_search: sql.Composed
+
     def __init__(
         self,
         dim: int,
@@ -98,6 +101,16 @@ class PgVectorScale(VectorDB):
                 log.debug(command.as_string(self.cursor))
                 self.cursor.execute(command)
             self.conn.commit()
+        
+        self._filtered_search = sql.Composed(
+            [
+                sql.SQL("SELECT id FROM public.{} WHERE id >= %s ORDER BY embedding ").format(
+                    sql.Identifier(self.table_name),
+                ),
+                sql.SQL(self.case_config.search_param()["metric_fun_op"]),
+                sql.SQL(" %s::vector LIMIT %s::int")
+            ]
+        )
         
         self._unfiltered_search = sql.Composed(
             [
@@ -264,9 +277,14 @@ class PgVectorScale(VectorDB):
         assert self.cursor is not None, "Cursor is not initialized"
 
         q = np.asarray(query)
-        # TODO add filters support
-        result = self.cursor.execute(
-            self._unfiltered_search, (q, k), prepare=True, binary=True
-        )
+        if filters:
+            gt = filters.get("id")
+            result = self.cursor.execute(
+                self._filtered_search, (gt, q, k), prepare=True, binary=True
+            )
+        else:
+            result = self.cursor.execute(
+                self._unfiltered_search, (q, k), prepare=True, binary=True
+            )
 
         return [int(i[0]) for i in result.fetchall()]
