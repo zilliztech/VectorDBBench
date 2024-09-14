@@ -66,7 +66,8 @@ class Milvus(VectorDB):
                 self.case_config.index_param(),
                 index_name=self._index_name,
             )
-            #  self._pre_load(coll)
+            if kwargs.get("pre_load") is True:
+                self._pre_load(col)
 
         connections.disconnect("default")
 
@@ -92,7 +93,7 @@ class Milvus(VectorDB):
         self._post_insert()
         log.info(f"{self.name} optimizing before search")
         try:
-            self.col.load()
+            self.col.load(refresh=True)
         except Exception as e:
             log.warning(f"{self.name} optimize error: {e}")
             raise e from None
