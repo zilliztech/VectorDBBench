@@ -150,7 +150,7 @@ class CaseRunner(BaseModel):
                 )
 
             self._init_search_runner()
-    
+
             m.qps, m.conc_num_list, m.conc_qps_list, m.conc_latency_p99_list = self._conc_search()
             m.recall, m.serial_latency_p99 = self._serial_search()
         '''
@@ -186,7 +186,7 @@ class CaseRunner(BaseModel):
                 if TaskStage.SEARCH_CONCURRENT in self.config.stages:
                     search_results = self._conc_search()
                     m.qps, m.conc_num_list, m.conc_qps_list, m.conc_latency_p99_list = search_results
-            
+
         except Exception as e:
             log.warning(f"Failed to run performance case, reason = {e}")
             traceback.print_exc()

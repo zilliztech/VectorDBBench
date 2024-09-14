@@ -17,7 +17,7 @@ class config:
 
     DEFAULT_DATASET_URL = env.str("DEFAULT_DATASET_URL", AWS_S3_URL)
     DATASET_LOCAL_DIR = env.path("DATASET_LOCAL_DIR", "/tmp/vectordb_bench/dataset")
-    NUM_PER_BATCH = env.int("NUM_PER_BATCH", 5000)
+    NUM_PER_BATCH = env.int("NUM_PER_BATCH", 100)
 
     DROP_OLD = env.bool("DROP_OLD", True)
     USE_SHUFFLED_DATA = env.bool("USE_SHUFFLED_DATA", True)
