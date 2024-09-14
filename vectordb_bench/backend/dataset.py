@@ -57,11 +57,11 @@ class CustomDataset(BaseDataset):
     dir: str
     file_num: int
     isCustom: bool = True
-    
+
     @validator("size")
     def verify_size(cls, v):
         return v
-    
+
     @property
     def label(self) -> str:
         return "Custom"
@@ -73,7 +73,8 @@ class CustomDataset(BaseDataset):
     @property
     def file_count(self) -> int:
         return self.file_num
-    
+
+
 class LAION(BaseDataset):
     name: str = "LAION"
     dim: int = 768
@@ -242,13 +243,15 @@ class DataSetIterator:
         self._cur = None
         self._sub_idx = [0 for i in range(len(self._ds.train_files))] # iter num for each file
 
+    def __iter__(self):
+        return self
+
     def _get_iter(self, file_name: str):
         p = pathlib.Path(self._ds.data_dir, file_name)
         log.info(f"Get iterator for {p.name}")
         if not p.exists():
             raise IndexError(f"No such file {p}")
-            log.warning(f"No such file: {p}")
-        return ParquetFile(p).iter_batches(config.NUM_PER_BATCH)
+        return ParquetFile(p, memory_map=True, pre_buffer=True).iter_batches(config.NUM_PER_BATCH)
 
     def __next__(self) -> pd.DataFrame:
         """return the data in the next file of the training list"""
