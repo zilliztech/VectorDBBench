@@ -10,6 +10,7 @@ from ....cli.cli import (
     IVFFlatTypedDict,
     cli,
     click_parameter_decorators_from_typed_dict,
+    get_custom_case_config,
     run,
 )
 from vectordb_bench.backend.clients import DB
@@ -77,6 +78,7 @@ def PgVectorIVFFlat(
 ):
     from .config import PgVectorConfig, PgVectorIVFFlatConfig
 
+    parameters["custom_case"] = get_custom_case_config(parameters)
     run(
         db=DB.PgVector,
         db_config=PgVectorConfig(
@@ -107,6 +109,7 @@ def PgVectorHNSW(
 ):
     from .config import PgVectorConfig, PgVectorHNSWConfig
 
+    parameters["custom_case"] = get_custom_case_config(parameters)
     run(
         db=DB.PgVector,
         db_config=PgVectorConfig(
