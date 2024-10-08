@@ -56,7 +56,7 @@ all = [
     "weaviate-client",
     "elasticsearch",
     "pgvector",
-    "pgvecto_rs[psycopg3]>=0.2.1",
+    "pgvecto_rs[psycopg3]>=0.2.2",
     "sqlalchemy",
     "redis",
     "chromadb",
@@ -72,7 +72,7 @@ weaviate = [ "weaviate-client" ]
 elastic = [ "elasticsearch" ]
 pgvector = [ "psycopg", "psycopg-binary", "pgvector" ]
 pgvectorscale = [ "psycopg", "psycopg-binary", "pgvector" ]
-pgvecto_rs = [ "pgvecto_rs[psycopg3]>=0.2.1" ]
+pgvecto_rs = [ "pgvecto_rs[psycopg3]>=0.2.2" ]
 redis = [ "redis" ]
 memorydb = [ "memorydb" ]
 chromadb = [ "chromadb" ]
