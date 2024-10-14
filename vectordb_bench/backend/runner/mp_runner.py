@@ -2,6 +2,7 @@ import time
 import traceback
 import concurrent
 import multiprocessing as mp
+import random
 import logging
 from typing import Iterable
 import numpy as np
@@ -46,7 +47,7 @@ class MultiProcessingSearchRunner:
             cond.wait()
 
         with self.db.init():
-            num, idx = len(test_data), 0
+            num, idx = len(test_data), random.randint(0, len(test_data) - 1)
 
             start_time = time.perf_counter()
             count = 0
