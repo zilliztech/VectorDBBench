@@ -360,6 +360,37 @@ CaseConfigParamInput_EFConstruction_ES = CaseConfigInput(
     },
 )
 
+CaseConfigParamInput_EFConstruction_AWSOpensearch = CaseConfigInput(
+    label=CaseConfigParamType.EFConstruction,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 100,
+        "max": 1024,
+        "value": 256,
+    },
+)
+
+CaseConfigParamInput_M_AWSOpensearch = CaseConfigInput(
+    label=CaseConfigParamType.M,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 4,
+        "max": 64,
+        "value": 16,
+    },
+)
+
+CaseConfigParamInput_EF_SEARCH_AWSOpensearch = CaseConfigInput(
+    label=CaseConfigParamType.ef_search,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 100,
+        "max": 1024,
+        "value": 256,
+    },
+)
+
+
 CaseConfigParamInput_maintenance_work_mem_PgVector = CaseConfigInput(
     label=CaseConfigParamType.maintenance_work_mem,
     inputHelp="Recommended value: 1.33x the index size, not to exceed the available free memory."
@@ -839,6 +870,13 @@ ESPerformanceConfig = [
     CaseConfigParamInput_NumCandidates_ES,
 ]
 
+AWSOpensearchLoadingConfig = [CaseConfigParamInput_EFConstruction_AWSOpensearch, CaseConfigParamInput_M_AWSOpensearch]
+AWSOpenSearchPerformanceConfig = [
+    CaseConfigParamInput_EFConstruction_AWSOpensearch,
+    CaseConfigParamInput_M_AWSOpensearch,
+    CaseConfigParamInput_EF_SEARCH_AWSOpensearch,
+]
+
 PgVectorLoadingConfig = [
     CaseConfigParamInput_IndexType_PgVector,
     CaseConfigParamInput_Lists_PgVector,
@@ -919,6 +957,10 @@ CASE_CONFIG_MAP = {
     DB.ElasticCloud: {
         CaseLabel.Load: ESLoadingConfig,
         CaseLabel.Performance: ESPerformanceConfig,
+    },
+    DB.AWSOpenSearch: {
+        CaseLabel.Load: AWSOpensearchLoadingConfig,
+        CaseLabel.Performance: AWSOpenSearchPerformanceConfig,
     },
     DB.PgVector: {
         CaseLabel.Load: PgVectorLoadingConfig,

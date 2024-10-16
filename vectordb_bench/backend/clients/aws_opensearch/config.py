@@ -1,9 +1,10 @@
+import logging
 from enum import Enum
 from pydantic import SecretStr, BaseModel
 
 from ..api import DBConfig, DBCaseConfig, MetricType, IndexType
 
-
+log = logging.getLogger(__name__)
 class AWSOpenSearchConfig(DBConfig, BaseModel):
     host: str = ""
     port: int = 443
@@ -31,14 +32,18 @@ class AWSOS_Engine(Enum):
 
 class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
     metric_type: MetricType = MetricType.L2
-    engine: AWSOS_Engine = AWSOS_Engine.nmslib
-    efConstruction: int = 360
-    M: int = 30
+    engine: AWSOS_Engine = AWSOS_Engine.faiss
+    efConstruction: int = 256
+    efSearch: int = 256
+    M: int = 16
 
     def parse_metric(self) -> str:
         if self.metric_type == MetricType.IP:
-            return "innerproduct"  # only support faiss / nmslib, not for Lucene.
+            return "innerproduct"
         elif self.metric_type == MetricType.COSINE:
+            if self.engine == AWSOS_Engine.faiss:
+                log.info(f"Using metric type as innerproduct because faiss doesn't support cosine as metric type for Opensearch")
+                return "innerproduct"
             return "cosinesimil"
         return "l2"
 
@@ -49,7 +54,8 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
             "engine": self.engine.value,
             "parameters": {
                 "ef_construction": self.efConstruction,
-                "m": self.M
+                "m": self.M,
+                "ef_search": self.efSearch
             }
         }
         return params

@@ -3,7 +3,7 @@ from contextlib import contextmanager
 import time
 from typing import Iterable, Type
 from ..api import VectorDB, DBCaseConfig, DBConfig, IndexType
-from .config import AWSOpenSearchConfig, AWSOpenSearchIndexConfig
+from .config import AWSOpenSearchConfig, AWSOpenSearchIndexConfig, AWSOS_Engine
 from opensearchpy import OpenSearch
 from opensearchpy.helpers import bulk
 
@@ -83,7 +83,7 @@ class AWSOpenSearch(VectorDB):
 
     @contextmanager
     def init(self) -> None:
-        """connect to elasticsearch"""
+        """connect to opensearch"""
         self.client = OpenSearch(**self.db_config)
 
         yield
@@ -97,7 +97,7 @@ class AWSOpenSearch(VectorDB):
         metadata: list[int],
         **kwargs,
     ) -> tuple[int, Exception]:
-        """Insert the embeddings to the elasticsearch."""
+        """Insert the embeddings to the opensearch."""
         assert self.client is not None, "should self.init() first"
 
         insert_data = []
@@ -136,13 +136,15 @@ class AWSOpenSearch(VectorDB):
         body = {
             "size": k,
             "query": {"knn": {self.vector_col_name: {"vector": query, "k": k}}},
+            **({"filter": {"range": {self.id_col_name: {"gt": filters["id"]}}}} if filters else {})
         }
         try:
-            resp = self.client.search(index=self.index_name, body=body)
+            resp = self.client.search(index=self.index_name, body=body,size=k,_source=False,docvalue_fields=[self.id_col_name],stored_fields="_none_",filter_path=[f"hits.hits.fields.{self.id_col_name}"],)
             log.info(f'Search took: {resp["took"]}')
             log.info(f'Search shards: {resp["_shards"]}')
             log.info(f'Search hits total: {resp["hits"]["total"]}')
-            result = [int(d["_id"]) for d in resp["hits"]["hits"]]
+            result = [h["fields"][self.id_col_name][0] for h in resp["hits"]["hits"]]
+            #result = [int(d["_id"]) for d in resp["hits"]["hits"]]
             # log.info(f'success! length={len(res)}')
 
             return result
@@ -152,7 +154,46 @@ class AWSOpenSearch(VectorDB):
 
     def optimize(self):
         """optimize will be called between insertion and search in performance cases."""
-        pass
+        # Call refresh first to ensure that all segments are created
+        self._refresh_index()
+        self._do_force_merge()
+        # Call refresh again to ensure that the index is ready after force merge.
+        self._refresh_index()
+        # ensure that all graphs are loaded in memory and ready for search
+        self._load_graphs_to_memory()
+
+    def _refresh_index(self):
+        log.debug(f"Starting refresh for index {self.index_name}")
+        SECONDS_WAITING_FOR_REFRESH_API_CALL_SEC = 30
+        while True:
+            try:
+                log.info(f"Starting the Refresh Index..")
+                self.client.indices.refresh(index=self.index_name)
+                break
+            except Exception as e:
+                log.info(
+                    f"Refresh errored out. Sleeping for {SECONDS_WAITING_FOR_REFRESH_API_CALL_SEC} sec and then Retrying : {e}")
+                time.sleep(SECONDS_WAITING_FOR_REFRESH_API_CALL_SEC)
+                continue
+        log.debug(f"Completed refresh for index {self.index_name}")
+
+    def _do_force_merge(self):
+        log.debug(f"Starting force merge for index {self.index_name}")
+        force_merge_endpoint = f'/{self.index_name}/_forcemerge?max_num_segments=1&wait_for_completion=false'
+        force_merge_task_id = self.client.transport.perform_request('POST', force_merge_endpoint)['task']
+        SECONDS_WAITING_FOR_FORCE_MERGE_API_CALL_SEC = 30
+        while True:
+            time.sleep(SECONDS_WAITING_FOR_FORCE_MERGE_API_CALL_SEC)
+            task_status = self.client.tasks.get(task_id=force_merge_task_id)
+            if task_status['completed']:
+                break
+        log.debug(f"Completed force merge for index {self.index_name}")
+
+    def _load_graphs_to_memory(self):
+        if self.case_config.engine != AWSOS_Engine.lucene:
+            log.info("Calling warmup API to load graphs into memory")
+            warmup_endpoint = f'/_plugins/_knn/warmup/{self.index_name}'
+            self.client.transport.perform_request('GET', warmup_endpoint)
 
     def ready_to_load(self):
         """ready_to_load will be called before load in load cases."""

@@ -40,12 +40,12 @@ def create_index(client, index_name):
                 "type": "knn_vector",
                 "dimension": _DIM,
                 "method": {
-                    "engine": "nmslib",
+                    "engine": "faiss",
                     "name": "hnsw",
                     "space_type": "l2",
                     "parameters": {
-                        "ef_construction": 128,
-                        "m": 24,
+                        "ef_construction": 256,
+                        "m": 16,
                     }
                 }
             }
@@ -108,12 +108,43 @@ def search(client, index_name):
             print('\nSearch not ready, sleep 1s')
             time.sleep(1)
 
+def optimize_index(client, index_name):
+    print(f"Starting force merge for index {index_name}")
+    force_merge_endpoint = f'/{index_name}/_forcemerge?max_num_segments=1&wait_for_completion=false'
+    force_merge_task_id = client.transport.perform_request('POST', force_merge_endpoint)['task']
+    SECONDS_WAITING_FOR_FORCE_MERGE_API_CALL_SEC = 30
+    while True:
+        time.sleep(SECONDS_WAITING_FOR_FORCE_MERGE_API_CALL_SEC)
+        task_status = client.tasks.get(task_id=force_merge_task_id)
+        if task_status['completed']:
+            break
+    print(f"Completed force merge for index {index_name}")
+
+
+def refresh_index(client, index_name):
+    print(f"Starting refresh for index {index_name}")
+    SECONDS_WAITING_FOR_REFRESH_API_CALL_SEC = 30
+    while True:
+        try:
+            print(f"Starting the Refresh Index..")
+            client.indices.refresh(index=index_name)
+            break
+        except Exception as e:
+            print(
+                f"Refresh errored out. Sleeping for {SECONDS_WAITING_FOR_REFRESH_API_CALL_SEC} sec and then Retrying : {e}")
+            time.sleep(SECONDS_WAITING_FOR_REFRESH_API_CALL_SEC)
+            continue
+    print(f"Completed refresh for index {index_name}")
+
+
 
 def main():
     client = create_client()
     try:
         create_index(client, _INDEX_NAME)
         bulk_insert(client, _INDEX_NAME)
+        optimize_index(client, _INDEX_NAME)
+        refresh_index(client, _INDEX_NAME)
         search(client, _INDEX_NAME)
         delete_index(client, _INDEX_NAME)
     except Exception as e:
