@@ -64,6 +64,7 @@ all = [
     "psycopg-binary",
     "opensearch-dsl==2.1.0",
     "opensearch-py==2.6.0",
+    "mariadb",
 ]
 
 qdrant = [ "qdrant-client" ]
@@ -78,6 +79,7 @@ memorydb = [ "memorydb" ]
 chromadb = [ "chromadb" ]
 awsopensearch = [ "awsopensearch" ]
 zilliz_cloud = []
+mariadb = [ "mariadb" ]
 
 [project.urls]
 "repository" = "https://github.com/zilliztech/VectorDBBench"

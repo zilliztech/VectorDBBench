@@ -35,6 +35,7 @@ class DB(Enum):
     MemoryDB = "MemoryDB"
     Chroma = "Chroma"
     AWSOpenSearch = "OpenSearch"
+    MariaDB = "MariaDB"
     Test = "test"
 
 
@@ -93,6 +94,10 @@ class DB(Enum):
             from .aws_opensearch.aws_opensearch import AWSOpenSearch
             return AWSOpenSearch
 
+        if self == DB.MariaDB:
+            from .mariadb.mariadb import MariaDB
+            return MariaDB
+
     @property
     def config_cls(self) -> Type[DBConfig]:
         """Import while in use"""
@@ -148,6 +153,10 @@ class DB(Enum):
             from .aws_opensearch.config import AWSOpenSearchConfig
             return AWSOpenSearchConfig
 
+        if self == DB.MariaDB:
+            from .mariadb.config import MariaDBConfig
+            return MariaDBConfig
+
     def case_config_cls(self, index_type: IndexType | None = None) -> Type[DBCaseConfig]:
         if self == DB.Milvus:
             from .milvus.config import _milvus_case_config
@@ -184,6 +193,10 @@ class DB(Enum):
         if self == DB.PgVectorScale:
             from .pgvectorscale.config import _pgvectorscale_case_config
             return _pgvectorscale_case_config.get(index_type)
+
+        if self == DB.MariaDB:
+            from .mariadb.config import _mariadb_case_config
+            return _mariadb_case_config.get(index_type)
 
         # DB.Pinecone, DB.Chroma, DB.Redis
         return EmptyDBCaseConfig
