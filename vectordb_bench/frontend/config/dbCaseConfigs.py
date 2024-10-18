@@ -819,6 +819,65 @@ CaseConfigParamInput_ZillizLevel = CaseConfigInput(
     },
 )
 
+CaseConfigParamInput_IndexType_MariaDB = CaseConfigInput(
+    label=CaseConfigParamType.IndexType,
+    inputHelp="Select Index Type",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [
+            IndexType.HNSW.value,
+        ],
+    },
+)
+
+CaseConfigParamInput_StorageEngine_MariaDB = CaseConfigInput(
+    label=CaseConfigParamType.storage_engine,
+    inputHelp="Select Storage Engine",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": ["InnoDB", "MyISAM"],
+    },
+)
+
+CaseConfigParamInput_M_MariaDB = CaseConfigInput(
+    label=CaseConfigParamType.M,
+    inputHelp="mhnsw_max_edges_per_node",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 2,
+        "max": 200,
+        "value": 6,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_EFSearch_MariaDB = CaseConfigInput(
+    label=CaseConfigParamType.ef_search,
+    inputHelp="mhnsw_min_limit",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 100,
+        "value": 20,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_CacheSize_MariaDB = CaseConfigInput(
+    label=CaseConfigParamType.cache_size,
+    inputHelp="mhnsw_cache_size",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1048576,
+        "max": (1 << 53) - 1,
+        "value": 16 * 1024 ** 3,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    == IndexType.HNSW.value,
+)
+
 MilvusLoadConfig = [
     CaseConfigParamInput_IndexType,
     CaseConfigParamInput_M,
@@ -942,6 +1001,21 @@ PgVectorScalePerformanceConfig = [
     CaseConfigParamInput_query_search_list_size,
 ]
 
+MariaDBLoadingConfig = [
+    CaseConfigParamInput_IndexType_MariaDB,
+    CaseConfigParamInput_StorageEngine_MariaDB,
+    CaseConfigParamInput_M_MariaDB,
+    CaseConfigParamInput_CacheSize_MariaDB,
+]
+
+MariaDBPerformanceConfig = [
+    CaseConfigParamInput_IndexType_MariaDB,
+    CaseConfigParamInput_StorageEngine_MariaDB,
+    CaseConfigParamInput_M_MariaDB,
+    CaseConfigParamInput_CacheSize_MariaDB,
+    CaseConfigParamInput_EFSearch_MariaDB,
+]
+
 CASE_CONFIG_MAP = {
     DB.Milvus: {
         CaseLabel.Load: MilvusLoadConfig,
@@ -973,5 +1047,9 @@ CASE_CONFIG_MAP = {
     DB.PgVectorScale: {
         CaseLabel.Load: PgVectorScaleLoadingConfig,
         CaseLabel.Performance: PgVectorScalePerformanceConfig,
+    },
+    DB.MariaDB: {
+        CaseLabel.Load: MariaDBLoadingConfig,
+        CaseLabel.Performance: MariaDBPerformanceConfig,
     },
 }
