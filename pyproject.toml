@@ -65,6 +65,7 @@ all = [
     "opensearch-dsl",
     "opensearch-py",
     "memorydb",
+    "mariadb",
 ]
 
 qdrant          = [ "qdrant-client" ]
@@ -81,6 +82,7 @@ redis           = [ "redis" ]
 memorydb        = [ "memorydb" ]
 chromadb        = [ "chromadb" ]
 opensearch      = [ "opensearch-py" ]
+mariadb = [ "mariadb" ]
 
 [project.urls]
 "repository" = "https://github.com/zilliztech/VectorDBBench"
