@@ -38,6 +38,7 @@ class DB(Enum):
     Chroma = "Chroma"
     AWSOpenSearch = "OpenSearch"
     AliyunElasticsearch = "AliyunElasticsearch"
+    MariaDB = "MariaDB"
     Test = "test"
     AliyunOpenSearch = "AliyunOpenSearch"
     MongoDB = "MongoDB"
@@ -134,6 +135,11 @@ class DB(Enum):
             from .mongodb.mongodb import MongoDB
 
             return MongoDB
+
+        if self == DB.MariaDB:
+            from .mariadb.mariadb import MariaDB
+
+            return MariaDB
 
         if self == DB.Test:
             from .test.test import Test
@@ -236,6 +242,10 @@ class DB(Enum):
 
             return MongoDBConfig
 
+        if self == DB.MariaDB:
+            from .mariadb.config import MariaDBConfig
+            return MariaDBConfig
+
         if self == DB.Test:
             from .test.config import TestConfig
 
@@ -317,6 +327,11 @@ class DB(Enum):
             from .mongodb.config import MongoDBIndexConfig
 
             return MongoDBIndexConfig
+
+        if self == DB.MariaDB:
+            from .mariadb.config import _mariadb_case_config
+
+            return _mariadb_case_config.get(index_type)
 
         # DB.Pinecone, DB.Chroma, DB.Redis
         return EmptyDBCaseConfig

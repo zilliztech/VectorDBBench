@@ -1,5 +1,6 @@
 from ..backend.clients.alloydb.cli import AlloyDBScaNN
 from ..backend.clients.aws_opensearch.cli import AWSOpenSearch
+from ..backend.clients.mariadb.cli import MariaDBHNSW
 from ..backend.clients.memorydb.cli import MemoryDB
 from ..backend.clients.milvus.cli import MilvusAutoIndex
 from ..backend.clients.pgdiskann.cli import PgDiskAnn
@@ -25,6 +26,7 @@ cli.add_command(AWSOpenSearch)
 cli.add_command(PgVectorScaleDiskAnn)
 cli.add_command(PgDiskAnn)
 cli.add_command(AlloyDBScaNN)
+cli.add_command(MariaDBHNSW)
 
 
 if __name__ == "__main__":
