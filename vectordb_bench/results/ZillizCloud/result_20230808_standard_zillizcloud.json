@@ -14,6 +14,7 @@
         "db": "ZillizCloud",
         "db_config": {
           "db_label": "1cu-perf",
+          "version": "v2023.6",
           "uri": "**********",
           "user": "root",
           "password": "**********"
@@ -41,6 +42,7 @@
         "db": "ZillizCloud",
         "db_config": {
           "db_label": "1cu-perf",
+          "version": "v2023.6",
           "uri": "**********",
           "user": "root",
           "password": "**********"
@@ -68,6 +70,7 @@
         "db": "ZillizCloud",
         "db_config": {
           "db_label": "1cu-perf",
+          "version": "v",
           "uri": "**********",
           "user": "root",
           "password": "**********"
@@ -95,6 +98,7 @@
         "db": "ZillizCloud",
         "db_config": {
           "db_label": "1cu-perf",
+          "version": "v2023.6",
           "uri": "**********",
           "user": "root",
           "password": "**********"
@@ -122,6 +126,7 @@
         "db": "ZillizCloud",
         "db_config": {
           "db_label": "1cu-perf",
+          "version": "v2023.6",
           "uri": "**********",
           "user": "root",
           "password": "**********"
@@ -149,6 +154,7 @@
         "db": "ZillizCloud",
         "db_config": {
           "db_label": "1cu-perf",
+          "version": "v2023.6",
           "uri": "**********",
           "user": "root",
           "password": "**********"
@@ -176,6 +182,7 @@
         "db": "ZillizCloud",
         "db_config": {
           "db_label": "8cu-perf",
+          "version": "v2023.6",
           "uri": "**********",
           "user": "root",
           "password": "**********"
@@ -203,6 +210,7 @@
         "db": "ZillizCloud",
         "db_config": {
           "db_label": "8cu-perf",
+          "version": "v2023.6",
           "uri": "**********",
           "user": "root",
           "password": "**********"
@@ -230,6 +238,7 @@
         "db": "ZillizCloud",
         "db_config": {
           "db_label": "8cu-perf",
+          "version": "v2023.6",
           "uri": "**********",
           "user": "root",
           "password": "**********"
@@ -257,6 +266,7 @@
         "db": "ZillizCloud",
         "db_config": {
           "db_label": "8cu-perf",
+          "version": "v2023.6",
           "uri": "**********",
           "user": "root",
           "password": "**********"
@@ -284,6 +294,7 @@
         "db": "ZillizCloud",
         "db_config": {
           "db_label": "8cu-perf",
+          "version": "v2023.6",
           "uri": "**********",
           "user": "root",
           "password": "**********"
@@ -311,6 +322,7 @@
         "db": "ZillizCloud",
         "db_config": {
           "db_label": "8cu-perf",
+          "version": "v2023.6",
           "uri": "**********",
           "user": "root",
           "password": "**********"
@@ -338,6 +350,7 @@
         "db": "ZillizCloud",
         "db_config": {
           "db_label": "1cu-cap",
+          "version": "v2023.6",
           "uri": "**********",
           "user": "root",
           "password": "**********"
@@ -365,6 +378,7 @@
         "db": "ZillizCloud",
         "db_config": {
           "db_label": "1cu-cap",
+          "version": "v2023.6",
           "uri": "**********",
           "user": "root",
           "password": "**********"
@@ -392,6 +406,7 @@
         "db": "ZillizCloud",
         "db_config": {
           "db_label": "1cu-cap",
+          "version": "v2023.6",
           "uri": "**********",
           "user": "root",
           "password": "**********"
@@ -419,6 +434,7 @@
         "db": "ZillizCloud",
         "db_config": {
           "db_label": "1cu-cap",
+          "version": "v2023.6",
           "uri": "**********",
           "user": "root",
           "password": "**********"
@@ -446,6 +462,7 @@
         "db": "ZillizCloud",
         "db_config": {
           "db_label": "1cu-cap",
+          "version": "v2023.6",
           "uri": "**********",
           "user": "root",
           "password": "**********"
@@ -473,6 +490,7 @@
         "db": "ZillizCloud",
         "db_config": {
           "db_label": "1cu-cap",
+          "version": "v2023.6",
           "uri": "**********",
           "user": "root",
           "password": "**********"
@@ -500,6 +518,7 @@
         "db": "ZillizCloud",
         "db_config": {
           "db_label": "2cu-cap",
+          "version": "v2023.6",
           "uri": "**********",
           "user": "root",
           "password": "**********"
@@ -527,6 +546,7 @@
         "db": "ZillizCloud",
         "db_config": {
           "db_label": "2cu-cap",
+          "version": "v2023.6",
           "uri": "**********",
           "user": "root",
           "password": "**********"
@@ -554,6 +574,7 @@
         "db": "ZillizCloud",
         "db_config": {
           "db_label": "2cu-cap",
+          "version": "v2023.6",
           "uri": "**********",
           "user": "root",
           "password": "**********"
@@ -581,6 +602,7 @@
         "db": "ZillizCloud",
         "db_config": {
           "db_label": "2cu-cap",
+          "version": "v2023.6",
           "uri": "**********",
           "user": "root",
           "password": "**********"
@@ -608,6 +630,7 @@
         "db": "ZillizCloud",
         "db_config": {
           "db_label": "2cu-cap",
+          "version": "v2023.6",
           "uri": "**********",
           "user": "root",
           "password": "**********"
@@ -635,6 +658,7 @@
         "db": "ZillizCloud",
         "db_config": {
           "db_label": "2cu-cap",
+          "version": "v2023.6",
           "uri": "**********",
           "user": "root",
           "password": "**********"
