@@ -1,6 +1,6 @@
 import logging
 import pathlib
-from datetime import date
+from datetime import date, datetime
 from enum import Enum, StrEnum, auto
 from typing import List, Self
 
@@ -167,7 +167,7 @@ class TestResult(BaseModel):
 
     def flush(self):
         db2case = self.get_db_results()
-        timestamp = date.today().timestamp()
+        timestamp = datetime.combine(date.today(), datetime.min.time()).timestamp()
         result_root = config.RESULTS_LOCAL_DIR
         for db, result in db2case.items():
             self.write_db_file(
