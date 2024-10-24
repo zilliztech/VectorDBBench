@@ -61,11 +61,22 @@ class PgVectorTypedDict(CommonTypedDict):
         Optional[str],
         click.option(
             "--quantization-type",
-            type=click.Choice(["none", "halfvec"]),
+            type=click.Choice(["none", "bit", "halfvec"]),
             help="quantization type for vectors",
             required=False,
         ),
     ]
+    reranking: Annotated[
+        Optional[bool],
+        click.option(
+            "--reranking/--skip-reranking",
+            type=bool,
+            help="Enable reranking for HNSW search for binary quantization",
+            default=False,
+        ),
+    ]
+
+    
 
 class PgVectorIVFFlatTypedDict(PgVectorTypedDict, IVFFlatTypedDict):
     ...
@@ -126,6 +137,7 @@ def PgVectorHNSW(
             maintenance_work_mem=parameters["maintenance_work_mem"],
             max_parallel_workers=parameters["max_parallel_workers"],
             quantization_type=parameters["quantization_type"],
+            reranking=parameters["reranking"],
         ),
         **parameters,
     )

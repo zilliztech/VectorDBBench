@@ -11,7 +11,7 @@ from pgvector.psycopg import register_vector
 from psycopg import Connection, Cursor, sql
 
 from ..api import VectorDB
-from .config import PgVectorConfigDict, PgVectorIndexConfig
+from .config import PgVectorConfigDict, PgVectorIndexConfig, PgVectorHNSWConfig
 
 log = logging.getLogger(__name__)
 
@@ -113,24 +113,61 @@ class PgVector(VectorDB):
             self.conn.commit()
 
         index_param = self.case_config.index_param()
+        
+        reranking = self.case_config.search_param()["reranking"]
+        ef_search = next((setting['parameter']['val'] for setting in session_options if setting['parameter']['setting_name'] == 'hnsw.ef_search'), None)
+        column_name = (
+            sql.SQL("binary_quantize({0})").format(sql.Identifier("embedding"))
+            if index_param["quantization_type"] == "bit"
+            else sql.SQL("embedding")
+        )
+        search_vector = (
+            sql.SQL("binary_quantize({0})").format(sql.Placeholder())
+            if index_param["quantization_type"] == "bit"
+            else sql.Placeholder()
+        )
+
         # The following sections assume that the quantization_type value matches the quantization function name
         if index_param["quantization_type"] != None:
-            self._filtered_search = sql.Composed(
-                [
-                    sql.SQL(
-                        "SELECT id FROM public.{table_name} WHERE id >= %s ORDER BY embedding::{quantization_type}({dim}) "
-                    ).format(
-                        table_name=sql.Identifier(self.table_name),
-                        quantization_type=sql.SQL(index_param["quantization_type"]),
-                        dim=sql.Literal(self.dim),
-                    ),
-                    sql.SQL(self.case_config.search_param()["metric_fun_op"]),
-                    sql.SQL(" %s::{quantization_type}({dim}) LIMIT %s::int").format(
-                        quantization_type=sql.SQL(index_param["quantization_type"]),
-                        dim=sql.Literal(self.dim),
-                    ),
-                ]
-            )
+            if index_param["quantization_type"] == "bit" and reranking:
+                self._filtered_search = sql.Composed(
+                    [
+                        # TODO: Parameterize the reranking distance function (<=>)
+                        sql.SQL(
+                            """
+                            SELECT i.id FROM (SELECT id, embedding <=> %s::vector AS distance FROM public.{table_name} WHERE id >= %s 
+                            ORDER BY {column_name}::{quantization_type}({dim})
+                            """
+                        ).format(
+                            table_name=sql.Identifier(self.table_name),
+                            column_name=column_name,
+                            quantization_type=sql.SQL(index_param["quantization_type"]),
+                            dim=sql.Literal(self.dim),
+                        ),
+                        sql.SQL(self.case_config.search_param()["metric_fun_op"]),
+                        sql.SQL(
+                            " {search_vector} LIMIT {quantized_ef_search}) i ORDER BY i.distance LIMIT %s::int"
+                        ).format(
+                            search_vector=search_vector,
+                            quantized_ef_search=sql.Literal(ef_search),
+                        ),
+                    ]
+                )
+            else:
+                self.filtered_search = sql.Composed(
+                    [
+                        sql.SQL(
+                            "SELECT id FROM public.{table_name} WHERE id >= %s ORDER BY {column_name}::{quantization_type}({dim}) "
+                        ).format(
+                            table_name=sql.Identifier(self.table_name),
+                            column_name=column_name,
+                            quantization_type=sql.SQL(index_param["quantization_type"]),
+                            dim=sql.Literal(self.dim),
+                        ),
+                        sql.SQL(self.case_config.search_param()["metric_fun_op"]),
+                        sql.SQL(" {search_vector} LIMIT %s::int").format(search_vector=search_vector),
+                    ]
+                )
         else:
             self._filtered_search = sql.Composed(
                 [
@@ -143,22 +180,45 @@ class PgVector(VectorDB):
             )
 
         if index_param["quantization_type"] != None:
-            self._unfiltered_search = sql.Composed(
-                [
-                    sql.SQL(
-                        "SELECT id FROM public.{table_name} ORDER BY embedding::{quantization_type}({dim}) "
-                    ).format(
-                        table_name=sql.Identifier(self.table_name),
-                        quantization_type=sql.SQL(index_param["quantization_type"]),
-                        dim=sql.Literal(self.dim),
-                    ),
-                    sql.SQL(self.case_config.search_param()["metric_fun_op"]),
-                    sql.SQL(" %s::{quantization_type}({dim}) LIMIT %s::int").format(
-                        quantization_type=sql.SQL(index_param["quantization_type"]),
-                        dim=sql.Literal(self.dim),
-                    ),
-                ]
-            )
+            if index_param["quantization_type"] == "bit" and reranking:
+                self._unfiltered_search = sql.Composed(
+                    [
+                        # TODO: Parameterize the reranking distance function (<=>)
+                        sql.SQL(
+                            """
+                            SELECT i.id FROM (SELECT id, embedding <=> %s::vector AS distance FROM public.{table_name} 
+                            ORDER BY {column_name}::{quantization_type}({dim})
+                            """
+                        ).format(
+                            table_name=sql.Identifier(self.table_name),
+                            column_name=column_name,
+                            quantization_type=sql.SQL(index_param["quantization_type"]),
+                            dim=sql.Literal(self.dim),
+                        ),
+                        sql.SQL(self.case_config.search_param()["metric_fun_op"]),
+                        sql.SQL(
+                            " {search_vector} LIMIT {quantized_ef_search}) i ORDER BY i.distance LIMIT %s::int"
+                        ).format(
+                            search_vector=search_vector,
+                            quantized_ef_search=sql.Literal(ef_search),
+                        ),
+                    ]
+                )
+            else:
+                self._unfiltered_search = sql.Composed(
+                    [
+                        sql.SQL(
+                            "SELECT id FROM public.{table_name} ORDER BY {column_name}::{quantization_type}({dim}) "
+                        ).format(
+                            table_name=sql.Identifier(self.table_name),
+                            column_name=column_name,
+                            quantization_type=sql.SQL(index_param["quantization_type"]),
+                            dim=sql.Literal(self.dim),
+                        ),
+                        sql.SQL(self.case_config.search_param()["metric_fun_op"]),
+                        sql.SQL(" {search_vector} LIMIT %s::int").format(search_vector=search_vector),
+                    ]
+                )
         else:
             self._unfiltered_search = sql.Composed(
                 [
@@ -306,12 +366,17 @@ class PgVector(VectorDB):
         if index_param["quantization_type"] != None:
             index_create_sql = sql.SQL(
                 """
-                CREATE INDEX IF NOT EXISTS {index_name} ON public.{table_name} 
-                USING {index_type} ((embedding::{quantization_type}({dim})) {embedding_metric})
+                CREATE INDEX IF NOT EXISTS {index_name} ON public.{table_name}
+                USING {index_type} (({column_name}::{quantization_type}({dim})) {embedding_metric})
                 """
             ).format(
                 index_name=sql.Identifier(self._index_name),
                 table_name=sql.Identifier(self.table_name),
+                column_name=(
+                    sql.SQL("binary_quantize({0})").format(sql.Identifier("embedding"))
+                    if index_param["quantization_type"] == "bit"
+                    else sql.Identifier("embedding")
+                ),
                 index_type=sql.Identifier(index_param["index_type"]),
                 # This assumes that the quantization_type value matches the quantization function name
                 quantization_type=sql.SQL(index_param["quantization_type"]),
@@ -406,15 +471,28 @@ class PgVector(VectorDB):
         assert self.conn is not None, "Connection is not initialized"
         assert self.cursor is not None, "Cursor is not initialized"
 
+        index_param = self.case_config.index_param()
+        search_param = self.case_config.search_param()
         q = np.asarray(query)
         if filters:
             gt = filters.get("id")
-            result = self.cursor.execute(
+            if index_param["quantization_type"] == "bit" and search_param["reranking"]:
+                result = self.cursor.execute(
+                    self._filtered_search, (q, gt, q, k), prepare=True, binary=True
+                )
+            else:
+                result = self.cursor.execute(
                     self._filtered_search, (gt, q, k), prepare=True, binary=True
-                    )
+                )
+                
         else:
-            result = self.cursor.execute(
+            if index_param["quantization_type"] == "bit" and search_param["reranking"]:
+                result = self.cursor.execute(
+                    self._unfiltered_search, (q, q, k), prepare=True, binary=True
+                )
+            else:
+                result = self.cursor.execute(
                     self._unfiltered_search, (q, k), prepare=True, binary=True
-                    )
+                )
 
         return [int(i[0]) for i in result.fetchall()]

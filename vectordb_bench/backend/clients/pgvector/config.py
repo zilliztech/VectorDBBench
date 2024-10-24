@@ -65,25 +65,46 @@ class PgVectorIndexConfig(BaseModel, DBCaseConfig):
             elif self.metric_type == MetricType.IP:
                 return "halfvec_ip_ops"
             return "halfvec_cosine_ops"
+        elif self.quantization_type == "bit":
+            if self.metric_type == MetricType.JACCARD:
+                return "bit_jaccard_ops"
+            return "bit_hamming_ops"
         else:
             if self.metric_type == MetricType.L2:
                 return "vector_l2_ops"
             elif self.metric_type == MetricType.IP:
                 return "vector_ip_ops"
+            elif self.metric_type == MetricType.JACCARD:
+                return "bit_jaccard_ops"
+            elif self.metric_type == MetricType.HAMMING:
+                return "bit_hamming_ops"
             return "vector_cosine_ops"
 
     def parse_metric_fun_op(self) -> LiteralString:
-        if self.metric_type == MetricType.L2:
-            return "<->"
-        elif self.metric_type == MetricType.IP:
-            return "<#>"
-        return "<=>"
+        if self.quantization_type == "bit":
+            if self.metric_type == MetricType.JACCARD:
+                return "<%>"
+            return "<~>"
+        else:
+            if self.metric_type == MetricType.L2:
+                return "<->"
+            elif self.metric_type == MetricType.IP:
+                return "<#>"
+            elif self.metric_type == MetricType.JACCARD:
+                return "<%>"
+            elif self.metric_type == MetricType.HAMMING:
+                return "<~>"
+            return "<=>"
 
     def parse_metric_fun_str(self) -> str:
         if self.metric_type == MetricType.L2:
             return "l2_distance"
         elif self.metric_type == MetricType.IP:
             return "max_inner_product"
+        elif self.metric_type == MetricType.JACCARD:
+            return "jaccard_distance"
+        elif self.metric_type == MetricType.HAMMING:
+            return "hamming_distance"
         return "cosine_distance"
 
     @abstractmethod
@@ -195,6 +216,7 @@ class PgVectorHNSWConfig(PgVectorIndexConfig):
     maintenance_work_mem: Optional[str] = None
     max_parallel_workers: Optional[int] = None
     quantization_type: Optional[str] = None
+    reranking: Optional[bool] = None
 
     def index_param(self) -> PgVectorIndexParam:
         index_parameters = {"m": self.m, "ef_construction": self.ef_construction}
@@ -214,6 +236,7 @@ class PgVectorHNSWConfig(PgVectorIndexConfig):
     def search_param(self) -> PgVectorSearchParam:
         return {
             "metric_fun_op": self.parse_metric_fun_op(),
+            "reranking": self.reranking,
         }
 
     def session_param(self) -> PgVectorSessionCommands:
