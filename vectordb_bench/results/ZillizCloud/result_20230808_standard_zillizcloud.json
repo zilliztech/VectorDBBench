@@ -70,7 +70,7 @@
         "db": "ZillizCloud",
         "db_config": {
           "db_label": "1cu-perf",
-          "version": "v",
+          "version": "v2023.6",
           "uri": "**********",
           "user": "root",
           "password": "**********"
