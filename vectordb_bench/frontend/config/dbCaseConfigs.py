@@ -3,7 +3,7 @@ import typing
 from pydantic import BaseModel
 from vectordb_bench.backend.cases import CaseLabel, CaseType
 from vectordb_bench.backend.clients import DB
-from vectordb_bench.backend.clients.api import IndexType
+from vectordb_bench.backend.clients.api import IndexType, MetricType
 from vectordb_bench.frontend.components.custom.getCustomConfig import get_custom_configs
 
 from vectordb_bench.models import CaseConfig, CaseConfigParamType
@@ -149,6 +149,7 @@ class InputType(IntEnum):
     Number = 20002
     Option = 20003
     Float = 20004
+    Bool = 20005
 
 
 class CaseConfigInput(BaseModel):
@@ -773,7 +774,7 @@ CaseConfigParamInput_QuantizationType_PgVector = CaseConfigInput(
     label=CaseConfigParamType.quantizationType,
     inputType=InputType.Option,
     inputConfig={
-        "options": ["none", "halfvec"],
+        "options": ["none", "bit", "halfvec"],
     },
     isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
     in [
@@ -817,6 +818,46 @@ CaseConfigParamInput_ZillizLevel = CaseConfigInput(
         "max": 3,
         "value": 1,
     },
+)
+
+CaseConfigParamInput_reranking_PgVector = CaseConfigInput(
+    label=CaseConfigParamType.reranking,
+    inputType=InputType.Bool,
+    displayLabel="Enable Reranking",
+    inputHelp="Enable if you want to use reranking while performing \
+        similarity search in binary quantization",
+    inputConfig={
+        "value": False,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.quantizationType, None)
+    == "bit"
+)
+
+CaseConfigParamInput_quantized_fetch_limit_PgVector = CaseConfigInput(
+    label=CaseConfigParamType.quantizedFetchLimit,
+    displayLabel="Quantized vector fetch limit",
+    inputHelp="Limit top-k vectors using the quantized vector comparison --bound by ef_search",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 20,
+        "max": 1000,
+        "value": 200,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.quantizationType, None)
+    == "bit" and config.get(CaseConfigParamType.reranking, False)
+)
+
+
+CaseConfigParamInput_reranking_metric_PgVector = CaseConfigInput(
+    label=CaseConfigParamType.rerankingMetric,
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [
+            metric.value for metric in MetricType if metric.value not in ["HAMMING", "JACCARD"]
+        ],
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.quantizationType, None)
+    == "bit" and config.get(CaseConfigParamType.reranking, False)
 )
 
 MilvusLoadConfig = [
@@ -896,6 +937,9 @@ PgVectorPerformanceConfig = [
     CaseConfigParamInput_QuantizationType_PgVector,
     CaseConfigParamInput_maintenance_work_mem_PgVector,
     CaseConfigParamInput_max_parallel_workers_PgVector,
+    CaseConfigParamInput_reranking_PgVector,
+    CaseConfigParamInput_reranking_metric_PgVector,
+    CaseConfigParamInput_quantized_fetch_limit_PgVector,
 ]
 
 PgVectoRSLoadingConfig = [
