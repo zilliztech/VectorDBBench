@@ -379,7 +379,7 @@ class CommonTypedDict(TypedDict):
     custom_dataset_use_shuffled: Annotated[
         bool,
         click.option(
-            "--custom-dataset-use-shuffled/--no-custom-dataset-use-shuffled",
+            "--custom-dataset-use-shuffled/--skip-custom-dataset-use-shuffled",
             help="Custom dataset use shuffled",
             default=False,
             show_default=True,
@@ -388,7 +388,7 @@ class CommonTypedDict(TypedDict):
     custom_dataset_with_gt: Annotated[
         bool,
         click.option(
-            "--custom-dataset-with-gt/--no-custom-dataset-with-gt",
+            "--custom-dataset-with-gt/--skip-custom-dataset-with-gt",
             help="Custom dataset with ground truth",
             default=True,
             show_default=True,
