@@ -150,8 +150,6 @@ def PgVectorHNSW(
     from .config import PgVectorConfig, PgVectorHNSWConfig
 
     parameters["custom_case"] = get_custom_case_config(parameters)
-    print(f"QUANTIZED_FETCH_LIMIT: {parameters['quantized_fetch_limit']}")
-    print(f"RERANKING_DISTANCE_OP: {parameters['reranking_distance_op']}")
     run(
         db=DB.PgVector,
         db_config=PgVectorConfig(
