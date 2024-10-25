@@ -115,7 +115,6 @@ class PgVector(VectorDB):
         index_param = self.case_config.index_param()
         
         reranking = self.case_config.search_param()["reranking"]
-        ef_search = next((setting['parameter']['val'] for setting in session_options if setting['parameter']['setting_name'] == 'hnsw.ef_search'), None)
         column_name = (
             sql.SQL("binary_quantize({0})").format(sql.Identifier("embedding"))
             if index_param["quantization_type"] == "bit"
