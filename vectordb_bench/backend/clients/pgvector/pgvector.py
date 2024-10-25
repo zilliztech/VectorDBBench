@@ -132,16 +132,15 @@ class PgVector(VectorDB):
             if index_param["quantization_type"] == "bit" and reranking:
                 self._filtered_search = sql.Composed(
                     [
-                        # TODO: Parameterize the reranking distance function (<=>)
                         sql.SQL(
                             """
-                            SELECT i.id FROM (SELECT id, embedding {reranking_distance_op} %s::vector AS distance FROM public.{table_name} WHERE id >= %s 
+                            SELECT i.id FROM (SELECT id, embedding {reranking_metric_fun_op} %s::vector AS distance FROM public.{table_name} WHERE id >= %s 
                             ORDER BY {column_name}::{quantization_type}({dim})
                             """
                         ).format(
                             table_name=sql.Identifier(self.table_name),
-                            reranking_distance_op=sql.SQL(
-                                self.case_config.search_param()["reranking_distance_op"]
+                            reranking_metric_fun_op=sql.SQL(
+                                self.case_config.search_param()["reranking_metric_fun_op"]
                             ),
                             column_name=column_name,
                             quantization_type=sql.SQL(index_param["quantization_type"]),
@@ -190,13 +189,13 @@ class PgVector(VectorDB):
                     [
                         sql.SQL(
                             """
-                            SELECT i.id FROM (SELECT id, embedding {reranking_distance_op} %s::vector AS distance FROM public.{table_name} 
+                            SELECT i.id FROM (SELECT id, embedding {reranking_metric_fun_op} %s::vector AS distance FROM public.{table_name} 
                             ORDER BY {column_name}::{quantization_type}({dim})
                             """
                         ).format(
                             table_name=sql.Identifier(self.table_name),
                             column_name=column_name,
-                            reranking_distance_op=sql.SQL(self.case_config.search_param()["reranking_distance_op"]),
+                            reranking_metric_fun_op=sql.SQL(self.case_config.search_param()["reranking_metric_fun_op"]),
                             quantization_type=sql.SQL(index_param["quantization_type"]),
                             dim=sql.Literal(self.dim),
                         ),
@@ -403,7 +402,6 @@ class PgVector(VectorDB):
                 embedding_metric=sql.Identifier(index_param["metric"]),
             )
 
-        print(f"CREATE INDEX SQL: {index_create_sql.as_string(self.cursor)}")
         index_create_sql_with_with_clause = (
             index_create_sql + with_clause
         ).join(" ")

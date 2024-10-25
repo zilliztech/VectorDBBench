@@ -84,12 +84,14 @@ class PgVectorTypedDict(CommonTypedDict):
             default=False,
         ),
     ]
-    reranking_distance_op: Annotated[
+    reranking_metric: Annotated[
         Optional[str],
         click.option(
-            "--reranking-distance-op",
-            type=click.Choice([op.value for op in MetricType if op.value not in ["HAMMING", "JACCARD"]]),
-            help="Distance operator for reranking",
+            "--reranking-metric",
+            type=click.Choice(
+                [metric.value for metric in MetricType if metric.value not in ["HAMMING", "JACCARD"]]
+            ),
+            help="Distance metric for reranking",
             default="COSINE",
             show_default=True,
         ),
@@ -99,7 +101,8 @@ class PgVectorTypedDict(CommonTypedDict):
         click.option(
             "--quantized-fetch-limit",
             type=int,
-            help="Limit of fetching quantized vector ranked by distance for reranking -- bound by ef_search",
+            help="Limit of fetching quantized vector ranked by distance for reranking \
+                -- bound by ef_search",
             required=False,
             callback=set_default_quantized_fetch_limit,
         )
@@ -167,7 +170,7 @@ def PgVectorHNSW(
             max_parallel_workers=parameters["max_parallel_workers"],
             quantization_type=parameters["quantization_type"],
             reranking=parameters["reranking"],
-            reranking_distance_op=parameters["reranking_distance_op"],
+            reranking_metric=parameters["reranking_metric"],
             quantized_fetch_limit=parameters["quantized_fetch_limit"],
         ),
         **parameters,
