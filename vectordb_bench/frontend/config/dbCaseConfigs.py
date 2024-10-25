@@ -950,6 +950,12 @@ PgVectorScalePerformanceConfig = [
     CaseConfigParamInput_query_search_list_size,
 ]
 
+PgDiskANNLoadConfig = [
+    CaseConfigParamInput_IndexType_PgDiskANN,
+    CaseConfigParamInput_max_neighbors,
+    CaseConfigParamInput_l_value_ib,
+]
+
 PgDiskANNPerformanceConfig = [
     CaseConfigParamInput_IndexType_PgDiskANN,
     CaseConfigParamInput_max_neighbors,
@@ -986,6 +992,7 @@ CASE_CONFIG_MAP = {
         CaseLabel.Performance: PgVectorScalePerformanceConfig,
     },
     DB.PgDiskANN: {
+        CaseLabel.Load: PgDiskANNLoadConfig,
         CaseLabel.Performance: PgDiskANNPerformanceConfig,
     },
 }
