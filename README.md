@@ -484,7 +484,7 @@ def ZillizAutoIndex(**parameters: Unpack[ZillizTypedDict]):
    3. Update db_config and db_case_config to match client requirements
    4. Continue to add new functions for each index config.
    5. Import the client cli module and command to vectordb_bench/cli/vectordbbench.py (for databases with multiple commands (index configs), this only needs to be done for one command)  
-   6. Import the `get_custom_case_config` function from `vectordb_bench/cli/cli.py` and add a new key `custom_case` to the `parameters` variable within the command.
+   6. Import the `get_custom_case_config` function from `vectordb_bench/cli/cli.py` and use it to add a new key `custom_case` to the `parameters` variable within the command.
 
 
 > cli modules with multiple index configs:
