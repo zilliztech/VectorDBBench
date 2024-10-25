@@ -119,6 +119,27 @@ Options:
   --ef-search INTEGER             hnsw ef-search
   --quantization-type [none|halfvec]
                                   quantization type for vectors
+  --custom-case-name TEXT         Custom case name i.e. PerformanceCase1536D50K
+  --custom-case-description TEXT  Custom name description
+  --custom-case-load-timeout INTEGER
+                                  Custom case load timeout [default: 36000]
+  --custom-case-optimize-timeout INTEGER
+                                  Custom case optimize timeout [default: 36000]
+  --custom-dataset-name TEXT
+                                  Dataset name i.e OpenAI
+  --custom-dataset-dir TEXT       Dataset directory i.e. openai_medium_500k
+  --custom-dataset-size INTEGER   Dataset size i.e. 500000
+  --custom-dataset-dim INTEGER    Dataset dimension
+  --custom-dataset-metric-type TEXT
+                                  Dataset distance metric [default: COSINE]
+  --custom-dataset-file-count INTEGER
+                                  Dataset file count
+  --custom-dataset-use-shuffled / --skip-custom-dataset-use-shuffled
+                                  Use shuffled custom dataset or skip  [default: custom-dataset-
+                                  use-shuffled]
+  --custom-dataset-with-gt / --skip-custom-dataset-with-gt
+                                  Custom dataset with ground truth or skip  [default: custom-dataset-
+                                  with-gt]
   --help                          Show this message and exit.
 ```
 #### Using a configuration file.
@@ -463,6 +484,8 @@ def ZillizAutoIndex(**parameters: Unpack[ZillizTypedDict]):
    3. Update db_config and db_case_config to match client requirements
    4. Continue to add new functions for each index config.
    5. Import the client cli module and command to vectordb_bench/cli/vectordbbench.py (for databases with multiple commands (index configs), this only needs to be done for one command)  
+   6. Import the `get_custom_case_config` function from `vectordb_bench/cli/cli.py` and add a new key `custom_case` to the `parameters` variable within the command.
+
 
 > cli modules with multiple index configs:
 > - pgvector: vectordb_bench/backend/clients/pgvector/cli.py
