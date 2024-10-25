@@ -479,7 +479,7 @@ def run(
                 concurrency_duration=parameters["concurrency_duration"],
                 num_concurrency=[int(s) for s in parameters["num_concurrency"]],
             ),
-            custom_case=parameters["custom_case"],
+            custom_case=parameters.get("custom_case", {}),
         ),
         stages=parse_task_stages(
             (
