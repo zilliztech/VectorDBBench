@@ -4,6 +4,8 @@ import click
 import os
 from pydantic import SecretStr
 
+from vectordb_bench.backend.clients.api import MetricType
+
 from ....cli.cli import (
     CommonTypedDict,
     HNSWFlavor1,
@@ -15,6 +17,13 @@ from ....cli.cli import (
 )
 from vectordb_bench.backend.clients import DB
 
+
+
+def set_default_quantized_fetch_limit(ctx, param, value):
+    if ctx.params.get("reranking") and value is None:
+        # ef_search is the default value for quantized_fetch_limit as it's bound by ef_search.
+        return ctx.params["ef_search"] 
+    return value
 
 class PgVectorTypedDict(CommonTypedDict):
     user_name: Annotated[
@@ -75,6 +84,26 @@ class PgVectorTypedDict(CommonTypedDict):
             default=False,
         ),
     ]
+    reranking_distance_op: Annotated[
+        Optional[str],
+        click.option(
+            "--reranking-distance-op",
+            type=click.Choice([op.value for op in MetricType if op.value not in ["HAMMING", "JACCARD"]]),
+            help="Distance operator for reranking",
+            default="COSINE",
+            show_default=True,
+        ),
+    ]
+    quantized_fetch_limit: Annotated[
+        Optional[int],
+        click.option(
+            "--quantized-fetch-limit",
+            type=int,
+            help="Limit of fetching quantized vector ranked by distance for reranking -- bound by ef_search",
+            required=False,
+            callback=set_default_quantized_fetch_limit,
+        )
+    ]
 
     
 
@@ -121,6 +150,8 @@ def PgVectorHNSW(
     from .config import PgVectorConfig, PgVectorHNSWConfig
 
     parameters["custom_case"] = get_custom_case_config(parameters)
+    print(f"QUANTIZED_FETCH_LIMIT: {parameters['quantized_fetch_limit']}")
+    print(f"RERANKING_DISTANCE_OP: {parameters['reranking_distance_op']}")
     run(
         db=DB.PgVector,
         db_config=PgVectorConfig(
@@ -138,6 +169,8 @@ def PgVectorHNSW(
             max_parallel_workers=parameters["max_parallel_workers"],
             quantization_type=parameters["quantization_type"],
             reranking=parameters["reranking"],
+            reranking_distance_op=parameters["reranking_distance_op"],
+            quantized_fetch_limit=parameters["quantized_fetch_limit"],
         ),
         **parameters,
     )

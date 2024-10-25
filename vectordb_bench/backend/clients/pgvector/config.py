@@ -57,6 +57,7 @@ class PgVectorIndexConfig(BaseModel, DBCaseConfig):
     metric_type: MetricType | None = None
     create_index_before_load: bool = False
     create_index_after_load: bool = True
+    reranking_distance_op: Optional[str] = None
 
     def parse_metric(self) -> str:
         if self.quantization_type == "halfvec":
@@ -106,6 +107,14 @@ class PgVectorIndexConfig(BaseModel, DBCaseConfig):
         elif self.metric_type == MetricType.HAMMING:
             return "hamming_distance"
         return "cosine_distance"
+    
+    def parse_reranking_dist_metric_fun_op(self) -> LiteralString:
+        if self.reranking_distance_op == MetricType.L2:
+            return "<->"
+        elif self.reranking_distance_op == MetricType.IP:
+            return "<#>"
+        return "<=>"
+
 
     @abstractmethod
     def index_param(self) -> PgVectorIndexParam:
@@ -217,6 +226,7 @@ class PgVectorHNSWConfig(PgVectorIndexConfig):
     max_parallel_workers: Optional[int] = None
     quantization_type: Optional[str] = None
     reranking: Optional[bool] = None
+    quantized_fetch_limit: Optional[int] = None
 
     def index_param(self) -> PgVectorIndexParam:
         index_parameters = {"m": self.m, "ef_construction": self.ef_construction}
@@ -237,6 +247,8 @@ class PgVectorHNSWConfig(PgVectorIndexConfig):
         return {
             "metric_fun_op": self.parse_metric_fun_op(),
             "reranking": self.reranking,
+            "reranking_distance_op": self.parse_reranking_dist_metric_fun_op(),
+            "quantized_fetch_limit": self.quantized_fetch_limit,
         }
 
     def session_param(self) -> PgVectorSessionCommands:
