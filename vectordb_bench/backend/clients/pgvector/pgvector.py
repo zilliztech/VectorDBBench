@@ -115,6 +115,8 @@ class PgVector(VectorDB):
         index_param = self.case_config.index_param()
         
         reranking = self.case_config.search_param()["reranking"]
+        
+        # Embeddings needs to be passed to binary_quantize function if quantization_type is bit
         column_name = (
             sql.SQL("binary_quantize({0})").format(sql.Identifier("embedding"))
             if index_param["quantization_type"] == "bit"
@@ -133,21 +135,29 @@ class PgVector(VectorDB):
                     [
                         sql.SQL(
                             """
-                            SELECT i.id FROM (SELECT id, embedding {reranking_metric_fun_op} %s::vector AS distance FROM public.{table_name} WHERE id >= %s 
-                            ORDER BY {column_name}::{quantization_type}({dim})
+                            SELECT i.id 
+                            FROM (
+                                SELECT id, embedding {reranking_metric_fun_op} %s::vector AS distance 
+                                FROM public.{table_name} 
+                                WHERE id >= %s 
+                                ORDER BY {column_name}::{quantization_type}({dim})
                             """
                         ).format(
                             table_name=sql.Identifier(self.table_name),
-                            reranking_metric_fun_op=sql.SQL(
-                                self.case_config.search_param()["reranking_metric_fun_op"]
-                            ),
                             column_name=column_name,
+                            reranking_metric_fun_op=sql.SQL(self.case_config.search_param()["reranking_metric_fun_op"]),
                             quantization_type=sql.SQL(index_param["quantization_type"]),
                             dim=sql.Literal(self.dim),
                         ),
                         sql.SQL(self.case_config.search_param()["metric_fun_op"]),
                         sql.SQL(
-                            " {search_vector} LIMIT {quantized_fetch_limit}) i ORDER BY i.distance LIMIT %s::int"
+                            """
+                                {search_vector} 
+                                LIMIT {quantized_fetch_limit}
+                            ) i
+                            ORDER BY i.distance 
+                            LIMIT %s::int
+                            """
                         ).format(
                             search_vector=search_vector,
                             quantized_fetch_limit=sql.Literal(
@@ -188,8 +198,11 @@ class PgVector(VectorDB):
                     [
                         sql.SQL(
                             """
-                            SELECT i.id FROM (SELECT id, embedding {reranking_metric_fun_op} %s::vector AS distance FROM public.{table_name} 
-                            ORDER BY {column_name}::{quantization_type}({dim})
+                            SELECT i.id 
+                            FROM (
+                                SELECT id, embedding {reranking_metric_fun_op} %s::vector AS distance
+                                FROM public.{table_name}
+                                ORDER BY {column_name}::{quantization_type}({dim})
                             """
                         ).format(
                             table_name=sql.Identifier(self.table_name),
@@ -200,7 +213,13 @@ class PgVector(VectorDB):
                         ),
                         sql.SQL(self.case_config.search_param()["metric_fun_op"]),
                         sql.SQL(
-                            " {search_vector} LIMIT {quantized_fetch_limit}) i ORDER BY i.distance LIMIT %s::int"
+                            """
+                                {search_vector} 
+                                LIMIT {quantized_fetch_limit}
+                            ) i
+                            ORDER BY i.distance 
+                            LIMIT %s::int
+                            """
                         ).format(
                             search_vector=search_vector,
                             quantized_fetch_limit=sql.Literal(
