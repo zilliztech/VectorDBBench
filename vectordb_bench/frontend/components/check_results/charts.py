@@ -1,5 +1,7 @@
 from vectordb_bench.backend.cases import Case
-from vectordb_bench.frontend.components.check_results.expanderStyle import initMainExpanderStyle
+from vectordb_bench.frontend.components.check_results.expanderStyle import (
+    initMainExpanderStyle,
+)
 from vectordb_bench.metric import metricOrder, isLowerIsBetterMetric, metricUnitMap
 from vectordb_bench.frontend.config.styles import *
 from vectordb_bench.models import ResultLabel
@@ -11,7 +13,7 @@ def drawCharts(st, allData, failedTasks, caseNames: list[str]):
     for caseName in caseNames:
         chartContainer = st.expander(caseName, True)
         data = [data for data in allData if data["case_name"] == caseName]
-        drawChart(data, chartContainer)
+        drawChart(data, chartContainer, key_prefix=caseName)
 
         errorDBs = failedTasks[caseName]
         showFailedDBs(chartContainer, errorDBs)
@@ -35,7 +37,7 @@ def showFailedText(st, text, dbs):
         )
 
 
-def drawChart(data, st):
+def drawChart(data, st, key_prefix: str):
     metricsSet = set()
     for d in data:
         metricsSet = metricsSet.union(d["metricsSet"])
@@ -43,7 +45,8 @@ def drawChart(data, st):
 
     for i, metric in enumerate(showMetrics):
         container = st.container()
-        drawMetricChart(data, metric, container)
+        key = f"{key_prefix}-{metric}"
+        drawMetricChart(data, metric, container, key=key)
 
 
 def getLabelToShapeMap(data):
@@ -75,7 +78,7 @@ def getLabelToShapeMap(data):
     return labelToShapeMap
 
 
-def drawMetricChart(data, metric, st):
+def drawMetricChart(data, metric, st, key: str):
     dataWithMetric = [d for d in data if d.get(metric, 0) > 1e-7]
     # dataWithMetric = data
     if len(dataWithMetric) == 0:
@@ -161,4 +164,4 @@ def drawMetricChart(data, metric, st):
         ),
     )
 
-    chart.plotly_chart(fig, use_container_width=True)
+    chart.plotly_chart(fig, use_container_width=True, key=key)
