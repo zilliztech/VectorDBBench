@@ -57,7 +57,6 @@ class PgVectorIndexConfig(BaseModel, DBCaseConfig):
     metric_type: MetricType | None = None
     create_index_before_load: bool = False
     create_index_after_load: bool = True
-    reranking_metric: Optional[str] = None
 
     def parse_metric(self) -> str:
         if self.quantization_type == "halfvec":
@@ -75,10 +74,6 @@ class PgVectorIndexConfig(BaseModel, DBCaseConfig):
                 return "vector_l2_ops"
             elif self.metric_type == MetricType.IP:
                 return "vector_ip_ops"
-            elif self.metric_type == MetricType.JACCARD:
-                return "bit_jaccard_ops"
-            elif self.metric_type == MetricType.HAMMING:
-                return "bit_hamming_ops"
             return "vector_cosine_ops"
 
     def parse_metric_fun_op(self) -> LiteralString:
@@ -91,10 +86,6 @@ class PgVectorIndexConfig(BaseModel, DBCaseConfig):
                 return "<->"
             elif self.metric_type == MetricType.IP:
                 return "<#>"
-            elif self.metric_type == MetricType.JACCARD:
-                return "<%>"
-            elif self.metric_type == MetricType.HAMMING:
-                return "<~>"
             return "<=>"
 
     def parse_metric_fun_str(self) -> str:
@@ -102,10 +93,6 @@ class PgVectorIndexConfig(BaseModel, DBCaseConfig):
             return "l2_distance"
         elif self.metric_type == MetricType.IP:
             return "max_inner_product"
-        elif self.metric_type == MetricType.JACCARD:
-            return "jaccard_distance"
-        elif self.metric_type == MetricType.HAMMING:
-            return "hamming_distance"
         return "cosine_distance"
     
     def parse_reranking_metric_fun_op(self) -> LiteralString:
@@ -227,6 +214,7 @@ class PgVectorHNSWConfig(PgVectorIndexConfig):
     quantization_type: Optional[str] = None
     reranking: Optional[bool] = None
     quantized_fetch_limit: Optional[int] = None
+    reranking_metric: Optional[str] = None
 
     def index_param(self) -> PgVectorIndexParam:
         index_parameters = {"m": self.m, "ef_construction": self.ef_construction}
