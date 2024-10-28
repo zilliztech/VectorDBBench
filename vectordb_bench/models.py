@@ -70,6 +70,8 @@ class CaseConfigParamType(Enum):
     num_bits_per_dimension = "num_bits_per_dimension"
     query_search_list_size = "query_search_list_size"
     query_rescore = "query_rescore"
+    storage_engine = "storage_engine"
+    cache_size = "cache_size"
 
 
 class CustomizedCase(BaseModel):
