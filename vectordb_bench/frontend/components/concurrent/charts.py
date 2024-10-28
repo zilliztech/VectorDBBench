@@ -22,7 +22,7 @@ def drawChartsByCase(allData, showCaseNames: list[str], st):
             for caseData in caseDataList
             for i in range(len(caseData["conc_num_list"]))
         ]
-        drawChart(data, chartContainer)
+        drawChart(data, chartContainer, key=f"{caseName}-qps-p99")
 
 
 def getRange(metric, data, padding_multipliers):
@@ -36,7 +36,7 @@ def getRange(metric, data, padding_multipliers):
     return rangeV
 
 
-def drawChart(data, st):
+def drawChart(data, st, key: str):
     if len(data) == 0:
         return
 
@@ -73,7 +73,4 @@ def drawChart(data, st):
     fig.update_yaxes(range=yrange, title_text="QPS")
     fig.update_traces(textposition="bottom right", texttemplate="conc-%{text:,.4~r}")
 
-    st.plotly_chart(
-        fig,
-        use_container_width=True,
-    )
+    st.plotly_chart(fig, use_container_width=True, key=key)
