@@ -1,10 +1,17 @@
 import streamlit as st
 from vectordb_bench.frontend.components.check_results.footer import footer
-from vectordb_bench.frontend.components.check_results.expanderStyle import initMainExpanderStyle
+from vectordb_bench.frontend.components.check_results.expanderStyle import (
+    initMainExpanderStyle,
+)
 from vectordb_bench.frontend.components.check_results.priceTable import priceTable
-from vectordb_bench.frontend.components.check_results.stPageConfig import initResultsPageConfig
+from vectordb_bench.frontend.components.check_results.stPageConfig import (
+    initResultsPageConfig,
+)
 from vectordb_bench.frontend.components.check_results.headerIcon import drawHeaderIcon
-from vectordb_bench.frontend.components.check_results.nav import NavToResults, NavToRunTest
+from vectordb_bench.frontend.components.check_results.nav import (
+    NavToResults,
+    NavToRunTest,
+)
 from vectordb_bench.frontend.components.check_results.charts import drawMetricChart
 from vectordb_bench.frontend.components.check_results.filters import getshownData
 from vectordb_bench.frontend.components.get_results.saveAsImage import getResults
@@ -16,7 +23,7 @@ from vectordb_bench.metric import QURIES_PER_DOLLAR_METRIC
 def main():
     # set page config
     initResultsPageConfig(st)
-    
+
     # header
     drawHeaderIcon(st)
 
@@ -57,7 +64,8 @@ def main():
                 dataWithMetric.append(d)
         if len(dataWithMetric) > 0:
             chartContainer = st.expander(caseName, True)
-            drawMetricChart(data, metric, chartContainer)
+            key = f"{caseName}-{metric}"
+            drawMetricChart(data, metric, chartContainer, key=key)
 
     # footer
     footer(st.container())
