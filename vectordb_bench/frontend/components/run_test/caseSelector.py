@@ -110,6 +110,12 @@ def caseConfigSetting(st, dbToCaseClusterConfigs, uiCaseItem: UICaseItem, active
                         value=config.inputConfig["value"],
                         help=config.inputHelp,
                     )
+                elif config.inputType == InputType.Bool:
+                    caseConfig[config.label] = column.checkbox(
+                        config.displayLabel if config.displayLabel else config.label.value,
+                        value=config.inputConfig["value"],
+                        help=config.inputHelp,
+                    )
                 k += 1
         if k == 0:
             columns[1].write("Auto")

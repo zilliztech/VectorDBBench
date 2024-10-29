@@ -65,6 +65,10 @@ class PgVectorIndexConfig(BaseModel, DBCaseConfig):
             elif self.metric_type == MetricType.IP:
                 return "halfvec_ip_ops"
             return "halfvec_cosine_ops"
+        elif self.quantization_type == "bit":
+            if self.metric_type == MetricType.JACCARD:
+                return "bit_jaccard_ops"
+            return "bit_hamming_ops"
         else:
             if self.metric_type == MetricType.L2:
                 return "vector_l2_ops"
@@ -73,11 +77,16 @@ class PgVectorIndexConfig(BaseModel, DBCaseConfig):
             return "vector_cosine_ops"
 
     def parse_metric_fun_op(self) -> LiteralString:
-        if self.metric_type == MetricType.L2:
-            return "<->"
-        elif self.metric_type == MetricType.IP:
-            return "<#>"
-        return "<=>"
+        if self.quantization_type == "bit":
+            if self.metric_type == MetricType.JACCARD:
+                return "<%>"
+            return "<~>"
+        else:
+            if self.metric_type == MetricType.L2:
+                return "<->"
+            elif self.metric_type == MetricType.IP:
+                return "<#>"
+            return "<=>"
 
     def parse_metric_fun_str(self) -> str:
         if self.metric_type == MetricType.L2:
@@ -85,6 +94,14 @@ class PgVectorIndexConfig(BaseModel, DBCaseConfig):
         elif self.metric_type == MetricType.IP:
             return "max_inner_product"
         return "cosine_distance"
+    
+    def parse_reranking_metric_fun_op(self) -> LiteralString:
+        if self.reranking_metric == MetricType.L2:
+            return "<->"
+        elif self.reranking_metric == MetricType.IP:
+            return "<#>"
+        return "<=>"
+
 
     @abstractmethod
     def index_param(self) -> PgVectorIndexParam:
@@ -195,6 +212,9 @@ class PgVectorHNSWConfig(PgVectorIndexConfig):
     maintenance_work_mem: Optional[str] = None
     max_parallel_workers: Optional[int] = None
     quantization_type: Optional[str] = None
+    reranking: Optional[bool] = None
+    quantized_fetch_limit: Optional[int] = None
+    reranking_metric: Optional[str] = None
 
     def index_param(self) -> PgVectorIndexParam:
         index_parameters = {"m": self.m, "ef_construction": self.ef_construction}
@@ -214,6 +234,9 @@ class PgVectorHNSWConfig(PgVectorIndexConfig):
     def search_param(self) -> PgVectorSearchParam:
         return {
             "metric_fun_op": self.parse_metric_fun_op(),
+            "reranking": self.reranking,
+            "reranking_metric_fun_op": self.parse_reranking_metric_fun_op(),
+            "quantized_fetch_limit": self.quantized_fetch_limit,
         }
 
     def session_param(self) -> PgVectorSessionCommands:

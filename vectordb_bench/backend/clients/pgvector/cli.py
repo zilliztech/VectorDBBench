@@ -4,6 +4,8 @@ import click
 import os
 from pydantic import SecretStr
 
+from vectordb_bench.backend.clients.api import MetricType
+
 from ....cli.cli import (
     CommonTypedDict,
     HNSWFlavor1,
@@ -15,6 +17,13 @@ from ....cli.cli import (
 )
 from vectordb_bench.backend.clients import DB
 
+
+
+def set_default_quantized_fetch_limit(ctx, param, value):
+    if ctx.params.get("reranking") and value is None:
+        # ef_search is the default value for quantized_fetch_limit as it's bound by ef_search.
+        return ctx.params["ef_search"] 
+    return value
 
 class PgVectorTypedDict(CommonTypedDict):
     user_name: Annotated[
@@ -61,11 +70,45 @@ class PgVectorTypedDict(CommonTypedDict):
         Optional[str],
         click.option(
             "--quantization-type",
-            type=click.Choice(["none", "halfvec"]),
+            type=click.Choice(["none", "bit", "halfvec"]),
             help="quantization type for vectors",
             required=False,
         ),
     ]
+    reranking: Annotated[
+        Optional[bool],
+        click.option(
+            "--reranking/--skip-reranking",
+            type=bool,
+            help="Enable reranking for HNSW search for binary quantization",
+            default=False,
+        ),
+    ]
+    reranking_metric: Annotated[
+        Optional[str],
+        click.option(
+            "--reranking-metric",
+            type=click.Choice(
+                [metric.value for metric in MetricType if metric.value not in ["HAMMING", "JACCARD"]]
+            ),
+            help="Distance metric for reranking",
+            default="COSINE",
+            show_default=True,
+        ),
+    ]
+    quantized_fetch_limit: Annotated[
+        Optional[int],
+        click.option(
+            "--quantized-fetch-limit",
+            type=int,
+            help="Limit of fetching quantized vector ranked by distance for reranking \
+                -- bound by ef_search",
+            required=False,
+            callback=set_default_quantized_fetch_limit,
+        )
+    ]
+
+    
 
 class PgVectorIVFFlatTypedDict(PgVectorTypedDict, IVFFlatTypedDict):
     ...
@@ -126,6 +169,9 @@ def PgVectorHNSW(
             maintenance_work_mem=parameters["maintenance_work_mem"],
             max_parallel_workers=parameters["max_parallel_workers"],
             quantization_type=parameters["quantization_type"],
+            reranking=parameters["reranking"],
+            reranking_metric=parameters["reranking_metric"],
+            quantized_fetch_limit=parameters["quantized_fetch_limit"],
         ),
         **parameters,
     )

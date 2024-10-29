@@ -10,6 +10,8 @@ class MetricType(str, Enum):
     L2 = "L2"
     COSINE = "COSINE"
     IP = "IP"
+    HAMMING = "HAMMING"
+    JACCARD = "JACCARD"
 
 
 class IndexType(str, Enum):
