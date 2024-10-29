@@ -38,6 +38,7 @@ All the database client supported
 | pgvector                 | `pip install vectordb-bench[pgvector]`      |
 | pgvecto.rs               | `pip install vectordb-bench[pgvecto_rs]`    |
 | pgvectorscale            | `pip install vectordb-bench[pgvectorscale]` |
+| pgdiskann                | `pip install vectordb-bench[pgdiskann]` |
 | redis                    | `pip install vectordb-bench[redis]`         |
 | memorydb                 | `pip install vectordb-bench[memorydb]`      |
 | chromadb                 | `pip install vectordb-bench[chromadb]`      |

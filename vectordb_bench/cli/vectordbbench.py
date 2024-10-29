@@ -1,6 +1,7 @@
 from ..backend.clients.pgvector.cli import PgVectorHNSW
 from ..backend.clients.pgvecto_rs.cli import PgVectoRSHNSW, PgVectoRSIVFFlat
 from ..backend.clients.pgvectorscale.cli import PgVectorScaleDiskAnn
+from ..backend.clients.pgdiskann.cli import PgDiskAnn
 from ..backend.clients.redis.cli import Redis
 from ..backend.clients.memorydb.cli import MemoryDB
 from ..backend.clients.test.cli import Test
@@ -22,6 +23,7 @@ cli.add_command(ZillizAutoIndex)
 cli.add_command(MilvusAutoIndex)
 cli.add_command(AWSOpenSearch)
 cli.add_command(PgVectorScaleDiskAnn)
+cli.add_command(PgDiskAnn)
 
 
 if __name__ == "__main__":
