@@ -37,23 +37,24 @@ class config:
     K_DEFAULT = 100  # default return top k nearest neighbors during search
     CUSTOM_CONFIG_DIR = pathlib.Path(__file__).parent.joinpath("custom/custom_case.json")
 
-    CAPACITY_TIMEOUT_IN_SECONDS = 24 * 3600 # 24h
-    LOAD_TIMEOUT_DEFAULT        = 2.5 * 3600 # 2.5h
-    LOAD_TIMEOUT_768D_1M        = 2.5 * 3600 # 2.5h
-    LOAD_TIMEOUT_768D_10M       =  25 * 3600 # 25h
-    LOAD_TIMEOUT_768D_100M      = 250 * 3600 # 10.41d
+    CAPACITY_TIMEOUT_IN_SECONDS = 24 * 3600   # 24h
+    LOAD_TIMEOUT_DEFAULT        = 24 * 3600   # 24h
+    LOAD_TIMEOUT_768D_1M        = 24 * 3600   # 24h
+    LOAD_TIMEOUT_768D_10M       = 240 * 3600  # 10d
+    LOAD_TIMEOUT_768D_100M      = 2400 * 3600 # 100d
 
-    LOAD_TIMEOUT_1536D_500K     = 2.5 * 3600 # 2.5h
-    LOAD_TIMEOUT_1536D_5M       =  25 * 3600 # 25h
+    LOAD_TIMEOUT_1536D_500K     = 24 * 3600   # 24h
+    LOAD_TIMEOUT_1536D_5M       = 240 * 3600  # 10d
 
-    OPTIMIZE_TIMEOUT_DEFAULT    = 30 * 60   # 30min
-    OPTIMIZE_TIMEOUT_768D_1M    =  30 * 60   # 30min
-    OPTIMIZE_TIMEOUT_768D_10M   = 5 * 3600 # 5h
-    OPTIMIZE_TIMEOUT_768D_100M  =  50 * 3600 # 50h
+    OPTIMIZE_TIMEOUT_DEFAULT    = 24 * 3600   # 24h
+    OPTIMIZE_TIMEOUT_768D_1M    = 24 * 3600   # 24h
+    OPTIMIZE_TIMEOUT_768D_10M   = 240 * 3600  # 10d
+    OPTIMIZE_TIMEOUT_768D_100M  = 2400 * 3600 # 100d
 
 
-    OPTIMIZE_TIMEOUT_1536D_500K =  15 * 60   # 15min
-    OPTIMIZE_TIMEOUT_1536D_5M   =   2.5 * 3600 # 2.5h
+    OPTIMIZE_TIMEOUT_1536D_500K = 24 * 3600   # 24h
+    OPTIMIZE_TIMEOUT_1536D_5M   = 240 * 3600  # 10d
+    
     def display(self) -> str:
         tmp = [
             i for i in inspect.getmembers(self)
