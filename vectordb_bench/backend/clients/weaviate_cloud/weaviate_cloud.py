@@ -23,7 +23,7 @@ class WeaviateCloud(VectorDB):
         **kwargs,
     ):
         """Initialize wrapper around the weaviate vector database."""
-        db_config.update("auth_client_secret", weaviate.AuthApiKey(api_key=db_config.get("auth_client_secret")))
+        db_config.update({"auth_client_secret": weaviate.AuthApiKey(api_key=db_config.get("auth_client_secret"))})
         self.db_config = db_config
         self.case_config = db_case_config
         self.collection_name = collection_name
