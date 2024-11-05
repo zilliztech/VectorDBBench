@@ -94,7 +94,7 @@ class PgVector(VectorDB):
         reranking = self.case_config.search_param()["reranking"]
         column_name = (
             sql.SQL("binary_quantize({0})").format(sql.Identifier("embedding"))
-            if index_param["quantization_type"] == "bit"
+            if index_param["quantization_type"] == "bit" and index_param["table_quantization_type"] != "bit"
             else sql.SQL("embedding")
         )
         search_vector = (
@@ -104,7 +104,8 @@ class PgVector(VectorDB):
         )
 
         # The following sections assume that the quantization_type value matches the quantization function name
-        if index_param["quantization_type"] is not None:
+        if index_param["quantization_type"] != index_param["table_quantization_type"]:
+            # Reranking makes sense only if table quantization is not "bit"
             if index_param["quantization_type"] == "bit" and reranking:
                 # Embeddings needs to be passed to binary_quantize function if quantization_type is bit
                 search_query = sql.Composed(
@@ -113,7 +114,7 @@ class PgVector(VectorDB):
                             """
                             SELECT i.id
                             FROM (
-                                SELECT id, embedding {reranking_metric_fun_op} %s::vector AS distance
+                                SELECT id, embedding {reranking_metric_fun_op} %s::{table_quantization_type} AS distance
                                 FROM public.{table_name} {where_clause}
                                 ORDER BY {column_name}::{quantization_type}({dim})
                             """,
@@ -123,6 +124,8 @@ class PgVector(VectorDB):
                             reranking_metric_fun_op=sql.SQL(
                                 self.case_config.search_param()["reranking_metric_fun_op"],
                             ),
+                            search_vector=search_vector,
+                            table_quantization_type=sql.SQL(index_param["table_quantization_type"]),
                             quantization_type=sql.SQL(index_param["quantization_type"]),
                             dim=sql.Literal(self.dim),
                             where_clause=sql.SQL("WHERE id >= %s") if filtered else sql.SQL(""),
@@ -130,7 +133,7 @@ class PgVector(VectorDB):
                         sql.SQL(self.case_config.search_param()["metric_fun_op"]),
                         sql.SQL(
                             """
-                                {search_vector}
+                                {search_vector}::{quantization_type}({dim})
                                 LIMIT {quantized_fetch_limit}
                             ) i
                             ORDER BY i.distance
@@ -138,6 +141,8 @@ class PgVector(VectorDB):
                             """,
                         ).format(
                             search_vector=search_vector,
+                            quantization_type=sql.SQL(index_param["quantization_type"]),
+                            dim=sql.Literal(self.dim),
                             quantized_fetch_limit=sql.Literal(
                                 self.case_config.search_param()["quantized_fetch_limit"],
                             ),
@@ -160,10 +165,12 @@ class PgVector(VectorDB):
                             where_clause=sql.SQL("WHERE id >= %s") if filtered else sql.SQL(""),
                         ),
                         sql.SQL(self.case_config.search_param()["metric_fun_op"]),
-                        sql.SQL(" {search_vector} LIMIT %s::int").format(
+                        sql.SQL(" {search_vector}::{quantization_type}({dim}) LIMIT %s::int").format(
                             search_vector=search_vector,
+                            quantization_type=sql.SQL(index_param["quantization_type"]),
+                            dim=sql.Literal(self.dim),
                         ),
-                    ],
+                    ]
                 )
         else:
             search_query = sql.Composed(
@@ -175,8 +182,12 @@ class PgVector(VectorDB):
                         where_clause=sql.SQL("WHERE id >= %s") if filtered else sql.SQL(""),
                     ),
                     sql.SQL(self.case_config.search_param()["metric_fun_op"]),
-                    sql.SQL(" %s::vector LIMIT %s::int"),
-                ],
+                    sql.SQL(" {search_vector}::{quantization_type}({dim}) LIMIT %s::int").format(
+                        search_vector=search_vector,
+                        quantization_type=sql.SQL(index_param["quantization_type"]),
+                        dim=sql.Literal(self.dim),
+                    ),
+                ]
             )
 
         return search_query
@@ -323,7 +334,7 @@ class PgVector(VectorDB):
                 )
         with_clause = sql.SQL("WITH ({});").format(sql.SQL(", ").join(options)) if any(options) else sql.Composed(())
 
-        if index_param["quantization_type"] is not None:
+        if index_param["quantization_type"] != index_param["table_quantization_type"]:
             index_create_sql = sql.SQL(
                 """
                 CREATE INDEX IF NOT EXISTS {index_name} ON public.{table_name}
@@ -365,14 +376,23 @@ class PgVector(VectorDB):
         assert self.conn is not None, "Connection is not initialized"
         assert self.cursor is not None, "Cursor is not initialized"
 
+        index_param = self.case_config.index_param()
+
         try:
             log.info(f"{self.name} client create table : {self.table_name}")
 
             # create table
             self.cursor.execute(
                 sql.SQL(
-                    "CREATE TABLE IF NOT EXISTS public.{table_name} (id BIGINT PRIMARY KEY, embedding vector({dim}));",
-                ).format(table_name=sql.Identifier(self.table_name), dim=dim),
+                    """
+                    CREATE TABLE IF NOT EXISTS public.{table_name}
+                    (id BIGINT PRIMARY KEY, embedding {table_quantization_type}({dim}));
+                    """
+                ).format(
+                    table_name=sql.Identifier(self.table_name),
+                    table_quantization_type=sql.SQL(index_param["table_quantization_type"]),
+                    dim=dim,
+                )
             )
             self.cursor.execute(
                 sql.SQL(
@@ -393,18 +413,41 @@ class PgVector(VectorDB):
         assert self.conn is not None, "Connection is not initialized"
         assert self.cursor is not None, "Cursor is not initialized"
 
+        index_param = self.case_config.index_param()
+
         try:
             metadata_arr = np.array(metadata)
             embeddings_arr = np.array(embeddings)
 
-            with self.cursor.copy(
-                sql.SQL("COPY public.{table_name} FROM STDIN (FORMAT BINARY)").format(
-                    table_name=sql.Identifier(self.table_name),
-                ),
-            ) as copy:
-                copy.set_types(["bigint", "vector"])
-                for i, row in enumerate(metadata_arr):
-                    copy.write_row((row, embeddings_arr[i]))
+            if index_param["table_quantization_type"] == "bit":
+                with self.cursor.copy(
+                    sql.SQL("COPY public.{table_name} FROM STDIN (FORMAT TEXT)").format(
+                        table_name=sql.Identifier(self.table_name)
+                    )
+                ) as copy:
+                    # Same logic as pgvector binary_quantize
+                    for i, row in enumerate(metadata_arr):
+                        embeddings_bit = ""
+                        for embedding in embeddings_arr[i]:
+                            if embedding > 0:
+                                embeddings_bit += "1"
+                            else:
+                                embeddings_bit += "0"
+                        copy.write_row((str(row), embeddings_bit))
+            else:
+                with self.cursor.copy(
+                    sql.SQL("COPY public.{table_name} FROM STDIN (FORMAT BINARY)").format(
+                        table_name=sql.Identifier(self.table_name)
+                    )
+                ) as copy:
+                    if index_param["table_quantization_type"] == "halfvec":
+                        copy.set_types(["bigint", "halfvec"])
+                        for i, row in enumerate(metadata_arr):
+                            copy.write_row((row, np.float16(embeddings_arr[i])))
+                    else:
+                        copy.set_types(["bigint", "vector"])
+                        for i, row in enumerate(metadata_arr):
+                            copy.write_row((row, embeddings_arr[i]))
             self.conn.commit()
 
             if kwargs.get("last_batch"):
