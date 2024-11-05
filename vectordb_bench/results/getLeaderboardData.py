@@ -2,6 +2,7 @@ from vectordb_bench import config
 import ujson
 import pathlib
 from vectordb_bench.backend.cases import CaseType
+from vectordb_bench.backend.clients import DB
 from vectordb_bench.frontend.config.dbPrices import DB_DBLABEL_TO_PRICE
 from vectordb_bench.interface import benchMarkRunner
 from vectordb_bench.models import ResultLabel, TestResult
@@ -45,6 +46,8 @@ def main():
             for d in test_result.results
             if d.task_config.case_config.case_id != CaseType.CapacityDim128
             and d.task_config.case_config.case_id != CaseType.CapacityDim960
+            if d.task_config.db != DB.ZillizCloud
+            or test_result.timestamp >= datetime(2024, 1, 1).timestamp()
         ]
 
         # compute qp$
