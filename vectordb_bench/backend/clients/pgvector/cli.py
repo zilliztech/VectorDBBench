@@ -18,11 +18,12 @@ from ....cli.cli import (
 from vectordb_bench.backend.clients import DB
 
 
-
 def set_default_quantized_fetch_limit(ctx, param, value):
     if ctx.params.get("reranking") and value is None:
         # ef_search is the default value for quantized_fetch_limit as it's bound by ef_search.
-        return ctx.params["ef_search"] 
+        # 100 (arbitrary) is default value for quantized_fetch_limit for IVFFlat.
+        default_value = ctx.params["ef_search"] if ctx.command.name == "pgvectorhnsw" else 100
+        return default_value
     return value
 
 class PgVectorTypedDict(CommonTypedDict):
