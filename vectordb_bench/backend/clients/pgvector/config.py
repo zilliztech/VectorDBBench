@@ -168,6 +168,9 @@ class PgVectorIVFFlatConfig(PgVectorIndexConfig):
     maintenance_work_mem: Optional[str] = None
     max_parallel_workers: Optional[int] = None
     quantization_type: Optional[str] = None
+    reranking: Optional[bool] = None
+    quantized_fetch_limit: Optional[int] = None
+    reranking_metric: Optional[str] = None
 
     def index_param(self) -> PgVectorIndexParam:
         index_parameters = {"lists": self.lists}
@@ -187,6 +190,9 @@ class PgVectorIVFFlatConfig(PgVectorIndexConfig):
     def search_param(self) -> PgVectorSearchParam:
         return {
             "metric_fun_op": self.parse_metric_fun_op(),
+            "reranking": self.reranking,
+            "reranking_metric_fun_op": self.parse_reranking_metric_fun_op(),
+            "quantized_fetch_limit": self.quantized_fetch_limit,
         }
 
     def session_param(self) -> PgVectorSessionCommands:
