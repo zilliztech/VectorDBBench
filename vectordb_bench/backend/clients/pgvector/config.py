@@ -80,7 +80,12 @@ class PgVectorIndexConfig(BaseModel, DBCaseConfig):
 
         if d.get(self.quantization_type) is None:
             return d.get("_fallback").get(self.metric_type)
-        return d.get(self.quantization_type).get(self.metric_type)
+        metric = d.get(self.quantization_type).get(self.metric_type)
+        # If using binary quantization for the index, use a bit metric
+        # no matter what metric was selected for vector or halfvec data
+        if self.quantization_type == "bit" and metric is None:
+            return "bit_hamming_ops"
+        return metric
 
     def parse_metric_fun_op(self) -> LiteralString:
         if self.quantization_type == "bit":
@@ -168,14 +173,19 @@ class PgVectorIVFFlatConfig(PgVectorIndexConfig):
     maintenance_work_mem: str | None = None
     max_parallel_workers: int | None = None
     quantization_type: str | None = None
+    table_quantization_type: str | None
     reranking: bool | None = None
     quantized_fetch_limit: int | None = None
     reranking_metric: str | None = None
 
     def index_param(self) -> PgVectorIndexParam:
         index_parameters = {"lists": self.lists}
-        if self.quantization_type == "none":
-            self.quantization_type = None
+        if self.quantization_type == "none" or self.quantization_type is None:
+            self.quantization_type = "vector"
+        if self.table_quantization_type == "none" or self.table_quantization_type is None:
+            self.table_quantization_type = "vector"
+        if self.table_quantization_type == "bit":
+            self.quantization_type = "bit"
         return {
             "metric": self.parse_metric(),
             "index_type": self.index.value,
@@ -183,6 +193,7 @@ class PgVectorIVFFlatConfig(PgVectorIndexConfig):
             "maintenance_work_mem": self.maintenance_work_mem,
             "max_parallel_workers": self.max_parallel_workers,
             "quantization_type": self.quantization_type,
+            "table_quantization_type": self.table_quantization_type,
         }
 
     def search_param(self) -> PgVectorSearchParam:
@@ -212,14 +223,19 @@ class PgVectorHNSWConfig(PgVectorIndexConfig):
     maintenance_work_mem: str | None = None
     max_parallel_workers: int | None = None
     quantization_type: str | None = None
+    table_quantization_type: str | None
     reranking: bool | None = None
     quantized_fetch_limit: int | None = None
     reranking_metric: str | None = None
 
     def index_param(self) -> PgVectorIndexParam:
         index_parameters = {"m": self.m, "ef_construction": self.ef_construction}
-        if self.quantization_type == "none":
-            self.quantization_type = None
+        if self.quantization_type == "none" or self.quantization_type is None:
+            self.quantization_type = "vector"
+        if self.table_quantization_type == "none" or self.table_quantization_type is None:
+            self.table_quantization_type = "vector"
+        if self.table_quantization_type == "bit":
+            self.quantization_type = "bit"
         return {
             "metric": self.parse_metric(),
             "index_type": self.index.value,
@@ -227,6 +243,7 @@ class PgVectorHNSWConfig(PgVectorIndexConfig):
             "maintenance_work_mem": self.maintenance_work_mem,
             "max_parallel_workers": self.max_parallel_workers,
             "quantization_type": self.quantization_type,
+            "table_quantization_type": self.table_quantization_type,
         }
 
     def search_param(self) -> PgVectorSearchParam:
