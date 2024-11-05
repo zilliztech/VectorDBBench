@@ -131,7 +131,11 @@ Options:
   --ef-construction INTEGER       hnsw ef-construction
   --ef-search INTEGER             hnsw ef-search
   --quantization-type [none|bit|halfvec]
-                                  quantization type for vectors
+                                  quantization type for vectors (in index)
+  --table-quantization-type [none|bit|halfvec]
+                                  quantization type for vectors (in table). If
+                                  equal to bit, the parameter
+                                  quantization_type will be set to bit too.
   --custom-case-name TEXT         Custom case name i.e. PerformanceCase1536D50K
   --custom-case-description TEXT  Custom name description
   --custom-case-load-timeout INTEGER
