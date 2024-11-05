@@ -136,6 +136,9 @@ def PgVectorIVFFlat(
             lists=parameters["lists"],
             probes=parameters["probes"],
             quantization_type=parameters["quantization_type"],
+            reranking=parameters["reranking"],
+            reranking_metric=parameters["reranking_metric"],
+            quantized_fetch_limit=parameters["quantized_fetch_limit"],
         ),
         **parameters,
     )
