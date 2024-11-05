@@ -414,7 +414,7 @@ class HNSWBaseRequiredTypedDict(TypedDict):
 
 class HNSWFlavor1(HNSWBaseTypedDict):
     ef_search: Annotated[
-        Optional[int], click.option("--ef-search", type=int, help="hnsw ef-search")
+        Optional[int], click.option("--ef-search", type=int, help="hnsw ef-search", is_eager=True)
     ]
 
 
