@@ -36,6 +36,7 @@ class DB(Enum):
     MemoryDB = "MemoryDB"
     Chroma = "Chroma"
     AWSOpenSearch = "OpenSearch"
+    Clickhouse = "Clickhouse"
     Test = "test"
 
 
@@ -97,6 +98,9 @@ class DB(Enum):
         if self == DB.AWSOpenSearch:
             from .aws_opensearch.aws_opensearch import AWSOpenSearch
             return AWSOpenSearch
+        if self == DB.Clickhouse:
+            from .clickhouse.clickhouse import Clickhouse
+            return Clickhouse
 
     @property
     def config_cls(self) -> Type[DBConfig]:
@@ -156,6 +160,10 @@ class DB(Enum):
         if self == DB.AWSOpenSearch:
             from .aws_opensearch.config import AWSOpenSearchConfig
             return AWSOpenSearchConfig
+        
+        if self == DB.Clickhouse:
+            from .clickhouse.config import ClickhouseConfig
+            return ClickhouseConfig
 
     def case_config_cls(self, index_type: IndexType | None = None) -> Type[DBCaseConfig]:
         if self == DB.Milvus:
