@@ -37,6 +37,7 @@ class DB(Enum):
     Chroma = "Chroma"
     AWSOpenSearch = "OpenSearch"
     Test = "test"
+    AliyunOpenSearch = "AliyunOpenSearch"
 
 
     @property
@@ -98,6 +99,10 @@ class DB(Enum):
             from .aws_opensearch.aws_opensearch import AWSOpenSearch
             return AWSOpenSearch
 
+        if self == DB.AliyunOpenSearch:
+            from .aliyun_opensearch.aliyun_opensearch import AliyunOpenSearch
+            return AliyunOpenSearch
+
     @property
     def config_cls(self) -> Type[DBConfig]:
         """Import while in use"""
@@ -157,6 +162,10 @@ class DB(Enum):
             from .aws_opensearch.config import AWSOpenSearchConfig
             return AWSOpenSearchConfig
 
+        if self == DB.AliyunOpenSearch:
+            from .aliyun_opensearch.config import AliyunOpenSearchConfig
+            return AliyunOpenSearchConfig
+
     def case_config_cls(self, index_type: IndexType | None = None) -> Type[DBCaseConfig]:
         if self == DB.Milvus:
             from .milvus.config import _milvus_case_config
@@ -197,6 +206,10 @@ class DB(Enum):
         if self == DB.PgDiskANN:
             from .pgdiskann.config import _pgdiskann_case_config
             return _pgdiskann_case_config.get(index_type)
+
+        if self == DB.AliyunOpenSearch:
+            from .aliyun_opensearch.config import AliyunOpenSearchIndexConfig
+            return AliyunOpenSearchIndexConfig
 
         # DB.Pinecone, DB.Chroma, DB.Redis
         return EmptyDBCaseConfig

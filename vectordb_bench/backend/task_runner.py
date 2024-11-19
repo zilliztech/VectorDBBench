@@ -238,7 +238,7 @@ class CaseRunner(BaseModel):
     @utils.time_it
     def _task(self) -> None:
         with self.db.init():
-            self.db.optimize()
+            self.db.optimize_with_size(data_size=self.ca.dataset.data.size)
 
     def _optimize(self) -> float:
         with concurrent.futures.ProcessPoolExecutor(max_workers=1) as executor:
