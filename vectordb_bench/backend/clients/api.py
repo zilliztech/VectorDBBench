@@ -204,6 +204,9 @@ class VectorDB(ABC):
         """
         raise NotImplementedError
 
+    def optimize_with_size(self, data_size: int):
+        self.optimize()
+
     # TODO: remove
     @abstractmethod
     def ready_to_load(self):

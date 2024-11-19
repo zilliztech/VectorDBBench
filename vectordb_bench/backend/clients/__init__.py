@@ -39,6 +39,7 @@ class DB(Enum):
     AWSOpenSearch = "OpenSearch"
     AliyunElasticsearch = "AliyunElasticsearch"
     Test = "test"
+    AliyunOpenSearch = "AliyunOpenSearch"
 
 
     @property
@@ -108,6 +109,10 @@ class DB(Enum):
             from .aliyun_elasticsearch.aliyun_elasticsearch import AliyunElasticsearch
             return AliyunElasticsearch
 
+        if self == DB.AliyunOpenSearch:
+            from .aliyun_opensearch.aliyun_opensearch import AliyunOpenSearch
+            return AliyunOpenSearch
+
     @property
     def config_cls(self) -> Type[DBConfig]:
         """Import while in use"""
@@ -175,6 +180,10 @@ class DB(Enum):
             from .aliyun_elasticsearch.config import AliyunElasticsearchConfig
             return AliyunElasticsearchConfig
 
+        if self == DB.AliyunOpenSearch:
+            from .aliyun_opensearch.config import AliyunOpenSearchConfig
+            return AliyunOpenSearchConfig
+
     def case_config_cls(self, index_type: IndexType | None = None) -> Type[DBCaseConfig]:
         if self == DB.Milvus:
             from .milvus.config import _milvus_case_config
@@ -223,6 +232,10 @@ class DB(Enum):
         if self == DB.AliyunElasticsearch:
             from .elastic_cloud.config import ElasticCloudIndexConfig
             return ElasticCloudIndexConfig
+
+        if self == DB.AliyunOpenSearch:
+            from .aliyun_opensearch.config import AliyunOpenSearchIndexConfig
+            return AliyunOpenSearchIndexConfig
 
         # DB.Pinecone, DB.Chroma, DB.Redis
         return EmptyDBCaseConfig
