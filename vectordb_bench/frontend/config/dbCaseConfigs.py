@@ -437,6 +437,16 @@ CaseConfigParamInput_EF_SEARCH_AWSOpensearch = CaseConfigInput(
     },
 )
 
+CaseConfigParamInput_EF_SEARCH_AliyunOpensearch = CaseConfigInput(
+    label=CaseConfigParamType.ef_search,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 1000000,
+        "value": 40,
+    },
+)
+
 
 CaseConfigParamInput_maintenance_work_mem_PgVector = CaseConfigInput(
     label=CaseConfigParamType.maintenance_work_mem,
@@ -1128,6 +1138,11 @@ AWSOpenSearchPerformanceConfig = [
     CaseConfigParamInput_EF_SEARCH_AWSOpensearch,
 ]
 
+AliyunOpensearchLoadingConfig = []
+AliyunOpenSearchPerformanceConfig = [
+    CaseConfigParamInput_EF_SEARCH_AliyunOpensearch,
+]
+
 PgVectorLoadingConfig = [
     CaseConfigParamInput_IndexType_PgVector,
     CaseConfigParamInput_Lists_PgVector,
@@ -1285,5 +1300,9 @@ CASE_CONFIG_MAP = {
     DB.AliyunElasticsearch: {
         CaseLabel.Load: AliyunElasticsearchLoadingConfig,
         CaseLabel.Performance: AliyunElasticsearchPerformanceConfig,
+    },
+    DB.AliyunOpenSearch: {
+        CaseLabel.Load: AliyunOpensearchLoadingConfig,
+        CaseLabel.Performance: AliyunOpenSearchPerformanceConfig,
     },
 }
