@@ -70,8 +70,8 @@ class AlloyDBScaNNTypedDict(AlloyDBTypedDict):
         click.option("--num-leaves-to-search", type=int, help="Number of leaves to search", required=True)
     ]
     pre_reordering_num_neighbors: Annotated[
-        Optional[int],
-        click.option("--pre-reordering-num-neighbors", type=int, help="Pre-reordering number of neighbors",)
+        int,
+        click.option("--pre-reordering-num-neighbors", type=int, help="Pre-reordering number of neighbors", default=200)
     ]
     max_top_neighbors_buffer_size: Annotated[
         int,
