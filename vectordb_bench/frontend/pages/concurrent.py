@@ -55,7 +55,11 @@ def main():
     resultesContainer = st.sidebar.container()
     getResults(resultesContainer, "vectordb_bench_concurrent")
 
-    drawChartsByCase(shownData, showCaseNames, st.container())
+    # main
+    latency_type = st.radio("Latency Type", options=["latency_p99", "latency_avg"])
+    drawChartsByCase(
+        shownData, showCaseNames, st.container(), latency_type=latency_type
+    )
 
     # footer
     footer(st.container())
