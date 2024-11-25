@@ -89,11 +89,12 @@ class MultiProcessingSearchRunner:
 
 
 
-    def _run_all_concurrencies_mem_efficient(self) -> float:
+    def _run_all_concurrencies_mem_efficient(self):
         max_qps = 0
         conc_num_list = []
         conc_qps_list = []
         conc_latency_p99_list = []
+        conc_latency_avg_list = []
         try:
             for conc in self.concurrencies:
                 with mp.Manager() as m:
@@ -113,13 +114,15 @@ class MultiProcessingSearchRunner:
                         start = time.perf_counter()
                         all_count = sum([r.result()[0] for r in future_iter])
                         latencies = sum([r.result()[2] for r in future_iter], start=[])
-                        latency_p99 = np.percentile(latencies, 0.99)
+                        latency_p99 = np.percentile(latencies, 99)
+                        latency_avg = np.mean(latencies)
                         cost = time.perf_counter() - start
 
                         qps = round(all_count / cost, 4)
                         conc_num_list.append(conc)
                         conc_qps_list.append(qps)
                         conc_latency_p99_list.append(latency_p99)
+                        conc_latency_avg_list.append(latency_avg)
                         log.info(f"End search in concurrency {conc}: dur={cost}s, total_count={all_count}, qps={qps}")
 
                 if qps > max_qps:
@@ -136,7 +139,7 @@ class MultiProcessingSearchRunner:
         finally:
             self.stop()
 
-        return max_qps, conc_num_list, conc_qps_list, conc_latency_p99_list
+        return max_qps, conc_num_list, conc_qps_list, conc_latency_p99_list, conc_latency_avg_list
 
     def run(self) -> float:
         """
