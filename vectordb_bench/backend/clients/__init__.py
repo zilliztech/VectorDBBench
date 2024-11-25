@@ -32,6 +32,7 @@ class DB(Enum):
     PgVectoRS = "PgVectoRS"
     PgVectorScale = "PgVectorScale"
     PgDiskANN = "PgDiskANN"
+    AlloyDB = "AlloyDB"
     Redis = "Redis"
     MemoryDB = "MemoryDB"
     Chroma = "Chroma"
@@ -97,6 +98,10 @@ class DB(Enum):
         if self == DB.AWSOpenSearch:
             from .aws_opensearch.aws_opensearch import AWSOpenSearch
             return AWSOpenSearch
+        
+        if self == DB.AlloyDB:
+            from .alloydb.alloydb import AlloyDB
+            return AlloyDB
 
     @property
     def config_cls(self) -> Type[DBConfig]:
@@ -156,6 +161,10 @@ class DB(Enum):
         if self == DB.AWSOpenSearch:
             from .aws_opensearch.config import AWSOpenSearchConfig
             return AWSOpenSearchConfig
+        
+        if self == DB.AlloyDB:
+            from .alloydb.config import AlloyDBConfig
+            return AlloyDBConfig
 
     def case_config_cls(self, index_type: IndexType | None = None) -> Type[DBCaseConfig]:
         if self == DB.Milvus:
@@ -197,6 +206,10 @@ class DB(Enum):
         if self == DB.PgDiskANN:
             from .pgdiskann.config import _pgdiskann_case_config
             return _pgdiskann_case_config.get(index_type)
+        
+        if self == DB.AlloyDB:
+            from .alloydb.config import _alloydb_case_config
+            return _alloydb_case_config.get(index_type)
 
         # DB.Pinecone, DB.Chroma, DB.Redis
         return EmptyDBCaseConfig
