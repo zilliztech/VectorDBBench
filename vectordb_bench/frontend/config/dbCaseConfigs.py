@@ -906,6 +906,141 @@ CaseConfigParamInput_reranking_metric_PgVector = CaseConfigInput(
     == "bit" and config.get(CaseConfigParamType.reranking, False)
 )
 
+
+CaseConfigParamInput_IndexType_AlloyDB = CaseConfigInput(
+    label=CaseConfigParamType.IndexType,
+    inputHelp="Select Index Type",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [
+            IndexType.SCANN.value,
+        ],
+    },
+)
+
+CaseConfigParamInput_num_leaves_AlloyDB = CaseConfigInput(
+    label=CaseConfigParamType.numLeaves,
+    displayLabel="Num Leaves",
+    inputHelp="The number of partition to apply to this index",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 1048576,
+        "value": 200,
+    },
+)
+
+CaseConfigParamInput_quantizer_AlloyDB = CaseConfigInput(
+    label=CaseConfigParamType.quantizer,
+    inputType=InputType.Option,
+    inputConfig={
+        "options": ["SQ8", "Flat"],
+    },
+)
+
+CaseConfigParamInput_max_num_levels_AlloyDB = CaseConfigInput(
+    label=CaseConfigParamType.maxNumLevels,
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [1, 2],
+    },
+)
+
+CaseConfigParamInput_enable_pca_AlloyDB = CaseConfigInput(
+    label=CaseConfigParamType.enablePca,
+    inputType=InputType.Option,
+    inputConfig={
+        "options": ["on", "off"],
+    },
+)
+
+CaseConfigParamInput_num_leaves_to_search_AlloyDB = CaseConfigInput(
+    label=CaseConfigParamType.numLeavesToSearch,
+    displayLabel="Num leaves to search",
+    inputHelp="The database flag controls the trade off between recall and QPS",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 20,
+        "max": 10486,
+        "value": 20,
+    },
+)
+
+CaseConfigParamInput_max_top_neighbors_buffer_size_AlloyDB = CaseConfigInput(
+    label=CaseConfigParamType.maxTopNeighborsBufferSize,
+    displayLabel="Max top neighbors buffer size",
+    inputHelp="The database flag specifies the size of cache used to improve the \
+        performance for filtered queries by scoring or ranking the scanned candidate \
+        neighbors in memory instead of the disk",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 10000,
+        "max": 60000,
+        "value": 20000,
+    },
+)
+
+CaseConfigParamInput_pre_reordering_num_neighbors_AlloyDB = CaseConfigInput(
+    label=CaseConfigParamType.preReorderingNumNeigbors,
+    displayLabel="Pre reordering num neighbors",
+    inputHelp="Specifies the number of candidate neighbors to consider during the reordering \
+        stages after initial search identifies a set of candidates",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 20,
+        "max": 10486,
+        "value": 80,
+    },
+)
+
+CaseConfigParamInput_num_search_threads_AlloyDB = CaseConfigInput(
+    label=CaseConfigParamType.numSearchThreads,
+    displayLabel="Num of searcher threads",
+    inputHelp="The number of searcher threads for multi-thread search.",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 100,
+        "value": 2,
+    },
+)
+
+CaseConfigParamInput_max_num_prefetch_datasets_AlloyDB = CaseConfigInput(
+    label=CaseConfigParamType.maxNumPrefetchDatasets,
+    displayLabel="Max num prefetch datasets",
+    inputHelp="The maximum number of data batches to prefetch during index search, where batch is a group of buffer pages",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 10,
+        "max": 150,
+        "value": 100,
+    },
+)
+
+CaseConfigParamInput_maintenance_work_mem_AlloyDB = CaseConfigInput(
+    label=CaseConfigParamType.maintenance_work_mem,
+    inputHelp="Recommended value: 1.33x the index size, not to exceed the available free memory."
+    "Specify in gigabytes. e.g. 8GB",
+    inputType=InputType.Text,
+    inputConfig={
+        "value": "8GB",
+    },
+)
+
+CaseConfigParamInput_max_parallel_workers_AlloyDB = CaseConfigInput(
+    label=CaseConfigParamType.max_parallel_workers,
+    displayLabel="Max parallel workers",
+    inputHelp="Recommended value: (cpu cores - 1). This will set the parameters: max_parallel_maintenance_workers,"
+    " max_parallel_workers & table(parallel_workers)",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 0,
+        "max": 1024,
+        "value": 7,
+    },
+)
+
+
 MilvusLoadConfig = [
     CaseConfigParamInput_IndexType,
     CaseConfigParamInput_M,
@@ -1045,6 +1180,33 @@ PgDiskANNPerformanceConfig = [
     CaseConfigParamInput_l_value_is,
 ]
 
+
+AlloyDBLoadConfig = [
+    CaseConfigParamInput_IndexType_AlloyDB,
+    CaseConfigParamInput_num_leaves_AlloyDB,
+    CaseConfigParamInput_max_num_levels_AlloyDB,
+    CaseConfigParamInput_enable_pca_AlloyDB,
+    CaseConfigParamInput_quantizer_AlloyDB,
+    CaseConfigParamInput_maintenance_work_mem_AlloyDB,
+    CaseConfigParamInput_max_parallel_workers_AlloyDB,
+]
+
+AlloyDBPerformanceConfig = [
+    CaseConfigParamInput_IndexType_AlloyDB,
+    CaseConfigParamInput_num_leaves_AlloyDB,
+    CaseConfigParamInput_max_num_levels_AlloyDB,
+    CaseConfigParamInput_enable_pca_AlloyDB,
+    CaseConfigParamInput_quantizer_AlloyDB,
+    CaseConfigParamInput_num_search_threads_AlloyDB,
+    CaseConfigParamInput_num_leaves_to_search_AlloyDB,
+    CaseConfigParamInput_max_num_prefetch_datasets_AlloyDB,
+    CaseConfigParamInput_max_top_neighbors_buffer_size_AlloyDB,
+    CaseConfigParamInput_pre_reordering_num_neighbors_AlloyDB,
+    CaseConfigParamInput_maintenance_work_mem_AlloyDB,
+    CaseConfigParamInput_max_parallel_workers_AlloyDB,
+]
+
+
 CASE_CONFIG_MAP = {
     DB.Milvus: {
         CaseLabel.Load: MilvusLoadConfig,
@@ -1080,5 +1242,9 @@ CASE_CONFIG_MAP = {
     DB.PgDiskANN: {
         CaseLabel.Load: PgDiskANNLoadConfig,
         CaseLabel.Performance: PgDiskANNPerformanceConfig,
+    },
+    DB.AlloyDB: {
+        CaseLabel.Load: AlloyDBLoadConfig,
+        CaseLabel.Performance: AlloyDBPerformanceConfig,
     },
 }

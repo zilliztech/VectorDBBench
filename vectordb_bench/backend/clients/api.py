@@ -10,6 +10,7 @@ class MetricType(str, Enum):
     L2 = "L2"
     COSINE = "COSINE"
     IP = "IP"
+    DP = "DP"
     HAMMING = "HAMMING"
     JACCARD = "JACCARD"
 
@@ -27,6 +28,7 @@ class IndexType(str, Enum):
     GPU_IVF_FLAT = "GPU_IVF_FLAT"
     GPU_IVF_PQ = "GPU_IVF_PQ"
     GPU_CAGRA = "GPU_CAGRA"
+    SCANN = "scann"
 
 
 class DBConfig(ABC, BaseModel):
