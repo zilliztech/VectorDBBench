@@ -76,6 +76,15 @@ class CaseConfigParamType(Enum):
     num_bits_per_dimension = "num_bits_per_dimension"
     query_search_list_size = "query_search_list_size"
     query_rescore = "query_rescore"
+    numLeaves = "num_leaves"
+    quantizer = "quantizer"
+    enablePca = "enable_pca"
+    maxNumLevels = "max_num_levels"
+    numLeavesToSearch = "num_leaves_to_search"
+    maxTopNeighborsBufferSize = "max_top_neighbors_buffer_size"
+    preReorderingNumNeigbors = "pre_reordering_num_neighbors"
+    numSearchThreads = "num_search_threads"
+    maxNumPrefetchDatasets = "max_num_prefetch_datasets"
 
 
 class CustomizedCase(BaseModel):
