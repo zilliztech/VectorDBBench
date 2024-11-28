@@ -93,7 +93,7 @@ class Milvus(VectorDB):
         self._post_insert()
         log.info(f"{self.name} optimizing before search")
         try:
-            self.col.load(refresh=True)
+            self.col.load()
         except Exception as e:
             log.warning(f"{self.name} optimize error: {e}")
             raise e from None
