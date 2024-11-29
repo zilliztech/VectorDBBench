@@ -106,7 +106,7 @@ class AlloyDBScaNNTypedDict(AlloyDBTypedDict):
         int,
         click.option(
             "--max-num-levels",
-            type=click.Choice([1, 2]),
+            type=click.Choice(["1", "2"]),
             help="Maximum number of levels",
             default=1
         )
