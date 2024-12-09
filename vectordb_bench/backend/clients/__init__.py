@@ -37,6 +37,7 @@ class DB(Enum):
     MemoryDB = "MemoryDB"
     Chroma = "Chroma"
     AWSOpenSearch = "OpenSearch"
+    AliyunElasticsearch = "AliyunElasticsearch"
     Test = "test"
 
 
@@ -103,6 +104,10 @@ class DB(Enum):
             from .alloydb.alloydb import AlloyDB
             return AlloyDB
 
+        if self == DB.AliyunElasticsearch:
+            from .aliyun_elasticsearch.aliyun_elasticsearch import AliyunElasticsearch
+            return AliyunElasticsearch
+
     @property
     def config_cls(self) -> Type[DBConfig]:
         """Import while in use"""
@@ -166,6 +171,10 @@ class DB(Enum):
             from .alloydb.config import AlloyDBConfig
             return AlloyDBConfig
 
+        if self == DB.AliyunElasticsearch:
+            from .aliyun_elasticsearch.config import AliyunElasticsearchConfig
+            return AliyunElasticsearchConfig
+
     def case_config_cls(self, index_type: IndexType | None = None) -> Type[DBCaseConfig]:
         if self == DB.Milvus:
             from .milvus.config import _milvus_case_config
@@ -210,6 +219,10 @@ class DB(Enum):
         if self == DB.AlloyDB:
             from .alloydb.config import _alloydb_case_config
             return _alloydb_case_config.get(index_type)
+
+        if self == DB.AliyunElasticsearch:
+            from .aliyun_elasticsearch.config import AliyunElasticsearchIndexConfig
+            return AliyunElasticsearchIndexConfig
 
         # DB.Pinecone, DB.Chroma, DB.Redis
         return EmptyDBCaseConfig
