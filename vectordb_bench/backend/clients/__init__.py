@@ -221,8 +221,8 @@ class DB(Enum):
             return _alloydb_case_config.get(index_type)
 
         if self == DB.AliyunElasticsearch:
-            from .aliyun_elasticsearch.config import AliyunElasticsearchIndexConfig
-            return AliyunElasticsearchIndexConfig
+            from .elastic_cloud.config import ElasticCloudIndexConfig
+            return ElasticCloudIndexConfig
 
         # DB.Pinecone, DB.Chroma, DB.Redis
         return EmptyDBCaseConfig
