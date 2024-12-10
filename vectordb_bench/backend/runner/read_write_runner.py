@@ -24,7 +24,7 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
         k: int = 100,
         filters: dict | None = None,
         concurrencies: Iterable[int] = (1, 15, 50),
-        search_stage: Iterable[float] = (0.5, 0.6, 0.7, 0.8, 0.9, 1.0), # search in any insert portion, 0.0 means search from the start
+        search_stage: Iterable[float] = (0.5, 0.6, 0.7, 0.8, 0.9), # search from insert portion, 0.0 means search from the start
         read_dur_after_write: int = 300, # seconds, search duration when insertion is done
         timeout: float | None = None,
     ):
@@ -32,7 +32,7 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
         self.data_volume = dataset.data.size
 
         for stage in search_stage:
-            assert 0.0 <= stage <= 1.0, "each search stage should be in [0.0, 1.0]"
+            assert 0.0 <= stage < 1.0, "each search stage should be in [0.0, 1.0)"
         self.search_stage = sorted(search_stage)
         self.read_dur_after_write = read_dur_after_write
 
@@ -65,48 +65,114 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
             k=k,
         )
 
+    def run_optimize(self):
+        """Optimize needs to run in differenct process for pymilvus schema recursion problem"""
+        with self.db.init():
+            log.info("Search after write - Optimize start")
+            self.db.optimize()
+            log.info("Search after write - Optimize finished")
+
+    def run_search(self):
+        log.info("Search after write - Serial search start")
+        res, ssearch_dur = self.serial_search_runner.run()
+        recall, ndcg, p99_latency = res
+        log.info(f"Search after write - Serial search - recall={recall}, ndcg={ndcg}, p99={p99_latency}, dur={ssearch_dur:.4f}")
+        log.info(f"Search after wirte - Conc search start, dur for each conc={self.read_dur_after_write}")
+        max_qps = self.run_by_dur(self.read_dur_after_write)
+        log.info(f"Search after wirte - Conc search finished, max_qps={max_qps}")
+
+        return (max_qps, recall, ndcg, p99_latency)
+
     def run_read_write(self):
-        futures = []
         with mp.Manager() as m:
             q = m.Queue()
             with concurrent.futures.ProcessPoolExecutor(mp_context=mp.get_context("spawn"), max_workers=2) as executor:
-                futures.append(executor.submit(self.run_with_rate, q))
-                futures.append(executor.submit(self.run_search_by_sig, q))
+                read_write_futures = []
+                read_write_futures.append(executor.submit(self.run_with_rate, q))
+                read_write_futures.append(executor.submit(self.run_search_by_sig, q))
 
-                for future in concurrent.futures.as_completed(futures):
-                    res = future.result()
-                    log.info(f"Result = {res}")
+                try:
+                    for f in concurrent.futures.as_completed(read_write_futures):
+                        res = f.result()
+                        log.info(f"Result = {res}")
 
+                    # Wait for read_write_futures finishing and do optimize and search
+                    op_future = executor.submit(self.run_optimize)
+                    op_future.result()
+
+                    search_future = executor.submit(self.run_search)
+                    last_res = search_future.result()
+
+                    log.info(f"Max QPS after optimze and search: {last_res}")
+                except Exception as e:
+                    log.warning(f"Read and write error: {e}")
+                    executor.shutdown(wait=True, cancel_futures=True)
+                    raise e
         log.info("Concurrent read write all done")
 
-
     def run_search_by_sig(self, q):
-        res = []
+        """
+        Args:
+            q: multiprocessing queue
+                (None) means abnormal exit
+                (False) means updating progress
+                (True) means normal exit
+        """
+        result, start_batch = [], 0
         total_batch = math.ceil(self.data_volume / self.insert_rate)
-        batch = 0
-        recall = 'x'
+        recall, ndcg, p99_latency = None, None, None
+
+        def wait_next_target(start, target_batch) -> bool:
+            """Return False when receive True or None"""
+            while start < target_batch:
+                sig = q.get(block=True)
+
+                if sig is None or sig is True:
+                    return False
+                else:
+                    start += 1
+            return True
 
         for idx, stage in enumerate(self.search_stage):
             target_batch = int(total_batch * stage)
-            while q.get(block=True):
-                batch += 1
-                if batch >= target_batch:
-                    perc = int(stage * 100)
-                    log.info(f"Insert {perc}% done, total batch={total_batch}")
-                    log.info(f"[{batch}/{total_batch}] Serial search - {perc}% start")
-                    recall, ndcg, p99 =self.serial_search_runner.run()
+            perc = int(stage * 100)
 
-                    if idx < len(self.search_stage) - 1:
-                        stage_search_dur = (self.data_volume  * (self.search_stage[idx + 1] - stage) // self.insert_rate) // len(self.concurrencies)
-                        if stage_search_dur < 30:
-                            log.warning(f"Search duration too short, please reduce concurrency count or insert rate, or increase dataset volume: dur={stage_search_dur}, concurrencies={len(self.concurrencies)}, insert_rate={self.insert_rate}")
-                        log.info(f"[{batch}/{total_batch}] Conc search - {perc}% start, dur for each conc={stage_search_dur}s")
-                    else:
-                        last_search_dur = self.data_volume * (1.0 - stage) // self.insert_rate
-                        stage_search_dur = last_search_dur + self.read_dur_after_write
-                        log.info(f"[{batch}/{total_batch}] Last conc search - {perc}% start, [read_until_write|read_after_write|total] =[{last_search_dur}s|{self.read_dur_after_write}s|{stage_search_dur}s]")
+            got = wait_next_target(start_batch, target_batch)
+            if got is False:
+                log.warning(f"Abnormal exit, target_batch={target_batch}, start_batch={start_batch}")
+                return
 
-                    max_qps = self.run_by_dur(stage_search_dur)
-                    res.append((perc, max_qps, recall))
-                    break
-        return res
+            log.info(f"Insert {perc}% done, total batch={total_batch}")
+            log.info(f"[{target_batch}/{total_batch}] Serial search - {perc}% start")
+            res, ssearch_dur = self.serial_search_runner.run()
+            recall, ndcg, p99_latency = res
+            log.info(f"[{target_batch}/{total_batch}] Serial search - {perc}% done, recall={recall}, ndcg={ndcg}, p99={p99_latency}, dur={ssearch_dur:.4f}")
+
+            # Search duration for non-last search stage is carefully calculated.
+            # If duration for each concurrency is less than 30s, runner will raise error.
+            if idx < len(self.search_stage) - 1:
+                total_dur_between_stages = self.data_volume  * (self.search_stage[idx + 1] - stage) // self.insert_rate
+                csearch_dur = total_dur_between_stages - ssearch_dur
+
+                # Try to leave room for init process executors
+                csearch_dur = csearch_dur - 30 if csearch_dur > 60 else csearch_dur
+
+                each_conc_search_dur = csearch_dur / len(self.concurrencies)
+                if each_conc_search_dur < 30:
+                    warning_msg = f"Results might be inaccurate, duration[{csearch_dur:.4f}] left for conc-search is too short, total available dur={total_dur_between_stages}, serial_search_cost={ssearch_dur}."
+                    log.warning(warning_msg)
+
+            # The last stage
+            else:
+                each_conc_search_dur = 60
+
+            log.info(f"[{target_batch}/{total_batch}] Concurrent search - {perc}% start, dur={each_conc_search_dur:.4f}")
+            max_qps = self.run_by_dur(each_conc_search_dur)
+            result.append((perc, max_qps, recall, ndcg, p99_latency))
+
+            start_batch = target_batch
+
+        # Drain the queue
+        while q.empty() is False:
+            q.get(block=True)
+        return result

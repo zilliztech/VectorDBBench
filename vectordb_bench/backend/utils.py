@@ -35,6 +35,7 @@ def numerize(n) -> str:
 
 
 def time_it(func):
+    """ returns result and elapsed time"""
     @wraps(func)
     def inner(*args, **kwargs):
         pref = time.perf_counter()
