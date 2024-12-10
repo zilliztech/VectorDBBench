@@ -14,6 +14,7 @@ from ...metric import calc_ndcg, calc_recall, get_ideal_dcg
 from ...models import LoadTimeoutError, PerformanceTimeoutError
 from .. import utils
 from ... import config
+from vectordb_bench.backend.filter import Filter, LabelFilter
 from vectordb_bench.backend.dataset import DatasetManager
 
 NUM_PER_BATCH = config.NUM_PER_BATCH
@@ -23,11 +24,19 @@ WAITTING_TIME = 60
 log = logging.getLogger(__name__)
 
 class SerialInsertRunner:
-    def __init__(self, db: api.VectorDB, dataset: DatasetManager, normalize: bool, timeout: float | None = None):
+    def __init__(
+        self,
+        db: api.VectorDB,
+        dataset: DatasetManager,
+        normalize: bool,
+        filter: Filter = None,
+        timeout: float | None = None,
+    ):
         self.timeout = timeout if isinstance(timeout, (int, float)) else None
         self.dataset = dataset
         self.db = db
         self.normalize = normalize
+        self.filter = filter
 
     def task(self) -> int:
         count = 0
@@ -43,12 +52,22 @@ class SerialInsertRunner:
                     all_embeddings = (emb_np / np.linalg.norm(emb_np, axis=1)[:, np.newaxis]).tolist()
                 else:
                     all_embeddings = emb_np.tolist()
-                del(emb_np)
+                del emb_np
                 log.debug(f"batch dataset size: {len(all_embeddings)}, {len(all_metadata)}")
+
+                labels_data = None
+                if isinstance(self.filter, LabelFilter):
+                    if self.dataset.data.scalar_labels_file_separated:
+                        labels_data = self.dataset.scalar_labels[
+                            self.filter.label_field
+                        ][all_metadata].to_list()
+                    else:
+                        labels_data = data_df[self.filter.label_field].tolist()
 
                 insert_count, error = self.db.insert_embeddings(
                     embeddings=all_embeddings,
                     metadata=all_metadata,
+                    labels_data=labels_data,
                 )
                 if error is not None:
                     raise error
@@ -153,13 +172,13 @@ class SerialSearchRunner:
         self,
         db: api.VectorDB,
         test_data: list[list[float]],
-        ground_truth: pd.DataFrame,
+        ground_truth: list[list[int]],
         k: int = 100,
-        filters: dict | None = None,
+        filter: dict | None = None,
     ):
         self.db = db
         self.k = k
-        self.filters = filters
+        self.filter = filter
 
         if isinstance(test_data[0], np.ndarray):
             self.test_data = [query.tolist() for query in test_data]
@@ -170,21 +189,18 @@ class SerialSearchRunner:
     def search(self, args: tuple[list, pd.DataFrame]):
         log.info(f"{mp.current_process().name:14} start search the entire test_data to get recall and latency")
         with self.db.init():
+            self.db.prepare_filter(self.filter)
             test_data, ground_truth = args
             ideal_dcg = get_ideal_dcg(self.k)
 
             log.debug(f"test dataset size: {len(test_data)}")
-            log.debug(f"ground truth size: {ground_truth.columns}, shape: {ground_truth.shape}")
+            log.debug(f"ground truth size: {len(ground_truth)}")
 
             latencies, recalls, ndcgs = [], [], []
             for idx, emb in enumerate(test_data):
                 s = time.perf_counter()
                 try:
-                    results = self.db.search_embedding(
-                        emb,
-                        self.k,
-                        self.filters,
-                    )
+                    results = self.db.search_embedding(emb, self.k)
 
                 except Exception as e:
                     log.warning(f"VectorDB search_embedding error: {e}")
@@ -193,7 +209,7 @@ class SerialSearchRunner:
 
                 latencies.append(time.perf_counter() - s)
 
-                gt = ground_truth['neighbors_id'][idx]
+                gt = ground_truth[idx]
                 recalls.append(calc_recall(self.k, gt[:self.k], results))
                 ndcgs.append(calc_ndcg(gt[:self.k], results, ideal_dcg))
 
@@ -214,7 +230,7 @@ class SerialSearchRunner:
             f"avg_ndcg={avg_ndcg},"
             f"avg_latency={avg_latency}, "
             f"p99={p99}"
-         )
+        )
         return (avg_recall, avg_ndcg, p99)
 
 

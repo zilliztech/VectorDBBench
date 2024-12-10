@@ -86,7 +86,7 @@ class BenchMarkRunner:
         return ResultCollector.collect(target_dir)
 
     def _try_get_signal(self):
-        if self.receive_conn and self.receive_conn.poll():
+        while self.receive_conn and self.receive_conn.poll():
             sig, received = self.receive_conn.recv()
             log.debug(f"Sigal received to process: {sig}, {received}")
             if sig == SIGNAL.ERROR:

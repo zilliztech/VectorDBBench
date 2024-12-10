@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from vectordb_bench.backend.cases import CaseLabel, CaseType
 from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.clients.api import IndexType, MetricType
+from vectordb_bench.backend.dataset import DatasetWithSizeMap, DatasetWithSizeType
 from vectordb_bench.frontend.components.custom.getCustomConfig import get_custom_configs
 
 from vectordb_bench.models import CaseConfig, CaseConfigParamType
@@ -33,21 +34,21 @@ class UICaseItem(BaseModel):
     def __init__(
         self,
         isLine: bool = False,
-        case_id: CaseType = None,
-        custom_case: dict = {},
-        cases: list[CaseConfig] = [],
+        cases: list[CaseConfig] = None,
         label: str = "",
         description: str = "",
         caseLabel: CaseLabel = CaseLabel.Performance,
     ):
         if isLine is True:
             super().__init__(isLine=True)
-        elif case_id is not None and isinstance(case_id, CaseType):
-            c = case_id.case_cls(custom_case)
+        if cases is None:
+            cases = []
+        elif len(cases) == 1:
+            c = cases[0].case
             super().__init__(
                 label=c.name,
                 description=c.description,
-                cases=[CaseConfig(case_id=case_id, custom_case=custom_case)],
+                cases=cases,
                 caseLabel=c.label,
             )
         else:
@@ -71,9 +72,38 @@ def get_custom_case_items() -> list[UICaseItem]:
     custom_configs = get_custom_configs()
     return [
         UICaseItem(
-            case_id=CaseType.PerformanceCustomDataset, custom_case=custom_config.dict()
+            cases=[
+                CaseConfig(
+                    case_id=CaseType.PerformanceCustomDataset,
+                    custom_case=custom_config.dict(),
+                )
+            ]
         )
         for custom_config in custom_configs
+    ]
+
+
+def generate_normal_cases(
+    case_id: CaseType, custom_case: dict | None = None
+) -> list[CaseConfig]:
+    return [CaseConfig(case_id=case_id, custom_case=custom_case)]
+
+
+def generator_label_filter_cases(
+    dataset_with_size_type: DatasetWithSizeType
+) -> list[CaseConfig]:
+    label_percentages = (
+        dataset_with_size_type.get_manager().data.scalar_label_percentages
+    )
+    return [
+        CaseConfig(
+            case_id=CaseType.LabelFilterPerformanceCase,
+            custom_case=dict(
+                dataset_with_size_type=dataset_with_size_type,
+                label_percentage=label_percentage,
+            ),
+        )
+        for label_percentage in label_percentages
     ]
 
 
@@ -87,34 +117,45 @@ UI_CASE_CLUSTERS: list[UICaseItemCluster] = [
     UICaseItemCluster(
         label="Search Performance Test",
         uiCaseItems=[
-            UICaseItem(case_id=CaseType.Performance768D100M),
-            UICaseItem(case_id=CaseType.Performance768D10M),
-            UICaseItem(case_id=CaseType.Performance768D1M),
+            UICaseItem(cases=generate_normal_cases(CaseType.Performance768D100M)),
+            UICaseItem(cases=generate_normal_cases(CaseType.Performance768D10M)),
+            UICaseItem(cases=generate_normal_cases(CaseType.Performance768D1M)),
             UICaseItem(isLine=True),
-            UICaseItem(case_id=CaseType.Performance1536D5M),
-            UICaseItem(case_id=CaseType.Performance1536D500K),
-            UICaseItem(case_id=CaseType.Performance1536D50K),
+            UICaseItem(cases=generate_normal_cases(CaseType.Performance1536D5M)),
+            UICaseItem(cases=generate_normal_cases(CaseType.Performance1536D500K)),
+            UICaseItem(cases=generate_normal_cases(CaseType.Performance1536D50K)),
         ],
     ),
     UICaseItemCluster(
         label="Filter Search Performance Test",
         uiCaseItems=[
-            UICaseItem(case_id=CaseType.Performance768D10M1P),
-            UICaseItem(case_id=CaseType.Performance768D10M99P),
-            UICaseItem(case_id=CaseType.Performance768D1M1P),
-            UICaseItem(case_id=CaseType.Performance768D1M99P),
+            UICaseItem(cases=generate_normal_cases(CaseType.Performance768D10M1P)),
+            UICaseItem(cases=generate_normal_cases(CaseType.Performance768D10M99P)),
+            UICaseItem(cases=generate_normal_cases(CaseType.Performance768D1M1P)),
+            UICaseItem(cases=generate_normal_cases(CaseType.Performance768D1M99P)),
             UICaseItem(isLine=True),
-            UICaseItem(case_id=CaseType.Performance1536D5M1P),
-            UICaseItem(case_id=CaseType.Performance1536D5M99P),
-            UICaseItem(case_id=CaseType.Performance1536D500K1P),
-            UICaseItem(case_id=CaseType.Performance1536D500K99P),
+            UICaseItem(cases=generate_normal_cases(CaseType.Performance1536D5M1P)),
+            UICaseItem(cases=generate_normal_cases(CaseType.Performance1536D5M99P)),
+            UICaseItem(cases=generate_normal_cases(CaseType.Performance1536D500K1P)),
+            UICaseItem(cases=generate_normal_cases(CaseType.Performance1536D500K99P)),
         ],
     ),
     UICaseItemCluster(
         label="Capacity Test",
         uiCaseItems=[
-            UICaseItem(case_id=CaseType.CapacityDim960),
-            UICaseItem(case_id=CaseType.CapacityDim128),
+            UICaseItem(cases=generate_normal_cases(CaseType.CapacityDim960)),
+            UICaseItem(cases=generate_normal_cases(CaseType.CapacityDim128)),
+        ],
+    ),
+    UICaseItemCluster(
+        label="Label-Filter Search Performance Test",
+        uiCaseItems=[
+            UICaseItem(
+                label=f"Label-Filter Search Performance Test - {dataset_with_size_type.value}",
+                description=f"[Batch Cases], {dataset_with_size_type.get_manager().data.name}",
+                cases=generator_label_filter_cases(dataset_with_size_type),
+            )
+            for dataset_with_size_type in DatasetWithSizeMap
         ],
     ),
 ]
@@ -127,14 +168,6 @@ DISPLAY_CASE_ORDER: list[CaseType] = [
     CaseType.Performance1536D5M,
     CaseType.Performance1536D500K,
     CaseType.Performance1536D50K,
-    CaseType.Performance768D10M1P,
-    CaseType.Performance768D1M1P,
-    CaseType.Performance1536D5M1P,
-    CaseType.Performance1536D500K1P,
-    CaseType.Performance768D10M99P,
-    CaseType.Performance768D1M99P,
-    CaseType.Performance1536D5M99P,
-    CaseType.Performance1536D500K99P,
     CaseType.CapacityDim960,
     CaseType.CapacityDim128,
 ]

@@ -1,38 +1,39 @@
 import streamlit as st
 from vectordb_bench.backend.filter import FilterType
 from vectordb_bench.frontend.components.check_results.footer import footer
-from vectordb_bench.frontend.components.check_results.stPageConfig import (
-    initResultsPageConfig,
-)
 from vectordb_bench.frontend.components.check_results.headerIcon import drawHeaderIcon
 from vectordb_bench.frontend.components.check_results.nav import (
     NavToQuriesPerDollar,
     NavToRunTest,
 )
-from vectordb_bench.frontend.components.check_results.charts import drawCharts
+from vectordb_bench.frontend.components.filter.charts import drawCharts
 from vectordb_bench.frontend.components.check_results.filters import getshownData
-from vectordb_bench.frontend.components.get_results.saveAsImage import getResults
+from vectordb_bench.frontend.config.styles import FAVICON
+
+# from vectordb_bench.frontend.config.styles import *
 from vectordb_bench.interface import benchMarkRunner
 
 
 def main():
     # set page config
-    initResultsPageConfig(st)
+    st.set_page_config(
+        page_title="Label Filter",
+        page_icon=FAVICON,
+        layout="wide",
+        # initial_sidebar_state="collapsed",
+    )
 
     # header
     drawHeaderIcon(st)
 
     allResults = benchMarkRunner.get_results()
 
-    st.title("Vector Database Benchmark")
-    st.caption(
-        "Note that all testing was completed in July 2023, except for the times already noted."
-    )
+    st.title("Vector Database Benchmark (Label Filter)")
 
     # results selector and filter
     resultSelectorContainer = st.sidebar.container()
     shownData, failedTasks, showCaseNames = getshownData(
-        resultSelectorContainer, allResults, filter_type=FilterType.NonFilter
+        resultSelectorContainer, allResults, filter_type=FilterType.Label
     )
 
     resultSelectorContainer.divider()
@@ -41,10 +42,6 @@ def main():
     navContainer = st.sidebar.container()
     NavToRunTest(navContainer)
     NavToQuriesPerDollar(navContainer)
-
-    # save or share
-    resultesContainer = st.sidebar.container()
-    getResults(resultesContainer, "vectordb_bench")
 
     # charts
     drawCharts(st, shownData, failedTasks, showCaseNames)

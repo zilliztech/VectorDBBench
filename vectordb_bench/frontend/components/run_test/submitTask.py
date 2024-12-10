@@ -73,7 +73,8 @@ def controlPanel(st, tasks, taskLabel, isAllValid):
         currentTaskId = benchMarkRunner.get_current_task_id()
         tasksCount = benchMarkRunner.get_tasks_count()
         text = f":running: Running Task {currentTaskId} / {tasksCount}"
-        st.progress(currentTaskId / tasksCount, text=text)
+        if tasksCount > 0:
+            st.progress(currentTaskId / tasksCount, text=text)
 
         columns = st.columns(6)
         columns[0].button(

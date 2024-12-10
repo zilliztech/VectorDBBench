@@ -1,9 +1,8 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Any, Type
 from contextlib import contextmanager
-
 from pydantic import BaseModel, validator, SecretStr
+from vectordb_bench.backend.filter import Filter, FilterType
 
 
 class MetricType(str, Enum):
@@ -114,6 +113,15 @@ class VectorDB(ABC):
         >>>     milvus.search_embedding()
     """
 
+    supported_filter_types: list[FilterType] = [FilterType.NonFilter]
+
+    @classmethod
+    def filter_supported(cls, filter: Filter) -> bool:
+        return filter.type in cls.supported_filter_types
+
+    def prepare_filter(self, filter: Filter):  # noqa: B027
+        pass
+
     @abstractmethod
     def __init__(
         self,
@@ -158,7 +166,7 @@ class VectorDB(ABC):
         embeddings: list[list[float]],
         metadata: list[int],
         **kwargs,
-    ) -> (int, Exception):
+    ) -> tuple[int, Exception]:
         """Insert the embeddings to the vector database. The default number of embeddings for
         each insert_embeddings is 5000.
 
@@ -177,7 +185,6 @@ class VectorDB(ABC):
         self,
         query: list[float],
         k: int = 100,
-        filters: dict | None = None,
     ) -> list[int]:
         """Get k most similar embeddings to query vector.
 
