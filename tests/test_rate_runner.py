@@ -52,9 +52,9 @@ def test_read_write_runner(db, insert_rate, conc: list, search_stage: Iterable[f
 
 def get_db(db: str, config: dict) -> VectorDB:
     if db == DB.Milvus.name:
-        return DB.Milvus.init_cls(dim=768, db_config=config, db_case_config=FLATConfig(metric_type="COSINE"), drop_old=True, pre_load=True)
+        return DB.Milvus.init_cls(dim=768, db_config=config, db_case_config=FLATConfig(metric_type="COSINE"), drop_old=True)
     elif db == DB.ZillizCloud.name:
-        return DB.ZillizCloud.init_cls(dim=768, db_config=config, db_case_config=AutoIndexConfig(metric_type="COSINE"), drop_old=True, pre_load=True)
+        return DB.ZillizCloud.init_cls(dim=768, db_config=config, db_case_config=AutoIndexConfig(metric_type="COSINE"), drop_old=True)
     else:
         raise ValueError(f"unknown db: {db}")
 
@@ -76,7 +76,7 @@ if __name__ == "__main__":
     }
 
     conc = (1, 15, 50)
-    search_stage = (0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
+    search_stage = (0.5, 0.6, 0.7, 0.8, 0.9)
 
     db = get_db(flags.db, config)
     test_read_write_runner(

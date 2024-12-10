@@ -167,7 +167,7 @@ class SerialSearchRunner:
             self.test_data = test_data
         self.ground_truth = ground_truth
 
-    def search(self, args: tuple[list, pd.DataFrame]):
+    def search(self, args: tuple[list, pd.DataFrame]) -> tuple[float, float, float]:
         log.info(f"{mp.current_process().name:14} start search the entire test_data to get recall and latency")
         with self.db.init():
             test_data, ground_truth = args
@@ -224,5 +224,11 @@ class SerialSearchRunner:
             result = future.result()
             return result
 
-    def run(self) -> tuple[float, float]:
+    @utils.time_it
+    def run(self) -> tuple[float, float, float]:
+        """
+        Returns:
+            tuple[tuple[float, float, float], float]: (avg_recall, avg_ndcg, p99_latency), cost
+
+        """
         return self._run_in_subprocess()
