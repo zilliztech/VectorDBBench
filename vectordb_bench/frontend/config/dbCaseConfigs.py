@@ -1040,6 +1040,35 @@ CaseConfigParamInput_max_parallel_workers_AlloyDB = CaseConfigInput(
     },
 )
 
+CaseConfigParamInput_EFConstruction_AliES = CaseConfigInput(
+    label=CaseConfigParamType.EFConstruction,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 8,
+        "max": 512,
+        "value": 360,
+    },
+)
+
+CaseConfigParamInput_M_AliES = CaseConfigInput(
+    label=CaseConfigParamType.M,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 4,
+        "max": 64,
+        "value": 30,
+    },
+)
+CaseConfigParamInput_NumCandidates_AliES = CaseConfigInput(
+    label=CaseConfigParamType.numCandidates,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 10000,
+        "value": 100,
+    },
+)
+
 
 MilvusLoadConfig = [
     CaseConfigParamInput_IndexType,
@@ -1206,6 +1235,12 @@ AlloyDBPerformanceConfig = [
     CaseConfigParamInput_max_parallel_workers_AlloyDB,
 ]
 
+AliyunElasticsearchLoadingConfig = [CaseConfigParamInput_EFConstruction_AliES, CaseConfigParamInput_M_AliES]
+AliyunElasticsearchPerformanceConfig = [
+    CaseConfigParamInput_EFConstruction_AliES,
+    CaseConfigParamInput_M_AliES,
+    CaseConfigParamInput_NumCandidates_AliES,
+]
 
 CASE_CONFIG_MAP = {
     DB.Milvus: {
@@ -1246,5 +1281,9 @@ CASE_CONFIG_MAP = {
     DB.AlloyDB: {
         CaseLabel.Load: AlloyDBLoadConfig,
         CaseLabel.Performance: AlloyDBPerformanceConfig,
+    },
+    DB.AliyunElasticsearch: {
+        CaseLabel.Load: AliyunElasticsearchLoadingConfig,
+        CaseLabel.Performance: AliyunElasticsearchPerformanceConfig,
     },
 }
