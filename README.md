@@ -29,21 +29,18 @@ All the database client supported
 
 | Optional database client | install command                             |
 |--------------------------|---------------------------------------------|
-| pymilvus(*default*)      | `pip install vectordb-bench`                |
-| all                      | `pip install vectordb-bench[all]`           |
+| pymilvus, zilliz_cloud (*default*)     | `pip install vectordb-bench`                |
+| all (*clients requirements might be conflict with each other*) | `pip install vectordb-bench[all]`           |
 | qdrant                   | `pip install vectordb-bench[qdrant]`        |
 | pinecone                 | `pip install vectordb-bench[pinecone]`      |
 | weaviate                 | `pip install vectordb-bench[weaviate]`      |
-| elastic                  | `pip install vectordb-bench[elastic]`       |
-| pgvector                 | `pip install vectordb-bench[pgvector]`      |
+| elastic, aliyun_elasticsearch| `pip install vectordb-bench[elastic]`       |
+| pgvector, pgvectorscale, pgdiskann, alloydb | `pip install vectordb-bench[pgvector]`      |
 | pgvecto.rs               | `pip install vectordb-bench[pgvecto_rs]`    |
-| pgvectorscale            | `pip install vectordb-bench[pgvectorscale]` |
-| pgdiskann                | `pip install vectordb-bench[pgdiskann]`     |
 | redis                    | `pip install vectordb-bench[redis]`         |
 | memorydb                 | `pip install vectordb-bench[memorydb]`      |
 | chromadb                 | `pip install vectordb-bench[chromadb]`      |
-| awsopensearch            | `pip install vectordb-bench[awsopensearch]` |
-| alloydb                  | `pip install vectordb-bench[alloydb]`       |
+| awsopensearch            | `pip install vectordb-bench[opensearch]` |
 
 ### Run
 

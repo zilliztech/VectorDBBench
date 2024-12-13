@@ -55,31 +55,32 @@ all = [
     "pinecone-client",
     "weaviate-client",
     "elasticsearch",
-    "pgvector",
-    "pgvecto_rs[psycopg3]>=0.2.2",
     "sqlalchemy",
     "redis",
     "chromadb",
+    "pgvector",
     "psycopg",
     "psycopg-binary",
-    "opensearch-dsl==2.1.0",
-    "opensearch-py==2.6.0",
+    "pgvecto_rs[psycopg3]>=0.2.2",
+    "opensearch-dsl",
+    "opensearch-py",
+    "memorydb",
 ]
 
-qdrant = [ "qdrant-client" ]
-pinecone = [ "pinecone-client" ]
-weaviate = [ "weaviate-client" ]
-elastic = [ "elasticsearch" ]
-pgvector = [ "psycopg", "psycopg-binary", "pgvector" ]
-pgvectorscale = [ "psycopg", "psycopg-binary", "pgvector" ]
-pgdiskann = [ "psycopg", "psycopg-binary", "pgvector" ]
-alloydb = [ "psycopg", "psycopg-binary", "pgvector"]
-pgvecto_rs = [ "pgvecto_rs[psycopg3]>=0.2.2" ]
-redis = [ "redis" ]
-memorydb = [ "memorydb" ]
-chromadb = [ "chromadb" ]
-awsopensearch = [ "awsopensearch" ]
-zilliz_cloud = []
+qdrant          = [ "qdrant-client" ]
+pinecone        = [ "pinecone-client" ]
+weaviate        = [ "weaviate-client" ]
+elastic         = [ "elasticsearch" ]
+# For elastic and aliyun_elasticsearch
+
+pgvector        = [ "psycopg", "psycopg-binary", "pgvector" ]
+# for pgvector, pgvectorscale, pgdiskann, and, alloydb
+
+pgvecto_rs      = [ "pgvecto_rs[psycopg3]>=0.2.2" ]
+redis           = [ "redis" ]
+memorydb        = [ "memorydb" ]
+chromadb        = [ "chromadb" ]
+opensearch      = [ "opensearch-py" ]
 
 [project.urls]
 "repository" = "https://github.com/zilliztech/VectorDBBench"
