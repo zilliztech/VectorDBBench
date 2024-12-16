@@ -1,10 +1,21 @@
-
-from vectordb_bench.frontend.config.styles import *
-from vectordb_bench.backend.cases import CaseType
-from vectordb_bench.frontend.config.dbCaseConfigs import *
+from vectordb_bench.backend.clients import DB
+from vectordb_bench.frontend.components.run_test.inputWidget import inputWidget
 from collections import defaultdict
+from vectordb_bench.frontend.config.dbCaseConfigs import (
+    CASE_CONFIG_MAP,
+    UI_CASE_CLUSTERS,
+    UICaseItem,
+    UICaseItemCluster,
+    get_custom_case_cluter,
+)
+from vectordb_bench.frontend.config.styles import (
+    CASE_CONFIG_SETTING_COLUMNS,
+    CHECKBOX_INDENT,
+    DB_CASE_CONFIG_SETTING_COLUMNS,
+)
 
 from vectordb_bench.frontend.utils import addHorizontalLine
+from vectordb_bench.models import CaseConfig
 
 
 def caseSelector(st, activedDbList: list[DB]):
@@ -24,45 +35,79 @@ def caseSelector(st, activedDbList: list[DB]):
     caseClusters = UI_CASE_CLUSTERS + [get_custom_case_cluter()]
     for caseCluster in caseClusters:
         activedCaseList += caseClusterExpander(
-            st, caseCluster, dbToCaseClusterConfigs, activedDbList)
+            st, caseCluster, dbToCaseClusterConfigs, activedDbList
+        )
     for db in dbToCaseClusterConfigs:
         for uiCaseItem in dbToCaseClusterConfigs[db]:
-            for case in uiCaseItem.cases:
+            for case in uiCaseItem.get_cases():
                 dbToCaseConfigs[db][case] = dbToCaseClusterConfigs[db][uiCaseItem]
 
     return activedCaseList, dbToCaseConfigs
 
 
-def caseClusterExpander(st, caseCluster: UICaseItemCluster, dbToCaseClusterConfigs, activedDbList: list[DB]):
+def caseClusterExpander(
+    st, caseCluster: UICaseItemCluster, dbToCaseClusterConfigs, activedDbList: list[DB]
+):
     expander = st.expander(caseCluster.label, False)
     activedCases: list[CaseConfig] = []
     for uiCaseItem in caseCluster.uiCaseItems:
         if uiCaseItem.isLine:
             addHorizontalLine(expander)
         else:
-            activedCases += caseItemCheckbox(expander,
-                                             dbToCaseClusterConfigs, uiCaseItem, activedDbList)
+            activedCases += caseItemCheckbox(
+                expander, dbToCaseClusterConfigs, uiCaseItem, activedDbList
+            )
     return activedCases
 
 
-def caseItemCheckbox(st, dbToCaseClusterConfigs, uiCaseItem: UICaseItem, activedDbList: list[DB]):
+def caseItemCheckbox(
+    st, dbToCaseClusterConfigs, uiCaseItem: UICaseItem, activedDbList: list[DB]
+):
     selected = st.checkbox(uiCaseItem.label)
     st.markdown(
         f"<div style='color: #1D2939; margin: -8px 0 20px {CHECKBOX_INDENT}px; font-size: 14px;'>{uiCaseItem.description}</div>",
         unsafe_allow_html=True,
     )
 
+    caseConfigSetting(st.container(), uiCaseItem)
+
     if selected:
-        caseConfigSetting(
+        dbCaseConfigSetting(
             st.container(), dbToCaseClusterConfigs, uiCaseItem, activedDbList
         )
 
-    return uiCaseItem.cases if selected else []
+    return uiCaseItem.get_cases() if selected else []
 
 
-def caseConfigSetting(st, dbToCaseClusterConfigs, uiCaseItem: UICaseItem, activedDbList: list[DB]):
+def caseConfigSetting(st, uiCaseItem: UICaseItem):
+    config_inputs = uiCaseItem.extra_custom_case_config_inputs
+    if len(config_inputs) == 0:
+        return
+
+    columns = st.columns(
+        [
+            1,
+            *[DB_CASE_CONFIG_SETTING_COLUMNS / CASE_CONFIG_SETTING_COLUMNS]
+            * CASE_CONFIG_SETTING_COLUMNS,
+        ]
+    )
+    columns[0].markdown(
+        f"<div style='margin: 0 0 24px {CHECKBOX_INDENT}px; font-size: 18px; font-weight: 600;'>Custom Config</div>",
+        unsafe_allow_html=True,
+    )
+    for i, config_input in enumerate(config_inputs):
+        column = columns[1 + i % DB_CASE_CONFIG_SETTING_COLUMNS]
+        key = f"custom-config-{uiCaseItem.label}"
+        uiCaseItem.tmp_custom_config[config_input.label.value] = inputWidget(
+            column, config=config_input, key=key
+        )
+
+
+def dbCaseConfigSetting(
+    st, dbToCaseClusterConfigs, uiCaseItem: UICaseItem, activedDbList: list[DB]
+):
     for db in activedDbList:
-        columns = st.columns(1 + CASE_CONFIG_SETTING_COLUMNS)
+        columns = st.columns(1 + DB_CASE_CONFIG_SETTING_COLUMNS)
         # column 0 - title
         dbColumn = columns[0]
         dbColumn.markdown(
@@ -70,52 +115,12 @@ def caseConfigSetting(st, dbToCaseClusterConfigs, uiCaseItem: UICaseItem, active
             unsafe_allow_html=True,
         )
         k = 0
-        caseConfig = dbToCaseClusterConfigs[db][uiCaseItem]
+        dbCaseConfig = dbToCaseClusterConfigs[db][uiCaseItem]
         for config in CASE_CONFIG_MAP.get(db, {}).get(uiCaseItem.caseLabel, []):
-            if config.isDisplayed(caseConfig):
-                column = columns[1 + k % CASE_CONFIG_SETTING_COLUMNS]
+            if config.isDisplayed(dbCaseConfig):
+                column = columns[1 + k % DB_CASE_CONFIG_SETTING_COLUMNS]
                 key = "%s-%s-%s" % (db, uiCaseItem.label, config.label.value)
-                if config.inputType == InputType.Text:
-                    caseConfig[config.label] = column.text_input(
-                        config.displayLabel if config.displayLabel else config.label.value,
-                        key=key,
-                        help=config.inputHelp,
-                        value=config.inputConfig["value"],
-                    )
-                elif config.inputType == InputType.Option:
-                    caseConfig[config.label] = column.selectbox(
-                        config.displayLabel if config.displayLabel else config.label.value,
-                        config.inputConfig["options"],
-                        key=key,
-                        help=config.inputHelp,
-                    )
-                elif config.inputType == InputType.Number:
-                    caseConfig[config.label] = column.number_input(
-                        config.displayLabel if config.displayLabel else config.label.value,
-                        # format="%d",
-                        step=config.inputConfig.get("step", 1),
-                        min_value=config.inputConfig["min"],
-                        max_value=config.inputConfig["max"],
-                        key=key,
-                        value=config.inputConfig["value"],
-                        help=config.inputHelp,
-                    )
-                elif config.inputType == InputType.Float:
-                    caseConfig[config.label] = column.number_input(
-                        config.displayLabel if config.displayLabel else config.label.value,
-                        step=config.inputConfig.get("step", 0.1),
-                        min_value=config.inputConfig["min"],
-                        max_value=config.inputConfig["max"],
-                        key=key,
-                        value=config.inputConfig["value"],
-                        help=config.inputHelp,
-                    )
-                elif config.inputType == InputType.Bool:
-                    caseConfig[config.label] = column.checkbox(
-                        config.displayLabel if config.displayLabel else config.label.value,
-                        value=config.inputConfig["value"],
-                        help=config.inputHelp,
-                    )
+                dbCaseConfig[config.label] = inputWidget(column, config, key)
                 k += 1
         if k == 0:
             columns[1].write("Auto")

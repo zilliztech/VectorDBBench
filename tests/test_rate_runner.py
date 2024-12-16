@@ -30,7 +30,7 @@ def test_rate_runner(db, insert_rate):
     _, t = runner.run_with_rate()
     log.info(f"insert run done, time={t}")
 
-def test_read_write_runner(db, insert_rate, conc: list, search_stage: Iterable[float], read_dur_after_write: int, local: bool=False):
+def test_read_write_runner(db, insert_rate, conc: list, search_stages: Iterable[float], read_dur_after_write: int, local: bool=False):
     cohere = Dataset.COHERE.manager(1_000_000)
     if local is True:
         source = DatasetSource.AliyunOSS
@@ -43,7 +43,7 @@ def test_read_write_runner(db, insert_rate, conc: list, search_stage: Iterable[f
         db=db,
         dataset=cohere,
         insert_rate=insert_rate,
-        search_stage=search_stage,
+        search_stages=search_stages,
         read_dur_after_write=read_dur_after_write,
         concurrencies=conc
     )
@@ -76,13 +76,13 @@ if __name__ == "__main__":
     }
 
     conc = (1, 15, 50)
-    search_stage = (0.5, 0.6, 0.7, 0.8, 0.9)
+    search_stages = (0.5, 0.6, 0.7, 0.8, 0.9)
 
     db = get_db(flags.db, config)
     test_read_write_runner(
         db=db,
         insert_rate=flags.insert_rate,
         conc=conc,
-        search_stage=search_stage,
+        search_stages=search_stages,
         read_dur_after_write=flags.duration,
         local=flags.use_s3)

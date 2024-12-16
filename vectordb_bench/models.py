@@ -1,7 +1,7 @@
 import logging
 import pathlib
 from datetime import date, datetime
-from enum import Enum, StrEnum, auto
+from enum import Enum, StrEnum
 from typing import List, Self
 
 import ujson
@@ -11,7 +11,7 @@ from .backend.clients import (
     DBConfig,
     DBCaseConfig,
 )
-from .backend.cases import CaseType
+from .backend.cases import Case, CaseType
 from .base import BaseModel
 from . import config
 from .metric import Metric
@@ -86,6 +86,8 @@ class CaseConfigParamType(Enum):
     numSearchThreads = "num_search_threads"
     maxNumPrefetchDatasets = "max_num_prefetch_datasets"
 
+    dataset_with_size_type = "dataset_with_size_type"
+
 
 class CustomizedCase(BaseModel):
     pass
@@ -119,14 +121,22 @@ class CaseConfig(BaseModel):
     def __hash__(self) -> int:
         return hash(self.json())
 
+    @property
+    def case(self) -> Case:
+        return self.case_id.case_cls(self.custom_case)
+
+    @property
+    def case_name(self) -> str:
+        return self.case.name
+
 
 class TaskStage(StrEnum):
     """Enumerations of various stages of the task"""
 
-    DROP_OLD = auto()
-    LOAD = auto()
-    SEARCH_SERIAL = auto()
-    SEARCH_CONCURRENT = auto()
+    DROP_OLD = "drop_old"
+    LOAD = "load"
+    SEARCH_SERIAL = "search_serial"
+    SEARCH_CONCURRENT = "search_concurrent"
 
     def __repr__(self) -> str:
         return str.__repr__(self.value)
@@ -268,7 +278,7 @@ class TestResult(BaseModel):
             key=lambda x: (
                 x.task_config.db.name,
                 x.task_config.db_config.db_label,
-                x.task_config.case_config.case_id.name,
+                x.task_config.case_config.case_name,
             ),
             reverse=True,
         )
@@ -278,6 +288,8 @@ class TestResult(BaseModel):
             for r in sorted_results
             if not filter_list or r.task_config.db not in filter_list
         ]
+        if len(filtered_results) == 0:
+            return
 
         def append_return(x, y):
             x.append(y)
@@ -289,7 +301,7 @@ class TestResult(BaseModel):
             + 3
         )
         max_case = max(
-            map(len, [f.task_config.case_config.case_id.name for f in filtered_results])
+            map(len, [f.task_config.case_config.case_name for f in filtered_results])
         )
         max_load_dur = (
             max(map(len, [str(f.metrics.load_duration) for f in filtered_results])) + 3
@@ -348,7 +360,7 @@ class TestResult(BaseModel):
                 % (
                     f.task_config.db.name,
                     f.task_config.db_config.db_label,
-                    f.task_config.case_config.case_id.name,
+                    f.task_config.case_config.case_name,
                     self.task_label,
                     f.metrics.load_duration,
                     f.metrics.qps,

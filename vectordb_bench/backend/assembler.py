@@ -2,7 +2,7 @@ from .cases import CaseLabel
 from .task_runner import CaseRunner, RunningStatus, TaskRunner
 from ..models import TaskConfig
 from ..backend.clients import EmptyDBCaseConfig
-from ..backend.data_source  import DatasetSource
+from ..backend.data_source import DatasetSource
 import logging
 
 
@@ -11,22 +11,28 @@ log = logging.getLogger(__name__)
 
 class Assembler:
     @classmethod
-    def assemble(cls, run_id , task: TaskConfig, source: DatasetSource) -> CaseRunner:
-        c_cls = task.case_config.case_id.case_cls
-
-        c = c_cls(task.case_config.custom_case)
+    def assemble(
+        cls, run_id, task: TaskConfig, source: DatasetSource
+    ) -> CaseRunner | None:
+        c = task.case_config.case
         if type(task.db_case_config) != EmptyDBCaseConfig:
             task.db_case_config.metric_type = c.dataset.data.metric_type
 
-        runner = CaseRunner(
-            run_id=run_id,
-            config=task,
-            ca=c,
-            status=RunningStatus.PENDING,
-            dataset_source=source,
-        )
+        if not task.db.init_cls.filter_supported(c.filter):
+            log.warning(
+                f"[Skip Case] VectorDB ({task.db.name}) cannot support Filter ({c.filter.type.name})"
+            )
+            return None
+        else:
+            runner = CaseRunner(
+                run_id=run_id,
+                config=task,
+                ca=c,
+                status=RunningStatus.PENDING,
+                dataset_source=source,
+            )
 
-        return runner
+            return runner
 
     @classmethod
     def assemble_all(
@@ -38,8 +44,10 @@ class Assembler:
     ) -> TaskRunner:
         """group by case type, db, and case dataset"""
         runners = [cls.assemble(run_id, task, source) for task in tasks]
+        runners = [runner for runner in runners if runner is not None]
         load_runners = [r for r in runners if r.ca.label == CaseLabel.Load]
         perf_runners = [r for r in runners if r.ca.label == CaseLabel.Performance]
+        streaming_runners = [r for r in runners if r.ca.label == CaseLabel.Streaming]
 
         # group by db
         db2runner = {}
@@ -59,6 +67,7 @@ class Assembler:
 
         all_runners = []
         all_runners.extend(load_runners)
+        all_runners.extend(streaming_runners)
         for v in db2runner.values():
             all_runners.extend(v)
 

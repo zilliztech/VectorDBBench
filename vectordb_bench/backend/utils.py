@@ -60,16 +60,3 @@ def compose_train_files(train_count: int, use_shuffled: bool) -> list[str]:
         train_files.append(f"{prefix}.{surfix}")
 
     return train_files
-
-
-def compose_gt_file(filters: int | float | str | None = None) -> str:
-    if filters is None:
-        return "neighbors.parquet"
-
-    if filters == 0.01:
-        return "neighbors_head_1p.parquet"
-
-    if filters == 0.99:
-        return "neighbors_tail_1p.parquet"
-
-    raise ValueError(f"Filters not supported: {filters}")

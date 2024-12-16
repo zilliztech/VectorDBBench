@@ -13,6 +13,7 @@ from pydantic import validator, PrivateAttr
 import polars as pl
 from pyarrow.parquet import ParquetFile
 
+from vectordb_bench.backend.filter import Filter, LabelFilter
 from ..base import BaseModel
 from .. import config
 from ..backend.clients import MetricType
@@ -33,7 +34,19 @@ class BaseDataset(BaseModel):
     use_shuffled: bool
     with_gt: bool = False
     _size_label: dict[int, SizeLabel] = PrivateAttr()
-    isCustom: bool = False
+    is_custom: bool = False
+    with_remote_resource: bool = True
+    with_scalar_labels: bool = False
+    scalar_labels_file_separated: bool = True
+    scalar_labels_file: str = "scalar_labels.parquet"
+    scalar_label_percentages: list[float] = []
+    train_id_field: str = "id"
+    train_vector_field: str = "emb"
+    test_file: str = "test.parquet"
+    test_id_field: str = "id"
+    test_vector_field: str = "emb"
+    gt_id_field: str = "id"
+    gt_neighbors_field: str = "neighbors_id"
 
     @validator("size")
     def verify_size(cls, v):
@@ -46,6 +59,10 @@ class BaseDataset(BaseModel):
         return self._size_label.get(self.size).label
 
     @property
+    def full_name(self) -> str:
+        return f"{self.name.capitalize()} ({self.label.capitalize()})"
+
+    @property
     def dir_name(self) -> str:
         return f"{self.name}_{self.label}_{utils.numerize(self.size)}".lower()
 
@@ -53,10 +70,16 @@ class BaseDataset(BaseModel):
     def file_count(self) -> int:
         return self._size_label.get(self.size).file_count
 
+    @property
+    def train_files(self) -> list[str]:
+        return utils.compose_train_files(self.file_count, self.use_shuffled)
+
+
 class CustomDataset(BaseDataset):
     dir: str
     file_num: int
-    isCustom: bool = True
+    is_custom: bool = True
+    with_remote_resource: bool = False
 
     @validator("size")
     def verify_size(cls, v):
@@ -102,12 +125,24 @@ class Cohere(BaseDataset):
     dim: int = 768
     metric_type: MetricType = MetricType.COSINE
     use_shuffled: bool = config.USE_SHUFFLED_DATA
-    with_gt: bool = True,
+    with_gt: bool = True
     _size_label: dict = {
         100_000: SizeLabel(100_000, "SMALL", 1),
         1_000_000: SizeLabel(1_000_000, "MEDIUM", 1),
         10_000_000: SizeLabel(10_000_000, "LARGE", 10),
     }
+    with_scalar_labels: bool = True
+    scalar_label_percentages: list[float] = [
+        0.001,
+        0.002,
+        0.005,
+        0.01,
+        0.02,
+        0.05,
+        0.1,
+        0.2,
+        0.5,
+    ]
 
 
 class Glove(BaseDataset):
@@ -135,12 +170,24 @@ class OpenAI(BaseDataset):
     dim: int = 1536
     metric_type: MetricType = MetricType.COSINE
     use_shuffled: bool = config.USE_SHUFFLED_DATA
-    with_gt: bool = True,
+    with_gt: bool = True
     _size_label: dict = {
         50_000: SizeLabel(50_000, "SMALL", 1),
         500_000: SizeLabel(500_000, "MEDIUM", 1),
         5_000_000: SizeLabel(5_000_000, "LARGE", 10),
     }
+    with_scalar_labels: bool = True
+    scalar_label_percentages: list[float] = [
+        0.001,
+        0.002,
+        0.005,
+        0.01,
+        0.02,
+        0.05,
+        0.1,
+        0.2,
+        0.5,
+    ]
 
 
 class DatasetManager(BaseModel):
@@ -153,10 +200,12 @@ class DatasetManager(BaseModel):
         >>> for data in cohere:
         >>>    print(data.columns)
     """
-    data:   BaseDataset
-    test_data: pd.DataFrame | None = None
-    gt_data: pd.DataFrame | None = None
-    train_files : list[str] = []
+
+    data: BaseDataset
+    test_data: list[list[float]] | None = None
+    gt_data: list[list[int]] | None = None
+    scalar_labels: pd.DataFrame | None = None
+    train_files: list[str] = []
     reader: DatasetReader | None = None
 
     def __eq__(self, obj):
@@ -169,58 +218,67 @@ class DatasetManager(BaseModel):
 
     @property
     def data_dir(self) -> pathlib.Path:
-        """ data local directory: config.DATASET_LOCAL_DIR/{dataset_name}/{dataset_dirname}
+        """data local directory: config.DATASET_LOCAL_DIR/{dataset_name}/{dataset_dirname}
 
         Examples:
             >>> sift_s = Dataset.SIFT.manager(500_000)
             >>> sift_s.relative_path
             '/tmp/vectordb_bench/dataset/sift/sift_small_500k/'
         """
-        return pathlib.Path(config.DATASET_LOCAL_DIR, self.data.name.lower(), self.data.dir_name.lower())
+        return pathlib.Path(
+            config.DATASET_LOCAL_DIR, self.data.name.lower(), self.data.dir_name
+        )
 
     def __iter__(self):
         return DataSetIterator(self)
 
     # TODO passing use_shuffle from outside
-    def prepare(self,
-        source: DatasetSource=DatasetSource.S3,
-        filters: int | float | str | None = None,
+    def prepare(
+        self,
+        filter: Filter,
+        source: DatasetSource = DatasetSource.S3,
     ) -> bool:
         """Download the dataset from DatasetSource
          url = f"{source}/{self.data.dir_name}"
 
         Args:
             source(DatasetSource): S3 or AliyunOSS, default as S3
-            filters(Optional[int | float | str]): combined with dataset's with_gt to
+            filter(Optional[int | float | str]): combined with dataset's with_gt to
               compose the correct ground_truth file
 
         Returns:
             bool: whether the dataset is successfully prepared
 
         """
-        file_count, use_shuffled = self.data.file_count, self.data.use_shuffled
-
-        train_files = utils.compose_train_files(file_count, use_shuffled)
-        all_files = train_files
-
+        self.train_files = self.data.train_files
         gt_file, test_file = None, None
         if self.data.with_gt:
-            gt_file, test_file = utils.compose_gt_file(filters), "test.parquet"
-            all_files.extend([gt_file, test_file])
+            gt_file, test_file = filter.groundtruth_file, self.data.test_file
 
-        if not self.data.isCustom:
+        if self.data.with_remote_resource:
+            download_files = [file for file in self.train_files]
+            if self.data.with_scalar_labels and self.data.scalar_labels_file_separated:
+                download_files.append(self.data.scalar_labels_file)
+            download_files.extend([gt_file, test_file])
             source.reader().read(
                 dataset=self.data.dir_name.lower(),
-                files=all_files,
+                files=download_files,
                 local_ds_root=self.data_dir,
             )
 
-        if gt_file is not None and test_file is not None:
-            self.test_data = self._read_file(test_file)
-            self.gt_data = self._read_file(gt_file)
+        # read scalar_labels_file if separated
+        if self.data.with_scalar_labels:
+            if self.data.scalar_labels_file_separated:
+                self.scalar_labels = self._read_file(self.data.scalar_labels_file)
 
-        prefix = "shuffle_train" if use_shuffled else "train"
-        self.train_files = sorted([f.name for f in self.data_dir.glob(f'{prefix}*.parquet')])
+        if gt_file is not None and test_file is not None:
+            self.test_data = self._read_file(test_file)[
+                self.data.test_vector_field
+            ].to_list()
+            self.gt_data = self._read_file(gt_file)[
+                self.data.gt_neighbors_field
+            ].to_list()
+
         log.debug(f"{self.data.name}: available train files {self.train_files}")
 
         return True
@@ -293,3 +351,49 @@ class Dataset(Enum):
 
     def manager(self, size: int) -> DatasetManager:
         return DatasetManager(data=self.get(size))
+
+
+class DatasetWithSizeType(Enum):
+    CohereSmall = "Small Cohere (768dim, 100K)"
+    CohereMedium = "Medium Cohere (768dim, 1M)"
+    CohereLarge = "Large Cohere (768dim, 10M)"
+    OpenAISmall = "Small OpenAI (1536dim, 50K)"
+    OpenAIMedium = "Medium OpenAI (1536dim, 500K)"
+    OpenAILarge = "Large OpenAI (1536dim, 5M)"
+
+    def get_manager(self) -> DatasetManager:
+        if self not in DatasetWithSizeMap:
+            raise ValueError(f"wrong ScalarDatasetWithSizeType: {self.name}")
+        return DatasetWithSizeMap.get(self)
+
+    def get_load_timeout(self) -> float:
+        if "small" in self.value.lower():
+            return config.LOAD_TIMEOUT_768D_100K
+        if "medium" in self.value.lower():
+            return config.LOAD_TIMEOUT_768D_1M
+        if "large" in self.value.lower():
+            return config.LOAD_TIMEOUT_768D_10M
+        raise KeyError(f"No load_timeout for {self.value}")
+
+    def get_optimize_timeout(self) -> float:
+        if "small" in self.value.lower():
+            return config.OPTIMIZE_TIMEOUT_768D_100K
+        if "medium" in self.value.lower():
+            return config.OPTIMIZE_TIMEOUT_768D_1M
+        if "large" in self.value.lower():
+            return config.OPTIMIZE_TIMEOUT_768D_10M
+        return config.OPTIMIZE_TIMEOUT_DEFAULT
+
+    @property
+    def labels_filter_cls(self) -> type[LabelFilter]:
+        return LabelFilter
+
+
+DatasetWithSizeMap = {
+    DatasetWithSizeType.CohereSmall: Dataset.COHERE.manager(100_000),
+    DatasetWithSizeType.CohereMedium: Dataset.COHERE.manager(1_000_000),
+    DatasetWithSizeType.CohereLarge: Dataset.COHERE.manager(10_000_000),
+    DatasetWithSizeType.OpenAISmall: Dataset.OPENAI.manager(50_000),
+    DatasetWithSizeType.OpenAIMedium: Dataset.OPENAI.manager(500_000),
+    DatasetWithSizeType.OpenAILarge: Dataset.OPENAI.manager(5_000_000),
+}

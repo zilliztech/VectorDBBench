@@ -5,8 +5,10 @@ import concurrent
 import numpy as np
 from enum import Enum, auto
 
+from vectordb_bench.backend.runner.read_write_runner import ReadWriteRunner
+
 from . import utils
-from .cases import Case, CaseLabel
+from .cases import Case, CaseLabel, StreamingPerformanceCase
 from ..base import BaseModel
 from ..models import TaskConfig, PerformanceTimeoutError, TaskStage
 
@@ -17,7 +19,7 @@ from .clients import (
 from ..metric import Metric
 from .runner import MultiProcessingSearchRunner
 from .runner import SerialSearchRunner, SerialInsertRunner
-from .data_source  import DatasetSource
+from .data_source import DatasetSource
 
 
 log = logging.getLogger(__name__)
@@ -52,25 +54,46 @@ class CaseRunner(BaseModel):
     serial_search_runner: SerialSearchRunner | None = None
     search_runner: MultiProcessingSearchRunner | None = None
     final_search_runner: MultiProcessingSearchRunner | None = None
+    read_write_runner: ReadWriteRunner | None = None
 
     def __eq__(self, obj):
         if isinstance(obj, CaseRunner):
-            return self.ca.label == CaseLabel.Performance and \
-                self.config.db == obj.config.db and \
-                self.config.db_case_config == obj.config.db_case_config and \
-                self.ca.dataset == obj.ca.dataset
+            return (
+                self.ca.label == CaseLabel.Performance
+                and self.config.db == obj.config.db
+                and self.config.db_case_config == obj.config.db_case_config
+                and self.ca.dataset == obj.ca.dataset
+                and self.ca.with_scalar_labels == self.ca.with_scalar_labels
+            )
         return False
 
     def display(self) -> dict:
-        c_dict = self.ca.dict(include={'label':True, 'filters': True,'dataset':{'data': {'name': True, 'size': True, 'dim': True, 'metric_type': True, 'label': True}} })
-        c_dict['db'] = self.config.db_name
+        c_dict = self.ca.dict(
+            include={
+                "label": True,
+                "name": True,
+                "filter": True,
+                "dataset": {
+                    "data": {
+                        "name": True,
+                        "size": True,
+                        "dim": True,
+                        "metric_type": True,
+                        "label": True,
+                    }
+                },
+            }
+        )
+        c_dict["db"] = self.config.db_name
         return c_dict
 
     @property
     def normalize(self) -> bool:
         assert self.db
-        return self.db.need_normalize_cosine() and \
-            self.ca.dataset.data.metric_type == MetricType.COSINE
+        return (
+            self.db.need_normalize_cosine()
+            and self.ca.dataset.data.metric_type == MetricType.COSINE
+        )
 
     def init_db(self, drop_old: bool = True) -> None:
         db_cls = self.config.db.init_cls
@@ -80,13 +103,13 @@ class CaseRunner(BaseModel):
             db_config=self.config.db_config.to_dict(),
             db_case_config=self.config.db_case_config,
             drop_old=drop_old,
-        )  # type:ignore
-
+            with_scalar_labels=self.ca.with_scalar_labels,
+        )
 
     def _pre_run(self, drop_old: bool = True):
         try:
             self.init_db(drop_old)
-            self.ca.dataset.prepare(self.dataset_source, filters=self.ca.filter_rate)
+            self.ca.dataset.prepare(source=self.dataset_source, filter=self.ca.filter)
         except ModuleNotFoundError as e:
             log.warning(
                 f"pre run case error: please install client for db: {self.config.db}, error={e}"
@@ -105,6 +128,8 @@ class CaseRunner(BaseModel):
             return self._run_capacity_case()
         elif self.ca.label == CaseLabel.Performance:
             return self._run_perf_case(drop_old)
+        elif self.ca.label == CaseLabel.Streaming:
+            return self._run_streaming_case()
         else:
             msg = f"unknown case type: {self.ca.label}"
             log.warning(msg)
@@ -120,7 +145,11 @@ class CaseRunner(BaseModel):
         log.info("Start capacity case")
         try:
             runner = SerialInsertRunner(
-                self.db, self.ca.dataset, self.normalize, self.ca.load_timeout
+                self.db,
+                self.ca.dataset,
+                self.normalize,
+                self.ca.filter,
+                self.ca.load_timeout,
             )
             count = runner.run_endlessness()
         except Exception as e:
@@ -195,11 +224,32 @@ class CaseRunner(BaseModel):
             log.info(f"Performance case got result: {m}")
             return m
 
+    def _run_streaming_case(self) -> Metric:
+        log.info("Start streaming case")
+        try:
+            m = Metric()
+            self._init_read_write_runner()
+            self.read_write_runner.run_read_write()
+        except Exception as e:
+            log.warning(f"Failed to run streaming case, reason = {e}")
+            traceback.print_exc()
+            raise e from None
+        else:
+            log.info(f"Performance case got result: {m}")
+            return m
+            
+
     @utils.time_it
     def _load_train_data(self):
         """Insert train data and get the insert_duration"""
         try:
-            runner = SerialInsertRunner(self.db, self.ca.dataset, self.normalize, self.ca.load_timeout)
+            runner = SerialInsertRunner(
+                self.db,
+                self.ca.dataset,
+                self.normalize,
+                self.ca.filter,
+                self.ca.load_timeout,
+            )
             runner.run()
         except Exception as e:
             raise e from None
@@ -214,7 +264,8 @@ class CaseRunner(BaseModel):
             tuple[float, float]: recall, serial_latency_p99
         """
         try:
-            return self.serial_search_runner.run()
+            results, t = self.serial_search_runner.run()
+            return results
         except Exception as e:
             log.warning(f"search error: {str(e)}, {e}")
             self.stop()
@@ -255,7 +306,7 @@ class CaseRunner(BaseModel):
                 raise e from None
 
     def _init_search_runner(self):
-        test_emb = np.stack(self.ca.dataset.test_data["emb"])
+        test_emb = np.stack(self.ca.dataset.test_data)
         if self.normalize:
             test_emb = test_emb / np.linalg.norm(test_emb, axis=1)[:, np.newaxis]
         self.test_emb = test_emb.tolist()
@@ -267,18 +318,30 @@ class CaseRunner(BaseModel):
                 db=self.db,
                 test_data=self.test_emb,
                 ground_truth=gt_df,
-                filters=self.ca.filters,
+                filter=self.ca.filter,
                 k=self.config.case_config.k,
             )
         if TaskStage.SEARCH_CONCURRENT in self.config.stages:
             self.search_runner = MultiProcessingSearchRunner(
                 db=self.db,
                 test_data=self.test_emb,
-                filters=self.ca.filters,
+                filter=self.ca.filter,
                 concurrencies=self.config.case_config.concurrency_search_config.num_concurrency,
                 duration=self.config.case_config.concurrency_search_config.concurrency_duration,
                 k=self.config.case_config.k,
             )
+            
+    def _init_read_write_runner(self):
+        ca: StreamingPerformanceCase = self.ca
+        self.read_write_runner = ReadWriteRunner(
+            db=self.db,
+            dataset=ca.dataset,
+            insert_rate=ca.insert_rate,
+            search_stages=ca.search_stages,
+            read_dur_after_write=ca.read_dur_after_write,
+            concurrencies=ca.concurrencies,
+            k=self.config.case_config.k,
+        )
 
     def stop(self):
         if self.search_runner:
@@ -303,35 +366,32 @@ class TaskRunner(BaseModel):
         return sum([1 for c in self.case_runners if c.status == status])
 
     def display(self) -> None:
-        DATA_FORMAT = (" %-14s | %-12s %-20s %7s | %-10s")
+        DATA_FORMAT = " %-14s | %-12s %-20s %7s | %-10s"
         TITLE_FORMAT = (" %-14s | %-12s %-20s %7s | %-10s") % (
-            "DB", "CaseType", "Dataset", "Filter", "task_label")
+            "DB",
+            "CaseType",
+            "Dataset",
+            "Filter",
+            "task_label",
+        )
 
         fmt = [TITLE_FORMAT]
-        fmt.append(DATA_FORMAT%(
-            "-"*11,
-            "-"*12,
-            "-"*20,
-            "-"*7,
-            "-"*7
-        ))
+        fmt.append(DATA_FORMAT % ("-" * 11, "-" * 12, "-" * 20, "-" * 7, "-" * 7))
 
         for f in self.case_runners:
-            if f.ca.filter_rate != 0.0:
-                filters = f.ca.filter_rate
-            elif f.ca.filter_size != 0:
-                filters = f.ca.filter_size
-            else:
-                filters = "None"
+            filter_rate = f.ca.filter_rate
 
             ds_str = f"{f.ca.dataset.data.name}-{f.ca.dataset.data.label}-{utils.numerize(f.ca.dataset.data.size)}"
-            fmt.append(DATA_FORMAT%(
-                f.config.db_name,
-                f.ca.label.name,
-                ds_str,
-                filters,
-                self.task_label,
-            ))
+            fmt.append(
+                DATA_FORMAT
+                % (
+                    f.config.db_name,
+                    f.ca.label.name,
+                    ds_str,
+                    filter_rate,
+                    self.task_label,
+                )
+            )
 
         tmp_logger = logging.getLogger("no_color")
         for f in fmt:

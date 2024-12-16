@@ -5,6 +5,8 @@ import concurrent
 import numpy as np
 import math
 
+from vectordb_bench.backend.filter import Filter, non_filter
+
 from .mp_runner import MultiProcessingSearchRunner
 from .serial_runner import SerialSearchRunner
 from .rate_runner import RatedMultiThreadingInsertRunner
@@ -19,26 +21,34 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
         self,
         db: api.VectorDB,
         dataset: DatasetManager,
-        insert_rate: int = 1000,
+        insert_rate: int = 500,
         normalize: bool = False,
         k: int = 100,
-        filters: dict | None = None,
+        filter: Filter = non_filter,
         concurrencies: Iterable[int] = (1, 15, 50),
-        search_stage: Iterable[float] = (0.5, 0.6, 0.7, 0.8, 0.9), # search from insert portion, 0.0 means search from the start
-        read_dur_after_write: int = 300, # seconds, search duration when insertion is done
+        search_stages: Iterable[float] = (
+            0.5,
+            0.6,
+            0.7,
+            0.8,
+            0.9,
+        ),  # search from insert portion, 0.0 means search from the start
+        read_dur_after_write: int = 300,  # seconds, search duration when insertion is done
         timeout: float | None = None,
     ):
         self.insert_rate = insert_rate
         self.data_volume = dataset.data.size
 
-        for stage in search_stage:
+        for stage in search_stages:
             assert 0.0 <= stage < 1.0, "each search stage should be in [0.0, 1.0)"
-        self.search_stage = sorted(search_stage)
+        self.search_stages = sorted(search_stages)
         self.read_dur_after_write = read_dur_after_write
 
-        log.info(f"Init runner, concurencys={concurrencies}, search_stage={search_stage}, stage_search_dur={read_dur_after_write}")
+        log.info(
+            f"Init runner, concurencys={concurrencies}, search_stages={self.search_stages}, stage_search_dur={read_dur_after_write}"
+        )
 
-        test_emb = np.stack(dataset.test_data["emb"])
+        test_emb = np.array(dataset.test_data)
         if normalize:
             test_emb = test_emb / np.linalg.norm(test_emb, axis=1)[:, np.newaxis]
         test_emb = test_emb.tolist()
@@ -48,7 +58,7 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
             db=db,
             test_data=test_emb,
             k=k,
-            filters=filters,
+            filter=filter,
             concurrencies=concurrencies,
         )
         RatedMultiThreadingInsertRunner.__init__(
@@ -133,7 +143,7 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
                     start += 1
             return True
 
-        for idx, stage in enumerate(self.search_stage):
+        for idx, stage in enumerate(self.search_stages):
             target_batch = int(total_batch * stage)
             perc = int(stage * 100)
 
@@ -150,8 +160,8 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
 
             # Search duration for non-last search stage is carefully calculated.
             # If duration for each concurrency is less than 30s, runner will raise error.
-            if idx < len(self.search_stage) - 1:
-                total_dur_between_stages = self.data_volume  * (self.search_stage[idx + 1] - stage) // self.insert_rate
+            if idx < len(self.search_stages) - 1:
+                total_dur_between_stages = self.data_volume  * (self.search_stages[idx + 1] - stage) // self.insert_rate
                 csearch_dur = total_dur_between_stages - ssearch_dur
 
                 # Try to leave room for init process executors
