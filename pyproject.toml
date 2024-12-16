@@ -65,6 +65,8 @@ all = [
     "opensearch-dsl",
     "opensearch-py",
     "memorydb",
+    "alibabacloud_ha3engine_vector",
+    "alibabacloud_searchengine20211025",
 ]
 
 qdrant          = [ "qdrant-client" ]
@@ -81,6 +83,7 @@ redis           = [ "redis" ]
 memorydb        = [ "memorydb" ]
 chromadb        = [ "chromadb" ]
 opensearch      = [ "opensearch-py" ]
+aliyun_opensearch = [ "alibabacloud_ha3engine_vector", "alibabacloud_searchengine20211025"]
 
 [project.urls]
 "repository" = "https://github.com/zilliztech/VectorDBBench"
