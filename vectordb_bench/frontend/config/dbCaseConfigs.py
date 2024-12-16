@@ -854,6 +854,19 @@ CaseConfigParamInput_QuantizationRatio_PgVectoRS = CaseConfigInput(
     ],
 )
 
+CaseConfigParamInput_TableQuantizationType_PgVector = CaseConfigInput(
+    label=CaseConfigParamType.tableQuantizationType,
+    inputType=InputType.Option,
+    inputConfig={
+        "options": ["none", "bit", "halfvec"],
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    in [
+        IndexType.HNSW.value,
+        IndexType.IVFFlat.value,
+    ],
+)
+
 CaseConfigParamInput_max_parallel_workers_PgVectorRS = CaseConfigInput(
     label=CaseConfigParamType.max_parallel_workers,
     displayLabel="Max parallel workers",
@@ -1149,6 +1162,7 @@ PgVectorLoadingConfig = [
     CaseConfigParamInput_m,
     CaseConfigParamInput_EFConstruction_PgVector,
     CaseConfigParamInput_QuantizationType_PgVector,
+    CaseConfigParamInput_TableQuantizationType_PgVector,
     CaseConfigParamInput_maintenance_work_mem_PgVector,
     CaseConfigParamInput_max_parallel_workers_PgVector,
 ]
@@ -1160,6 +1174,7 @@ PgVectorPerformanceConfig = [
     CaseConfigParamInput_Lists_PgVector,
     CaseConfigParamInput_Probes_PgVector,
     CaseConfigParamInput_QuantizationType_PgVector,
+    CaseConfigParamInput_TableQuantizationType_PgVector,
     CaseConfigParamInput_maintenance_work_mem_PgVector,
     CaseConfigParamInput_max_parallel_workers_PgVector,
     CaseConfigParamInput_reranking_PgVector,

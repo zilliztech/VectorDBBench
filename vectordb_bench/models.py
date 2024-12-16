@@ -47,6 +47,7 @@ class CaseConfigParamType(Enum):
     probes = "probes"
     quantizationType = "quantization_type"
     quantizationRatio = "quantization_ratio"
+    tableQuantizationType = "table_quantization_type"
     reranking = "reranking"
     rerankingMetric = "reranking_metric"
     quantizedFetchLimit = "quantized_fetch_limit"
