@@ -206,7 +206,7 @@ class CaseRunner(BaseModel):
         finally:
             runner = None
 
-    def _serial_search(self) -> tuple[float, float]:
+    def _serial_search(self) -> tuple[float, float, float]:
         """Performance serial tests, search the entire test data once,
         calculate the recall, serial_latency_p99
 
@@ -214,7 +214,8 @@ class CaseRunner(BaseModel):
             tuple[float, float]: recall, serial_latency_p99
         """
         try:
-            return self.serial_search_runner.run()
+            results, _ = self.serial_search_runner.run()
+            return results
         except Exception as e:
             log.warning(f"search error: {str(e)}, {e}")
             self.stop()
@@ -238,7 +239,7 @@ class CaseRunner(BaseModel):
     @utils.time_it
     def _task(self) -> None:
         with self.db.init():
-            self.db.optimize()
+            self.db.optimize_with_size(data_size=self.ca.dataset.data.size)
 
     def _optimize(self) -> float:
         with concurrent.futures.ProcessPoolExecutor(max_workers=1) as executor:
