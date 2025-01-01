@@ -168,14 +168,19 @@ class PgVectorIVFFlatConfig(PgVectorIndexConfig):
     maintenance_work_mem: Optional[str] = None
     max_parallel_workers: Optional[int] = None
     quantization_type: Optional[str] = None
+    table_quantization_type: Optional[str] = None
     reranking: Optional[bool] = None
     quantized_fetch_limit: Optional[int] = None
     reranking_metric: Optional[str] = None
 
     def index_param(self) -> PgVectorIndexParam:
         index_parameters = {"lists": self.lists}
-        if self.quantization_type == "none":
-            self.quantization_type = None
+        if self.quantization_type == "none" or self.quantization_type == None:
+            self.quantization_type = "vector"
+        if self.table_quantization_type == "none" or self.table_quantization_type == None:
+            self.table_quantization_type = "vector"
+        if self.table_quantization_type == "bit":
+            self.quantization_type = "bit"
         return {
             "metric": self.parse_metric(),
             "index_type": self.index.value,
@@ -185,6 +190,7 @@ class PgVectorIVFFlatConfig(PgVectorIndexConfig):
             "maintenance_work_mem": self.maintenance_work_mem,
             "max_parallel_workers": self.max_parallel_workers,
             "quantization_type": self.quantization_type,
+            "table_quantization_type": self.table_quantization_type,
         }
 
     def search_param(self) -> PgVectorSearchParam:
@@ -218,14 +224,19 @@ class PgVectorHNSWConfig(PgVectorIndexConfig):
     maintenance_work_mem: Optional[str] = None
     max_parallel_workers: Optional[int] = None
     quantization_type: Optional[str] = None
+    table_quantization_type: Optional[str] = None
     reranking: Optional[bool] = None
     quantized_fetch_limit: Optional[int] = None
     reranking_metric: Optional[str] = None
 
     def index_param(self) -> PgVectorIndexParam:
         index_parameters = {"m": self.m, "ef_construction": self.ef_construction}
-        if self.quantization_type == "none":
-            self.quantization_type = None
+        if self.quantization_type == "none" or self.quantization_type == None:
+            self.quantization_type = "vector"
+        if self.table_quantization_type == "none" or self.table_quantization_type == None:
+            self.table_quantization_type = "vector"
+        if self.table_quantization_type == "bit":
+            self.quantization_type = "bit"
         return {
             "metric": self.parse_metric(),
             "index_type": self.index.value,
@@ -235,6 +246,7 @@ class PgVectorHNSWConfig(PgVectorIndexConfig):
             "maintenance_work_mem": self.maintenance_work_mem,
             "max_parallel_workers": self.max_parallel_workers,
             "quantization_type": self.quantization_type,
+            "table_quantization_type": self.table_quantization_type,
         }
 
     def search_param(self) -> PgVectorSearchParam:
