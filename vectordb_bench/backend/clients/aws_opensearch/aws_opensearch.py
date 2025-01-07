@@ -17,7 +17,7 @@ class AWSOpenSearch(VectorDB):
         db_config: dict,
         db_case_config: AWSOpenSearchIndexConfig,
         index_name: str = "vdb_bench_index",  # must be lowercase
-        id_col_name: str = "id",
+        id_col_name: str = "_id",
         vector_col_name: str = "embedding",
         drop_old: bool = False,
         **kwargs,
@@ -61,7 +61,6 @@ class AWSOpenSearch(VectorDB):
         }
         mappings = {
             "properties": {
-                self.id_col_name: {"type": "integer"},
                 **{
                     categoryCol: {"type": "keyword"}
                     for categoryCol in self.category_col_names
@@ -143,7 +142,7 @@ class AWSOpenSearch(VectorDB):
             log.info(f'Search took: {resp["took"]}')
             log.info(f'Search shards: {resp["_shards"]}')
             log.info(f'Search hits total: {resp["hits"]["total"]}')
-            result = [h["fields"][self.id_col_name][0] for h in resp["hits"]["hits"]]
+            result = [int(h["fields"][self.id_col_name][0]) for h in resp["hits"]["hits"]]
             #result = [int(d["_id"]) for d in resp["hits"]["hits"]]
             # log.info(f'success! length={len(res)}')
 
