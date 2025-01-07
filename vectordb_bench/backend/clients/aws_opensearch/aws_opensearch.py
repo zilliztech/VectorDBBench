@@ -102,7 +102,7 @@ class AWSOpenSearch(VectorDB):
 
         insert_data = []
         for i in range(len(embeddings)):
-            insert_data.append({"index": {"_index": self.index_name, "_id": metadata[i]}})
+            insert_data.append({"index": {"_index": self.index_name, self.id_col_name: metadata[i]}})
             insert_data.append({self.vector_col_name: embeddings[i]})
         try:
             resp = self.client.bulk(insert_data)
