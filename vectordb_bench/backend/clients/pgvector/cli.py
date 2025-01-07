@@ -43,6 +43,15 @@ class PgVectorTypedDict(CommonTypedDict):
     host: Annotated[
         str, click.option("--host", type=str, help="Db host", required=True)
     ]
+    port:  Annotated[
+        int,
+        click.option("--port",
+                     type=int,
+                     help="Postgres database port",
+                     default=5432,
+                     required=False
+                     ),
+    ]
     db_name: Annotated[
         str, click.option("--db-name", type=str, help="Db name", required=True)
     ]
@@ -130,6 +139,7 @@ def PgVectorIVFFlat(
             user_name=SecretStr(parameters["user_name"]),
             password=SecretStr(parameters["password"]),
             host=parameters["host"],
+            port=parameters["port"],
             db_name=parameters["db_name"],
         ),
         db_case_config=PgVectorIVFFlatConfig(
@@ -164,6 +174,7 @@ def PgVectorHNSW(
             user_name=SecretStr(parameters["user_name"]),
             password=SecretStr(parameters["password"]),
             host=parameters["host"],
+            port=parameters["port"],
             db_name=parameters["db_name"],
         ),
         db_case_config=PgVectorHNSWConfig(
