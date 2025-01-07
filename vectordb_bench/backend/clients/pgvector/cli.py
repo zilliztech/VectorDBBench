@@ -49,6 +49,7 @@ class PgVectorTypedDict(CommonTypedDict):
                      type=int,
                      help="Postgres database port",
                      default=5432,
+                     show_default=True,
                      required=False
                      ),
     ]
