@@ -139,7 +139,7 @@ class AWSOpenSearch(VectorDB):
             **({"filter": {"range": {self.id_col_name: {"gt": filters["id"]}}}} if filters else {})
         }
         try:
-            resp = self.client.search(index=self.index_name, body=body,size=k,_source=False,docvalue_fields=[self.id_col_name],stored_fields="_none_",filter_path=[f"hits.hits.fields.{self.id_col_name}"],)
+            resp = self.client.search(index=self.index_name, body=body,size=k,_source=False,docvalue_fields=[self.id_col_name],stored_fields="_none_",)
             log.info(f'Search took: {resp["took"]}')
             log.info(f'Search shards: {resp["_shards"]}')
             log.info(f'Search hits total: {resp["hits"]["total"]}')
