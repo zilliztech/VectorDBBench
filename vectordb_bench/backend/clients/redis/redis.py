@@ -69,7 +69,7 @@ class Redis(VectorDB):
             rs.create_index(schema, definition=definition)
 
     @contextmanager
-    def init(self) -> None:
+    def init(self):
         """ create and destory connections to database.
 
         Examples:
@@ -99,7 +99,7 @@ class Redis(VectorDB):
         embeddings: list[list[float]],
         metadata: list[int],
         **kwargs: Any,
-    ) -> (int, Exception):
+    ) -> tuple[int, Exception]:
         """Insert embeddings into the database.
         Should call self.init() first.
         """
