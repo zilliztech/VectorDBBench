@@ -1,10 +1,10 @@
-from typing import Annotated, Optional, TypedDict, Unpack
+import os
+from typing import Annotated, Unpack
 
 import click
-import os
 from pydantic import SecretStr
 
-from vectordb_bench.backend.clients.api import MetricType
+from vectordb_bench.backend.clients import DB
 
 from ....cli.cli import (
     CommonTypedDict,
@@ -13,31 +13,28 @@ from ....cli.cli import (
     get_custom_case_config,
     run,
 )
-from vectordb_bench.backend.clients import DB
 
 
 class AlloyDBTypedDict(CommonTypedDict):
     user_name: Annotated[
-        str, click.option("--user-name", type=str, help="Db username", required=True)
+        str,
+        click.option("--user-name", type=str, help="Db username", required=True),
     ]
     password: Annotated[
         str,
-        click.option("--password",
-                     type=str,
-                     help="Postgres database password",
-                     default=lambda: os.environ.get("POSTGRES_PASSWORD", ""),
-                     show_default="$POSTGRES_PASSWORD",
-                     ),
+        click.option(
+            "--password",
+            type=str,
+            help="Postgres database password",
+            default=lambda: os.environ.get("POSTGRES_PASSWORD", ""),
+            show_default="$POSTGRES_PASSWORD",
+        ),
     ]
 
-    host: Annotated[
-        str, click.option("--host", type=str, help="Db host", required=True)
-    ]
-    db_name: Annotated[
-        str, click.option("--db-name", type=str, help="Db name", required=True)
-    ]
+    host: Annotated[str, click.option("--host", type=str, help="Db host", required=True)]
+    db_name: Annotated[str, click.option("--db-name", type=str, help="Db name", required=True)]
     maintenance_work_mem: Annotated[
-        Optional[str],
+        str | None,
         click.option(
             "--maintenance-work-mem",
             type=str,
@@ -49,7 +46,7 @@ class AlloyDBTypedDict(CommonTypedDict):
         ),
     ]
     max_parallel_workers: Annotated[
-        Optional[int],
+        int | None,
         click.option(
             "--max-parallel-workers",
             type=int,
@@ -58,32 +55,51 @@ class AlloyDBTypedDict(CommonTypedDict):
         ),
     ]
 
-    
 
 class AlloyDBScaNNTypedDict(AlloyDBTypedDict):
     num_leaves: Annotated[
         int,
-        click.option("--num-leaves", type=int, help="Number of leaves", required=True)
+        click.option("--num-leaves", type=int, help="Number of leaves", required=True),
     ]
     num_leaves_to_search: Annotated[
         int,
-        click.option("--num-leaves-to-search", type=int, help="Number of leaves to search", required=True)
+        click.option(
+            "--num-leaves-to-search",
+            type=int,
+            help="Number of leaves to search",
+            required=True,
+        ),
     ]
     pre_reordering_num_neighbors: Annotated[
         int,
-        click.option("--pre-reordering-num-neighbors", type=int, help="Pre-reordering number of neighbors", default=200)
+        click.option(
+            "--pre-reordering-num-neighbors",
+            type=int,
+            help="Pre-reordering number of neighbors",
+            default=200,
+        ),
     ]
     max_top_neighbors_buffer_size: Annotated[
         int,
-        click.option("--max-top-neighbors-buffer-size", type=int, help="Maximum top neighbors buffer size", default=20_000)
+        click.option(
+            "--max-top-neighbors-buffer-size",
+            type=int,
+            help="Maximum top neighbors buffer size",
+            default=20_000,
+        ),
     ]
     num_search_threads: Annotated[
         int,
-        click.option("--num-search-threads", type=int, help="Number of search threads", default=2)
+        click.option("--num-search-threads", type=int, help="Number of search threads", default=2),
     ]
     max_num_prefetch_datasets: Annotated[
         int,
-        click.option("--max-num-prefetch-datasets", type=int, help="Maximum number of prefetch datasets", default=100)
+        click.option(
+            "--max-num-prefetch-datasets",
+            type=int,
+            help="Maximum number of prefetch datasets",
+            default=100,
+        ),
     ]
     quantizer: Annotated[
         str,
@@ -91,16 +107,17 @@ class AlloyDBScaNNTypedDict(AlloyDBTypedDict):
             "--quantizer",
             type=click.Choice(["SQ8", "FLAT"]),
             help="Quantizer type",
-            default="SQ8"
-        )
+            default="SQ8",
+        ),
     ]
     enable_pca: Annotated[
-        bool, click.option(
+        bool,
+        click.option(
             "--enable-pca",
             type=click.Choice(["on", "off"]),
             help="Enable PCA",
-            default="on"
-        )
+            default="on",
+        ),
     ]
     max_num_levels: Annotated[
         int,
@@ -108,8 +125,8 @@ class AlloyDBScaNNTypedDict(AlloyDBTypedDict):
             "--max-num-levels",
             type=click.Choice(["1", "2"]),
             help="Maximum number of levels",
-            default=1
-        )
+            default=1,
+        ),
     ]
 
 

@@ -4,21 +4,24 @@ import logging
 import time
 from contextlib import contextmanager
 
-from ..api import VectorDB, DBCaseConfig
+from qdrant_client import QdrantClient
 from qdrant_client.http.models import (
-    CollectionStatus,
-    VectorParams,
-    PayloadSchemaType,
     Batch,
-    Filter,
+    CollectionStatus,
     FieldCondition,
+    Filter,
+    PayloadSchemaType,
     Range,
+    VectorParams,
 )
 
-from qdrant_client import QdrantClient
-
+from ..api import DBCaseConfig, VectorDB
 
 log = logging.getLogger(__name__)
+
+
+SECONDS_WAITING_FOR_INDEXING_API_CALL = 5
+QDRANT_BATCH_SIZE = 500
 
 
 class QdrantCloud(VectorDB):
@@ -57,16 +60,14 @@ class QdrantCloud(VectorDB):
         self.qdrant_client = QdrantClient(**self.db_config)
         yield
         self.qdrant_client = None
-        del(self.qdrant_client)
+        del self.qdrant_client
 
     def ready_to_load(self):
         pass
 
-
     def optimize(self):
         assert self.qdrant_client, "Please call self.init() before"
         # wait for vectors to be fully indexed
-        SECONDS_WAITING_FOR_INDEXING_API_CALL = 5
         try:
             while True:
                 info = self.qdrant_client.get_collection(self.collection_name)
@@ -74,19 +75,26 @@ class QdrantCloud(VectorDB):
                 if info.status != CollectionStatus.GREEN:
                     continue
                 if info.status == CollectionStatus.GREEN:
-                    log.info(f"Stored vectors: {info.vectors_count}, Indexed vectors: {info.indexed_vectors_count}, Collection status: {info.indexed_vectors_count}")
+                    msg = (
+                        f"Stored vectors: {info.vectors_count}, Indexed vectors: {info.indexed_vectors_count}, ",
+                        f"Collection status: {info.indexed_vectors_count}",
+                    )
+                    log.info(msg)
                     return
         except Exception as e:
             log.warning(f"QdrantCloud ready to search error: {e}")
             raise e from None
 
-    def _create_collection(self, dim, qdrant_client: int):
+    def _create_collection(self, dim: int, qdrant_client: QdrantClient):
         log.info(f"Create collection: {self.collection_name}")
 
         try:
             qdrant_client.create_collection(
                 collection_name=self.collection_name,
-                vectors_config=VectorParams(size=dim, distance=self.case_config.index_param()["distance"])
+                vectors_config=VectorParams(
+                    size=dim,
+                    distance=self.case_config.index_param()["distance"],
+                ),
             )
 
             qdrant_client.create_payload_index(
@@ -109,13 +117,12 @@ class QdrantCloud(VectorDB):
     ) -> (int, Exception):
         """Insert embeddings into Milvus. should call self.init() first"""
         assert self.qdrant_client is not None
-        QDRANT_BATCH_SIZE = 500
         try:
             # TODO: counts
             for offset in range(0, len(embeddings), QDRANT_BATCH_SIZE):
-                vectors = embeddings[offset: offset + QDRANT_BATCH_SIZE]
-                ids = metadata[offset: offset + QDRANT_BATCH_SIZE]
-                payloads=[{self._primary_field: v} for v in ids]
+                vectors = embeddings[offset : offset + QDRANT_BATCH_SIZE]
+                ids = metadata[offset : offset + QDRANT_BATCH_SIZE]
+                payloads = [{self._primary_field: v} for v in ids]
                 _ = self.qdrant_client.upsert(
                     collection_name=self.collection_name,
                     wait=True,
@@ -142,21 +149,23 @@ class QdrantCloud(VectorDB):
         f = None
         if filters:
             f = Filter(
-                must=[FieldCondition(
-                    key = self._primary_field,
-                    range = Range(
-                        gt=filters.get('id'),
+                must=[
+                    FieldCondition(
+                        key=self._primary_field,
+                        range=Range(
+                            gt=filters.get("id"),
+                        ),
                     ),
-                )]
+                ],
             )
 
-        res = self.qdrant_client.search(
-            collection_name=self.collection_name,
-            query_vector=query,
-            limit=k,
-            query_filter=f,
-            #  with_payload=True,
-        ),
+        res = (
+            self.qdrant_client.search(
+                collection_name=self.collection_name,
+                query_vector=query,
+                limit=k,
+                query_filter=f,
+            ),
+        )
 
-        ret = [result.id for result in res[0]]
-        return ret
+        return [result.id for result in res[0]]

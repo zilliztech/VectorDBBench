@@ -1,6 +1,6 @@
 from datetime import datetime
-from vectordb_bench.frontend.config.styles import *
-from vectordb_bench.interface import benchMarkRunner
+from vectordb_bench.frontend.config import styles
+from vectordb_bench.interface import benchmark_runner
 
 
 def submitTask(st, tasks, isAllValid):
@@ -27,10 +27,8 @@ def submitTask(st, tasks, isAllValid):
 
 def taskLabelInput(st):
     defaultTaskLabel = datetime.now().strftime("%Y%m%d%H")
-    columns = st.columns(TASK_LABEL_INPUT_COLUMNS)
-    taskLabel = columns[0].text_input(
-        "task_label", defaultTaskLabel, label_visibility="collapsed"
-    )
+    columns = st.columns(styles.TASK_LABEL_INPUT_COLUMNS)
+    taskLabel = columns[0].text_input("task_label", defaultTaskLabel, label_visibility="collapsed")
     return taskLabel
 
 
@@ -46,10 +44,8 @@ def advancedSettings(st):
     )
 
     container = st.columns([1, 2])
-    k = container[0].number_input("k",min_value=1, value=100, label_visibility="collapsed")
-    container[1].caption(
-        "K value for number of nearest neighbors to search"
-    )
+    k = container[0].number_input("k", min_value=1, value=100, label_visibility="collapsed")
+    container[1].caption("K value for number of nearest neighbors to search")
 
     return index_already_exists, use_aliyun, k
 
@@ -58,20 +54,20 @@ def controlPanel(st, tasks, taskLabel, isAllValid):
     index_already_exists, use_aliyun, k = advancedSettings(st)
 
     def runHandler():
-        benchMarkRunner.set_drop_old(not index_already_exists)
+        benchmark_runner.set_drop_old(not index_already_exists)
         for task in tasks:
             task.case_config.k = k
-        benchMarkRunner.set_download_address(use_aliyun)
-        benchMarkRunner.run(tasks, taskLabel)
+        benchmark_runner.set_download_address(use_aliyun)
+        benchmark_runner.run(tasks, taskLabel)
 
     def stopHandler():
-        benchMarkRunner.stop_running()
+        benchmark_runner.stop_running()
 
-    isRunning = benchMarkRunner.has_running()
+    isRunning = benchmark_runner.has_running()
 
     if isRunning:
-        currentTaskId = benchMarkRunner.get_current_task_id()
-        tasksCount = benchMarkRunner.get_tasks_count()
+        currentTaskId = benchmark_runner.get_current_task_id()
+        tasksCount = benchmark_runner.get_tasks_count()
         text = f":running: Running Task {currentTaskId} / {tasksCount}"
         st.progress(currentTaskId / tasksCount, text=text)
 
@@ -89,7 +85,7 @@ def controlPanel(st, tasks, taskLabel, isAllValid):
         )
 
     else:
-        errorText = benchMarkRunner.latest_error or ""
+        errorText = benchmark_runner.latest_error or ""
         if len(errorText) > 0:
             st.error(errorText)
         disabled = True if len(tasks) == 0 or not isAllValid else False

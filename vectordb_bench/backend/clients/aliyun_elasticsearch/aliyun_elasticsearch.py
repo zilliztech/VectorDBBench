@@ -1,5 +1,5 @@
-from ..elastic_cloud.elastic_cloud import ElasticCloud
 from ..elastic_cloud.config import ElasticCloudIndexConfig
+from ..elastic_cloud.elastic_cloud import ElasticCloud
 
 
 class AliyunElasticsearch(ElasticCloud):
@@ -24,4 +24,3 @@ class AliyunElasticsearch(ElasticCloud):
             drop_old=drop_old,
             **kwargs,
         )
-

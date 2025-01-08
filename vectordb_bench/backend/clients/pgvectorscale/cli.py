@@ -1,6 +1,10 @@
-import click
 import os
+from typing import Annotated, Unpack
+
+import click
 from pydantic import SecretStr
+
+from vectordb_bench.backend.clients import DB
 
 from ....cli.cli import (
     CommonTypedDict,
@@ -8,73 +12,83 @@ from ....cli.cli import (
     click_parameter_decorators_from_typed_dict,
     run,
 )
-from typing import Annotated, Unpack
-from vectordb_bench.backend.clients import DB
 
 
 class PgVectorScaleTypedDict(CommonTypedDict):
     user_name: Annotated[
-        str, click.option("--user-name", type=str, help="Db username", required=True)
+        str,
+        click.option("--user-name", type=str, help="Db username", required=True),
     ]
     password: Annotated[
         str,
-        click.option("--password",
-                     type=str,
-                     help="Postgres database password",
-                     default=lambda: os.environ.get("POSTGRES_PASSWORD", ""),
-                     show_default="$POSTGRES_PASSWORD",
-                     ),
+        click.option(
+            "--password",
+            type=str,
+            help="Postgres database password",
+            default=lambda: os.environ.get("POSTGRES_PASSWORD", ""),
+            show_default="$POSTGRES_PASSWORD",
+        ),
     ]
 
-    host: Annotated[
-        str, click.option("--host", type=str, help="Db host", required=True)
-    ]
-    db_name: Annotated[
-        str, click.option("--db-name", type=str, help="Db name", required=True)
-    ]
+    host: Annotated[str, click.option("--host", type=str, help="Db host", required=True)]
+    db_name: Annotated[str, click.option("--db-name", type=str, help="Db name", required=True)]
 
 
 class PgVectorScaleDiskAnnTypedDict(PgVectorScaleTypedDict):
     storage_layout: Annotated[
         str,
         click.option(
-            "--storage-layout", type=str, help="Streaming DiskANN storage layout",
+            "--storage-layout",
+            type=str,
+            help="Streaming DiskANN storage layout",
         ),
     ]
     num_neighbors: Annotated[
         int,
         click.option(
-            "--num-neighbors", type=int, help="Streaming DiskANN num neighbors",
+            "--num-neighbors",
+            type=int,
+            help="Streaming DiskANN num neighbors",
         ),
     ]
     search_list_size: Annotated[
         int,
         click.option(
-            "--search-list-size", type=int, help="Streaming DiskANN search list size",
+            "--search-list-size",
+            type=int,
+            help="Streaming DiskANN search list size",
         ),
     ]
     max_alpha: Annotated[
         float,
         click.option(
-            "--max-alpha", type=float, help="Streaming DiskANN max alpha",
+            "--max-alpha",
+            type=float,
+            help="Streaming DiskANN max alpha",
         ),
     ]
     num_dimensions: Annotated[
         int,
         click.option(
-            "--num-dimensions", type=int, help="Streaming DiskANN num dimensions",
+            "--num-dimensions",
+            type=int,
+            help="Streaming DiskANN num dimensions",
         ),
     ]
     query_search_list_size: Annotated[
         int,
         click.option(
-            "--query-search-list-size", type=int, help="Streaming DiskANN query search list size",
+            "--query-search-list-size",
+            type=int,
+            help="Streaming DiskANN query search list size",
         ),
     ]
     query_rescore: Annotated[
         int,
         click.option(
-            "--query-rescore", type=int, help="Streaming DiskANN query rescore",
+            "--query-rescore",
+            type=int,
+            help="Streaming DiskANN query rescore",
         ),
     ]
 

@@ -1,8 +1,8 @@
 import logging
-from enum import Enum
-from pydantic import SecretStr, BaseModel
 
-from ..api import DBConfig, DBCaseConfig, MetricType, IndexType
+from pydantic import BaseModel, SecretStr
+
+from ..api import DBCaseConfig, DBConfig, MetricType
 
 log = logging.getLogger(__name__)
 
@@ -26,18 +26,17 @@ class AliyunOpenSearchConfig(DBConfig, BaseModel):
             "control_host": self.control_host,
         }
 
+
 class AliyunOpenSearchIndexConfig(BaseModel, DBCaseConfig):
     metric_type: MetricType = MetricType.L2
-    efConstruction: int = 500
+    ef_construction: int = 500
     M: int = 100
     ef_search: int = 40
 
     def distance_type(self) -> str:
         if self.metric_type == MetricType.L2:
             return "SquaredEuclidean"
-        elif self.metric_type == MetricType.IP:
-            return "InnerProduct"
-        elif self.metric_type == MetricType.COSINE:
+        if self.metric_type in (MetricType.IP, MetricType.COSINE):
             return "InnerProduct"
         return "SquaredEuclidean"
 

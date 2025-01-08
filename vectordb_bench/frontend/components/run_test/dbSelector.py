@@ -22,7 +22,7 @@ def dbSelector(st):
         dbIsActived[db] = column.checkbox(db.name)
         try:
             column.image(DB_TO_ICON.get(db, ""))
-        except MediaFileStorageError as e:
+        except MediaFileStorageError:
             column.warning(f"{db.name} image not available")
             pass
     activedDbList = [db for db in DB_LIST if dbIsActived[db]]

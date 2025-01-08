@@ -15,10 +15,10 @@ from vectordb_bench.frontend.components.check_results.stPageConfig import initRu
 def main():
     # set page config
     initRunTestPageConfig(st)
-    
+
     # init style
     initStyle(st)
-    
+
     # header
     drawHeaderIcon(st)
 
@@ -48,11 +48,7 @@ def main():
     activedCaseList, allCaseConfigs = caseSelector(caseSelectorContainer, activedDbList)
 
     # generate tasks
-    tasks = (
-        generate_tasks(activedDbList, dbConfigs, activedCaseList, allCaseConfigs)
-        if isAllValid
-        else []
-    )
+    tasks = generate_tasks(activedDbList, dbConfigs, activedCaseList, allCaseConfigs) if isAllValid else []
 
     # submit
     submitContainer = st.container()

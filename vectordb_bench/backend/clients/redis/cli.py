@@ -3,9 +3,6 @@ from typing import Annotated, TypedDict, Unpack
 import click
 from pydantic import SecretStr
 
-from .config import RedisHNSWConfig
-
-
 from ....cli.cli import (
     CommonTypedDict,
     HNSWFlavor2,
@@ -14,12 +11,11 @@ from ....cli.cli import (
     run,
 )
 from .. import DB
+from .config import RedisHNSWConfig
 
 
 class RedisTypedDict(TypedDict):
-    host: Annotated[
-        str, click.option("--host", type=str, help="Db host", required=True)
-    ]
+    host: Annotated[str, click.option("--host", type=str, help="Db host", required=True)]
     password: Annotated[str, click.option("--password", type=str, help="Db password")]
     port: Annotated[int, click.option("--port", type=int, default=6379, help="Db Port")]
     ssl: Annotated[
@@ -52,27 +48,25 @@ class RedisTypedDict(TypedDict):
     ]
 
 
-class RedisHNSWTypedDict(CommonTypedDict, RedisTypedDict, HNSWFlavor2):
-    ...
+class RedisHNSWTypedDict(CommonTypedDict, RedisTypedDict, HNSWFlavor2): ...
 
 
 @cli.command()
 @click_parameter_decorators_from_typed_dict(RedisHNSWTypedDict)
 def Redis(**parameters: Unpack[RedisHNSWTypedDict]):
     from .config import RedisConfig
+
     run(
         db=DB.Redis,
         db_config=RedisConfig(
             db_label=parameters["db_label"],
-            password=SecretStr(parameters["password"])
-            if parameters["password"]
-            else None,
+            password=SecretStr(parameters["password"]) if parameters["password"] else None,
             host=SecretStr(parameters["host"]),
             port=parameters["port"],
             ssl=parameters["ssl"],
             ssl_ca_certs=parameters["ssl_ca_certs"],
             cmd=parameters["cmd"],
-        ),        
+        ),
         db_case_config=RedisHNSWConfig(
             M=parameters["m"],
             efConstruction=parameters["ef_construction"],

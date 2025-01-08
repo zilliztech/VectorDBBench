@@ -1,6 +1,5 @@
 from collections import defaultdict
 from dataclasses import asdict
-from vectordb_bench.backend.cases import Case
 from vectordb_bench.metric import isLowerIsBetterMetric
 from vectordb_bench.models import CaseResult, ResultLabel
 
@@ -24,10 +23,7 @@ def getFilterTasks(
         task
         for task in tasks
         if task.task_config.db_name in dbNames
-        and task.task_config.case_config.case_id.case_cls(
-            task.task_config.case_config.custom_case
-        ).name
-        in caseNames
+        and task.task_config.case_config.case_id.case_cls(task.task_config.case_config.custom_case).name in caseNames
     ]
     return filterTasks
 
@@ -39,9 +35,7 @@ def mergeTasks(tasks: list[CaseResult]):
         db = task.task_config.db.value
         db_label = task.task_config.db_config.db_label or ""
         version = task.task_config.db_config.version or ""
-        case = task.task_config.case_config.case_id.case_cls(
-            task.task_config.case_config.custom_case
-        )
+        case = task.task_config.case_config.case_id.case_cls(task.task_config.case_config.custom_case)
         dbCaseMetricsMap[db_name][case.name] = {
             "db": db,
             "db_label": db_label,
@@ -86,9 +80,7 @@ def mergeTasks(tasks: list[CaseResult]):
 def mergeMetrics(metrics_1: dict, metrics_2: dict) -> dict:
     metrics = {**metrics_1}
     for key, value in metrics_2.items():
-        metrics[key] = (
-            getBetterMetric(key, value, metrics[key]) if key in metrics else value
-        )
+        metrics[key] = getBetterMetric(key, value, metrics[key]) if key in metrics else value
 
     return metrics
 
@@ -99,11 +91,7 @@ def getBetterMetric(metric, value_1, value_2):
             return value_2
         if value_2 < 1e-7:
             return value_1
-        return (
-            min(value_1, value_2)
-            if isLowerIsBetterMetric(metric)
-            else max(value_1, value_2)
-        )
+        return min(value_1, value_2) if isLowerIsBetterMetric(metric) else max(value_1, value_2)
     except Exception:
         return value_1
 

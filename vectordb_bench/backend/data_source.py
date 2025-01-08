@@ -1,18 +1,19 @@
 import logging
 import pathlib
 import typing
-from enum import Enum
-from tqdm import tqdm
-import os
 from abc import ABC, abstractmethod
+from enum import Enum
 
-from .. import config
+from tqdm import tqdm
+
+from vectordb_bench import config
 
 logging.getLogger("s3fs").setLevel(logging.CRITICAL)
 
 log = logging.getLogger(__name__)
 
 DatasetReader = typing.TypeVar("DatasetReader")
+
 
 class DatasetSource(Enum):
     S3 = "S3"
@@ -24,6 +25,8 @@ class DatasetSource(Enum):
 
         if self == DatasetSource.AliyunOSS:
             return AliyunOSSReader()
+
+        return None
 
 
 class DatasetReader(ABC):
@@ -39,7 +42,6 @@ class DatasetReader(ABC):
             files(list[str]):  all filenames of the dataset
             local_ds_root(pathlib.Path): whether to write the remote data.
         """
-        pass
 
     @abstractmethod
     def validate_file(self, remote: pathlib.Path, local: pathlib.Path) -> bool:
@@ -52,15 +54,18 @@ class AliyunOSSReader(DatasetReader):
 
     def __init__(self):
         import oss2
+
         self.bucket = oss2.Bucket(oss2.AnonymousAuth(), self.remote_root, "benchmark", True)
 
     def validate_file(self, remote: pathlib.Path, local: pathlib.Path) -> bool:
         info = self.bucket.get_object_meta(remote.as_posix())
 
         # check size equal
-        remote_size, local_size = info.content_length, os.path.getsize(local)
+        remote_size, local_size = info.content_length, local.stat().st_size
         if remote_size != local_size:
-            log.info(f"local file: {local} size[{local_size}] not match with remote size[{remote_size}]")
+            log.info(
+                f"local file: {local} size[{local_size}] not match with remote size[{remote_size}]",
+            )
             return False
 
         return True
@@ -70,7 +75,13 @@ class AliyunOSSReader(DatasetReader):
         if not local_ds_root.exists():
             log.info(f"local dataset root path not exist, creating it: {local_ds_root}")
             local_ds_root.mkdir(parents=True)
-            downloads = [(pathlib.PurePosixPath("benchmark", dataset, f), local_ds_root.joinpath(f)) for f in files]
+            downloads = [
+                (
+                    pathlib.PurePosixPath("benchmark", dataset, f),
+                    local_ds_root.joinpath(f),
+                )
+                for f in files
+            ]
 
         else:
             for file in files:
@@ -78,7 +89,9 @@ class AliyunOSSReader(DatasetReader):
                 local_file = local_ds_root.joinpath(file)
 
                 if (not local_file.exists()) or (not self.validate_file(remote_file, local_file)):
-                    log.info(f"local file: {local_file} not match with remote: {remote_file}; add to downloading list")
+                    log.info(
+                        f"local file: {local_file} not match with remote: {remote_file}; add to downloading list",
+                    )
                     downloads.append((remote_file, local_file))
 
         if len(downloads) == 0:
@@ -92,17 +105,14 @@ class AliyunOSSReader(DatasetReader):
         log.info(f"Succeed to download all files, downloaded file count = {len(downloads)}")
 
 
-
 class AwsS3Reader(DatasetReader):
     source: DatasetSource = DatasetSource.S3
     remote_root: str = config.AWS_S3_URL
 
     def __init__(self):
         import s3fs
-        self.fs = s3fs.S3FileSystem(
-            anon=True,
-            client_kwargs={'region_name': 'us-west-2'}
-        )
+
+        self.fs = s3fs.S3FileSystem(anon=True, client_kwargs={"region_name": "us-west-2"})
 
     def ls_all(self, dataset: str):
         dataset_root_dir = pathlib.Path(self.remote_root, dataset)
@@ -111,7 +121,6 @@ class AwsS3Reader(DatasetReader):
         for n in names:
             log.info(n)
         return names
-
 
     def read(self, dataset: str, files: list[str], local_ds_root: pathlib.Path):
         downloads = []
@@ -126,7 +135,9 @@ class AwsS3Reader(DatasetReader):
                 local_file = local_ds_root.joinpath(file)
 
                 if (not local_file.exists()) or (not self.validate_file(remote_file, local_file)):
-                    log.info(f"local file: {local_file} not match with remote: {remote_file}; add to downloading list")
+                    log.info(
+                        f"local file: {local_file} not match with remote: {remote_file}; add to downloading list",
+                    )
                     downloads.append(remote_file)
 
         if len(downloads) == 0:
@@ -139,15 +150,16 @@ class AwsS3Reader(DatasetReader):
 
         log.info(f"Succeed to download all files, downloaded file count = {len(downloads)}")
 
-
     def validate_file(self, remote: pathlib.Path, local: pathlib.Path) -> bool:
         # info() uses ls() inside, maybe we only need to ls once
         info = self.fs.info(remote)
 
         # check size equal
-        remote_size, local_size = info.get("size"), os.path.getsize(local)
+        remote_size, local_size = info.get("size"), local.stat().st_size
         if remote_size != local_size:
-            log.info(f"local file: {local} size[{local_size}] not match with remote size[{remote_size}]")
+            log.info(
+                f"local file: {local} size[{local_size}] not match with remote size[{remote_size}]",
+            )
             return False
 
         return True

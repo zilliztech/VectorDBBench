@@ -1,7 +1,9 @@
 from abc import abstractmethod
-from typing import Any, Mapping, Optional, Sequence, TypedDict
+from collections.abc import Mapping, Sequence
+from typing import Any, LiteralString, TypedDict
+
 from pydantic import BaseModel, SecretStr
-from typing_extensions import LiteralString
+
 from ..api import DBCaseConfig, DBConfig, IndexType, MetricType
 
 POSTGRE_URL_PLACEHOLDER = "postgresql://%s:%s@%s/%s"
@@ -9,7 +11,7 @@ POSTGRE_URL_PLACEHOLDER = "postgresql://%s:%s@%s/%s"
 
 class PgVectorConfigDict(TypedDict):
     """These keys will be directly used as kwargs in psycopg connection string,
-        so the names must match exactly psycopg API"""
+    so the names must match exactly psycopg API"""
 
     user: str
     password: str
@@ -41,8 +43,8 @@ class PgVectorIndexParam(TypedDict):
     metric: str
     index_type: str
     index_creation_with_options: Sequence[dict[str, Any]]
-    maintenance_work_mem: Optional[str]
-    max_parallel_workers: Optional[int]
+    maintenance_work_mem: str | None
+    max_parallel_workers: int | None
 
 
 class PgVectorSearchParam(TypedDict):
@@ -59,61 +61,60 @@ class PgVectorIndexConfig(BaseModel, DBCaseConfig):
     create_index_after_load: bool = True
 
     def parse_metric(self) -> str:
-        if self.quantization_type == "halfvec":
-            if self.metric_type == MetricType.L2:
-                return "halfvec_l2_ops"
-            elif self.metric_type == MetricType.IP:
-                return "halfvec_ip_ops"
-            return "halfvec_cosine_ops"
-        elif self.quantization_type == "bit":
-            if self.metric_type == MetricType.JACCARD:
-                return "bit_jaccard_ops"
-            return "bit_hamming_ops"
-        else:
-            if self.metric_type == MetricType.L2:
-                return "vector_l2_ops"
-            elif self.metric_type == MetricType.IP:
-                return "vector_ip_ops"
-            return "vector_cosine_ops"
+        d = {
+            "halfvec": {
+                MetricType.L2: "halfvec_l2_ops",
+                MetricType.IP: "halfvec_ip_ops",
+                MetricType.COSINE: "halfvec_cosine_ops",
+            },
+            "bit": {
+                MetricType.JACCARD: "bit_jaccard_ops",
+                MetricType.HAMMING: "bit_hamming_ops",
+            },
+            "_fallback": {
+                MetricType.L2: "vector_l2_ops",
+                MetricType.IP: "vector_ip_ops",
+                MetricType.COSINE: "vector_cosine_ops",
+            },
+        }
+
+        if d.get(self.quantization_type) is None:
+            return d.get("_fallback").get(self.metric_type)
+        return d.get(self.quantization_type).get(self.metric_type)
 
     def parse_metric_fun_op(self) -> LiteralString:
         if self.quantization_type == "bit":
             if self.metric_type == MetricType.JACCARD:
                 return "<%>"
             return "<~>"
-        else:
-            if self.metric_type == MetricType.L2:
-                return "<->"
-            elif self.metric_type == MetricType.IP:
-                return "<#>"
-            return "<=>"
+        if self.metric_type == MetricType.L2:
+            return "<->"
+        if self.metric_type == MetricType.IP:
+            return "<#>"
+        return "<=>"
 
     def parse_metric_fun_str(self) -> str:
         if self.metric_type == MetricType.L2:
             return "l2_distance"
-        elif self.metric_type == MetricType.IP:
+        if self.metric_type == MetricType.IP:
             return "max_inner_product"
         return "cosine_distance"
-    
+
     def parse_reranking_metric_fun_op(self) -> LiteralString:
         if self.reranking_metric == MetricType.L2:
             return "<->"
-        elif self.reranking_metric == MetricType.IP:
+        if self.reranking_metric == MetricType.IP:
             return "<#>"
         return "<=>"
 
+    @abstractmethod
+    def index_param(self) -> PgVectorIndexParam: ...
 
     @abstractmethod
-    def index_param(self) -> PgVectorIndexParam:
-        ...
+    def search_param(self) -> PgVectorSearchParam: ...
 
     @abstractmethod
-    def search_param(self) -> PgVectorSearchParam:
-        ...
-
-    @abstractmethod
-    def session_param(self) -> PgVectorSessionCommands:
-        ...
+    def session_param(self) -> PgVectorSessionCommands: ...
 
     @staticmethod
     def _optionally_build_with_options(with_options: Mapping[str, Any]) -> Sequence[dict[str, Any]]:
@@ -125,24 +126,23 @@ class PgVectorIndexConfig(BaseModel, DBCaseConfig):
                     {
                         "option_name": option_name,
                         "val": str(value),
-                    }
+                    },
                 )
         return options
 
     @staticmethod
-    def _optionally_build_set_options(
-        set_mapping: Mapping[str, Any]
-    ) -> Sequence[dict[str, Any]]:
+    def _optionally_build_set_options(set_mapping: Mapping[str, Any]) -> Sequence[dict[str, Any]]:
         """Walk through options, creating 'SET 'key1 = "value1";' list"""
         session_options = []
         for setting_name, value in set_mapping.items():
             if value:
                 session_options.append(
-                    {"parameter": {
+                    {
+                        "parameter": {
                             "setting_name": setting_name,
                             "val": str(value),
                         },
-                    }
+                    },
                 )
         return session_options
 
@@ -165,12 +165,12 @@ class PgVectorIVFFlatConfig(PgVectorIndexConfig):
     lists: int | None
     probes: int | None
     index: IndexType = IndexType.ES_IVFFlat
-    maintenance_work_mem: Optional[str] = None
-    max_parallel_workers: Optional[int] = None
-    quantization_type: Optional[str] = None
-    reranking: Optional[bool] = None
-    quantized_fetch_limit: Optional[int] = None
-    reranking_metric: Optional[str] = None
+    maintenance_work_mem: str | None = None
+    max_parallel_workers: int | None = None
+    quantization_type: str | None = None
+    reranking: bool | None = None
+    quantized_fetch_limit: int | None = None
+    reranking_metric: str | None = None
 
     def index_param(self) -> PgVectorIndexParam:
         index_parameters = {"lists": self.lists}
@@ -179,9 +179,7 @@ class PgVectorIVFFlatConfig(PgVectorIndexConfig):
         return {
             "metric": self.parse_metric(),
             "index_type": self.index.value,
-            "index_creation_with_options": self._optionally_build_with_options(
-                index_parameters
-            ),
+            "index_creation_with_options": self._optionally_build_with_options(index_parameters),
             "maintenance_work_mem": self.maintenance_work_mem,
             "max_parallel_workers": self.max_parallel_workers,
             "quantization_type": self.quantization_type,
@@ -197,9 +195,7 @@ class PgVectorIVFFlatConfig(PgVectorIndexConfig):
 
     def session_param(self) -> PgVectorSessionCommands:
         session_parameters = {"ivfflat.probes": self.probes}
-        return {
-            "session_options": self._optionally_build_set_options(session_parameters)
-        }
+        return {"session_options": self._optionally_build_set_options(session_parameters)}
 
 
 class PgVectorHNSWConfig(PgVectorIndexConfig):
@@ -210,17 +206,15 @@ class PgVectorHNSWConfig(PgVectorIndexConfig):
     """
 
     m: int | None  # DETAIL:  Valid values are between "2" and "100".
-    ef_construction: (
-        int | None
-    )  # ef_construction must be greater than or equal to 2 * m
+    ef_construction: int | None  # ef_construction must be greater than or equal to 2 * m
     ef_search: int | None
     index: IndexType = IndexType.ES_HNSW
-    maintenance_work_mem: Optional[str] = None
-    max_parallel_workers: Optional[int] = None
-    quantization_type: Optional[str] = None
-    reranking: Optional[bool] = None
-    quantized_fetch_limit: Optional[int] = None
-    reranking_metric: Optional[str] = None
+    maintenance_work_mem: str | None = None
+    max_parallel_workers: int | None = None
+    quantization_type: str | None = None
+    reranking: bool | None = None
+    quantized_fetch_limit: int | None = None
+    reranking_metric: str | None = None
 
     def index_param(self) -> PgVectorIndexParam:
         index_parameters = {"m": self.m, "ef_construction": self.ef_construction}
@@ -229,9 +223,7 @@ class PgVectorHNSWConfig(PgVectorIndexConfig):
         return {
             "metric": self.parse_metric(),
             "index_type": self.index.value,
-            "index_creation_with_options": self._optionally_build_with_options(
-                index_parameters
-            ),
+            "index_creation_with_options": self._optionally_build_with_options(index_parameters),
             "maintenance_work_mem": self.maintenance_work_mem,
             "max_parallel_workers": self.max_parallel_workers,
             "quantization_type": self.quantization_type,
@@ -247,13 +239,11 @@ class PgVectorHNSWConfig(PgVectorIndexConfig):
 
     def session_param(self) -> PgVectorSessionCommands:
         session_parameters = {"hnsw.ef_search": self.ef_search}
-        return {
-            "session_options": self._optionally_build_set_options(session_parameters)
-        }
+        return {"session_options": self._optionally_build_set_options(session_parameters)}
 
 
 _pgvector_case_config = {
-        IndexType.HNSW: PgVectorHNSWConfig,
-        IndexType.ES_HNSW: PgVectorHNSWConfig,
-        IndexType.IVFFlat: PgVectorIVFFlatConfig,
+    IndexType.HNSW: PgVectorHNSWConfig,
+    IndexType.ES_HNSW: PgVectorHNSWConfig,
+    IndexType.IVFFlat: PgVectorIVFFlatConfig,
 }
