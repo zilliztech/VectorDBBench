@@ -1,6 +1,6 @@
 from pydantic import BaseModel, SecretStr
 
-from ..api import DBConfig, DBCaseConfig, MetricType
+from ..api import DBCaseConfig, DBConfig, MetricType
 
 
 class WeaviateConfig(DBConfig):
@@ -23,7 +23,7 @@ class WeaviateIndexConfig(BaseModel, DBCaseConfig):
     def parse_metric(self) -> str:
         if self.metric_type == MetricType.L2:
             return "l2-squared"
-        elif self.metric_type == MetricType.IP:
+        if self.metric_type == MetricType.IP:
             return "dot"
         return "cosine"
 

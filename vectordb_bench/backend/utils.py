@@ -2,7 +2,7 @@ import time
 from functools import wraps
 
 
-def numerize(n) -> str:
+def numerize(n: int) -> str:
     """display positive number n for readability
 
     Examples:
@@ -16,32 +16,34 @@ def numerize(n) -> str:
         "K": 1e6,
         "M": 1e9,
         "B": 1e12,
-        "END": float('inf'),
+        "END": float("inf"),
     }
 
     display_n, sufix = n, ""
     for s, base in sufix2upbound.items():
         # number >= 1000B will alway have sufix 'B'
         if s == "END":
-            display_n = int(n/1e9)
+            display_n = int(n / 1e9)
             sufix = "B"
             break
 
         if n < base:
             sufix = "" if s == "EMPTY" else s
-            display_n = int(n/(base/1e3))
+            display_n = int(n / (base / 1e3))
             break
     return f"{display_n}{sufix}"
 
 
-def time_it(func):
-    """ returns result and elapsed time"""
+def time_it(func: any):
+    """returns result and elapsed time"""
+
     @wraps(func)
     def inner(*args, **kwargs):
         pref = time.perf_counter()
         result = func(*args, **kwargs)
         delta = time.perf_counter() - pref
         return result, delta
+
     return inner
 
 
@@ -62,14 +64,19 @@ def compose_train_files(train_count: int, use_shuffled: bool) -> list[str]:
     return train_files
 
 
-def compose_gt_file(filters: int | float | str | None = None) -> str:
+ONE_PERCENT = 0.01
+NINETY_NINE_PERCENT = 0.99
+
+
+def compose_gt_file(filters: float | str | None = None) -> str:
     if filters is None:
         return "neighbors.parquet"
 
-    if filters == 0.01:
+    if filters == ONE_PERCENT:
         return "neighbors_head_1p.parquet"
 
-    if filters == 0.99:
+    if filters == NINETY_NINE_PERCENT:
         return "neighbors_tail_1p.parquet"
 
-    raise ValueError(f"Filters not supported: {filters}")
+    msg = f"Filters not supported: {filters}"
+    raise ValueError(msg)

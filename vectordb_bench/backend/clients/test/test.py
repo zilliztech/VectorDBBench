@@ -1,6 +1,7 @@
 import logging
+from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Any, Generator, Optional, Tuple
+from typing import Any
 
 from ..api import DBCaseConfig, VectorDB
 
@@ -43,11 +44,10 @@ class Test(VectorDB):
         embeddings: list[list[float]],
         metadata: list[int],
         **kwargs: Any,
-    ) -> Tuple[int, Optional[Exception]]:
+    ) -> tuple[int, Exception | None]:
         """Insert embeddings into the database.
         Should call self.init() first.
         """
-        raise RuntimeError("Not implemented")
         return len(metadata), None
 
     def search_embedding(
@@ -58,5 +58,4 @@ class Test(VectorDB):
         timeout: int | None = None,
         **kwargs: Any,
     ) -> list[int]:
-        raise NotImplementedError
-        return [i for i in range(k)]
+        return list(range(k))

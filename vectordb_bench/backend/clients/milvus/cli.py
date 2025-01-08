@@ -1,8 +1,9 @@
-from typing import Annotated, TypedDict, Unpack, Optional
+from typing import Annotated, TypedDict, Unpack
 
 import click
 from pydantic import SecretStr
 
+from vectordb_bench.backend.clients import DB
 from vectordb_bench.cli.cli import (
     CommonTypedDict,
     HNSWFlavor3,
@@ -10,33 +11,33 @@ from vectordb_bench.cli.cli import (
     cli,
     click_parameter_decorators_from_typed_dict,
     run,
-
 )
-from vectordb_bench.backend.clients import DB
 
 DBTYPE = DB.Milvus
 
 
 class MilvusTypedDict(TypedDict):
     uri: Annotated[
-        str, click.option("--uri", type=str, help="uri connection string", required=True)
+        str,
+        click.option("--uri", type=str, help="uri connection string", required=True),
     ]
     user_name: Annotated[
-        Optional[str], click.option("--user-name", type=str, help="Db username", required=False)
+        str | None,
+        click.option("--user-name", type=str, help="Db username", required=False),
     ]
     password: Annotated[
-        Optional[str], click.option("--password", type=str, help="Db password", required=False)
+        str | None,
+        click.option("--password", type=str, help="Db password", required=False),
     ]
 
 
-class MilvusAutoIndexTypedDict(CommonTypedDict, MilvusTypedDict):
-    ...
+class MilvusAutoIndexTypedDict(CommonTypedDict, MilvusTypedDict): ...
 
 
 @cli.command()
 @click_parameter_decorators_from_typed_dict(MilvusAutoIndexTypedDict)
 def MilvusAutoIndex(**parameters: Unpack[MilvusAutoIndexTypedDict]):
-    from .config import MilvusConfig, AutoIndexConfig
+    from .config import AutoIndexConfig, MilvusConfig
 
     run(
         db=DBTYPE,
@@ -54,7 +55,7 @@ def MilvusAutoIndex(**parameters: Unpack[MilvusAutoIndexTypedDict]):
 @cli.command()
 @click_parameter_decorators_from_typed_dict(MilvusAutoIndexTypedDict)
 def MilvusFlat(**parameters: Unpack[MilvusAutoIndexTypedDict]):
-    from .config import MilvusConfig, FLATConfig
+    from .config import FLATConfig, MilvusConfig
 
     run(
         db=DBTYPE,
@@ -69,14 +70,13 @@ def MilvusFlat(**parameters: Unpack[MilvusAutoIndexTypedDict]):
     )
 
 
-class MilvusHNSWTypedDict(CommonTypedDict, MilvusTypedDict, HNSWFlavor3):
-    ...
+class MilvusHNSWTypedDict(CommonTypedDict, MilvusTypedDict, HNSWFlavor3): ...
 
 
 @cli.command()
 @click_parameter_decorators_from_typed_dict(MilvusHNSWTypedDict)
 def MilvusHNSW(**parameters: Unpack[MilvusHNSWTypedDict]):
-    from .config import MilvusConfig, HNSWConfig
+    from .config import HNSWConfig, MilvusConfig
 
     run(
         db=DBTYPE,
@@ -95,14 +95,13 @@ def MilvusHNSW(**parameters: Unpack[MilvusHNSWTypedDict]):
     )
 
 
-class MilvusIVFFlatTypedDict(CommonTypedDict, MilvusTypedDict, IVFFlatTypedDictN):
-    ...
+class MilvusIVFFlatTypedDict(CommonTypedDict, MilvusTypedDict, IVFFlatTypedDictN): ...
 
 
 @cli.command()
 @click_parameter_decorators_from_typed_dict(MilvusIVFFlatTypedDict)
 def MilvusIVFFlat(**parameters: Unpack[MilvusIVFFlatTypedDict]):
-    from .config import MilvusConfig, IVFFlatConfig
+    from .config import IVFFlatConfig, MilvusConfig
 
     run(
         db=DBTYPE,
@@ -123,7 +122,7 @@ def MilvusIVFFlat(**parameters: Unpack[MilvusIVFFlatTypedDict]):
 @cli.command()
 @click_parameter_decorators_from_typed_dict(MilvusIVFFlatTypedDict)
 def MilvusIVFSQ8(**parameters: Unpack[MilvusIVFFlatTypedDict]):
-    from .config import MilvusConfig, IVFSQ8Config
+    from .config import IVFSQ8Config, MilvusConfig
 
     run(
         db=DBTYPE,
@@ -142,17 +141,13 @@ def MilvusIVFSQ8(**parameters: Unpack[MilvusIVFFlatTypedDict]):
 
 
 class MilvusDISKANNTypedDict(CommonTypedDict, MilvusTypedDict):
-    search_list: Annotated[
-        str, click.option("--search-list",
-                          type=int,
-                          required=True)
-    ]
+    search_list: Annotated[str, click.option("--search-list", type=int, required=True)]
 
 
 @cli.command()
 @click_parameter_decorators_from_typed_dict(MilvusDISKANNTypedDict)
 def MilvusDISKANN(**parameters: Unpack[MilvusDISKANNTypedDict]):
-    from .config import MilvusConfig, DISKANNConfig
+    from .config import DISKANNConfig, MilvusConfig
 
     run(
         db=DBTYPE,
@@ -171,21 +166,16 @@ def MilvusDISKANN(**parameters: Unpack[MilvusDISKANNTypedDict]):
 
 class MilvusGPUIVFTypedDict(CommonTypedDict, MilvusTypedDict, MilvusIVFFlatTypedDict):
     cache_dataset_on_device: Annotated[
-        str, click.option("--cache-dataset-on-device",
-                          type=str,
-                          required=True)
+        str,
+        click.option("--cache-dataset-on-device", type=str, required=True),
     ]
-    refine_ratio: Annotated[
-        str, click.option("--refine-ratio",
-                          type=float,
-                          required=True)
-    ]
+    refine_ratio: Annotated[str, click.option("--refine-ratio", type=float, required=True)]
 
 
 @cli.command()
 @click_parameter_decorators_from_typed_dict(MilvusGPUIVFTypedDict)
 def MilvusGPUIVFFlat(**parameters: Unpack[MilvusGPUIVFTypedDict]):
-    from .config import MilvusConfig, GPUIVFFlatConfig
+    from .config import GPUIVFFlatConfig, MilvusConfig
 
     run(
         db=DBTYPE,
@@ -205,23 +195,20 @@ def MilvusGPUIVFFlat(**parameters: Unpack[MilvusGPUIVFTypedDict]):
     )
 
 
-class MilvusGPUIVFPQTypedDict(CommonTypedDict, MilvusTypedDict, MilvusIVFFlatTypedDict, MilvusGPUIVFTypedDict):
-    m: Annotated[
-        str, click.option("--m",
-                          type=int, help="hnsw m",
-                          required=True)
-    ]
-    nbits: Annotated[
-        str, click.option("--nbits",
-                          type=int,
-                          required=True)
-    ]
+class MilvusGPUIVFPQTypedDict(
+    CommonTypedDict,
+    MilvusTypedDict,
+    MilvusIVFFlatTypedDict,
+    MilvusGPUIVFTypedDict,
+):
+    m: Annotated[str, click.option("--m", type=int, help="hnsw m", required=True)]
+    nbits: Annotated[str, click.option("--nbits", type=int, required=True)]
 
 
 @cli.command()
 @click_parameter_decorators_from_typed_dict(MilvusGPUIVFPQTypedDict)
 def MilvusGPUIVFPQ(**parameters: Unpack[MilvusGPUIVFPQTypedDict]):
-    from .config import MilvusConfig, GPUIVFPQConfig
+    from .config import GPUIVFPQConfig, MilvusConfig
 
     run(
         db=DBTYPE,
@@ -245,51 +232,22 @@ def MilvusGPUIVFPQ(**parameters: Unpack[MilvusGPUIVFPQTypedDict]):
 
 class MilvusGPUCAGRATypedDict(CommonTypedDict, MilvusTypedDict, MilvusGPUIVFTypedDict):
     intermediate_graph_degree: Annotated[
-        str, click.option("--intermediate-graph-degree",
-                          type=int,
-                          required=True)
+        str,
+        click.option("--intermediate-graph-degree", type=int, required=True),
     ]
-    graph_degree: Annotated[
-        str, click.option("--graph-degree",
-                          type=int,
-                          required=True)
-    ]
-    build_algo: Annotated[
-        str, click.option("--build_algo",
-                          type=str,
-                          required=True)
-    ]
-    team_size: Annotated[
-        str, click.option("--team-size",
-                          type=int,
-                          required=True)
-    ]
-    search_width: Annotated[
-        str, click.option("--search-width",
-                          type=int,
-                          required=True)
-    ]
-    itopk_size: Annotated[
-        str, click.option("--itopk-size",
-                          type=int,
-                          required=True)
-    ]
-    min_iterations: Annotated[
-        str, click.option("--min-iterations",
-                          type=int,
-                          required=True)
-    ]
-    max_iterations: Annotated[
-        str, click.option("--max-iterations",
-                          type=int,
-                          required=True)
-    ]
+    graph_degree: Annotated[str, click.option("--graph-degree", type=int, required=True)]
+    build_algo: Annotated[str, click.option("--build_algo", type=str, required=True)]
+    team_size: Annotated[str, click.option("--team-size", type=int, required=True)]
+    search_width: Annotated[str, click.option("--search-width", type=int, required=True)]
+    itopk_size: Annotated[str, click.option("--itopk-size", type=int, required=True)]
+    min_iterations: Annotated[str, click.option("--min-iterations", type=int, required=True)]
+    max_iterations: Annotated[str, click.option("--max-iterations", type=int, required=True)]
 
 
 @cli.command()
 @click_parameter_decorators_from_typed_dict(MilvusGPUCAGRATypedDict)
 def MilvusGPUCAGRA(**parameters: Unpack[MilvusGPUCAGRATypedDict]):
-    from .config import MilvusConfig, GPUCAGRAConfig
+    from .config import GPUCAGRAConfig, MilvusConfig
 
     run(
         db=DBTYPE,

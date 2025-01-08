@@ -240,13 +240,13 @@ After reopen the repository in container, run `python -m vectordb_bench` in the 
 
 ### Check coding styles
 ```shell
-$ ruff check vectordb_bench
+$ make lint
 ```
 
-Add `--fix` if you want to fix the coding styles automatically
+To fix the coding styles automatically
 
 ```shell
-$ ruff check vectordb_bench --fix
+$ make format
 ```
 
 ## How does it work?

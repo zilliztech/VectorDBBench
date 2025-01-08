@@ -1,8 +1,10 @@
-from typing import Annotated, Optional, Unpack
+import os
+from typing import Annotated, Unpack
 
 import click
-import os
 from pydantic import SecretStr
+
+from vectordb_bench.backend.clients import DB
 
 from ....cli.cli import (
     CommonTypedDict,
@@ -12,12 +14,12 @@ from ....cli.cli import (
     click_parameter_decorators_from_typed_dict,
     run,
 )
-from vectordb_bench.backend.clients import DB
 
 
 class PgVectoRSTypedDict(CommonTypedDict):
     user_name: Annotated[
-        str, click.option("--user-name", type=str, help="Db username", required=True)
+        str,
+        click.option("--user-name", type=str, help="Db username", required=True),
     ]
     password: Annotated[
         str,
@@ -30,14 +32,10 @@ class PgVectoRSTypedDict(CommonTypedDict):
         ),
     ]
 
-    host: Annotated[
-        str, click.option("--host", type=str, help="Db host", required=True)
-    ]
-    db_name: Annotated[
-        str, click.option("--db-name", type=str, help="Db name", required=True)
-    ]
+    host: Annotated[str, click.option("--host", type=str, help="Db host", required=True)]
+    db_name: Annotated[str, click.option("--db-name", type=str, help="Db name", required=True)]
     max_parallel_workers: Annotated[
-        Optional[int],
+        int | None,
         click.option(
             "--max-parallel-workers",
             type=int,

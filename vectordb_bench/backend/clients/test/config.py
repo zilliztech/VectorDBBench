@@ -1,6 +1,6 @@
-from pydantic import BaseModel, SecretStr
+from pydantic import BaseModel
 
-from ..api import DBCaseConfig, DBConfig, IndexType, MetricType
+from ..api import DBCaseConfig, DBConfig, MetricType
 
 
 class TestConfig(DBConfig):

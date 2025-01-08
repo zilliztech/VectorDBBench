@@ -1,16 +1,21 @@
 import logging
 import time
+from collections.abc import Iterable
 from contextlib import contextmanager
-from typing import Iterable
-from ..api import VectorDB
-from .config import ElasticCloudIndexConfig
+
 from elasticsearch.helpers import bulk
 
+from ..api import VectorDB
+from .config import ElasticCloudIndexConfig
 
 for logger in ("elasticsearch", "elastic_transport"):
     logging.getLogger(logger).setLevel(logging.WARNING)
 
 log = logging.getLogger(__name__)
+
+
+SECONDS_WAITING_FOR_FORCE_MERGE_API_CALL_SEC = 30
+
 
 class ElasticCloud(VectorDB):
     def __init__(
@@ -46,14 +51,14 @@ class ElasticCloud(VectorDB):
     def init(self) -> None:
         """connect to elasticsearch"""
         from elasticsearch import Elasticsearch
+
         self.client = Elasticsearch(**self.db_config, request_timeout=180)
 
         yield
-        # self.client.transport.close()
         self.client = None
-        del(self.client)
+        del self.client
 
-    def _create_indice(self, client) -> None:
+    def _create_indice(self, client: any) -> None:
         mappings = {
             "_source": {"excludes": [self.vector_col_name]},
             "properties": {
@@ -62,13 +67,13 @@ class ElasticCloud(VectorDB):
                     "dims": self.dim,
                     **self.case_config.index_param(),
                 },
-            }
+            },
         }
 
         try:
             client.indices.create(index=self.indice, mappings=mappings)
         except Exception as e:
-            log.warning(f"Failed to create indice: {self.indice} error: {str(e)}")
+            log.warning(f"Failed to create indice: {self.indice} error: {e!s}")
             raise e from None
 
     def insert_embeddings(
@@ -94,7 +99,7 @@ class ElasticCloud(VectorDB):
             bulk_insert_res = bulk(self.client, insert_data)
             return (bulk_insert_res[0], None)
         except Exception as e:
-            log.warning(f"Failed to insert data: {self.indice} error: {str(e)}")
+            log.warning(f"Failed to insert data: {self.indice} error: {e!s}")
             return (0, e)
 
     def search_embedding(
@@ -114,16 +119,12 @@ class ElasticCloud(VectorDB):
             list[tuple[int, float]]: list of k most similar embeddings in (id, score) tuple to the query embedding.
         """
         assert self.client is not None, "should self.init() first"
-        # is_existed_res = self.client.indices.exists(index=self.indice)
-        # assert is_existed_res.raw == True, "should self.init() first"
 
         knn = {
             "field": self.vector_col_name,
             "k": k,
             "num_candidates": self.case_config.num_candidates,
-            "filter": [{"range": {self.id_col_name: {"gt": filters["id"]}}}]
-            if filters
-            else [],
+            "filter": [{"range": {self.id_col_name: {"gt": filters["id"]}}}] if filters else [],
             "query_vector": query,
         }
         size = k
@@ -137,26 +138,26 @@ class ElasticCloud(VectorDB):
                 stored_fields="_none_",
                 filter_path=[f"hits.hits.fields.{self.id_col_name}"],
             )
-            res = [h["fields"][self.id_col_name][0] for h in res["hits"]["hits"]]
-
-            return res
+            return [h["fields"][self.id_col_name][0] for h in res["hits"]["hits"]]
         except Exception as e:
-            log.warning(f"Failed to search: {self.indice} error: {str(e)}")
+            log.warning(f"Failed to search: {self.indice} error: {e!s}")
             raise e from None
 
     def optimize(self):
         """optimize will be called between insertion and search in performance cases."""
         assert self.client is not None, "should self.init() first"
         self.client.indices.refresh(index=self.indice)
-        force_merge_task_id = self.client.indices.forcemerge(index=self.indice, max_num_segments=1, wait_for_completion=False)['task']
+        force_merge_task_id = self.client.indices.forcemerge(
+            index=self.indice,
+            max_num_segments=1,
+            wait_for_completion=False,
+        )["task"]
         log.info(f"Elasticsearch force merge task id: {force_merge_task_id}")
-        SECONDS_WAITING_FOR_FORCE_MERGE_API_CALL_SEC = 30
         while True:
             time.sleep(SECONDS_WAITING_FOR_FORCE_MERGE_API_CALL_SEC)
             task_status = self.client.tasks.get(task_id=force_merge_task_id)
-            if task_status['completed']:
+            if task_status["completed"]:
                 return
 
     def ready_to_load(self):
         """ready_to_load will be called before load in load cases."""
-        pass

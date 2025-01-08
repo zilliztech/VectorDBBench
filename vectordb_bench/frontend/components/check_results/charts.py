@@ -1,8 +1,7 @@
-from vectordb_bench.backend.cases import Case
 from vectordb_bench.frontend.components.check_results.expanderStyle import (
     initMainExpanderStyle,
 )
-from vectordb_bench.metric import metricOrder, isLowerIsBetterMetric, metricUnitMap
+from vectordb_bench.metric import metric_order, isLowerIsBetterMetric, metric_unit_map
 from vectordb_bench.frontend.config.styles import *
 from vectordb_bench.models import ResultLabel
 import plotly.express as px
@@ -21,9 +20,7 @@ def drawCharts(st, allData, failedTasks, caseNames: list[str]):
 
 def showFailedDBs(st, errorDBs):
     failedDBs = [db for db, label in errorDBs.items() if label == ResultLabel.FAILED]
-    timeoutDBs = [
-        db for db, label in errorDBs.items() if label == ResultLabel.OUTOFRANGE
-    ]
+    timeoutDBs = [db for db, label in errorDBs.items() if label == ResultLabel.OUTOFRANGE]
 
     showFailedText(st, "Failed", failedDBs)
     showFailedText(st, "Timeout", timeoutDBs)
@@ -41,7 +38,7 @@ def drawChart(data, st, key_prefix: str):
     metricsSet = set()
     for d in data:
         metricsSet = metricsSet.union(d["metricsSet"])
-    showMetrics = [metric for metric in metricOrder if metric in metricsSet]
+    showMetrics = [metric for metric in metric_order if metric in metricsSet]
 
     for i, metric in enumerate(showMetrics):
         container = st.container()
@@ -72,9 +69,7 @@ def getLabelToShapeMap(data):
             else:
                 usedShapes.add(labelIndexMap[label] % len(PATTERN_SHAPES))
 
-    labelToShapeMap = {
-        label: getPatternShape(index) for label, index in labelIndexMap.items()
-    }
+    labelToShapeMap = {label: getPatternShape(index) for label, index in labelIndexMap.items()}
     return labelToShapeMap
 
 
@@ -96,11 +91,9 @@ def drawMetricChart(data, metric, st, key: str):
     xpadding = (xmax - xmin) / 16
     xpadding_multiplier = 1.8
     xrange = [xmin, xmax + xpadding * xpadding_multiplier]
-    unit = metricUnitMap.get(metric, "")
+    unit = metric_unit_map.get(metric, "")
     labelToShapeMap = getLabelToShapeMap(dataWithMetric)
-    categoryorder = (
-        "total descending" if isLowerIsBetterMetric(metric) else "total ascending"
-    )
+    categoryorder = "total descending" if isLowerIsBetterMetric(metric) else "total ascending"
     fig = px.bar(
         dataWithMetric,
         x=metric,
@@ -137,18 +130,14 @@ def drawMetricChart(data, metric, st, key: str):
             color="#333",
             size=12,
         ),
-        marker=dict(
-            pattern=dict(fillmode="overlay", fgcolor="#fff", fgopacity=1, size=7)
-        ),
+        marker=dict(pattern=dict(fillmode="overlay", fgcolor="#fff", fgopacity=1, size=7)),
         texttemplate="%{x:,.4~r}" + unit,
     )
     fig.update_layout(
         margin=dict(l=0, r=0, t=48, b=12, pad=8),
         bargap=0.25,
         showlegend=False,
-        legend=dict(
-            orientation="h", yanchor="bottom", y=1, xanchor="right", x=1, title=""
-        ),
+        legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="right", x=1, title=""),
         # legend=dict(orientation="v", title=""),
         yaxis={"categoryorder": categoryorder},
         title=dict(

@@ -1,9 +1,8 @@
 from abc import ABC, abstractmethod
-from enum import Enum
-from typing import Any, Type
 from contextlib import contextmanager
+from enum import Enum
 
-from pydantic import BaseModel, validator, SecretStr
+from pydantic import BaseModel, SecretStr, validator
 
 
 class MetricType(str, Enum):
@@ -65,13 +64,10 @@ class DBConfig(ABC, BaseModel):
         raise NotImplementedError
 
     @validator("*")
-    def not_empty_field(cls, v, field):
-        if (
-            field.name in cls.common_short_configs()
-            or field.name in cls.common_long_configs()
-        ):
+    def not_empty_field(cls, v: any, field: any):
+        if field.name in cls.common_short_configs() or field.name in cls.common_long_configs():
             return v
-        if not v and isinstance(v, (str, SecretStr)):
+        if not v and isinstance(v, str | SecretStr):
             raise ValueError("Empty string!")
         return v
 

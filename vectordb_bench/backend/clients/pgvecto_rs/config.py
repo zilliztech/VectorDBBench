@@ -1,11 +1,11 @@
 from abc import abstractmethod
 from typing import TypedDict
 
+from pgvecto_rs.types import Flat, Hnsw, IndexOption, Ivf, Quantization
+from pgvecto_rs.types.index import QuantizationRatio, QuantizationType
 from pydantic import BaseModel, SecretStr
-from pgvecto_rs.types import IndexOption, Ivf, Hnsw, Flat, Quantization
-from pgvecto_rs.types.index import QuantizationType, QuantizationRatio
 
-from ..api import DBConfig, DBCaseConfig, IndexType, MetricType
+from ..api import DBCaseConfig, DBConfig, IndexType, MetricType
 
 POSTGRE_URL_PLACEHOLDER = "postgresql://%s:%s@%s/%s"
 
@@ -52,14 +52,14 @@ class PgVectoRSIndexConfig(BaseModel, DBCaseConfig):
     def parse_metric(self) -> str:
         if self.metric_type == MetricType.L2:
             return "vector_l2_ops"
-        elif self.metric_type == MetricType.IP:
+        if self.metric_type == MetricType.IP:
             return "vector_dot_ops"
         return "vector_cos_ops"
 
     def parse_metric_fun_op(self) -> str:
         if self.metric_type == MetricType.L2:
             return "<->"
-        elif self.metric_type == MetricType.IP:
+        if self.metric_type == MetricType.IP:
             return "<#>"
         return "<=>"
 
@@ -85,9 +85,7 @@ class PgVectoRSHNSWConfig(PgVectoRSIndexConfig):
         if self.quantization_type is None:
             quantization = None
         else:
-            quantization = Quantization(
-                typ=self.quantization_type, ratio=self.quantization_ratio
-            )
+            quantization = Quantization(typ=self.quantization_type, ratio=self.quantization_ratio)
 
         option = IndexOption(
             index=Hnsw(
@@ -115,9 +113,7 @@ class PgVectoRSIVFFlatConfig(PgVectoRSIndexConfig):
         if self.quantization_type is None:
             quantization = None
         else:
-            quantization = Quantization(
-                typ=self.quantization_type, ratio=self.quantization_ratio
-            )
+            quantization = Quantization(typ=self.quantization_type, ratio=self.quantization_ratio)
 
         option = IndexOption(
             index=Ivf(nlist=self.lists, quantization=quantization),
@@ -139,9 +135,7 @@ class PgVectoRSFLATConfig(PgVectoRSIndexConfig):
         if self.quantization_type is None:
             quantization = None
         else:
-            quantization = Quantization(
-                typ=self.quantization_type, ratio=self.quantization_ratio
-            )
+            quantization = Quantization(typ=self.quantization_type, ratio=self.quantization_ratio)
 
         option = IndexOption(
             index=Flat(

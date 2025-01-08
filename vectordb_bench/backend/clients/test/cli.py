@@ -10,8 +10,7 @@ from .. import DB
 from ..test.config import TestConfig, TestIndexConfig
 
 
-class TestTypedDict(CommonTypedDict):
-    ...
+class TestTypedDict(CommonTypedDict): ...
 
 
 @cli.command()

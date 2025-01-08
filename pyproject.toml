@@ -44,6 +44,7 @@ dynamic = ["version"]
 
 [project.optional-dependencies]
 test = [
+    "black",
     "ruff",
     "pytest",
 ]
@@ -93,3 +94,116 @@ init_bench = "vectordb_bench.__main__:main"
 vectordbbench = "vectordb_bench.cli.vectordbbench:cli"
 
 [tool.setuptools_scm]
+
+[tool.black]
+line-length = 120
+target-version = ['py311']
+include = '\.pyi?$'
+
+[tool.ruff]
+lint.select = [
+    "E",
+    "F",
+    "C90",
+    "I",
+    "N",
+    "B", "C", "G",
+    "A",
+    "ANN001",
+    "S", "T", "W", "ARG", "BLE", "COM", "DJ", "EM", "ERA", "EXE", "FBT", "ICN", "INP", "ISC", "NPY", "PD", "PGH", "PIE", "PL", "PT", "PTH", "PYI", "RET", "RSE", "RUF", "SIM", "SLF", "TCH", "TID", "TRY", "UP", "YTT"
+]
+lint.ignore = [
+    "BLE001", # blind-except (BLE001)
+    "SLF001", # SLF001 Private member accessed [E]
+    "TRY003", # [ruff] TRY003 Avoid specifying long messages outside the exception class [E]
+    "FBT001", "FBT002", "FBT003",
+    "G004", # [ruff] G004 Logging statement uses f-string [E]
+    "UP031",
+    "RUF012",
+    "EM101",
+    "N805",
+    "ARG002",
+    "ARG003",
+    "PIE796", # https://github.com/zilliztech/VectorDBBench/issues/438
+    "INP001", # TODO
+    "TID252", # TODO
+    "N801", "N802", "N815",
+    "S101", "S108", "S603", "S311",
+    "PLR2004",
+    "RUF017",
+    "C416",
+    "PLW0603",
+]
+
+# Allow autofix for all enabled rules (when `--fix`) is provided.
+lint.fixable = [
+    "A", "B", "C", "D", "E", "F", "G", "I", "N", "Q", "S", "T", "W",
+    "ANN", "ARG", "BLE", "COM", "DJ", "DTZ", "EM", "ERA", "EXE", "FBT",
+    "ICN", "INP", "ISC", "NPY", "PD", "PGH", "PIE", "PL", "PT", "PTH",
+    "PYI", "RET", "RSE", "RUF", "SIM", "SLF", "TCH", "TID", "TRY", "UP",
+    "YTT",
+]
+lint.unfixable = []
+
+show-fixes = true
+
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+    "grpc_gen",
+    "__pycache__",
+    "frontend", # TODO
+    "tests",
+]
+
+# Same as Black.
+line-length = 120
+
+# Allow unused variables when underscore-prefixed.
+lint.dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+# Assume Python 3.11
+target-version = "py311"
+
+[tool.ruff.lint.mccabe]
+# Unlike Flake8, default to a complexity level of 10.
+max-complexity = 18
+
+[tool.ruff.lint.pycodestyle]
+max-line-length = 120
+max-doc-length = 120
+
+[tool.ruff.lint.pylint]
+max-args = 20
+max-branches = 15
+
+[tool.ruff.lint.flake8-builtins]
+builtins-ignorelist = [
+    # "format",
+    # "next",
+    # "object", # TODO
+    # "id",
+    # "dict", # TODO
+    # "filter",
+]
+

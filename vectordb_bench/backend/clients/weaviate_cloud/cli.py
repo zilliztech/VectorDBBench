@@ -14,7 +14,8 @@ from .. import DB
 
 class WeaviateTypedDict(CommonTypedDict):
     api_key: Annotated[
-        str, click.option("--api-key", type=str, help="Weaviate api key", required=True)
+        str,
+        click.option("--api-key", type=str, help="Weaviate api key", required=True),
     ]
     url: Annotated[
         str,
@@ -34,8 +35,6 @@ def Weaviate(**parameters: Unpack[WeaviateTypedDict]):
             api_key=SecretStr(parameters["api_key"]),
             url=SecretStr(parameters["url"]),
         ),
-        db_case_config=WeaviateIndexConfig(
-            ef=256, efConstruction=256, maxConnections=16
-        ),
+        db_case_config=WeaviateIndexConfig(ef=256, efConstruction=256, maxConnections=16),
         **parameters,
     )

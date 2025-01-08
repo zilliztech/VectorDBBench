@@ -1,32 +1,31 @@
-from .cases import CaseLabel
-from .task_runner import CaseRunner, RunningStatus, TaskRunner
-from ..models import TaskConfig
-from ..backend.clients import EmptyDBCaseConfig
-from ..backend.data_source  import DatasetSource
 import logging
 
+from vectordb_bench.backend.clients import EmptyDBCaseConfig
+from vectordb_bench.backend.data_source import DatasetSource
+from vectordb_bench.models import TaskConfig
+
+from .cases import CaseLabel
+from .task_runner import CaseRunner, RunningStatus, TaskRunner
 
 log = logging.getLogger(__name__)
 
 
 class Assembler:
     @classmethod
-    def assemble(cls, run_id , task: TaskConfig, source: DatasetSource) -> CaseRunner:
+    def assemble(cls, run_id: str, task: TaskConfig, source: DatasetSource) -> CaseRunner:
         c_cls = task.case_config.case_id.case_cls
 
         c = c_cls(task.case_config.custom_case)
-        if type(task.db_case_config) != EmptyDBCaseConfig:
+        if type(task.db_case_config) is not EmptyDBCaseConfig:
             task.db_case_config.metric_type = c.dataset.data.metric_type
 
-        runner = CaseRunner(
+        return CaseRunner(
             run_id=run_id,
             config=task,
             ca=c,
             status=RunningStatus.PENDING,
             dataset_source=source,
         )
-
-        return runner
 
     @classmethod
     def assemble_all(
@@ -50,12 +49,12 @@ class Assembler:
             db2runner[db].append(r)
 
         # check dbclient installed
-        for k in db2runner.keys():
+        for k in db2runner:
             _ = k.init_cls
 
         # sort by dataset size
-        for k in db2runner.keys():
-            db2runner[k].sort(key=lambda x:x.ca.dataset.data.size)
+        for k, _ in db2runner:
+            db2runner[k].sort(key=lambda x: x.ca.dataset.data.size)
 
         all_runners = []
         all_runners.extend(load_runners)

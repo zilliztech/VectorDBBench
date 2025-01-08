@@ -1,7 +1,9 @@
 from abc import abstractmethod
-from typing import Any, Mapping, Optional, Sequence, TypedDict
+from collections.abc import Mapping, Sequence
+from typing import Any, LiteralString, TypedDict
+
 from pydantic import BaseModel, SecretStr
-from typing_extensions import LiteralString
+
 from ..api import DBCaseConfig, DBConfig, IndexType, MetricType
 
 POSTGRE_URL_PLACEHOLDER = "postgresql://%s:%s@%s/%s"
@@ -9,7 +11,7 @@ POSTGRE_URL_PLACEHOLDER = "postgresql://%s:%s@%s/%s"
 
 class AlloyDBConfigDict(TypedDict):
     """These keys will be directly used as kwargs in psycopg connection string,
-        so the names must match exactly psycopg API"""
+    so the names must match exactly psycopg API"""
 
     user: str
     password: str
@@ -41,8 +43,8 @@ class AlloyDBIndexParam(TypedDict):
     metric: str
     index_type: str
     index_creation_with_options: Sequence[dict[str, Any]]
-    maintenance_work_mem: Optional[str]
-    max_parallel_workers: Optional[int]
+    maintenance_work_mem: str | None
+    max_parallel_workers: int | None
 
 
 class AlloyDBSearchParam(TypedDict):
@@ -61,31 +63,30 @@ class AlloyDBIndexConfig(BaseModel, DBCaseConfig):
     def parse_metric(self) -> str:
         if self.metric_type == MetricType.L2:
             return "l2"
-        elif self.metric_type == MetricType.DP:
+        if self.metric_type == MetricType.DP:
             return "dot_product"
         return "cosine"
 
     def parse_metric_fun_op(self) -> LiteralString:
         if self.metric_type == MetricType.L2:
             return "<->"
-        elif self.metric_type == MetricType.IP:
+        if self.metric_type == MetricType.IP:
             return "<#>"
         return "<=>"
 
     @abstractmethod
-    def index_param(self) -> AlloyDBIndexParam:
-        ...
+    def index_param(self) -> AlloyDBIndexParam: ...
 
     @abstractmethod
-    def search_param(self) -> AlloyDBSearchParam:
-        ...
+    def search_param(self) -> AlloyDBSearchParam: ...
 
     @abstractmethod
-    def session_param(self) -> AlloyDBSessionCommands:
-        ...
+    def session_param(self) -> AlloyDBSessionCommands: ...
 
     @staticmethod
-    def _optionally_build_with_options(with_options: Mapping[str, Any]) -> Sequence[dict[str, Any]]:
+    def _optionally_build_with_options(
+        with_options: Mapping[str, Any],
+    ) -> Sequence[dict[str, Any]]:
         """Walk through mappings, creating a List of {key1 = value} pairs. That will be used to build a where clause"""
         options = []
         for option_name, value in with_options.items():
@@ -94,24 +95,25 @@ class AlloyDBIndexConfig(BaseModel, DBCaseConfig):
                     {
                         "option_name": option_name,
                         "val": str(value),
-                    }
+                    },
                 )
         return options
 
     @staticmethod
     def _optionally_build_set_options(
-        set_mapping: Mapping[str, Any]
+        set_mapping: Mapping[str, Any],
     ) -> Sequence[dict[str, Any]]:
         """Walk through options, creating 'SET 'key1 = "value1";' list"""
         session_options = []
         for setting_name, value in set_mapping.items():
             if value:
                 session_options.append(
-                    {"parameter": {
+                    {
+                        "parameter": {
                             "setting_name": setting_name,
                             "val": str(value),
                         },
-                    }
+                    },
                 )
         return session_options
 
@@ -124,22 +126,22 @@ class AlloyDBScaNNConfig(AlloyDBIndexConfig):
     max_num_levels: int | None
     num_leaves_to_search: int | None
     max_top_neighbors_buffer_size: int | None
-    pre_reordering_num_neighbors: int |  None
-    num_search_threads: int  | None
+    pre_reordering_num_neighbors: int | None
+    num_search_threads: int | None
     max_num_prefetch_datasets: int | None
-    maintenance_work_mem: Optional[str] = None
-    max_parallel_workers: Optional[int] = None
+    maintenance_work_mem: str | None = None
+    max_parallel_workers: int | None = None
 
     def index_param(self) -> AlloyDBIndexParam:
         index_parameters = {
-            "num_leaves": self.num_leaves, "max_num_levels": self.max_num_levels, "quantizer": self.quantizer,
+            "num_leaves": self.num_leaves,
+            "max_num_levels": self.max_num_levels,
+            "quantizer": self.quantizer,
         }
         return {
             "metric": self.parse_metric(),
             "index_type": self.index.value,
-            "index_creation_with_options": self._optionally_build_with_options(
-                index_parameters
-            ),
+            "index_creation_with_options": self._optionally_build_with_options(index_parameters),
             "maintenance_work_mem": self.maintenance_work_mem,
             "max_parallel_workers": self.max_parallel_workers,
             "enable_pca": self.enable_pca,
@@ -158,11 +160,9 @@ class AlloyDBScaNNConfig(AlloyDBIndexConfig):
             "scann.num_search_threads": self.num_search_threads,
             "scann.max_num_prefetch_datasets": self.max_num_prefetch_datasets,
         }
-        return {
-            "session_options": self._optionally_build_set_options(session_parameters)
-        }
+        return {"session_options": self._optionally_build_set_options(session_parameters)}
 
 
 _alloydb_case_config = {
-        IndexType.SCANN: AlloyDBScaNNConfig,
+    IndexType.SCANN: AlloyDBScaNNConfig,
 }

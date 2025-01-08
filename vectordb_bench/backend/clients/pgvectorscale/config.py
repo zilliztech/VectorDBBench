@@ -1,7 +1,8 @@
 from abc import abstractmethod
-from typing import TypedDict
+from typing import LiteralString, TypedDict
+
 from pydantic import BaseModel, SecretStr
-from typing_extensions import LiteralString
+
 from ..api import DBCaseConfig, DBConfig, IndexType, MetricType
 
 POSTGRE_URL_PLACEHOLDER = "postgresql://%s:%s@%s/%s"
@@ -9,7 +10,7 @@ POSTGRE_URL_PLACEHOLDER = "postgresql://%s:%s@%s/%s"
 
 class PgVectorScaleConfigDict(TypedDict):
     """These keys will be directly used as kwargs in psycopg connection string,
-        so the names must match exactly psycopg API"""
+    so the names must match exactly psycopg API"""
 
     user: str
     password: str
@@ -46,7 +47,7 @@ class PgVectorScaleIndexConfig(BaseModel, DBCaseConfig):
         if self.metric_type == MetricType.COSINE:
             return "vector_cosine_ops"
         return ""
-        
+
     def parse_metric_fun_op(self) -> LiteralString:
         if self.metric_type == MetricType.COSINE:
             return "<=>"
@@ -56,19 +57,16 @@ class PgVectorScaleIndexConfig(BaseModel, DBCaseConfig):
         if self.metric_type == MetricType.COSINE:
             return "cosine_distance"
         return ""
-    
-    @abstractmethod
-    def index_param(self) -> dict:
-        ...
 
     @abstractmethod
-    def search_param(self) -> dict:
-        ...
+    def index_param(self) -> dict: ...
 
     @abstractmethod
-    def session_param(self) -> dict:
-        ...
-    
+    def search_param(self) -> dict: ...
+
+    @abstractmethod
+    def session_param(self) -> dict: ...
+
 
 class PgVectorScaleStreamingDiskANNConfig(PgVectorScaleIndexConfig):
     index: IndexType = IndexType.STREAMING_DISKANN
@@ -93,19 +91,20 @@ class PgVectorScaleStreamingDiskANNConfig(PgVectorScaleIndexConfig):
                 "num_dimensions": self.num_dimensions,
             },
         }
-    
+
     def search_param(self) -> dict:
         return {
             "metric": self.parse_metric(),
             "metric_fun_op": self.parse_metric_fun_op(),
         }
-    
+
     def session_param(self) -> dict:
         return {
             "diskann.query_search_list_size": self.query_search_list_size,
             "diskann.query_rescore": self.query_rescore,
         }
-    
+
+
 _pgvectorscale_case_config = {
     IndexType.STREAMING_DISKANN: PgVectorScaleStreamingDiskANNConfig,
 }
