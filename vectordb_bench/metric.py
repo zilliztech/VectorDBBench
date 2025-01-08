@@ -1,8 +1,7 @@
 import logging
-import numpy as np
-
 from dataclasses import dataclass, field
 
+import numpy as np
 
 log = logging.getLogger(__name__)
 
@@ -33,19 +32,19 @@ MAX_LOAD_COUNT_METRIC = "max_load_count"
 QPS_METRIC = "qps"
 RECALL_METRIC = "recall"
 
-metricUnitMap = {
+metric_unit_map = {
     LOAD_DURATION_METRIC: "s",
     SERIAL_LATENCY_P99_METRIC: "ms",
     MAX_LOAD_COUNT_METRIC: "K",
     QURIES_PER_DOLLAR_METRIC: "K",
 }
 
-lowerIsBetterMetricList = [
+lower_is_better_metrics = [
     LOAD_DURATION_METRIC,
     SERIAL_LATENCY_P99_METRIC,
 ]
 
-metricOrder = [
+metric_order = [
     QPS_METRIC,
     RECALL_METRIC,
     LOAD_DURATION_METRIC,
@@ -55,7 +54,7 @@ metricOrder = [
 
 
 def isLowerIsBetterMetric(metric: str) -> bool:
-    return metric in lowerIsBetterMetricList
+    return metric in lower_is_better_metrics
 
 
 def calc_recall(count: int, ground_truth: list[int], got: list[int]) -> float:
@@ -70,7 +69,7 @@ def calc_recall(count: int, ground_truth: list[int], got: list[int]) -> float:
 def get_ideal_dcg(k: int):
     ideal_dcg = 0
     for i in range(k):
-        ideal_dcg += 1 / np.log2(i+2)
+        ideal_dcg += 1 / np.log2(i + 2)
 
     return ideal_dcg
 
@@ -78,8 +77,8 @@ def get_ideal_dcg(k: int):
 def calc_ndcg(ground_truth: list[int], got: list[int], ideal_dcg: float) -> float:
     dcg = 0
     ground_truth = list(ground_truth)
-    for id in set(got):
-        if id in ground_truth:
-            idx = ground_truth.index(id)
-            dcg += 1 / np.log2(idx+2)
+    for got_id in set(got):
+        if got_id in ground_truth:
+            idx = ground_truth.index(got_id)
+            dcg += 1 / np.log2(idx + 2)
     return dcg / ideal_dcg

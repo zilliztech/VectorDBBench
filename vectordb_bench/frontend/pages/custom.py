@@ -1,13 +1,21 @@
+from functools import partial
 import streamlit as st
 from vectordb_bench.frontend.components.check_results.headerIcon import drawHeaderIcon
-from vectordb_bench.frontend.components.custom.displayCustomCase import displayCustomCase
+from vectordb_bench.frontend.components.custom.displayCustomCase import (
+    displayCustomCase,
+)
 from vectordb_bench.frontend.components.custom.displaypPrams import displayParams
-from vectordb_bench.frontend.components.custom.getCustomConfig import CustomCaseConfig, generate_custom_case, get_custom_configs, save_custom_configs
+from vectordb_bench.frontend.components.custom.getCustomConfig import (
+    CustomCaseConfig,
+    generate_custom_case,
+    get_custom_configs,
+    save_custom_configs,
+)
 from vectordb_bench.frontend.components.custom.initStyle import initStyle
 from vectordb_bench.frontend.config.styles import FAVICON, PAGE_TITLE
 
 
-class CustomCaseManager():
+class CustomCaseManager:
     customCaseItems: list[CustomCaseConfig]
 
     def __init__(self):
@@ -52,12 +60,25 @@ def main():
 
         columns = expander.columns(8)
         columns[0].button(
-            "Save", key=f"{key}_", type="secondary", on_click=lambda: customCaseManager.save())
-        columns[1].button(":red[Delete]", key=f"{key}_delete", type="secondary",
-                          on_click=lambda: customCaseManager.deleteCase(idx))
+            "Save",
+            key=f"{key}_",
+            type="secondary",
+            on_click=lambda: customCaseManager.save(),
+        )
+        columns[1].button(
+            ":red[Delete]",
+            key=f"{key}_delete",
+            type="secondary",
+            # B023
+            on_click=partial(lambda idx: customCaseManager.deleteCase(idx), idx=idx),
+        )
 
-    st.button("\+ New Dataset", key=f"add_custom_configs",
-              type="primary", on_click=lambda: customCaseManager.addCase())
+    st.button(
+        "\+ New Dataset",
+        key="add_custom_configs",
+        type="primary",
+        on_click=lambda: customCaseManager.addCase(),
+    )
 
 
 if __name__ == "__main__":

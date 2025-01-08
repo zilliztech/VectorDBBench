@@ -1,6 +1,10 @@
-import click
 import os
+from typing import Annotated, Unpack
+
+import click
 from pydantic import SecretStr
+
+from vectordb_bench.backend.clients import DB
 
 from ....cli.cli import (
     CommonTypedDict,
@@ -8,50 +12,52 @@ from ....cli.cli import (
     click_parameter_decorators_from_typed_dict,
     run,
 )
-from typing import Annotated, Optional, Unpack
-from vectordb_bench.backend.clients import DB
 
 
 class PgDiskAnnTypedDict(CommonTypedDict):
     user_name: Annotated[
-        str, click.option("--user-name", type=str, help="Db username", required=True)
+        str,
+        click.option("--user-name", type=str, help="Db username", required=True),
     ]
     password: Annotated[
         str,
-        click.option("--password",
-                     type=str,
-                     help="Postgres database password",
-                     default=lambda: os.environ.get("POSTGRES_PASSWORD", ""),
-                     show_default="$POSTGRES_PASSWORD",
-                     ),
+        click.option(
+            "--password",
+            type=str,
+            help="Postgres database password",
+            default=lambda: os.environ.get("POSTGRES_PASSWORD", ""),
+            show_default="$POSTGRES_PASSWORD",
+        ),
     ]
 
-    host: Annotated[
-        str, click.option("--host", type=str, help="Db host", required=True)
-    ]
-    db_name: Annotated[
-        str, click.option("--db-name", type=str, help="Db name", required=True)
-    ]
+    host: Annotated[str, click.option("--host", type=str, help="Db host", required=True)]
+    db_name: Annotated[str, click.option("--db-name", type=str, help="Db name", required=True)]
     max_neighbors: Annotated[
         int,
         click.option(
-            "--max-neighbors", type=int, help="PgDiskAnn max neighbors",
+            "--max-neighbors",
+            type=int,
+            help="PgDiskAnn max neighbors",
         ),
     ]
     l_value_ib: Annotated[
         int,
         click.option(
-            "--l-value-ib", type=int, help="PgDiskAnn l_value_ib",
+            "--l-value-ib",
+            type=int,
+            help="PgDiskAnn l_value_ib",
         ),
     ]
     l_value_is: Annotated[
         float,
         click.option(
-            "--l-value-is", type=float, help="PgDiskAnn l_value_is",
+            "--l-value-is",
+            type=float,
+            help="PgDiskAnn l_value_is",
         ),
     ]
     maintenance_work_mem: Annotated[
-        Optional[str],
+        str | None,
         click.option(
             "--maintenance-work-mem",
             type=str,
@@ -63,7 +69,7 @@ class PgDiskAnnTypedDict(CommonTypedDict):
         ),
     ]
     max_parallel_workers: Annotated[
-        Optional[int],
+        int | None,
         click.option(
             "--max-parallel-workers",
             type=int,
@@ -71,6 +77,7 @@ class PgDiskAnnTypedDict(CommonTypedDict):
             required=False,
         ),
     ]
+
 
 @cli.command()
 @click_parameter_decorators_from_typed_dict(PgDiskAnnTypedDict)

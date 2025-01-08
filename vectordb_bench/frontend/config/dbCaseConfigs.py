@@ -33,9 +33,9 @@ class UICaseItem(BaseModel):
     def __init__(
         self,
         isLine: bool = False,
-        case_id: CaseType = None,
-        custom_case: dict = {},
-        cases: list[CaseConfig] = [],
+        case_id: CaseType | None = None,
+        custom_case: dict | None = None,
+        cases: list[CaseConfig] | None = None,
         label: str = "",
         description: str = "",
         caseLabel: CaseLabel = CaseLabel.Performance,
@@ -70,17 +70,13 @@ class UICaseItemCluster(BaseModel):
 def get_custom_case_items() -> list[UICaseItem]:
     custom_configs = get_custom_configs()
     return [
-        UICaseItem(
-            case_id=CaseType.PerformanceCustomDataset, custom_case=custom_config.dict()
-        )
+        UICaseItem(case_id=CaseType.PerformanceCustomDataset, custom_case=custom_config.dict())
         for custom_config in custom_configs
     ]
 
 
 def get_custom_case_cluter() -> UICaseItemCluster:
-    return UICaseItemCluster(
-        label="Custom Search Performance Test", uiCaseItems=get_custom_case_items()
-    )
+    return UICaseItemCluster(label="Custom Search Performance Test", uiCaseItems=get_custom_case_items())
 
 
 UI_CASE_CLUSTERS: list[UICaseItemCluster] = [
@@ -224,8 +220,7 @@ CaseConfigParamInput_max_neighbors = CaseConfigInput(
         "max": 300,
         "value": 32,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
-    == IndexType.DISKANN.value,
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.DISKANN.value,
 )
 
 CaseConfigParamInput_l_value_ib = CaseConfigInput(
@@ -236,8 +231,7 @@ CaseConfigParamInput_l_value_ib = CaseConfigInput(
         "max": 300,
         "value": 50,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
-    == IndexType.DISKANN.value,
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.DISKANN.value,
 )
 
 CaseConfigParamInput_l_value_is = CaseConfigInput(
@@ -248,8 +242,7 @@ CaseConfigParamInput_l_value_is = CaseConfigInput(
         "max": 300,
         "value": 40,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
-    == IndexType.DISKANN.value,
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.DISKANN.value,
 )
 
 CaseConfigParamInput_num_neighbors = CaseConfigInput(
@@ -260,8 +253,7 @@ CaseConfigParamInput_num_neighbors = CaseConfigInput(
         "max": 300,
         "value": 50,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
-    == IndexType.STREAMING_DISKANN.value,
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.STREAMING_DISKANN.value,
 )
 
 CaseConfigParamInput_search_list_size = CaseConfigInput(
@@ -272,8 +264,7 @@ CaseConfigParamInput_search_list_size = CaseConfigInput(
         "max": 300,
         "value": 100,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
-    == IndexType.STREAMING_DISKANN.value,
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.STREAMING_DISKANN.value,
 )
 
 CaseConfigParamInput_max_alpha = CaseConfigInput(
@@ -284,8 +275,7 @@ CaseConfigParamInput_max_alpha = CaseConfigInput(
         "max": 2.0,
         "value": 1.2,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
-    == IndexType.STREAMING_DISKANN.value,
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.STREAMING_DISKANN.value,
 )
 
 CaseConfigParamInput_num_dimensions = CaseConfigInput(
@@ -296,8 +286,7 @@ CaseConfigParamInput_num_dimensions = CaseConfigInput(
         "max": 2000,
         "value": 0,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
-    == IndexType.STREAMING_DISKANN.value,
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.STREAMING_DISKANN.value,
 )
 
 CaseConfigParamInput_query_search_list_size = CaseConfigInput(
@@ -308,8 +297,7 @@ CaseConfigParamInput_query_search_list_size = CaseConfigInput(
         "max": 150,
         "value": 100,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
-    == IndexType.STREAMING_DISKANN.value,
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.STREAMING_DISKANN.value,
 )
 
 
@@ -321,8 +309,7 @@ CaseConfigParamInput_query_rescore = CaseConfigInput(
         "max": 150,
         "value": 50,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
-    == IndexType.STREAMING_DISKANN.value,
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.STREAMING_DISKANN.value,
 )
 
 CaseConfigParamInput_IndexType_PgVector = CaseConfigInput(
@@ -358,8 +345,7 @@ CaseConfigParamInput_M = CaseConfigInput(
         "max": 64,
         "value": 30,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
-    == IndexType.HNSW.value,
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
 )
 
 CaseConfigParamInput_m = CaseConfigInput(
@@ -370,8 +356,7 @@ CaseConfigParamInput_m = CaseConfigInput(
         "max": 64,
         "value": 16,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
-    == IndexType.HNSW.value,
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
 )
 
 
@@ -383,8 +368,7 @@ CaseConfigParamInput_EFConstruction_Milvus = CaseConfigInput(
         "max": 512,
         "value": 360,
     },
-    isDisplayed=lambda config: config[CaseConfigParamType.IndexType]
-    == IndexType.HNSW.value,
+    isDisplayed=lambda config: config[CaseConfigParamType.IndexType] == IndexType.HNSW.value,
 )
 
 CaseConfigParamInput_EFConstruction_Weaviate = CaseConfigInput(
@@ -480,8 +464,7 @@ CaseConfigParamInput_EFConstruction_PgVectoRS = CaseConfigInput(
         "max": 2000,
         "value": 300,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
-    == IndexType.HNSW.value,
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
 )
 
 CaseConfigParamInput_EFSearch_PgVectoRS = CaseConfigInput(
@@ -492,8 +475,7 @@ CaseConfigParamInput_EFSearch_PgVectoRS = CaseConfigInput(
         "max": 65535,
         "value": 100,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
-    == IndexType.HNSW.value,
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
 )
 
 CaseConfigParamInput_EFConstruction_PgVector = CaseConfigInput(
@@ -504,8 +486,7 @@ CaseConfigParamInput_EFConstruction_PgVector = CaseConfigInput(
         "max": 1024,
         "value": 256,
     },
-    isDisplayed=lambda config: config[CaseConfigParamType.IndexType]
-    == IndexType.HNSW.value,
+    isDisplayed=lambda config: config[CaseConfigParamType.IndexType] == IndexType.HNSW.value,
 )
 
 
@@ -537,8 +518,7 @@ CaseConfigParamInput_EF_Milvus = CaseConfigInput(
         "max": MAX_STREAMLIT_INT,
         "value": 100,
     },
-    isDisplayed=lambda config: config[CaseConfigParamType.IndexType]
-    == IndexType.HNSW.value,
+    isDisplayed=lambda config: config[CaseConfigParamType.IndexType] == IndexType.HNSW.value,
 )
 
 CaseConfigParamInput_EF_Weaviate = CaseConfigInput(
@@ -565,8 +545,7 @@ CaseConfigParamInput_SearchList = CaseConfigInput(
         "max": MAX_STREAMLIT_INT,
         "value": 100,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
-    == IndexType.DISKANN.value,
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.DISKANN.value,
 )
 
 CaseConfigParamInput_Nlist = CaseConfigInput(
@@ -611,8 +590,7 @@ CaseConfigParamInput_M_PQ = CaseConfigInput(
         "max": 65536,
         "value": 0,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
-    in [IndexType.GPU_IVF_PQ.value],
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) in [IndexType.GPU_IVF_PQ.value],
 )
 
 
@@ -624,8 +602,7 @@ CaseConfigParamInput_Nbits_PQ = CaseConfigInput(
         "max": 65536,
         "value": 8,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
-    in [IndexType.GPU_IVF_PQ.value],
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) in [IndexType.GPU_IVF_PQ.value],
 )
 
 CaseConfigParamInput_intermediate_graph_degree = CaseConfigInput(
@@ -636,8 +613,7 @@ CaseConfigParamInput_intermediate_graph_degree = CaseConfigInput(
         "max": 65536,
         "value": 64,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
-    in [IndexType.GPU_CAGRA.value],
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) in [IndexType.GPU_CAGRA.value],
 )
 
 CaseConfigParamInput_graph_degree = CaseConfigInput(
@@ -648,8 +624,7 @@ CaseConfigParamInput_graph_degree = CaseConfigInput(
         "max": 65536,
         "value": 32,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
-    in [IndexType.GPU_CAGRA.value],
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) in [IndexType.GPU_CAGRA.value],
 )
 
 CaseConfigParamInput_itopk_size = CaseConfigInput(
@@ -660,8 +635,7 @@ CaseConfigParamInput_itopk_size = CaseConfigInput(
         "max": 65536,
         "value": 128,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
-    in [IndexType.GPU_CAGRA.value],
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) in [IndexType.GPU_CAGRA.value],
 )
 
 CaseConfigParamInput_team_size = CaseConfigInput(
@@ -672,8 +646,7 @@ CaseConfigParamInput_team_size = CaseConfigInput(
         "max": 65536,
         "value": 0,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
-    in [IndexType.GPU_CAGRA.value],
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) in [IndexType.GPU_CAGRA.value],
 )
 
 CaseConfigParamInput_search_width = CaseConfigInput(
@@ -684,8 +657,7 @@ CaseConfigParamInput_search_width = CaseConfigInput(
         "max": 65536,
         "value": 4,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
-    in [IndexType.GPU_CAGRA.value],
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) in [IndexType.GPU_CAGRA.value],
 )
 
 CaseConfigParamInput_min_iterations = CaseConfigInput(
@@ -696,8 +668,7 @@ CaseConfigParamInput_min_iterations = CaseConfigInput(
         "max": 65536,
         "value": 0,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
-    in [IndexType.GPU_CAGRA.value],
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) in [IndexType.GPU_CAGRA.value],
 )
 
 CaseConfigParamInput_max_iterations = CaseConfigInput(
@@ -708,8 +679,7 @@ CaseConfigParamInput_max_iterations = CaseConfigInput(
         "max": 65536,
         "value": 0,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
-    in [IndexType.GPU_CAGRA.value],
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) in [IndexType.GPU_CAGRA.value],
 )
 
 CaseConfigParamInput_build_algo = CaseConfigInput(
@@ -718,8 +688,7 @@ CaseConfigParamInput_build_algo = CaseConfigInput(
     inputConfig={
         "options": ["IVF_PQ", "NN_DESCENT"],
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
-    in [IndexType.GPU_CAGRA.value],
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) in [IndexType.GPU_CAGRA.value],
 )
 
 
@@ -762,8 +731,7 @@ CaseConfigParamInput_Lists = CaseConfigInput(
         "max": 65536,
         "value": 10,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
-    in [IndexType.IVFFlat.value],
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) in [IndexType.IVFFlat.value],
 )
 
 CaseConfigParamInput_Probes = CaseConfigInput(
@@ -784,8 +752,7 @@ CaseConfigParamInput_Lists_PgVector = CaseConfigInput(
         "max": 65536,
         "value": 10,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
-    == IndexType.IVFFlat.value,
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.IVFFlat.value,
 )
 
 CaseConfigParamInput_Probes_PgVector = CaseConfigInput(
@@ -796,8 +763,7 @@ CaseConfigParamInput_Probes_PgVector = CaseConfigInput(
         "max": 65536,
         "value": 1,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
-    == IndexType.IVFFlat.value,
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.IVFFlat.value,
 )
 
 CaseConfigParamInput_EFSearch_PgVector = CaseConfigInput(
@@ -808,8 +774,7 @@ CaseConfigParamInput_EFSearch_PgVector = CaseConfigInput(
         "max": 2048,
         "value": 256,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
-    == IndexType.HNSW.value,
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
 )
 
 
@@ -845,8 +810,7 @@ CaseConfigParamInput_QuantizationRatio_PgVectoRS = CaseConfigInput(
     inputConfig={
         "options": ["x4", "x8", "x16", "x32", "x64"],
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.quantizationType, None)
-    == "product"
+    isDisplayed=lambda config: config.get(CaseConfigParamType.quantizationType, None) == "product"
     and config.get(CaseConfigParamType.IndexType, None)
     in [
         IndexType.HNSW.value,
@@ -885,8 +849,7 @@ CaseConfigParamInput_reranking_PgVector = CaseConfigInput(
     inputConfig={
         "value": False,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.quantizationType, None)
-    == "bit"
+    isDisplayed=lambda config: config.get(CaseConfigParamType.quantizationType, None) == "bit",
 )
 
 CaseConfigParamInput_quantized_fetch_limit_PgVector = CaseConfigInput(
@@ -899,8 +862,8 @@ CaseConfigParamInput_quantized_fetch_limit_PgVector = CaseConfigInput(
         "max": 1000,
         "value": 200,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.quantizationType, None)
-    == "bit" and config.get(CaseConfigParamType.reranking, False)
+    isDisplayed=lambda config: config.get(CaseConfigParamType.quantizationType, None) == "bit"
+    and config.get(CaseConfigParamType.reranking, False),
 )
 
 
@@ -908,12 +871,10 @@ CaseConfigParamInput_reranking_metric_PgVector = CaseConfigInput(
     label=CaseConfigParamType.rerankingMetric,
     inputType=InputType.Option,
     inputConfig={
-        "options": [
-            metric.value for metric in MetricType if metric.value not in ["HAMMING", "JACCARD"]
-        ],
+        "options": [metric.value for metric in MetricType if metric.value not in ["HAMMING", "JACCARD"]],
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.quantizationType, None)
-    == "bit" and config.get(CaseConfigParamType.reranking, False)
+    isDisplayed=lambda config: config.get(CaseConfigParamType.quantizationType, None) == "bit"
+    and config.get(CaseConfigParamType.reranking, False),
 )
 
 
@@ -1131,7 +1092,10 @@ ESPerformanceConfig = [
     CaseConfigParamInput_NumCandidates_ES,
 ]
 
-AWSOpensearchLoadingConfig = [CaseConfigParamInput_EFConstruction_AWSOpensearch, CaseConfigParamInput_M_AWSOpensearch]
+AWSOpensearchLoadingConfig = [
+    CaseConfigParamInput_EFConstruction_AWSOpensearch,
+    CaseConfigParamInput_M_AWSOpensearch,
+]
 AWSOpenSearchPerformanceConfig = [
     CaseConfigParamInput_EFConstruction_AWSOpensearch,
     CaseConfigParamInput_M_AWSOpensearch,
@@ -1250,7 +1214,10 @@ AlloyDBPerformanceConfig = [
     CaseConfigParamInput_max_parallel_workers_AlloyDB,
 ]
 
-AliyunElasticsearchLoadingConfig = [CaseConfigParamInput_EFConstruction_AliES, CaseConfigParamInput_M_AliES]
+AliyunElasticsearchLoadingConfig = [
+    CaseConfigParamInput_EFConstruction_AliES,
+    CaseConfigParamInput_M_AliES,
+]
 AliyunElasticsearchPerformanceConfig = [
     CaseConfigParamInput_EFConstruction_AliES,
     CaseConfigParamInput_M_AliES,

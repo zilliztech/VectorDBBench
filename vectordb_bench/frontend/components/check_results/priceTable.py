@@ -7,9 +7,7 @@ from vectordb_bench.frontend.config.dbPrices import DB_DBLABEL_TO_PRICE
 
 
 def priceTable(container, data):
-    dbAndLabelSet = {
-        (d["db"], d["db_label"]) for d in data if d["db"] != DB.Milvus.value
-    }
+    dbAndLabelSet = {(d["db"], d["db_label"]) for d in data if d["db"] != DB.Milvus.value}
 
     dbAndLabelList = list(dbAndLabelSet)
     dbAndLabelList.sort()

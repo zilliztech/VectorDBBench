@@ -29,7 +29,7 @@ class MemoryDBIndexConfig(BaseModel, DBCaseConfig):
     def parse_metric(self) -> str:
         if self.metric_type == MetricType.L2:
             return "l2"
-        elif self.metric_type == MetricType.IP:
+        if self.metric_type == MetricType.IP:
             return "ip"
         return "cosine"
 

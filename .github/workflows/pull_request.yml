@@ -31,6 +31,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[test]"
 
+      - name: Run coding checks
+        run: |
+          make lint
+
       - name: Test with pytest
         run: |
           make unittest

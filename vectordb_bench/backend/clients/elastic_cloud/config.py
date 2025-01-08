@@ -1,7 +1,8 @@
 from enum import Enum
-from pydantic import SecretStr, BaseModel
 
-from ..api import DBConfig, DBCaseConfig, MetricType, IndexType
+from pydantic import BaseModel, SecretStr
+
+from ..api import DBCaseConfig, DBConfig, IndexType, MetricType
 
 
 class ElasticCloudConfig(DBConfig, BaseModel):
@@ -32,12 +33,12 @@ class ElasticCloudIndexConfig(BaseModel, DBCaseConfig):
     def parse_metric(self) -> str:
         if self.metric_type == MetricType.L2:
             return "l2_norm"
-        elif self.metric_type == MetricType.IP:
+        if self.metric_type == MetricType.IP:
             return "dot_product"
         return "cosine"
 
     def index_param(self) -> dict:
-        params = {
+        return {
             "type": "dense_vector",
             "index": True,
             "element_type": self.element_type.value,
@@ -48,7 +49,6 @@ class ElasticCloudIndexConfig(BaseModel, DBCaseConfig):
                 "ef_construction": self.efConstruction,
             },
         }
-        return params
 
     def search_param(self) -> dict:
         return {

@@ -1,7 +1,7 @@
-import pathlib
-from ..models import TestResult
-
 import logging
+import pathlib
+
+from vectordb_bench.models import TestResult
 
 log = logging.getLogger(__name__)
 
@@ -13,7 +13,6 @@ class ResultCollector:
         results_d = {}
         if not result_dir.exists() or len(list(result_dir.rglob(reg))) == 0:
             return []
-
 
         for json_file in result_dir.rglob(reg):
             file_result = TestResult.read_file(json_file, trans_unit=True)
