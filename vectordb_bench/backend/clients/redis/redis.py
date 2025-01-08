@@ -136,10 +136,9 @@ class Redis(VectorDB):
         assert self.conn is not None
         
         query_vector = np.array(query).astype(np.float32).tobytes()
-        ef_runtime = {self.case_config.search_param()["params"]["ef"]}
+        ef_runtime = self.case_config.search_param()["params"]["ef"]
         query_obj = Query(f"*=>[KNN {k} @vector $vec EF_RUNTIME {ef_runtime} as score]").sort_by("score").return_fields("id", "score").paging(0, k).dialect(2)
         query_params = {"vec": query_vector}
-        
         
         if filters:
             # benchmark test filters of format: {'metadata': '>=10000', 'id': 10000}
