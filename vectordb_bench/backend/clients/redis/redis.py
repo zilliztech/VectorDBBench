@@ -1,8 +1,7 @@
 import logging
 from contextlib import contextmanager
-from typing import Any, Type
-from ..api import VectorDB, DBConfig, DBCaseConfig, EmptyDBCaseConfig, IndexType
-from .config import RedisConfig
+from typing import Any
+from ..api import VectorDB, DBCaseConfig
 import redis
 from redis.commands.search.field import TagField, VectorField, NumericField
 from redis.commands.search.indexDefinition import IndexDefinition, IndexType
@@ -58,6 +57,8 @@ class Redis(VectorDB):
                         "TYPE": "FLOAT32",             # FLOAT32 or FLOAT64
                         "DIM": vector_dimensions,      # Number of Vector Dimensions
                         "DISTANCE_METRIC": "COSINE",   # Vector Search Distance Metric
+                        "M": self.case_config.index_param()["params"]["M"],
+                        "EF_CONSTRUCTION": self.case_config.index_param()["params"]["efConstruction"],
                     }
                 ),
             )
@@ -138,21 +139,20 @@ class Redis(VectorDB):
         query_obj = Query(f"*=>[KNN {k} @vector $vec as score]").sort_by("score").return_fields("id", "score").paging(0, k).dialect(2)
         query_params = {"vec": query_vector}
         
+        ef_runtime = {self.case_config.search_param()["params"]["ef"]}
+        
         if filters:
             # benchmark test filters of format: {'metadata': '>=10000', 'id': 10000}
             # gets exact match for id, and range for metadata if they exist in filters
             id_value = filters.get("id")
             metadata_value = filters.get("metadata")
             if id_value and metadata_value:
-                query_obj = Query(f"(@metadata:[{metadata_value} +inf] @id:{ {id_value} })=>[KNN {k} @vector $vec as score]").sort_by("score").return_fields("id", "score").paging(0, k).dialect(2)
+                query_obj = Query(f"(@metadata:[{metadata_value} +inf] @id:{ {id_value} })=>[KNN {k} @vector $vec EF_RUNTIME {ef_runtime} as score]").sort_by("score").return_fields("id", "score").paging(0, k).dialect(2)
             elif id_value:
                 #gets exact match for id
-                query_obj = Query(f"@id:{ {id_value} }=>[KNN {k} @vector $vec as score]").sort_by("score").return_fields("id", "score").paging(0, k).dialect(2)
+                query_obj = Query(f"@id:{ {id_value} }=>[KNN {k} @vector $vec EF_RUNTIME {ef_runtime} as score]").sort_by("score").return_fields("id", "score").paging(0, k).dialect(2)
             else: #metadata only case, greater than or equal to metadata value
-                query_obj = Query(f"@metadata:[{metadata_value} +inf]=>[KNN {k} @vector $vec as score]").sort_by("score").return_fields("id", "score").paging(0, k).dialect(2) 
+                query_obj = Query(f"@metadata:[{metadata_value} +inf]=>[KNN {k} @vector $vec EF_RUNTIME {ef_runtime} as score]").sort_by("score").return_fields("id", "score").paging(0, k).dialect(2) 
         res = self.conn.ft(INDEX_NAME).search(query_obj, query_params)
         # doc in res of format {'id': '9831', 'payload': None, 'score': '1.19209289551e-07'}
         return [int(doc["id"]) for doc in res.docs]
-
-    
-        
