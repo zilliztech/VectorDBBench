@@ -1,14 +1,17 @@
 from vectordb_bench.backend.cases import Case
 from vectordb_bench.frontend.components.check_results.data import getChartData
-from vectordb_bench.frontend.components.check_results.expanderStyle import initSidebarExanderStyle
+from vectordb_bench.frontend.components.check_results.expanderStyle import (
+    initSidebarExanderStyle,
+)
 from vectordb_bench.frontend.config.dbCaseConfigs import CASE_NAME_ORDER
-from vectordb_bench.frontend.config.styles import *
+from vectordb_bench.frontend.config.styles import SIDEBAR_CONTROL_COLUMNS
 import streamlit as st
+from typing import Callable
 
 from vectordb_bench.models import CaseResult, TestResult
 
 
-def getshownData(results: list[TestResult], st):
+def getshownData(st, results: list[TestResult], **kwargs):
     # hide the nav
     st.markdown(
         "<style> div[data-testid='stSidebarNav'] {display: none;} </style>",
@@ -17,15 +20,20 @@ def getshownData(results: list[TestResult], st):
 
     st.header("Filters")
 
-    shownResults = getshownResults(results, st)
-    showDBNames, showCaseNames = getShowDbsAndCases(shownResults, st)
+    shownResults = getshownResults(st, results, **kwargs)
+    showDBNames, showCaseNames = getShowDbsAndCases(st, shownResults)
 
     shownData, failedTasks = getChartData(shownResults, showDBNames, showCaseNames)
 
     return shownData, failedTasks, showCaseNames
 
 
-def getshownResults(results: list[TestResult], st) -> list[CaseResult]:
+def getshownResults(
+    st,
+    results: list[TestResult],
+    case_results_filter: Callable[[CaseResult], bool] = lambda x: True,
+    **kwargs,
+) -> list[CaseResult]:
     resultSelectOptions = [
         result.task_label if result.task_label != result.run_id else f"res-{result.run_id[:4]}" for result in results
     ]
@@ -41,23 +49,17 @@ def getshownResults(results: list[TestResult], st) -> list[CaseResult]:
     )
     selectedResult: list[CaseResult] = []
     for option in selectedResultSelectedOptions:
-        result = results[resultSelectOptions.index(option)].results
-        selectedResult += result
+        case_results = results[resultSelectOptions.index(option)].results
+        selectedResult += [r for r in case_results if case_results_filter(r)]
 
     return selectedResult
 
 
-def getShowDbsAndCases(result: list[CaseResult], st) -> tuple[list[str], list[str]]:
+def getShowDbsAndCases(st, result: list[CaseResult]) -> tuple[list[str], list[str]]:
     initSidebarExanderStyle(st)
     allDbNames = list(set({res.task_config.db_name for res in result}))
     allDbNames.sort()
-    allCases: list[Case] = [
-        res.task_config.case_config.case_id.case_cls(res.task_config.case_config.custom_case) for res in result
-    ]
-    allCaseNameSet = set({case.name for case in allCases})
-    allCaseNames = [case_name for case_name in CASE_NAME_ORDER if case_name in allCaseNameSet] + [
-        case_name for case_name in allCaseNameSet if case_name not in CASE_NAME_ORDER
-    ]
+    allCases: list[Case] = [res.task_config.case_config.case for res in result]
 
     # DB Filter
     dbFilterContainer = st.container()
@@ -67,6 +69,12 @@ def getShowDbsAndCases(result: list[CaseResult], st) -> tuple[list[str], list[st
         allDbNames,
         col=1,
     )
+    showCaseNames = []
+
+    allCaseNameSet = set({case.name for case in allCases})
+    allCaseNames = [case_name for case_name in CASE_NAME_ORDER if case_name in allCaseNameSet] + [
+        case_name for case_name in allCaseNameSet if case_name not in CASE_NAME_ORDER
+    ]
 
     # Case Filter
     caseFilterContainer = st.container()
