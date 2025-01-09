@@ -53,8 +53,8 @@ class Assembler:
             _ = k.init_cls
 
         # sort by dataset size
-        for k, _ in db2runner:
-            db2runner[k].sort(key=lambda x: x.ca.dataset.data.size)
+        for _, runner in db2runner.items():
+            runner.sort(key=lambda x: x.ca.dataset.data.size)
 
         all_runners = []
         all_runners.extend(load_runners)

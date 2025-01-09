@@ -249,7 +249,7 @@ class BenchMarkRunner:
 
     def _run_async(self, conn: Connection) -> bool:
         log.info(
-            f"task submitted: id={self.running_task.run_id}, {self.running_task.task_label}, ",
+            f"task submitted: id={self.running_task.run_id}, {self.running_task.task_label}, "
             f"case number: {len(self.running_task.case_runners)}",
         )
         global global_result_future
