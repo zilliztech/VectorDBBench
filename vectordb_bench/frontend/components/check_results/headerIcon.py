@@ -8,8 +8,8 @@ def drawHeaderIcon(st):
 
 <style>
 .headerIconContainer {{
-    position: absolute;
-    top: -50px;
+    position: relative;
+    top: 0px;
     height: 50px;
     width: 100%;
     border-bottom: 2px solid #E8EAEE;

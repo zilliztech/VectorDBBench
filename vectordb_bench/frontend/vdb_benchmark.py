@@ -32,7 +32,7 @@ def main():
 
     # results selector and filter
     resultSelectorContainer = st.sidebar.container()
-    shownData, failedTasks, showCaseNames = getshownData(allResults, resultSelectorContainer)
+    shownData, failedTasks, showCaseNames = getshownData(resultSelectorContainer, allResults)
 
     resultSelectorContainer.divider()
 
