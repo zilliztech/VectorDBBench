@@ -39,6 +39,7 @@ class Assembler:
         runners = [cls.assemble(run_id, task, source) for task in tasks]
         load_runners = [r for r in runners if r.ca.label == CaseLabel.Load]
         perf_runners = [r for r in runners if r.ca.label == CaseLabel.Performance]
+        streaming_runners = [r for r in runners if r.ca.label == CaseLabel.Streaming]
 
         # group by db
         db2runner = {}
@@ -58,6 +59,7 @@ class Assembler:
 
         all_runners = []
         all_runners.extend(load_runners)
+        all_runners.extend(streaming_runners)
         for v in db2runner.values():
             all_runners.extend(v)
 

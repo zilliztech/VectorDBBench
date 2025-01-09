@@ -7,7 +7,7 @@ from typing import Self
 import ujson
 
 from . import config
-from .backend.cases import CaseType
+from .backend.cases import Case, CaseType
 from .backend.clients import (
     DB,
     DBCaseConfig,
@@ -88,6 +88,13 @@ class CaseConfigParamType(Enum):
     numSearchThreads = "num_search_threads"
     maxNumPrefetchDatasets = "max_num_prefetch_datasets"
 
+    dataset_with_size_type = "dataset_with_size_type"
+    insert_rate = "insert_rate"
+    search_stages = "search_stages"
+    concurrencies = "concurrencies"
+    optimize_after_write = "optimize_after_write"
+    read_dur_after_write = "read_dur_after_write"
+
 
 class CustomizedCase(BaseModel):
     pass
@@ -121,14 +128,22 @@ class CaseConfig(BaseModel):
     def __hash__(self) -> int:
         return hash(self.json())
 
+    @property
+    def case(self) -> Case:
+        return self.case_id.case_cls(self.custom_case)
+
+    @property
+    def case_name(self) -> str:
+        return self.case.name
+
 
 class TaskStage(StrEnum):
     """Enumerations of various stages of the task"""
 
-    DROP_OLD = auto()
-    LOAD = auto()
-    SEARCH_SERIAL = auto()
-    SEARCH_CONCURRENT = auto()
+    DROP_OLD = "drop_old"
+    LOAD = "load"
+    SEARCH_SERIAL = "search_serial"
+    SEARCH_CONCURRENT = "search_concurrent"
 
     def __repr__(self) -> str:
         return str.__repr__(self.value)
@@ -264,12 +279,14 @@ class TestResult(BaseModel):
             key=lambda x: (
                 x.task_config.db.name,
                 x.task_config.db_config.db_label,
-                x.task_config.case_config.case_id.name,
+                x.task_config.case_config.case_name,
             ),
             reverse=True,
         )
 
         filtered_results = [r for r in sorted_results if not filter_list or r.task_config.db not in filter_list]
+        if len(filtered_results) == 0:
+            return
 
         def append_return(x: any, y: any):
             x.append(y)
@@ -277,7 +294,7 @@ class TestResult(BaseModel):
 
         max_db = max(map(len, [f.task_config.db.name for f in filtered_results]))
         max_db_labels = max(map(len, [f.task_config.db_config.db_label for f in filtered_results])) + 3
-        max_case = max(map(len, [f.task_config.case_config.case_id.name for f in filtered_results]))
+        max_case = max(map(len, [f.task_config.case_config.case_name for f in filtered_results]))
         max_load_dur = max(map(len, [str(f.metrics.load_duration) for f in filtered_results])) + 3
         max_qps = max(map(len, [str(f.metrics.qps) for f in filtered_results])) + 3
         max_recall = max(map(len, [str(f.metrics.recall) for f in filtered_results])) + 3
@@ -331,7 +348,7 @@ class TestResult(BaseModel):
                 % (
                     f.task_config.db.name,
                     f.task_config.db_config.db_label,
-                    f.task_config.case_config.case_id.name,
+                    f.task_config.case_config.case_name,
                     self.task_label,
                     f.metrics.load_duration,
                     f.metrics.qps,
