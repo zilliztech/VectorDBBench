@@ -67,12 +67,13 @@ class MultiProcessingSearchRunner:
                         self.k,
                         self.filters,
                     )
+                    count += 1
+                    latencies.append(time.perf_counter() - s)
                 except Exception as e:
                     log.warning(f"VectorDB search_embedding error: {e}")
-                    traceback.print_exc(chain=True)
-                    raise e from None
+                    # traceback.print_exc(chain=True)
+                    # raise e from None
 
-                latencies.append(time.perf_counter() - s)
                 count += 1
                 # loop through the test data
                 idx = idx + 1 if idx < num - 1 else 0
@@ -170,10 +171,10 @@ class MultiProcessingSearchRunner:
     def stop(self) -> None:
         pass
 
-    def run_by_dur(self, duration: int) -> float:
+    def run_by_dur(self, duration: int) -> tuple[float, float]:
         return self._run_by_dur(duration)
 
-    def _run_by_dur(self, duration: int) -> float:
+    def _run_by_dur(self, duration: int) -> tuple[float, float]:
         max_qps = 0
         try:
             for conc in self.concurrencies:
@@ -197,12 +198,17 @@ class MultiProcessingSearchRunner:
                             log.info(f"Syncing all process and start concurrency search, concurrency={conc}")
 
                         start = time.perf_counter()
-                        all_count = sum([r.result() for r in future_iter])
+                        res = [r.result() for r in future_iter]
+                        all_success_count = sum([r[0] for r in res])
+                        all_failed_count = sum([r[1] for r in res])
+                        failed_rate = all_failed_count / (all_failed_count + all_success_count)
                         cost = time.perf_counter() - start
 
-                        qps = round(all_count / cost, 4)
-                        log.info(f"End search in concurrency {conc}: dur={cost}s, total_count={all_count}, qps={qps}")
-
+                        qps = round(all_success_count / cost, 4)
+                        log.info(
+                            f"End search in concurrency {conc}: dur={cost}s, failed_rate={failed_rate}, "
+                            f"all_success_count={all_success_count}, all_failed_count={all_failed_count}, qps={qps}",
+                        )
                 if qps > max_qps:
                     max_qps = qps
                     log.info(f"Update largest qps with concurrency {conc}: current max_qps={max_qps}")
@@ -219,15 +225,9 @@ class MultiProcessingSearchRunner:
         finally:
             self.stop()
 
-        return max_qps
+        return max_qps, failed_rate
 
-    def search_by_dur(
-        self,
-        dur: int,
-        test_data: list[list[float]],
-        q: mp.Queue,
-        cond: mp.Condition,
-    ) -> int:
+    def search_by_dur(self, dur: int, test_data: list[list[float]], q: mp.Queue, cond: mp.Condition) -> tuple[int, int]:
         # sync all process
         q.put(1)
         with cond:
@@ -237,7 +237,8 @@ class MultiProcessingSearchRunner:
             num, idx = len(test_data), random.randint(0, len(test_data) - 1)
 
             start_time = time.perf_counter()
-            count = 0
+            success_count = 0
+            failed_cnt = 0
             while time.perf_counter() < start_time + dur:
                 s = time.perf_counter()
                 try:
@@ -246,25 +247,27 @@ class MultiProcessingSearchRunner:
                         self.k,
                         self.filters,
                     )
+                    success_count += 1
                 except Exception as e:
+                    failed_cnt += 1
                     log.warning(f"VectorDB search_embedding error: {e}")
-                    traceback.print_exc(chain=True)
-                    raise e from None
+                    # traceback.print_exc(chain=True)
+                    # raise e from None
 
-                count += 1
                 # loop through the test data
                 idx = idx + 1 if idx < num - 1 else 0
 
-                if count % 500 == 0:
+                if success_count % 500 == 0:
                     log.debug(
-                        f"({mp.current_process().name:16}) search_count: {count}, "
-                        f"latest_latency={time.perf_counter()-s}"
+                        f"({mp.current_process().name:16}) search_count: {success_count}, "
+                        f"latest_latency={time.perf_counter()-s}",
                     )
 
         total_dur = round(time.perf_counter() - start_time, 4)
         log.debug(
             f"{mp.current_process().name:16} search {self.duration}s: "
-            f"actual_dur={total_dur}s, count={count}, qps in this process: {round(count / total_dur, 4):3}"
+            f"actual_dur={total_dur}s, count={success_count}, failed_cnt={failed_cnt}, "
+            f"qps (successful) in this process: {round(success_count / total_dur, 4):3}",
         )
 
-        return count
+        return success_count, failed_cnt

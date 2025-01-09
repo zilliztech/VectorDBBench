@@ -1,3 +1,4 @@
+import json
 import logging
 from enum import Enum, auto
 
@@ -8,7 +9,7 @@ from vectordb_bench.frontend.components.custom.getCustomConfig import (
     CustomDatasetConfig,
 )
 
-from .dataset import CustomDataset, Dataset, DatasetManager
+from .dataset import CustomDataset, Dataset, DatasetManager, DatasetWithSizeType
 
 log = logging.getLogger(__name__)
 
@@ -47,6 +48,8 @@ class CaseType(Enum):
     Custom = 100
     PerformanceCustomDataset = 101
 
+    StreamingPerformanceCase = 200
+
     def case_cls(self, custom_configs: dict | None = None) -> type["Case"]:
         if custom_configs is None:
             return type2case.get(self)()
@@ -68,6 +71,7 @@ class CaseType(Enum):
 class CaseLabel(Enum):
     Load = auto()
     Performance = auto()
+    Streaming = auto()
 
 
 class Case(BaseModel):
@@ -87,7 +91,7 @@ class Case(BaseModel):
     description: str
     dataset: DatasetManager
 
-    load_timeout: float | int
+    load_timeout: float | int | None = None
     optimize_timeout: float | int | None = None
 
     filter_rate: float | None = None
@@ -104,14 +108,14 @@ class Case(BaseModel):
         return None
 
 
-class CapacityCase(Case, BaseModel):
+class CapacityCase(Case):
     label: CaseLabel = CaseLabel.Load
     filter_rate: float | None = None
     load_timeout: float | int = config.CAPACITY_TIMEOUT_IN_SECONDS
     optimize_timeout: float | int | None = None
 
 
-class PerformanceCase(Case, BaseModel):
+class PerformanceCase(Case):
     label: CaseLabel = CaseLabel.Performance
     filter_rate: float | None = None
     load_timeout: float | int = config.LOAD_TIMEOUT_DEFAULT
@@ -349,6 +353,63 @@ class PerformanceCustomDataset(PerformanceCase):
         )
 
 
+Streaming_Insert_Rate_Step = 100
+
+
+class StreamingPerformanceCase(Case):
+    case_id: CaseType = CaseType.StreamingPerformanceCase
+    label: CaseLabel = CaseLabel.Streaming
+    dataset_with_size_type: DatasetWithSizeType
+    insert_rate: int
+    search_stages: list[float]
+    concurrencies: list[int]
+    optimize_after_write: bool = True
+    read_dur_after_write: int = 30
+
+    def __init__(
+        self,
+        dataset_with_size_type: DatasetWithSizeType | str = DatasetWithSizeType.CohereSmall.value,
+        insert_rate: int = 500,
+        search_stages: list[float] | str = (0.5, 0.8),
+        concurrencies: list[int] | str = (5, 10),
+        **kwargs,
+    ):
+        if insert_rate % config.NUM_PER_BATCH != 0:
+            _insert_rate = max(
+                Streaming_Insert_Rate_Step,
+                insert_rate // Streaming_Insert_Rate_Step * Streaming_Insert_Rate_Step,
+            )
+            log.warning(
+                f"[streaming_case init] insert_rate(={insert_rate}) should be "
+                f"divisible by {Streaming_Insert_Rate_Step}), reset to {_insert_rate}",
+            )
+            insert_rate = _insert_rate
+        if not isinstance(dataset_with_size_type, DatasetWithSizeType):
+            dataset_with_size_type = DatasetWithSizeType(dataset_with_size_type)
+        dataset = dataset_with_size_type.get_manager()
+        name = f"Streaming-Perf - {dataset_with_size_type.value}, {insert_rate} rows/s"
+        description = (
+            "This case tests the search performance of vector database while maintaining "
+            f"a fixed insertion speed. (dataset: {dataset_with_size_type.value})"
+        )
+
+        if isinstance(search_stages, str):
+            search_stages = json.loads(search_stages)
+        if isinstance(concurrencies, str):
+            concurrencies = json.loads(concurrencies)
+
+        super().__init__(
+            name=name,
+            description=description,
+            dataset=dataset,
+            dataset_with_size_type=dataset_with_size_type,
+            insert_rate=insert_rate,
+            search_stages=search_stages,
+            concurrencies=concurrencies,
+            **kwargs,
+        )
+
+
 type2case = {
     CaseType.CapacityDim960: CapacityDim960,
     CaseType.CapacityDim128: CapacityDim128,
@@ -367,4 +428,5 @@ type2case = {
     CaseType.Performance1536D5M99P: Performance1536D5M99P,
     CaseType.Performance1536D50K: Performance1536D50K,
     CaseType.PerformanceCustomDataset: PerformanceCustomDataset,
+    CaseType.StreamingPerformanceCase: StreamingPerformanceCase,
 }

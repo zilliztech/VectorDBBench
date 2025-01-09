@@ -6,7 +6,6 @@ import time
 import traceback
 
 import numpy as np
-import pandas as pd
 import psutil
 
 from vectordb_bench.backend.dataset import DatasetManager
@@ -183,12 +182,15 @@ class SerialInsertRunner:
         return count
 
 
+Max_Search_Retry = 5
+
+
 class SerialSearchRunner:
     def __init__(
         self,
         db: api.VectorDB,
         test_data: list[list[float]],
-        ground_truth: pd.DataFrame,
+        ground_truth: list[list[int]],
         k: int = 100,
         filters: dict | None = None,
     ):
@@ -202,33 +204,45 @@ class SerialSearchRunner:
             self.test_data = test_data
         self.ground_truth = ground_truth
 
-    def search(self, args: tuple[list, pd.DataFrame]) -> tuple[float, float, float]:
+    def _get_db_search_res(self, emb: list[float], retry_idx: int = 0) -> list[int]:
+        try:
+            results = self.db.search_embedding(
+                emb,
+                self.k,
+                self.filters,
+            )
+        except Exception as e:
+            log.warning(f"Serial search failed, retry_idx={retry_idx}, Exception: {e}")
+            if retry_idx < Max_Search_Retry:
+                return self._get_db_search_res(emb=emb, retry_idx=retry_idx + 1)
+
+            msg = f"Serial search failed and retried more than {Max_Search_Retry} times"
+            raise RuntimeError(msg) from e
+
+        return results
+
+    def search(self, args: tuple[list, list[list[int]]]) -> tuple[float, float, float]:
         log.info(f"{mp.current_process().name:14} start search the entire test_data to get recall and latency")
         with self.db.init():
             test_data, ground_truth = args
             ideal_dcg = get_ideal_dcg(self.k)
 
             log.debug(f"test dataset size: {len(test_data)}")
-            log.debug(f"ground truth size: {ground_truth.columns}, shape: {ground_truth.shape}")
+            log.debug(f"ground truth size: {len(ground_truth)}")
 
             latencies, recalls, ndcgs = [], [], []
             for idx, emb in enumerate(test_data):
                 s = time.perf_counter()
                 try:
-                    results = self.db.search_embedding(
-                        emb,
-                        self.k,
-                        self.filters,
-                    )
-
+                    results = self._get_db_search_res(emb)
                 except Exception as e:
                     log.warning(f"VectorDB search_embedding error: {e}")
-                    traceback.print_exc(chain=True)
+                    # traceback.print_exc(chain=True)
                     raise e from None
 
                 latencies.append(time.perf_counter() - s)
 
-                gt = ground_truth["neighbors_id"][idx]
+                gt = ground_truth[idx]
                 recalls.append(calc_recall(self.k, gt[: self.k], results))
                 ndcgs.append(calc_ndcg(gt[: self.k], results, ideal_dcg))
 

@@ -3,7 +3,8 @@ from vectordb_bench.models import DB
 # style const
 DB_SELECTOR_COLUMNS = 6
 DB_CONFIG_SETTING_COLUMNS = 3
-CASE_CONFIG_SETTING_COLUMNS = 4
+CASE_CONFIG_SETTING_COLUMNS = 2
+DB_CASE_CONFIG_SETTING_COLUMNS = 4
 CHECKBOX_INDENT = 30
 TASK_LABEL_INPUT_COLUMNS = 2
 CHECKBOX_MAX_COLUMNS = 4
@@ -16,6 +17,9 @@ SIDEBAR_CONTROL_COLUMNS = 3
 LEGEND_RECT_WIDTH = 24
 LEGEND_RECT_HEIGHT = 16
 LEGEND_TEXT_FONT_SIZE = 14
+STREAMING_CHART_COLUMNS = 2
+SCATTER_MAKER_SIZE = 8
+SCATTER_LINE_WIDTH = 2
 
 PATTERN_SHAPES = ["", "+", "\\", "x", ".", "|", "/", "-"]
 
@@ -62,3 +66,18 @@ COLOR_MAP = {
     DB.Redis.value: "#0D6EFD",
     DB.AWSOpenSearch.value: "#0DCAF0",
 }
+
+COLORS_10 = [
+    "#a6cee3",
+    "#1f78b4",
+    "#b2df8a",
+    "#33a02c",
+    "#fb9a99",
+    "#e31a1c",
+    "#fdbf6f",
+    "#ff7f00",
+    "#cab2d6",
+    "#6a3d9a",
+]
+
+COLORS_2 = ["#1f78b4", "#d8b365"]
