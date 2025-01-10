@@ -76,8 +76,8 @@ class QdrantCloud(VectorDB):
                     continue
                 if info.status == CollectionStatus.GREEN:
                     msg = (
-                        f"Stored vectors: {info.vectors_count}, Indexed vectors: {info.indexed_vectors_count}, ",
-                        f"Collection status: {info.indexed_vectors_count}",
+                        f"Stored vectors: {info.vectors_count}, Indexed vectors: {info.indexed_vectors_count}, "
+                        f"Collection status: {info.indexed_vectors_count}"
                     )
                     log.info(msg)
                     return

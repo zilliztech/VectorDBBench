@@ -73,14 +73,14 @@ class RatedMultiThreadingInsertRunner:
 
                         if len(not_done) > 0:
                             log.warning(
-                                f"Failed to finish all tasks in 1s, [{len(not_done)}/{len(executing_futures)}] ",
-                                f"tasks are not done, waited={wait_interval:.2f}, trying to wait in the next round",
+                                f"Failed to finish all tasks in 1s, [{len(not_done)}/{len(executing_futures)}] "
+                                f"tasks are not done, waited={wait_interval:.2f}, trying to wait in the next round"
                             )
                             executing_futures = list(not_done)
                         else:
                             log.debug(
-                                f"Finished {len(executing_futures)} insert-{config.NUM_PER_BATCH} ",
-                                f"task in 1s, wait_interval={wait_interval:.2f}",
+                                f"Finished {len(executing_futures)} insert-{config.NUM_PER_BATCH} "
+                                f"task in 1s, wait_interval={wait_interval:.2f}"
                             )
                             executing_futures = []
                     except Exception as e:

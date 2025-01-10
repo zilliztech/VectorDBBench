@@ -98,9 +98,7 @@ class CaseRunner(BaseModel):
             self.init_db(drop_old)
             self.ca.dataset.prepare(self.dataset_source, filters=self.ca.filter_rate)
         except ModuleNotFoundError as e:
-            log.warning(
-                f"pre run case error: please install client for db: {self.config.db}, error={e}",
-            )
+            log.warning(f"pre run case error: please install client for db: {self.config.db}, error={e}")
             raise e from None
 
     def run(self, drop_old: bool = True) -> Metric:
@@ -136,9 +134,7 @@ class CaseRunner(BaseModel):
             log.warning(f"Failed to run capacity case, reason = {e}")
             raise e from None
         else:
-            log.info(
-                f"Capacity case loading dataset reaches VectorDB's limit: max capacity = {count}",
-            )
+            log.info(f"Capacity case loading dataset reaches VectorDB's limit: max capacity = {count}")
             return Metric(max_load_count=count)
 
     def _run_perf_case(self, drop_old: bool = True) -> Metric:
@@ -146,22 +142,6 @@ class CaseRunner(BaseModel):
 
         Returns:
             Metric: load_duration, recall, serial_latency_p99, and, qps
-        """
-        """
-                    if drop_old:
-                _, load_dur = self._load_train_data()
-                build_dur = self._optimize()
-                m.load_duration = round(load_dur+build_dur, 4)
-                log.info(
-                    f"Finish loading the entire dataset into VectorDB,"
-                    f" insert_duration={load_dur}, optimize_duration={build_dur}"
-                    f" load_duration(insert + optimize) = {m.load_duration}"
-                )
-
-            self._init_search_runner()
-
-            m.qps, m.conc_num_list, m.conc_qps_list, m.conc_latency_p99_list = self._conc_search()
-            m.recall, m.serial_latency_p99 = self._serial_search()
         """
 
         log.info("Start performance case")
@@ -175,7 +155,7 @@ class CaseRunner(BaseModel):
                     log.info(
                         f"Finish loading the entire dataset into VectorDB,"
                         f" insert_duration={load_dur}, optimize_duration={build_dur}"
-                        f" load_duration(insert + optimize) = {m.load_duration}",
+                        f" load_duration(insert + optimize) = {m.load_duration}"
                     )
                 else:
                     log.info("Data loading skipped")
