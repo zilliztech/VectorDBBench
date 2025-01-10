@@ -45,8 +45,8 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
         self.read_dur_after_write = read_dur_after_write
 
         log.info(
-            f"Init runner, concurencys={concurrencies}, search_stage={search_stage}, ",
-            f"stage_search_dur={read_dur_after_write}",
+            f"Init runner, concurencys={concurrencies}, search_stage={search_stage}, "
+            f"stage_search_dur={read_dur_after_write}"
         )
 
         test_emb = np.stack(dataset.test_data["emb"])
@@ -88,12 +88,10 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
         res, ssearch_dur = self.serial_search_runner.run()
         recall, ndcg, p99_latency = res
         log.info(
-            f"Search after write - Serial search - recall={recall}, ndcg={ndcg}, p99={p99_latency}, ",
+            f"Search after write - Serial search - recall={recall}, ndcg={ndcg}, p99={p99_latency}, "
             f"dur={ssearch_dur:.4f}",
         )
-        log.info(
-            f"Search after wirte - Conc search start, dur for each conc={self.read_dur_after_write}",
-        )
+        log.info(f"Search after wirte - Conc search start, dur for each conc={self.read_dur_after_write}")
         max_qps = self.run_by_dur(self.read_dur_after_write)
         log.info(f"Search after wirte - Conc search finished, max_qps={max_qps}")
 
@@ -157,9 +155,7 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
 
             got = wait_next_target(start_batch, target_batch)
             if got is False:
-                log.warning(
-                    f"Abnormal exit, target_batch={target_batch}, start_batch={start_batch}",
-                )
+                log.warning(f"Abnormal exit, target_batch={target_batch}, start_batch={start_batch}")
                 return None
 
             log.info(f"Insert {perc}% done, total batch={total_batch}")
@@ -167,8 +163,8 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
             res, ssearch_dur = self.serial_search_runner.run()
             recall, ndcg, p99_latency = res
             log.info(
-                f"[{target_batch}/{total_batch}] Serial search - {perc}% done, recall={recall}, ",
-                f"ndcg={ndcg}, p99={p99_latency}, dur={ssearch_dur:.4f}",
+                f"[{target_batch}/{total_batch}] Serial search - {perc}% done, recall={recall}, "
+                f"ndcg={ndcg}, p99={p99_latency}, dur={ssearch_dur:.4f}"
             )
 
             # Search duration for non-last search stage is carefully calculated.
@@ -183,8 +179,8 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
                 each_conc_search_dur = csearch_dur / len(self.concurrencies)
                 if each_conc_search_dur < 30:
                     warning_msg = (
-                        f"Results might be inaccurate, duration[{csearch_dur:.4f}] left for conc-search is too short, ",
-                        f"total available dur={total_dur_between_stages}, serial_search_cost={ssearch_dur}.",
+                        f"Results might be inaccurate, duration[{csearch_dur:.4f}] left for conc-search is too short, "
+                        f"total available dur={total_dur_between_stages}, serial_search_cost={ssearch_dur}."
                     )
                     log.warning(warning_msg)
 
@@ -193,7 +189,7 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
                 each_conc_search_dur = 60
 
             log.info(
-                f"[{target_batch}/{total_batch}] Concurrent search - {perc}% start, dur={each_conc_search_dur:.4f}",
+                f"[{target_batch}/{total_batch}] Concurrent search - {perc}% start, dur={each_conc_search_dur:.4f}"
             )
             max_qps = self.run_by_dur(each_conc_search_dur)
             result.append((perc, max_qps, recall, ndcg, p99_latency))

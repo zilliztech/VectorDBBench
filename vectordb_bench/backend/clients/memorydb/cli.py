@@ -43,8 +43,8 @@ class MemoryDBTypedDict(TypedDict):
             show_default=True,
             default=False,
             help=(
-                "Cluster Mode Disabled (CMD), use this flag when testing locally on a single node instance.",
-                " In production, MemoryDB only supports cluster mode (CME)",
+                "Cluster Mode Disabled (CMD), use this flag when testing locally on a single node instance."
+                " In production, MemoryDB only supports cluster mode (CME)"
             ),
         ),
     ]

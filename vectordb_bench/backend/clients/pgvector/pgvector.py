@@ -415,9 +415,7 @@ class PgVector(VectorDB):
 
             return len(metadata), None
         except Exception as e:
-            log.warning(
-                f"Failed to insert data into pgvector table ({self.table_name}), error: {e}",
-            )
+            log.warning(f"Failed to insert data into pgvector table ({self.table_name}), error: {e}")
             return 0, e
 
     def search_embedding(

@@ -40,9 +40,7 @@ class SerialInsertRunner:
     def task(self) -> int:
         count = 0
         with self.db.init():
-            log.info(
-                f"({mp.current_process().name:16}) Start inserting embeddings in batch {config.NUM_PER_BATCH}",
-            )
+            log.info(f"({mp.current_process().name:16}) Start inserting embeddings in batch {config.NUM_PER_BATCH}")
             start = time.perf_counter()
             for data_df in self.dataset:
                 all_metadata = data_df["id"].tolist()
@@ -66,13 +64,11 @@ class SerialInsertRunner:
                 assert insert_count == len(all_metadata)
                 count += insert_count
                 if count % 100_000 == 0:
-                    log.info(
-                        f"({mp.current_process().name:16}) Loaded {count} embeddings into VectorDB",
-                    )
+                    log.info(f"({mp.current_process().name:16}) Loaded {count} embeddings into VectorDB")
 
             log.info(
-                f"({mp.current_process().name:16}) Finish loading all dataset into VectorDB, ",
-                f"dur={time.perf_counter()-start}",
+                f"({mp.current_process().name:16}) Finish loading all dataset into VectorDB, "
+                f"dur={time.perf_counter()-start}"
             )
             return count
 
@@ -83,8 +79,8 @@ class SerialInsertRunner:
 
             num_batches = math.ceil(len(all_embeddings) / NUM_PER_BATCH)
             log.info(
-                f"({mp.current_process().name:16}) Start inserting {len(all_embeddings)} ",
-                f"embeddings in batch {NUM_PER_BATCH}",
+                f"({mp.current_process().name:16}) Start inserting {len(all_embeddings)} "
+                f"embeddings in batch {NUM_PER_BATCH}"
             )
             count = 0
             for batch_id in range(num_batches):
@@ -94,8 +90,8 @@ class SerialInsertRunner:
                 embeddings = all_embeddings[batch_id * NUM_PER_BATCH : (batch_id + 1) * NUM_PER_BATCH]
 
                 log.debug(
-                    f"({mp.current_process().name:16}) batch [{batch_id:3}/{num_batches}], ",
-                    f"Start inserting {len(metadata)} embeddings",
+                    f"({mp.current_process().name:16}) batch [{batch_id:3}/{num_batches}], "
+                    f"Start inserting {len(metadata)} embeddings"
                 )
                 while retry_count < LOAD_MAX_TRY_COUNT:
                     insert_count, error = self.db.insert_embeddings(
@@ -113,15 +109,15 @@ class SerialInsertRunner:
                     else:
                         break
                 log.debug(
-                    f"({mp.current_process().name:16}) batch [{batch_id:3}/{num_batches}], ",
-                    f"Finish inserting {len(metadata)} embeddings",
+                    f"({mp.current_process().name:16}) batch [{batch_id:3}/{num_batches}], "
+                    f"Finish inserting {len(metadata)} embeddings"
                 )
 
                 assert already_insert_count == len(metadata)
                 count += already_insert_count
             log.info(
-                f"({mp.current_process().name:16}) Finish inserting {len(all_embeddings)} embeddings in ",
-                f"batch {NUM_PER_BATCH}",
+                f"({mp.current_process().name:16}) Finish inserting {len(all_embeddings)} embeddings in "
+                f"batch {NUM_PER_BATCH}"
             )
         return count
 
@@ -171,13 +167,13 @@ class SerialInsertRunner:
                 max_load_count += count
                 times += 1
                 log.info(
-                    f"Loaded {times} entire dataset, current max load counts={utils.numerize(max_load_count)}, ",
-                    f"{max_load_count}",
+                    f"Loaded {times} entire dataset, current max load counts={utils.numerize(max_load_count)}, "
+                    f"{max_load_count}"
                 )
         except Exception as e:
             log.info(
-                f"Capacity case load reach limit, insertion counts={utils.numerize(max_load_count)}, ",
-                f"{max_load_count}, err={e}",
+                f"Capacity case load reach limit, insertion counts={utils.numerize(max_load_count)}, "
+                f"{max_load_count}, err={e}"
             )
             traceback.print_exc()
             return max_load_count
@@ -209,9 +205,7 @@ class SerialSearchRunner:
         self.ground_truth = ground_truth
 
     def search(self, args: tuple[list, pd.DataFrame]) -> tuple[float, float, float]:
-        log.info(
-            f"{mp.current_process().name:14} start search the entire test_data to get recall and latency",
-        )
+        log.info(f"{mp.current_process().name:14} start search the entire test_data to get recall and latency")
         with self.db.init():
             test_data, ground_truth = args
             ideal_dcg = get_ideal_dcg(self.k)
@@ -242,8 +236,8 @@ class SerialSearchRunner:
 
                 if len(latencies) % 100 == 0:
                     log.debug(
-                        f"({mp.current_process().name:14}) search_count={len(latencies):3}, ",
-                        f"latest_latency={latencies[-1]}, latest recall={recalls[-1]}",
+                        f"({mp.current_process().name:14}) search_count={len(latencies):3}, "
+                        f"latest_latency={latencies[-1]}, latest recall={recalls[-1]}"
                     )
 
         avg_latency = round(np.mean(latencies), 4)
@@ -258,7 +252,7 @@ class SerialSearchRunner:
             f"avg_recall={avg_recall}, "
             f"avg_ndcg={avg_ndcg},"
             f"avg_latency={avg_latency}, "
-            f"p99={p99}",
+            f"p99={p99}"
         )
         return (avg_recall, avg_ndcg, p99)
 

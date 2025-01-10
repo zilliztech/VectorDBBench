@@ -42,7 +42,7 @@ class DB(Enum):
     AliyunOpenSearch = "AliyunOpenSearch"
 
     @property
-    def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912
+    def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901
         """Import while in use"""
         if self == DB.Milvus:
             from .milvus.milvus import Milvus
@@ -129,11 +129,16 @@ class DB(Enum):
 
             return AliyunOpenSearch
 
+        if self == DB.Test:
+            from .test.test import Test
+
+            return Test
+
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
 
     @property
-    def config_cls(self) -> type[DBConfig]:  # noqa: PLR0911, PLR0912
+    def config_cls(self) -> type[DBConfig]:  # noqa: PLR0911, PLR0912, C901
         """Import while in use"""
         if self == DB.Milvus:
             from .milvus.config import MilvusConfig
@@ -219,6 +224,11 @@ class DB(Enum):
             from .aliyun_opensearch.config import AliyunOpenSearchConfig
 
             return AliyunOpenSearchConfig
+
+        if self == DB.Test:
+            from .test.config import TestConfig
+
+            return TestConfig
 
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
