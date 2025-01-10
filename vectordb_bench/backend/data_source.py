@@ -63,9 +63,7 @@ class AliyunOSSReader(DatasetReader):
         # check size equal
         remote_size, local_size = info.content_length, local.stat().st_size
         if remote_size != local_size:
-            log.info(
-                f"local file: {local} size[{local_size}] not match with remote size[{remote_size}]",
-            )
+            log.info(f"local file: {local} size[{local_size}] not match with remote size[{remote_size}]")
             return False
 
         return True
@@ -89,9 +87,7 @@ class AliyunOSSReader(DatasetReader):
                 local_file = local_ds_root.joinpath(file)
 
                 if (not local_file.exists()) or (not self.validate_file(remote_file, local_file)):
-                    log.info(
-                        f"local file: {local_file} not match with remote: {remote_file}; add to downloading list",
-                    )
+                    log.info(f"local file: {local_file} not match with remote: {remote_file}; add to downloading list")
                     downloads.append((remote_file, local_file))
 
         if len(downloads) == 0:
@@ -135,9 +131,7 @@ class AwsS3Reader(DatasetReader):
                 local_file = local_ds_root.joinpath(file)
 
                 if (not local_file.exists()) or (not self.validate_file(remote_file, local_file)):
-                    log.info(
-                        f"local file: {local_file} not match with remote: {remote_file}; add to downloading list",
-                    )
+                    log.info(f"local file: {local_file} not match with remote: {remote_file}; add to downloading list")
                     downloads.append(remote_file)
 
         if len(downloads) == 0:
@@ -157,9 +151,7 @@ class AwsS3Reader(DatasetReader):
         # check size equal
         remote_size, local_size = info.get("size"), local.stat().st_size
         if remote_size != local_size:
-            log.info(
-                f"local file: {local} size[{local_size}] not match with remote size[{remote_size}]",
-            )
+            log.info(f"local file: {local} size[{local_size}] not match with remote size[{remote_size}]")
             return False
 
         return True

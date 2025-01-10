@@ -133,6 +133,7 @@ lint.ignore = [
     "RUF017",
     "C416",
     "PLW0603",
+    "COM812",
 ]
 
 # Allow autofix for all enabled rules (when `--fix`) is provided.

@@ -65,9 +65,7 @@ class BenchMarkRunner:
             log.warning("Empty tasks submitted")
             return False
 
-        log.debug(
-            f"tasks: {tasks}, task_label: {task_label}, dataset source: {self.dataset_source}",
-        )
+        log.debug(f"tasks: {tasks}, task_label: {task_label}, dataset source: {self.dataset_source}")
 
         # Generate run_id
         run_id = uuid.uuid4().hex
@@ -169,14 +167,13 @@ class BenchMarkRunner:
                 drop_old = TaskStage.DROP_OLD in runner.config.stages
                 if (latest_runner and runner == latest_runner) or not self.drop_old:
                     drop_old = False
+                num_cases = running_task.num_cases()
                 try:
-                    log.info(
-                        f"[{idx+1}/{running_task.num_cases()}] start case: {runner.display()}, drop_old={drop_old}",
-                    )
+                    log.info(f"[{idx+1}/{num_cases}] start case: {runner.display()}, drop_old={drop_old}")
                     case_res.metrics = runner.run(drop_old)
                     log.info(
-                        f"[{idx+1}/{running_task.num_cases()}] finish case: {runner.display()}, "
-                        f"result={case_res.metrics}, label={case_res.label}",
+                        f"[{idx+1}/{num_cases}] finish case: {runner.display()}, "
+                        f"result={case_res.metrics}, label={case_res.label}"
                     )
 
                     # cache the latest succeeded runner
@@ -189,16 +186,12 @@ class BenchMarkRunner:
                     if not drop_old:
                         case_res.metrics.load_duration = cached_load_duration if cached_load_duration else 0.0
                 except (LoadTimeoutError, PerformanceTimeoutError) as e:
-                    log.warning(
-                        f"[{idx+1}/{running_task.num_cases()}] case {runner.display()} failed to run, reason={e}",
-                    )
+                    log.warning(f"[{idx+1}/{num_cases}] case {runner.display()} failed to run, reason={e}")
                     case_res.label = ResultLabel.OUTOFRANGE
                     continue
 
                 except Exception as e:
-                    log.warning(
-                        f"[{idx+1}/{running_task.num_cases()}] case {runner.display()} failed to run, reason={e}",
-                    )
+                    log.warning(f"[{idx+1}/{num_cases}] case {runner.display()} failed to run, reason={e}")
                     traceback.print_exc()
                     case_res.label = ResultLabel.FAILED
                     continue
@@ -217,9 +210,7 @@ class BenchMarkRunner:
 
             send_conn.send((SIGNAL.SUCCESS, None))
             send_conn.close()
-            log.info(
-                f"Success to finish task: label={running_task.task_label}, run_id={running_task.run_id}",
-            )
+            log.info(f"Success to finish task: label={running_task.task_label}, run_id={running_task.run_id}")
 
         except Exception as e:
             err_msg = (
@@ -250,7 +241,7 @@ class BenchMarkRunner:
     def _run_async(self, conn: Connection) -> bool:
         log.info(
             f"task submitted: id={self.running_task.run_id}, {self.running_task.task_label}, "
-            f"case number: {len(self.running_task.case_runners)}",
+            f"case number: {len(self.running_task.case_runners)}"
         )
         global global_result_future
         executor = concurrent.futures.ProcessPoolExecutor(
