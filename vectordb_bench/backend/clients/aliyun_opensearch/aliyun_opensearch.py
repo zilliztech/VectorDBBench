@@ -325,10 +325,7 @@ class AliyunOpenSearch(VectorDB):
 
         return False
 
-    def optimize(self):
-        pass
-
-    def optimize_with_size(self, data_size: int):
+    def optimize(self, data_size: int):
         log.info(f"optimize count: {data_size}")
         retry_times = 0
         while True:
@@ -340,6 +337,3 @@ class AliyunOpenSearch(VectorDB):
             if total_count == data_size:
                 log.info("optimize table finish.")
                 return
-
-    def ready_to_load(self):
-        """ready_to_load will be called before load in load cases."""

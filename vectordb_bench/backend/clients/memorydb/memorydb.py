@@ -157,17 +157,14 @@ class MemoryDB(VectorDB):
         self.conn = self.get_client()
         search_param = self.case_config.search_param()
         if search_param["ef_runtime"]:
-            self.ef_runtime_str = f'EF_RUNTIME {search_param["ef_runtime"]}'
+            self.ef_runtime_str = f"EF_RUNTIME {search_param['ef_runtime']}"
         else:
             self.ef_runtime_str = ""
         yield
         self.conn.close()
         self.conn = None
 
-    def ready_to_load(self) -> bool:
-        pass
-
-    def optimize(self) -> None:
+    def optimize(self, data_size: int | None = None):
         self._post_insert()
 
     def insert_embeddings(

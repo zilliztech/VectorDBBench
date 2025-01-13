@@ -68,7 +68,7 @@ class SerialInsertRunner:
 
             log.info(
                 f"({mp.current_process().name:16}) Finish loading all dataset into VectorDB, "
-                f"dur={time.perf_counter()-start}"
+                f"dur={time.perf_counter() - start}"
             )
             return count
 
@@ -156,8 +156,6 @@ class SerialInsertRunner:
         start_time = time.perf_counter()
         max_load_count, times = 0, 0
         try:
-            with self.db.init():
-                self.db.ready_to_load()
             while time.perf_counter() - start_time < self.timeout:
                 count = self.endless_insert_data(
                     all_embeddings,
