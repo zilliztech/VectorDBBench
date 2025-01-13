@@ -145,15 +145,15 @@ class AWSOpenSearch(VectorDB):
                 docvalue_fields=[self.id_col_name],
                 stored_fields="_none_",
             )
-            log.info(f'Search took: {resp["took"]}')
-            log.info(f'Search shards: {resp["_shards"]}')
-            log.info(f'Search hits total: {resp["hits"]["total"]}')
+            log.info(f"Search took: {resp['took']}")
+            log.info(f"Search shards: {resp['_shards']}")
+            log.info(f"Search hits total: {resp['hits']['total']}")
             return [int(h["fields"][self.id_col_name][0]) for h in resp["hits"]["hits"]]
         except Exception as e:
             log.warning(f"Failed to search: {self.index_name} error: {e!s}")
             raise e from None
 
-    def optimize(self):
+    def optimize(self, data_size: int | None = None):
         """optimize will be called between insertion and search in performance cases."""
         # Call refresh first to ensure that all segments are created
         self._refresh_index()
@@ -194,6 +194,3 @@ class AWSOpenSearch(VectorDB):
             log.info("Calling warmup API to load graphs into memory")
             warmup_endpoint = f"/_plugins/_knn/warmup/{self.index_name}"
             self.client.transport.perform_request("GET", warmup_endpoint)
-
-    def ready_to_load(self):
-        """ready_to_load will be called before load in load cases."""

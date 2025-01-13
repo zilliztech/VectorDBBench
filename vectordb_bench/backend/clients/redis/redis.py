@@ -95,10 +95,7 @@ class Redis(VectorDB):
     def ready_to_search(self) -> bool:
         """Check if the database is ready to search."""
 
-    def ready_to_load(self) -> bool:
-        pass
-
-    def optimize(self) -> None:
+    def optimize(self, data_size: int | None = None):
         pass
 
     def insert_embeddings(

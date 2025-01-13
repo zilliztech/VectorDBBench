@@ -67,10 +67,7 @@ class WeaviateCloud(VectorDB):
         self.client = None
         del self.client
 
-    def ready_to_load(self):
-        """Should call insert first, do nothing"""
-
-    def optimize(self):
+    def optimize(self, data_size: int | None = None):
         assert self.client.schema.exists(self.collection_name)
         self.client.schema.update_config(
             self.collection_name,

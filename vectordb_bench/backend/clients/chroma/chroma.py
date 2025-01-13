@@ -57,10 +57,7 @@ class ChromaClient(VectorDB):
     def ready_to_search(self) -> bool:
         pass
 
-    def ready_to_load(self) -> bool:
-        pass
-
-    def optimize(self) -> None:
+    def optimize(self, data_size: int | None = None):
         pass
 
     def insert_embeddings(

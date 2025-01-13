@@ -33,10 +33,7 @@ class Test(VectorDB):
 
         yield
 
-    def ready_to_load(self) -> bool:
-        return True
-
-    def optimize(self) -> None:
+    def optimize(self, data_size: int | None = None):
         pass
 
     def insert_embeddings(

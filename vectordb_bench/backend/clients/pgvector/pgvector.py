@@ -228,10 +228,7 @@ class PgVector(VectorDB):
         )
         self.conn.commit()
 
-    def ready_to_load(self):
-        pass
-
-    def optimize(self):
+    def optimize(self, data_size: int | None = None):
         self._post_insert()
 
     def _post_insert(self):

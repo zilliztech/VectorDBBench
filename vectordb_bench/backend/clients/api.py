@@ -137,6 +137,13 @@ class VectorDB(ABC):
     @contextmanager
     def init(self) -> None:
         """create and destory connections to database.
+        Why contextmanager:
+
+            In multiprocessing search tasks, vectordbbench might init
+            totally hundreds of thousands of connections with DB server.
+
+            Too many connections may drain local FDs or server connection resources.
+            If the DB client doesn't have `close()` method, just set the object to None.
 
         Examples:
             >>> with self.init():
@@ -187,9 +194,8 @@ class VectorDB(ABC):
         """
         raise NotImplementedError
 
-    # TODO: remove
     @abstractmethod
-    def optimize(self):
+    def optimize(self, data_size: int | None = None):
         """optimize will be called between insertion and search in performance cases.
 
         Should be blocked until the vectorDB is ready to be tested on
@@ -197,18 +203,5 @@ class VectorDB(ABC):
 
         Time(insert the dataset) + Time(optimize) will be recorded as "load_duration" metric
         Optimize's execution time is limited, the limited time is based on cases.
-        """
-        raise NotImplementedError
-
-    def optimize_with_size(self, data_size: int):
-        self.optimize()
-
-    # TODO: remove
-    @abstractmethod
-    def ready_to_load(self):
-        """ready_to_load will be called before load in load cases.
-
-        Should be blocked until the vectorDB is ready to be tested on
-        heavy load cases.
         """
         raise NotImplementedError

@@ -59,10 +59,7 @@ class Pinecone(VectorDB):
         self.index = pc.Index(self.index_name)
         yield
 
-    def ready_to_load(self):
-        pass
-
-    def optimize(self):
+    def optimize(self, data_size: int | None = None):
         pass
 
     def insert_embeddings(
