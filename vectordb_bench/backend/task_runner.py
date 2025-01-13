@@ -234,13 +234,13 @@ class CaseRunner(BaseModel):
             self.stop()
 
     @utils.time_it
-    def _task(self) -> None:
+    def _optimize_task(self) -> None:
         with self.db.init():
-            self.db.optimize_with_size(data_size=self.ca.dataset.data.size)
+            self.db.optimize(data_size=self.ca.dataset.data.size)
 
     def _optimize(self) -> float:
         with concurrent.futures.ProcessPoolExecutor(max_workers=1) as executor:
-            future = executor.submit(self._task)
+            future = executor.submit(self._optimize_task)
             try:
                 return future.result(timeout=self.ca.optimize_timeout)[1]
             except TimeoutError as e:

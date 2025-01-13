@@ -143,7 +143,7 @@ class ElasticCloud(VectorDB):
             log.warning(f"Failed to search: {self.indice} error: {e!s}")
             raise e from None
 
-    def optimize(self):
+    def optimize(self, data_size: int | None = None):
         """optimize will be called between insertion and search in performance cases."""
         assert self.client is not None, "should self.init() first"
         self.client.indices.refresh(index=self.indice)
@@ -158,6 +158,3 @@ class ElasticCloud(VectorDB):
             task_status = self.client.tasks.get(task_id=force_merge_task_id)
             if task_status["completed"]:
                 return
-
-    def ready_to_load(self):
-        """ready_to_load will be called before load in load cases."""

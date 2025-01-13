@@ -80,7 +80,7 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
         """Optimize needs to run in differenct process for pymilvus schema recursion problem"""
         with self.db.init():
             log.info("Search after write - Optimize start")
-            self.db.optimize()
+            self.db.optimize(data_size=self.data_volume)
             log.info("Search after write - Optimize finished")
 
     def run_search(self):

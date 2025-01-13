@@ -62,10 +62,7 @@ class QdrantCloud(VectorDB):
         self.qdrant_client = None
         del self.qdrant_client
 
-    def ready_to_load(self):
-        pass
-
-    def optimize(self):
+    def optimize(self, data_size: int | None = None):
         assert self.qdrant_client, "Please call self.init() before"
         # wait for vectors to be fully indexed
         try:
