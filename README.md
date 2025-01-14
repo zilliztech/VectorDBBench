@@ -52,6 +52,7 @@ All the database client supported
 | chromadb                 | `pip install vectordb-bench[chromadb]`      |
 | awsopensearch            | `pip install vectordb-bench[opensearch]` |
 | aliyun_opensearch        | `pip install vectordb-bench[aliyun_opensearch]` |
+| mongodb                  | `pip install vectordb-bench[mongodb]`       |
 
 ### Run
 
