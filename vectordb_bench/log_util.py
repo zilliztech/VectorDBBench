@@ -1,8 +1,13 @@
 import logging
 from logging import config
+from pathlib import Path
 
 
 def init(log_level: str):
+    # Create logs directory if it doesn't exist
+    log_dir = Path("logs")
+    log_dir.mkdir(exist_ok=True)
+
     log_config = {
         "version": 1,
         "disable_existing_loggers": False,
@@ -24,15 +29,23 @@ def init(log_level: str):
                 "class": "logging.StreamHandler",
                 "formatter": "default",
             },
+            "file": {
+                "class": "logging.handlers.RotatingFileHandler",
+                "formatter": "default",
+                "filename": "logs/vectordb_bench.log",
+                "maxBytes": 10485760,  # 10MB
+                "backupCount": 5,
+                "encoding": "utf8",
+            },
         },
         "loggers": {
             "vectordb_bench": {
-                "handlers": ["console"],
+                "handlers": ["console", "file"],
                 "level": log_level,
                 "propagate": False,
             },
             "no_color": {
-                "handlers": ["no_color_console"],
+                "handlers": ["no_color_console", "file"],
                 "level": log_level,
                 "propagate": False,
             },
