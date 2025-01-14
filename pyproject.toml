@@ -85,6 +85,7 @@ memorydb        = [ "memorydb" ]
 chromadb        = [ "chromadb" ]
 opensearch      = [ "opensearch-py" ]
 aliyun_opensearch = [ "alibabacloud_ha3engine_vector", "alibabacloud_searchengine20211025"]
+mongodb         = [ "pymongo" ]
 
 [project.urls]
 "repository" = "https://github.com/zilliztech/VectorDBBench"
@@ -207,4 +208,3 @@ builtins-ignorelist = [
     # "dict", # TODO
     # "filter",
 ]
-
