@@ -1,6 +1,7 @@
-import os
 import argparse
+import os
 import subprocess
+
 
 def docker_tag_base():
     return 'vdbbench'

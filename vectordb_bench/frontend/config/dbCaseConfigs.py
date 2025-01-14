@@ -1041,6 +1041,26 @@ CaseConfigParamInput_NumCandidates_AliES = CaseConfigInput(
 )
 
 
+CaseConfigParamInput_MongoDBQuantizationType = CaseConfigInput(
+    label=CaseConfigParamType.mongodb_quantization_type,
+    inputType=InputType.Option,
+    inputConfig={
+        "options": ["none", "scalar", "binary"],
+    },
+)
+
+
+CaseConfigParamInput_MongoDBNumCandidatesRatio = CaseConfigInput(
+    label=CaseConfigParamType.mongodb_num_candidates_ratio,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 10,
+        "max": 20,
+        "value": 10,
+    },
+)
+
+
 MilvusLoadConfig = [
     CaseConfigParamInput_IndexType,
     CaseConfigParamInput_M,
@@ -1224,6 +1244,14 @@ AliyunElasticsearchPerformanceConfig = [
     CaseConfigParamInput_NumCandidates_AliES,
 ]
 
+MongoDBLoadingConfig = [
+    CaseConfigParamInput_MongoDBQuantizationType,
+]
+MongoDBPerformanceConfig = [
+    CaseConfigParamInput_MongoDBQuantizationType,
+    CaseConfigParamInput_MongoDBNumCandidatesRatio,
+]
+
 CASE_CONFIG_MAP = {
     DB.Milvus: {
         CaseLabel.Load: MilvusLoadConfig,
@@ -1271,5 +1299,9 @@ CASE_CONFIG_MAP = {
     DB.AliyunOpenSearch: {
         CaseLabel.Load: AliyunOpensearchLoadingConfig,
         CaseLabel.Performance: AliyunOpenSearchPerformanceConfig,
+    },
+    DB.MongoDB: {
+        CaseLabel.Load: MongoDBLoadingConfig,
+        CaseLabel.Performance: MongoDBPerformanceConfig,
     },
 }
