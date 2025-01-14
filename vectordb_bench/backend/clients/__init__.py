@@ -40,6 +40,7 @@ class DB(Enum):
     AliyunElasticsearch = "AliyunElasticsearch"
     Test = "test"
     AliyunOpenSearch = "AliyunOpenSearch"
+    MongoDB = "MongoDB"
 
     @property
     def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901
@@ -128,6 +129,11 @@ class DB(Enum):
             from .aliyun_opensearch.aliyun_opensearch import AliyunOpenSearch
 
             return AliyunOpenSearch
+
+        if self == DB.MongoDB:
+            from .mongodb.mongodb import MongoDB
+
+            return MongoDB
 
         if self == DB.Test:
             from .test.test import Test
@@ -225,6 +231,11 @@ class DB(Enum):
 
             return AliyunOpenSearchConfig
 
+        if self == DB.MongoDB:
+            from .mongodb.config import MongoDBConfig
+
+            return MongoDBConfig
+
         if self == DB.Test:
             from .test.config import TestConfig
 
@@ -301,6 +312,11 @@ class DB(Enum):
             from .aliyun_opensearch.config import AliyunOpenSearchIndexConfig
 
             return AliyunOpenSearchIndexConfig
+
+        if self == DB.MongoDB:
+            from .mongodb.config import MongoDBIndexConfig
+
+            return MongoDBIndexConfig
 
         # DB.Pinecone, DB.Chroma, DB.Redis
         return EmptyDBCaseConfig
