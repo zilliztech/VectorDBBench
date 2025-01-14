@@ -88,6 +88,10 @@ class CaseConfigParamType(Enum):
     numSearchThreads = "num_search_threads"
     maxNumPrefetchDatasets = "max_num_prefetch_datasets"
 
+    # mongodb params
+    mongodb_quantization_type = "quantization"
+    mongodb_num_candidates_ratio = "num_candidates_ratio"
+
 
 class CustomizedCase(BaseModel):
     pass

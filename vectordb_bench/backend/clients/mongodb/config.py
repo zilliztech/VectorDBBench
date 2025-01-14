@@ -1,6 +1,14 @@
+from enum import Enum
+
 from pydantic import BaseModel, SecretStr
 
 from ..api import DBCaseConfig, DBConfig, IndexType, MetricType
+
+
+class QuantizationType(Enum):
+    NONE = "none"
+    BINARY = "binary"
+    SCALAR = "scalar"
 
 
 class MongoDBConfig(DBConfig, BaseModel):
@@ -16,9 +24,9 @@ class MongoDBConfig(DBConfig, BaseModel):
 
 class MongoDBIndexConfig(BaseModel, DBCaseConfig):
     index: IndexType = IndexType.HNSW  # MongoDB uses HNSW for vector search
-    metric_type: MetricType | None = None
-    num_candidates: int | None = 1500  # Default numCandidates for vector search
-    exact_search: bool = False  # Whether to use exact (ENN) search
+    metric_type: MetricType = MetricType.COSINE
+    num_candidates_ratio: int = 10  # Default numCandidates ratio for vector search
+    quantization: QuantizationType = QuantizationType.NONE  # Quantization type if applicable
 
     def parse_metric(self) -> str:
         if self.metric_type == MetricType.L2:
@@ -36,9 +44,10 @@ class MongoDBIndexConfig(BaseModel, DBCaseConfig):
                     "similarity": self.parse_metric(),
                     "numDimensions": None,  # Will be set in MongoDB class
                     "path": "vector",  # Vector field name
+                    "quantization": self.quantization.value,
                 }
             ],
         }
 
     def search_param(self) -> dict:
-        return {"numCandidates": self.num_candidates if not self.exact_search else None, "exact": self.exact_search}
+        return {"num_candidates_ratio": self.num_candidates_ratio}

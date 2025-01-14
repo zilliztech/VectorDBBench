@@ -90,7 +90,7 @@ class MongoDB(VectorDB):
                             break
                         log.info(f"index deleting {indices}")
                 except Exception:
-                    log.exception("Error dropping index")
+                    log.exception(f"Error dropping index {index_name}")
         try:
             # Create vector search index
             search_index = SearchIndexModel(definition=index_params, name=index_name, type="vectorSearch")
@@ -104,7 +104,7 @@ class MongoDB(VectorDB):
             log.info(f"Created index on {self.id_field} field")
 
         except Exception:
-            log.exception("Error creating index")
+            log.exception(f"Error creating index {index_name}")
             raise
 
     def _wait_for_index_ready(self, index_name: str, check_interval: int = 5) -> None:
@@ -167,16 +167,15 @@ class MongoDB(VectorDB):
         else:
             # Set numCandidates based on k value and data size
             # For 50K dataset, use higher multiplier for better recall
-            num_candidates = min(10000, max(k * 20, search_params["numCandidates"] or 0))
+            num_candidates = min(10000, k * search_params["num_candidates_ratio"])
             vector_search["numCandidates"] = num_candidates
 
         # Add filter if specified
         if filters:
             log.info(f"Applying filter: {filters}")
             vector_search["filter"] = {
-                "id": {"gt": filters["id"]},
+                "id": {"gte": filters["id"]},
             }
-
         pipeline = [
             {"$vectorSearch": vector_search},
             {
