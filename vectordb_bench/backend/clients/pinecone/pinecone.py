@@ -53,6 +53,7 @@ class Pinecone(VectorDB):
                 index.delete(delete_all=True, namespace=namespace)
 
         self._metadata_key = "meta"
+        self._scalar_id_field = "id"
         self._scalar_label_field = "label"
 
     @classmethod
