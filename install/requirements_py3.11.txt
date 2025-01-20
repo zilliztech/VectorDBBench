@@ -1,4 +1,4 @@
-grpcio==1.53.0
+grpcio==1.53.2
 grpcio-tools==1.53.0
 qdrant-client
 pinecone-client
