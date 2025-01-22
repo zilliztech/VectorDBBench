@@ -10,6 +10,7 @@ import numpy as np
 
 from vectordb_bench.backend.clients import api
 from vectordb_bench.backend.dataset import DatasetManager
+from vectordb_bench.backend.filter import Filter, non_filter
 from vectordb_bench.backend.utils import time_it
 from vectordb_bench.metric import Metric
 
@@ -28,7 +29,7 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
         insert_rate: int = 1000,
         normalize: bool = False,
         k: int = 100,
-        filters: dict | None = None,
+        filters: Filter = non_filter,
         concurrencies: Iterable[int] = (1, 15, 50),
         search_stages: Iterable[float] = (
             0.5,
@@ -82,6 +83,7 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
             test_data=test_emb,
             ground_truth=dataset.gt_data,
             k=k,
+            filters=filters,
         )
 
     @time_it

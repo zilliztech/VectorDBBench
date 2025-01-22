@@ -4,7 +4,7 @@ from ..api import DBCaseConfig, DBConfig, IndexType, MetricType
 
 
 class MilvusConfig(DBConfig):
-    uri: SecretStr = "http://10.102.7.230:19530"
+    uri: SecretStr = "http://localhost:19530"
     user: str | None = None
     password: SecretStr | None = None
 
@@ -33,6 +33,7 @@ class MilvusIndexConfig(BaseModel):
 
     index: IndexType
     metric_type: MetricType | None = None
+    use_partition_key: bool = True  # for label-filter
 
     @property
     def is_gpu_index(self) -> bool:

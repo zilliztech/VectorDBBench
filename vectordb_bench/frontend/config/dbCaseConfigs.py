@@ -180,6 +180,17 @@ custom_streaming_config: list[ConfigInput] = [
 ]
 
 
+def generate_label_filter_cases(dataset_with_size_type: DatasetWithSizeType) -> list[CaseConfig]:
+    label_percentages = dataset_with_size_type.get_manager().data.scalar_label_percentages
+    return [
+        CaseConfig(
+            case_id=CaseType.LabelFilterPerformanceCase,
+            custom_case=dict(dataset_with_size_type=dataset_with_size_type, label_percentage=label_percentage),
+        )
+        for label_percentage in label_percentages
+    ]
+
+
 UI_CASE_CLUSTERS: list[UICaseItemCluster] = [
     UICaseItemCluster(
         label="Search Performance Test",
@@ -194,7 +205,7 @@ UI_CASE_CLUSTERS: list[UICaseItemCluster] = [
         ],
     ),
     UICaseItemCluster(
-        label="Filter Search Performance Test",
+        label="Int-Filter Search Performance Test",
         uiCaseItems=[
             UICaseItem(cases=generate_normal_cases(CaseType.Performance768D10M1P)),
             UICaseItem(cases=generate_normal_cases(CaseType.Performance768D10M99P)),
@@ -205,6 +216,23 @@ UI_CASE_CLUSTERS: list[UICaseItemCluster] = [
             UICaseItem(cases=generate_normal_cases(CaseType.Performance1536D5M99P)),
             UICaseItem(cases=generate_normal_cases(CaseType.Performance1536D500K1P)),
             UICaseItem(cases=generate_normal_cases(CaseType.Performance1536D500K99P)),
+        ],
+    ),
+    UICaseItemCluster(
+        label="Label-Filter Search Performance Test",
+        uiCaseItems=[
+            UICaseItem(
+                label=f"Label-Filter Search Performance Test - {dataset_with_size_type.value}",
+                description=(
+                    f'[Batch Cases] These cases evaluate search performance under filtering constraints like "color==red." '
+                    "Vdbbench provides an additional column of randomly distributed labels with fixed proportions, "
+                    f"such as {dataset_with_size_type.get_manager().data.scalar_label_percentages}. "
+                    f"Essentially, vdbbench will test each filter label in {dataset_with_size_type.value} to "
+                    "assess the vector database's search performance across different filtering conditions. "
+                ),
+                cases=generate_label_filter_cases(dataset_with_size_type),
+            )
+            for dataset_with_size_type in DatasetWithSizeType
         ],
     ),
     UICaseItemCluster(
@@ -1132,6 +1160,13 @@ CaseConfigParamInput_NumCandidates_AliES = CaseConfigInput(
     },
 )
 
+CaseConfigParamInput_Milvus_use_partition_key = CaseConfigInput(
+    label=CaseConfigParamType.use_partition_key,
+    inputType=InputType.Option,
+    inputHelp="whether to use partition_key for label-filter cases. only works in label-filter cases",
+    inputConfig={"options": [True, False]},
+)
+
 
 MilvusLoadConfig = [
     CaseConfigParamInput_IndexType,
@@ -1144,6 +1179,7 @@ MilvusLoadConfig = [
     CaseConfigParamInput_graph_degree,
     CaseConfigParamInput_build_algo,
     CaseConfigParamInput_cache_dataset_on_device,
+    CaseConfigParamInput_Milvus_use_partition_key,
 ]
 MilvusPerformanceConfig = [
     CaseConfigParamInput_IndexType,
@@ -1165,6 +1201,7 @@ MilvusPerformanceConfig = [
     CaseConfigParamInput_build_algo,
     CaseConfigParamInput_cache_dataset_on_device,
     CaseConfigParamInput_refine_ratio,
+    CaseConfigParamInput_Milvus_use_partition_key,
 ]
 
 WeaviateLoadConfig = [
