@@ -9,6 +9,7 @@ import numpy as np
 import psutil
 
 from vectordb_bench.backend.dataset import DatasetManager
+from vectordb_bench.backend.filter import Filter, FilterType, non_filter
 
 from ... import config
 from ...metric import calc_ndcg, calc_recall, get_ideal_dcg
@@ -28,12 +29,14 @@ class SerialInsertRunner:
         db: api.VectorDB,
         dataset: DatasetManager,
         normalize: bool,
+        filters: Filter = non_filter,
         timeout: float | None = None,
     ):
         self.timeout = timeout if isinstance(timeout, int | float) else None
         self.dataset = dataset
         self.db = db
         self.normalize = normalize
+        self.filters = filters
 
     def task(self) -> int:
         count = 0
@@ -52,9 +55,17 @@ class SerialInsertRunner:
                 del emb_np
                 log.debug(f"batch dataset size: {len(all_embeddings)}, {len(all_metadata)}")
 
+                labels_data = None
+                if self.filters.type == FilterType.Label:
+                    if self.dataset.data.scalar_labels_file_separated:
+                        labels_data = self.dataset.scalar_labels[self.filters.label_field][all_metadata].to_list()
+                    else:
+                        labels_data = data_df[self.filters.label_field].tolist()
+
                 insert_count, error = self.db.insert_embeddings(
                     embeddings=all_embeddings,
                     metadata=all_metadata,
+                    labels_data=labels_data,
                 )
                 if error is not None:
                     raise error
@@ -188,7 +199,7 @@ class SerialSearchRunner:
         test_data: list[list[float]],
         ground_truth: list[list[int]],
         k: int = 100,
-        filters: dict | None = None,
+        filters: Filter = non_filter,
     ):
         self.db = db
         self.k = k
@@ -202,11 +213,7 @@ class SerialSearchRunner:
 
     def _get_db_search_res(self, emb: list[float], retry_idx: int = 0) -> list[int]:
         try:
-            results = self.db.search_embedding(
-                emb,
-                self.k,
-                self.filters,
-            )
+            results = self.db.search_embedding(emb, self.k)
         except Exception as e:
             log.warning(f"Serial search failed, retry_idx={retry_idx}, Exception: {e}")
             if retry_idx < config.Max_Search_Retry:
@@ -220,6 +227,7 @@ class SerialSearchRunner:
     def search(self, args: tuple[list, list[list[int]]]) -> tuple[float, float, float]:
         log.info(f"{mp.current_process().name:14} start search the entire test_data to get recall and latency")
         with self.db.init():
+            self.db.prepare_filter(self.filters)
             test_data, ground_truth = args
             ideal_dcg = get_ideal_dcg(self.k)
 
