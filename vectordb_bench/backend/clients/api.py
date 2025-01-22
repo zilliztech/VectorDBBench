@@ -4,6 +4,8 @@ from enum import Enum
 
 from pydantic import BaseModel, SecretStr, validator
 
+from vectordb_bench.backend.filter import Filter, FilterOp
+
 
 class MetricType(str, Enum):
     L2 = "L2"
@@ -126,6 +128,21 @@ class VectorDB(ABC):
         >>>     milvus.search_embedding()
     """
 
+    "The filtering types supported by the VectorDB Client, default only non-filter"
+    supported_filter_types: list[FilterOp] = [FilterOp.NonFilter]
+
+    @classmethod
+    def filter_supported(cls, filters: Filter) -> bool:
+        """Ensure that the filters are supported before testing filtering cases."""
+        return filters.type in cls.supported_filter_types
+
+    def prepare_filter(self, filters: Filter):
+        """The vector database is allowed to pre-prepare different filter conditions
+        to reduce redundancy during the testing process.
+
+        (All search tests in a case use consistent filtering conditions.)"""
+        return
+
     @abstractmethod
     def __init__(
         self,
@@ -176,6 +193,7 @@ class VectorDB(ABC):
         self,
         embeddings: list[list[float]],
         metadata: list[int],
+        labels_data: list[str] | None = None,
         **kwargs,
     ) -> tuple[int, Exception]:
         """Insert the embeddings to the vector database. The default number of embeddings for
@@ -196,7 +214,6 @@ class VectorDB(ABC):
         self,
         query: list[float],
         k: int = 100,
-        filters: dict | None = None,
     ) -> list[int]:
         """Get k most similar embeddings to query vector.
 

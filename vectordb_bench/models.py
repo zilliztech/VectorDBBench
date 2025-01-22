@@ -116,6 +116,7 @@ class CaseConfigParamType(Enum):
     # mongodb params
     mongodb_quantization_type = "quantization"
     mongodb_num_candidates_ratio = "num_candidates_ratio"
+    use_partition_key = "use_partition_key"
 
     dataset_with_size_type = "dataset_with_size_type"
     insert_rate = "insert_rate"
