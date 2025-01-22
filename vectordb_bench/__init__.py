@@ -27,33 +27,7 @@ class config:
     DROP_OLD = env.bool("DROP_OLD", True)
     USE_SHUFFLED_DATA = env.bool("USE_SHUFFLED_DATA", True)
 
-    NUM_CONCURRENCY = env.list(
-        "NUM_CONCURRENCY",
-        [
-            1,
-            5,
-            10,
-            15,
-            20,
-            25,
-            30,
-            35,
-            40,
-            45,
-            50,
-            55,
-            60,
-            65,
-            70,
-            75,
-            80,
-            85,
-            90,
-            95,
-            100,
-        ],
-        subcast=int,
-    )
+    NUM_CONCURRENCY = env.list("NUM_CONCURRENCY", [1, 5, 10, 20, 30, 40, 60, 80], subcast=int)
 
     CONCURRENCY_DURATION = 30
 
