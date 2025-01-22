@@ -71,8 +71,9 @@ class RatedMultiThreadingInsertRunner:
                     )
                     _ = [fut.result() for fut in done]
                     if len(not_done) > 0:
-                        log.warning(f"[{len(not_done)}] tasks are not done, trying to wait in the next round")
                         self.executing_futures = list(not_done)
+                        if len(not_done) > 100:
+                            log.warning(f"[{len(not_done)}] tasks are not done, trying to wait in the next round")
                     else:
                         self.executing_futures = []
 
@@ -100,13 +101,13 @@ class RatedMultiThreadingInsertRunner:
                     if finished is True:
                         log.info(f"End of dataset, left unfinished={len(self.executing_futures)}")
                         break
-                    if elapsed_time >= 0.9:
+                    if elapsed_time >= 1.5:
                         log.warning(
                             f"Submit insert tasks took {elapsed_time}s, expected 1s, "
                             f"indicating potential resource limitations on the client machine.",
                         )
 
-                    wait_interval = time_per_batch - elapsed_time if elapsed_time < time_per_batch else 0.001
+                    wait_interval = 0.001
                     check_and_send_signal(wait_interval, finished=False)
 
                     dur = time.perf_counter() - start_time - inserted_batch_cnt * time_per_batch
