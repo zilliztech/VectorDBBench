@@ -167,7 +167,7 @@ class AWSOpenSearch(VectorDB):
             log.warning(f"Failed to search: {self.index_name} error: {e!s}")
             raise e from None
 
-    def optimize(self):
+    def optimize(self, data_size: int | None = None):
         """optimize will be called between insertion and search in performance cases."""
         # Call refresh first to ensure that all segments are created
         self._refresh_index()
