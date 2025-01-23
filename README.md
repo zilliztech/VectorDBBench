@@ -152,6 +152,18 @@ Options:
                                   with-gt]
   --help                          Show this message and exit.
 ```
+#### OpenSearch run command example
+
+```shell
+vectordbbench awsopensearch --db-label awsopensearch \
+--m 16 --ef-construction 256 \
+--host search-vector-db-prod-h4f6m4of6x7yp2rz7gdmots7w4.us-west-2.es.amazonaws.com --port 443 \
+--user vector --password '<password>' \
+--case-type Performance1536D5M \
+--skip-load --num-concurrency 75 \
+--number-of-replicas 2 --index-thread-qty 4 --number-of-shards 3
+```
+
 #### Using a configuration file.
 
 The vectordbbench command can optionally read some or all the options from a yaml formatted configuration file.

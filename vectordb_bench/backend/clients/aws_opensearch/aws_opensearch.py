@@ -1,11 +1,12 @@
 import logging
-from contextlib import contextmanager
 import time
-from typing import Iterable, Type
-from ..api import VectorDB, DBCaseConfig, DBConfig, IndexType
-from .config import AWSOpenSearchConfig, AWSOpenSearchIndexConfig, AWSOS_Engine
+from contextlib import contextmanager
+from typing import Iterable
+
 from opensearchpy import OpenSearch
-from opensearchpy.helpers import bulk
+
+from .config import AWSOpenSearchConfig, AWSOpenSearchIndexConfig, AWSOS_Engine
+from ..api import VectorDB, IndexType
 
 log = logging.getLogger(__name__)
 
@@ -52,12 +53,24 @@ class AWSOpenSearch(VectorDB):
         return AWSOpenSearchIndexConfig
 
     def _create_index(self, client: OpenSearch):
+        cluster_settings_body = {
+            "persistent": {
+                "knn.algo_param.index_thread_qty": self.case_config.index_thread_qty,
+                "knn.memory.circuit_breaker.limit": self.case_config.cb_threshold
+            }
+        }
+        client.cluster.put_settings(cluster_settings_body)
         settings = {
             "index": {
                 "knn": True,
-                # "number_of_shards": 5,
-                # "refresh_interval": "600s",
-            }
+                "number_of_shards": self.case_config.number_of_shards,
+                "number_of_replicas": 0,
+                "translog.flush_threshold_size": self.case_config.flush_threshold_size,
+                # Setting trans log threshold to 5GB
+                **({
+                       "knn.algo_param.ef_search": self.case_config.ef_search} if self.case_config.engine == AWSOS_Engine.nmslib else {})
+            },
+            "refresh_interval": self.case_config.refresh_interval,
         }
         mappings = {
             "properties": {
@@ -139,9 +152,9 @@ class AWSOpenSearch(VectorDB):
         }
         try:
             resp = self.client.search(index=self.index_name, body=body,size=k,_source=False,docvalue_fields=[self.id_col_name],stored_fields="_none_",)
-            log.info(f'Search took: {resp["took"]}')
-            log.info(f'Search shards: {resp["_shards"]}')
-            log.info(f'Search hits total: {resp["hits"]["total"]}')
+            log.debug(f'Search took: {resp["took"]}')
+            log.debug(f'Search shards: {resp["_shards"]}')
+            log.debug(f'Search hits total: {resp["hits"]["total"]}')
             result = [int(h["fields"][self.id_col_name][0]) for h in resp["hits"]["hits"]]
             #result = [int(d["_id"]) for d in resp["hits"]["hits"]]
             # log.info(f'success! length={len(res)}')
@@ -155,11 +168,42 @@ class AWSOpenSearch(VectorDB):
         """optimize will be called between insertion and search in performance cases."""
         # Call refresh first to ensure that all segments are created
         self._refresh_index()
-        self._do_force_merge()
+        if self.case_config.force_merge_enabled:
+            self._do_force_merge()
+            self._refresh_index()
+        self._update_replicas()
         # Call refresh again to ensure that the index is ready after force merge.
         self._refresh_index()
         # ensure that all graphs are loaded in memory and ready for search
         self._load_graphs_to_memory()
+
+    def _update_replicas(self):
+        index_settings = self.client.indices.get_settings(index=self.index_name)
+        current_number_of_replicas = int(index_settings[self.index_name]['settings']['index']['number_of_replicas'])
+        log.info(
+            f"Current Number of replicas are {current_number_of_replicas} and changing the replicas to {self.case_config.number_of_replicas}")
+        settings_body = {
+            "index": {
+                "number_of_replicas": self.case_config.number_of_replicas
+            }
+        }
+        self.client.indices.put_settings(index=self.index_name, body=settings_body)
+        self._wait_till_green()
+
+    def _wait_till_green(self):
+        log.info("Wait for index to become green..")
+        SECONDS_WAITING_FOR_REPLICAS_TO_BE_ENABLED_SEC = 30
+        while True:
+            res = self.client.cat.indices(index=self.index_name, h="health", format="json")
+            health = res[0]['health']
+            if health == 'green':
+                break
+            else:
+                log.info(f"The index {self.index_name} has health : {health} and is not green. Retrying")
+                time.sleep(SECONDS_WAITING_FOR_REPLICAS_TO_BE_ENABLED_SEC)
+                continue
+        log.info(f"Index {self.index_name} is green..")
+
 
     def _refresh_index(self):
         log.debug(f"Starting refresh for index {self.index_name}")
@@ -177,6 +221,14 @@ class AWSOpenSearch(VectorDB):
         log.debug(f"Completed refresh for index {self.index_name}")
 
     def _do_force_merge(self):
+        log.info(f"Updating the Index thread qty to {self.case_config.index_thread_qty_during_force_merge}.")
+
+        cluster_settings_body = {
+            "persistent": {
+                "knn.algo_param.index_thread_qty": self.case_config.index_thread_qty_during_force_merge
+            }
+        }
+        self.client.cluster.put_settings(cluster_settings_body)
         log.debug(f"Starting force merge for index {self.index_name}")
         force_merge_endpoint = f'/{self.index_name}/_forcemerge?max_num_segments=1&wait_for_completion=false'
         force_merge_task_id = self.client.transport.perform_request('POST', force_merge_endpoint)['task']

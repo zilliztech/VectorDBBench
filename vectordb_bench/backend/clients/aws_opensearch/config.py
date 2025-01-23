@@ -36,6 +36,16 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
     efConstruction: int = 256
     efSearch: int = 256
     M: int = 16
+    index_thread_qty: int | None = 4
+    number_of_shards: int | None = 1
+    number_of_replicas: int | None = 0
+    number_of_segments: int | None = 1
+    refresh_interval: str | None = "60s"
+    force_merge_enabled: bool | None = True
+    flush_threshold_size: str | None = "5120mb"
+    number_of_indexing_clients: int | None = 1
+    index_thread_qty_during_force_merge: int
+    cb_threshold: str | None = "50%"
 
     def parse_metric(self) -> str:
         if self.metric_type == MetricType.IP:
