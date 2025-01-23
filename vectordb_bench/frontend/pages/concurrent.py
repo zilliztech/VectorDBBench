@@ -9,7 +9,7 @@ from vectordb_bench.frontend.components.check_results.filters import getshownDat
 from vectordb_bench.frontend.components.concurrent.charts import drawChartsByCase
 from vectordb_bench.frontend.components.get_results.saveAsImage import getResults
 from vectordb_bench.frontend.config.styles import FAVICON
-from vectordb_bench.interface import benchMarkRunner
+from vectordb_bench.interface import benchmark_runner
 from vectordb_bench.models import TestResult
 
 
@@ -25,7 +25,7 @@ def main():
     # header
     drawHeaderIcon(st)
 
-    allResults = benchMarkRunner.get_results()
+    allResults = benchmark_runner.get_results()
 
     def check_conc_data(res: TestResult):
         case_results = res.results
@@ -57,9 +57,7 @@ def main():
 
     # main
     latency_type = st.radio("Latency Type", options=["latency_p99", "latency_avg"])
-    drawChartsByCase(
-        shownData, showCaseNames, st.container(), latency_type=latency_type
-    )
+    drawChartsByCase(shownData, showCaseNames, st.container(), latency_type=latency_type)
 
     # footer
     footer(st.container())

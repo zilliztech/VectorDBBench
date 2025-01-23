@@ -32,8 +32,7 @@ def get_custom_configs():
 
 def save_custom_configs(custom_configs: list[CustomDatasetConfig]):
     with open(config.CUSTOM_CONFIG_DIR, "w") as f:
-        json.dump([custom_config.dict()
-                   for custom_config in custom_configs], f, indent=4)
+        json.dump([custom_config.dict() for custom_config in custom_configs], f, indent=4)
 
 
 def generate_custom_case():

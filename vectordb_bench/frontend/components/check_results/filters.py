@@ -20,23 +20,17 @@ def getshownData(results: list[TestResult], st):
     shownResults = getshownResults(results, st)
     showDBNames, showCaseNames = getShowDbsAndCases(shownResults, st)
 
-    shownData, failedTasks = getChartData(
-        shownResults, showDBNames, showCaseNames)
+    shownData, failedTasks = getChartData(shownResults, showDBNames, showCaseNames)
 
     return shownData, failedTasks, showCaseNames
 
 
 def getshownResults(results: list[TestResult], st) -> list[CaseResult]:
     resultSelectOptions = [
-        result.task_label
-        if result.task_label != result.run_id
-        else f"res-{result.run_id[:4]}"
-        for result in results
+        result.task_label if result.task_label != result.run_id else f"res-{result.run_id[:4]}" for result in results
     ]
     if len(resultSelectOptions) == 0:
-        st.write(
-            "There are no results to display. Please wait for the task to complete or run a new task."
-        )
+        st.write("There are no results to display. Please wait for the task to complete or run a new task.")
         return []
 
     selectedResultSelectedOptions = st.multiselect(
@@ -58,13 +52,12 @@ def getShowDbsAndCases(result: list[CaseResult], st) -> tuple[list[str], list[st
     allDbNames = list(set({res.task_config.db_name for res in result}))
     allDbNames.sort()
     allCases: list[Case] = [
-        res.task_config.case_config.case_id.case_cls(
-            res.task_config.case_config.custom_case)
-        for res in result
+        res.task_config.case_config.case_id.case_cls(res.task_config.case_config.custom_case) for res in result
     ]
     allCaseNameSet = set({case.name for case in allCases})
-    allCaseNames = [case_name for case_name in CASE_NAME_ORDER if case_name in allCaseNameSet] + \
-        [case_name for case_name in allCaseNameSet if case_name not in CASE_NAME_ORDER]
+    allCaseNames = [case_name for case_name in CASE_NAME_ORDER if case_name in allCaseNameSet] + [
+        case_name for case_name in allCaseNameSet if case_name not in CASE_NAME_ORDER
+    ]
 
     # DB Filter
     dbFilterContainer = st.container()
@@ -120,8 +113,7 @@ def filterView(container, header, options, col, optionLables=None):
     )
     if optionLables is None:
         optionLables = options
-    isActive = {option: st.session_state[selectAllState]
-                for option in optionLables}
+    isActive = {option: st.session_state[selectAllState] for option in optionLables}
     for i, option in enumerate(optionLables):
         isActive[option] = columns[i % col].checkbox(
             optionLables[i],

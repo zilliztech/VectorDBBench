@@ -1,15 +1,17 @@
-import logging
-from typing import Iterable
-import multiprocessing as mp
 import concurrent
-import numpy as np
+import logging
 import math
+import multiprocessing as mp
+from collections.abc import Iterable
 
-from .mp_runner import MultiProcessingSearchRunner
-from .serial_runner import SerialSearchRunner
-from .rate_runner import RatedMultiThreadingInsertRunner
+import numpy as np
+
 from vectordb_bench.backend.clients import api
 from vectordb_bench.backend.dataset import DatasetManager
+
+from .mp_runner import MultiProcessingSearchRunner
+from .rate_runner import RatedMultiThreadingInsertRunner
+from .serial_runner import SerialSearchRunner
 
 log = logging.getLogger(__name__)
 
@@ -24,8 +26,14 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
         k: int = 100,
         filters: dict | None = None,
         concurrencies: Iterable[int] = (1, 15, 50),
-        search_stage: Iterable[float] = (0.5, 0.6, 0.7, 0.8, 0.9), # search from insert portion, 0.0 means search from the start
-        read_dur_after_write: int = 300, # seconds, search duration when insertion is done
+        search_stage: Iterable[float] = (
+            0.5,
+            0.6,
+            0.7,
+            0.8,
+            0.9,
+        ),  # search from insert portion, 0.0 means search from the start
+        read_dur_after_write: int = 300,  # seconds, search duration when insertion is done
         timeout: float | None = None,
     ):
         self.insert_rate = insert_rate
@@ -36,7 +44,10 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
         self.search_stage = sorted(search_stage)
         self.read_dur_after_write = read_dur_after_write
 
-        log.info(f"Init runner, concurencys={concurrencies}, search_stage={search_stage}, stage_search_dur={read_dur_after_write}")
+        log.info(
+            f"Init runner, concurencys={concurrencies}, search_stage={search_stage}, "
+            f"stage_search_dur={read_dur_after_write}"
+        )
 
         test_emb = np.stack(dataset.test_data["emb"])
         if normalize:
@@ -69,14 +80,17 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
         """Optimize needs to run in differenct process for pymilvus schema recursion problem"""
         with self.db.init():
             log.info("Search after write - Optimize start")
-            self.db.optimize()
+            self.db.optimize(data_size=self.data_volume)
             log.info("Search after write - Optimize finished")
 
     def run_search(self):
         log.info("Search after write - Serial search start")
         res, ssearch_dur = self.serial_search_runner.run()
         recall, ndcg, p99_latency = res
-        log.info(f"Search after write - Serial search - recall={recall}, ndcg={ndcg}, p99={p99_latency}, dur={ssearch_dur:.4f}")
+        log.info(
+            f"Search after write - Serial search - recall={recall}, ndcg={ndcg}, p99={p99_latency}, "
+            f"dur={ssearch_dur:.4f}",
+        )
         log.info(f"Search after wirte - Conc search start, dur for each conc={self.read_dur_after_write}")
         max_qps = self.run_by_dur(self.read_dur_after_write)
         log.info(f"Search after wirte - Conc search finished, max_qps={max_qps}")
@@ -86,7 +100,10 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
     def run_read_write(self):
         with mp.Manager() as m:
             q = m.Queue()
-            with concurrent.futures.ProcessPoolExecutor(mp_context=mp.get_context("spawn"), max_workers=2) as executor:
+            with concurrent.futures.ProcessPoolExecutor(
+                mp_context=mp.get_context("spawn"),
+                max_workers=2,
+            ) as executor:
                 read_write_futures = []
                 read_write_futures.append(executor.submit(self.run_with_rate, q))
                 read_write_futures.append(executor.submit(self.run_search_by_sig, q))
@@ -107,10 +124,10 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
                 except Exception as e:
                     log.warning(f"Read and write error: {e}")
                     executor.shutdown(wait=True, cancel_futures=True)
-                    raise e
+                    raise e from e
         log.info("Concurrent read write all done")
 
-    def run_search_by_sig(self, q):
+    def run_search_by_sig(self, q: mp.Queue):
         """
         Args:
             q: multiprocessing queue
@@ -122,15 +139,14 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
         total_batch = math.ceil(self.data_volume / self.insert_rate)
         recall, ndcg, p99_latency = None, None, None
 
-        def wait_next_target(start, target_batch) -> bool:
+        def wait_next_target(start: int, target_batch: int) -> bool:
             """Return False when receive True or None"""
             while start < target_batch:
                 sig = q.get(block=True)
 
                 if sig is None or sig is True:
                     return False
-                else:
-                    start += 1
+                start += 1
             return True
 
         for idx, stage in enumerate(self.search_stage):
@@ -140,18 +156,21 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
             got = wait_next_target(start_batch, target_batch)
             if got is False:
                 log.warning(f"Abnormal exit, target_batch={target_batch}, start_batch={start_batch}")
-                return
+                return None
 
             log.info(f"Insert {perc}% done, total batch={total_batch}")
             log.info(f"[{target_batch}/{total_batch}] Serial search - {perc}% start")
             res, ssearch_dur = self.serial_search_runner.run()
             recall, ndcg, p99_latency = res
-            log.info(f"[{target_batch}/{total_batch}] Serial search - {perc}% done, recall={recall}, ndcg={ndcg}, p99={p99_latency}, dur={ssearch_dur:.4f}")
+            log.info(
+                f"[{target_batch}/{total_batch}] Serial search - {perc}% done, recall={recall}, "
+                f"ndcg={ndcg}, p99={p99_latency}, dur={ssearch_dur:.4f}"
+            )
 
             # Search duration for non-last search stage is carefully calculated.
             # If duration for each concurrency is less than 30s, runner will raise error.
             if idx < len(self.search_stage) - 1:
-                total_dur_between_stages = self.data_volume  * (self.search_stage[idx + 1] - stage) // self.insert_rate
+                total_dur_between_stages = self.data_volume * (self.search_stage[idx + 1] - stage) // self.insert_rate
                 csearch_dur = total_dur_between_stages - ssearch_dur
 
                 # Try to leave room for init process executors
@@ -159,14 +178,19 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
 
                 each_conc_search_dur = csearch_dur / len(self.concurrencies)
                 if each_conc_search_dur < 30:
-                    warning_msg = f"Results might be inaccurate, duration[{csearch_dur:.4f}] left for conc-search is too short, total available dur={total_dur_between_stages}, serial_search_cost={ssearch_dur}."
+                    warning_msg = (
+                        f"Results might be inaccurate, duration[{csearch_dur:.4f}] left for conc-search is too short, "
+                        f"total available dur={total_dur_between_stages}, serial_search_cost={ssearch_dur}."
+                    )
                     log.warning(warning_msg)
 
             # The last stage
             else:
                 each_conc_search_dur = 60
 
-            log.info(f"[{target_batch}/{total_batch}] Concurrent search - {perc}% start, dur={each_conc_search_dur:.4f}")
+            log.info(
+                f"[{target_batch}/{total_batch}] Concurrent search - {perc}% start, dur={each_conc_search_dur:.4f}"
+            )
             max_qps = self.run_by_dur(each_conc_search_dur)
             result.append((perc, max_qps, recall, ndcg, p99_latency))
 

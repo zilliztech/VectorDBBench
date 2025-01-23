@@ -9,6 +9,7 @@ def initResultsPageConfig(st):
         # initial_sidebar_state="collapsed",
     )
 
+
 def initRunTestPageConfig(st):
     st.set_page_config(
         page_title=PAGE_TITLE,

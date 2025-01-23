@@ -1,10 +1,12 @@
-from pydantic import SecretStr, BaseModel
-from ..api import DBConfig, DBCaseConfig, MetricType, IndexType
+from pydantic import BaseModel, SecretStr
+
+from ..api import DBCaseConfig, DBConfig, IndexType, MetricType
+
 
 class RedisConfig(DBConfig):
     password: SecretStr | None = None
     host: SecretStr
-    port: int | None = None 
+    port: int | None = None
 
     def to_dict(self) -> dict:
         return {
@@ -12,7 +14,6 @@ class RedisConfig(DBConfig):
             "port": self.port,
             "password": self.password.get_secret_value() if self.password is not None else None,
         }
-        
 
 
 class RedisIndexConfig(BaseModel):
@@ -24,7 +25,8 @@ class RedisIndexConfig(BaseModel):
         if not self.metric_type:
             return ""
         return self.metric_type.value
-    
+
+
 class RedisHNSWConfig(RedisIndexConfig, DBCaseConfig):
     M: int
     efConstruction: int

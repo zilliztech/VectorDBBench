@@ -14,9 +14,7 @@ from .. import DB
 
 
 class MemoryDBTypedDict(TypedDict):
-    host: Annotated[
-        str, click.option("--host", type=str, help="Db host", required=True)
-    ]
+    host: Annotated[str, click.option("--host", type=str, help="Db host", required=True)]
     password: Annotated[str, click.option("--password", type=str, help="Db password")]
     port: Annotated[int, click.option("--port", type=int, default=6379, help="Db Port")]
     ssl: Annotated[
@@ -44,7 +42,10 @@ class MemoryDBTypedDict(TypedDict):
             is_flag=True,
             show_default=True,
             default=False,
-            help="Cluster Mode Disabled (CMD), use this flag when testing locally on a single node instance. In production, MemoryDB only supports cluster mode (CME)",
+            help=(
+                "Cluster Mode Disabled (CMD), use this flag when testing locally on a single node instance."
+                " In production, MemoryDB only supports cluster mode (CME)"
+            ),
         ),
     ]
     insert_batch_size: Annotated[
@@ -58,8 +59,7 @@ class MemoryDBTypedDict(TypedDict):
     ]
 
 
-class MemoryDBHNSWTypedDict(CommonTypedDict, MemoryDBTypedDict, HNSWFlavor2):
-    ...
+class MemoryDBHNSWTypedDict(CommonTypedDict, MemoryDBTypedDict, HNSWFlavor2): ...
 
 
 @cli.command()
@@ -82,7 +82,7 @@ def MemoryDB(**parameters: Unpack[MemoryDBHNSWTypedDict]):
             M=parameters["m"],
             ef_construction=parameters["ef_construction"],
             ef_runtime=parameters["ef_runtime"],
-            insert_batch_size=parameters["insert_batch_size"]
+            insert_batch_size=parameters["insert_batch_size"],
         ),
         **parameters,
     )

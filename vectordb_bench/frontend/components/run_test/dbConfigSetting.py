@@ -42,10 +42,7 @@ def dbConfigSettingItem(st, activeDb: DB):
 
     # db config (unique)
     for key, property in properties.items():
-        if (
-            key not in dbConfigClass.common_short_configs()
-            and key not in dbConfigClass.common_long_configs()
-        ):
+        if key not in dbConfigClass.common_short_configs() and key not in dbConfigClass.common_long_configs():
             column = columns[idx % DB_CONFIG_SETTING_COLUMNS]
             idx += 1
             dbConfig[key] = column.text_input(

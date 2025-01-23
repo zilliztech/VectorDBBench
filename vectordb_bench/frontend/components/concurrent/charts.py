@@ -14,24 +14,24 @@ def drawChartsByCase(allData, showCaseNames: list[str], st, latency_type: str):
         data = [
             {
                 "conc_num": caseData["conc_num_list"][i],
-                "qps": caseData["conc_qps_list"][i]
-                if 0 <= i < len(caseData["conc_qps_list"])
-                else 0,
-                "latency_p99": caseData["conc_latency_p99_list"][i] * 1000
-                if 0 <= i < len(caseData["conc_latency_p99_list"])
-                else 0,
-                "latency_avg": caseData["conc_latency_avg_list"][i] * 1000
-                if 0 <= i < len(caseData["conc_latency_avg_list"])
-                else 0,
+                "qps": (caseData["conc_qps_list"][i] if 0 <= i < len(caseData["conc_qps_list"]) else 0),
+                "latency_p99": (
+                    caseData["conc_latency_p99_list"][i] * 1000
+                    if 0 <= i < len(caseData["conc_latency_p99_list"])
+                    else 0
+                ),
+                "latency_avg": (
+                    caseData["conc_latency_avg_list"][i] * 1000
+                    if 0 <= i < len(caseData["conc_latency_avg_list"])
+                    else 0
+                ),
                 "db_name": caseData["db_name"],
                 "db": caseData["db"],
             }
             for caseData in caseDataList
             for i in range(len(caseData["conc_num_list"]))
         ]
-        drawChart(
-            data, chartContainer, key=f"{caseName}-qps-p99", x_metric=latency_type
-        )
+        drawChart(data, chartContainer, key=f"{caseName}-qps-p99", x_metric=latency_type)
 
 
 def getRange(metric, data, padding_multipliers):

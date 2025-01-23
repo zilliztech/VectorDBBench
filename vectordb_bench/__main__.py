@@ -1,7 +1,8 @@
-import traceback
 import logging
+import pathlib
 import subprocess
-import os
+import traceback
+
 from . import config
 
 log = logging.getLogger("vectordb_bench")
@@ -16,7 +17,7 @@ def run_streamlit():
     cmd = [
         "streamlit",
         "run",
-        f"{os.path.dirname(__file__)}/frontend/vdb_benchmark.py",
+        f"{pathlib.Path(__file__).parent}/frontend/vdb_benchmark.py",
         "--logger.level",
         "info",
         "--theme.base",

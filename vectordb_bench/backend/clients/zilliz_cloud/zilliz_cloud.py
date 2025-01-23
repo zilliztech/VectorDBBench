@@ -1,7 +1,7 @@
 """Wrapper around the ZillizCloud vector database over VectorDB"""
 
-from ..milvus.milvus import Milvus
 from ..api import DBCaseConfig
+from ..milvus.milvus import Milvus
 
 
 class ZillizCloud(Milvus):

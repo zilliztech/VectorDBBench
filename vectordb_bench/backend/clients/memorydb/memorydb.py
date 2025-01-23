@@ -1,30 +1,33 @@
-import logging, time
+import logging
+import time
+from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Any, Generator, Optional, Tuple, Type
-from ..api import VectorDB, DBCaseConfig, IndexType
-from .config import MemoryDBIndexConfig
+from typing import Any
+
+import numpy as np
 import redis
 from redis import Redis
 from redis.cluster import RedisCluster
-from redis.commands.search.field import TagField, VectorField, NumericField
-from redis.commands.search.indexDefinition import IndexDefinition, IndexType
+from redis.commands.search.field import NumericField, TagField, VectorField
+from redis.commands.search.indexDefinition import IndexDefinition
 from redis.commands.search.query import Query
-import numpy as np
 
+from ..api import IndexType, VectorDB
+from .config import MemoryDBIndexConfig
 
 log = logging.getLogger(__name__)
-INDEX_NAME = "index"    # Vector Index Name
+INDEX_NAME = "index"  # Vector Index Name
+
 
 class MemoryDB(VectorDB):
     def __init__(
-            self,
-            dim: int,
-            db_config: dict,
-            db_case_config: MemoryDBIndexConfig,
-            drop_old: bool = False,
-            **kwargs
-        ):
-
+        self,
+        dim: int,
+        db_config: dict,
+        db_case_config: MemoryDBIndexConfig,
+        drop_old: bool = False,
+        **kwargs,
+    ):
         self.db_config = db_config
         self.case_config = db_case_config
         self.collection_name = INDEX_NAME
@@ -44,10 +47,10 @@ class MemoryDB(VectorDB):
                 info = conn.ft(INDEX_NAME).info()
                 log.info(f"Index info: {info}")
             except redis.exceptions.ResponseError as e:
-                log.error(e)
+                log.warning(e)
                 drop_old = False
                 log.info(f"MemoryDB client drop_old collection: {self.collection_name}")
-            
+
             log.info("Executing FLUSHALL")
             conn.flushall()
 
@@ -59,7 +62,7 @@ class MemoryDB(VectorDB):
                     self.wait_until(self.wait_for_empty_db, 3, "", rc)
                     log.debug(f"Flushall done in the host: {host}")
                     rc.close()
-        
+
         self.make_index(dim, conn)
         conn.close()
         conn = None
@@ -69,7 +72,7 @@ class MemoryDB(VectorDB):
             # check to see if index exists
             conn.ft(INDEX_NAME).info()
         except Exception as e:
-            log.warn(f"Error getting info for index '{INDEX_NAME}': {e}")
+            log.warning(f"Error getting info for index '{INDEX_NAME}': {e}")
             index_param = self.case_config.index_param()
             search_param = self.case_config.search_param()
             vector_parameters = {  # Vector Index Type: FLAT or HNSW
@@ -85,17 +88,19 @@ class MemoryDB(VectorDB):
                 vector_parameters["EF_RUNTIME"] = search_param["ef_runtime"]
 
             schema = (
-                TagField("id"),                   
-                NumericField("metadata"),              
-                VectorField("vector",   # Vector Field Name
-                    "HNSW", vector_parameters
+                TagField("id"),
+                NumericField("metadata"),
+                VectorField(
+                    "vector",  # Vector Field Name
+                    "HNSW",
+                    vector_parameters,
                 ),
             )
 
             definition = IndexDefinition(index_type=IndexType.HASH)
             rs = conn.ft(INDEX_NAME)
             rs.create_index(schema, definition=definition)
-    
+
     def get_client(self, **kwargs):
         """
         Gets either cluster connection or normal connection based on `cmd` flag.
@@ -143,7 +148,7 @@ class MemoryDB(VectorDB):
 
     @contextmanager
     def init(self) -> Generator[None, None, None]:
-        """ create and destory connections to database.
+        """create and destory connections to database.
 
         Examples:
             >>> with self.init():
@@ -152,17 +157,14 @@ class MemoryDB(VectorDB):
         self.conn = self.get_client()
         search_param = self.case_config.search_param()
         if search_param["ef_runtime"]:
-            self.ef_runtime_str = f'EF_RUNTIME {search_param["ef_runtime"]}'
+            self.ef_runtime_str = f"EF_RUNTIME {search_param['ef_runtime']}"
         else:
             self.ef_runtime_str = ""
         yield
         self.conn.close()
         self.conn = None
 
-    def ready_to_load(self) -> bool:
-        pass
-
-    def optimize(self) -> None:
+    def optimize(self, data_size: int | None = None):
         self._post_insert()
 
     def insert_embeddings(
@@ -170,7 +172,7 @@ class MemoryDB(VectorDB):
         embeddings: list[list[float]],
         metadata: list[int],
         **kwargs: Any,
-    ) -> Tuple[int, Optional[Exception]]:
+    ) -> tuple[int, Exception | None]:
         """Insert embeddings into the database.
         Should call self.init() first.
         """
@@ -178,12 +180,15 @@ class MemoryDB(VectorDB):
         try:
             with self.conn.pipeline(transaction=False) as pipe:
                 for i, embedding in enumerate(embeddings):
-                    embedding = np.array(embedding).astype(np.float32)
-                    pipe.hset(metadata[i], mapping = {
-                        "id": str(metadata[i]),
-                        "metadata": metadata[i], 
-                        "vector": embedding.tobytes(),
-                    })
+                    ndarr_emb = np.array(embedding).astype(np.float32)
+                    pipe.hset(
+                        metadata[i],
+                        mapping={
+                            "id": str(metadata[i]),
+                            "metadata": metadata[i],
+                            "vector": ndarr_emb.tobytes(),
+                        },
+                    )
                     # Execute the pipe so we don't keep too much in memory at once
                     if (i + 1) % self.insert_batch_size == 0:
                         pipe.execute()
@@ -192,9 +197,9 @@ class MemoryDB(VectorDB):
                 result_len = i + 1
         except Exception as e:
             return 0, e
-        
+
         return result_len, None
-    
+
     def _post_insert(self):
         """Wait for indexing to finish"""
         client = self.get_client(primary=True)
@@ -208,21 +213,17 @@ class MemoryDB(VectorDB):
                 self.wait_until(*args)
                 log.debug(f"Background indexing completed in the host: {host_name}")
                 rc.close()
-    
-    def wait_until(
-        self, condition, interval=5, message="Operation took too long", *args
-    ):
+
+    def wait_until(self, condition: any, interval: int = 5, message: str = "Operation took too long", *args):
         while not condition(*args):
             time.sleep(interval)
-    
+
     def wait_for_no_activity(self, client: redis.RedisCluster | redis.Redis):
-        return (
-            client.info("search")["search_background_indexing_status"] == "NO_ACTIVITY"
-        )
-    
+        return client.info("search")["search_background_indexing_status"] == "NO_ACTIVITY"
+
     def wait_for_empty_db(self, client: redis.RedisCluster | redis.Redis):
         return client.execute_command("DBSIZE") == 0
-    
+
     def search_embedding(
         self,
         query: list[float],
@@ -230,13 +231,13 @@ class MemoryDB(VectorDB):
         filters: dict | None = None,
         timeout: int | None = None,
         **kwargs: Any,
-    ) -> (list[int]):
+    ) -> list[int]:
         assert self.conn is not None
-        
+
         query_vector = np.array(query).astype(np.float32).tobytes()
         query_obj = Query(f"*=>[KNN {k} @vector $vec]").return_fields("id").paging(0, k)
         query_params = {"vec": query_vector}
-        
+
         if filters:
             # benchmark test filters of format: {'metadata': '>=10000', 'id': 10000}
             # gets exact match for id, and range for metadata if they exist in filters
@@ -244,11 +245,19 @@ class MemoryDB(VectorDB):
             # Removing '>=' from the id_value: '>=10000'
             metadata_value = filters.get("metadata")[2:]
             if id_value and metadata_value:
-                query_obj = Query(f"(@metadata:[{metadata_value} +inf] @id:{ {id_value} })=>[KNN {k} @vector $vec]").return_fields("id").paging(0, k)
+                query_obj = (
+                    Query(
+                        f"(@metadata:[{metadata_value} +inf] @id:{ {id_value} })=>[KNN {k} @vector $vec]",
+                    )
+                    .return_fields("id")
+                    .paging(0, k)
+                )
             elif id_value:
-                #gets exact match for id
+                # gets exact match for id
                 query_obj = Query(f"@id:{ {id_value} }=>[KNN {k} @vector $vec]").return_fields("id").paging(0, k)
-            else: #metadata only case, greater than or equal to metadata value
-                query_obj = Query(f"@metadata:[{metadata_value} +inf]=>[KNN {k} @vector $vec]").return_fields("id").paging(0, k)
+            else:  # metadata only case, greater than or equal to metadata value
+                query_obj = (
+                    Query(f"@metadata:[{metadata_value} +inf]=>[KNN {k} @vector $vec]").return_fields("id").paging(0, k)
+                )
         res = self.conn.ft(INDEX_NAME).search(query_obj, query_params)
         return [int(doc["id"]) for doc in res.docs]

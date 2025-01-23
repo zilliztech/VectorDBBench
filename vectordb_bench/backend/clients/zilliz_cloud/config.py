@@ -1,7 +1,7 @@
 from pydantic import SecretStr
 
 from ..api import DBCaseConfig, DBConfig
-from ..milvus.config import MilvusIndexConfig, IndexType
+from ..milvus.config import IndexType, MilvusIndexConfig
 
 
 class ZillizCloudConfig(DBConfig):
@@ -33,7 +33,5 @@ class AutoIndexConfig(MilvusIndexConfig, DBCaseConfig):
             "metric_type": self.parse_metric(),
             "params": {
                 "level": self.level,
-            }
+            },
         }
-
-

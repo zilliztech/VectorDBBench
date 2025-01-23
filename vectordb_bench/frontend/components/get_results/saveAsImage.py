@@ -9,9 +9,11 @@ HTML_2_CANVAS_URL = "https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.js"
 def load_unpkg(src: str) -> str:
     return requests.get(src).text
 
+
 def getResults(container, pageName="vectordb_bench"):
     container.subheader("Get results")
     saveAsImage(container, pageName)
+
 
 def saveAsImage(container, pageName):
     html2canvasJS = load_unpkg(HTML_2_CANVAS_URL)

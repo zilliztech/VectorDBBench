@@ -4,25 +4,30 @@ Usage:
     >>> Dataset.Cohere.get(100_000)
 """
 
-from collections import namedtuple
 import logging
 import pathlib
+import typing
 from enum import Enum
+
 import pandas as pd
-from pydantic import validator, PrivateAttr
 import polars as pl
 from pyarrow.parquet import ParquetFile
+from pydantic import PrivateAttr, validator
 
-from ..base import BaseModel
-from .. import config
-from ..backend.clients import MetricType
+from vectordb_bench import config
+from vectordb_bench.base import BaseModel
+
 from . import utils
-from .data_source import DatasetSource, DatasetReader
+from .clients import MetricType
+from .data_source import DatasetReader, DatasetSource
 
 log = logging.getLogger(__name__)
 
 
-SizeLabel = namedtuple('SizeLabel', ['size', 'label', 'file_count'])
+class SizeLabel(typing.NamedTuple):
+    size: int
+    label: str
+    file_count: int
 
 
 class BaseDataset(BaseModel):
@@ -33,12 +38,13 @@ class BaseDataset(BaseModel):
     use_shuffled: bool
     with_gt: bool = False
     _size_label: dict[int, SizeLabel] = PrivateAttr()
-    isCustom: bool = False
+    is_custom: bool = False
 
     @validator("size")
-    def verify_size(cls, v):
+    def verify_size(cls, v: int):
         if v not in cls._size_label:
-            raise ValueError(f"Size {v} not supported for the dataset, expected: {cls._size_label.keys()}")
+            msg = f"Size {v} not supported for the dataset, expected: {cls._size_label.keys()}"
+            raise ValueError(msg)
         return v
 
     @property
@@ -53,13 +59,14 @@ class BaseDataset(BaseModel):
     def file_count(self) -> int:
         return self._size_label.get(self.size).file_count
 
+
 class CustomDataset(BaseDataset):
     dir: str
     file_num: int
-    isCustom: bool = True
+    is_custom: bool = True
 
     @validator("size")
-    def verify_size(cls, v):
+    def verify_size(cls, v: int):
         return v
 
     @property
@@ -102,7 +109,7 @@ class Cohere(BaseDataset):
     dim: int = 768
     metric_type: MetricType = MetricType.COSINE
     use_shuffled: bool = config.USE_SHUFFLED_DATA
-    with_gt: bool = True,
+    with_gt: bool = (True,)
     _size_label: dict = {
         100_000: SizeLabel(100_000, "SMALL", 1),
         1_000_000: SizeLabel(1_000_000, "MEDIUM", 1),
@@ -124,7 +131,11 @@ class SIFT(BaseDataset):
     metric_type: MetricType = MetricType.L2
     use_shuffled: bool = False
     _size_label: dict = {
-        500_000: SizeLabel(500_000, "SMALL", 1,),
+        500_000: SizeLabel(
+            500_000,
+            "SMALL",
+            1,
+        ),
         5_000_000: SizeLabel(5_000_000, "MEDIUM", 1),
         #  50_000_000: SizeLabel(50_000_000, "LARGE", 50),
     }
@@ -135,7 +146,7 @@ class OpenAI(BaseDataset):
     dim: int = 1536
     metric_type: MetricType = MetricType.COSINE
     use_shuffled: bool = config.USE_SHUFFLED_DATA
-    with_gt: bool = True,
+    with_gt: bool = (True,)
     _size_label: dict = {
         50_000: SizeLabel(50_000, "SMALL", 1),
         500_000: SizeLabel(500_000, "MEDIUM", 1),
@@ -153,13 +164,14 @@ class DatasetManager(BaseModel):
         >>> for data in cohere:
         >>>    print(data.columns)
     """
-    data:   BaseDataset
+
+    data: BaseDataset
     test_data: pd.DataFrame | None = None
     gt_data: pd.DataFrame | None = None
-    train_files : list[str] = []
+    train_files: list[str] = []
     reader: DatasetReader | None = None
 
-    def __eq__(self, obj):
+    def __eq__(self, obj: any):
         if isinstance(obj, DatasetManager):
             return self.data.name == obj.data.name and self.data.label == obj.data.label
         return False
@@ -169,22 +181,27 @@ class DatasetManager(BaseModel):
 
     @property
     def data_dir(self) -> pathlib.Path:
-        """ data local directory: config.DATASET_LOCAL_DIR/{dataset_name}/{dataset_dirname}
+        """data local directory: config.DATASET_LOCAL_DIR/{dataset_name}/{dataset_dirname}
 
         Examples:
             >>> sift_s = Dataset.SIFT.manager(500_000)
             >>> sift_s.relative_path
             '/tmp/vectordb_bench/dataset/sift/sift_small_500k/'
         """
-        return pathlib.Path(config.DATASET_LOCAL_DIR, self.data.name.lower(), self.data.dir_name.lower())
+        return pathlib.Path(
+            config.DATASET_LOCAL_DIR,
+            self.data.name.lower(),
+            self.data.dir_name.lower(),
+        )
 
     def __iter__(self):
         return DataSetIterator(self)
 
     # TODO passing use_shuffle from outside
-    def prepare(self,
-        source: DatasetSource=DatasetSource.S3,
-        filters: int | float | str | None = None,
+    def prepare(
+        self,
+        source: DatasetSource = DatasetSource.S3,
+        filters: float | str | None = None,
     ) -> bool:
         """Download the dataset from DatasetSource
          url = f"{source}/{self.data.dir_name}"
@@ -208,7 +225,7 @@ class DatasetManager(BaseModel):
             gt_file, test_file = utils.compose_gt_file(filters), "test.parquet"
             all_files.extend([gt_file, test_file])
 
-        if not self.data.isCustom:
+        if not self.data.is_custom:
             source.reader().read(
                 dataset=self.data.dir_name.lower(),
                 files=all_files,
@@ -220,7 +237,7 @@ class DatasetManager(BaseModel):
             self.gt_data = self._read_file(gt_file)
 
         prefix = "shuffle_train" if use_shuffled else "train"
-        self.train_files = sorted([f.name for f in self.data_dir.glob(f'{prefix}*.parquet')])
+        self.train_files = sorted([f.name for f in self.data_dir.glob(f"{prefix}*.parquet")])
         log.debug(f"{self.data.name}: available train files {self.train_files}")
 
         return True
@@ -241,7 +258,7 @@ class DataSetIterator:
         self._ds = dataset
         self._idx = 0  # file number
         self._cur = None
-        self._sub_idx = [0 for i in range(len(self._ds.train_files))] # iter num for each file
+        self._sub_idx = [0 for i in range(len(self._ds.train_files))]  # iter num for each file
 
     def __iter__(self):
         return self
@@ -250,7 +267,9 @@ class DataSetIterator:
         p = pathlib.Path(self._ds.data_dir, file_name)
         log.info(f"Get iterator for {p.name}")
         if not p.exists():
-            raise IndexError(f"No such file {p}")
+            msg = f"No such file: {p}"
+            log.warning(msg)
+            raise IndexError(msg)
         return ParquetFile(p, memory_map=True, pre_buffer=True).iter_batches(config.NUM_PER_BATCH)
 
     def __next__(self) -> pd.DataFrame:
@@ -281,6 +300,7 @@ class Dataset(Enum):
         >>> Dataset.COHERE.manager(100_000)
         >>> Dataset.COHERE.get(100_000)
     """
+
     LAION = LAION
     GIST = GIST
     COHERE = Cohere
