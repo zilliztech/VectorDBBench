@@ -55,7 +55,7 @@ class AWSOpenSearch(VectorDB):
         cluster_settings_body = {
             "persistent": {
                 "knn.algo_param.index_thread_qty": self.case_config.index_thread_qty,
-                "knn.memory.circuit_breaker.limit": self.case_config.cb_threshold
+                "knn.memory.circuit_breaker.limit": self.case_config.cb_threshold,
             }
         }
         client.cluster.put_settings(cluster_settings_body)
@@ -66,8 +66,11 @@ class AWSOpenSearch(VectorDB):
                 "number_of_replicas": 0,
                 "translog.flush_threshold_size": self.case_config.flush_threshold_size,
                 # Setting trans log threshold to 5GB
-                **({
-                       "knn.algo_param.ef_search": self.case_config.ef_search} if self.case_config.engine == AWSOS_Engine.nmslib else {})
+                **(
+                    {"knn.algo_param.ef_search": self.case_config.ef_search}
+                    if self.case_config.engine == AWSOS_Engine.nmslib
+                    else {}
+                ),
             },
             "refresh_interval": self.case_config.refresh_interval,
         }
@@ -182,14 +185,11 @@ class AWSOpenSearch(VectorDB):
 
     def _update_replicas(self):
         index_settings = self.client.indices.get_settings(index=self.index_name)
-        current_number_of_replicas = int(index_settings[self.index_name]['settings']['index']['number_of_replicas'])
+        current_number_of_replicas = int(index_settings[self.index_name]["settings"]["index"]["number_of_replicas"])
         log.info(
-            f"Current Number of replicas are {current_number_of_replicas} and changing the replicas to {self.case_config.number_of_replicas}")
-        settings_body = {
-            "index": {
-                "number_of_replicas": self.case_config.number_of_replicas
-            }
-        }
+            f"Current Number of replicas are {current_number_of_replicas} and changing the replicas to {self.case_config.number_of_replicas}"
+        )
+        settings_body = {"index": {"number_of_replicas": self.case_config.number_of_replicas}}
         self.client.indices.put_settings(index=self.index_name, body=settings_body)
         self._wait_till_green()
 
@@ -198,8 +198,8 @@ class AWSOpenSearch(VectorDB):
         SECONDS_WAITING_FOR_REPLICAS_TO_BE_ENABLED_SEC = 30
         while True:
             res = self.client.cat.indices(index=self.index_name, h="health", format="json")
-            health = res[0]['health']
-            if health == 'green':
+            health = res[0]["health"]
+            if health == "green":
                 break
             else:
                 log.info(f"The index {self.index_name} has health : {health} and is not green. Retrying")
@@ -226,9 +226,7 @@ class AWSOpenSearch(VectorDB):
         log.info(f"Updating the Index thread qty to {self.case_config.index_thread_qty_during_force_merge}.")
 
         cluster_settings_body = {
-            "persistent": {
-                "knn.algo_param.index_thread_qty": self.case_config.index_thread_qty_during_force_merge
-            }
+            "persistent": {"knn.algo_param.index_thread_qty": self.case_config.index_thread_qty_during_force_merge}
         }
         self.client.cluster.put_settings(cluster_settings_body)
         log.debug(f"Starting force merge for index {self.index_name}")
