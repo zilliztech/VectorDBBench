@@ -14,6 +14,7 @@ WAITING_FOR_REFRESH_SEC = 30
 WAITING_FOR_FORCE_MERGE_SEC = 30
 SECONDS_WAITING_FOR_REPLICAS_TO_BE_ENABLED_SEC = 30
 
+
 class AWSOpenSearch(VectorDB):
     def __init__(
         self,
