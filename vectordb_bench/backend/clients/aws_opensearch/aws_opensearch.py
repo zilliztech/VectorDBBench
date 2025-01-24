@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 
 WAITING_FOR_REFRESH_SEC = 30
 WAITING_FOR_FORCE_MERGE_SEC = 30
-
+SECONDS_WAITING_FOR_REPLICAS_TO_BE_ENABLED_SEC = 30
 
 class AWSOpenSearch(VectorDB):
     def __init__(
@@ -187,7 +187,8 @@ class AWSOpenSearch(VectorDB):
         index_settings = self.client.indices.get_settings(index=self.index_name)
         current_number_of_replicas = int(index_settings[self.index_name]["settings"]["index"]["number_of_replicas"])
         log.info(
-            f"Current Number of replicas are {current_number_of_replicas} and changing the replicas to {self.case_config.number_of_replicas}"
+            f"Current Number of replicas are {current_number_of_replicas}"
+            f" and changing the replicas to {self.case_config.number_of_replicas}"
         )
         settings_body = {"index": {"number_of_replicas": self.case_config.number_of_replicas}}
         self.client.indices.put_settings(index=self.index_name, body=settings_body)
@@ -195,16 +196,13 @@ class AWSOpenSearch(VectorDB):
 
     def _wait_till_green(self):
         log.info("Wait for index to become green..")
-        SECONDS_WAITING_FOR_REPLICAS_TO_BE_ENABLED_SEC = 30
         while True:
             res = self.client.cat.indices(index=self.index_name, h="health", format="json")
             health = res[0]["health"]
-            if health == "green":
+            if health != "green":
                 break
-            else:
-                log.info(f"The index {self.index_name} has health : {health} and is not green. Retrying")
-                time.sleep(SECONDS_WAITING_FOR_REPLICAS_TO_BE_ENABLED_SEC)
-                continue
+            log.info(f"The index {self.index_name} has health : {health} and is not green. Retrying")
+            time.sleep(SECONDS_WAITING_FOR_REPLICAS_TO_BE_ENABLED_SEC)
         log.info(f"Index {self.index_name} is green..")
 
     def _refresh_index(self):
