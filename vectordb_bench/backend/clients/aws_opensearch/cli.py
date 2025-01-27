@@ -20,11 +20,13 @@ class AWSOpenSearchTypedDict(TypedDict):
     password: Annotated[str, click.option("--password", type=str, help="Db password")]
     number_of_shards: Annotated[
         int,
-        click.option("--number-of-shards", type=int, help="Number of shards", default=1),
+        click.option("--number-of-shards", type=int, help="Number of primary shards for the index", default=1),
     ]
     number_of_replicas: Annotated[
         int,
-        click.option("--number-of-replicas", type=int, help="Number of replica", default=1),
+        click.option(
+            "--number-of-replicas", type=int, help="Number of replica copies for each primary shard", default=1
+        ),
     ]
     index_thread_qty: Annotated[
         int,
@@ -41,29 +43,9 @@ class AWSOpenSearchTypedDict(TypedDict):
         click.option(
             "--index-thread-qty-during-force-merge",
             type=int,
-            help="Thread count for native engine indexing used during force merge",
+            help="Thread count during force merge operations",
             default=4,
         ),
-    ]
-
-    number_of_segments: Annotated[
-        int,
-        click.option("--number-of-segments", type=int, help="Number of segments", default=1),
-    ]
-
-    refresh_interval: Annotated[
-        int,
-        click.option("--refresh-interval", type=str, help="refresh-interval", default="60s"),
-    ]
-
-    force_merge_enabled: Annotated[
-        int,
-        click.option("--force-merge-enabled", type=bool, help="If we need to do force merge or not", default=True),
-    ]
-
-    flush_threshold_size: Annotated[
-        int,
-        click.option("--flush-threshold-size", type=str, help="Threshold for flushing translog", default="5120mb"),
     ]
 
     number_of_indexing_clients: Annotated[
@@ -71,8 +53,32 @@ class AWSOpenSearchTypedDict(TypedDict):
         click.option(
             "--number-of-indexing-clients",
             type=int,
-            help="Number of indexing clients that should be used for indexing the data",
+            help="Number of concurrent indexing clients",
             default=1,
+        ),
+    ]
+
+    number_of_segments: Annotated[
+        int,
+        click.option("--number-of-segments", type=int, help="Target number of segments after merging", default=1),
+    ]
+
+    refresh_interval: Annotated[
+        int,
+        click.option(
+            "--refresh-interval", type=str, help="How often to make new data available for search", default="60s"
+        ),
+    ]
+
+    force_merge_enabled: Annotated[
+        int,
+        click.option("--force-merge-enabled", type=bool, help="Whether to perform force merge operation", default=True),
+    ]
+
+    flush_threshold_size: Annotated[
+        int,
+        click.option(
+            "--flush-threshold-size", type=str, help="Size threshold for flushing the transaction log", default="5120mb"
         ),
     ]
 

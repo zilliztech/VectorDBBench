@@ -172,22 +172,27 @@ $ vectordbbench awsopensearch --help
 Usage: vectordbbench awsopensearch [OPTIONS]
 
 Options:
-  --number-of-shards INTEGER      Number of shards
-  --number-of-replicas INTEGER    Number of replica
+  # Sharding and Replication
+  --number-of-shards INTEGER      Number of primary shards for the index
+  --number-of-replicas INTEGER    Number of replica copies for each primary
+                                  shard
+  # Indexing Performance                              
   --index-thread-qty INTEGER      Thread count for native engine indexing
   --index-thread-qty-during-force-merge INTEGER
-                                  Thread count for native engine indexing used
-                                  during force merge
-  --number-of-segments INTEGER    Number of segments
-  --refresh-interval TEXT         refresh-interval for the index
-  --force-merge-enabled BOOLEAN   If we need to do force merge or not
-  --flush-threshold-size TEXT     Threshold for flushing translog
+                                  Thread count during force merge operations
   --number-of-indexing-clients INTEGER
-                                  Number of indexing clients that should be
-                                  used for indexing the data
+                                  Number of concurrent indexing clients
+  # Index Management
+  --number-of-segments INTEGER    Target number of segments after merging
+  --refresh-interval TEXT         How often to make new data available for
+                                  search
+  --force-merge-enabled BOOLEAN   Whether to perform force merge operation
+  --flush-threshold-size TEXT     Size threshold for flushing the transaction
+                                  log
+  # Memory Management
   --cb-threshold TEXT             k-NN Memory circuit breaker threshold
-  --help                          Show this message and exit.
-```
+
+  --help                          Show this message and exit.```
 
 #### Using a configuration file.
 
