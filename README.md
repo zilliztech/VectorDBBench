@@ -153,6 +153,42 @@ Options:
                                   with-gt]
   --help                          Show this message and exit.
 ```
+
+### Run awsopensearch from command line
+
+```shell
+vectordbbench awsopensearch --db-label awsopensearch \
+--m 16 --ef-construction 256 \
+--host search-vector-db-prod-h4f6m4of6x7yp2rz7gdmots7w4.us-west-2.es.amazonaws.com --port 443 \
+--user vector --password '<password>' \
+--case-type Performance1536D5M --num-insert-workers 10  \
+--skip-load --num-concurrency 75
+```
+
+To list the options for awsopensearch, execute `vectordbbench awsopensearch --help`
+
+```text
+$ vectordbbench awsopensearch --help
+Usage: vectordbbench awsopensearch [OPTIONS]
+
+Options:
+  --number-of-shards INTEGER      Number of shards
+  --number-of-replicas INTEGER    Number of replica
+  --index-thread-qty INTEGER      Thread count for native engine indexing
+  --index-thread-qty-during-force-merge INTEGER
+                                  Thread count for native engine indexing used
+                                  during force merge
+  --number-of-segments INTEGER    Number of segments
+  --refresh-interval TEXT         refresh-interval for the index
+  --force-merge-enabled BOOLEAN   If we need to do force merge or not
+  --flush-threshold-size TEXT     Threshold for flushing translog
+  --number-of-indexing-clients INTEGER
+                                  Number of indexing clients that should be
+                                  used for indexing the data
+  --cb-threshold TEXT             k-NN Memory circuit breaker threshold
+  --help                          Show this message and exit.
+```
+
 #### Using a configuration file.
 
 The vectordbbench command can optionally read some or all the options from a yaml formatted configuration file.
