@@ -56,6 +56,8 @@ class CaseRunner(BaseModel):
                 and self.config.db == obj.config.db
                 and self.config.db_case_config == obj.config.db_case_config
                 and self.ca.dataset == obj.ca.dataset
+                # Label-filter cases store one more scalar data than other cases
+                and self.ca.with_scalar_labels == self.ca.with_scalar_labels
             )
         return False
 
@@ -92,12 +94,13 @@ class CaseRunner(BaseModel):
             db_config=self.config.db_config.to_dict(),
             db_case_config=self.config.db_case_config,
             drop_old=drop_old,
+            with_scalar_labels=self.ca.with_scalar_labels,
         )
 
     def _pre_run(self, drop_old: bool = True):
         try:
             self.init_db(drop_old)
-            self.ca.dataset.prepare(self.dataset_source, filters=self.ca.filter_rate)
+            self.ca.dataset.prepare(self.dataset_source, filters=self.ca.filters)
         except ModuleNotFoundError as e:
             log.warning(f"pre run case error: please install client for db: {self.config.db}, error={e}")
             raise e from None
@@ -130,6 +133,7 @@ class CaseRunner(BaseModel):
                 self.db,
                 self.ca.dataset,
                 self.normalize,
+                self.ca.filters,
                 self.ca.load_timeout,
             )
             count = runner.run_endlessness()
@@ -206,6 +210,7 @@ class CaseRunner(BaseModel):
                 self.db,
                 self.ca.dataset,
                 self.normalize,
+                self.ca.filters,
                 self.ca.load_timeout,
             )
             runner.run()

@@ -20,6 +20,7 @@ from vectordb_bench.base import BaseModel
 from . import utils
 from .clients import MetricType
 from .data_source import DatasetReader, DatasetSource
+from .filter import Filter, FilterType, non_filter
 
 log = logging.getLogger(__name__)
 
@@ -40,7 +41,13 @@ class BaseDataset(BaseModel):
     _size_label: dict[int, SizeLabel] = PrivateAttr()
     is_custom: bool = False
     with_remote_resource: bool = True
+    # for label filter cases
     with_scalar_labels: bool = False
+    # if True, scalar_labels will be retrieved from a separate parquet file;
+    #   otherwise, they will be obtained from train.parquet.
+    scalar_labels_file_separated: bool = True
+    scalar_labels_file: str = "scalar_labels.parquet"
+    scalar_label_percentages: list[float] = []
     train_id_field: str = "id"
     train_vector_field: str = "emb"
     test_file: str = "test.parquet"
@@ -133,6 +140,8 @@ class Cohere(BaseDataset):
         1_000_000: SizeLabel(1_000_000, "MEDIUM", 1),
         10_000_000: SizeLabel(10_000_000, "LARGE", 10),
     }
+    with_scalar_labels: bool = True
+    scalar_label_percentages: list[float] = [0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5]
 
 
 class Glove(BaseDataset):
@@ -170,6 +179,8 @@ class OpenAI(BaseDataset):
         500_000: SizeLabel(500_000, "MEDIUM", 1),
         5_000_000: SizeLabel(5_000_000, "LARGE", 10),
     }
+    with_scalar_labels: bool = True
+    scalar_label_percentages: list[float] = [0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5]
 
 
 class DatasetManager(BaseModel):
@@ -186,6 +197,7 @@ class DatasetManager(BaseModel):
     data: BaseDataset
     test_data: list[list[float]] | None = None
     gt_data: list[list[int]] | None = None
+    scalar_labels: pl.DataFrame | None = None
     train_files: list[str] = []
     reader: DatasetReader | None = None
 
@@ -219,14 +231,14 @@ class DatasetManager(BaseModel):
     def prepare(
         self,
         source: DatasetSource = DatasetSource.S3,
-        filters: float | str | None = None,
+        filters: Filter = non_filter,
     ) -> bool:
         """Download the dataset from DatasetSource
          url = f"{source}/{self.data.dir_name}"
 
         Args:
             source(DatasetSource): S3 or AliyunOSS, default as S3
-            filters(Optional[int | float | str]): combined with dataset's with_gt to
+            filters(Filter): combined with dataset's with_gt to
               compose the correct ground_truth file
 
         Returns:
@@ -236,16 +248,22 @@ class DatasetManager(BaseModel):
         self.train_files = self.data.train_files
         gt_file, test_file = None, None
         if self.data.with_gt:
-            gt_file, test_file = utils.compose_gt_file(filters), self.data.test_file
+            gt_file, test_file = filters.groundtruth_file, self.data.test_file
 
         if self.data.with_remote_resource:
             download_files = [file for file in self.train_files]
             download_files.extend([gt_file, test_file])
+            if self.data.with_scalar_labels and self.data.scalar_labels_file_separated:
+                download_files.append(self.data.scalar_labels_file)
             source.reader().read(
                 dataset=self.data.dir_name.lower(),
                 files=download_files,
                 local_ds_root=self.data_dir,
             )
+
+        # read scalar_labels_file if separated
+        if filters.type == FilterType.Label and self.data.with_scalar_labels and self.data.scalar_labels_file_separated:
+            self.scalar_labels = self._read_file(self.data.scalar_labels_file)
 
         if gt_file is not None and test_file is not None:
             self.test_data = self._read_file(test_file)[self.data.test_vector_field].to_list()
@@ -255,13 +273,13 @@ class DatasetManager(BaseModel):
 
         return True
 
-    def _read_file(self, file_name: str) -> pd.DataFrame:
+    def _read_file(self, file_name: str) -> pl.DataFrame:
         """read one file from disk into memory"""
         log.info(f"Read the entire file into memory: {file_name}")
         p = pathlib.Path(self.data_dir, file_name)
         if not p.exists():
             log.warning(f"No such file: {p}")
-            return pd.DataFrame()
+            return pl.DataFrame()
 
         return pl.read_parquet(p)
 
