@@ -38,9 +38,11 @@ def inputWidget(st, config: CaseConfigInput, key: str):
             help=config.inputHelp,
         )
     if config.inputType == InputType.Bool:
-        return st.checkbox(
+        return st.selectbox(
             config.displayLabel if config.displayLabel else config.label.value,
-            value=config.inputConfig["value"],
+            options=[True, False],
+            index=0 if config.inputConfig["value"] else 1,
+            key=key,
             help=config.inputHelp,
         )
     raise Exception(f"Invalid InputType: {config.inputType}")

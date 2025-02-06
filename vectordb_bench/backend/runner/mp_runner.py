@@ -69,10 +69,7 @@ class MultiProcessingSearchRunner:
             while time.perf_counter() < start_time + self.duration:
                 s = time.perf_counter()
                 try:
-                    self.db.search_embedding(
-                        test_data[idx],
-                        self.k,
-                    )
+                    self.db.search_embedding(test_data[idx], self.k)
                     count += 1
                     latencies.append(time.perf_counter() - s)
                 except Exception as e:
@@ -268,11 +265,7 @@ class MultiProcessingSearchRunner:
             while time.perf_counter() < start_time + dur:
                 s = time.perf_counter()
                 try:
-                    self.db.search_embedding(
-                        test_data[idx],
-                        self.k,
-                        self.filters,
-                    )
+                    self.db.search_embedding(test_data[idx], self.k)
                     success_count += 1
                 except Exception as e:
                     failed_cnt += 1
