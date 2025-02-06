@@ -593,7 +593,7 @@ CaseConfigParamInput_EFConstruction_ES = CaseConfigInput(
     inputConfig={
         "min": 8,
         "max": 512,
-        "value": 360,
+        "value": 128,
     },
 )
 
@@ -695,6 +695,67 @@ CaseConfigParamInput_EFConstruction_PgVector = CaseConfigInput(
     isDisplayed=lambda config: config[CaseConfigParamType.IndexType] == IndexType.HNSW.value,
 )
 
+CaseConfigParamInput_IndexType_ES = CaseConfigInput(
+    label=CaseConfigParamType.IndexType,
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [
+            IndexType.ES_HNSW.value,
+            IndexType.ES_HNSW_INT8.value,
+            IndexType.ES_HNSW_INT4.value,
+            IndexType.ES_HNSW_BBQ.value,
+        ],
+    },
+)
+
+CaseConfigParamInput_NumShards_ES = CaseConfigInput(
+    label=CaseConfigParamType.number_of_shards,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 128,
+        "value": 1,
+    },
+)
+
+CaseConfigParamInput_NumReplica_ES = CaseConfigInput(
+    label=CaseConfigParamType.number_of_replicas,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 0,
+        "max": 10,
+        "value": 0,
+    },
+)
+
+CaseConfigParamInput_RefreshInterval_ES = CaseConfigInput(
+    label=CaseConfigParamType.refresh_interval,
+    inputType=InputType.Text,
+    inputConfig={"value": "30s"},
+)
+
+CaseConfigParamInput_UseRescore_ES = CaseConfigInput(
+    label=CaseConfigParamType.use_rescore,
+    inputType=InputType.Bool,
+    inputConfig={"value": False},
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) != IndexType.ES_HNSW.value,
+)
+
+CaseConfigParamInput_OversampleRatio_ES = CaseConfigInput(
+    label=CaseConfigParamType.oversample_ratio,
+    inputType=InputType.Float,
+    inputConfig={"min": 1.0, "max": 100.0, "value": 2.0},
+    isDisplayed=lambda config: config.get(CaseConfigParamType.use_rescore, False),
+    inputHelp="num_oversample = oversample_ratio * top_k.",
+)
+
+CaseConfigParamInput_UseRouting_ES = CaseConfigInput(
+    label=CaseConfigParamType.use_routing,
+    inputType=InputType.Bool,
+    inputConfig={"value": False},
+    inputHelp="Using routing to improve label-filter case performance",
+)
+
 
 CaseConfigParamInput_M_ES = CaseConfigInput(
     label=CaseConfigParamType.M,
@@ -702,9 +763,10 @@ CaseConfigParamInput_M_ES = CaseConfigInput(
     inputConfig={
         "min": 4,
         "max": 64,
-        "value": 30,
+        "value": 16,
     },
 )
+
 
 CaseConfigParamInput_NumCandidates_ES = CaseConfigInput(
     label=CaseConfigParamType.numCandidates,
@@ -1548,11 +1610,25 @@ WeaviatePerformanceConfig = [
     CaseConfigParamInput_EF_Weaviate,
 ]
 
-ESLoadingConfig = [CaseConfigParamInput_EFConstruction_ES, CaseConfigParamInput_M_ES]
+ESLoadingConfig = [
+    CaseConfigParamInput_IndexType_ES,
+    CaseConfigParamInput_NumShards_ES,
+    CaseConfigParamInput_NumReplica_ES,
+    CaseConfigParamInput_RefreshInterval_ES,
+    CaseConfigParamInput_EFConstruction_ES,
+    CaseConfigParamInput_M_ES,
+]
 ESPerformanceConfig = [
+    CaseConfigParamInput_IndexType_ES,
+    CaseConfigParamInput_NumShards_ES,
+    CaseConfigParamInput_NumReplica_ES,
+    CaseConfigParamInput_RefreshInterval_ES,
     CaseConfigParamInput_EFConstruction_ES,
     CaseConfigParamInput_M_ES,
     CaseConfigParamInput_NumCandidates_ES,
+    CaseConfigParamInput_UseRescore_ES,
+    CaseConfigParamInput_OversampleRatio_ES,
+    CaseConfigParamInput_UseRouting_ES,
 ]
 
 AWSOpensearchLoadingConfig = [
