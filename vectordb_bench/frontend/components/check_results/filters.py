@@ -1,4 +1,6 @@
 from vectordb_bench.backend.cases import Case
+from vectordb_bench.backend.dataset import DatasetWithSizeType
+from vectordb_bench.backend.filter import FilterType
 from vectordb_bench.frontend.components.check_results.data import getChartData
 from vectordb_bench.frontend.components.check_results.expanderStyle import (
     initSidebarExanderStyle,
@@ -11,7 +13,7 @@ from typing import Callable
 from vectordb_bench.models import CaseResult, TestResult
 
 
-def getshownData(st, results: list[TestResult], **kwargs):
+def getshownData(st, results: list[TestResult], filter_type: FilterType = FilterType.NonFilter, **kwargs):
     # hide the nav
     st.markdown(
         "<style> div[data-testid='stSidebarNav'] {display: none;} </style>",
@@ -21,7 +23,7 @@ def getshownData(st, results: list[TestResult], **kwargs):
     st.header("Filters")
 
     shownResults = getshownResults(st, results, **kwargs)
-    showDBNames, showCaseNames = getShowDbsAndCases(st, shownResults)
+    showDBNames, showCaseNames = getShowDbsAndCases(st, shownResults, filter_type)
 
     shownData, failedTasks = getChartData(shownResults, showDBNames, showCaseNames)
 
@@ -55,11 +57,12 @@ def getshownResults(
     return selectedResult
 
 
-def getShowDbsAndCases(st, result: list[CaseResult]) -> tuple[list[str], list[str]]:
+def getShowDbsAndCases(st, result: list[CaseResult], filter_type: FilterType) -> tuple[list[str], list[str]]:
     initSidebarExanderStyle(st)
-    allDbNames = list(set({res.task_config.db_name for res in result}))
+    case_results = [res for res in result if res.task_config.case_config.case.filters.type == filter_type]
+    allDbNames = list(set({res.task_config.db_name for res in case_results}))
     allDbNames.sort()
-    allCases: list[Case] = [res.task_config.case_config.case for res in result]
+    allCases: list[Case] = [res.task_config.case_config.case for res in case_results]
 
     # DB Filter
     dbFilterContainer = st.container()
@@ -71,19 +74,36 @@ def getShowDbsAndCases(st, result: list[CaseResult]) -> tuple[list[str], list[st
     )
     showCaseNames = []
 
-    allCaseNameSet = set({case.name for case in allCases})
-    allCaseNames = [case_name for case_name in CASE_NAME_ORDER if case_name in allCaseNameSet] + [
-        case_name for case_name in allCaseNameSet if case_name not in CASE_NAME_ORDER
-    ]
+    if filter_type == FilterType.NonFilter:
+        allCaseNameSet = set({case.name for case in allCases})
+        allCaseNames = [case_name for case_name in CASE_NAME_ORDER if case_name in allCaseNameSet] + [
+            case_name for case_name in allCaseNameSet if case_name not in CASE_NAME_ORDER
+        ]
 
-    # Case Filter
-    caseFilterContainer = st.container()
-    showCaseNames = filterView(
-        caseFilterContainer,
-        "Case Filter",
-        [caseName for caseName in allCaseNames],
-        col=1,
-    )
+        # Case Filter
+        caseFilterContainer = st.container()
+        showCaseNames = filterView(
+            caseFilterContainer,
+            "Case Filter",
+            [caseName for caseName in allCaseNames],
+            col=1,
+        )
+
+    if filter_type == FilterType.Label:
+        container = st.container()
+        datasetWithSizeTypes = [dataset_with_size_type for dataset_with_size_type in DatasetWithSizeType]
+        showDatasetWithSizeTypes = filterView(
+            container,
+            "Case Filter",
+            datasetWithSizeTypes,
+            col=1,
+            optionLables=[v.value for v in datasetWithSizeTypes],
+        )
+        datasets = [dataset_with_size_type.get_manager() for dataset_with_size_type in showDatasetWithSizeTypes]
+        showCaseNames = list(set([case.name for case in allCases if case.dataset in datasets]))
+
+    if filter_type == FilterType.Int:
+        raise NotImplementedError
 
     return showDBNames, showCaseNames
 

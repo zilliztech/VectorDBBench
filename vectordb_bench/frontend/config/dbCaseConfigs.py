@@ -180,6 +180,17 @@ custom_streaming_config: list[ConfigInput] = [
 ]
 
 
+def generate_label_filter_cases(dataset_with_size_type: DatasetWithSizeType) -> list[CaseConfig]:
+    label_percentages = dataset_with_size_type.get_manager().data.scalar_label_percentages
+    return [
+        CaseConfig(
+            case_id=CaseType.LabelFilterPerformanceCase,
+            custom_case=dict(dataset_with_size_type=dataset_with_size_type, label_percentage=label_percentage),
+        )
+        for label_percentage in label_percentages
+    ]
+
+
 UI_CASE_CLUSTERS: list[UICaseItemCluster] = [
     UICaseItemCluster(
         label="Search Performance Test",
@@ -194,7 +205,7 @@ UI_CASE_CLUSTERS: list[UICaseItemCluster] = [
         ],
     ),
     UICaseItemCluster(
-        label="Filter Search Performance Test",
+        label="Int-Filter Search Performance Test",
         uiCaseItems=[
             UICaseItem(cases=generate_normal_cases(CaseType.Performance768D10M1P)),
             UICaseItem(cases=generate_normal_cases(CaseType.Performance768D10M99P)),
@@ -205,6 +216,23 @@ UI_CASE_CLUSTERS: list[UICaseItemCluster] = [
             UICaseItem(cases=generate_normal_cases(CaseType.Performance1536D5M99P)),
             UICaseItem(cases=generate_normal_cases(CaseType.Performance1536D500K1P)),
             UICaseItem(cases=generate_normal_cases(CaseType.Performance1536D500K99P)),
+        ],
+    ),
+    UICaseItemCluster(
+        label="Label-Filter Search Performance Test",
+        uiCaseItems=[
+            UICaseItem(
+                label=f"Label-Filter Search Performance Test - {dataset_with_size_type.value}",
+                description=(
+                    f'[Batch Cases] These cases evaluate search performance under filtering constraints like "color==red." '
+                    "Vdbbench provides an additional column of randomly distributed labels with fixed proportions, "
+                    f"such as {dataset_with_size_type.get_manager().data.scalar_label_percentages}. "
+                    f"Essentially, vdbbench will test each filter label in {dataset_with_size_type.value} to "
+                    "assess the vector database's search performance across different filtering conditions. "
+                ),
+                cases=generate_label_filter_cases(dataset_with_size_type),
+            )
+            for dataset_with_size_type in DatasetWithSizeType
         ],
     ),
     UICaseItemCluster(
@@ -479,7 +507,7 @@ CaseConfigParamInput_EFConstruction_ES = CaseConfigInput(
     inputConfig={
         "min": 8,
         "max": 512,
-        "value": 360,
+        "value": 128,
     },
 )
 
@@ -581,6 +609,67 @@ CaseConfigParamInput_EFConstruction_PgVector = CaseConfigInput(
     isDisplayed=lambda config: config[CaseConfigParamType.IndexType] == IndexType.HNSW.value,
 )
 
+CaseConfigParamInput_IndexType_ES = CaseConfigInput(
+    label=CaseConfigParamType.IndexType,
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [
+            IndexType.ES_HNSW.value,
+            IndexType.ES_HNSW_INT8.value,
+            IndexType.ES_HNSW_INT4.value,
+            IndexType.ES_HNSW_BBQ.value,
+        ],
+    },
+)
+
+CaseConfigParamInput_NumShards_ES = CaseConfigInput(
+    label=CaseConfigParamType.number_of_shards,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 128,
+        "value": 1,
+    },
+)
+
+CaseConfigParamInput_NumReplica_ES = CaseConfigInput(
+    label=CaseConfigParamType.number_of_replicas,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 0,
+        "max": 10,
+        "value": 0,
+    },
+)
+
+CaseConfigParamInput_RefreshInterval_ES = CaseConfigInput(
+    label=CaseConfigParamType.refresh_interval,
+    inputType=InputType.Text,
+    inputConfig={"value": "30s"},
+)
+
+CaseConfigParamInput_UseRescore_ES = CaseConfigInput(
+    label=CaseConfigParamType.use_rescore,
+    inputType=InputType.Bool,
+    inputConfig={"value": False},
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) != IndexType.ES_HNSW.value,
+)
+
+CaseConfigParamInput_OversampleRatio_ES = CaseConfigInput(
+    label=CaseConfigParamType.oversample_ratio,
+    inputType=InputType.Float,
+    inputConfig={"min": 1.0, "max": 100.0, "value": 2.0},
+    isDisplayed=lambda config: config.get(CaseConfigParamType.use_rescore, False),
+    inputHelp="num_oversample = oversample_ratio * top_k.",
+)
+
+CaseConfigParamInput_UseRouting_ES = CaseConfigInput(
+    label=CaseConfigParamType.use_routing,
+    inputType=InputType.Bool,
+    inputConfig={"value": False},
+    inputHelp="Using routing to improve label-filter case performance",
+)
+
 
 CaseConfigParamInput_M_ES = CaseConfigInput(
     label=CaseConfigParamType.M,
@@ -588,9 +677,10 @@ CaseConfigParamInput_M_ES = CaseConfigInput(
     inputConfig={
         "min": 4,
         "max": 64,
-        "value": 30,
+        "value": 24,
     },
 )
+
 
 CaseConfigParamInput_NumCandidates_ES = CaseConfigInput(
     label=CaseConfigParamType.numCandidates,
@@ -1132,6 +1222,13 @@ CaseConfigParamInput_NumCandidates_AliES = CaseConfigInput(
     },
 )
 
+CaseConfigParamInput_Milvus_use_partition_key = CaseConfigInput(
+    label=CaseConfigParamType.use_partition_key,
+    inputType=InputType.Option,
+    inputHelp="whether to use partition_key for label-filter cases. only works in label-filter cases",
+    inputConfig={"options": [True, False]},
+)
+
 
 MilvusLoadConfig = [
     CaseConfigParamInput_IndexType,
@@ -1144,6 +1241,7 @@ MilvusLoadConfig = [
     CaseConfigParamInput_graph_degree,
     CaseConfigParamInput_build_algo,
     CaseConfigParamInput_cache_dataset_on_device,
+    CaseConfigParamInput_Milvus_use_partition_key,
 ]
 MilvusPerformanceConfig = [
     CaseConfigParamInput_IndexType,
@@ -1165,6 +1263,7 @@ MilvusPerformanceConfig = [
     CaseConfigParamInput_build_algo,
     CaseConfigParamInput_cache_dataset_on_device,
     CaseConfigParamInput_refine_ratio,
+    CaseConfigParamInput_Milvus_use_partition_key,
 ]
 
 WeaviateLoadConfig = [
@@ -1177,11 +1276,25 @@ WeaviatePerformanceConfig = [
     CaseConfigParamInput_EF_Weaviate,
 ]
 
-ESLoadingConfig = [CaseConfigParamInput_EFConstruction_ES, CaseConfigParamInput_M_ES]
+ESLoadingConfig = [
+    CaseConfigParamInput_IndexType_ES,
+    CaseConfigParamInput_NumShards_ES,
+    CaseConfigParamInput_NumReplica_ES,
+    CaseConfigParamInput_RefreshInterval_ES,
+    CaseConfigParamInput_EFConstruction_ES,
+    CaseConfigParamInput_M_ES,
+]
 ESPerformanceConfig = [
+    CaseConfigParamInput_IndexType_ES,
+    CaseConfigParamInput_NumShards_ES,
+    CaseConfigParamInput_NumReplica_ES,
+    CaseConfigParamInput_RefreshInterval_ES,
     CaseConfigParamInput_EFConstruction_ES,
     CaseConfigParamInput_M_ES,
     CaseConfigParamInput_NumCandidates_ES,
+    CaseConfigParamInput_UseRescore_ES,
+    CaseConfigParamInput_OversampleRatio_ES,
+    CaseConfigParamInput_UseRouting_ES,
 ]
 
 AWSOpensearchLoadingConfig = [

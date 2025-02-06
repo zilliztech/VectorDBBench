@@ -8,6 +8,8 @@ from collections.abc import Iterable
 
 import numpy as np
 
+from vectordb_bench.backend.filter import Filter, non_filter
+
 from ... import config
 from ..clients import api
 
@@ -29,7 +31,7 @@ class MultiProcessingSearchRunner:
         db: api.VectorDB,
         test_data: list[list[float]],
         k: int = 100,
-        filters: dict | None = None,
+        filters: Filter = non_filter,
         concurrencies: Iterable[int] = config.NUM_CONCURRENCY,
         duration: int = 30,
     ):
@@ -54,6 +56,7 @@ class MultiProcessingSearchRunner:
             cond.wait()
 
         with self.db.init():
+            self.db.prepare_filter(self.filters)
             num, idx = len(test_data), random.randint(0, len(test_data) - 1)
 
             start_time = time.perf_counter()
@@ -62,11 +65,7 @@ class MultiProcessingSearchRunner:
             while time.perf_counter() < start_time + self.duration:
                 s = time.perf_counter()
                 try:
-                    self.db.search_embedding(
-                        test_data[idx],
-                        self.k,
-                        self.filters,
-                    )
+                    self.db.search_embedding(test_data[idx], self.k)
                     count += 1
                     latencies.append(time.perf_counter() - s)
                 except Exception as e:
@@ -246,6 +245,7 @@ class MultiProcessingSearchRunner:
             cond.wait()
 
         with self.db.init():
+            self.db.prepare_filter(self.filters)
             num, idx = len(test_data), random.randint(0, len(test_data) - 1)
 
             start_time = time.perf_counter()
@@ -254,11 +254,7 @@ class MultiProcessingSearchRunner:
             while time.perf_counter() < start_time + dur:
                 s = time.perf_counter()
                 try:
-                    self.db.search_embedding(
-                        test_data[idx],
-                        self.k,
-                        self.filters,
-                    )
+                    self.db.search_embedding(test_data[idx], self.k)
                     success_count += 1
                 except Exception as e:
                     failed_cnt += 1
