@@ -56,8 +56,6 @@ class CaseRunner(BaseModel):
                 and self.config.db == obj.config.db
                 and self.config.db_case_config == obj.config.db_case_config
                 and self.ca.dataset == obj.ca.dataset
-                # Label-filter cases store one more scalar data than other cases
-                and self.ca.with_scalar_labels == self.ca.with_scalar_labels
             )
         return False
 
@@ -158,6 +156,8 @@ class CaseRunner(BaseModel):
                 if TaskStage.LOAD in self.config.stages:
                     _, load_dur = self._load_train_data()
                     build_dur = self._optimize()
+                    m.insert_duration = round(load_dur, 4)
+                    m.optimize_duration = round(build_dur, 4)
                     m.load_duration = round(load_dur + build_dur, 4)
                     log.info(
                         f"Finish loading the entire dataset into VectorDB,"

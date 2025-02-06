@@ -88,6 +88,12 @@ class CaseConfigParamType(Enum):
     numSearchThreads = "num_search_threads"
     maxNumPrefetchDatasets = "max_num_prefetch_datasets"
     use_partition_key = "use_partition_key"
+    number_of_shards = "number_of_shards"
+    number_of_replicas = "number_of_replicas"
+    refresh_interval = "refresh_interval"
+    use_rescore = "use_rescore"
+    oversample_ratio = "oversample_ratio"
+    use_routing = "use_routing"
 
     dataset_with_size_type = "dataset_with_size_type"
     insert_rate = "insert_rate"

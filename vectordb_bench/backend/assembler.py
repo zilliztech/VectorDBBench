@@ -2,6 +2,7 @@ import logging
 
 from vectordb_bench.backend.clients import EmptyDBCaseConfig
 from vectordb_bench.backend.data_source import DatasetSource
+from vectordb_bench.backend.filter import FilterType
 from vectordb_bench.models import TaskConfig
 
 from .cases import CaseLabel
@@ -55,7 +56,7 @@ class Assembler:
 
         # sort by dataset size
         for _, runner in db2runner.items():
-            runner.sort(key=lambda x: x.ca.dataset.data.size)
+            runner.sort(key=lambda x: (x.ca.dataset.data.size, 0 if x.ca.filters.type == FilterType.Label else 1))
 
         all_runners = []
         all_runners.extend(load_runners)
