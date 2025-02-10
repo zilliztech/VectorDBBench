@@ -6,7 +6,7 @@ def initResultsPageConfig(st):
         page_title=PAGE_TITLE,
         page_icon=FAVICON,
         # layout="wide",
-        # initial_sidebar_state="collapsed",
+        initial_sidebar_state="collapsed",
     )
 
 

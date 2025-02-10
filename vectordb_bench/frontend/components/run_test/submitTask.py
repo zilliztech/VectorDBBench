@@ -1,6 +1,8 @@
 from datetime import datetime
+from vectordb_bench import config
 from vectordb_bench.frontend.config import styles
 from vectordb_bench.interface import benchmark_runner
+from vectordb_bench.models import TaskConfig
 
 
 def submitTask(st, tasks, isAllValid):
@@ -47,17 +49,34 @@ def advancedSettings(st):
     k = container[0].number_input("k", min_value=1, value=100, label_visibility="collapsed")
     container[1].caption("K value for number of nearest neighbors to search")
 
-    return index_already_exists, use_aliyun, k
+    # input concurrent
+    container = st.columns([1, 2])
+    defaultconcurrentInput = ",".join(map(str, config.NUM_CONCURRENCY))
+    concurrentInput = container[0].text_input(
+        "Concurrent Input", value=defaultconcurrentInput, label_visibility="collapsed"
+    )
+    container[1].caption("Concurrent value to launch")
 
+    # add concurrentInput
+    return index_already_exists, use_aliyun, k, concurrentInput
 
-def controlPanel(st, tasks, taskLabel, isAllValid):
-    index_already_exists, use_aliyun, k = advancedSettings(st)
+def controlPanel(st, tasks: list[TaskConfig], taskLabel, isAllValid):
+    index_already_exists, use_aliyun, k, concurrentInput = advancedSettings(st)
 
     def runHandler():
         benchmark_runner.set_drop_old(not index_already_exists)
+        try:
+            concurrentInput_list = [int(item.strip()) for item in concurrentInput.split(",")]
+        except ValueError:
+            st.write("you need to input correct numbers")
+            return None
+
         for task in tasks:
             task.case_config.k = k
+            task.case_config.concurrency_search_config.num_concurrency = concurrentInput_list
+
         benchmark_runner.set_download_address(use_aliyun)
+
         benchmark_runner.run(tasks, taskLabel)
 
     def stopHandler():
