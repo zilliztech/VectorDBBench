@@ -13,6 +13,8 @@ Closely mimicking real-world production environments, we've set up diverse testi
 
 Prepare to delve into the world of VectorDBBench, and let it guide you in uncovering your perfect vector database match.  
 
+VectorDBBench is sponsered by Zilliz，the leading opensource vectorDB company behind Milvus. Choose smarter with VectorDBBench- start your free test on [zilliz cloud](https://zilliz.com/) today!
+
 **Leaderboard:** https://zilliz.com/benchmark
 ## Quick Start
 ### Prerequirement
