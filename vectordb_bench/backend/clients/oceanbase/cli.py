@@ -7,7 +7,6 @@ from ..api import IndexType, MetricType
 from vectordb_bench.cli.cli import (
     CommonTypedDict,
     HNSWFlavor3,
-    OceanBaseIVFTypedDict,
     cli,
     click_parameter_decorators_from_typed_dict,
     run,
@@ -62,60 +61,6 @@ def OceanBaseHNSW(**parameters: Unpack[OceanBaseHNSWTypedDict]):
             M=parameters["m"],
             efConstruction=parameters["ef_construction"],
             ef_search=parameters["ef_search"],
-            index=parameters["index_type"],
-        ),
-        **parameters,
-    )
-
-class OceanBaseIVFTypedDict(CommonTypedDict, OceanBaseTypedDict, OceanBaseIVFTypedDict):
-    ...
-    
-@cli.command()
-@click_parameter_decorators_from_typed_dict(OceanBaseIVFTypedDict)
-def OceanBaseIVF(**parameters: Unpack[OceanBaseIVFTypedDict]):
-    from .config import OceanBaseConfig, OceanBaseIVFConfig
-    dis_str = parameters["distance"]
-    if dis_str == "l2":
-        input_metric_type = MetricType.L2
-    elif dis_str == "cosine":
-        input_metric_type = MetricType.COSINE
-    elif dis_str == "ip":
-        input_metric_type = MetricType.IP
-    else:
-        input_metric_type = MetricType.COSINE
-    
-    type_str = parameters["index_type"]
-    if type_str == "IVF_FLAT":
-        input_index_type = IndexType.IVFFlat
-    elif type_str == "IVF_PQ":
-        input_index_type = IndexType.IVFPQ
-    elif type_str == "IVF_SQ8":
-        input_index_type = IndexType.IVFSQ8
-    
-    if parameters["m"] is None:
-        # ivf pq will cause error, sq and flat are unused
-        input_m = 0 
-    else:
-        input_m = parameters["m"]
-
-    run(
-        db=DB.OceanBase,
-        db_config=OceanBaseConfig(
-            db_label=parameters["db_label"],
-            user=SecretStr(parameters["user"]),
-            password=SecretStr(parameters["password"]),
-            unix_socket=parameters["unixsock"],
-            host=parameters["host"],
-            port=parameters["port"],
-            database=parameters["database"],
-        ),
-        db_case_config=OceanBaseIVFConfig(
-            M=input_m,
-            nlist=parameters["nlist"],
-            sample_per_nlist=parameters["sample_per_nlist"],
-            index=input_index_type,
-            metric_type=input_metric_type,
-            ivf_nprobes=parameters["ivf_nprobes"]
         ),
         **parameters,
     )
