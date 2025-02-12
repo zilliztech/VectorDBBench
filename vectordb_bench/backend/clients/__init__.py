@@ -41,6 +41,7 @@ class DB(Enum):
     Test = "test"
     AliyunOpenSearch = "AliyunOpenSearch"
     MongoDB = "MongoDB"
+    OceanBase = "OceanBase"
 
     @property
     def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901
@@ -134,6 +135,11 @@ class DB(Enum):
             from .mongodb.mongodb import MongoDB
 
             return MongoDB
+        
+        if self == DB.OceanBase:
+            from .oceanbase.oceanbase import OceanBase
+            
+            return OceanBase
 
         if self == DB.Test:
             from .test.test import Test
@@ -235,6 +241,11 @@ class DB(Enum):
             from .mongodb.config import MongoDBConfig
 
             return MongoDBConfig
+        
+        if self == DB.OceanBase:
+            from .oceanbase.config import OceanBaseConfig
+
+            return OceanBaseConfig
 
         if self == DB.Test:
             from .test.config import TestConfig
@@ -317,6 +328,11 @@ class DB(Enum):
             from .mongodb.config import MongoDBIndexConfig
 
             return MongoDBIndexConfig
+        
+        if self == DB.OceanBase:
+            from .oceanbase.config import _oceanbase_case_config
+            
+            return _oceanbase_case_config.get(IndexType.HNSW)
 
         # DB.Pinecone, DB.Chroma, DB.Redis
         return EmptyDBCaseConfig

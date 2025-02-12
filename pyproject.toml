@@ -39,6 +39,7 @@ dependencies = [
     "pydantic<v2",
     "scikit-learn",
     "pymilvus", # with pandas, numpy, ujson
+    "mysql-connector-python"
 ]
 dynamic = ["version"]
 

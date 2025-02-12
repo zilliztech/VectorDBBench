@@ -6,7 +6,8 @@ import environs
 from . import log_util
 
 env = environs.Env()
-env.read_env(".env", False)
+#env.read_env(".env", False)
+env.read_env(".env")
 
 
 class config:
