@@ -119,7 +119,7 @@ class OceanBase(VectorDB):
     def ready_to_load(self):
         pass
 
-    def optimize(self):
+    def optimize(self, data_size):
         idx_param = self.db_case_config.index_param()
         idx_args_str = ','.join([f"{k}={v}" for k, v in idx_param["params"].items()]) 
         print("begin create index")
