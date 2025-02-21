@@ -125,14 +125,15 @@ class OceanBase(VectorDB):
         idx_args_str = ','.join([f"{k}={v}" for k, v in idx_param["params"].items()]) 
         print("begin create index")
         self._cursor.execute(f"create /*+ PARALLEL(32) */ vector index idx1 on items(embedding) with (distance={self.db_case_config.parse_metric()}, type={idx_param['index_type']}, lib={idx_param['lib']}, {idx_args_str})")
+        print("create index end")
         print("begin major freeze") 
         self._cursor.execute("ALTER SYSTEM MAJOR FREEZE;")
         time.sleep(10)
-        count = 0
-        while count != 1:
-            self._cursor.execute("SELECT COUNT(*) FROM oceanbase.DBA_OB_ZONE_MAJOR_COMPACTION WHERE STATUS = 'IDLE';")
-            count = self._cursor.fetchone()[0]
-            if count != 1:
+        all_status_idle = "FALSE"
+        while all_status_idle != "TRUE":
+            self._cursor.execute("SELECT IF(COUNT(*) = COUNT(STATUS = 'IDLE' OR NULL), 'TRUE', 'FALSE') AS all_status_idle FROM oceanbase.DBA_OB_ZONE_MAJOR_COMPACTION;")
+            all_status_idle = self._cursor.fetchone()[0]
+            if all_status_idle != "TRUE":
                 time.sleep(10)
         print("major freeze end") 
         self._cursor.execute("call dbms_stats.gather_schema_stats('test',degree=>96);")
