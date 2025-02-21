@@ -173,6 +173,7 @@ CaseConfigParamInput_IndexType = CaseConfigInput(
             IndexType.GPU_IVF_FLAT.value,
             IndexType.GPU_IVF_PQ.value,
             IndexType.GPU_CAGRA.value,
+            IndexType.GPU_BRUTE_FORCE.value,
         ],
     },
 )
@@ -562,6 +563,7 @@ CaseConfigParamInput_Nlist = CaseConfigInput(
         IndexType.IVFSQ8.value,
         IndexType.GPU_IVF_FLAT.value,
         IndexType.GPU_IVF_PQ.value,
+        IndexType.GPU_BRUTE_FORCE.value,
     ],
 )
 
@@ -579,6 +581,7 @@ CaseConfigParamInput_Nprobe = CaseConfigInput(
         IndexType.IVFSQ8.value,
         IndexType.GPU_IVF_FLAT.value,
         IndexType.GPU_IVF_PQ.value,
+        IndexType.GPU_BRUTE_FORCE.value,
     ],
 )
 
@@ -703,6 +706,7 @@ CaseConfigParamInput_cache_dataset_on_device = CaseConfigInput(
         IndexType.GPU_CAGRA.value,
         IndexType.GPU_IVF_PQ.value,
         IndexType.GPU_IVF_FLAT.value,
+        IndexType.GPU_BRUTE_FORCE.value,
     ],
 )
 
@@ -720,6 +724,7 @@ CaseConfigParamInput_refine_ratio = CaseConfigInput(
         IndexType.GPU_CAGRA.value,
         IndexType.GPU_IVF_PQ.value,
         IndexType.GPU_IVF_FLAT.value,
+        IndexType.GPU_BRUTE_FORCE.value,
     ],
 )
 
