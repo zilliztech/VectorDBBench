@@ -32,6 +32,7 @@ class OceanBase(VectorDB):
         self._index_name = "vidx"
         self._primary_field = "id"
         self._vector_field = "embedding"
+        self.db_case_config.metric_type = MetricType.IP
         print(self.db_case_config.parse_metric_func_str())
         self._query = f"SELECT /*+ opt_param('rowsets_max_rows', 256)*/ id FROM {self.table_name} ORDER BY {self.db_case_config.parse_metric_func_str()}(embedding, '[%s]') APPROXIMATE LIMIT %s"
         log.info(f"{self.name} config values: {self.db_config}\n{self.db_case_config}\n{self.db_case_config.parse_metric_func_str()}")
@@ -137,7 +138,7 @@ class OceanBase(VectorDB):
         self._cursor.execute("call dbms_stats.gather_schema_stats('test',degree=>96);")
 
     def need_normalize_cosine(self) -> bool:
-        return self.db_case_config.metric_type == MetricType.IP or self.db_case_config.metric_type == MetricType.COSINE
+        return True
 
     def insert_embeddings(
         self,
