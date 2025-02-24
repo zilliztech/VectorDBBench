@@ -25,6 +25,7 @@ class IndexType(str, Enum):
     ES_HNSW = "hnsw"
     ES_IVFFlat = "ivfflat"
     GPU_IVF_FLAT = "GPU_IVF_FLAT"
+    GPU_BRUTE_FORCE = "GPU_BRUTE_FORCE"
     GPU_IVF_PQ = "GPU_IVF_PQ"
     GPU_CAGRA = "GPU_CAGRA"
     SCANN = "scann"

@@ -40,6 +40,7 @@ class MilvusIndexConfig(BaseModel):
             IndexType.GPU_CAGRA,
             IndexType.GPU_IVF_FLAT,
             IndexType.GPU_IVF_PQ,
+            IndexType.GPU_BRUTE_FORCE,
         ]
 
     def parse_metric(self) -> str:
@@ -184,6 +185,37 @@ class GPUIVFFlatConfig(MilvusIndexConfig, DBCaseConfig):
         }
 
 
+class GPUBruteForceConfig(MilvusIndexConfig, DBCaseConfig):
+    limit: int = 10  # Default top-k for search
+    metric_type: str  # Metric type (e.g., 'L2', 'IP', etc.)
+    index: IndexType = IndexType.GPU_BRUTE_FORCE  # Index type set to GPU_BRUTE_FORCE
+
+    def index_param(self) -> dict:
+        """
+        Returns the parameters for creating the GPU_BRUTE_FORCE index.
+        No additional parameters required for index building.
+        """
+        return {
+            "metric_type": self.parse_metric(),  # Metric type for distance calculation (L2, IP, etc.)
+            "index_type": self.index.value,  # GPU_BRUTE_FORCE index type
+            "params": {},  # No additional parameters for GPU_BRUTE_FORCE
+        }
+
+    def search_param(self) -> dict:
+        """
+        Returns the parameters for performing a search on the GPU_BRUTE_FORCE index.
+        Only metric_type and top-k (limit) are needed for search.
+        """
+        return {
+            "metric_type": self.parse_metric(),  # Metric type for search
+            "params": {
+                "nprobe": 1,  # For GPU_BRUTE_FORCE, set nprobe to 1 (brute force search)
+                "limit": self.limit,  # Top-k for search
+            },
+        }
+
+
+
 class GPUIVFPQConfig(MilvusIndexConfig, DBCaseConfig):
     nlist: int = 1024
     m: int = 0
@@ -261,4 +293,5 @@ _milvus_case_config = {
     IndexType.GPU_IVF_FLAT: GPUIVFFlatConfig,
     IndexType.GPU_IVF_PQ: GPUIVFPQConfig,
     IndexType.GPU_CAGRA: GPUCAGRAConfig,
+    IndexType.GPU_BRUTE_FORCE: GPUBruteForceConfig,
 }
