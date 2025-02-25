@@ -37,18 +37,32 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
     metric_type: MetricType = MetricType.L2
     engine: AWSOS_Engine = AWSOS_Engine.faiss
     efConstruction: int = 256
-    efSearch: int = 256
+    efSearch: int = 100
     M: int = 16
     index_thread_qty: int | None = 4
     number_of_shards: int | None = 1
     number_of_replicas: int | None = 0
     number_of_segments: int | None = 1
-    refresh_interval: str | None = "60s"
+    refresh_interval: str | None = "30s"
     force_merge_enabled: bool | None = True
     flush_threshold_size: str | None = "5120mb"
     number_of_indexing_clients: int | None = 1
-    index_thread_qty_during_force_merge: int
+    index_thread_qty_during_force_merge: int = 8
     cb_threshold: str | None = "50%"
+    use_routing: bool = False  # for label-filter cases
+    use_quant: bool = False
+    oversample_factor: float = 1.0
+
+    def __eq__(self, obj: any):
+        return (
+            self.engine == obj.engine
+            and self.M == obj.M
+            and self.efConstruction == obj.efConstruction
+            and self.number_of_shards == obj.number_of_shards
+            and self.number_of_replicas == obj.number_of_replicas
+            and self.number_of_segments == obj.number_of_segments
+            and self.use_routing == obj.use_routing
+        )
 
     def parse_metric(self) -> str:
         if self.metric_type == MetricType.IP:
@@ -70,9 +84,17 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
             "parameters": {
                 "ef_construction": self.efConstruction,
                 "m": self.M,
-                "ef_search": self.efSearch,
+                **(
+                    {
+                        "encoder": {
+                            "name": "sq",
+                        }
+                    }
+                    if self.use_quant
+                    else {}
+                ),
             },
         }
 
     def search_param(self) -> dict:
-        return {}
+        return {"ef_search": self.efSearch}
