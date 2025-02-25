@@ -309,6 +309,7 @@ class CaseRunner(BaseModel):
             read_dur_after_write=ca.read_dur_after_write,
             concurrencies=ca.concurrencies,
             k=self.config.case_config.k,
+            normalize=self.normalize,
         )
 
     def stop(self):
