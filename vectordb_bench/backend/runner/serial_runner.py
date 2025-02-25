@@ -38,6 +38,18 @@ class SerialInsertRunner:
         self.normalize = normalize
         self.filters = filters
 
+    def retry_insert(self, db: api.VectorDB, retry_idx: int = 0, **kwargs):
+        _, error = db.insert_embeddings(**kwargs)
+        if error is not None:
+            log.warning(f"Insert Failed, try_idx={retry_idx}, Exception: {error}")
+            retry_idx += 1
+            if retry_idx <= config.MAX_INSERT_RETRY:
+                time.sleep(retry_idx)
+                self.retry_insert(db, retry_idx=retry_idx, **kwargs)
+            else:
+                msg = f"Insert failed and retried more than {config.MAX_INSERT_RETRY} times"
+                raise RuntimeError(msg) from None
+
     def task(self) -> int:
         count = 0
         with self.db.init():
@@ -68,7 +80,12 @@ class SerialInsertRunner:
                     labels_data=labels_data,
                 )
                 if error is not None:
-                    raise error
+                    self.retry_insert(
+                        self.db,
+                        embeddings=all_embeddings,
+                        metadata=all_metadata,
+                        labels_data=labels_data,
+                    )
 
                 assert insert_count == len(all_metadata)
                 count += insert_count
