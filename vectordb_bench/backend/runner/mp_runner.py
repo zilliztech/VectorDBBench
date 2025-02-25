@@ -269,7 +269,11 @@ class MultiProcessingSearchRunner:
                     success_count += 1
                 except Exception as e:
                     failed_cnt += 1
-                    log.warning(f"VectorDB search_embedding error: {e}")
+                    # reduce log
+                    if failed_cnt <= 3:
+                        log.warning(f"VectorDB search_embedding error: {e}")
+                    else:
+                        log.debug(f"VectorDB search_embedding error: {e}")
 
                 # loop through the test data
                 idx = idx + 1 if idx < num - 1 else 0
