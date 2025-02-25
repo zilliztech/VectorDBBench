@@ -26,6 +26,37 @@ def displayCustomCase(customCase: CustomCaseConfig, st, key):
         "train file count", key=f"{key}_file_count", value=customCase.dataset_config.file_count
     )
 
+    columns = st.columns(3)
+    customCase.dataset_config.train_name = columns[0].text_input(
+        "train file name", key=f"{key}_train_name", value=customCase.dataset_config.train_name
+    )
+    customCase.dataset_config.test_name = columns[1].text_input(
+        "test file name", key=f"{key}_test_name", value=customCase.dataset_config.test_name
+    )
+    customCase.dataset_config.gt_name = columns[2].text_input(
+        "ground truth file name", key=f"{key}_gt_name", value=customCase.dataset_config.gt_name
+    )
+
+    columns = st.columns([1, 1, 2, 2])
+    customCase.dataset_config.train_id_name = columns[0].text_input(
+        "train id name", key=f"{key}_train_id_name", value=customCase.dataset_config.train_id_name
+    )
+    customCase.dataset_config.train_col_name = columns[1].text_input(
+        "train emb name", key=f"{key}_train_col_name", value=customCase.dataset_config.train_col_name
+    )
+    customCase.dataset_config.test_col_name = columns[2].text_input(
+        "test emb name", key=f"{key}_test_col_name", value=customCase.dataset_config.test_col_name
+    )
+    customCase.dataset_config.gt_col_name = columns[3].text_input(
+        "ground truth emb name", key=f"{key}_gt_col_name", value=customCase.dataset_config.gt_col_name
+    )
+
+    columns = st.columns(1)
+    columns[0].markdown(
+        "<p style='margin-top: 0px; color: gray; font-size: 14px;'>1.if your file and column in the file is not named as previous explanation, please input the real name (for example: if the file name is tr.parquet and column name is embbb, then input tr and embbb).<br>2.if train file count is more than one, please input all your train file name and split with ','.</p>",
+        unsafe_allow_html=True,
+    )
+
     columns = st.columns(4)
     customCase.dataset_config.use_shuffled = columns[0].checkbox(
         "use shuffled data", key=f"{key}_use_shuffled", value=customCase.dataset_config.use_shuffled
