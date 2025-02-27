@@ -21,10 +21,11 @@ class Filter(BaseModel):
 class NonFilter(Filter):
     type: FilterOp = FilterOp.NonFilter
     filter_rate: float = 0.0
+    gt_file_name: str = "neighbors.parquet"
 
     @property
     def groundtruth_file(self) -> str:
-        return "neighbors.parquet"
+        return self.gt_file_name
 
 
 non_filter = NonFilter()

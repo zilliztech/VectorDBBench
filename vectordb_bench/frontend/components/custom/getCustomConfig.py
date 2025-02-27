@@ -14,6 +14,13 @@ class CustomDatasetConfig(BaseModel):
     file_count: int = 1
     use_shuffled: bool = False
     with_gt: bool = True
+    train_name: str = "train"
+    test_name: str = "test"
+    gt_name: str = "neighbors"
+    train_id_name: str = "id"
+    train_col_name: str = "emb"
+    test_col_name: str = "emb"
+    gt_col_name: str = "neighbors_id"
 
 
 class CustomCaseConfig(BaseModel):
