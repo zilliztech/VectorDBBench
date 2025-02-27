@@ -4,7 +4,7 @@ from enum import Enum, auto
 
 from vectordb_bench import config
 from vectordb_bench.backend.clients.api import MetricType
-from vectordb_bench.backend.filter import Filter, FilterOp, IntFilter, LabelFilter, NonFilter, non_filter
+from vectordb_bench.backend.filter import Filter, FilterOp, IntFilter, LabelFilter, non_filter
 from vectordb_bench.base import BaseModel
 from vectordb_bench.frontend.components.custom.getCustomConfig import CustomDatasetConfig
 
@@ -337,7 +337,6 @@ class PerformanceCustomDataset(PerformanceCase):
     case_id: CaseType = CaseType.PerformanceCustomDataset
     name: str = "Performance With Custom Dataset"
     description: str = ""
-    gt_file: str
     dataset: DatasetManager
 
     def __init__(
@@ -359,25 +358,14 @@ class PerformanceCustomDataset(PerformanceCase):
             with_gt=dataset_config.with_gt,
             dir=dataset_config.dir,
             file_num=dataset_config.file_count,
-            train_file=dataset_config.train_name,
-            test_file=f"{dataset_config.test_name}.parquet",
-            train_id_field=dataset_config.train_id_name,
-            train_vector_field=dataset_config.train_col_name,
-            test_vector_field=dataset_config.test_col_name,
-            gt_neighbors_field=dataset_config.gt_col_name
         )
         super().__init__(
             name=name,
             description=description,
             load_timeout=load_timeout,
             optimize_timeout=optimize_timeout,
-            gt_file=f"{dataset_config.gt_name}.parquet",
             dataset=DatasetManager(data=dataset),
         )
-
-    @property
-    def filters(self) -> Filter:
-        return NonFilter(gt_file_name=self.gt_file)
 
 
 class StreamingPerformanceCase(Case):

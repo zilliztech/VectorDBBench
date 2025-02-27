@@ -89,13 +89,6 @@ class CustomDataset(BaseDataset):
     file_num: int
     is_custom: bool = True
     with_remote_resource: bool = False
-    train_file: str = "train"
-    train_id_field: str = "id"
-    train_vector_field: str = "emb"
-    test_file: str = "test.parquet"
-    gt_file: str = "neighbors.parquet"
-    test_vector_field: str = "emb"
-    gt_neighbors_field: str = "neighbors_id"
 
     @validator("size")
     def verify_size(cls, v: int):
@@ -112,20 +105,6 @@ class CustomDataset(BaseDataset):
     @property
     def file_count(self) -> int:
         return self.file_num
-
-    @property
-    def train_files(self) -> list[str]:
-        train_file, train_count = self.train_file, self.file_count
-        prefix = f"{train_file}"
-        train_files = []
-        if train_count > 1:
-            prefix_s = prefix.split(",")
-            for i in range(train_count):
-                sub_file = f"{prefix_s[i]}.parquet"
-                train_files.append(sub_file)
-        else:
-            train_files.append(f"{prefix}.parquet")
-        return train_files
 
 
 class LAION(BaseDataset):
