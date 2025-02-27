@@ -56,9 +56,9 @@ class SerialInsertRunner:
             log.info(f"({mp.current_process().name:16}) Start inserting embeddings in batch {config.NUM_PER_BATCH}")
             start = time.perf_counter()
             for data_df in self.dataset:
-                all_metadata = data_df["id"].tolist()
+                all_metadata = data_df[self.dataset.data.train_id_field].tolist()
 
-                emb_np = np.stack(data_df["emb"])
+                emb_np = np.stack(data_df[self.dataset.data.train_vector_field])
                 if self.normalize:
                     log.debug("normalize the 100k train data")
                     all_embeddings = (emb_np / np.linalg.norm(emb_np, axis=1)[:, np.newaxis]).tolist()
@@ -175,8 +175,8 @@ class SerialInsertRunner:
         # only 1 file
         data_df = next(iter(self.dataset))
         all_embeddings, all_metadata = (
-            np.stack(data_df["emb"]).tolist(),
-            data_df["id"].tolist(),
+            np.stack(data_df[self.dataset.data.train_vector_field]).tolist(),
+            data_df[self.dataset.data.train_id_field].tolist(),
         )
 
         start_time = time.perf_counter()
