@@ -142,9 +142,18 @@ class TiDB(VectorDB):
                 log.warning("Failed to wait TiFlash to catch up: %s", e)
                 raise e from None
 
+    def _optimize_compact_tiflash(self):
+        with self._get_connection() as (conn, cursor):
+            try:
+                cursor.execute(f"ALTER TABLE {self.table_name} COMPACT")
+                conn.commit()
+            except Exception as e:
+                log.warning("Failed to compact table: %s", e)
+                raise e from None
+
     def _optimize_get_tiflash_index_pending_rows(self):
         database = self.db_config["database"]
-        with self._get_connection() as (conn, cursor):
+        with self._get_connection() as (_, cursor):
             try:
                 cursor.execute(
                     f"""
