@@ -56,18 +56,18 @@ class TiDB(VectorDB):
                 yield conn, cursor
 
     def _drop_table(self):
-        with self._get_connection() as (conn, cursor):
-            try:
+        try:
+            with self._get_connection() as (conn, cursor):
                 cursor.execute(f"DROP TABLE IF EXISTS {self.table_name}")
                 conn.commit()
-            except Exception as e:
-                log.warning("Failed to drop table: %s error: %s", self.table_name, e)
-                raise e from None
+        except Exception as e:
+            log.warning("Failed to drop table: %s error: %s", self.table_name, e)
+            raise e
 
     def _create_table(self):
-        index_param = self.case_config.index_param()
-        with self._get_connection() as (conn, cursor):
-            try:
+        try:
+            index_param = self.case_config.index_param()
+            with self._get_connection() as (conn, cursor):
                 cursor.execute(
                     f"""
                     CREATE TABLE {self.table_name} (
@@ -78,9 +78,9 @@ class TiDB(VectorDB):
                     """
                 )
                 conn.commit()
-            except Exception as e:
-                log.warning("Failed to create table: %s error: %s", self.table_name, e)
-                raise e from None
+        except Exception as e:
+            log.warning("Failed to create table: %s error: %s", self.table_name, e)
+            raise e
 
     def ready_to_load(self) -> bool:
         pass
@@ -115,9 +115,9 @@ class TiDB(VectorDB):
         log.info("Index build finished successfully.")
 
     def _optimize_check_tiflash_replica_progress(self):
-        database = self.db_config["database"]
-        with self._get_connection() as (_, cursor):
-            try:
+        try:
+            database = self.db_config["database"]
+            with self._get_connection() as (_, cursor):
                 cursor.execute(
                     f"""
                     SELECT PROGRESS FROM information_schema.tiflash_replica
@@ -126,35 +126,35 @@ class TiDB(VectorDB):
                 )
                 result = cursor.fetchone()
                 return result[0]
-            except Exception as e:
-                log.warning("Failed to check TiFlash replica progress: %s", e)
-                raise e from None
+        except Exception as e:
+            log.warning("Failed to check TiFlash replica progress: %s", e)
+            raise e
 
     def _optimize_wait_tiflash_catch_up(self):
-        with self._get_connection() as (conn, cursor):
-            try:
+        try:
+            with self._get_connection() as (conn, cursor):
                 cursor.execute('SET @@TIDB_ISOLATION_READ_ENGINES="tidb,tiflash"')
                 conn.commit()
                 cursor.execute(f"SELECT COUNT(*) FROM {self.table_name}")
                 result = cursor.fetchone()
                 return result[0]
-            except Exception as e:
-                log.warning("Failed to wait TiFlash to catch up: %s", e)
-                raise e from None
+        except Exception as e:
+            log.warning("Failed to wait TiFlash to catch up: %s", e)
+            raise e
 
     def _optimize_compact_tiflash(self):
-        with self._get_connection() as (conn, cursor):
-            try:
+        try:
+            with self._get_connection() as (conn, cursor):
                 cursor.execute(f"ALTER TABLE {self.table_name} COMPACT")
                 conn.commit()
-            except Exception as e:
-                log.warning("Failed to compact table: %s", e)
-                raise e from None
+        except Exception as e:
+            log.warning("Failed to compact table: %s", e)
+            raise e
 
     def _optimize_get_tiflash_index_pending_rows(self):
-        database = self.db_config["database"]
-        with self._get_connection() as (_, cursor):
-            try:
+        try:
+            database = self.db_config["database"]
+            with self._get_connection() as (_, cursor):
                 cursor.execute(
                     f"""
                     SELECT SUM(ROWS_STABLE_NOT_INDEXED)
@@ -164,9 +164,9 @@ class TiDB(VectorDB):
                 )
                 result = cursor.fetchone()
                 return result[0]
-            except Exception as e:
-                log.warning("Failed to read TiFlash index pending rows: %s", e)
-                raise e from None
+        except Exception as e:
+            log.warning("Failed to read TiFlash index pending rows: %s", e)
+            raise e
 
     def _insert_embeddings_serial(
         self,
@@ -175,8 +175,8 @@ class TiDB(VectorDB):
         offset: int,
         size: int,
     ) -> Exception:
-        with self._get_connection() as (conn, cursor):
-            try:
+        try:
+            with self._get_connection() as (conn, cursor):
                 buf = io.StringIO()
                 buf.write(f"INSERT INTO {self.table_name} (id, embedding) VALUES ")
                 for i in range(offset, offset + size):
@@ -185,10 +185,9 @@ class TiDB(VectorDB):
                     buf.write(f'({metadata[i]}, "{str(embeddings[i])}")')
                 cursor.execute(buf.getvalue())
                 conn.commit()
-                return None
-            except Exception as e:
-                log.warning("Failed to insert data into table: %s", e)
-                return e
+        except Exception as e:
+            log.warning("Failed to insert data into table: %s", e)
+            raise e
 
     def insert_embeddings(
         self,
@@ -209,10 +208,12 @@ class TiDB(VectorDB):
                 size = min(batch_size, len(embeddings) - i)
                 future = executor.submit(self._insert_embeddings_serial, embeddings, metadata, offset, size)
                 futures.append(future)
-            for future in concurrent.futures.as_completed(futures):
-                ex = future.result()
-                if ex:
-                    return 0, ex
+            done, pending = concurrent.futures.wait(futures, return_when=concurrent.futures.FIRST_EXCEPTION)
+            executor.shutdown(wait=False)
+            for future in done:
+                future.result()
+            for future in pending:
+                future.cancel()
         return len(metadata), None
 
     def search_embedding(
