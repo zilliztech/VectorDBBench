@@ -223,11 +223,11 @@ class TiDB(VectorDB):
         timeout: int | None = None,
         **kwargs: Any,
     ) -> list[int]:
-        self.query_cursor.execute(
+        self.cursor.execute(
             f"""
             SELECT id FROM {self.table_name}
             ORDER BY {self.search_fn}(embedding, "{str(query)}") LIMIT {k};
             """
         )
-        result = self.query_cursor.fetchall()
+        result = self.cursor.fetchall()
         return [int(i[0]) for i in result]
