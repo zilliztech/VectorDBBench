@@ -1,7 +1,11 @@
+from typing import TypeVar
+
 from pydantic import BaseModel, SecretStr, validator
-from qdrant_client.http.models import QuantizationSearchParams, SearchParams
 
 from ..api import DBCaseConfig, DBConfig, MetricType
+
+# define type "SearchParams"
+SearchParams = TypeVar("SearchParams")
 
 
 # Allowing `api_key` to be left empty, to ensure compatibility with the open-source Qdrant.
@@ -72,6 +76,9 @@ class QdrantIndexConfig(BaseModel, DBCaseConfig):
         return {"distance": self.parse_metric()}
 
     def search_param(self) -> SearchParams:
+        # Import while in use
+        from qdrant_client.http.models import QuantizationSearchParams, SearchParams
+
         quantization = (
             QuantizationSearchParams(
                 ignore=False,
