@@ -49,6 +49,7 @@ class CaseConfigParamType(Enum):
     probes = "probes"
     quantizationType = "quantization_type"
     quantizationRatio = "quantization_ratio"
+    tableQuantizationType = "table_quantization_type"
     reranking = "reranking"
     rerankingMetric = "reranking_metric"
     quantizedFetchLimit = "quantized_fetch_limit"
@@ -87,6 +88,8 @@ class CaseConfigParamType(Enum):
     preReorderingNumNeigbors = "pre_reordering_num_neighbors"
     numSearchThreads = "num_search_threads"
     maxNumPrefetchDatasets = "max_num_prefetch_datasets"
+    storage_engine = "storage_engine"
+    max_cache_size = "max_cache_size"
 
     # mongodb params
     mongodb_quantization_type = "quantization"

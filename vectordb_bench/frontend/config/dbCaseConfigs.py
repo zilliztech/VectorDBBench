@@ -823,6 +823,19 @@ CaseConfigParamInput_QuantizationRatio_PgVectoRS = CaseConfigInput(
     ],
 )
 
+CaseConfigParamInput_TableQuantizationType_PgVector = CaseConfigInput(
+    label=CaseConfigParamType.tableQuantizationType,
+    inputType=InputType.Option,
+    inputConfig={
+        "options": ["none", "bit", "halfvec"],
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    in [
+        IndexType.HNSW.value,
+        IndexType.IVFFlat.value,
+    ],
+)
+
 CaseConfigParamInput_max_parallel_workers_PgVectorRS = CaseConfigInput(
     label=CaseConfigParamType.max_parallel_workers,
     displayLabel="Max parallel workers",
@@ -1045,6 +1058,64 @@ CaseConfigParamInput_NumCandidates_AliES = CaseConfigInput(
     },
 )
 
+CaseConfigParamInput_IndexType_MariaDB = CaseConfigInput(
+    label=CaseConfigParamType.IndexType,
+    inputHelp="Select Index Type",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [
+            IndexType.HNSW.value,
+        ],
+    },
+)
+
+CaseConfigParamInput_StorageEngine_MariaDB = CaseConfigInput(
+    label=CaseConfigParamType.storage_engine,
+    inputHelp="Select Storage Engine",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": ["InnoDB", "MyISAM"],
+    },
+)
+
+CaseConfigParamInput_M_MariaDB = CaseConfigInput(
+    label=CaseConfigParamType.M,
+    inputHelp="M parameter in MHNSW vector indexing",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 3,
+        "max": 200,
+        "value": 6,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_EFSearch_MariaDB = CaseConfigInput(
+    label=CaseConfigParamType.ef_search,
+    inputHelp="mhnsw_ef_search",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 10000,
+        "value": 20,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_CacheSize_MariaDB = CaseConfigInput(
+    label=CaseConfigParamType.max_cache_size,
+    inputHelp="mhnsw_max_cache_size",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1048576,
+        "max": (1 << 53) - 1,
+        "value": 16 * 1024 ** 3,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    == IndexType.HNSW.value,
+)
 
 CaseConfigParamInput_MongoDBQuantizationType = CaseConfigInput(
     label=CaseConfigParamType.mongodb_quantization_type,
@@ -1138,6 +1209,7 @@ PgVectorLoadingConfig = [
     CaseConfigParamInput_m,
     CaseConfigParamInput_EFConstruction_PgVector,
     CaseConfigParamInput_QuantizationType_PgVector,
+    CaseConfigParamInput_TableQuantizationType_PgVector,
     CaseConfigParamInput_maintenance_work_mem_PgVector,
     CaseConfigParamInput_max_parallel_workers_PgVector,
 ]
@@ -1149,6 +1221,7 @@ PgVectorPerformanceConfig = [
     CaseConfigParamInput_Lists_PgVector,
     CaseConfigParamInput_Probes_PgVector,
     CaseConfigParamInput_QuantizationType_PgVector,
+    CaseConfigParamInput_TableQuantizationType_PgVector,
     CaseConfigParamInput_maintenance_work_mem_PgVector,
     CaseConfigParamInput_max_parallel_workers_PgVector,
     CaseConfigParamInput_reranking_PgVector,
@@ -1257,6 +1330,20 @@ MongoDBPerformanceConfig = [
     CaseConfigParamInput_MongoDBNumCandidatesRatio,
 ]
 
+MariaDBLoadingConfig = [
+    CaseConfigParamInput_IndexType_MariaDB,
+    CaseConfigParamInput_StorageEngine_MariaDB,
+    CaseConfigParamInput_M_MariaDB,
+    CaseConfigParamInput_CacheSize_MariaDB,
+]
+MariaDBPerformanceConfig = [
+    CaseConfigParamInput_IndexType_MariaDB,
+    CaseConfigParamInput_StorageEngine_MariaDB,
+    CaseConfigParamInput_M_MariaDB,
+    CaseConfigParamInput_CacheSize_MariaDB,
+    CaseConfigParamInput_EFSearch_MariaDB,
+]
+
 CASE_CONFIG_MAP = {
     DB.Milvus: {
         CaseLabel.Load: MilvusLoadConfig,
@@ -1308,5 +1395,9 @@ CASE_CONFIG_MAP = {
     DB.MongoDB: {
         CaseLabel.Load: MongoDBLoadingConfig,
         CaseLabel.Performance: MongoDBPerformanceConfig,
+    },
+    DB.MariaDB: {
+        CaseLabel.Load: MariaDBLoadingConfig,
+        CaseLabel.Performance: MariaDBPerformanceConfig,
     },
 }
