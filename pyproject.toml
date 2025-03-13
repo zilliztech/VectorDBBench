@@ -69,6 +69,7 @@ all = [
     "alibabacloud_ha3engine_vector",
     "alibabacloud_searchengine20211025",
     "mariadb",
+    "PyMySQL",
 ]
 
 qdrant          = [ "qdrant-client" ]
@@ -87,7 +88,8 @@ chromadb        = [ "chromadb" ]
 opensearch      = [ "opensearch-py" ]
 aliyun_opensearch = [ "alibabacloud_ha3engine_vector", "alibabacloud_searchengine20211025"]
 mongodb         = [ "pymongo" ]
-mariadb = [ "mariadb" ]
+mariadb         = [ "mariadb" ]
+tidb            = [ "PyMySQL" ]
 
 [project.urls]
 "repository" = "https://github.com/zilliztech/VectorDBBench"

@@ -42,6 +42,7 @@ class DB(Enum):
     Test = "test"
     AliyunOpenSearch = "AliyunOpenSearch"
     MongoDB = "MongoDB"
+    TiDB = "TiDB"
 
     @property
     def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901
@@ -140,6 +141,11 @@ class DB(Enum):
             from .mariadb.mariadb import MariaDB
 
             return MariaDB
+
+        if self == DB.TiDB:
+            from .tidb.tidb import TiDB
+
+            return TiDB
 
         if self == DB.Test:
             from .test.test import Test
@@ -244,7 +250,13 @@ class DB(Enum):
 
         if self == DB.MariaDB:
             from .mariadb.config import MariaDBConfig
+
             return MariaDBConfig
+
+        if self == DB.TiDB:
+            from .tidb.config import TiDBConfig
+
+            return TiDBConfig
 
         if self == DB.Test:
             from .test.config import TestConfig
@@ -332,6 +344,11 @@ class DB(Enum):
             from .mariadb.config import _mariadb_case_config
 
             return _mariadb_case_config.get(index_type)
+
+        if self == DB.TiDB:
+            from .tidb.config import TiDBIndexConfig
+
+            return TiDBIndexConfig
 
         # DB.Pinecone, DB.Chroma, DB.Redis
         return EmptyDBCaseConfig
