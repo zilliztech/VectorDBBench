@@ -96,6 +96,10 @@ class CustomDataset(BaseDataset):
     gt_file: str = "neighbors.parquet"
     test_vector_field: str = "emb"
     gt_neighbors_field: str = "neighbors_id"
+    with_scalar_labels: bool = True
+    scalar_labels_file_separated: bool = True
+    scalar_labels_file: str = "scalar_labels.parquet"
+    label_percentages: list[float] = []
 
     @validator("size")
     def verify_size(cls, v: int):
@@ -115,16 +119,13 @@ class CustomDataset(BaseDataset):
 
     @property
     def train_files(self) -> list[str]:
-        train_file, train_count = self.train_file, self.file_count
+        train_file = self.train_file
         prefix = f"{train_file}"
         train_files = []
-        if train_count > 1:
-            prefix_s = [item.strip() for item in prefix.split(",") if item.strip()]
-            for i in range(train_count):
-                sub_file = f"{prefix_s[i]}.parquet"
-                train_files.append(sub_file)
-        else:
-            train_files.append(f"{prefix}.parquet")
+        prefix_s = [item.strip() for item in prefix.split(",") if item.strip()]
+        for i in range(len(prefix_s)):
+            sub_file = f"{prefix_s[i]}.parquet"
+            train_files.append(sub_file)
         return train_files
 
 

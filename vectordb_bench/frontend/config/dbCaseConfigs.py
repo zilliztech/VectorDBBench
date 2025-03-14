@@ -114,14 +114,46 @@ def get_custom_case_items() -> list[UICaseItem]:
     custom_configs = get_custom_configs()
     return [
         UICaseItem(
+            label=f"{custom_config.dataset_config.name} - None Filter",
+            description=(
+                f"[Batch Cases] This case tests the search performance of a vector database with your own dataset, at varying parallel levels."
+                f"Results will show index building time, recall, and maximum QPS."
+            ),
             cases=[
                 CaseConfig(
                     case_id=CaseType.PerformanceCustomDataset,
-                    custom_case=custom_config.dict(),
+                    custom_case={
+                        **custom_config.dict(),
+                        "use_filter": False,
+                    },
                 )
-            ]
+            ],
         )
         for custom_config in custom_configs
+    ] + [
+        UICaseItem(
+            label=f"{custom_config.dataset_config.name} - Filter",
+            description=(
+                f'[Batch Cases] This case evaluate search performance under filtering constraints like "color==red."'
+                f"Vdbbench provides an additional column of randomly distributed labels with fixed proportions, "
+                f"such as [0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5]. "
+                f"Essentially, vdbbench will test each filter label in your own dataset to"
+                " assess the vector database's search performance across different filtering conditions."
+            ),
+            cases=[
+                CaseConfig(
+                    case_id=CaseType.PerformanceCustomDataset,
+                    custom_case={
+                        **custom_config.dict(),
+                        "use_filter": True,
+                        "label_percentage": label_percentage,
+                    },
+                )
+                for label_percentage in custom_config.dataset_config.label_percentages
+            ],
+        )
+        for custom_config in custom_configs
+        if custom_config.dataset_config.label_percentages
     ]
 
 

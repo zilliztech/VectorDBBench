@@ -339,6 +339,8 @@ class PerformanceCustomDataset(PerformanceCase):
     description: str = ""
     gt_file: str
     dataset: DatasetManager
+    label_percentage: float | None = None
+    use_filter: bool
 
     def __init__(
         self,
@@ -347,6 +349,8 @@ class PerformanceCustomDataset(PerformanceCase):
         load_timeout: float,
         optimize_timeout: float,
         dataset_config: dict,
+        label_percentage: float | None = None,
+        use_filter: bool = False,
         **kwargs,
     ):
         dataset_config = CustomDatasetConfig(**dataset_config)
@@ -365,6 +369,7 @@ class PerformanceCustomDataset(PerformanceCase):
             train_vector_field=dataset_config.train_col_name,
             test_vector_field=dataset_config.test_col_name,
             gt_neighbors_field=dataset_config.gt_col_name,
+            scalar_labels_file=f"{dataset_config.scalar_labels_name}.parquet",
         )
         super().__init__(
             name=name,
@@ -373,10 +378,14 @@ class PerformanceCustomDataset(PerformanceCase):
             optimize_timeout=optimize_timeout,
             gt_file=f"{dataset_config.gt_name}.parquet",
             dataset=DatasetManager(data=dataset),
+            use_filter=use_filter,
+            label_percentage=label_percentage,
         )
 
     @property
     def filters(self) -> Filter:
+        if self.use_filter is True:
+            return LabelFilter(label_percentage=self.label_percentage)
         return NonFilter(gt_file_name=self.gt_file)
 
 
