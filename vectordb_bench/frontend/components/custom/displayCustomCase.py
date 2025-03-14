@@ -12,7 +12,7 @@ def displayCustomCase(customCase: CustomCaseConfig, st, key):
         "Folder Path", key=f"{key}_dir", value=customCase.dataset_config.dir
     )
 
-    columns = st.columns(4)
+    columns = st.columns(3)
     customCase.dataset_config.dim = columns[0].number_input(
         "dim", key=f"{key}_dim", value=customCase.dataset_config.dim
     )
@@ -22,19 +22,12 @@ def displayCustomCase(customCase: CustomCaseConfig, st, key):
     customCase.dataset_config.metric_type = columns[2].selectbox(
         "metric type", key=f"{key}_metric_type", options=["L2", "Cosine", "IP"]
     )
-    customCase.dataset_config.file_count = columns[3].number_input(
-        "train file count",
-        key=f"{key}_file_count",
-        value=customCase.dataset_config.file_count,
-        help="if train file count is more than one, please input all your train file name and split with ','",
-    )
 
     columns = st.columns(3)
     customCase.dataset_config.train_name = columns[0].text_input(
         "train file name",
         key=f"{key}_train_name",
         value=customCase.dataset_config.train_name,
-        help="if your file and column in the file is not named as previous explanation, please input the real name (for example: if the file name is `tr.parquet` and column name is `embbb`, then input tr and embbb)",
     )
     customCase.dataset_config.test_name = columns[1].text_input(
         "test file name", key=f"{key}_test_name", value=customCase.dataset_config.test_name
@@ -57,12 +50,23 @@ def displayCustomCase(customCase: CustomCaseConfig, st, key):
         "ground truth emb name", key=f"{key}_gt_col_name", value=customCase.dataset_config.gt_col_name
     )
 
-    columns = st.columns(4)
-    customCase.dataset_config.use_shuffled = columns[0].checkbox(
-        "use shuffled data", key=f"{key}_use_shuffled", value=customCase.dataset_config.use_shuffled
+    columns = st.columns(2)
+    customCase.dataset_config.scalar_labels_name = columns[0].text_input(
+        "scalar labels file name",
+        key=f"{key}_scalar_labels_file_name",
+        value=customCase.dataset_config.scalar_labels_name,
     )
-    customCase.dataset_config.with_gt = columns[1].checkbox(
-        "with groundtruth", key=f"{key}_with_gt", value=customCase.dataset_config.with_gt
+    default_label_percentages = ",".join(map(str, customCase.dataset_config.with_label_percentages))
+    label_percentage_input = columns[1].text_input(
+        "label percentages",
+        key=f"{key}_label_percantages",
+        value=default_label_percentages,
     )
+    try:
+        customCase.dataset_config.label_percentages = [
+            float(item.strip()) for item in label_percentage_input.split(",") if item.strip()
+        ]
+    except ValueError as e:
+        st.write(f"<span style='color:red'>{e},please input correct number</span>", unsafe_allow_html=True)
 
     customCase.description = st.text_area("description", key=f"{key}_description", value=customCase.description)
