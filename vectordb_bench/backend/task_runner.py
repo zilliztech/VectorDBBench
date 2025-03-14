@@ -348,12 +348,7 @@ class TaskRunner(BaseModel):
         fmt.append(DATA_FORMAT % ("-" * 11, "-" * 12, "-" * 20, "-" * 7, "-" * 7))
 
         for f in self.case_runners:
-            if f.ca.filter_rate != 0.0:
-                filters = f.ca.filter_rate
-            elif f.ca.filter_size != 0:
-                filters = f.ca.filter_size
-            else:
-                filters = "None"
+            filters = f.ca.filters.filter_rate
 
             ds_str = f"{f.ca.dataset.data.name}-{f.ca.dataset.data.label}-{utils.numerize(f.ca.dataset.data.size)}"
             fmt.append(
