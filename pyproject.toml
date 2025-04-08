@@ -70,7 +70,8 @@ all = [
     "alibabacloud_searchengine20211025",
     "mariadb",
     "PyMySQL",
-    "clickhouse-connect"
+    "clickhouse-connect",
+    "pyvespa",
 ]
 
 qdrant          = [ "qdrant-client" ]
@@ -92,6 +93,7 @@ mongodb         = [ "pymongo" ]
 mariadb         = [ "mariadb" ]
 tidb            = [ "PyMySQL" ]
 clickhouse      = [ "clickhouse-connect" ]
+vespa           = [ "pyvespa" ]
 
 [project.urls]
 "repository" = "https://github.com/zilliztech/VectorDBBench"
