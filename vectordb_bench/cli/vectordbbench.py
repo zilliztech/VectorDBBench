@@ -12,6 +12,7 @@ from ..backend.clients.test.cli import Test
 from ..backend.clients.weaviate_cloud.cli import Weaviate
 from ..backend.clients.zilliz_cloud.cli import ZillizAutoIndex
 from ..backend.clients.tidb.cli import TiDB
+from ..backend.clients.clickhouse.cli import Clickhouse
 from .cli import cli
 
 cli.add_command(PgVectorHNSW)
@@ -29,6 +30,7 @@ cli.add_command(PgDiskAnn)
 cli.add_command(AlloyDBScaNN)
 cli.add_command(MariaDBHNSW)
 cli.add_command(TiDB)
+cli.add_command(Clickhouse)
 
 
 if __name__ == "__main__":
