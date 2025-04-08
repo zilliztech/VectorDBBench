@@ -4,6 +4,7 @@ from vectordb_bench.frontend.components.check_results.headerIcon import drawHead
 from vectordb_bench.frontend.components.check_results.nav import (
     NavToResults,
     NavToRunTest,
+    NavToPages,
 )
 from vectordb_bench.frontend.components.check_results.filters import getshownData
 from vectordb_bench.frontend.components.concurrent.charts import drawChartsByCase
@@ -24,6 +25,9 @@ def main():
 
     # header
     drawHeaderIcon(st)
+
+    # navigate
+    NavToPages(st)
 
     allResults = benchmark_runner.get_results()
 
