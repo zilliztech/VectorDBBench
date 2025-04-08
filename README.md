@@ -56,6 +56,7 @@ All the database client supported
 | aliyun_opensearch        | `pip install vectordb-bench[aliyun_opensearch]` |
 | mongodb                  | `pip install vectordb-bench[mongodb]`       |
 | tidb                     | `pip install vectordb-bench[tidb]`          |
+| vespa                    | `pip install vectordb-bench[vespa]`         |
 
 ### Run
 
