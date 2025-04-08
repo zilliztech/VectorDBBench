@@ -166,6 +166,20 @@ class Cohere(BaseDataset):
     scalar_label_percentages: list[float] = [0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5]
 
 
+class Bioasq(BaseDataset):
+    name: str = "Bioasq"
+    dim: int = 1024
+    metric_type: MetricType = MetricType.COSINE
+    use_shuffled: bool = config.USE_SHUFFLED_DATA
+    with_gt: bool = True
+    _size_label: dict = {
+        1_000_000: SizeLabel(1_000_000, "MEDIUM", 1),
+        10_000_000: SizeLabel(10_000_000, "LARGE", 10),
+    }
+    with_scalar_labels: bool = True
+    scalar_label_percentages: list[float] = [0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5]
+
+
 class Glove(BaseDataset):
     name: str = "Glove"
     dim: int = 200
@@ -361,6 +375,7 @@ class Dataset(Enum):
     LAION = LAION
     GIST = GIST
     COHERE = Cohere
+    BIOASQ = Bioasq
     GLOVE = Glove
     SIFT = SIFT
     OPENAI = OpenAI
@@ -376,6 +391,8 @@ class DatasetWithSizeType(Enum):
     CohereSmall = "Small Cohere (768dim, 100K)"
     CohereMedium = "Medium Cohere (768dim, 1M)"
     CohereLarge = "Large Cohere (768dim, 10M)"
+    BioasqMedium = "Medium Bioasq (1024dim, 1M)"
+    BioasqLarge = "Large Bioasq (1024dim, 10M)"
     OpenAISmall = "Small OpenAI (1536dim, 50K)"
     OpenAIMedium = "Medium OpenAI (1536dim, 500K)"
     OpenAILarge = "Large OpenAI (1536dim, 5M)"
@@ -410,6 +427,8 @@ DatasetWithSizeMap = {
     DatasetWithSizeType.CohereSmall: Dataset.COHERE.manager(100_000),
     DatasetWithSizeType.CohereMedium: Dataset.COHERE.manager(1_000_000),
     DatasetWithSizeType.CohereLarge: Dataset.COHERE.manager(10_000_000),
+    DatasetWithSizeType.BioasqMedium: Dataset.BIOASQ.manager(1_000_000),
+    DatasetWithSizeType.BioasqLarge: Dataset.BIOASQ.manager(10_000_000),
     DatasetWithSizeType.OpenAISmall: Dataset.OPENAI.manager(50_000),
     DatasetWithSizeType.OpenAIMedium: Dataset.OPENAI.manager(500_000),
     DatasetWithSizeType.OpenAILarge: Dataset.OPENAI.manager(5_000_000),
