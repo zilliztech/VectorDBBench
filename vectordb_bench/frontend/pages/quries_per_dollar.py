@@ -9,6 +9,7 @@ from vectordb_bench.frontend.components.check_results.stPageConfig import (
 )
 from vectordb_bench.frontend.components.check_results.headerIcon import drawHeaderIcon
 from vectordb_bench.frontend.components.check_results.nav import (
+    NavToPages,
     NavToResults,
     NavToRunTest,
 )
@@ -27,13 +28,16 @@ def main():
     # header
     drawHeaderIcon(st)
 
+    # navigate
+    NavToPages(st)
+
     allResults = benchmark_runner.get_results()
 
     st.title("Vector DB Benchmark (QP$)")
 
     # results selector
     resultSelectorContainer = st.sidebar.container()
-    shownData, _, showCaseNames = getshownData(allResults, resultSelectorContainer)
+    shownData, _, showCaseNames = getshownData(resultSelectorContainer, allResults)
 
     resultSelectorContainer.divider()
 
