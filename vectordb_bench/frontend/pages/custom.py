@@ -1,6 +1,7 @@
 from functools import partial
 import streamlit as st
 from vectordb_bench.frontend.components.check_results.headerIcon import drawHeaderIcon
+from vectordb_bench.frontend.components.check_results.nav import NavToPages
 from vectordb_bench.frontend.components.custom.displayCustomCase import (
     displayCustomCase,
 )
@@ -48,6 +49,9 @@ def main():
 
     # init style
     initStyle(st)
+
+    # navigate
+    NavToPages(st)
 
     st.title("Custom Dataset")
     displayParams(st)
