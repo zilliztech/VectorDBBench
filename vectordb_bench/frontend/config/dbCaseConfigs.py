@@ -231,6 +231,9 @@ UI_CASE_CLUSTERS: list[UICaseItemCluster] = [
             UICaseItem(cases=generate_normal_cases(CaseType.Performance768D10M)),
             UICaseItem(cases=generate_normal_cases(CaseType.Performance768D1M)),
             UICaseItem(isLine=True),
+            UICaseItem(cases=generate_normal_cases(CaseType.Performance1024D1M)),
+            UICaseItem(cases=generate_normal_cases(CaseType.Performance1024D10M)),
+            UICaseItem(isLine=True),
             UICaseItem(cases=generate_normal_cases(CaseType.Performance1536D5M)),
             UICaseItem(cases=generate_normal_cases(CaseType.Performance1536D500K)),
             UICaseItem(cases=generate_normal_cases(CaseType.Performance1536D50K)),
@@ -301,6 +304,8 @@ DISPLAY_CASE_ORDER: list[CaseType] = [
     CaseType.Performance1536D5M,
     CaseType.Performance1536D500K,
     CaseType.Performance1536D50K,
+    CaseType.Performance1024D1M,
+    CaseType.Performance1024D10M,
     CaseType.CapacityDim960,
     CaseType.CapacityDim128,
 ]
