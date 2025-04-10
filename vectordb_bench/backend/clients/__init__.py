@@ -44,6 +44,7 @@ class DB(Enum):
     MongoDB = "MongoDB"
     TiDB = "TiDB"
     Clickhouse = "Clickhouse"
+    Vespa = "Vespa"
 
     @property
     def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901
@@ -157,6 +158,11 @@ class DB(Enum):
             from .test.test import Test
 
             return Test
+        
+        if self == DB.Vespa:
+            from .vespa.vespa import Vespa
+
+            return Vespa
 
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
@@ -273,6 +279,12 @@ class DB(Enum):
             from .test.config import TestConfig
 
             return TestConfig
+        
+        if self == DB.Vespa:
+            from .vespa.config import VespaConfig
+
+            return VespaConfig
+
 
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
@@ -365,6 +377,11 @@ class DB(Enum):
             from .tidb.config import TiDBIndexConfig
 
             return TiDBIndexConfig
+        
+        if self == DB.Vespa:
+            from .vespa.config import VespaHNSWConfig
+
+            return VespaHNSWConfig
 
         # DB.Pinecone, DB.Chroma, DB.Redis
         return EmptyDBCaseConfig
