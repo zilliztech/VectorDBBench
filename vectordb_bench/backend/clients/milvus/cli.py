@@ -194,6 +194,7 @@ def MilvusGPUIVFFlat(**parameters: Unpack[MilvusGPUIVFTypedDict]):
         **parameters,
     )
 
+
 class MilvusGPUBruteForceTypedDict(CommonTypedDict, MilvusTypedDict):
     metric_type: Annotated[
         str,
@@ -203,6 +204,7 @@ class MilvusGPUBruteForceTypedDict(CommonTypedDict, MilvusTypedDict):
         int,
         click.option("--limit", type=int, required=True, help="Top-k limit for search"),
     ]
+
 
 @cli.command()
 @click_parameter_decorators_from_typed_dict(MilvusGPUBruteForceTypedDict)

@@ -81,7 +81,7 @@ class ElasticCloud(VectorDB):
         embeddings: Iterable[list[float]],
         metadata: list[int],
         **kwargs,
-    ) -> (int, Exception):
+    ) -> tuple[int, Exception]:
         """Insert the embeddings to the elasticsearch."""
         assert self.client is not None, "should self.init() first"
 

@@ -7,8 +7,8 @@ from contextlib import contextmanager
 from vespa import application
 
 from ..api import VectorDB
-from .config import VespaHNSWConfig
 from . import util
+from .config import VespaHNSWConfig
 
 log = logging.getLogger(__name__)
 
@@ -116,17 +116,12 @@ class Vespa(VectorDB):
             id_filter = filters.get("id")
             yql += f" and id >= {id_filter}"
 
-        query_embedding = (
-            query
-            if self.case_config.quantization_type == "none"
-            else util.binarize_tensor(query)
-        )
+        query_embedding = query if self.case_config.quantization_type == "none" else util.binarize_tensor(query)
 
         ranking = self.case_config.quantization_type
 
         result = self.client.query({"yql": yql, "input.query(query_embedding)": query_embedding, "ranking": ranking})
-        result_ids = [child["fields"]["id"] for child in result.get_json()["root"]["children"]]
-        return result_ids
+        return [child["fields"]["id"] for child in result.get_json()["root"]["children"]]
 
     def optimize(self, data_size: int | None = None):
         """optimize will be called between insertion and search in performance cases.

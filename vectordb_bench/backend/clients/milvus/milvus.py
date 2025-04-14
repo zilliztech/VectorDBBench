@@ -155,7 +155,7 @@ class Milvus(VectorDB):
         embeddings: Iterable[list[float]],
         metadata: list[int],
         **kwargs,
-    ) -> (int, Exception):
+    ) -> tuple[int, Exception]:
         """Insert embeddings into Milvus. should call self.init() first"""
         # use the first insert_embeddings to init collection
         assert self.col is not None

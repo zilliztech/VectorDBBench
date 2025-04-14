@@ -1087,8 +1087,7 @@ CaseConfigParamInput_M_MariaDB = CaseConfigInput(
         "max": 200,
         "value": 6,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
-    == IndexType.HNSW.value,
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
 )
 
 CaseConfigParamInput_EFSearch_MariaDB = CaseConfigInput(
@@ -1100,8 +1099,7 @@ CaseConfigParamInput_EFSearch_MariaDB = CaseConfigInput(
         "max": 10000,
         "value": 20,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
-    == IndexType.HNSW.value,
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
 )
 
 CaseConfigParamInput_CacheSize_MariaDB = CaseConfigInput(
@@ -1111,10 +1109,9 @@ CaseConfigParamInput_CacheSize_MariaDB = CaseConfigInput(
     inputConfig={
         "min": 1048576,
         "max": (1 << 53) - 1,
-        "value": 16 * 1024 ** 3,
+        "value": 16 * 1024**3,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
-    == IndexType.HNSW.value,
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
 )
 
 CaseConfigParamInput_MongoDBQuantizationType = CaseConfigInput(
@@ -1162,10 +1159,7 @@ CaseConfigParamInput_QuantizationType_Vespa = CaseConfigInput(
     label=CaseConfigParamType.quantizationType,
     inputType=InputType.Option,
     inputConfig={
-        "options": [
-            "none",
-            "binary"
-        ],
+        "options": ["none", "binary"],
     },
 )
 

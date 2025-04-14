@@ -99,7 +99,7 @@ class WeaviateCloud(VectorDB):
         embeddings: Iterable[list[float]],
         metadata: list[int],
         **kwargs,
-    ) -> (int, Exception):
+    ) -> tuple[int, Exception]:
         """Insert embeddings into Weaviate"""
         assert self.client.schema.exists(self.collection_name)
         insert_count = 0

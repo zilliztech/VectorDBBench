@@ -64,5 +64,5 @@ COLOR_MAP = {
     DB.Redis.value: "#0D6EFD",
     DB.AWSOpenSearch.value: "#0DCAF0",
     DB.TiDB.value: "#0D6EFD",
-    DB.Vespa.value: "#61d790"
+    DB.Vespa.value: "#61d790",
 }
