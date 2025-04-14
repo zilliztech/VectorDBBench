@@ -7,7 +7,7 @@ from ..api import DBCaseConfig, DBConfig, IndexType, MetricType
 
 class MariaDBConfigDict(TypedDict):
     """These keys will be directly used as kwargs in mariadb connection string,
-        so the names must match exactly mariadb API"""
+    so the names must match exactly mariadb API"""
 
     user: str
     password: str
@@ -44,6 +44,7 @@ class MariaDBIndexConfig(BaseModel):
         msg = f"Metric type {self.metric_type} is not supported!"
         raise ValueError(msg)
 
+
 class MariaDBHNSWConfig(MariaDBIndexConfig, DBCaseConfig):
     M: int | None
     ef_search: int | None
@@ -68,7 +69,5 @@ class MariaDBHNSWConfig(MariaDBIndexConfig, DBCaseConfig):
 
 
 _mariadb_case_config = {
-        IndexType.HNSW: MariaDBHNSWConfig,
+    IndexType.HNSW: MariaDBHNSWConfig,
 }
-
-

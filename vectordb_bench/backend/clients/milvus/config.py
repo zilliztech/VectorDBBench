@@ -215,7 +215,6 @@ class GPUBruteForceConfig(MilvusIndexConfig, DBCaseConfig):
         }
 
 
-
 class GPUIVFPQConfig(MilvusIndexConfig, DBCaseConfig):
     nlist: int = 1024
     m: int = 0

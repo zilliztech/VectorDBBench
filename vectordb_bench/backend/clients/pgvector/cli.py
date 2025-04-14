@@ -18,8 +18,7 @@ from ....cli.cli import (
 )
 
 
-# ruff: noqa
-def set_default_quantized_fetch_limit(ctx: any, param: any, value: any):
+def set_default_quantized_fetch_limit(ctx: any, param: any, value: any):  # noqa: ARG001
     if ctx.params.get("reranking") and value is None:
         # ef_search is the default value for quantized_fetch_limit as it's bound by ef_search.
         # 100 is default value for quantized_fetch_limit for IVFFlat.

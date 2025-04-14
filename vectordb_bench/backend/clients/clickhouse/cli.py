@@ -18,7 +18,7 @@ class ClickhouseTypedDict(TypedDict):
     password: Annotated[str, click.option("--password", type=str, help="DB password")]
     host: Annotated[str, click.option("--host", type=str, help="DB host", required=True)]
     port: Annotated[int, click.option("--port", type=int, default=8123, help="DB Port")]
-    user: Annotated[int, click.option("--user", type=str, default='clickhouse', help="DB user")]
+    user: Annotated[int, click.option("--user", type=str, default="clickhouse", help="DB user")]
     ssl: Annotated[
         bool,
         click.option(

@@ -263,7 +263,6 @@ class TestResult(BaseModel):
                     )
             return TestResult.validate(test_result)
 
-    # ruff: noqa
     def display(self, dbs: list[DB] | None = None):
         filter_list = dbs if dbs and isinstance(dbs, list) else None
         sorted_results = sorted(
@@ -294,7 +293,7 @@ class TestResult(BaseModel):
         max_qps = 10 if max_qps < 10 else max_qps
         max_recall = 13 if max_recall < 13 else max_recall
 
-        LENGTH = (
+        LENGTH = (  # noqa: N806
             max_db,
             max_db_labels,
             max_case,
@@ -307,13 +306,13 @@ class TestResult(BaseModel):
             5,
         )
 
-        DATA_FORMAT = (
+        DATA_FORMAT = (  # noqa: N806
             f"%-{max_db}s | %-{max_db_labels}s %-{max_case}s %-{len(self.task_label)}s"
             f" | %-{max_load_dur}s %-{max_qps}s %-15s %-{max_recall}s %-14s"
             f" | %-5s"
         )
 
-        TITLE = DATA_FORMAT % (
+        TITLE = DATA_FORMAT % (  # noqa: N806
             "DB",
             "db_label",
             "case",
@@ -325,8 +324,8 @@ class TestResult(BaseModel):
             "max_load_count",
             "label",
         )
-        SPLIT = DATA_FORMAT % tuple(map(lambda x: "-" * x, LENGTH))
-        SUMMARY_FORMAT = ("Task summary: run_id=%s, task_label=%s") % (
+        SPLIT = DATA_FORMAT % tuple(map(lambda x: "-" * x, LENGTH))  # noqa: C417, N806
+        SUMMARY_FORMAT = ("Task summary: run_id=%s, task_label=%s") % (  # noqa: N806
             self.run_id[:5],
             self.task_label,
         )
