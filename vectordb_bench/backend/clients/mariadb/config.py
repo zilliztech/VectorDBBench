@@ -1,6 +1,9 @@
-from pydantic import SecretStr, BaseModel
 from typing import TypedDict
-from ..api import DBConfig, DBCaseConfig, MetricType, IndexType
+
+from pydantic import BaseModel, SecretStr
+
+from ..api import DBCaseConfig, DBConfig, IndexType, MetricType
+
 
 class MariaDBConfigDict(TypedDict):
     """These keys will be directly used as kwargs in mariadb connection string,
@@ -36,10 +39,10 @@ class MariaDBIndexConfig(BaseModel):
     def parse_metric(self) -> str:
         if self.metric_type == MetricType.L2:
             return "euclidean"
-        elif self.metric_type == MetricType.COSINE:
+        if self.metric_type == MetricType.COSINE:
             return "cosine"
-        else:
-            raise ValueError(f"Metric type {self.metric_type} is not supported!")
+        msg = f"Metric type {self.metric_type} is not supported!"
+        raise ValueError(msg)
 
 class MariaDBHNSWConfig(MariaDBIndexConfig, DBCaseConfig):
     M: int | None

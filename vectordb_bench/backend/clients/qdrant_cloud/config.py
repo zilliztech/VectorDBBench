@@ -1,4 +1,4 @@
-from pydantic import BaseModel, SecretStr, validator
+from pydantic import BaseModel, SecretStr
 
 from ..api import DBCaseConfig, DBConfig, MetricType
 
@@ -19,14 +19,6 @@ class QdrantConfig(DBConfig):
         return {
             "url": self.url.get_secret_value(),
         }
-
-    @validator("*")
-    def not_empty_field(cls, v: any, field: any):
-        if field.name in ["api_key", "db_label"]:
-            return v
-        if isinstance(v, str | SecretStr) and len(v) == 0:
-            raise ValueError("Empty string!")
-        return v
 
 
 class QdrantIndexConfig(BaseModel, DBCaseConfig):

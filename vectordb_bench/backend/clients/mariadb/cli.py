@@ -1,17 +1,16 @@
 from typing import Annotated, Optional, Unpack
 
 import click
-import os
 from pydantic import SecretStr
+
+from vectordb_bench.backend.clients import DB
 
 from ....cli.cli import (
     CommonTypedDict,
-    HNSWFlavor1,
     cli,
     click_parameter_decorators_from_typed_dict,
     run,
 )
-from vectordb_bench.backend.clients import DB
 
 
 class MariaDBTypedDict(CommonTypedDict):

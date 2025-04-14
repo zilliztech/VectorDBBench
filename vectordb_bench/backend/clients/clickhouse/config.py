@@ -1,9 +1,10 @@
-from typing import TypedDict
 from pydantic import BaseModel, SecretStr
-from ..api import DBConfig, DBCaseConfig, MetricType, IndexType
+
+from ..api import DBCaseConfig, DBConfig, IndexType, MetricType
+
 
 class ClickhouseConfig(DBConfig):
-    user_name: str  = "clickhouse"
+    user_name: str = "clickhouse"
     password: SecretStr
     host: str = "localhost"
     port: int = 8123
@@ -16,7 +17,7 @@ class ClickhouseConfig(DBConfig):
             "port": self.port,
             "dbname": self.db_name,
             "user": self.user_name,
-            "password": pwd_str
+            "password": pwd_str,
         }
 
 
@@ -32,8 +33,11 @@ class ClickhouseIndexConfig(BaseModel):
     def parse_metric_str(self) -> str:
         if self.metric_type == MetricType.L2:
             return "L2Distance"
-        elif self.metric_type == MetricType.COSINE:
+        if self.metric_type == MetricType.COSINE:
             return "cosineDistance"
+        msg = f"Not Support for {self.metric_type}"
+        raise RuntimeError(msg)
+        return None
 
 
 class ClickhouseHNSWConfig(ClickhouseIndexConfig, DBCaseConfig):
@@ -51,6 +55,6 @@ class ClickhouseHNSWConfig(ClickhouseIndexConfig, DBCaseConfig):
 
     def search_param(self) -> dict:
         return {
-            "metric_type": self.parse_metric_str(),
+            "met˝ric_type": self.parse_metric_str(),
             "params": {"ef": self.ef},
         }

@@ -1,5 +1,6 @@
-from pydantic import SecretStr, BaseModel, validator
-from ..api import DBConfig, DBCaseConfig, MetricType
+from pydantic import BaseModel, SecretStr
+
+from ..api import DBCaseConfig, DBConfig, MetricType
 
 
 class TiDBConfig(DBConfig):
@@ -9,10 +10,6 @@ class TiDBConfig(DBConfig):
     port: int = 4000
     db_name: str = "test"
     ssl: bool = False
-
-    @validator("*")
-    def not_empty_field(cls, v: any, field: any):
-        return v
 
     def to_dict(self) -> dict:
         pwd_str = self.password.get_secret_value()
@@ -33,10 +30,10 @@ class TiDBIndexConfig(BaseModel, DBCaseConfig):
     def get_metric_fn(self) -> str:
         if self.metric_type == MetricType.L2:
             return "vec_l2_distance"
-        elif self.metric_type == MetricType.COSINE:
+        if self.metric_type == MetricType.COSINE:
             return "vec_cosine_distance"
-        else:
-            raise ValueError(f"Unsupported metric type: {self.metric_type}")
+        msg = f"Unsupported metric type: {self.metric_type}"
+        raise ValueError(msg)
 
     def index_param(self) -> dict:
         return {
