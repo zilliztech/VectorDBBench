@@ -65,7 +65,7 @@ class ChromaClient(VectorDB):
         embeddings: list[list[float]],
         metadata: list[int],
         **kwargs: Any,
-    ) -> (int, Exception):
+    ) -> tuple[int, Exception]:
         """Insert embeddings into the database.
 
         Args:
@@ -74,7 +74,7 @@ class ChromaClient(VectorDB):
             kwargs: other arguments
 
         Returns:
-            (int, Exception): number of embeddings inserted and exception if any
+            tuple[int, Exception]: number of embeddings inserted and exception if any
         """
         ids = [str(i) for i in metadata]
         metadata = [{"id": int(i)} for i in metadata]

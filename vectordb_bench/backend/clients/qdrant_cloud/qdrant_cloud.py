@@ -111,7 +111,7 @@ class QdrantCloud(VectorDB):
         embeddings: list[list[float]],
         metadata: list[int],
         **kwargs,
-    ) -> (int, Exception):
+    ) -> tuple[int, Exception]:
         """Insert embeddings into Milvus. should call self.init() first"""
         assert self.qdrant_client is not None
         try:

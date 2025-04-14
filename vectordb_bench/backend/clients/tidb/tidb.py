@@ -3,7 +3,7 @@ import io
 import logging
 import time
 from contextlib import contextmanager
-from typing import Any, Optional, Tuple
+from typing import Any
 
 import pymysql
 
@@ -62,7 +62,7 @@ class TiDB(VectorDB):
                 conn.commit()
         except Exception as e:
             log.warning("Failed to drop table: %s error: %s", self.table_name, e)
-            raise e
+            raise
 
     def _create_table(self):
         try:
@@ -80,7 +80,7 @@ class TiDB(VectorDB):
                 conn.commit()
         except Exception as e:
             log.warning("Failed to create table: %s error: %s", self.table_name, e)
-            raise e
+            raise
 
     def ready_to_load(self) -> bool:
         pass
@@ -122,25 +122,25 @@ class TiDB(VectorDB):
                     f"""
                     SELECT PROGRESS FROM information_schema.tiflash_replica
                     WHERE TABLE_SCHEMA = "{database}" AND TABLE_NAME = "{self.table_name}"
-                    """
+                    """  # noqa: S608
                 )
                 result = cursor.fetchone()
                 return result[0]
         except Exception as e:
             log.warning("Failed to check TiFlash replica progress: %s", e)
-            raise e
+            raise
 
     def _optimize_wait_tiflash_catch_up(self):
         try:
             with self._get_connection() as (conn, cursor):
                 cursor.execute('SET @@TIDB_ISOLATION_READ_ENGINES="tidb,tiflash"')
                 conn.commit()
-                cursor.execute(f"SELECT COUNT(*) FROM {self.table_name}")
+                cursor.execute(f"SELECT COUNT(*) FROM {self.table_name}")  # noqa: S608
                 result = cursor.fetchone()
                 return result[0]
         except Exception as e:
             log.warning("Failed to wait TiFlash to catch up: %s", e)
-            raise e
+            raise
 
     def _optimize_compact_tiflash(self):
         try:
@@ -149,7 +149,7 @@ class TiDB(VectorDB):
                 conn.commit()
         except Exception as e:
             log.warning("Failed to compact table: %s", e)
-            raise e
+            raise
 
     def _optimize_get_tiflash_index_pending_rows(self):
         try:
@@ -160,13 +160,13 @@ class TiDB(VectorDB):
                     SELECT SUM(ROWS_STABLE_NOT_INDEXED)
                     FROM information_schema.tiflash_indexes
                     WHERE TIDB_DATABASE = "{database}" AND TIDB_TABLE = "{self.table_name}"
-                    """
+                    """  # noqa: S608
                 )
                 result = cursor.fetchone()
                 return result[0]
         except Exception as e:
             log.warning("Failed to read TiFlash index pending rows: %s", e)
-            raise e
+            raise
 
     def _insert_embeddings_serial(
         self,
@@ -178,29 +178,28 @@ class TiDB(VectorDB):
         try:
             with self._get_connection() as (conn, cursor):
                 buf = io.StringIO()
-                buf.write(f"INSERT INTO {self.table_name} (id, embedding) VALUES ")
+                buf.write(f"INSERT INTO {self.table_name} (id, embedding) VALUES ")  # noqa: S608
                 for i in range(offset, offset + size):
                     if i > offset:
                         buf.write(",")
-                    buf.write(f'({metadata[i]}, "{str(embeddings[i])}")')
+                    buf.write(f'({metadata[i]}, "{embeddings[i]!s}")')
                 cursor.execute(buf.getvalue())
                 conn.commit()
         except Exception as e:
             log.warning("Failed to insert data into table: %s", e)
-            raise e
+            raise
 
     def insert_embeddings(
         self,
         embeddings: list[list[float]],
         metadata: list[int],
         **kwargs: Any,
-    ) -> Tuple[int, Optional[Exception]]:
+    ) -> tuple[int, Exception]:
         workers = 10
         # Avoid exceeding MAX_ALLOWED_PACKET (default=64MB)
         max_batch_size = 64 * 1024 * 1024 // 24 // self.dim
         batch_size = len(embeddings) // workers
-        if batch_size > max_batch_size:
-            batch_size = max_batch_size
+        batch_size = min(batch_size, max_batch_size)
         with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as executor:
             futures = []
             for i in range(0, len(embeddings), batch_size):
@@ -227,8 +226,8 @@ class TiDB(VectorDB):
         self.cursor.execute(
             f"""
             SELECT id FROM {self.table_name}
-            ORDER BY {self.search_fn}(embedding, "{str(query)}") LIMIT {k};
-            """
+            ORDER BY {self.search_fn}(embedding, "{query!s}") LIMIT {k};
+            """  # noqa: S608
         )
         result = self.cursor.fetchall()
         return [int(i[0]) for i in result]

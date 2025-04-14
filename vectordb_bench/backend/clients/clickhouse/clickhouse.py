@@ -1,18 +1,19 @@
 """Wrapper around the Clickhouse vector database over VectorDB"""
 
-import io
 import logging
 from contextlib import contextmanager
 from typing import Any
-import clickhouse_connect
-import numpy as np
 
-from ..api import VectorDB, DBCaseConfig
+import clickhouse_connect
+
+from ..api import DBCaseConfig, VectorDB
 
 log = logging.getLogger(__name__)
 
+
 class Clickhouse(VectorDB):
     """Use SQLAlchemy instructions"""
+
     def __init__(
         self,
         dim: int,
@@ -32,12 +33,13 @@ class Clickhouse(VectorDB):
         self._vector_field = "embedding"
 
         # construct basic units
-        self.conn =  clickhouse_connect.get_client(
-        host=self.db_config["host"],
-        port=self.db_config["port"],
-        username=self.db_config["user"],
-        password=self.db_config["password"],
-        database=self.db_config["dbname"])
+        self.conn = clickhouse_connect.get_client(
+            host=self.db_config["host"],
+            port=self.db_config["port"],
+            username=self.db_config["user"],
+            password=self.db_config["password"],
+            database=self.db_config["dbname"],
+        )
 
         if drop_old:
             log.info(f"Clickhouse client drop table : {self.table_name}")
@@ -48,7 +50,7 @@ class Clickhouse(VectorDB):
         self.conn = None
 
     @contextmanager
-    def init(self) -> None:
+    def init(self):
         """
         Examples:
             >>> with self.init():
@@ -56,12 +58,13 @@ class Clickhouse(VectorDB):
             >>>     self.search_embedding()
         """
 
-        self.conn =  clickhouse_connect.get_client(
-        host=self.db_config["host"],
-        port=self.db_config["port"],
-        username=self.db_config["user"],
-        password=self.db_config["password"],
-        database=self.db_config["dbname"])
+        self.conn = clickhouse_connect.get_client(
+            host=self.db_config["host"],
+            port=self.db_config["port"],
+            username=self.db_config["user"],
+            password=self.db_config["password"],
+            database=self.db_config["dbname"],
+        )
 
         try:
             yield
@@ -85,9 +88,7 @@ class Clickhouse(VectorDB):
             )
 
         except Exception as e:
-            log.warning(
-                f"Failed to create Clickhouse table: {self.table_name} error: {e}"
-            )
+            log.warning(f"Failed to create Clickhouse table: {self.table_name} error: {e}")
             raise e from None
 
     def ready_to_load(self):
@@ -104,16 +105,20 @@ class Clickhouse(VectorDB):
         embeddings: list[list[float]],
         metadata: list[int],
         **kwargs: Any,
-    ) -> (int, Exception):
+    ) -> tuple[int, Exception]:
         assert self.conn is not None, "Connection is not initialized"
 
         try:
             # do not iterate for bulk insert
             items = [metadata, embeddings]
 
-            self.conn.insert(table=self.table_name, data=items,
-                             column_names=['id', 'embedding'], column_type_names=['UInt32', 'Array(Float64)'],
-                             column_oriented=True)
+            self.conn.insert(
+                table=self.table_name,
+                data=items,
+                column_names=["id", "embedding"],
+                column_type_names=["UInt32", "Array(Float64)"],
+                column_oriented=True,
+            )
             return len(metadata), None
         except Exception as e:
             log.warning(f"Failed to insert data into Clickhouse table ({self.table_name}), error: {e}")
@@ -128,22 +133,24 @@ class Clickhouse(VectorDB):
     ) -> list[int]:
         assert self.conn is not None, "Connection is not initialized"
 
-        index_param = self.case_config.index_param()
+        index_param = self.case_config.index_param()  # noqa: F841
         search_param = self.case_config.search_param()
 
         if filters:
             gt = filters.get("id")
-            filterSql = (f'SELECT id, {search_param["metric_type"]}(embedding,{query}) AS score '
-                         f'FROM {self.db_config["dbname"]}.{self.table_name}  '
-                         f'WHERE id > {gt} '
-                         f'ORDER BY score LIMIT {k};'
-                         )
-            result = self.conn.query(filterSql).result_rows
+            filter_sql = (
+                f'SELECT id, {search_param["metric_type"]}(embedding,{query}) AS score '  # noqa: S608
+                f'FROM {self.db_config["dbname"]}.{self.table_name}  '
+                f"WHERE id > {gt} "
+                f"ORDER BY score LIMIT {k};"
+            )
+            result = self.conn.query(filter_sql).result_rows
             return [int(row[0]) for row in result]
-        else:
-            selectSql = (f'SELECT id, {search_param["metric_type"]}(embedding,{query}) AS score '
-                         f'FROM {self.db_config["dbname"]}.{self.table_name}  '
-                         f'ORDER BY score LIMIT {k};'
-                         )
-            result = self.conn.query(selectSql).result_rows
+        else:  # noqa: RET505
+            select_sql = (
+                f'SELECT id, {search_param["metric_type"]}(embedding,{query}) AS score '  # noqa: S608
+                f'FROM {self.db_config["dbname"]}.{self.table_name}  '
+                f"ORDER BY score LIMIT {k};"
+            )
+            result = self.conn.query(select_sql).result_rows
             return [int(row[0]) for row in result]

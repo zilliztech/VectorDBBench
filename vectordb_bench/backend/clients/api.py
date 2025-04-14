@@ -162,7 +162,7 @@ class VectorDB(ABC):
         embeddings: list[list[float]],
         metadata: list[int],
         **kwargs,
-    ) -> (int, Exception):
+    ) -> tuple[int, Exception]:
         """Insert the embeddings to the vector database. The default number of embeddings for
         each insert_embeddings is 5000.
 
