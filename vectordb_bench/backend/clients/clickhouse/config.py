@@ -6,9 +6,6 @@ from ..api import DBConfig, DBCaseConfig, MetricType, IndexType
 
 
 class ClickhouseConfigDict(TypedDict):
-    """These keys will be directly used as kwargs in psycopg connection string,
-    so the names must match exactly psycopg API"""
-
     user: str
     password: str
     host: str
@@ -64,7 +61,6 @@ class ClickhouseHNSWConfig(ClickhouseIndexConfig):
     efConstruction: int | None              # Default in clickhouse in 128
     ef: int | None = None
     index: IndexType = IndexType.HNSW
-    # This parameter does not affect the representation of the vectors in the underlying column
     quantization: str | None = 'bf16'                # Default is bf16. Possible values are f64, f32, f16, bf16, or i8
     granularity: int | None = 10_000_000    # Size of the index granules. By default, in CH it's equal 10.000.000
 

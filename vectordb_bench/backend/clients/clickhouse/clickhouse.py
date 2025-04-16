@@ -8,7 +8,7 @@ from clickhouse_connect.driver import Client
 
 from .. import IndexType
 from .config import ClickhouseConfigDict, ClickhouseIndexConfig
-from ..api import VectorDB, DBCaseConfig
+from ..api import VectorDB
 
 log = logging.getLogger(__name__)
 
