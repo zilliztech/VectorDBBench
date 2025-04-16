@@ -40,9 +40,10 @@ except ImportError:
 
 def click_get_defaults_from_file(ctx, param, value):  # noqa: ANN001, ARG001
     if value:
-        input_file = value if Path.exists(value) else Path.join(config.CONFIG_LOCAL_DIR, value)
+        path = Path(value)
+        input_file = path if path.exists() else Path(config.CONFIG_LOCAL_DIR, path)
         try:
-            with Path.open(input_file) as f:
+            with input_file.open() as f:
                 _config: dict[str, dict[str, Any]] = load(f.read(), Loader=Loader)  # noqa: S506
                 ctx.default_map = _config.get(ctx.command.name, {})
         except Exception as e:
