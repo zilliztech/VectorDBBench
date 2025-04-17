@@ -3,17 +3,20 @@
 import logging
 from contextlib import contextmanager
 from typing import Any
+
 import clickhouse_connect
 from clickhouse_connect.driver import Client
 
 from .. import IndexType
-from .config import ClickhouseConfigDict, ClickhouseIndexConfig
 from ..api import VectorDB
+from .config import ClickhouseConfigDict, ClickhouseIndexConfig
 
 log = logging.getLogger(__name__)
 
+
 class Clickhouse(VectorDB):
     """Use SQLAlchemy instructions"""
+
     def __init__(
         self,
         dim: int,
@@ -37,7 +40,7 @@ class Clickhouse(VectorDB):
         self._vector_field = "embedding"
 
         # construct basic units
-        self.conn =  self._create_connection(**self.db_config, settings=self.session_param)
+        self.conn = self._create_connection(**self.db_config, settings=self.session_param)
 
         if drop_old:
             log.info(f"Clickhouse client drop table : {self.table_name}")
@@ -58,7 +61,7 @@ class Clickhouse(VectorDB):
             >>>     self.search_embedding()
         """
 
-        self.conn =  self._create_connection(**self.db_config, settings=self.session_param)
+        self.conn = self._create_connection(**self.db_config, settings=self.session_param)
 
         try:
             yield
@@ -66,19 +69,17 @@ class Clickhouse(VectorDB):
             self.conn.close()
             self.conn = None
 
-    def _create_connection(self, settings: dict| None, **kwargs) -> Client:
-        connection = clickhouse_connect.get_client(**self.db_config, settings=settings)
-        return connection
-
+    def _create_connection(self, settings: dict | None, **kwargs) -> Client:
+        return clickhouse_connect.get_client(**self.db_config, settings=settings)
 
     def _drop_index(self):
         assert self.conn is not None, "Connection is not initialized"
         try:
-            self.conn.command(f'ALTER TABLE {self.db_config["database"]}.{self.table_name} DROP INDEX {self._index_name}')
-        except Exception as e:
-            log.warning(
-                f"Failed to drop index on table {self.db_config['database']}.{self.table_name}: {e}"
+            self.conn.command(
+                f'ALTER TABLE {self.db_config["database"]}.{self.table_name} DROP INDEX {self._index_name}'
             )
+        except Exception as e:
+            log.warning(f"Failed to drop index on table {self.db_config['database']}.{self.table_name}: {e}")
             raise e from None
 
     def _drop_table(self):
@@ -87,46 +88,41 @@ class Clickhouse(VectorDB):
         try:
             self.conn.command(f'DROP TABLE IF EXISTS {self.db_config["database"]}.{self.table_name}')
         except Exception as e:
-            log.warning(
-                f"Failed to drop table {self.db_config['database']}.{self.table_name}: {e}"
-            )
+            log.warning(f"Failed to drop table {self.db_config['database']}.{self.table_name}: {e}")
             raise e from None
 
     def _perfomance_tuning(self):
-        self.conn.command(f'SET materialize_skip_indexes_on_insert = 1')
+        self.conn.command("SET materialize_skip_indexes_on_insert = 1")
 
     def _create_index(self):
         assert self.conn is not None, "Connection is not initialized"
         try:
-            if self.index_param['index_type'] == IndexType.HNSW.value:
-                if (self.index_param['quantization'] and self.index_param['params']['M']
-                        and self.index_param['params']['efConstruction']):
-                    query = f'''
-                        ALTER TABLE {self.db_config["database"]}.{self.table_name} 
-                        ADD INDEX {self._index_name} {self._vector_field} 
-                        TYPE vector_similarity('hnsw', '{self.index_param["metric_type"]}', 
-                        '{self.index_param["quantization"]}', 
-                        {self.index_param["params"]["M"]}, {self.index_param["params"]["efConstruction"]}) 
+            if self.index_param["index_type"] == IndexType.HNSW.value:
+                if (
+                    self.index_param["quantization"]
+                    and self.index_param["params"]["M"]
+                    and self.index_param["params"]["efConstruction"]
+                ):
+                    query = f"""
+                        ALTER TABLE {self.db_config["database"]}.{self.table_name}
+                        ADD INDEX {self._index_name} {self._vector_field}
+                        TYPE vector_similarity('hnsw', '{self.index_param["metric_type"]}',
+                        '{self.index_param["quantization"]}',
+                        {self.index_param["params"]["M"]}, {self.index_param["params"]["efConstruction"]})
                         GRANULARITY {self.index_param["granularity"]}
-                        '''
+                        """
                 else:
-                    query = f'''
-                        ALTER TABLE {self.db_config["database"]}.{self.table_name} 
-                        ADD INDEX {self._index_name} {self._vector_field} 
+                    query = f"""
+                        ALTER TABLE {self.db_config["database"]}.{self.table_name}
+                        ADD INDEX {self._index_name} {self._vector_field}
                         TYPE vector_similarity('hnsw', '{self.index_param["metric_type"]}')
                         GRANULARITY {self.index_param["granularity"]}
-                        '''
-                self.conn.command(
-                    cmd=query
-                )
+                        """
+                self.conn.command(cmd=query)
             else:
-                log.warning(
-                    f"HNSW is only avaliable method in clickhouse now"
-                )
+                log.warning("HNSW is only avaliable method in clickhouse now")
         except Exception as e:
-            log.warning(
-                f"Failed to create Clickhouse vector index on table: {self.table_name} error: {e}"
-            )
+            log.warning(f"Failed to create Clickhouse vector index on table: {self.table_name} error: {e}")
             raise e from None
 
     def _create_table(self, dim: int):
@@ -136,17 +132,15 @@ class Clickhouse(VectorDB):
             # create table
             self.conn.command(
                 f'CREATE TABLE IF NOT EXISTS {self.db_config["database"]}.{self.table_name} '
-                f'({self._primary_field} UInt32, '
+                f"({self._primary_field} UInt32, "
                 f'{self._vector_field} Array({self.index_param["vector_data_type"]}) CODEC(NONE), '
-                f'CONSTRAINT same_length CHECK length(embedding) = {dim}) '
-                f'ENGINE = MergeTree() '
-                f'ORDER BY {self._primary_field}'
+                f"CONSTRAINT same_length CHECK length(embedding) = {dim}) "
+                f"ENGINE = MergeTree() "
+                f"ORDER BY {self._primary_field}"
             )
 
         except Exception as e:
-            log.warning(
-                f"Failed to create Clickhouse table: {self.table_name} error: {e}"
-            )
+            log.warning(f"Failed to create Clickhouse table: {self.table_name} error: {e}")
             raise e from None
 
     def optimize(self, data_size: int | None = None):
@@ -167,10 +161,13 @@ class Clickhouse(VectorDB):
             # do not iterate for bulk insert
             items = [metadata, embeddings]
 
-            self.conn.insert(table=self.table_name, data=items,
-                             column_names=['id', 'embedding'],
-                             column_type_names=['UInt32', f'Array({self.index_param["vector_data_type"]})'],
-                             column_oriented=True)
+            self.conn.insert(
+                table=self.table_name,
+                data=items,
+                column_names=["id", "embedding"],
+                column_type_names=["UInt32", f'Array({self.index_param["vector_data_type"]})'],
+                column_oriented=True,
+            )
             return len(metadata), None
         except Exception as e:
             log.warning(f"Failed to insert data into Clickhouse table ({self.table_name}), error: {e}")
@@ -184,26 +181,52 @@ class Clickhouse(VectorDB):
         timeout: int | None = None,
     ) -> list[int]:
         assert self.conn is not None, "Connection is not initialized"
+        parameters = {
+            "primary_field": self._primary_field,
+            "vector_field": self._vector_field,
+            "schema": self.db_config["database"],
+            "table": self.table_name,
+            "gt": filters.get("id"),
+            "k": k,
+            "metric_type": self.search_param["metric_type"],
+            "query": query,
+        }
+        if self.case_config.metric_type == "COSINE":
+            if filters:
+                result = self.conn.query(
+                    "SELECT {primary_field:Identifier}, {vector_field:Identifier} "
+                    "FROM {schema:Identifier}.{table:Identifier} "
+                    "WHERE {primary_field:Identifier} > {gt:UInt32} "
+                    "ORDER BY cosineDistance(embedding,{query:Array(Float64)}) "
+                    "LIMIT {k:UInt32}",
+                    parameters=parameters,
+                ).result_rows
+                return [int(row[0]) for row in result]
 
+            result = self.conn.query(
+                "SELECT {primary_field:Identifier}, {vector_field:Identifier} "
+                "FROM {schema:Identifier}.{table:Identifier} "
+                "ORDER BY cosineDistance(embedding,{query:Array(Float64)}) "
+                "LIMIT {k:UInt32}",
+                parameters=parameters,
+            ).result_rows
+            return [int(row[0]) for row in result]
         if filters:
-            gt = filters.get("id")
-            filterSql = f'''
-                         SELECT {self._primary_field}, {self._vector_field}
-                         FROM {self.db_config["database"]}.{self.table_name}  
-                         WHERE {self._primary_field} > {gt} 
-                         ORDER BY {self.search_param["metric_type"]}(embedding,{query}) 
-                         LIMIT {k}
-                        '''
-
-            result = self.conn.query(filterSql).result_rows
+            result = self.conn.query(
+                "SELECT {primary_field:Identifier}, {vector_field:Identifier} "
+                "FROM {schema:Identifier}.{table:Identifier} "
+                "WHERE {primary_field:Identifier} > {gt:UInt32} "
+                "ORDER BY L2Distance(embedding,{query:Array(Float64)}) "
+                "LIMIT {k:UInt32}",
+                parameters=parameters,
+            ).result_rows
             return [int(row[0]) for row in result]
-        else:
-            selectSql = f'''
-                         SELECT {self._primary_field}, {self._vector_field} 
-                         FROM {self.db_config["database"]}.{self.table_name} 
-                         ORDER BY {self.search_param["metric_type"]}(embedding,{query}) 
-                         LIMIT {k}
-                         '''
 
-            result = self.conn.query(selectSql).result_rows
-            return [int(row[0]) for row in result]
+        result = self.conn.query(
+            "SELECT {primary_field:Identifier}, {vector_field:Identifier} "
+            "FROM {schema:Identifier}.{table:Identifier} "
+            "ORDER BY L2Distance(embedding,{query:Array(Float64)}) "
+            "LIMIT {k:UInt32}",
+            parameters=parameters,
+        ).result_rows
+        return [int(row[0]) for row in result]
