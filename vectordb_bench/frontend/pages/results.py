@@ -1,26 +1,24 @@
 import streamlit as st
-from vectordb_bench.backend.filter import FilterOp
 from vectordb_bench.frontend.components.check_results.footer import footer
+from vectordb_bench.frontend.components.check_results.stPageConfig import (
+    initResultsPageConfig,
+)
 from vectordb_bench.frontend.components.check_results.headerIcon import drawHeaderIcon
 from vectordb_bench.frontend.components.check_results.nav import (
     NavToQuriesPerDollar,
     NavToRunTest,
     NavToPages,
 )
-from vectordb_bench.frontend.components.label_filter.charts import drawCharts
+from vectordb_bench.frontend.components.check_results.charts import drawCharts
 from vectordb_bench.frontend.components.check_results.filters import getshownData
-from vectordb_bench.frontend.config.styles import FAVICON
+from vectordb_bench.frontend.components.get_results.saveAsImage import getResults
+
 from vectordb_bench.interface import benchmark_runner
 
 
 def main():
     # set page config
-    st.set_page_config(
-        page_title="Label Filter",
-        page_icon=FAVICON,
-        layout="wide",
-        # initial_sidebar_state="collapsed",
-    )
+    initResultsPageConfig(st)
 
     # header
     drawHeaderIcon(st)
@@ -30,13 +28,15 @@ def main():
 
     allResults = benchmark_runner.get_results()
 
-    st.title("Vector Database Benchmark (Label Filter)")
+    st.title("Vector Database Benchmark")
+    st.caption(
+        "Except for zillizcloud-v2024.1, which was tested in _January 2024_, all other tests were completed before _August 2023_."
+    )
+    st.caption("All tested milvus are in _standalone_ mode.")
 
     # results selector and filter
     resultSelectorContainer = st.sidebar.container()
-    shownData, failedTasks, showCaseNames = getshownData(
-        resultSelectorContainer, allResults, filter_type=FilterOp.StrEqual
-    )
+    shownData, failedTasks, showCaseNames = getshownData(resultSelectorContainer, allResults)
 
     resultSelectorContainer.divider()
 
@@ -45,8 +45,12 @@ def main():
     NavToRunTest(navContainer)
     NavToQuriesPerDollar(navContainer)
 
+    # save or share
+    resultesContainer = st.sidebar.container()
+    getResults(resultesContainer, "vectordb_bench")
+
     # charts
-    drawCharts(st, shownData)
+    drawCharts(st, shownData, failedTasks, showCaseNames)
 
     # footer
     footer(st.container())
