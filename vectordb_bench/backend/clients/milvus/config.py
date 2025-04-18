@@ -1,6 +1,6 @@
 from pydantic import BaseModel, SecretStr, validator
 
-from ..api import DBCaseConfig, DBConfig, IndexType, MetricType
+from ..api import DBCaseConfig, DBConfig, IndexType, MetricType, SQType
 
 
 class MilvusConfig(DBConfig):
@@ -88,6 +88,88 @@ class HNSWConfig(MilvusIndexConfig, DBCaseConfig):
         }
 
 
+class HNSWSQConfig(HNSWConfig, DBCaseConfig):
+    index: IndexType = IndexType.HNSW_SQ
+    sq_type: SQType = SQType.SQ8
+    refine: bool = True
+    refine_type: SQType = SQType.FP32
+    refine_k: float = 1
+
+    def index_param(self) -> dict:
+        return {
+            "metric_type": self.parse_metric(),
+            "index_type": self.index.value,
+            "params": {
+                "M": self.M,
+                "efConstruction": self.efConstruction,
+                "sq_type": self.sq_type.value,
+                "refine": self.refine,
+                "refine_type": self.refine_type.value,
+            },
+        }
+
+    def search_param(self) -> dict:
+        return {
+            "metric_type": self.parse_metric(),
+            "params": {"ef": self.ef, "refine_k": self.refine_k},
+        }
+
+
+class HNSWPQConfig(HNSWConfig):
+    index: IndexType = IndexType.HNSW_PQ
+    m: int = 32
+    nbits: int = 8
+    refine: bool = True
+    refine_type: SQType = SQType.FP32
+    refine_k: float = 1
+
+    def index_param(self) -> dict:
+        return {
+            "metric_type": self.parse_metric(),
+            "index_type": self.index.value,
+            "params": {
+                "M": self.M,
+                "efConstruction": self.efConstruction,
+                "m": self.m,
+                "nbits": self.nbits,
+                "refine": self.refine,
+                "refine_type": self.refine_type.value,
+            },
+        }
+
+    def search_param(self) -> dict:
+        return {
+            "metric_type": self.parse_metric(),
+            "params": {"ef": self.ef, "refine_k": self.refine_k},
+        }
+
+
+class HNSWPRQConfig(HNSWPQConfig):
+    index: IndexType = IndexType.HNSW_PRQ
+    nrq: int = 2
+
+    def index_param(self) -> dict:
+        return {
+            "metric_type": self.parse_metric(),
+            "index_type": self.index.value,
+            "params": {
+                "M": self.M,
+                "efConstruction": self.efConstruction,
+                "m": self.m,
+                "nbits": self.nbits,
+                "nrq": self.nrq,
+                "refine": self.refine,
+                "refine_type": self.refine_type.value,
+            },
+        }
+
+    def search_param(self) -> dict:
+        return {
+            "metric_type": self.parse_metric(),
+            "params": {"ef": self.ef, "refine_k": self.refine_k},
+        }
+
+
 class DISKANNConfig(MilvusIndexConfig, DBCaseConfig):
     search_list: int | None = None
     index: IndexType = IndexType.DISKANN
@@ -141,6 +223,31 @@ class IVFSQ8Config(MilvusIndexConfig, DBCaseConfig):
         return {
             "metric_type": self.parse_metric(),
             "params": {"nprobe": self.nprobe},
+        }
+
+
+class IVFRABITQConfig(IVFSQ8Config):
+    index: IndexType = IndexType.IVF_RABITQ
+    rbq_bits_query: int = 0  # 0, 1, 2, ..., 8
+    refine: bool = True
+    refine_type: SQType = SQType.FP32
+    refine_k: float = 1
+
+    def index_param(self) -> dict:
+        return {
+            "metric_type": self.parse_metric(),
+            "index_type": self.index.value,
+            "params": {
+                "nlist": self.nlist,
+                "refine": self.refine,
+                "refine_type": self.refine_type.value,
+            },
+        }
+
+    def search_param(self) -> dict:
+        return {
+            "metric_type": self.parse_metric(),
+            "params": {"nprobe": self.nprobe, "rbq_bits_query": self.rbq_bits_query, "refine_k": self.refine_k},
         }
 
 
@@ -285,9 +392,13 @@ class GPUCAGRAConfig(MilvusIndexConfig, DBCaseConfig):
 _milvus_case_config = {
     IndexType.AUTOINDEX: AutoIndexConfig,
     IndexType.HNSW: HNSWConfig,
+    IndexType.HNSW_SQ: HNSWSQConfig,
+    IndexType.HNSW_PQ: HNSWPQConfig,
+    IndexType.HNSW_PRQ: HNSWPRQConfig,
     IndexType.DISKANN: DISKANNConfig,
     IndexType.IVFFlat: IVFFlatConfig,
     IndexType.IVFSQ8: IVFSQ8Config,
+    IndexType.IVF_RABITQ: IVFRABITQConfig,
     IndexType.Flat: FLATConfig,
     IndexType.GPU_IVF_FLAT: GPUIVFFlatConfig,
     IndexType.GPU_IVF_PQ: GPUIVFPQConfig,
