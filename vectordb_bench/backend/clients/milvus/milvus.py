@@ -7,7 +7,7 @@ from contextlib import contextmanager
 
 from pymilvus import Collection, CollectionSchema, DataType, FieldSchema, MilvusException, utility
 
-from ..api import VectorDB, MetricType
+from ..api import VectorDB
 from .config import MilvusIndexConfig
 
 log = logging.getLogger(__name__)
@@ -37,7 +37,6 @@ class Milvus(VectorDB):
         self._scalar_field = "id"
         self._vector_field = "vector"
         self._index_name = "vector_idx"
-        self.case_config.metric_type = MetricType.IP
 
         from pymilvus import connections
 
@@ -144,7 +143,12 @@ class Milvus(VectorDB):
         self._optimize()
 
     def need_normalize_cosine(self) -> bool:
-        return True
+        """Wheather this database need to normalize dataset to support COSINE"""
+        if self.case_config.is_gpu_index:
+            log.info("current gpu_index only supports IP / L2, cosine dataset need normalize.")
+            return True
+ 
+        return False
 
     def insert_embeddings(
         self,

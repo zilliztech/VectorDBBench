@@ -438,6 +438,15 @@ class HNSWFlavor3(HNSWBaseRequiredTypedDict):
         int | None,
         click.option("--ef-search", type=int, help="hnsw ef-search", required=True),
     ]
+    index_type: Annotated[
+        str | None,
+        click.option(
+            "--index-type",
+            type=click.Choice(["HNSW", "HNSW_SQ"], case_sensitive=False),
+            help="Type of index to use. Supported values: HNSW, HNSW_SQ",
+            required=True,
+        ),
+    ]
 
 
 class IVFFlatTypedDict(TypedDict):

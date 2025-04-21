@@ -1,17 +1,17 @@
 import logging
-import struct
-from typing import Dict, Generator, Any, Tuple, Optional
-from contextlib import contextmanager
 import time
+from contextlib import contextmanager
+from typing import Generator, Any, Tuple, Optional, List, Dict
 
-import numpy as np
 import mysql.connector as mysql
-from ..api import VectorDB, IndexType, MetricType
+import numpy as np
+from ..api import VectorDB, IndexType
 from .config import OceanBaseIndexConfig, OceanBaseConfigDict
 
 log = logging.getLogger(__name__)
 
 OCEANBASE_DEFAULT_LOAD_BATCH_SIZE = 256
+
 
 class OceanBase(VectorDB):
     def __init__(
@@ -24,157 +24,185 @@ class OceanBase(VectorDB):
         **kwargs,
     ):
         self.name = "OceanBase"
+        self.dim = dim
         self.db_config = db_config
         self.db_case_config = db_case_config
         self.table_name = collection_name
-        self.dim = dim
         self.load_batch_size = OCEANBASE_DEFAULT_LOAD_BATCH_SIZE
         self._index_name = "vidx"
         self._primary_field = "id"
         self._vector_field = "embedding"
-        self.db_case_config.metric_type = MetricType.IP
-        print(self.db_case_config.parse_metric_func_str())
-        self._query = f"SELECT /*+ opt_param('rowsets_max_rows', 256)*/ id FROM {self.table_name} ORDER BY {self.db_case_config.parse_metric_func_str()}(embedding, '[%s]') APPROXIMATE LIMIT %s"
-        log.info(f"{self.name} config values: {self.db_config}\n{self.db_case_config}\n{self.db_case_config.parse_metric_func_str()}")
 
-        if self.db_config["unix_socket"] != "":
-            self._conn = mysql.connect(unix_socket=self.db_config["unix_socket"],
-                                       user=self.db_config["user"],
-                                       port=self.db_config["port"],
-                                       password=self.db_config["password"],
-                                       database=self.db_config["database"])
-        else:
-            self._conn = mysql.connect(host=self.db_config["host"],
-                                       user=self.db_config["user"],
-                                       port=self.db_config["port"],
-                                       password=self.db_config["password"],
-                                       database=self.db_config["database"])
-        self._cursor = self._conn.cursor()
+        log.info(
+            f"{self.name} initialized with config:\nDatabase: {self.db_config}\nCase Config: {self.db_case_config}"
+        )
 
-        if drop_old:
-            self._drop_table()
-            self._create_table()
-
-        self._cursor.close()
-        self._cursor = None
-        self._conn.close()
         self._conn = None
+        self._cursor = None
+
+        try:
+            self._connect()
+            if drop_old:
+                self._drop_table()
+                self._create_table()
+        finally:
+            self._disconnect()
+
+    def _connect(self):
+        try:
+            if self.db_config["unix_socket"]:
+                self._conn = mysql.connect(
+                    unix_socket=self.db_config["unix_socket"],
+                    user=self.db_config["user"],
+                    port=self.db_config["port"],
+                    password=self.db_config["password"],
+                    database=self.db_config["database"],
+                )
+            else:
+                self._conn = mysql.connect(
+                    host=self.db_config["host"],
+                    user=self.db_config["user"],
+                    port=self.db_config["port"],
+                    password=self.db_config["password"],
+                    database=self.db_config["database"],
+                )
+            self._cursor = self._conn.cursor()
+        except mysql.Error as e:
+            log.error(f"Failed to connect to the database: {e}")
+            raise
+
+    def _disconnect(self):
+        if self._cursor:
+            self._cursor.close()
+            self._cursor = None
+        if self._conn:
+            self._conn.close()
+            self._conn = None
 
     @contextmanager
     def init(self) -> Generator[None, None, None]:
         try:
-            if self.db_config["unix_socket"] != "":
-                self._conn = mysql.connect(unix_socket=self.db_config["unix_socket"],
-                                           user=self.db_config["user"],
-                                           port=self.db_config["port"],
-                                           password=self.db_config["password"],
-                                           database=self.db_config["database"])
-            else:
-                self._conn = mysql.connect(host=self.db_config["host"],
-                                           user=self.db_config["user"],
-                                           port=self.db_config["port"],
-                                           password=self.db_config["password"],
-                                           database=self.db_config["database"])
-            self._cursor = self._conn.cursor()
+            self._connect()
             self._cursor.execute("SET autocommit=1")
-            if self.db_case_config.index == IndexType.HNSW or self.db_case_config.index == IndexType.HNSW_SQ:
-                self._cursor.execute(f"SET  ob_hnsw_ef_search={(self.db_case_config.search_param())['params']['ef_search']}")
-            else:
-                self._cursor.execute(f"SET ob_ivf_nprobes={(self.db_case_config.search_param())['params']['ivf_nprobes']}")
+
+            if self.db_case_config.index in {IndexType.HNSW, IndexType.HNSW_SQ}:
+                self._cursor.execute(
+                    f"SET ob_hnsw_ef_search={(self.db_case_config.search_param())['params']['ef_search']}"
+                )
             yield
         finally:
-            self._cursor.close()
-            self._cursor = None
-            self._conn.close()
-            self._conn = None
+            self._disconnect()
 
     def _drop_table(self):
-        if (self._conn is None) or (self._cursor is None):
-            raise ValueError("connection is invalid")
+        if not self._cursor:
+            raise ValueError("Cursor is not initialized")
 
-        log.info(f"{self.name} client drop table: {self.table_name}")
-        self._cursor.execute(
-            f"DROP TABLE IF EXISTS {self.table_name}"
-        )
+        log.info(f"Dropping table {self.table_name}")
+        self._cursor.execute(f"DROP TABLE IF EXISTS {self.table_name}")
 
     def _create_table(self):
-        if (self._conn is None) or (self._cursor is None):
-            raise ValueError("connection is invalid")
+        if not self._cursor:
+            raise ValueError("Cursor is not initialized")
 
-        log.info(f"{self.name} client create table: {self.table_name}")
-        idx_param = self.db_case_config.index_param()
-        idx_args_str = ','.join([f"{k}={v}" for k, v in idx_param["params"].items()])
-        log.info(
-            f"""CREATE TABLE {self.table_name} (
-                id INT, 
-                embedding vector({self.dim}), 
-                primary key(id));"""
+        log.info(f"Creating table {self.table_name}")
+        create_table_query = (
+            f"CREATE TABLE {self.table_name} ("
+            f"id INT PRIMARY KEY, "
+            f"embedding VECTOR({self.dim})"
+            f");"
         )
-        self._cursor.execute(
-            f"""CREATE TABLE {self.table_name} (
-                id INT, 
-                embedding vector({self.dim}), 
-                primary key(id));"""
+        self._cursor.execute(create_table_query)
+
+    def optimize(self, data_size: int):
+        index_params = self.db_case_config.index_param()
+        index_args = ', '.join(f"{k}={v}" for k, v in index_params["params"].items())
+        index_query = (
+            f"CREATE /*+ PARALLEL(32) */ VECTOR INDEX idx1 "
+            f"ON {self.table_name}(embedding) "
+            f"WITH (distance={self.db_case_config.parse_metric()}, "
+            f"type={index_params['index_type']}, lib={index_params['lib']}, {index_args})"
         )
 
-    def ready_to_load(self):
-        pass
+        try:
+            log.info("Creating index...")
+            start_time = time.time()
+            self._cursor.execute(index_query)
+            log.info(f"Index created in {time.time() - start_time:.2f} seconds")
 
-    def optimize(self, data_size):
-        idx_param = self.db_case_config.index_param()
-        idx_args_str = ','.join([f"{k}={v}" for k, v in idx_param["params"].items()]) 
-        print("begin create index")
-        self._cursor.execute(f"create /*+ PARALLEL(32) */ vector index idx1 on items(embedding) with (distance={self.db_case_config.parse_metric()}, type={idx_param['index_type']}, lib={idx_param['lib']}, {idx_args_str})")
-        print("create index end")
-        print("begin major freeze") 
-        self._cursor.execute("ALTER SYSTEM MAJOR FREEZE;")
-        time.sleep(10)
-        all_status_idle = "FALSE"
-        while all_status_idle != "TRUE":
-            self._cursor.execute("SELECT IF(COUNT(*) = COUNT(STATUS = 'IDLE' OR NULL), 'TRUE', 'FALSE') AS all_status_idle FROM oceanbase.DBA_OB_ZONE_MAJOR_COMPACTION;")
-            all_status_idle = self._cursor.fetchone()[0]
-            if all_status_idle != "TRUE":
-                time.sleep(10)
-        print("major freeze end") 
-        self._cursor.execute("call dbms_stats.gather_schema_stats('test',degree=>96);")
+            log.info("Performing major freeze...")
+            self._cursor.execute("ALTER SYSTEM MAJOR FREEZE;")
+            time.sleep(10)
+            self._wait_for_major_compaction()
+
+            log.info("Gathering schema statistics...")
+            self._cursor.execute("CALL dbms_stats.gather_schema_stats('test', degree => 96);")
+        except mysql.Error as e:
+            log.error(f"Failed to optimize index: {e}")
+            raise
 
     def need_normalize_cosine(self) -> bool:
-        return True
+        return False
+
+    def _wait_for_major_compaction(self):
+        while True:
+            self._cursor.execute(
+                "SELECT IF(COUNT(*) = COUNT(STATUS = 'IDLE' OR NULL), 'TRUE', 'FALSE') "
+                "AS all_status_idle FROM oceanbase.DBA_OB_ZONE_MAJOR_COMPACTION;"
+            )
+            all_status_idle = self._cursor.fetchone()[0]
+            if all_status_idle == "TRUE":
+                break
+            time.sleep(10)
 
     def insert_embeddings(
         self,
-        embeddings: list[list[float]],
-        metadata: list[int],
+        embeddings: List[List[float]],
+        metadata: List[int],
         **kwargs: Any,
     ) -> Tuple[int, Optional[Exception]]:
-        if (self._conn is None) or (self._cursor is None):
-            raise ValueError("connection is invalid")
+        if not self._cursor:
+            raise ValueError("Cursor is not initialized")
 
         insert_count = 0
         try:
-            for batch_start_offset in range(0, len(embeddings), self.load_batch_size):
-                batch_end_offset = min(batch_start_offset + self.load_batch_size, len(embeddings))
-                data_batch = [(metadata[i], embeddings[i]) for i in range(batch_start_offset, batch_end_offset)]
-                values = ["(%d, '[%s]')" % (i, ",".join([str(e) for e in embedding])) for i, embedding in data_batch]
-                values_str = ",".join(values)
-                self._cursor.execute(f"insert /*+ ENABLE_PARALLEL_DML PARALLEL(32) */ into {self.table_name} values {values_str}")
-                insert_count += (batch_end_offset - batch_start_offset)
+            for batch_start in range(0, len(embeddings), self.load_batch_size):
+                batch_end = min(batch_start + self.load_batch_size, len(embeddings))
+                batch = [
+                    (metadata[i], embeddings[i])
+                    for i in range(batch_start, batch_end)
+                ]
+                values = ", ".join(
+                    f"({id}, '[{','.join(map(str, embedding))}]')" for id, embedding in batch
+                )
+                self._cursor.execute(
+                    f"INSERT /*+ ENABLE_PARALLEL_DML PARALLEL(32) */ INTO {self.table_name} VALUES {values}"
+                )
+                insert_count += len(batch)
         except mysql.Error as e:
-            log.info(f"Failed to insert data: {e}")
-            return (insert_count, e)
-        return (insert_count, None)
+            log.error(f"Failed to insert embeddings: {e}")
+            return insert_count, e
+
+        return insert_count, None
 
     def search_embedding(
         self,
-        query: list[float],
+        query: List[float],
         k: int = 100,
-        filters: dict | None = None,
-        timeout: int | None = None,
-    ) -> list[int]:
-        if (self._conn is None) or (self._cursor is None):
-            raise ValueError("connection is invalid")
+        filters: Optional[Dict[str, Any]] = None,
+        timeout: Optional[int] = None,
+    ) -> List[int]:
+        if not self._cursor:
+            raise ValueError("Cursor is not initialized")
 
-        if filters is not None:
-            raise ValueError("filters is not supported now")
-        self._cursor.execute(self._query % (",".join([str(e) for e in query]), k))
-        return [id for id, in self._cursor.fetchall()]
+        filter_clause = f"WHERE id >= {filters['id']}" if filters else ""
+        query_str = (
+            f"SELECT /*+ opt_param('rowsets_max_rows', 256)*/ id FROM {self.table_name} "
+            f"{filter_clause} ORDER BY {self.db_case_config.parse_metric_func_str()}(embedding, '[{','.join(map(str, query))}]') APPROXIMATE LIMIT {k}"
+        )
+
+        try:
+            self._cursor.execute(query_str)
+            return [row[0] for row in self._cursor.fetchall()]
+        except mysql.Error as e:
+            log.error(f"Failed to execute search query: {e}")
+            raise

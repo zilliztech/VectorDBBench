@@ -61,6 +61,7 @@ def OceanBaseHNSW(**parameters: Unpack[OceanBaseHNSWTypedDict]):
             M=parameters["m"],
             efConstruction=parameters["ef_construction"],
             ef_search=parameters["ef_search"],
+            index=parameters["index_type"],
         ),
         **parameters,
     )
