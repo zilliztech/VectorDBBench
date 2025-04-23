@@ -168,6 +168,7 @@ CaseConfigParamInput_IndexType = CaseConfigInput(
             IndexType.HNSW_PQ.value,
             IndexType.HNSW_PRQ.value,
             IndexType.IVFFlat.value,
+            IndexType.IVFPQ.value,
             IndexType.IVFSQ8.value,
             IndexType.IVF_RABITQ.value,
             IndexType.DISKANN.value,
@@ -631,6 +632,7 @@ CaseConfigParamInput_Nlist = CaseConfigInput(
     isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
     in [
         IndexType.IVFFlat.value,
+        IndexType.IVFPQ.value,
         IndexType.IVFSQ8.value,
         IndexType.IVF_RABITQ.value,
         IndexType.GPU_IVF_FLAT.value,
@@ -650,6 +652,7 @@ CaseConfigParamInput_Nprobe = CaseConfigInput(
     isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
     in [
         IndexType.IVFFlat.value,
+        IndexType.IVFPQ.value,
         IndexType.IVFSQ8.value,
         IndexType.IVF_RABITQ.value,
         IndexType.GPU_IVF_FLAT.value,
@@ -662,12 +665,12 @@ CaseConfigParamInput_M_PQ = CaseConfigInput(
     label=CaseConfigParamType.m,
     inputType=InputType.Number,
     inputConfig={
-        "min": 0,
+        "min": 1,
         "max": 65536,
-        "value": 0,
+        "value": 32,
     },
     isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
-    in [IndexType.GPU_IVF_PQ.value, IndexType.HNSW_PQ.value, IndexType.HNSW_PRQ.value],
+    in [IndexType.GPU_IVF_PQ.value, IndexType.HNSW_PQ.value, IndexType.HNSW_PRQ.value, IndexType.IVFPQ.value],
 )
 
 
@@ -680,7 +683,7 @@ CaseConfigParamInput_Nbits_PQ = CaseConfigInput(
         "value": 8,
     },
     isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
-    in [IndexType.GPU_IVF_PQ.value, IndexType.HNSW_PQ.value, IndexType.HNSW_PRQ.value],
+    in [IndexType.GPU_IVF_PQ.value, IndexType.HNSW_PQ.value, IndexType.HNSW_PRQ.value, IndexType.IVFPQ.value],
 )
 
 CaseConfigParamInput_NRQ = CaseConfigInput(
