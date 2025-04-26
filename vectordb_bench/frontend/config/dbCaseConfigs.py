@@ -1491,6 +1491,127 @@ VespaLoadingConfig = [
 ]
 VespaPerformanceConfig = VespaLoadingConfig
 
+CaseConfigParamInput_IndexType_LanceDB = CaseConfigInput(
+    label=CaseConfigParamType.IndexType,
+    inputHelp="AUTOINDEX = IVFPQ with default parameters",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [
+            IndexType.NONE.value,
+            IndexType.AUTOINDEX.value,
+            IndexType.IVFPQ.value,
+            IndexType.HNSW.value,
+        ],
+    },
+)
+
+CaseConfigParamInput_num_partitions_LanceDB = CaseConfigInput(
+    label=CaseConfigParamType.num_partitions,
+    displayLabel="Number of Partitions",
+    inputHelp="Number of partitions (clusters) for IVF_PQ. Default (when 0): sqrt(num_rows)",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 0,
+        "max": 10000,
+        "value": 0,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.IVFPQ.value
+    or config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_num_sub_vectors_LanceDB = CaseConfigInput(
+    label=CaseConfigParamType.num_sub_vectors,
+    displayLabel="Number of Sub-vectors",
+    inputHelp="Number of sub-vectors for PQ. Default (when 0): dim/16 or dim/8",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 0,
+        "max": 1000,
+        "value": 0,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.IVFPQ.value
+    or config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_num_bits_LanceDB = CaseConfigInput(
+    label=CaseConfigParamType.nbits,
+    displayLabel="Number of Bits",
+    inputHelp="Number of bits per sub-vector.",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [4, 8],
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.IVFPQ.value
+    or config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_sample_rate_LanceDB = CaseConfigInput(
+    label=CaseConfigParamType.sample_rate,
+    displayLabel="Sample Rate",
+    inputHelp="Sample rate for training. Higher values are more accurate but slower",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 16,
+        "max": 1024,
+        "value": 256,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.IVFPQ.value
+    or config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_max_iterations_LanceDB = CaseConfigInput(
+    label=CaseConfigParamType.max_iterations,
+    displayLabel="Max Iterations",
+    inputHelp="Maximum iterations for k-means clustering",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 10,
+        "max": 200,
+        "value": 50,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.IVFPQ.value
+    or config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_m_LanceDB = CaseConfigInput(
+    label=CaseConfigParamType.m,
+    displayLabel="m",
+    inputHelp="m parameter in HNSW",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 0,
+        "max": 1000,
+        "value": 0,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_ef_construction_LanceDB = CaseConfigInput(
+    label=CaseConfigParamType.ef_construction,
+    displayLabel="ef_construction",
+    inputHelp="ef_construction parameter in HNSW",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 0,
+        "max": 1000,
+        "value": 0,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
+)
+
+LanceDBLoadConfig = [
+    CaseConfigParamInput_IndexType_LanceDB,
+    CaseConfigParamInput_num_partitions_LanceDB,
+    CaseConfigParamInput_num_sub_vectors_LanceDB,
+    CaseConfigParamInput_num_bits_LanceDB,
+    CaseConfigParamInput_sample_rate_LanceDB,
+    CaseConfigParamInput_max_iterations_LanceDB,
+    CaseConfigParamInput_m_LanceDB,
+    CaseConfigParamInput_ef_construction_LanceDB,
+]
+
+LanceDBPerformanceConfig = LanceDBLoadConfig
+
 CASE_CONFIG_MAP = {
     DB.Milvus: {
         CaseLabel.Load: MilvusLoadConfig,
@@ -1550,5 +1671,9 @@ CASE_CONFIG_MAP = {
     DB.Vespa: {
         CaseLabel.Load: VespaLoadingConfig,
         CaseLabel.Performance: VespaPerformanceConfig,
+    },
+    DB.LanceDB: {
+        CaseLabel.Load: LanceDBLoadConfig,
+        CaseLabel.Performance: LanceDBPerformanceConfig,
     },
 }

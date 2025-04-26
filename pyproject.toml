@@ -72,6 +72,7 @@ all = [
     "PyMySQL",
     "clickhouse-connect",
     "pyvespa",
+    "lancedb",
 ]
 
 qdrant          = [ "qdrant-client" ]
@@ -94,6 +95,7 @@ mariadb         = [ "mariadb" ]
 tidb            = [ "PyMySQL" ]
 clickhouse      = [ "clickhouse-connect" ]
 vespa           = [ "pyvespa" ]
+lancedb         = [ "lancedb" ]
 
 [project.urls]
 "repository" = "https://github.com/zilliztech/VectorDBBench"

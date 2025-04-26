@@ -45,9 +45,10 @@ class DB(Enum):
     TiDB = "TiDB"
     Clickhouse = "Clickhouse"
     Vespa = "Vespa"
+    LanceDB = "LanceDB"
 
     @property
-    def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901
+    def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901, PLR0915
         """Import while in use"""
         if self == DB.Milvus:
             from .milvus.milvus import Milvus
@@ -164,11 +165,16 @@ class DB(Enum):
 
             return Vespa
 
+        if self == DB.LanceDB:
+            from .lancedb.lancedb import LanceDB
+
+            return LanceDB
+
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
 
     @property
-    def config_cls(self) -> type[DBConfig]:  # noqa: PLR0911, PLR0912, C901
+    def config_cls(self) -> type[DBConfig]:  # noqa: PLR0911, PLR0912, C901, PLR0915
         """Import while in use"""
         if self == DB.Milvus:
             from .milvus.config import MilvusConfig
@@ -285,6 +291,11 @@ class DB(Enum):
 
             return VespaConfig
 
+        if self == DB.LanceDB:
+            from .lancedb.config import LanceDBConfig
+
+            return LanceDBConfig
+
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
 
@@ -381,6 +392,11 @@ class DB(Enum):
             from .vespa.config import VespaHNSWConfig
 
             return VespaHNSWConfig
+
+        if self == DB.LanceDB:
+            from .lancedb.config import _lancedb_case_config
+
+            return _lancedb_case_config.get(index_type)
 
         # DB.Pinecone, DB.Chroma, DB.Redis
         return EmptyDBCaseConfig
