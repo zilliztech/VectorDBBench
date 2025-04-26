@@ -267,13 +267,13 @@ pip install -e '.[pinecone]'
 ```
 ### Run test server
 ```
-$ python -m vectordb_bench
+python -m vectordb_bench
 ```
 
 OR:
 
 ```shell
-$ init_bench
+init_bench
 ```
 
 OR:
@@ -290,13 +290,13 @@ After reopen the repository in container, run `python -m vectordb_bench` in the 
 
 ### Check coding styles
 ```shell
-$ make lint
+make lint
 ```
 
 To fix the coding styles automatically
 
 ```shell
-$ make format
+make format
 ```
 
 ## How does it work?
