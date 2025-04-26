@@ -1,6 +1,7 @@
 from ..backend.clients.alloydb.cli import AlloyDBScaNN
 from ..backend.clients.aws_opensearch.cli import AWSOpenSearch
 from ..backend.clients.clickhouse.cli import Clickhouse
+from ..backend.clients.lancedb.cli import LanceDB
 from ..backend.clients.mariadb.cli import MariaDBHNSW
 from ..backend.clients.memorydb.cli import MemoryDB
 from ..backend.clients.milvus.cli import MilvusAutoIndex
@@ -33,6 +34,7 @@ cli.add_command(MariaDBHNSW)
 cli.add_command(TiDB)
 cli.add_command(Clickhouse)
 cli.add_command(Vespa)
+cli.add_command(LanceDB)
 
 
 if __name__ == "__main__":
