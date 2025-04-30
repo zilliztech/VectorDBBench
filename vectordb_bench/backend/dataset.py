@@ -220,10 +220,12 @@ class DatasetManager(BaseModel):
         train_files = utils.compose_train_files(file_count, use_shuffled)
         all_files = train_files
 
-        gt_file, test_file = None, None
+        test_file = "test.parquet"
+        all_files.extend([test_file])
+        gt_file = None
         if self.data.with_gt:
-            gt_file, test_file = utils.compose_gt_file(filters), "test.parquet"
-            all_files.extend([gt_file, test_file])
+            gt_file = utils.compose_gt_file(filters)
+            all_files.extend([gt_file])
 
         if not self.data.is_custom:
             source.reader().read(
@@ -232,8 +234,10 @@ class DatasetManager(BaseModel):
                 local_ds_root=self.data_dir,
             )
 
-        if gt_file is not None and test_file is not None:
+        if test_file is not None:
             self.test_data = self._read_file(test_file)
+
+        if gt_file is not None:
             self.gt_data = self._read_file(gt_file)
 
         prefix = "shuffle_train" if use_shuffled else "train"

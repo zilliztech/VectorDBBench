@@ -209,7 +209,8 @@ class SerialSearchRunner:
             ideal_dcg = get_ideal_dcg(self.k)
 
             log.debug(f"test dataset size: {len(test_data)}")
-            log.debug(f"ground truth size: {ground_truth.columns}, shape: {ground_truth.shape}")
+            if ground_truth is not None:
+                log.debug(f"ground truth size: {ground_truth.columns}, shape: {ground_truth.shape}")
 
             latencies, recalls, ndcgs = [], [], []
             for idx, emb in enumerate(test_data):
@@ -228,9 +229,13 @@ class SerialSearchRunner:
 
                 latencies.append(time.perf_counter() - s)
 
-                gt = ground_truth["neighbors_id"][idx]
-                recalls.append(calc_recall(self.k, gt[: self.k], results))
-                ndcgs.append(calc_ndcg(gt[: self.k], results, ideal_dcg))
+                if ground_truth is not None:
+                    gt = ground_truth["neighbors_id"][idx]
+                    recalls.append(calc_recall(self.k, gt[: self.k], results))
+                    ndcgs.append(calc_ndcg(gt[: self.k], results, ideal_dcg))
+                else:
+                    recalls.append(0)
+                    ndcgs.append(0)
 
                 if len(latencies) % 100 == 0:
                     log.debug(
