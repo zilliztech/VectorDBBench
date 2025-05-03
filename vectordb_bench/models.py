@@ -6,12 +6,15 @@ from typing import Self
 
 import ujson
 
+from vectordb_bench.backend.clients.api import EmptyDBCaseConfig
+
 from . import config
 from .backend.cases import CaseType
 from .backend.clients import (
     DB,
     DBCaseConfig,
     DBConfig,
+    EmptyDBCaseConfig,
 )
 from .base import BaseModel
 from .metric import Metric
@@ -247,13 +250,21 @@ class TestResult(BaseModel):
                 test_result["task_label"] = test_result["run_id"]
 
             for case_result in test_result["results"]:
-                task_config = case_result.get("task_config")
-                db = DB(task_config.get("db"))
+                task_config = case_result["task_config"]
+                db = DB(task_config["db"])
 
                 task_config["db_config"] = db.config_cls(**task_config["db_config"])
-                task_config["db_case_config"] = db.case_config_cls(
-                    index_type=task_config["db_case_config"].get("index", None),
-                )(**task_config["db_case_config"])
+
+                # Safely instantiate DBCaseConfig (fallback to EmptyDBCaseConfig on None)
+                raw_case_cfg = task_config.get("db_case_config") or {}
+                index_value = raw_case_cfg.get("index", None)
+                try:
+                    task_config["db_case_config"] = db.case_config_cls(index_type=index_value)(**raw_case_cfg)
+                except:
+                    log.error(
+                        f"Couldn't get class for index '{index_value}' ({full_path})"
+                    )
+                    task_config["db_case_config"] = EmptyDBCaseConfig(**raw_case_cfg)
 
                 case_result["task_config"] = task_config
 
