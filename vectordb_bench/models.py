@@ -259,9 +259,7 @@ class TestResult(BaseModel):
                 try:
                     task_config["db_case_config"] = db.case_config_cls(index_type=index_value)(**raw_case_cfg)
                 except Exception:
-                    log.exception(
-                        f"Couldn't get class for index '{index_value}' ({full_path})"
-                    )
+                    log.exception(f"Couldn't get class for index '{index_value}' ({full_path})")
                     task_config["db_case_config"] = EmptyDBCaseConfig(**raw_case_cfg)
 
                 case_result["task_config"] = task_config
@@ -366,4 +364,3 @@ class TestResult(BaseModel):
         tmp_logger = logging.getLogger("no_color")
         for f in fmt:
             tmp_logger.info(f)
-
