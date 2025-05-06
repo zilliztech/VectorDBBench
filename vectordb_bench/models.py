@@ -6,6 +6,8 @@ from typing import Self
 
 import ujson
 
+from vectordb_bench.backend.dataset import DatasetWithSizeMap, DatasetWithSizeType
+
 from . import config
 from .backend.cases import Case, CaseType
 from .backend.clients import (
@@ -14,6 +16,7 @@ from .backend.clients import (
     DBConfig,
 )
 from .base import BaseModel
+from vectordb_bench.backend.cases import type2case
 from .metric import Metric
 
 log = logging.getLogger(__name__)
@@ -246,6 +249,26 @@ class TestResult(BaseModel):
             b = partial.json(exclude={"db_config": {"password", "api_key"}})
             f.write(b)
 
+    def get_case_config(case_config: CaseConfig) -> dict[CaseConfig]:
+        if int(case_config["case_id"]) in {6, 7, 8, 9, 12, 13, 14, 15}:
+            for key, value in CaseType.__members__.items():
+                if value.value == case_config["case_id"]:
+                    matching_key = key
+                    break
+            case_list = type2case[CaseType[matching_key]]
+            case_instance = case_list()
+            custom_case = case_config["custom_case"]
+            if custom_case is None:
+                custom_case = {}
+            custom_case["filter_rate"] = case_instance.filter_rate
+            for dataset, size_type in DatasetWithSizeMap.items():
+                if case_instance.dataset == size_type:
+                    custom_case["dataset_with_size_type"] = dataset
+                    break
+            case_config["case_id"] = CaseType.NewIntFilterPerformanceCase
+            case_config["custom_case"] = custom_case
+        return case_config
+
     @classmethod
     def read_file(cls, full_path: pathlib.Path, trans_unit: bool = False) -> Self:
         if not full_path.exists():
@@ -256,9 +279,9 @@ class TestResult(BaseModel):
             test_result = ujson.loads(f.read())
             if "task_label" not in test_result:
                 test_result["task_label"] = test_result["run_id"]
-
             for case_result in test_result["results"]:
                 task_config = case_result.get("task_config")
+                case_config = task_config.get("case_config")
                 db = DB(task_config.get("db"))
 
                 task_config["db_config"] = db.config_cls(**task_config["db_config"])
@@ -266,6 +289,7 @@ class TestResult(BaseModel):
                     index_type=task_config["db_case_config"].get("index", None),
                 )(**task_config["db_case_config"])
 
+                task_config["case_config"] = cls.get_case_config(case_config=case_config)
                 case_result["task_config"] = task_config
 
                 if trans_unit:

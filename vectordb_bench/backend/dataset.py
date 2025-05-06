@@ -48,6 +48,7 @@ class BaseDataset(BaseModel):
     scalar_labels_file_separated: bool = True
     scalar_labels_file: str = "scalar_labels.parquet"
     scalar_label_percentages: list[float] = []
+    scalar_int_rates: list[float] = []
     train_id_field: str = "id"
     train_vector_field: str = "emb"
     test_file: str = "test.parquet"
@@ -164,6 +165,7 @@ class Cohere(BaseDataset):
     }
     with_scalar_labels: bool = True
     scalar_label_percentages: list[float] = [0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5]
+    scalar_int_rates: list[float] = [0.01, 0.99]
 
 
 class Bioasq(BaseDataset):
@@ -178,6 +180,7 @@ class Bioasq(BaseDataset):
     }
     with_scalar_labels: bool = True
     scalar_label_percentages: list[float] = [0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5]
+    scalar_int_rates: list[float] = [0.01, 0.99]
 
 
 class Glove(BaseDataset):
@@ -217,6 +220,7 @@ class OpenAI(BaseDataset):
     }
     with_scalar_labels: bool = True
     scalar_label_percentages: list[float] = [0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5]
+    scalar_int_rates: list[float] = [0.01, 0.99]
 
 
 class DatasetManager(BaseModel):

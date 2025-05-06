@@ -4,7 +4,7 @@ from enum import Enum, auto
 
 from vectordb_bench import config
 from vectordb_bench.backend.clients.api import MetricType
-from vectordb_bench.backend.filter import Filter, FilterOp, IntFilter, LabelFilter, NonFilter, non_filter
+from vectordb_bench.backend.filter import Filter, FilterOp, IntFilter, LabelFilter, NewIntFilter, NonFilter, non_filter
 from vectordb_bench.base import BaseModel
 from vectordb_bench.frontend.components.custom.getCustomConfig import CustomDatasetConfig
 
@@ -51,6 +51,8 @@ class CaseType(Enum):
     PerformanceCustomDataset = 101
 
     StreamingPerformanceCase = 200
+
+    NewIntFilterPerformanceCase = 250
 
     LabelFilterPerformanceCase = 300
 
@@ -130,6 +132,7 @@ class PerformanceCase(Case):
     filter_rate: float | None = None
     load_timeout: float | int = config.LOAD_TIMEOUT_DEFAULT
     optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_DEFAULT
+    int_value: float | None = None
 
 
 class CapacityDim960(CapacityCase):
@@ -471,6 +474,46 @@ class StreamingPerformanceCase(Case):
         )
 
 
+class NewIntFilterPerformanceCase(PerformanceCase):
+    case_id: CaseType = CaseType.NewIntFilterPerformanceCase
+    dataset_with_size_type: DatasetWithSizeType
+    filter_rate: float
+
+    def __init__(
+        self,
+        dataset_with_size_type: DatasetWithSizeType | str,
+        filter_rate: float,
+        int_value: float | None = 0,
+        **kwargs,
+    ):
+        if not isinstance(dataset_with_size_type, DatasetWithSizeType):
+            dataset_with_size_type = DatasetWithSizeType(dataset_with_size_type)
+        name = f"Int-Filter-{filter_rate*100:.1f}% - {dataset_with_size_type.value}"
+        description = f"Int-Filter-{filter_rate*100:.1f}% Performance Test ({dataset_with_size_type.value})"
+        dataset = dataset_with_size_type.get_manager()
+        load_timeout = dataset_with_size_type.get_load_timeout()
+        optimize_timeout = dataset_with_size_type.get_optimize_timeout()
+        filters = IntFilter(filter_rate=filter_rate, int_value=int_value)
+        filter_rate = filters.filter_rate
+        super().__init__(
+            name=name,
+            description=description,
+            dataset=dataset,
+            load_timeout=load_timeout,
+            optimize_timeout=optimize_timeout,
+            filter_rate=filter_rate,
+            int_value=int_value,
+            dataset_with_size_type=dataset_with_size_type,
+            **kwargs,
+        )
+
+    @property
+    def filters(self) -> Filter:
+        int_field = self.dataset.data.train_id_field
+        int_value = int(self.dataset.data.size * self.filter_rate)
+        return NewIntFilter(filter_rate=self.filter_rate, int_field=int_field, int_value=int_value)
+
+
 class LabelFilterPerformanceCase(PerformanceCase):
     case_id: CaseType = CaseType.LabelFilterPerformanceCase
     dataset_with_size_type: DatasetWithSizeType
@@ -529,5 +572,6 @@ type2case = {
     CaseType.Performance1536D50K: Performance1536D50K,
     CaseType.PerformanceCustomDataset: PerformanceCustomDataset,
     CaseType.StreamingPerformanceCase: StreamingPerformanceCase,
+    CaseType.NewIntFilterPerformanceCase: NewIntFilterPerformanceCase,
     CaseType.LabelFilterPerformanceCase: LabelFilterPerformanceCase,
 }
