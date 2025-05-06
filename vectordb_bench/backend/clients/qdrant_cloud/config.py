@@ -6,14 +6,14 @@ from ..api import DBCaseConfig, DBConfig, MetricType
 # Allowing `api_key` to be left empty, to ensure compatibility with the open-source Qdrant.
 class QdrantConfig(DBConfig):
     url: SecretStr
-    api_key: SecretStr
+    api_key: SecretStr | None = None
 
     def to_dict(self) -> dict:
-        api_key = self.api_key.get_secret_value()
-        if len(api_key) > 0:
+        api_key_value = self.api_key.get_secret_value() if self.api_key else None
+        if api_key_value:
             return {
                 "url": self.url.get_secret_value(),
-                "api_key": self.api_key.get_secret_value(),
+                "api_key": api_key_value,
                 "prefer_grpc": True,
             }
         return {
