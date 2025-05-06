@@ -6,8 +6,6 @@ from typing import Self
 
 import ujson
 
-from vectordb_bench.backend.clients.api import EmptyDBCaseConfig
-
 from . import config
 from .backend.cases import CaseType
 from .backend.clients import (
@@ -260,8 +258,8 @@ class TestResult(BaseModel):
                 index_value = raw_case_cfg.get("index", None)
                 try:
                     task_config["db_case_config"] = db.case_config_cls(index_type=index_value)(**raw_case_cfg)
-                except:
-                    log.error(
+                except Exception:
+                    log.exception(
                         f"Couldn't get class for index '{index_value}' ({full_path})"
                     )
                     task_config["db_case_config"] = EmptyDBCaseConfig(**raw_case_cfg)
@@ -368,3 +366,4 @@ class TestResult(BaseModel):
         tmp_logger = logging.getLogger("no_color")
         for f in fmt:
             tmp_logger.info(f)
+
