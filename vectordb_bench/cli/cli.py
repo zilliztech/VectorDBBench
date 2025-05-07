@@ -405,13 +405,7 @@ class CommonTypedDict(TypedDict):
             show_default=True,
         ),
     ]
-    task_label: Annotated[
-        str,
-        click.option(
-            "--task-label",
-            help="Task label"
-        )
-    ]
+    task_label: Annotated[str, click.option("--task-label", help="Task label")]
 
 
 class HNSWBaseTypedDict(TypedDict):
@@ -506,7 +500,7 @@ def run(
             parameters["search_concurrent"],
         ),
     )
-    task_label = parameters['task_label']
+    task_label = parameters["task_label"]
 
     log.info(f"Task:\n{pformat(task)}\n")
     if not parameters["dry_run"]:
