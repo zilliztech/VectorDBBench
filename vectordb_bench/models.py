@@ -30,6 +30,11 @@ class PerformanceTimeoutError(TimeoutError):
         super().__init__("Performance case optimize timeout")
 
 
+class ConcurrencySlotTimeoutError(TimeoutError):
+    def __init__(self):
+        super().__init__("Timeout while waiting for a concurrency slot to become available")
+
+
 class CaseConfigParamType(Enum):
     """
     Value will be the key of CaseConfig.params and displayed in UI
@@ -113,6 +118,7 @@ class CustomizedCase(BaseModel):
 class ConcurrencySearchConfig(BaseModel):
     num_concurrency: list[int] = config.NUM_CONCURRENCY
     concurrency_duration: int = config.CONCURRENCY_DURATION
+    concurrency_timeout: int = config.CONCURRENCY_TIMEOUT
 
 
 class CaseConfig(BaseModel):

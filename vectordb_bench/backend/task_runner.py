@@ -275,6 +275,7 @@ class CaseRunner(BaseModel):
                 filters=self.ca.filters,
                 concurrencies=self.config.case_config.concurrency_search_config.num_concurrency,
                 duration=self.config.case_config.concurrency_search_config.concurrency_duration,
+                concurrency_timeout=self.config.case_config.concurrency_search_config.concurrency_timeout,
                 k=self.config.case_config.k,
             )
 

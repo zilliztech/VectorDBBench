@@ -6,7 +6,7 @@ import environs
 from . import log_util
 
 env = environs.Env()
-env.read_env(".env", False)
+env.read_env(path=".env", recurse=False)
 
 
 class config:
@@ -51,6 +51,8 @@ class config:
     )
 
     CONCURRENCY_DURATION = 30
+
+    CONCURRENCY_TIMEOUT = 3600
 
     RESULTS_LOCAL_DIR = env.path(
         "RESULTS_LOCAL_DIR",
