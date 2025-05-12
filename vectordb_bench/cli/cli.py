@@ -310,7 +310,7 @@ class CommonTypedDict(TypedDict):
             default=config.CONCURRENCY_TIMEOUT,
             show_default=True,
             help="Timeout (in seconds) to wait for a concurrency slot before failing. "
-                 "Set to a negative value to wait indefinitely.",
+            "Set to a negative value to wait indefinitely.",
         ),
     ]
     custom_case_name: Annotated[
