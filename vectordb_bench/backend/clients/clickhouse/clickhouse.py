@@ -111,7 +111,6 @@ class Clickhouse(VectorDB):
                         {self.index_param["params"]["M"]}, {self.index_param["params"]["efConstruction"]})
                         GRANULARITY {self.index_param["granularity"]}
                         """
-                    print("query is", query)
                 else:
                     query = f"""
                         ALTER TABLE {self.db_config["database"]}.{self.table_name}
@@ -119,7 +118,6 @@ class Clickhouse(VectorDB):
                         TYPE vector_similarity('hnsw', '{self.index_param["metric_type"]}', {self.dim})
                         GRANULARITY {self.index_param["granularity"]}
                         """
-                    print("query is", query)
                 self.conn.command(cmd=query)
             else:
                 log.warning("HNSW is only avaliable method in clickhouse now")
