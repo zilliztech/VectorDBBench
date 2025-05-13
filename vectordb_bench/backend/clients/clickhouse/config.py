@@ -16,7 +16,7 @@ class ClickhouseConfigDict(TypedDict):
 
 
 class ClickhouseConfig(DBConfig):
-    user_name: str = "clickhouse"
+    user: str = "clickhouse"
     password: SecretStr
     host: str = "localhost"
     port: int = 8123
@@ -29,7 +29,7 @@ class ClickhouseConfig(DBConfig):
             "host": self.host,
             "port": self.port,
             "database": self.db_name,
-            "user": self.user_name,
+            "user": self.user,
             "password": pwd_str,
             "secure": self.secure,
         }
