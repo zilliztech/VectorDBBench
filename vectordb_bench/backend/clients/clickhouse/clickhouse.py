@@ -107,7 +107,7 @@ class Clickhouse(VectorDB):
                         ALTER TABLE {self.db_config["database"]}.{self.table_name}
                         ADD INDEX {self._index_name} {self._vector_field}
                         TYPE vector_similarity('hnsw', '{self.index_param["metric_type"]}',{self.dim},
-                        '{self.index_param["quantization"]}', 
+                        '{self.index_param["quantization"]}',
                         {self.index_param["params"]["M"]}, {self.index_param["params"]["efConstruction"]})
                         GRANULARITY {self.index_param["granularity"]}
                         """
