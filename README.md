@@ -204,7 +204,8 @@ Options:
   # Memory Management
   --cb-threshold TEXT             k-NN Memory circuit breaker threshold
 
-  --help                          Show this message and exit.```
+  --help                          Show this message and exit.
+  ```
 
 #### Using a configuration file.
 
