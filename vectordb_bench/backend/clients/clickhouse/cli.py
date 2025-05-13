@@ -1,66 +1,89 @@
-from typing import Annotated, TypedDict, Unpack
+from abc import abstractmethod
+from typing import TypedDict
 
-import click
-from pydantic import SecretStr
+from pydantic import BaseModel, SecretStr
 
-from ....cli.cli import (
-    CommonTypedDict,
-    HNSWFlavor2,
-    cli,
-    click_parameter_decorators_from_typed_dict,
-    run,
-)
-from .. import DB
-from .config import ClickhouseHNSWConfig
+from ..api import DBCaseConfig, DBConfig, IndexType, MetricType
 
 
-class ClickhouseTypedDict(TypedDict):
-    password: Annotated[str, click.option("--password", type=str, help="DB password")]
-    host: Annotated[str, click.option("--host", type=str, help="DB host", required=True)]
-    port: Annotated[int, click.option("--port", type=int, default=8123, help="DB Port")]
-    user: Annotated[int, click.option("--user", type=str, default="clickhouse", help="DB user")]
-    ssl: Annotated[
-        bool,
-        click.option(
-            "--ssl/--no-ssl",
-            is_flag=True,
-            show_default=True,
-            default=True,
-            help="Enable or disable SSL for Clickhouse",
-        ),
-    ]
-    ssl_ca_certs: Annotated[
-        str,
-        click.option(
-            "--ssl-ca-certs",
-            show_default=True,
-            help="Path to certificate authority file to use for SSL",
-        ),
-    ]
+class ClickhouseConfigDict(TypedDict):
+    user: str
+    password: str
+    host: str
+    port: int
+    database: str
+    secure: bool
 
 
-class ClickhouseHNSWTypedDict(CommonTypedDict, ClickhouseTypedDict, HNSWFlavor2): ...
+class ClickhouseConfig(DBConfig):
+    user: str = "clickhouse"
+    password: SecretStr
+    host: str = "localhost"
+    port: int = 8123
+    db_name: str = "default"
+    secure: bool = False
+
+    def to_dict(self) -> ClickhouseConfigDict:
+        pwd_str = self.password.get_secret_value()
+        return {
+            "host": self.host,
+            "port": self.port,
+            "database": self.db_name,
+            "user": self.user,
+            "password": pwd_str,
+            "secure": self.secure,
+        }
 
 
-@cli.command()
-@click_parameter_decorators_from_typed_dict(ClickhouseHNSWTypedDict)
-def Clickhouse(**parameters: Unpack[ClickhouseHNSWTypedDict]):
-    from .config import ClickhouseConfig
+class ClickhouseIndexConfig(BaseModel, DBCaseConfig):
 
-    run(
-        db=DB.Clickhouse,
-        db_config=ClickhouseConfig(
-            db_label=parameters["db_label"],
-            password=SecretStr(parameters["password"]) if parameters["password"] else None,
-            host=parameters["host"],
-            port=parameters["port"],
-            ssl=parameters["ssl"],
-            ssl_ca_certs=parameters["ssl_ca_certs"],
-        ),
-        db_case_config=ClickhouseHNSWConfig(
-            M=parameters["m"],
-            efConstruction=parameters["ef_construction"],
-            ef=parameters["ef_runtime"],
-        ),
-        **parameters,
-    )
+    metric_type: MetricType | None = None
+    vector_data_type: str | None = "Float32"  # Data type of vectors. Can be Float32 or Float64 or BFloat16
+    create_index_before_load: bool = True
+    create_index_after_load: bool = False
+
+    def parse_metric(self) -> str:
+        if not self.metric_type:
+            return ""
+        return self.metric_type.value
+
+    def parse_metric_str(self) -> str:
+        if self.metric_type == MetricType.L2:
+            return "L2Distance"
+        if self.metric_type == MetricType.COSINE:
+            return "cosineDistance"
+        return "cosineDistance"
+
+    @abstractmethod
+    def session_param(self):
+        pass
+
+
+class ClickhouseHNSWConfig(ClickhouseIndexConfig):
+    M: int | None  # Default in clickhouse in 32
+    efConstruction: int | None  # Default in clickhouse in 128
+    ef: int | None = None
+    index: IndexType = IndexType.HNSW
+    quantization: str | None = "bf16"  # Default is bf16. Possible values are f64, f32, f16, bf16, or i8
+    granularity: int | None = 10_000_000  # Size of the index granules. By default, in CH it's equal 10.000.000
+
+    def index_param(self) -> dict:
+        return {
+            "vector_data_type": self.vector_data_type,
+            "metric_type": self.parse_metric_str(),
+            "index_type": self.index.value,
+            "quantization": self.quantization,
+            "granularity": self.granularity,
+            "params": {"M": self.M, "efConstruction": self.efConstruction},
+        }
+
+    def search_param(self) -> dict:
+        return {
+            "metric_type": self.parse_metric_str(),
+            "params": {"ef": self.ef},
+        }
+
+    def session_param(self) -> dict:
+        return {
+            "allow_experimental_vector_similarity_index": 1,
+        }
