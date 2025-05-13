@@ -106,18 +106,20 @@ class Clickhouse(VectorDB):
                     query = f"""
                         ALTER TABLE {self.db_config["database"]}.{self.table_name}
                         ADD INDEX {self._index_name} {self._vector_field}
-                        TYPE vector_similarity('hnsw', '{self.index_param["metric_type"]}',
-                        '{self.index_param["quantization"]}',
+                        TYPE vector_similarity('hnsw', '{self.index_param["metric_type"]}',{self.dim},
+                        '{self.index_param["quantization"]}', 
                         {self.index_param["params"]["M"]}, {self.index_param["params"]["efConstruction"]})
                         GRANULARITY {self.index_param["granularity"]}
                         """
+                    print("query is", query)
                 else:
                     query = f"""
                         ALTER TABLE {self.db_config["database"]}.{self.table_name}
                         ADD INDEX {self._index_name} {self._vector_field}
-                        TYPE vector_similarity('hnsw', '{self.index_param["metric_type"]}')
+                        TYPE vector_similarity('hnsw', '{self.index_param["metric_type"]}', {self.dim})
                         GRANULARITY {self.index_param["granularity"]}
                         """
+                    print("query is", query)
                 self.conn.command(cmd=query)
             else:
                 log.warning("HNSW is only avaliable method in clickhouse now")
@@ -186,7 +188,7 @@ class Clickhouse(VectorDB):
             "vector_field": self._vector_field,
             "schema": self.db_config["database"],
             "table": self.table_name,
-            "gt": filters.get("id"),
+            "gt": 0 if filters is None else filters.get("id", 0),
             "k": k,
             "metric_type": self.search_param["metric_type"],
             "query": query,
