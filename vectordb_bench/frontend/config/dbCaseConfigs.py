@@ -488,6 +488,18 @@ CaseConfigParamInput_EF_SEARCH_AWSOpensearch = CaseConfigInput(
     },
 )
 
+CaseConfigParamInput_INDEX_THREAD_QTY_DURING_FORCE_MERGE_AWSOpensearch = CaseConfigInput(
+    label=CaseConfigParamType.index_thread_qty_during_force_merge,
+    displayLabel="Index Thread Qty During Force Merge",
+    inputHelp="Thread count during force merge operations",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 32,
+        "value": 4,
+    },
+)
+
 CaseConfigParamInput_EF_SEARCH_AliyunOpensearch = CaseConfigInput(
     label=CaseConfigParamType.ef_search,
     inputType=InputType.Number,
@@ -1329,11 +1341,13 @@ ESPerformanceConfig = [
 AWSOpensearchLoadingConfig = [
     CaseConfigParamInput_EFConstruction_AWSOpensearch,
     CaseConfigParamInput_M_AWSOpensearch,
+    CaseConfigParamInput_INDEX_THREAD_QTY_DURING_FORCE_MERGE_AWSOpensearch,
 ]
 AWSOpenSearchPerformanceConfig = [
     CaseConfigParamInput_EFConstruction_AWSOpensearch,
     CaseConfigParamInput_M_AWSOpensearch,
     CaseConfigParamInput_EF_SEARCH_AWSOpensearch,
+    CaseConfigParamInput_INDEX_THREAD_QTY_DURING_FORCE_MERGE_AWSOpensearch,
 ]
 
 AliyunOpensearchLoadingConfig = []
