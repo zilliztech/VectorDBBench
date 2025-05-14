@@ -5,10 +5,12 @@ import random
 import time
 import traceback
 from collections.abc import Iterable
+from multiprocessing.queues import Queue
 
 import numpy as np
 
 from ... import config
+from ...models import ConcurrencySlotTimeoutError
 from ..clients import api
 
 NUM_PER_BATCH = config.NUM_PER_BATCH
@@ -28,16 +30,18 @@ class MultiProcessingSearchRunner:
         self,
         db: api.VectorDB,
         test_data: list[list[float]],
-        k: int = 100,
+        k: int = config.K_DEFAULT,
         filters: dict | None = None,
         concurrencies: Iterable[int] = config.NUM_CONCURRENCY,
-        duration: int = 30,
+        duration: int = config.CONCURRENCY_DURATION,
+        concurrency_timeout: int = config.CONCURRENCY_TIMEOUT,
     ):
         self.db = db
         self.k = k
         self.filters = filters
         self.concurrencies = concurrencies
         self.duration = duration
+        self.concurrency_timeout = concurrency_timeout
 
         self.test_data = test_data
         log.debug(f"test dataset columns: {len(test_data)}")
@@ -114,9 +118,7 @@ class MultiProcessingSearchRunner:
                         log.info(f"Start search {self.duration}s in concurrency {conc}, filters: {self.filters}")
                         future_iter = [executor.submit(self.search, self.test_data, q, cond) for i in range(conc)]
                         # Sync all processes
-                        while q.qsize() < conc:
-                            sleep_t = conc if conc < 10 else 10
-                            time.sleep(sleep_t)
+                        self._wait_for_queue_fill(q, size=conc)
 
                         with cond:
                             cond.notify_all()
@@ -159,6 +161,15 @@ class MultiProcessingSearchRunner:
             conc_latency_p99_list,
             conc_latency_avg_list,
         )
+
+    def _wait_for_queue_fill(self, q: Queue, size: int):
+        wait_t = 0
+        while q.qsize() < size:
+            sleep_t = size if size < 10 else 10
+            wait_t += sleep_t
+            if wait_t > self.concurrency_timeout > 0:
+                raise ConcurrencySlotTimeoutError
+            time.sleep(sleep_t)
 
     def run(self) -> float:
         """

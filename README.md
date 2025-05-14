@@ -114,6 +114,10 @@ Options:
   --num-concurrency TEXT          Comma-separated list of concurrency values
                                   to test during concurrent search  [default:
                                   1,10,20]
+  --concurrency-timeout INTEGER   Timeout (in seconds) to wait for a
+                                  concurrency slot before failing. Set to a
+                                  negative value to wait indefinitely.
+                                  [default: 3600]
   --user-name TEXT                Db username  [required]
   --password TEXT                 Db password  [required]
   --host TEXT                     Db host  [required]
