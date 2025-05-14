@@ -17,10 +17,9 @@ from typing import (
 import click
 from yaml import load
 
-from vectordb_bench.backend.clients.api import MetricType
-
 from .. import config
 from ..backend.clients import DB
+from ..backend.clients.api import MetricType
 from ..interface import benchmark_runner, global_result_future
 from ..models import (
     CaseConfig,
@@ -303,6 +302,17 @@ class CommonTypedDict(TypedDict):
             callback=lambda *args: list(map(int, click_arg_split(*args))),
         ),
     ]
+    concurrency_timeout: Annotated[
+        int,
+        click.option(
+            "--concurrency-timeout",
+            type=int,
+            default=config.CONCURRENCY_TIMEOUT,
+            show_default=True,
+            help="Timeout (in seconds) to wait for a concurrency slot before failing. "
+            "Set to a negative value to wait indefinitely.",
+        ),
+    ]
     custom_case_name: Annotated[
         str,
         click.option(
@@ -490,6 +500,7 @@ def run(
             concurrency_search_config=ConcurrencySearchConfig(
                 concurrency_duration=parameters["concurrency_duration"],
                 num_concurrency=[int(s) for s in parameters["num_concurrency"]],
+                concurrency_timeout=parameters["concurrency_timeout"],
             ),
             custom_case=get_custom_case_config(parameters),
         ),
