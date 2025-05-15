@@ -38,6 +38,7 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
     engine: AWSOS_Engine = AWSOS_Engine.faiss
     efConstruction: int = 256
     efSearch: int = 256
+    ef_search: int | None = None  # 添加与前端一致的参数名
     M: int = 16
     index_thread_qty: int | None = 4
     number_of_shards: int | None = 1
@@ -63,6 +64,10 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
         return "l2"
 
     def index_param(self) -> dict:
+        # 使用 ef_search 参数（如果设置了），否则使用 efSearch
+        ef_search_value = self.ef_search if self.ef_search is not None else self.efSearch
+        log.info(f"Using ef_search value: {ef_search_value} for index creation")
+        
         return {
             "name": "hnsw",
             "space_type": self.parse_metric(),
@@ -70,7 +75,7 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
             "parameters": {
                 "ef_construction": self.efConstruction,
                 "m": self.M,
-                "ef_search": self.efSearch,
+                "ef_search": ef_search_value,
             },
         }
 

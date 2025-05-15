@@ -35,7 +35,15 @@ class AWSOpenSearch(VectorDB):
         self.category_col_names = [f"scalar-{categoryCount}" for categoryCount in [2, 5, 10, 100, 1000]]
         self.vector_col_name = vector_col_name
 
+        # 添加详细日志，记录所有配置参数
         log.info(f"AWS_OpenSearch client config: {self.db_config}")
+        log.info(f"AWS_OpenSearch case_config type: {type(db_case_config)}")
+        log.info(f"AWS_OpenSearch case_config dict: {db_case_config.__dict__}")
+        log.info(f"Number of indexing clients: {db_case_config.number_of_indexing_clients}")
+        log.info(f"Number of shards: {db_case_config.number_of_shards}")
+        log.info(f"Number of replicas: {db_case_config.number_of_replicas}")
+        log.info(f"Index thread qty: {db_case_config.index_thread_qty}")
+        
         client = OpenSearch(**self.db_config)
         if drop_old:
             log.info(f"AWS_OpenSearch client drop old index: {self.index_name}")
@@ -53,6 +61,10 @@ class AWSOpenSearch(VectorDB):
         return AWSOpenSearchIndexConfig
 
     def _create_index(self, client: OpenSearch):
+        # 记录 ef_search 参数值
+        ef_search_value = self.case_config.ef_search if self.case_config.ef_search is not None else self.case_config.efSearch
+        log.info(f"Creating index with ef_search: {ef_search_value}")
+        
         cluster_settings_body = {
             "persistent": {
                 "knn.algo_param.index_thread_qty": self.case_config.index_thread_qty,
@@ -68,7 +80,7 @@ class AWSOpenSearch(VectorDB):
                 "translog.flush_threshold_size": self.case_config.flush_threshold_size,
                 # Setting trans log threshold to 5GB
                 **(
-                    {"knn.algo_param.ef_search": self.case_config.ef_search}
+                    {"knn.algo_param.ef_search": ef_search_value}
                     if self.case_config.engine == AWSOS_Engine.nmslib
                     else {}
                 ),
@@ -111,7 +123,22 @@ class AWSOpenSearch(VectorDB):
     ) -> tuple[int, Exception]:
         """Insert the embeddings to the opensearch."""
         assert self.client is not None, "should self.init() first"
-
+        
+        # 使用多个客户端并行导入数据
+        num_clients = self.case_config.number_of_indexing_clients or 1
+        log.info(f"Number of indexing clients from case_config: {num_clients}")
+        
+        if num_clients <= 1:
+            # 单客户端导入逻辑
+            log.info("Using single client for data insertion")
+            return self._insert_with_single_client(embeddings, metadata)
+        else:
+            # 多客户端并行导入逻辑
+            log.info(f"Using {num_clients} parallel clients for data insertion")
+            return self._insert_with_multiple_clients(embeddings, metadata, num_clients)
+    
+    def _insert_with_single_client(self, embeddings: Iterable[list[float]], metadata: list[int]) -> tuple[int, Exception]:
+        """使用单个客户端导入数据"""
         insert_data = []
         for i in range(len(embeddings)):
             insert_data.append(
@@ -129,7 +156,92 @@ class AWSOpenSearch(VectorDB):
         except Exception as e:
             log.warning(f"Failed to insert data: {self.index_name} error: {e!s}")
             time.sleep(10)
-            return self.insert_embeddings(embeddings, metadata)
+            return self._insert_with_single_client(embeddings, metadata)
+            
+    def _insert_with_multiple_clients(self, embeddings: Iterable[list[float]], metadata: list[int], num_clients: int) -> tuple[int, Exception]:
+        """使用多个客户端并行导入数据"""
+        import concurrent.futures
+        from concurrent.futures import ThreadPoolExecutor
+        
+        # 将数据分成多个部分
+        embeddings_list = list(embeddings)
+        chunk_size = max(1, len(embeddings_list) // num_clients)
+        chunks = []
+        
+        for i in range(0, len(embeddings_list), chunk_size):
+            end = min(i + chunk_size, len(embeddings_list))
+            chunks.append((
+                embeddings_list[i:end],
+                metadata[i:end]
+            ))
+        
+        # 创建多个客户端
+        clients = []
+        for _ in range(min(num_clients, len(chunks))):
+            client = OpenSearch(**self.db_config)
+            clients.append(client)
+        
+        log.info(f"AWS_OpenSearch using {len(clients)} parallel clients for data insertion")
+        
+        # 定义每个线程的工作函数
+        def insert_chunk(client_idx, chunk_idx):
+            chunk_embeddings, chunk_metadata = chunks[chunk_idx]
+            client = clients[client_idx]
+            
+            insert_data = []
+            for i in range(len(chunk_embeddings)):
+                insert_data.append(
+                    {"index": {"_index": self.index_name, self.id_col_name: chunk_metadata[i]}},
+                )
+                insert_data.append({self.vector_col_name: chunk_embeddings[i]})
+            
+            try:
+                resp = client.bulk(insert_data)
+                log.info(f"Client {client_idx} added {len(resp['items'])} documents")
+                return len(chunk_embeddings), None
+            except Exception as e:
+                log.warning(f"Client {client_idx} failed to insert data: {e!s}")
+                return 0, e
+        
+        # 使用线程池并行执行
+        results = []
+        with ThreadPoolExecutor(max_workers=len(clients)) as executor:
+            futures = []
+            
+            # 分配任务给线程
+            for chunk_idx in range(len(chunks)):
+                client_idx = chunk_idx % len(clients)
+                futures.append(executor.submit(insert_chunk, client_idx, chunk_idx))
+            
+            # 收集结果
+            for future in concurrent.futures.as_completed(futures):
+                count, error = future.result()
+                results.append((count, error))
+        
+        # 关闭所有客户端
+        for client in clients:
+            try:
+                client.close()
+            except:
+                pass
+        
+        # 处理结果
+        total_count = sum(count for count, _ in results)
+        errors = [error for _, error in results if error is not None]
+        
+        if errors:
+            # 如果有错误，返回第一个错误
+            log.warning(f"Some clients failed to insert data, retrying with single client")
+            time.sleep(10)
+            return self._insert_with_single_client(embeddings, metadata)
+        
+        # 获取最新的索引统计信息
+        resp = self.client.indices.stats(self.index_name)
+        log.info(
+            f"Total document count in index after parallel insertion: {resp['_all']['primaries']['indexing']['index_total']}",
+        )
+        
+        return (total_count, None)
 
     def search_embedding(
         self,

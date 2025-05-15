@@ -101,6 +101,13 @@ class AWSOpenSearchHNSWTypedDict(CommonTypedDict, AWSOpenSearchTypedDict, HNSWFl
 def AWSOpenSearch(**parameters: Unpack[AWSOpenSearchHNSWTypedDict]):
     from .config import AWSOpenSearchConfig, AWSOpenSearchIndexConfig
 
+    # 添加日志记录参数
+    log.info(f"CLI parameters: {parameters}")
+    
+    # 获取 ef_search 参数
+    ef_search = parameters.get("ef_search", 256)
+    log.info(f"ef_search from CLI: {ef_search}")
+    
     run(
         db=DB.AWSOpenSearch,
         db_config=AWSOpenSearchConfig(
@@ -120,6 +127,7 @@ def AWSOpenSearch(**parameters: Unpack[AWSOpenSearchHNSWTypedDict]):
             number_of_indexing_clients=parameters["number_of_indexing_clients"],
             index_thread_qty_during_force_merge=parameters["index_thread_qty_during_force_merge"],
             cb_threshold=parameters["cb_threshold"],
+            ef_search=ef_search,  # 使用前端传递的 ef_search 参数
         ),
         **parameters,
     )
