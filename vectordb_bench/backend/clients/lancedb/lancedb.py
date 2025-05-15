@@ -77,9 +77,15 @@ class LanceDB(VectorDB):
         filters: dict | None = None,
     ) -> list[int]:
         if filters:
-            results = self.table.search(query).where(f"id >= {filters['id']}", prefilter=True).limit(k).to_list()
+            results = (
+                self.table.search(query)
+                .select(["id"])
+                .where(f"id >= {filters['id']}", prefilter=True)
+                .limit(k)
+                .to_list()
+            )
         else:
-            results = self.table.search(query).limit(k).to_list()
+            results = self.table.search(query).select(["id"]).limit(k).to_list()
         return [int(result["id"]) for result in results]
 
     def optimize(self, data_size: int | None = None):
