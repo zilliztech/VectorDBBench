@@ -36,11 +36,11 @@ class AWSOS_Engine(Enum):
 class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
     metric_type: MetricType = MetricType.L2
     engine: AWSOS_Engine = AWSOS_Engine.faiss
-    engine_name: str | None = None  # 添加与前端一致的参数名
-    metric_type_name: str | None = None  # 添加与前端一致的参数名
+    engine_name: str | None = None
+    metric_type_name: str | None = None
     efConstruction: int = 256
     efSearch: int = 256
-    ef_search: int | None = None  # 添加与前端一致的参数名
+    ef_search: int | None = None
     M: int = 16
     index_thread_qty: int | None = 4
     number_of_shards: int | None = 1
@@ -54,10 +54,9 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
     cb_threshold: str | None = "50%"
 
     def parse_metric(self) -> str:
-        # 记录输入参数
+
         log.info(f"parse_metric called with engine={self.engine}, engine_name={self.engine_name}, metric_type={self.metric_type}, metric_type_name={self.metric_type_name}")
         
-        # 确定实际使用的引擎
         engine_value = self.engine
         if self.engine_name is not None:
             try:
@@ -66,7 +65,6 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
             except (KeyError, ValueError):
                 log.warning(f"Invalid engine name: {self.engine_name}, using default: {self.engine}")
         
-        # 如果前端传入了明确的度量类型名称，优先使用它
         if self.metric_type_name is not None:
             metric_type_name = self.metric_type_name.lower()
             log.info(f"Using metric_type from frontend: {metric_type_name}")
@@ -83,8 +81,7 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
             elif metric_type_name == "ip" or metric_type_name == "innerproduct":
                 log.info("Using innerproduct metric type")
                 return "innerproduct"
-            
-        # 否则使用原有的逻辑
+
         if self.metric_type == MetricType.IP:
             log.info("Using innerproduct based on MetricType.IP")
             return "innerproduct"
@@ -100,11 +97,9 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
         return "l2"
 
     def index_param(self) -> dict:
-        # 使用 ef_search 参数（如果设置了），否则使用 efSearch
         ef_search_value = self.ef_search if self.ef_search is not None else self.efSearch
         log.info(f"Using ef_search value: {ef_search_value} for index creation")
-        
-        # 如果前端传入了明确的引擎名称，优先使用它
+
         engine_value = self.engine
         if self.engine_name is not None:
             try:
@@ -112,8 +107,7 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
                 log.info(f"Using engine from frontend: {engine_value}")
             except (KeyError, ValueError):
                 log.warning(f"Invalid engine name: {self.engine_name}, using default: {self.engine}")
-        
-        # 获取度量类型
+
         space_type = self.parse_metric()
         log.info(f"Final space_type for index creation: {space_type}")
         
@@ -124,7 +118,6 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
             "parameters": {
                 "ef_construction": self.efConstruction,
                 "m": self.M,
-                # 从参数中移除 ef_search，它不应该在这里
             },
         }
         
