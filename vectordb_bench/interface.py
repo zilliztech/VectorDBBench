@@ -66,15 +66,6 @@ class BenchMarkRunner:
             return False
 
         log.debug(f"tasks: {tasks}, task_label: {task_label}, dataset source: {self.dataset_source}")
-        
-        # 添加日志，记录任务配置
-        for i, task in enumerate(tasks):
-            log.info(f"Task {i+1} configuration:")
-            log.info(f"  DB: {task.db}")
-            log.info(f"  DB config: {task.db_config}")
-            log.info(f"  DB case config: {task.db_case_config}")
-            if hasattr(task.db_case_config, 'number_of_indexing_clients'):
-                log.info(f"  Number of indexing clients: {task.db_case_config.number_of_indexing_clients}")
 
         # Generate run_id
         run_id = uuid.uuid4().hex
