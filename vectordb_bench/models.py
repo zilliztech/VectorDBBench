@@ -105,6 +105,8 @@ class CaseConfigParamType(Enum):
     number_of_shards = "number_of_shards"
     number_of_replicas = "number_of_replicas"
     index_thread_qty = "index_thread_qty"
+    engine_name = "engine_name"
+    metric_type_name = "metric_type_name"
 
     # mongodb params
     mongodb_quantization_type = "quantization"

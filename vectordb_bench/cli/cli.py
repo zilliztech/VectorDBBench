@@ -405,7 +405,7 @@ class CommonTypedDict(TypedDict):
             show_default=True,
         ),
     ]
-    task_label: Annotated[str, click.option("--task-label", help="Task label")]
+        task_label: Annotated[str, click.option("--task-label", help="Task label")]
 
 
 class HNSWBaseTypedDict(TypedDict):

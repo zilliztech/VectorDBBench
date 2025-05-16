@@ -1,16 +1,18 @@
 from typing import Annotated, TypedDict, Unpack
-
+import logging
 import click
 from pydantic import SecretStr
 
 from ....cli.cli import (
     CommonTypedDict,
-    HNSWFlavor2,
+    HNSWFlavor1,  # 使用 HNSWFlavor1
     cli,
     click_parameter_decorators_from_typed_dict,
     run,
 )
 from .. import DB
+
+log = logging.getLogger(__name__)
 
 
 class AWSOpenSearchTypedDict(TypedDict):
@@ -38,13 +40,23 @@ class AWSOpenSearchTypedDict(TypedDict):
         ),
     ]
 
-    index_thread_qty_during_force_merge: Annotated[
-        int,
+    engine_name: Annotated[
+        str,
         click.option(
-            "--index-thread-qty-during-force-merge",
-            type=int,
-            help="Thread count during force merge operations",
-            default=4,
+            "--engine",
+            type=click.Choice(["nmslib", "faiss", "lucene"], case_sensitive=False),
+            help="HNSW algorithm implementation to use",
+            default="faiss",
+        ),
+    ]
+    
+    metric_type_name: Annotated[
+        str,
+        click.option(
+            "--metric-type",
+            type=click.Choice(["l2", "cosine", "ip"], case_sensitive=False),
+            help="Distance metric type for vector similarity",
+            default="l2",
         ),
     ]
 
@@ -64,26 +76,26 @@ class AWSOpenSearchTypedDict(TypedDict):
     ]
 
     refresh_interval: Annotated[
-        int,
+        str,  # 修改为正确的类型 str
         click.option(
             "--refresh-interval", type=str, help="How often to make new data available for search", default="60s"
         ),
     ]
 
     force_merge_enabled: Annotated[
-        int,
+        bool,  # 修改为正确的类型 bool
         click.option("--force-merge-enabled", type=bool, help="Whether to perform force merge operation", default=True),
     ]
 
     flush_threshold_size: Annotated[
-        int,
+        str,  # 修改为正确的类型 str
         click.option(
             "--flush-threshold-size", type=str, help="Size threshold for flushing the transaction log", default="5120mb"
         ),
     ]
 
     cb_threshold: Annotated[
-        int,
+        str,  # 修改为正确的类型 str
         click.option(
             "--cb-threshold",
             type=str,
@@ -91,9 +103,19 @@ class AWSOpenSearchTypedDict(TypedDict):
             default="50%",
         ),
     ]
+    
+    index_thread_qty_during_force_merge: Annotated[
+        int,
+        click.option(
+            "--index-thread-qty-during-force-merge",
+            type=int,
+            help="Thread count during force merge operations",
+            default=4,
+        ),
+    ]
 
 
-class AWSOpenSearchHNSWTypedDict(CommonTypedDict, AWSOpenSearchTypedDict, HNSWFlavor2): ...
+class AWSOpenSearchHNSWTypedDict(CommonTypedDict, AWSOpenSearchTypedDict, HNSWFlavor1): ...
 
 
 @cli.command()
@@ -108,6 +130,12 @@ def AWSOpenSearch(**parameters: Unpack[AWSOpenSearchHNSWTypedDict]):
     ef_search = parameters.get("ef_search", 256)
     log.info(f"ef_search from CLI: {ef_search}")
     
+    # 获取 engine 和 metric_type 参数
+    engine_name = parameters.get("engine")
+    metric_type_name = parameters.get("metric_type")
+    log.info(f"engine from CLI: {engine_name}")
+    log.info(f"metric_type from CLI: {metric_type_name}")
+    
     run(
         db=DB.AWSOpenSearch,
         db_config=AWSOpenSearchConfig(
@@ -115,6 +143,7 @@ def AWSOpenSearch(**parameters: Unpack[AWSOpenSearchHNSWTypedDict]):
             port=parameters["port"],
             user=parameters["user"],
             password=SecretStr(parameters["password"]),
+            db_label=parameters.get("db_label", ""),  # 确保 db_label 被传递
         ),
         db_case_config=AWSOpenSearchIndexConfig(
             number_of_shards=parameters["number_of_shards"],
@@ -127,7 +156,11 @@ def AWSOpenSearch(**parameters: Unpack[AWSOpenSearchHNSWTypedDict]):
             number_of_indexing_clients=parameters["number_of_indexing_clients"],
             index_thread_qty_during_force_merge=parameters["index_thread_qty_during_force_merge"],
             cb_threshold=parameters["cb_threshold"],
-            ef_search=ef_search,  # 使用前端传递的 ef_search 参数
+            ef_search=ef_search,
+            engine_name=engine_name,  # 使用从命令行获取的 engine 参数
+            metric_type_name=metric_type_name,  # 使用从命令行获取的 metric_type 参数
+            M=parameters.get("m", 16),  # 确保 M 参数被正确传递
+            efConstruction=parameters.get("ef_construction", 256),  # 确保 efConstruction 参数被正确传递
         ),
         **parameters,
     )

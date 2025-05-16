@@ -35,7 +35,6 @@ class AWSOpenSearch(VectorDB):
         self.category_col_names = [f"scalar-{categoryCount}" for categoryCount in [2, 5, 10, 100, 1000]]
         self.vector_col_name = vector_col_name
 
-        # 添加详细日志，记录所有配置参数
         log.info(f"AWS_OpenSearch client config: {self.db_config}")
         log.info(f"AWS_OpenSearch case_config type: {type(db_case_config)}")
         log.info(f"AWS_OpenSearch case_config dict: {db_case_config.__dict__}")
@@ -61,9 +60,25 @@ class AWSOpenSearch(VectorDB):
         return AWSOpenSearchIndexConfig
 
     def _create_index(self, client: OpenSearch):
-        # 记录 ef_search 参数值
         ef_search_value = self.case_config.ef_search if self.case_config.ef_search is not None else self.case_config.efSearch
         log.info(f"Creating index with ef_search: {ef_search_value}")
+        log.info(f"Creating index with number_of_replicas: {self.case_config.number_of_replicas}")
+        
+        # 记录引擎和度量类型
+        engine_value = self.case_config.engine
+        if self.case_config.engine_name is not None:
+            try:
+                engine_value = AWSOS_Engine[self.case_config.engine_name.lower()]
+                log.info(f"Using engine from frontend: {engine_value}")
+            except (KeyError, ValueError):
+                log.warning(f"Invalid engine name: {self.case_config.engine_name}, using default: {self.case_config.engine}")
+        
+        log.info(f"Creating index with engine: {engine_value}")
+        if self.case_config.metric_type_name:
+            log.info(f"Creating index with metric type: {self.case_config.metric_type_name}")
+        
+        # 记录所有相关参数
+        log.info(f"All case_config parameters: {self.case_config.__dict__}")
         
         cluster_settings_body = {
             "persistent": {
@@ -72,21 +87,30 @@ class AWSOpenSearch(VectorDB):
             }
         }
         client.cluster.put_settings(cluster_settings_body)
+        
+        # 确定使用的引擎
+        engine_value = self.case_config.engine
+        if self.case_config.engine_name is not None:
+            try:
+                engine_value = AWSOS_Engine[self.case_config.engine_name.lower()]
+            except (KeyError, ValueError):
+                pass
+        
         settings = {
             "index": {
                 "knn": True,
                 "number_of_shards": self.case_config.number_of_shards,
-                "number_of_replicas": 0,
+                "number_of_replicas": self.case_config.number_of_replicas,
                 "translog.flush_threshold_size": self.case_config.flush_threshold_size,
-                # Setting trans log threshold to 5GB
-                **(
-                    {"knn.algo_param.ef_search": ef_search_value}
-                    if self.case_config.engine == AWSOS_Engine.nmslib
-                    else {}
-                ),
             },
             "refresh_interval": self.case_config.refresh_interval,
         }
+        
+        # 如果使用 nmslib 引擎，将 ef_search 添加到索引设置中
+        if engine_value == AWSOS_Engine.nmslib:
+            settings["index"]["knn.algo_param.ef_search"] = ef_search_value
+            log.info(f"Adding ef_search={ef_search_value} to index settings for nmslib engine")
+        
         mappings = {
             "properties": {
                 **{categoryCol: {"type": "keyword"} for categoryCol in self.category_col_names},
@@ -98,6 +122,8 @@ class AWSOpenSearch(VectorDB):
             },
         }
         try:
+            log.info(f"Creating index with settings: {settings}")
+            log.info(f"Creating index with mappings: {mappings}")
             client.indices.create(
                 index=self.index_name,
                 body={"settings": settings, "mappings": mappings},
@@ -123,22 +149,18 @@ class AWSOpenSearch(VectorDB):
     ) -> tuple[int, Exception]:
         """Insert the embeddings to the opensearch."""
         assert self.client is not None, "should self.init() first"
-        
-        # 使用多个客户端并行导入数据
+
         num_clients = self.case_config.number_of_indexing_clients or 1
         log.info(f"Number of indexing clients from case_config: {num_clients}")
         
         if num_clients <= 1:
-            # 单客户端导入逻辑
             log.info("Using single client for data insertion")
             return self._insert_with_single_client(embeddings, metadata)
         else:
-            # 多客户端并行导入逻辑
             log.info(f"Using {num_clients} parallel clients for data insertion")
             return self._insert_with_multiple_clients(embeddings, metadata, num_clients)
     
     def _insert_with_single_client(self, embeddings: Iterable[list[float]], metadata: list[int]) -> tuple[int, Exception]:
-        """使用单个客户端导入数据"""
         insert_data = []
         for i in range(len(embeddings)):
             insert_data.append(
@@ -159,11 +181,9 @@ class AWSOpenSearch(VectorDB):
             return self._insert_with_single_client(embeddings, metadata)
             
     def _insert_with_multiple_clients(self, embeddings: Iterable[list[float]], metadata: list[int], num_clients: int) -> tuple[int, Exception]:
-        """使用多个客户端并行导入数据"""
         import concurrent.futures
         from concurrent.futures import ThreadPoolExecutor
-        
-        # 将数据分成多个部分
+
         embeddings_list = list(embeddings)
         chunk_size = max(1, len(embeddings_list) // num_clients)
         chunks = []
@@ -174,16 +194,14 @@ class AWSOpenSearch(VectorDB):
                 embeddings_list[i:end],
                 metadata[i:end]
             ))
-        
-        # 创建多个客户端
+
         clients = []
         for _ in range(min(num_clients, len(chunks))):
             client = OpenSearch(**self.db_config)
             clients.append(client)
         
         log.info(f"AWS_OpenSearch using {len(clients)} parallel clients for data insertion")
-        
-        # 定义每个线程的工作函数
+
         def insert_chunk(client_idx, chunk_idx):
             chunk_embeddings, chunk_metadata = chunks[chunk_idx]
             client = clients[client_idx]
@@ -202,40 +220,33 @@ class AWSOpenSearch(VectorDB):
             except Exception as e:
                 log.warning(f"Client {client_idx} failed to insert data: {e!s}")
                 return 0, e
-        
-        # 使用线程池并行执行
+
         results = []
         with ThreadPoolExecutor(max_workers=len(clients)) as executor:
             futures = []
-            
-            # 分配任务给线程
+
             for chunk_idx in range(len(chunks)):
                 client_idx = chunk_idx % len(clients)
                 futures.append(executor.submit(insert_chunk, client_idx, chunk_idx))
             
-            # 收集结果
             for future in concurrent.futures.as_completed(futures):
                 count, error = future.result()
                 results.append((count, error))
         
-        # 关闭所有客户端
         for client in clients:
             try:
                 client.close()
             except:
                 pass
         
-        # 处理结果
         total_count = sum(count for count, _ in results)
         errors = [error for _, error in results if error is not None]
         
         if errors:
-            # 如果有错误，返回第一个错误
             log.warning(f"Some clients failed to insert data, retrying with single client")
             time.sleep(10)
             return self._insert_with_single_client(embeddings, metadata)
         
-        # 获取最新的索引统计信息
         resp = self.client.indices.stats(self.index_name)
         log.info(
             f"Total document count in index after parallel insertion: {resp['_all']['primaries']['indexing']['index_total']}",
@@ -303,16 +314,20 @@ class AWSOpenSearch(VectorDB):
             f"Current Number of replicas are {current_number_of_replicas}"
             f" and changing the replicas to {self.case_config.number_of_replicas}"
         )
-        settings_body = {"index": {"number_of_replicas": self.case_config.number_of_replicas}}
-        self.client.indices.put_settings(index=self.index_name, body=settings_body)
-        self._wait_till_green()
+        # 只有当当前副本数与配置的副本数不同时才更新
+        if current_number_of_replicas != self.case_config.number_of_replicas:
+            settings_body = {"index": {"number_of_replicas": self.case_config.number_of_replicas}}
+            self.client.indices.put_settings(index=self.index_name, body=settings_body)
+            self._wait_till_green()
+        else:
+            log.info(f"Number of replicas already set to {self.case_config.number_of_replicas}, no update needed")
 
     def _wait_till_green(self):
         log.info("Wait for index to become green..")
         while True:
             res = self.client.cat.indices(index=self.index_name, h="health", format="json")
             health = res[0]["health"]
-            if health != "green":
+            if health == "green":
                 break
             log.info(f"The index {self.index_name} has health : {health} and is not green. Retrying")
             time.sleep(SECONDS_WAITING_FOR_REPLICAS_TO_BE_ENABLED_SEC)
