@@ -85,8 +85,7 @@ class AWSOpenSearch(VectorDB):
             }
         }
         client.cluster.put_settings(cluster_settings_body)
-        
-        # 确定使用的引擎
+
         engine_value = self.case_config.engine
         if self.case_config.engine_name is not None:
             try:

@@ -76,26 +76,26 @@ class AWSOpenSearchTypedDict(TypedDict):
     ]
 
     refresh_interval: Annotated[
-        str,  # 修改为正确的类型 str
+        str,
         click.option(
             "--refresh-interval", type=str, help="How often to make new data available for search", default="60s"
         ),
     ]
 
     force_merge_enabled: Annotated[
-        bool,  # 修改为正确的类型 bool
+        bool,
         click.option("--force-merge-enabled", type=bool, help="Whether to perform force merge operation", default=True),
     ]
 
     flush_threshold_size: Annotated[
-        str,  # 修改为正确的类型 str
+        str,
         click.option(
             "--flush-threshold-size", type=str, help="Size threshold for flushing the transaction log", default="5120mb"
         ),
     ]
 
     cb_threshold: Annotated[
-        str,  # 修改为正确的类型 str
+        str,
         click.option(
             "--cb-threshold",
             type=str,
