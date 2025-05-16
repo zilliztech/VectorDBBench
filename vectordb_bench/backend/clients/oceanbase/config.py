@@ -116,6 +116,7 @@ class OceanBaseIVFConfig(OceanBaseIndexConfig, DBCaseConfig):
 _oceanbase_case_config = {
     IndexType.HNSW_SQ: OceanBaseHNSWConfig,
     IndexType.HNSW: OceanBaseHNSWConfig,
+    IndexType.HNSW_BQ: OceanBaseHNSWConfig,
     IndexType.IVFFlat: OceanBaseIVFConfig,
     IndexType.IVFPQ: OceanBaseIVFConfig,
     IndexType.IVFSQ8: OceanBaseIVFConfig,

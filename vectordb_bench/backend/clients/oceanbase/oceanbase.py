@@ -5,8 +5,9 @@ from typing import Generator, Any, Tuple, Optional, List, Dict
 
 import mysql.connector as mysql
 import numpy as np
-from ..api import VectorDB, IndexType
+from ..api import VectorDB, IndexType, MetricType
 from .config import OceanBaseIndexConfig, OceanBaseConfigDict
+import struct
 
 log = logging.getLogger(__name__)
 
@@ -32,6 +33,8 @@ class OceanBase(VectorDB):
         self._index_name = "vidx"
         self._primary_field = "id"
         self._vector_field = "embedding"
+        if self.db_case_config.index == IndexType.HNSW_BQ:
+            self.db_case_config.metric_type = MetricType.L2
 
         log.info(
             f"{self.name} initialized with config:\nDatabase: {self.db_config}\nCase Config: {self.db_case_config}"
@@ -85,7 +88,7 @@ class OceanBase(VectorDB):
             self._connect()
             self._cursor.execute("SET autocommit=1")
 
-            if self.db_case_config.index in {IndexType.HNSW, IndexType.HNSW_SQ}:
+            if self.db_case_config.index in {IndexType.HNSW, IndexType.HNSW_SQ, IndexType.HNSW_BQ}:
                 self._cursor.execute(
                     f"SET ob_hnsw_ef_search={(self.db_case_config.search_param())['params']['ef_search']}"
                 )
@@ -121,11 +124,18 @@ class OceanBase(VectorDB):
         index_params = self.db_case_config.index_param()
         index_args = ', '.join(f"{k}={v}" for k, v in index_params["params"].items())
         index_query = (
-            f"CREATE /*+ PARALLEL(32) */ VECTOR INDEX idx1 "
+            f"CREATE /*+ PARALLEL(18) */ VECTOR INDEX idx1 "
             f"ON {self.table_name}(embedding) "
             f"WITH (distance={self.db_case_config.parse_metric()}, "
-            f"type={index_params['index_type']}, lib={index_params['lib']}, {index_args})"
+            f"type={index_params['index_type']}, lib={index_params['lib']}, {index_args}"
         )
+
+        if self.db_case_config.index in {IndexType.HNSW, IndexType.HNSW_SQ, IndexType.HNSW_BQ}:
+            index_query += ", extra_info_max_size=32"
+        
+        index_query += ")"
+
+        log.info("Create index query: %s", index_query)
 
         try:
             log.info("Creating index...")
@@ -198,10 +208,12 @@ class OceanBase(VectorDB):
         if not self._cursor:
             raise ValueError("Cursor is not initialized")
 
+        packed = struct.pack(f'<{len(query)}f', *query)
+        hex_vec = packed.hex();
         filter_clause = f"WHERE id >= {filters['id']}" if filters else ""
         query_str = (
             f"SELECT /*+ opt_param('rowsets_max_rows', 256)*/ id FROM {self.table_name} "
-            f"{filter_clause} ORDER BY {self.db_case_config.parse_metric_func_str()}(embedding, '[{','.join(map(str, query))}]') APPROXIMATE LIMIT {k}"
+            f"{filter_clause} ORDER BY {self.db_case_config.parse_metric_func_str()}(embedding, X'{hex_vec}') APPROXIMATE LIMIT {k}"
         )
 
         try:

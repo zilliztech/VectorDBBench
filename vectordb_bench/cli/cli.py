@@ -442,7 +442,7 @@ class HNSWFlavor3(HNSWBaseRequiredTypedDict):
         str | None,
         click.option(
             "--index-type",
-            type=click.Choice(["HNSW", "HNSW_SQ"], case_sensitive=False),
+            type=click.Choice(["HNSW", "HNSW_SQ", "HNSW_BQ"], case_sensitive=False),
             help="Type of index to use. Supported values: HNSW, HNSW_SQ",
             required=True,
         ),
