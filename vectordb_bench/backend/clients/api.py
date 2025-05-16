@@ -21,6 +21,7 @@ class IndexType(str, Enum):
     STREAMING_DISKANN = "DISKANN"
     IVFFlat = "IVF_FLAT"
     IVFSQ8 = "IVF_SQ8"
+    IVFPQ = "IVF_PQ"
     Flat = "FLAT"
     AUTOINDEX = "AUTOINDEX"
     ES_HNSW = "hnsw"

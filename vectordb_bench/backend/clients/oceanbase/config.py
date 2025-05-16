@@ -60,7 +60,7 @@ class OceanBaseHNSWConfig(OceanBaseIndexConfig, DBCaseConfig):
     M: int
     efConstruction: int
     ef_search: int | None = None
-    index: IndexType = IndexType.HNSW
+    index: IndexType
 
     def index_param(self) -> dict:
         return {
@@ -75,7 +75,48 @@ class OceanBaseHNSWConfig(OceanBaseIndexConfig, DBCaseConfig):
             "metric_type": self.parse_metric_func_str(),
             "params": { "ef_search": self.ef_search }
         }
+
+class OceanBaseIVFConfig(OceanBaseIndexConfig, DBCaseConfig):
+    M: int
+    sample_per_nlist: int
+    nlist: int
+    index: IndexType
+    ivf_nprobes: int | None = None
+
+    def index_param(self) -> dict:
+        if self.index == IndexType.IVFPQ:
+            return {
+                "lib": "OB",
+                "metric_type": self.parse_metric(),
+                "index_type": self.index.value,
+                "params": { 
+                    "m": self.M, 
+                    "sample_per_nlist": self.sample_per_nlist, 
+                    "nlist": self.nlist,
+                }
+            }
+        else:
+            return {
+                "lib": "OB",
+                "metric_type": self.parse_metric(),
+                "index_type": self.index.value,
+                "params": { 
+                    "sample_per_nlist": self.sample_per_nlist, 
+                    "nlist": self.nlist,
+                }
+            }
+        
+
+    def search_param(self) -> dict:
+        return {
+            "metric_type": self.metric_type,
+            "params": { "ivf_nprobes": self.ivf_nprobes }
+        }
     
 _oceanbase_case_config = {
+    IndexType.HNSW_SQ: OceanBaseHNSWConfig,
     IndexType.HNSW: OceanBaseHNSWConfig,
+    IndexType.IVFFlat: OceanBaseIVFConfig,
+    IndexType.IVFPQ: OceanBaseIVFConfig,
+    IndexType.IVFSQ8: OceanBaseIVFConfig,
 }

@@ -464,6 +464,32 @@ class IVFFlatTypedDictN(TypedDict):
         click.option("--probes", "nprobe", type=int, help="ivfflat probes", required=True),
     ]
 
+class OceanBaseIVFTypedDict(TypedDict):
+    index_type: Annotated[
+        str | None,
+        click.option(
+            "--index-type",
+            type=click.Choice(["IVF_FLAT", "IVF_SQ8", "IVF_PQ"], case_sensitive=False),
+            help="Type of index to use. Supported values: IVF_FLAT, IVF_SQ8, IVF_PQ",
+            required=True,
+        ),
+    ]
+    nlist: Annotated[
+        int | None,
+        click.option("--nlist", "nlist", type=int, help="ivf nlist", required=True),
+    ]
+    sample_per_nlist: Annotated[
+        int | None,
+        click.option("--sample_per_nlist", "sample_per_nlist", type=int, help="ivf sample_per_nlist", required=True),
+    ]
+    ivf_nprobes: Annotated[
+        int | None,
+        click.option("--ivf_nprobes", "ivf_nprobes", type=str, help="ivf_nprobes", required=True),
+    ]
+    m: Annotated[
+        int | None,
+        click.option("--m", "m", type=int, help="ivf m"),
+    ]
 
 @click.group()
 def cli(): ...

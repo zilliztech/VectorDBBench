@@ -89,6 +89,10 @@ class OceanBase(VectorDB):
                 self._cursor.execute(
                     f"SET ob_hnsw_ef_search={(self.db_case_config.search_param())['params']['ef_search']}"
                 )
+            else:
+                self._cursor.execute(
+                    f"SET ob_ivf_nprobes={(self.db_case_config.search_param())['params']['ivf_nprobes']}"
+                )
             yield
         finally:
             self._disconnect()
