@@ -5,7 +5,7 @@ from pydantic import SecretStr
 
 from ....cli.cli import (
     CommonTypedDict,
-    HNSWFlavor1,  # 使用 HNSWFlavor1
+    HNSWFlavor1,
     cli,
     click_parameter_decorators_from_typed_dict,
     run,
@@ -123,14 +123,11 @@ class AWSOpenSearchHNSWTypedDict(CommonTypedDict, AWSOpenSearchTypedDict, HNSWFl
 def AWSOpenSearch(**parameters: Unpack[AWSOpenSearchHNSWTypedDict]):
     from .config import AWSOpenSearchConfig, AWSOpenSearchIndexConfig
 
-    # 添加日志记录参数
     log.info(f"CLI parameters: {parameters}")
     
-    # 获取 ef_search 参数
     ef_search = parameters.get("ef_search", 256)
     log.info(f"ef_search from CLI: {ef_search}")
     
-    # 获取 engine 和 metric_type 参数
     engine_name = parameters.get("engine")
     metric_type_name = parameters.get("metric_type")
     log.info(f"engine from CLI: {engine_name}")
@@ -143,7 +140,7 @@ def AWSOpenSearch(**parameters: Unpack[AWSOpenSearchHNSWTypedDict]):
             port=parameters["port"],
             user=parameters["user"],
             password=SecretStr(parameters["password"]),
-            db_label=parameters.get("db_label", ""),  # 确保 db_label 被传递
+            db_label=parameters.get("db_label", ""),
         ),
         db_case_config=AWSOpenSearchIndexConfig(
             number_of_shards=parameters["number_of_shards"],
@@ -157,10 +154,10 @@ def AWSOpenSearch(**parameters: Unpack[AWSOpenSearchHNSWTypedDict]):
             index_thread_qty_during_force_merge=parameters["index_thread_qty_during_force_merge"],
             cb_threshold=parameters["cb_threshold"],
             ef_search=ef_search,
-            engine_name=engine_name,  # 使用从命令行获取的 engine 参数
-            metric_type_name=metric_type_name,  # 使用从命令行获取的 metric_type 参数
-            M=parameters.get("m", 16),  # 确保 M 参数被正确传递
-            efConstruction=parameters.get("ef_construction", 256),  # 确保 efConstruction 参数被正确传递
+            engine_name=engine_name,
+            metric_type_name=metric_type_name,
+            M=parameters.get("m", 16),
+            efConstruction=parameters.get("ef_construction", 256),
         ),
         **parameters,
     )

@@ -64,7 +64,6 @@ class AWSOpenSearch(VectorDB):
         log.info(f"Creating index with ef_search: {ef_search_value}")
         log.info(f"Creating index with number_of_replicas: {self.case_config.number_of_replicas}")
         
-        # 记录引擎和度量类型
         engine_value = self.case_config.engine
         if self.case_config.engine_name is not None:
             try:
@@ -77,7 +76,6 @@ class AWSOpenSearch(VectorDB):
         if self.case_config.metric_type_name:
             log.info(f"Creating index with metric type: {self.case_config.metric_type_name}")
         
-        # 记录所有相关参数
         log.info(f"All case_config parameters: {self.case_config.__dict__}")
         
         cluster_settings_body = {
@@ -106,7 +104,6 @@ class AWSOpenSearch(VectorDB):
             "refresh_interval": self.case_config.refresh_interval,
         }
         
-        # 如果使用 nmslib 引擎，将 ef_search 添加到索引设置中
         if engine_value == AWSOS_Engine.nmslib:
             settings["index"]["knn.algo_param.ef_search"] = ef_search_value
             log.info(f"Adding ef_search={ef_search_value} to index settings for nmslib engine")
@@ -314,7 +311,7 @@ class AWSOpenSearch(VectorDB):
             f"Current Number of replicas are {current_number_of_replicas}"
             f" and changing the replicas to {self.case_config.number_of_replicas}"
         )
-        # 只有当当前副本数与配置的副本数不同时才更新
+
         if current_number_of_replicas != self.case_config.number_of_replicas:
             settings_body = {"index": {"number_of_replicas": self.case_config.number_of_replicas}}
             self.client.indices.put_settings(index=self.index_name, body=settings_body)
