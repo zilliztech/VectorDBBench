@@ -85,14 +85,6 @@ class CaseRunner(BaseModel):
 
     def init_db(self, drop_old: bool = True) -> None:
         db_cls = self.config.db.init_cls
-
-        # 添加日志，记录配置信息
-        log.info(f"Initializing DB: {self.config.db}")
-        log.info(f"DB config: {self.config.db_config}")
-        log.info(f"DB case config: {self.config.db_case_config}")
-        
-        if hasattr(self.config.db_case_config, 'number_of_indexing_clients'):
-            log.info(f"Number of indexing clients: {self.config.db_case_config.number_of_indexing_clients}")
         
         self.db = db_cls(
             dim=self.ca.dataset.data.dim,
