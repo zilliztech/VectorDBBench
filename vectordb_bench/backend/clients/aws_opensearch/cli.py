@@ -40,7 +40,7 @@ class AWSOpenSearchTypedDict(TypedDict):
         ),
     ]
 
-    engine_name: Annotated[
+    engine: Annotated[
         str,
         click.option(
             "--engine",
@@ -50,7 +50,7 @@ class AWSOpenSearchTypedDict(TypedDict):
         ),
     ]
 
-    metric_type_name: Annotated[
+    metric_type: Annotated[
         str,
         click.option(
             "--metric-type",
@@ -131,27 +131,13 @@ def AWSOpenSearch(**parameters: Unpack[AWSOpenSearchHNSWTypedDict]):
     ef_construction = parameters.get("ef_construction", 256)
     m = parameters.get("m", 16)
 
-    # 获取引擎和度量类型
-    engine_name = parameters.get("engine_name", "faiss")
-    metric_type_name = parameters.get("metric_type_name", "l2")
-
-    # 转换引擎类型
-    engine = AWSOS_Engine.faiss
-    if engine_name == "nmslib":
-        engine = AWSOS_Engine.nmslib
-    elif engine_name == "lucene":
-        engine = AWSOS_Engine.lucene
-
-    # 转换度量类型
-    metric_type = MetricType.L2
-    if metric_type_name == "ip":
-        metric_type = MetricType.IP
-    elif metric_type_name == "cosine":
-        metric_type = MetricType.COSINE
+    # 获取引擎和度量类型 - 直接从 parameters 中获取 engine 和 metric_type
+    engine_name = parameters.get("engine", "faiss")  # 使用 engine 而不是 engine_name
+    metric_type_name = parameters.get("metric_type", "l2")  # 使用 metric_type 而不是 metric_type_name
 
     log.info(f"ef_search from CLI: {ef_search}")
-    log.info(f"engine from CLI: {engine}")
-    log.info(f"metric_type from CLI: {metric_type}")
+    log.info(f"engine from CLI: {engine_name}")
+    log.info(f"metric_type from CLI: {metric_type_name}")
 
     run(
         db=DB.AWSOpenSearch,
@@ -177,8 +163,8 @@ def AWSOpenSearch(**parameters: Unpack[AWSOpenSearchHNSWTypedDict]):
             efSearch=ef_search,  # 同时设置两个参数以确保兼容性
             efConstruction=ef_construction,
             M=m,
-            engine=engine,
-            metric_type=metric_type,
+            engine_name=engine_name,  # 直接传递字符串，在 AWSOpenSearchIndexConfig 中转换
+            metric_type_name=metric_type_name,  # 直接传递字符串，在 AWSOpenSearchIndexConfig 中转换
         ),
         **parameters,
     )

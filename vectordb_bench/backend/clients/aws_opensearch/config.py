@@ -53,6 +53,23 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
     number_of_indexing_clients: int | None = 1
     index_thread_qty_during_force_merge: int
     cb_threshold: str | None = "50%"
+    
+    def __init__(self, **data):
+        super().__init__(**data)
+        # 初始化时处理 engine_name 和 metric_type_name
+        if self.engine_name is not None:
+            try:
+                self.engine = AWSOS_Engine[self.engine_name.lower()]
+                log.info(f"Setting engine from engine_name: {self.engine_name} -> {self.engine}")
+            except (KeyError, ValueError):
+                log.warning(f"Invalid engine name: {self.engine_name}, using default: {self.engine}")
+                
+        if self.metric_type_name is not None:
+            try:
+                self.metric_type = MetricType[self.metric_type_name.upper()]
+                log.info(f"Setting metric_type from metric_type_name: {self.metric_type_name} -> {self.metric_type}")
+            except (KeyError, ValueError):
+                log.warning(f"Invalid metric type: {self.metric_type_name}, using default: {self.metric_type}")
 
     def parse_metric(self) -> str:
         if self.metric_type == MetricType.IP:
@@ -67,9 +84,9 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
         return "l2"
 
     def index_param(self) -> dict:
-        # 使用 ef_search 参数（如果设置了），否则使用 efSearch
-        ef_search_value = self.ef_search if self.ef_search is not None else self.efSearch
-        log.info(f"Using ef_search value: {ef_search_value} for index creation")
+        log.info(f"Using engine: {self.engine} for index creation")
+        log.info(f"Using metric_type: {self.metric_type} for index creation")
+        log.info(f"Resulting space_type: {self.parse_metric()} for index creation")
         
         return {
             "name": "hnsw",
@@ -77,8 +94,7 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
             "engine": self.engine.value,
             "parameters": {
                 "ef_construction": self.efConstruction,
-                "m": self.M,
-                "ef_search": ef_search_value,
+                "m": self.M
             },
         }
 
