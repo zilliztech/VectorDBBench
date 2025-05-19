@@ -36,11 +36,12 @@ class AWSOS_Engine(Enum):
 class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
     metric_type: MetricType = MetricType.L2
     engine: AWSOS_Engine = AWSOS_Engine.faiss
-    engine_name: str | None = None
-    metric_type_name: str | None = None
     efConstruction: int = 256
     efSearch: int = 256
+    # 添加与前端一致的参数名，用于接收前端传递的参数
     ef_search: int | None = None
+    engine_name: str | None = None
+    metric_type_name: str | None = None
     M: int = 16
     index_thread_qty: int | None = 4
     number_of_shards: int | None = 1
@@ -54,75 +55,32 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
     cb_threshold: str | None = "50%"
 
     def parse_metric(self) -> str:
-
-        log.info(f"parse_metric called with engine={self.engine}, engine_name={self.engine_name}, metric_type={self.metric_type}, metric_type_name={self.metric_type_name}")
-        
-        engine_value = self.engine
-        if self.engine_name is not None:
-            try:
-                engine_value = AWSOS_Engine[self.engine_name.lower()]
-                log.info(f"Using engine from frontend: {engine_value}")
-            except (KeyError, ValueError):
-                log.warning(f"Invalid engine name: {self.engine_name}, using default: {self.engine}")
-        
-        if self.metric_type_name is not None:
-            metric_type_name = self.metric_type_name.lower()
-            log.info(f"Using metric_type from frontend: {metric_type_name}")
-            
-            if metric_type_name == "cosine":
-                if engine_value == AWSOS_Engine.faiss:
-                    log.info("Using innerproduct because faiss doesn't support cosine as metric type for Opensearch")
-                    return "innerproduct"
-                log.info("Using cosinesimil for nmslib/lucene engine with cosine metric")
-                return "cosinesimil"
-            elif metric_type_name == "l2" or metric_type_name == "euclidean":
-                log.info("Using l2 metric type")
-                return "l2"
-            elif metric_type_name == "ip" or metric_type_name == "innerproduct":
-                log.info("Using innerproduct metric type")
-                return "innerproduct"
-
         if self.metric_type == MetricType.IP:
-            log.info("Using innerproduct based on MetricType.IP")
             return "innerproduct"
         if self.metric_type == MetricType.COSINE:
-            if engine_value == AWSOS_Engine.faiss:
+            if self.engine == AWSOS_Engine.faiss:
                 log.info(
                     "Using innerproduct because faiss doesn't support cosine as metric type for Opensearch",
                 )
                 return "innerproduct"
-            log.info("Using cosinesimil based on MetricType.COSINE")
             return "cosinesimil"
-        log.info("Using l2 as default metric type")
         return "l2"
 
     def index_param(self) -> dict:
+        # 使用 ef_search 参数（如果设置了），否则使用 efSearch
         ef_search_value = self.ef_search if self.ef_search is not None else self.efSearch
         log.info(f"Using ef_search value: {ef_search_value} for index creation")
-
-        engine_value = self.engine
-        if self.engine_name is not None:
-            try:
-                engine_value = AWSOS_Engine[self.engine_name.lower()]
-                log.info(f"Using engine from frontend: {engine_value}")
-            except (KeyError, ValueError):
-                log.warning(f"Invalid engine name: {self.engine_name}, using default: {self.engine}")
-
-        space_type = self.parse_metric()
-        log.info(f"Final space_type for index creation: {space_type}")
         
-        result = {
+        return {
             "name": "hnsw",
-            "space_type": space_type,
-            "engine": engine_value.value,
+            "space_type": self.parse_metric(),
+            "engine": self.engine.value,
             "parameters": {
                 "ef_construction": self.efConstruction,
                 "m": self.M,
+                "ef_search": ef_search_value,
             },
         }
-        
-        log.info(f"Final index_param result: {result}")
-        return result
 
     def search_param(self) -> dict:
         return {}

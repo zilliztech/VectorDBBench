@@ -49,7 +49,7 @@ class AWSOpenSearchTypedDict(TypedDict):
             default="faiss",
         ),
     ]
-    
+
     metric_type_name: Annotated[
         str,
         click.option(
@@ -103,7 +103,7 @@ class AWSOpenSearchTypedDict(TypedDict):
             default="50%",
         ),
     ]
-    
+
     index_thread_qty_during_force_merge: Annotated[
         int,
         click.option(
@@ -121,18 +121,38 @@ class AWSOpenSearchHNSWTypedDict(CommonTypedDict, AWSOpenSearchTypedDict, HNSWFl
 @cli.command()
 @click_parameter_decorators_from_typed_dict(AWSOpenSearchHNSWTypedDict)
 def AWSOpenSearch(**parameters: Unpack[AWSOpenSearchHNSWTypedDict]):
-    from .config import AWSOpenSearchConfig, AWSOpenSearchIndexConfig
+    from .config import AWSOpenSearchConfig, AWSOpenSearchIndexConfig, AWSOS_Engine
+    from vectordb_bench.backend.clients.api import MetricType
 
     log.info(f"CLI parameters: {parameters}")
-    
+
+    # 获取参数
     ef_search = parameters.get("ef_search", 256)
+    ef_construction = parameters.get("ef_construction", 256)
+    m = parameters.get("m", 16)
+
+    # 获取引擎和度量类型
+    engine_name = parameters.get("engine_name", "faiss")
+    metric_type_name = parameters.get("metric_type_name", "l2")
+
+    # 转换引擎类型
+    engine = AWSOS_Engine.faiss
+    if engine_name == "nmslib":
+        engine = AWSOS_Engine.nmslib
+    elif engine_name == "lucene":
+        engine = AWSOS_Engine.lucene
+
+    # 转换度量类型
+    metric_type = MetricType.L2
+    if metric_type_name == "ip":
+        metric_type = MetricType.IP
+    elif metric_type_name == "cosine":
+        metric_type = MetricType.COSINE
+
     log.info(f"ef_search from CLI: {ef_search}")
-    
-    engine_name = parameters.get("engine")
-    metric_type_name = parameters.get("metric_type")
-    log.info(f"engine from CLI: {engine_name}")
-    log.info(f"metric_type from CLI: {metric_type_name}")
-    
+    log.info(f"engine from CLI: {engine}")
+    log.info(f"metric_type from CLI: {metric_type}")
+
     run(
         db=DB.AWSOpenSearch,
         db_config=AWSOpenSearchConfig(
@@ -154,10 +174,11 @@ def AWSOpenSearch(**parameters: Unpack[AWSOpenSearchHNSWTypedDict]):
             index_thread_qty_during_force_merge=parameters["index_thread_qty_during_force_merge"],
             cb_threshold=parameters["cb_threshold"],
             ef_search=ef_search,
-            engine_name=engine_name,
-            metric_type_name=metric_type_name,
-            M=parameters.get("m", 16),
-            efConstruction=parameters.get("ef_construction", 256),
+            efSearch=ef_search,  # 同时设置两个参数以确保兼容性
+            efConstruction=ef_construction,
+            M=m,
+            engine=engine,
+            metric_type=metric_type,
         ),
         **parameters,
     )
