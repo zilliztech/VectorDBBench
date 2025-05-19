@@ -40,7 +40,12 @@ class Milvus(VectorDB):
 
         from pymilvus import connections
 
-        connections.connect(**self.db_config, timeout=30)
+        connections.connect(
+            uri=self.db_config.get("uri"),
+            user=self.db_config.get("user"),
+            password=self.db_config.get("password"),
+            timeout=30
+        )
         if drop_old and utility.has_collection(self.collection_name):
             log.info(f"{self.name} client drop_old collection: {self.collection_name}")
             utility.drop_collection(self.collection_name)
@@ -59,6 +64,7 @@ class Milvus(VectorDB):
                 name=self.collection_name,
                 schema=CollectionSchema(fields),
                 consistency_level="Session",
+                num_shards=self.db_config.get("num_shards"),
             )
 
             log.info(f"{self.name} create index: index_params: {self.case_config.index_param()}")
