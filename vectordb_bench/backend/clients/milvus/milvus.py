@@ -44,7 +44,7 @@ class Milvus(VectorDB):
             uri=self.db_config.get("uri"),
             user=self.db_config.get("user"),
             password=self.db_config.get("password"),
-            timeout=30
+            timeout=30,
         )
         if drop_old and utility.has_collection(self.collection_name):
             log.info(f"{self.name} client drop_old collection: {self.collection_name}")
