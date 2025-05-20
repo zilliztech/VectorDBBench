@@ -29,6 +29,17 @@ class MilvusTypedDict(TypedDict):
         str | None,
         click.option("--password", type=str, help="Db password", required=False),
     ]
+    num_shards: Annotated[
+        int,
+        click.option(
+            "--num-shards",
+            type=int,
+            help="Number of shards",
+            required=False,
+            default=1,
+            show_default=True,
+        ),
+    ]
 
 
 class MilvusAutoIndexTypedDict(CommonTypedDict, MilvusTypedDict): ...
@@ -46,6 +57,7 @@ def MilvusAutoIndex(**parameters: Unpack[MilvusAutoIndexTypedDict]):
             uri=SecretStr(parameters["uri"]),
             user=parameters["user_name"],
             password=SecretStr(parameters["password"]),
+            num_shards=int(parameters["num_shards"]),
         ),
         db_case_config=AutoIndexConfig(),
         **parameters,
@@ -64,6 +76,7 @@ def MilvusFlat(**parameters: Unpack[MilvusAutoIndexTypedDict]):
             uri=SecretStr(parameters["uri"]),
             user=parameters["user_name"],
             password=SecretStr(parameters["password"]),
+            num_shards=int(parameters["num_shards"]),
         ),
         db_case_config=FLATConfig(),
         **parameters,
@@ -110,6 +123,7 @@ def MilvusIVFFlat(**parameters: Unpack[MilvusIVFFlatTypedDict]):
             uri=SecretStr(parameters["uri"]),
             user=parameters["user_name"],
             password=SecretStr(parameters["password"]),
+            num_shards=int(parameters["num_shards"]),
         ),
         db_case_config=IVFFlatConfig(
             nlist=parameters["nlist"],
@@ -131,6 +145,7 @@ def MilvusIVFSQ8(**parameters: Unpack[MilvusIVFFlatTypedDict]):
             uri=SecretStr(parameters["uri"]),
             user=parameters["user_name"],
             password=SecretStr(parameters["password"]),
+            num_shards=int(parameters["num_shards"]),
         ),
         db_case_config=IVFSQ8Config(
             nlist=parameters["nlist"],
@@ -156,6 +171,7 @@ def MilvusDISKANN(**parameters: Unpack[MilvusDISKANNTypedDict]):
             uri=SecretStr(parameters["uri"]),
             user=parameters["user_name"],
             password=SecretStr(parameters["password"]),
+            num_shards=int(parameters["num_shards"]),
         ),
         db_case_config=DISKANNConfig(
             search_list=parameters["search_list"],
@@ -184,6 +200,7 @@ def MilvusGPUIVFFlat(**parameters: Unpack[MilvusGPUIVFTypedDict]):
             uri=SecretStr(parameters["uri"]),
             user=parameters["user_name"],
             password=SecretStr(parameters["password"]),
+            num_shards=int(parameters["num_shards"]),
         ),
         db_case_config=GPUIVFFlatConfig(
             nlist=parameters["nlist"],
@@ -218,6 +235,7 @@ def MilvusGPUBruteForce(**parameters: Unpack[MilvusGPUBruteForceTypedDict]):
             uri=SecretStr(parameters["uri"]),
             user=parameters["user_name"],
             password=SecretStr(parameters["password"]),
+            num_shards=int(parameters["num_shards"]),
         ),
         db_case_config=GPUBruteForceConfig(
             metric_type=parameters["metric_type"],
@@ -249,6 +267,7 @@ def MilvusGPUIVFPQ(**parameters: Unpack[MilvusGPUIVFPQTypedDict]):
             uri=SecretStr(parameters["uri"]),
             user=parameters["user_name"],
             password=SecretStr(parameters["password"]),
+            num_shards=int(parameters["num_shards"]),
         ),
         db_case_config=GPUIVFPQConfig(
             nlist=parameters["nlist"],
@@ -288,6 +307,7 @@ def MilvusGPUCAGRA(**parameters: Unpack[MilvusGPUCAGRATypedDict]):
             uri=SecretStr(parameters["uri"]),
             user=parameters["user_name"],
             password=SecretStr(parameters["password"]),
+            num_shards=int(parameters["num_shards"]),
         ),
         db_case_config=GPUCAGRAConfig(
             intermediate_graph_degree=parameters["intermediate_graph_degree"],
