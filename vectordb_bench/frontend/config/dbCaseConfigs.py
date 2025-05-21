@@ -342,17 +342,6 @@ CaseConfigParamInput_IndexType_PgVectoRS = CaseConfigInput(
     },
 )
 
-CaseConfigParamInput_IndexType_OceanBase = CaseConfigInput(
-    label=CaseConfigParamType.IndexType,
-    inputHelp="Select Index Type",
-    inputType=InputType.Option,
-    inputConfig={
-        "options": [
-            IndexType.HNSW.value,
-        ],
-    },
-)
-
 CaseConfigParamInput_M = CaseConfigInput(
     label=CaseConfigParamType.M,
     inputType=InputType.Number,
@@ -1479,20 +1468,6 @@ MongoDBPerformanceConfig = [
     CaseConfigParamInput_MongoDBNumCandidatesRatio,
 ]
 
-<<<<<<< HEAD
-OceanBaseLoadingConfig = [
-    CaseConfigParamInput_IndexType_OceanBase,
-    CaseConfigParamInput_M,
-    CaseConfigParamInput_EFConstruction_Milvus,
-]
-OceanBasePerformanceConfig = [
-    CaseConfigParamInput_IndexType_OceanBase,
-    CaseConfigParamInput_M,
-    CaseConfigParamInput_EFConstruction_Milvus,
-    CaseConfigParamInput_EFSearch_PgVector,
-]
-
-=======
 MariaDBLoadingConfig = [
     CaseConfigParamInput_IndexType_MariaDB,
     CaseConfigParamInput_StorageEngine_MariaDB,
@@ -1637,7 +1612,6 @@ LanceDBLoadConfig = [
 
 LanceDBPerformanceConfig = LanceDBLoadConfig
 
->>>>>>> origin/main
 CASE_CONFIG_MAP = {
     DB.Milvus: {
         CaseLabel.Load: MilvusLoadConfig,
@@ -1690,12 +1664,6 @@ CASE_CONFIG_MAP = {
         CaseLabel.Load: MongoDBLoadingConfig,
         CaseLabel.Performance: MongoDBPerformanceConfig,
     },
-<<<<<<< HEAD
-    DB.OceanBase: {
-        CaseLabel.Load: OceanBaseLoadingConfig,
-        CaseLabel.Performance: OceanBasePerformanceConfig,
-    }
-=======
     DB.MariaDB: {
         CaseLabel.Load: MariaDBLoadingConfig,
         CaseLabel.Performance: MariaDBPerformanceConfig,
@@ -1708,5 +1676,4 @@ CASE_CONFIG_MAP = {
         CaseLabel.Load: LanceDBLoadConfig,
         CaseLabel.Performance: LanceDBPerformanceConfig,
     },
->>>>>>> origin/main
 }

@@ -39,7 +39,6 @@ dependencies = [
     "pydantic<v2",
     "scikit-learn",
     "pymilvus", # with pandas, numpy, ujson
-    "mysql-connector-python"
 ]
 dynamic = ["version"]
 
@@ -74,6 +73,7 @@ all = [
     "clickhouse-connect",
     "pyvespa",
     "lancedb",
+    "mysql-connector-python",
 ]
 
 qdrant          = [ "qdrant-client" ]
@@ -97,6 +97,7 @@ tidb            = [ "PyMySQL" ]
 clickhouse      = [ "clickhouse-connect" ]
 vespa           = [ "pyvespa" ]
 lancedb         = [ "lancedb" ]
+oceanbase       = [ "mysql-connector-python" ]
 
 [project.urls]
 "repository" = "https://github.com/zilliztech/VectorDBBench"

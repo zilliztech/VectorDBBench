@@ -57,6 +57,7 @@ All the database client supported
 | mongodb                  | `pip install vectordb-bench[mongodb]`       |
 | tidb                     | `pip install vectordb-bench[tidb]`          |
 | vespa                    | `pip install vectordb-bench[vespa]`         |
+| oceanbase                | `pip install vectordb-bench[oceanbase]`     |
 
 ### Run
 
