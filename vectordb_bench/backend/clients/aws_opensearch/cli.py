@@ -135,7 +135,6 @@ def AWSOpenSearch(**parameters: Unpack[AWSOpenSearchHNSWTypedDict]):
 
     log.info(f"CLI parameters: {parameters}")
 
-    # 获取参数
     ef_search = parameters.get("ef_search", 256)
     ef_construction = parameters.get("ef_construction", 256)
     m = parameters.get("m", 16)
