@@ -1,14 +1,11 @@
 from vectordb_bench.backend.clients import DB
 from vectordb_bench.models import CaseConfig, CaseConfigParamType, TaskConfig
-import logging
 
-log = logging.getLogger(__name__)
 
 def generate_tasks(activedDbList: list[DB], dbConfigs, activedCaseList: list[CaseConfig], allCaseConfigs):
     tasks = []
     for db in activedDbList:
         for case in activedCaseList:
-            
             task = TaskConfig(
                 db=db.value,
                 db_config=dbConfigs[db],

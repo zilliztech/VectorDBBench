@@ -85,7 +85,7 @@ class CaseRunner(BaseModel):
 
     def init_db(self, drop_old: bool = True) -> None:
         db_cls = self.config.db.init_cls
-        
+
         self.db = db_cls(
             dim=self.ca.dataset.data.dim,
             db_config=self.config.db_config.to_dict(),
