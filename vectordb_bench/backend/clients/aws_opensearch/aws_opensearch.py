@@ -18,15 +18,15 @@ SECONDS_WAITING_FOR_REPLICAS_TO_BE_ENABLED_SEC = 30
 
 class AWSOpenSearch(VectorDB):
     def __init__(
-            self,
-            dim: int,
-            db_config: dict,
-            db_case_config: AWSOpenSearchIndexConfig,
-            index_name: str = "vdb_bench_index",  # must be lowercase
-            id_col_name: str = "_id",
-            vector_col_name: str = "embedding",
-            drop_old: bool = False,
-            **kwargs,
+        self,
+        dim: int,
+        db_config: dict,
+        db_case_config: AWSOpenSearchIndexConfig,
+        index_name: str = "vdb_bench_index",  # must be lowercase
+        id_col_name: str = "_id",
+        vector_col_name: str = "embedding",
+        drop_old: bool = False,
+        **kwargs,
     ):
         self.dim = dim
         self.db_config = db_config
@@ -62,8 +62,6 @@ class AWSOpenSearch(VectorDB):
     def case_config_cls(cls, index_type: IndexType | None = None) -> AWSOpenSearchIndexConfig:
         return AWSOpenSearchIndexConfig
 
-
-
     def _create_index(self, client: OpenSearch) -> None:
         ef_search_value = self.case_config.ef_search if self.case_config.ef_search is not None else self.case_config.efSearch
         log.info(f"Creating index with ef_search: {ef_search_value}")
@@ -80,7 +78,6 @@ class AWSOpenSearch(VectorDB):
             }
         }
         client.cluster.put_settings(cluster_settings_body)
-
         settings = {
             "index": {
                 "knn": True,
@@ -90,9 +87,7 @@ class AWSOpenSearch(VectorDB):
             },
             "refresh_interval": self.case_config.refresh_interval,
         }
-
         settings["index"]["knn.algo_param.ef_search"] = ef_search_value
-
         mappings = {
             "properties": {
                 **{categoryCol: {"type": "keyword"} for categoryCol in self.category_col_names},
@@ -124,10 +119,10 @@ class AWSOpenSearch(VectorDB):
         del self.client
 
     def insert_embeddings(
-            self,
-            embeddings: Iterable[list[float]],
-            metadata: list[int],
-            **kwargs,
+        self,
+        embeddings: Iterable[list[float]],
+        metadata: list[int],
+        **kwargs,
     ) -> tuple[int, Exception]:
         """Insert the embeddings to the opensearch."""
         assert self.client is not None, "should self.init() first"
