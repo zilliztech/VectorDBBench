@@ -5,7 +5,6 @@ from contextlib import contextmanager
 
 from opensearchpy import OpenSearch
 
-from .run import optimize_index
 from ..api import IndexType, VectorDB
 from .config import AWSOpenSearchConfig, AWSOpenSearchIndexConfig, AWSOS_Engine
 
@@ -53,7 +52,6 @@ class AWSOpenSearch(VectorDB):
             self._update_ef_search_before_search(client)
             self._load_graphs_to_memory(client)
 
-
     @classmethod
     def config_cls(cls) -> AWSOpenSearchConfig:
         return AWSOpenSearchConfig
@@ -63,7 +61,9 @@ class AWSOpenSearch(VectorDB):
         return AWSOpenSearchIndexConfig
 
     def _create_index(self, client: OpenSearch) -> None:
-        ef_search_value = self.case_config.ef_search if self.case_config.ef_search is not None else self.case_config.efSearch
+        ef_search_value = (
+            self.case_config.ef_search if self.case_config.ef_search is not None else self.case_config.efSearch
+        )
         log.info(f"Creating index with ef_search: {ef_search_value}")
         log.info(f"Creating index with number_of_replicas: {self.case_config.number_of_replicas}")
 
@@ -133,11 +133,12 @@ class AWSOpenSearch(VectorDB):
         if num_clients <= 1:
             log.info("Using single client for data insertion")
             return self._insert_with_single_client(embeddings, metadata)
-        else:
-            log.info(f"Using {num_clients} parallel clients for data insertion")
-            return self._insert_with_multiple_clients(embeddings, metadata, num_clients)
+        log.info(f"Using {num_clients} parallel clients for data insertion")
+        return self._insert_with_multiple_clients(embeddings, metadata, num_clients)
 
-    def _insert_with_single_client(self, embeddings: Iterable[list[float]], metadata: list[int]) -> tuple[int, Exception]:
+    def _insert_with_single_client(
+        self, embeddings: Iterable[list[float]], metadata: list[int]
+    ) -> tuple[int, Exception]:
         insert_data = []
         for i in range(len(embeddings)):
             insert_data.append(
@@ -157,7 +158,9 @@ class AWSOpenSearch(VectorDB):
             time.sleep(10)
             return self._insert_with_single_client(embeddings, metadata)
 
-    def _insert_with_multiple_clients(self, embeddings: Iterable[list[float]], metadata: list[int], num_clients: int) -> tuple[int, Exception]:
+    def _insert_with_multiple_clients(
+        self, embeddings: Iterable[list[float]], metadata: list[int], num_clients: int
+    ) -> tuple[int, Exception]:
         import concurrent.futures
         from concurrent.futures import ThreadPoolExecutor
 
@@ -167,10 +170,7 @@ class AWSOpenSearch(VectorDB):
 
         for i in range(0, len(embeddings_list), chunk_size):
             end = min(i + chunk_size, len(embeddings_list))
-            chunks.append((
-                embeddings_list[i:end],
-                metadata[i:end]
-            ))
+            chunks.append((embeddings_list[i:end], metadata[i:end]))
 
         clients = []
         for _ in range(min(num_clients, len(chunks))):
@@ -179,7 +179,7 @@ class AWSOpenSearch(VectorDB):
 
         log.info(f"AWS_OpenSearch using {len(clients)} parallel clients for data insertion")
 
-        def insert_chunk(client_idx, chunk_idx):
+        def insert_chunk(client_idx: int, chunk_idx: int):
             chunk_embeddings, chunk_metadata = chunks[chunk_idx]
             client = clients[client_idx]
 
@@ -210,55 +210,60 @@ class AWSOpenSearch(VectorDB):
                 count, error = future.result()
                 results.append((count, error))
 
+        from contextlib import suppress
+
         for client in clients:
-            try:
+            with suppress(Exception):
                 client.close()
-            except:
-                pass
 
         total_count = sum(count for count, _ in results)
         errors = [error for _, error in results if error is not None]
 
         if errors:
-            log.warning(f"Some clients failed to insert data, retrying with single client")
+            log.warning("Some clients failed to insert data, retrying with single client")
             time.sleep(10)
             return self._insert_with_single_client(embeddings, metadata)
 
         resp = self.client.indices.stats(self.index_name)
         log.info(
-            f"Total document count in index after parallel insertion: {resp['_all']['primaries']['indexing']['index_total']}",
+            f"""Total document count in index after parallel insertion:
+                {resp['_all']['primaries']['indexing']['index_total']}""",
         )
 
         return (total_count, None)
 
     def _update_ef_search_before_search(self, client: OpenSearch):
-        ef_search_value = self.case_config.ef_search if self.case_config.ef_search is not None else self.case_config.efSearch
+        ef_search_value = (
+            self.case_config.ef_search if self.case_config.ef_search is not None else self.case_config.efSearch
+        )
 
         try:
             index_settings = client.indices.get_settings(index=self.index_name)
-            current_ef_search = index_settings.get(self.index_name, {}).get("settings", {}).get("index", {}).get("knn.algo_param",{}).get("ef_search")
+            current_ef_search = (
+                index_settings.get(self.index_name, {})
+                .get("settings", {})
+                .get("index", {})
+                .get("knn.algo_param", {})
+                .get("ef_search")
+            )
 
             if current_ef_search != str(ef_search_value):
                 log.info(f"Updating ef_search before search from {current_ef_search} to {ef_search_value}")
-                settings_body = {
-                    "index": {
-                        "knn.algo_param.ef_search": ef_search_value
-                    }
-                }
+                settings_body = {"index": {"knn.algo_param.ef_search": ef_search_value}}
                 client.indices.put_settings(index=self.index_name, body=settings_body)
                 log.info(f"Successfully updated ef_search to {ef_search_value} before search")
 
             log.info(f"Current engine: {self.case_config.engine}")
             log.info(f"Current metric_type: {self.case_config.metric_type_name}")
-            
+
         except Exception as e:
             log.warning(f"Failed to update ef_search parameter before search: {e}")
 
     def search_embedding(
-            self,
-            query: list[float],
-            k: int = 100,
-            filters: dict | None = None,
+        self,
+        query: list[float],
+        k: int = 100,
+        filters: dict | None = None,
     ) -> list[int]:
         """Get k most similar embeddings to query vector.
 
@@ -272,7 +277,6 @@ class AWSOpenSearch(VectorDB):
         """
         assert self.client is not None, "should self.init() first"
 
-
         if self.case_config.engine == AWSOS_Engine.faiss:
             body = {
                 "size": k,
@@ -285,13 +289,13 @@ class AWSOpenSearch(VectorDB):
                         }
                     }
                 },
-                **({"filter": {"range": {self.id_col_name: {"gt": filters["id"]}}}} if filters else {})
+                **({"filter": {"range": {self.id_col_name: {"gt": filters["id"]}}}} if filters else {}),
             }
         else:
             body = {
                 "size": k,
                 "query": {"knn": {self.vector_col_name: {"vector": query, "k": k}}},
-                **({"filter": {"range": {self.id_col_name: {"gt": filters["id"]}}}} if filters else {})
+                **({"filter": {"range": {self.id_col_name: {"gt": filters["id"]}}}} if filters else {}),
             }
 
         try:
@@ -326,14 +330,12 @@ class AWSOpenSearch(VectorDB):
         self._load_graphs_to_memory(self.client)
 
     def _update_ef_search(self):
-        ef_search_value = self.case_config.ef_search if self.case_config.ef_search is not None else self.case_config.efSearch
+        ef_search_value = (
+            self.case_config.ef_search if self.case_config.ef_search is not None else self.case_config.efSearch
+        )
         log.info(f"Updating ef_search parameter to: {ef_search_value}")
 
-        settings_body = {
-            "index": {
-                "knn.algo_param.ef_search": ef_search_value
-            }
-        }
+        settings_body = {"index": {"knn.algo_param.ef_search": ef_search_value}}
         try:
             self.client.indices.put_settings(index=self.index_name, body=settings_body)
             log.info(f"Successfully updated ef_search to {ef_search_value}")

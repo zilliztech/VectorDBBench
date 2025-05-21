@@ -1,5 +1,6 @@
-from typing import Annotated, TypedDict, Unpack
 import logging
+from typing import Annotated, TypedDict, Unpack
+
 import click
 from pydantic import SecretStr
 
@@ -130,8 +131,9 @@ class AWSOpenSearchHNSWTypedDict(CommonTypedDict, AWSOpenSearchTypedDict, HNSWFl
 @cli.command()
 @click_parameter_decorators_from_typed_dict(AWSOpenSearchHNSWTypedDict)
 def AWSOpenSearch(**parameters: Unpack[AWSOpenSearchHNSWTypedDict]):
-    from .config import AWSOpenSearchConfig, AWSOpenSearchIndexConfig, AWSOS_Engine
     from vectordb_bench.backend.clients.api import MetricType
+
+    from .config import AWSOpenSearchConfig, AWSOpenSearchIndexConfig, AWSOS_Engine
 
     log.info(f"CLI parameters: {parameters}")
 
@@ -167,13 +169,14 @@ def AWSOpenSearch(**parameters: Unpack[AWSOpenSearchHNSWTypedDict]):
             index_thread_qty_during_force_merge=parameters["index_thread_qty_during_force_merge"],
             cb_threshold=parameters["cb_threshold"],
             ef_search=ef_search,
-            efSearch=ef_search,
             efConstruction=ef_construction,
             M=m,
             engine_name=engine_name,
             metric_type_name=metric_type_name,
             metric_type=MetricType[parameters["metric_type"].upper()],
-            faiss_use_fp16=parameters.get("faiss_use_fp16", True) if AWSOS_Engine[engine_name] == AWSOS_Engine.faiss else False,
+            faiss_use_fp16=(
+                parameters.get("faiss_use_fp16", True) if AWSOS_Engine[engine_name] == AWSOS_Engine.faiss else False
+            ),
         ),
         **parameters,
     )
