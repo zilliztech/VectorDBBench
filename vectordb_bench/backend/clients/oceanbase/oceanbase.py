@@ -212,7 +212,7 @@ class OceanBase(VectorDB):
         hex_vec = packed.hex();
         filter_clause = f"WHERE id >= {filters['id']}" if filters else ""
         query_str = (
-            f"SELECT /*+ opt_param('rowsets_max_rows', 256)*/ id FROM {self.table_name} "
+            f"SELECT id FROM {self.table_name} "
             f"{filter_clause} ORDER BY {self.db_case_config.parse_metric_func_str()}(embedding, X'{hex_vec}') APPROXIMATE LIMIT {k}"
         )
 

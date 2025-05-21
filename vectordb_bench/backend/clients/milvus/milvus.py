@@ -149,7 +149,6 @@ class Milvus(VectorDB):
         if self.case_config.is_gpu_index:
             log.info("current gpu_index only supports IP / L2, cosine dataset need normalize.")
             return True
- 
         return False
 
     def insert_embeddings(

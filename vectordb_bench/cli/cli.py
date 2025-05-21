@@ -453,6 +453,13 @@ class HNSWFlavor3(HNSWBaseRequiredTypedDict):
         int | None,
         click.option("--ef-search", type=int, help="hnsw ef-search", required=True),
     ]
+
+
+class HNSWFlavor4(HNSWBaseRequiredTypedDict):
+    ef_search: Annotated[
+        int | None,
+        click.option("--ef-search", type=int, help="hnsw ef-search", required=True),
+    ]
     index_type: Annotated[
         str | None,
         click.option(

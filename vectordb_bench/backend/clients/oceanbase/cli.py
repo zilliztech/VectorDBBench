@@ -6,7 +6,7 @@ from ..api import IndexType, MetricType
 
 from vectordb_bench.cli.cli import (
     CommonTypedDict,
-    HNSWFlavor3,
+    HNSWFlavor4,
     OceanBaseIVFTypedDict,
     cli,
     click_parameter_decorators_from_typed_dict,
@@ -39,7 +39,7 @@ class OceanBaseTypedDict(CommonTypedDict):
         int, click.option("--port", type=int, help="OceanBase port", required=True)
     ]
 
-class OceanBaseHNSWTypedDict(CommonTypedDict, OceanBaseTypedDict, HNSWFlavor3):
+class OceanBaseHNSWTypedDict(CommonTypedDict, OceanBaseTypedDict, HNSWFlavor4):
     ...
 
 @cli.command()

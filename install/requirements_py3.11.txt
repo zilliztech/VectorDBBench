@@ -22,6 +22,6 @@ environs
 pydantic<v2
 scikit-learn
 pymilvus
-mysql-connector-python
 clickhouse_connect
 pyvespa
+mysql-connector-python

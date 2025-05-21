@@ -42,11 +42,11 @@ class DB(Enum):
     Test = "test"
     AliyunOpenSearch = "AliyunOpenSearch"
     MongoDB = "MongoDB"
-    OceanBase = "OceanBase"
     TiDB = "TiDB"
     Clickhouse = "Clickhouse"
     Vespa = "Vespa"
     LanceDB = "LanceDB"
+    OceanBase = "OceanBase"
 
     @property
     def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901, PLR0915
