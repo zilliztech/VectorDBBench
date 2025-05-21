@@ -146,6 +146,7 @@ class InputType(IntEnum):
     Option = 20003
     Float = 20004
     Bool = 20005
+    Select = 20006
 
 
 class CaseConfigInput(BaseModel):
@@ -482,7 +483,7 @@ CaseConfigParamInput_EF_SEARCH_AWSOpensearch = CaseConfigInput(
     label=CaseConfigParamType.ef_search,
     inputType=InputType.Number,
     inputConfig={
-        "min": 100,
+        "min": 1,
         "max": 1024,
         "value": 256,
     },
@@ -1264,6 +1265,87 @@ CaseConfigParamInput_EFConstruction_Vespa = CaseConfigInput(
     isDisplayed=lambda config: config[CaseConfigParamType.IndexType] == IndexType.HNSW.value,
 )
 
+CaseConfigParamInput_INDEX_THREAD_QTY_DURING_FORCE_MERGE_AWSOpensearch = CaseConfigInput(
+    label=CaseConfigParamType.index_thread_qty_during_force_merge,
+    displayLabel="Index Thread Qty During Force Merge",
+    inputHelp="Thread count during force merge operations",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 32,
+        "value": 4,
+    },
+)
+
+CaseConfigParamInput_NUMBER_OF_INDEXING_CLIENTS_AWSOpensearch = CaseConfigInput(
+    label=CaseConfigParamType.number_of_indexing_clients,
+    displayLabel="Number of Indexing Clients",
+    inputHelp="Number of concurrent clients for data insertion",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 32,
+        "value": 1,
+    },
+)
+
+CaseConfigParamInput_NUMBER_OF_SHARDS_AWSOpensearch = CaseConfigInput(
+    label=CaseConfigParamType.number_of_shards,
+    displayLabel="Number of Shards",
+    inputHelp="Number of primary shards for the index",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 32,
+        "value": 1,
+    },
+)
+
+CaseConfigParamInput_NUMBER_OF_REPLICAS_AWSOpensearch = CaseConfigInput(
+    label=CaseConfigParamType.number_of_replicas,
+    displayLabel="Number of Replicas",
+    inputHelp="Number of replica copies for each primary shard",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 0,
+        "max": 10,
+        "value": 1,
+    },
+)
+
+CaseConfigParamInput_INDEX_THREAD_QTY_AWSOpensearch = CaseConfigInput(
+    label=CaseConfigParamType.index_thread_qty,
+    displayLabel="Index Thread Qty",
+    inputHelp="Thread count for native engine indexing",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 32,
+        "value": 4,
+    },
+)
+
+CaseConfigParamInput_ENGINE_NAME_AWSOpensearch = CaseConfigInput(
+    label=CaseConfigParamType.engine_name,
+    displayLabel="Engine",
+    inputHelp="HNSW algorithm implementation to use",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": ["faiss", "nmslib", "lucene"],
+        "default": "faiss",
+    },
+)
+
+CaseConfigParamInput_METRIC_TYPE_NAME_AWSOpensearch = CaseConfigInput(
+    label=CaseConfigParamType.metric_type_name,
+    displayLabel="Metric Type",
+    inputHelp="Distance metric type for vector similarity",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": ["l2", "cosine", "ip"],
+        "default": "l2",
+    },
+)
 
 MilvusLoadConfig = [
     CaseConfigParamInput_IndexType,
@@ -1612,6 +1694,32 @@ LanceDBLoadConfig = [
 
 LanceDBPerformanceConfig = LanceDBLoadConfig
 
+AWSOpensearchLoadingConfig = [
+    CaseConfigParamInput_EFConstruction_AWSOpensearch,
+    CaseConfigParamInput_M_AWSOpensearch,
+    CaseConfigParamInput_ENGINE_NAME_AWSOpensearch,
+    CaseConfigParamInput_METRIC_TYPE_NAME_AWSOpensearch,
+    CaseConfigParamInput_INDEX_THREAD_QTY_DURING_FORCE_MERGE_AWSOpensearch,
+    CaseConfigParamInput_NUMBER_OF_INDEXING_CLIENTS_AWSOpensearch,
+    CaseConfigParamInput_NUMBER_OF_SHARDS_AWSOpensearch,
+    CaseConfigParamInput_NUMBER_OF_REPLICAS_AWSOpensearch,
+    CaseConfigParamInput_INDEX_THREAD_QTY_AWSOpensearch,
+]
+
+AWSOpenSearchPerformanceConfig = [
+    CaseConfigParamInput_EFConstruction_AWSOpensearch,
+    CaseConfigParamInput_M_AWSOpensearch,
+    CaseConfigParamInput_EF_SEARCH_AWSOpensearch,
+    CaseConfigParamInput_ENGINE_NAME_AWSOpensearch,
+    CaseConfigParamInput_METRIC_TYPE_NAME_AWSOpensearch,
+    CaseConfigParamInput_INDEX_THREAD_QTY_DURING_FORCE_MERGE_AWSOpensearch,
+    CaseConfigParamInput_NUMBER_OF_INDEXING_CLIENTS_AWSOpensearch,
+    CaseConfigParamInput_NUMBER_OF_SHARDS_AWSOpensearch,
+    CaseConfigParamInput_NUMBER_OF_REPLICAS_AWSOpensearch,
+    CaseConfigParamInput_INDEX_THREAD_QTY_AWSOpensearch,
+]
+
+# Map DB to config
 CASE_CONFIG_MAP = {
     DB.Milvus: {
         CaseLabel.Load: MilvusLoadConfig,
@@ -1675,5 +1783,9 @@ CASE_CONFIG_MAP = {
     DB.LanceDB: {
         CaseLabel.Load: LanceDBLoadConfig,
         CaseLabel.Performance: LanceDBPerformanceConfig,
+    },
+    DB.AWSOpenSearch: {
+        CaseLabel.Load: AWSOpensearchLoadingConfig,
+        CaseLabel.Performance: AWSOpenSearchPerformanceConfig,
     },
 }

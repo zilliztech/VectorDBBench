@@ -1,16 +1,18 @@
 from typing import Annotated, TypedDict, Unpack
-
+import logging
 import click
 from pydantic import SecretStr
 
 from ....cli.cli import (
     CommonTypedDict,
-    HNSWFlavor2,
+    HNSWFlavor1,
     cli,
     click_parameter_decorators_from_typed_dict,
     run,
 )
 from .. import DB
+
+log = logging.getLogger(__name__)
 
 
 class AWSOpenSearchTypedDict(TypedDict):
@@ -38,13 +40,23 @@ class AWSOpenSearchTypedDict(TypedDict):
         ),
     ]
 
-    index_thread_qty_during_force_merge: Annotated[
-        int,
+    engine: Annotated[
+        str,
         click.option(
-            "--index-thread-qty-during-force-merge",
-            type=int,
-            help="Thread count during force merge operations",
-            default=4,
+            "--engine",
+            type=click.Choice(["nmslib", "faiss", "lucene"], case_sensitive=False),
+            help="HNSW algorithm implementation to use",
+            default="faiss",
+        ),
+    ]
+
+    metric_type: Annotated[
+        str,
+        click.option(
+            "--metric-type",
+            type=click.Choice(["l2", "cosine", "ip"], case_sensitive=False),
+            help="Distance metric type for vector similarity",
+            default="l2",
         ),
     ]
 
@@ -64,26 +76,26 @@ class AWSOpenSearchTypedDict(TypedDict):
     ]
 
     refresh_interval: Annotated[
-        int,
+        str,
         click.option(
             "--refresh-interval", type=str, help="How often to make new data available for search", default="60s"
         ),
     ]
 
     force_merge_enabled: Annotated[
-        int,
+        bool,
         click.option("--force-merge-enabled", type=bool, help="Whether to perform force merge operation", default=True),
     ]
 
     flush_threshold_size: Annotated[
-        int,
+        str,
         click.option(
             "--flush-threshold-size", type=str, help="Size threshold for flushing the transaction log", default="5120mb"
         ),
     ]
 
     cb_threshold: Annotated[
-        int,
+        str,
         click.option(
             "--cb-threshold",
             type=str,
@@ -92,14 +104,47 @@ class AWSOpenSearchTypedDict(TypedDict):
         ),
     ]
 
+    index_thread_qty_during_force_merge: Annotated[
+        int,
+        click.option(
+            "--index-thread-qty-during-force-merge",
+            type=int,
+            help="Thread count during force merge operations",
+            default=4,
+        ),
+    ]
 
-class AWSOpenSearchHNSWTypedDict(CommonTypedDict, AWSOpenSearchTypedDict, HNSWFlavor2): ...
+    faiss_use_fp16: Annotated[
+        bool,
+        click.option(
+            "--faiss-use-fp16/--no-faiss-use-fp16",
+            default=True,
+            help="Whether to use fp16 encoder for faiss engine",
+        ),
+    ]
+
+
+class AWSOpenSearchHNSWTypedDict(CommonTypedDict, AWSOpenSearchTypedDict, HNSWFlavor1): ...
 
 
 @cli.command()
 @click_parameter_decorators_from_typed_dict(AWSOpenSearchHNSWTypedDict)
 def AWSOpenSearch(**parameters: Unpack[AWSOpenSearchHNSWTypedDict]):
-    from .config import AWSOpenSearchConfig, AWSOpenSearchIndexConfig
+    from .config import AWSOpenSearchConfig, AWSOpenSearchIndexConfig, AWSOS_Engine
+    from vectordb_bench.backend.clients.api import MetricType
+
+    log.info(f"CLI parameters: {parameters}")
+
+    ef_search = parameters.get("ef_search", 256)
+    ef_construction = parameters.get("ef_construction", 256)
+    m = parameters.get("m", 16)
+
+    engine_name = parameters.get("engine", "faiss")
+    metric_type_name = parameters.get("metric_type", "l2")
+
+    log.info(f"ef_search from CLI: {ef_search}")
+    log.info(f"engine from CLI: {engine_name}")
+    log.info(f"metric_type from CLI: {metric_type_name}")
 
     run(
         db=DB.AWSOpenSearch,
@@ -108,6 +153,7 @@ def AWSOpenSearch(**parameters: Unpack[AWSOpenSearchHNSWTypedDict]):
             port=parameters["port"],
             user=parameters["user"],
             password=SecretStr(parameters["password"]),
+            db_label=parameters.get("db_label", ""),
         ),
         db_case_config=AWSOpenSearchIndexConfig(
             number_of_shards=parameters["number_of_shards"],
@@ -120,6 +166,14 @@ def AWSOpenSearch(**parameters: Unpack[AWSOpenSearchHNSWTypedDict]):
             number_of_indexing_clients=parameters["number_of_indexing_clients"],
             index_thread_qty_during_force_merge=parameters["index_thread_qty_during_force_merge"],
             cb_threshold=parameters["cb_threshold"],
+            ef_search=ef_search,
+            efSearch=ef_search,
+            efConstruction=ef_construction,
+            M=m,
+            engine_name=engine_name,
+            metric_type_name=metric_type_name,
+            metric_type=MetricType[parameters["metric_type"].upper()],
+            faiss_use_fp16=parameters.get("faiss_use_fp16", True) if AWSOS_Engine[engine_name] == AWSOS_Engine.faiss else False,
         ),
         **parameters,
     )

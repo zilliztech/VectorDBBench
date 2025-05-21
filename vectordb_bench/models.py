@@ -105,6 +105,13 @@ class CaseConfigParamType(Enum):
     num_partitions = "num_partitions"
     num_sub_vectors = "num_sub_vectors"
     sample_rate = "sample_rate"
+    index_thread_qty_during_force_merge = "index_thread_qty_during_force_merge"
+    number_of_indexing_clients = "number_of_indexing_clients"
+    number_of_shards = "number_of_shards"
+    number_of_replicas = "number_of_replicas"
+    index_thread_qty = "index_thread_qty"
+    engine_name = "engine_name"
+    metric_type_name = "metric_type_name"
 
     # mongodb params
     mongodb_quantization_type = "quantization"
