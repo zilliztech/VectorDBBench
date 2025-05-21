@@ -62,14 +62,15 @@ class AWSOpenSearch(VectorDB):
     def case_config_cls(cls, index_type: IndexType | None = None) -> AWSOpenSearchIndexConfig:
         return AWSOpenSearchIndexConfig
 
-    def _create_index(self, client: OpenSearch):
+
+
+    def _create_index(self, client: OpenSearch) -> None:
         ef_search_value = self.case_config.ef_search if self.case_config.ef_search is not None else self.case_config.efSearch
         log.info(f"Creating index with ef_search: {ef_search_value}")
         log.info(f"Creating index with number_of_replicas: {self.case_config.number_of_replicas}")
 
-        # 记录引擎和度量类型的最终值
         log.info(f"Creating index with engine: {self.case_config.engine}")
-        log.info(f"Creating index with metric type: {self.case_config.metric_type}")
+        log.info(f"Creating index with metric type: {self.case_config.metric_type_name}")
         log.info(f"All case_config parameters: {self.case_config.__dict__}")
 
         cluster_settings_body = {
@@ -90,9 +91,7 @@ class AWSOpenSearch(VectorDB):
             "refresh_interval": self.case_config.refresh_interval,
         }
 
-        if self.case_config.engine == AWSOS_Engine.nmslib:
-            settings["index"]["knn.algo_param.ef_search"] = ef_search_value
-            log.info(f"Adding ef_search={ef_search_value} to index settings for nmslib engine")
+        settings["index"]["knn.algo_param.ef_search"] = ef_search_value
 
         mappings = {
             "properties": {
@@ -255,7 +254,7 @@ class AWSOpenSearch(VectorDB):
                 log.info(f"Successfully updated ef_search to {ef_search_value} before search")
 
             log.info(f"Current engine: {self.case_config.engine}")
-            log.info(f"Current metric_type: {self.case_config.metric_type}")
+            log.info(f"Current metric_type: {self.case_config.metric_type_name}")
             
         except Exception as e:
             log.warning(f"Failed to update ef_search parameter before search: {e}")
@@ -278,11 +277,28 @@ class AWSOpenSearch(VectorDB):
         """
         assert self.client is not None, "should self.init() first"
 
-        body = {
-            "size": k,
-            "query": {"knn": {self.vector_col_name: {"vector": query, "k": k}}},
-            **({"filter": {"range": {self.id_col_name: {"gt": filters["id"]}}}} if filters else {}),
-        }
+
+        if self.case_config.engine == AWSOS_Engine.faiss:
+            body = {
+                "size": k,
+                "query": {
+                    "knn": {
+                        self.vector_col_name: {
+                            "vector": query,
+                            "k": k,
+                            "method_parameters": {"ef_search": self.case_config.ef_search},
+                        }
+                    }
+                },
+                **({"filter": {"range": {self.id_col_name: {"gt": filters["id"]}}}} if filters else {})
+            }
+        else:
+            body = {
+                "size": k,
+                "query": {"knn": {self.vector_col_name: {"vector": query, "k": k}}},
+                **({"filter": {"range": {self.id_col_name: {"gt": filters["id"]}}}} if filters else {})
+            }
+
         try:
             resp = self.client.search(
                 index=self.index_name,
@@ -347,7 +363,7 @@ class AWSOpenSearch(VectorDB):
         while True:
             res = self.client.cat.indices(index=self.index_name, h="health", format="json")
             health = res[0]["health"]
-            if health != "green":
+            if health == "green":
                 break
             log.info(f"The index {self.index_name} has health : {health} and is not green. Retrying")
             time.sleep(SECONDS_WAITING_FOR_REPLICAS_TO_BE_ENABLED_SEC)

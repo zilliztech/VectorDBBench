@@ -114,6 +114,15 @@ class AWSOpenSearchTypedDict(TypedDict):
         ),
     ]
 
+    faiss_use_fp16: Annotated[
+        bool,
+        click.option(
+            "--faiss-use-fp16/--no-faiss-use-fp16",
+            default=True,
+            help="Whether to use fp16 encoder for faiss engine",
+        ),
+    ]
+
 
 class AWSOpenSearchHNSWTypedDict(CommonTypedDict, AWSOpenSearchTypedDict, HNSWFlavor1): ...
 
@@ -131,9 +140,8 @@ def AWSOpenSearch(**parameters: Unpack[AWSOpenSearchHNSWTypedDict]):
     ef_construction = parameters.get("ef_construction", 256)
     m = parameters.get("m", 16)
 
-    # 获取引擎和度量类型 - 直接从 parameters 中获取 engine 和 metric_type
-    engine_name = parameters.get("engine", "faiss")  # 使用 engine 而不是 engine_name
-    metric_type_name = parameters.get("metric_type", "l2")  # 使用 metric_type 而不是 metric_type_name
+    engine_name = parameters.get("engine", "faiss")
+    metric_type_name = parameters.get("metric_type", "l2")
 
     log.info(f"ef_search from CLI: {ef_search}")
     log.info(f"engine from CLI: {engine_name}")
@@ -160,11 +168,13 @@ def AWSOpenSearch(**parameters: Unpack[AWSOpenSearchHNSWTypedDict]):
             index_thread_qty_during_force_merge=parameters["index_thread_qty_during_force_merge"],
             cb_threshold=parameters["cb_threshold"],
             ef_search=ef_search,
-            efSearch=ef_search,  # 同时设置两个参数以确保兼容性
+            efSearch=ef_search,
             efConstruction=ef_construction,
             M=m,
-            engine_name=engine_name,  # 直接传递字符串，在 AWSOpenSearchIndexConfig 中转换
-            metric_type_name=metric_type_name,  # 直接传递字符串，在 AWSOpenSearchIndexConfig 中转换
+            engine_name=engine_name,
+            metric_type_name=metric_type_name,
+            metric_type=MetricType[parameters["metric_type"].upper()],
+            faiss_use_fp16=parameters.get("faiss_use_fp16", True) if AWSOS_Engine[engine_name] == AWSOS_Engine.faiss else False,
         ),
         **parameters,
     )

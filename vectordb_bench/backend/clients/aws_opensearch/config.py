@@ -38,8 +38,7 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
     engine: AWSOS_Engine = AWSOS_Engine.faiss
     efConstruction: int = 256
     efSearch: int = 256
-    # 添加与前端一致的参数名，用于接收前端传递的参数
-    ef_search: int | None = None
+    ef_search: int = 200
     engine_name: str | None = None
     metric_type_name: str | None = None
     M: int = 16
@@ -53,10 +52,12 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
     number_of_indexing_clients: int | None = 1
     index_thread_qty_during_force_merge: int
     cb_threshold: str | None = "50%"
+    faiss_use_fp16: bool | None = True
     
     def __init__(self, **data):
         super().__init__(**data)
-        # 初始化时处理 engine_name 和 metric_type_name
+
+        # self.faiss_use_fp16 = data.get("faiss_use_fp16", False) if self.engine == AWSOS_Engine.faiss else False
         if self.engine_name is not None:
             try:
                 self.engine = AWSOS_Engine[self.engine_name.lower()]
@@ -72,30 +73,43 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
                 log.warning(f"Invalid metric type: {self.metric_type_name}, using default: {self.metric_type}")
 
     def parse_metric(self) -> str:
+        log.info(f"User specified metric_type: {self.metric_type_name}")
+        self.metric_type = MetricType[self.metric_type_name.upper()]
         if self.metric_type == MetricType.IP:
             return "innerproduct"
         if self.metric_type == MetricType.COSINE:
             if self.engine == AWSOS_Engine.faiss:
-                log.info(
-                    "Using innerproduct because faiss doesn't support cosine as metric type for Opensearch",
-                )
+                log.info("Using innerproduct because faiss doesn't support cosine as metric type for Opensearch")
                 return "innerproduct"
             return "cosinesimil"
+        if self.metric_type == MetricType.L2:
+            log.info("Using l2 as specified by user")
+            return "l2"
         return "l2"
 
     def index_param(self) -> dict:
         log.info(f"Using engine: {self.engine} for index creation")
-        log.info(f"Using metric_type: {self.metric_type} for index creation")
+        log.info(f"Using metric_type: {self.metric_type_name} for index creation")
         log.info(f"Resulting space_type: {self.parse_metric()} for index creation")
-        
+
+        parameters = {
+            "ef_construction": self.efConstruction,
+            "m": self.M
+        }
+        # 仅 faiss 且启用 fp16 时添加 encoder
+        if self.engine == AWSOS_Engine.faiss and self.faiss_use_fp16:
+            parameters["encoder"] = {
+                "name": "sq",
+                "parameters": {
+                    "type": "fp16"
+                }
+            }
+
         return {
             "name": "hnsw",
-            "space_type": self.parse_metric(),
             "engine": self.engine.value,
-            "parameters": {
-                "ef_construction": self.efConstruction,
-                "m": self.M
-            },
+            "space_type": self.parse_metric(),
+            "parameters": parameters
         }
 
     def search_param(self) -> dict:
