@@ -18,8 +18,7 @@ from ....cli.cli import (
 )
 
 
-# ruff: noqa
-def set_default_quantized_fetch_limit(ctx: any, param: any, value: any):
+def set_default_quantized_fetch_limit(ctx: any, param: any, value: any):  # noqa: ARG001
     if ctx.params.get("reranking") and value is None:
         # ef_search is the default value for quantized_fetch_limit as it's bound by ef_search.
         # 100 is default value for quantized_fetch_limit for IVFFlat.
@@ -82,7 +81,17 @@ class PgVectorTypedDict(CommonTypedDict):
         click.option(
             "--quantization-type",
             type=click.Choice(["none", "bit", "halfvec"]),
-            help="quantization type for vectors",
+            help="quantization type for vectors (in index)",
+            required=False,
+        ),
+    ]
+    table_quantization_type: Annotated[
+        str | None,
+        click.option(
+            "--table-quantization-type",
+            type=click.Choice(["none", "bit", "halfvec"]),
+            help="quantization type for vectors (in table). "
+            "If equal to bit, the parameter quantization_type will be set to bit too.",
             required=False,
         ),
     ]
@@ -146,6 +155,7 @@ def PgVectorIVFFlat(
             lists=parameters["lists"],
             probes=parameters["probes"],
             quantization_type=parameters["quantization_type"],
+            table_quantization_type=parameters["table_quantization_type"],
             reranking=parameters["reranking"],
             reranking_metric=parameters["reranking_metric"],
             quantized_fetch_limit=parameters["quantized_fetch_limit"],
@@ -182,6 +192,7 @@ def PgVectorHNSW(
             maintenance_work_mem=parameters["maintenance_work_mem"],
             max_parallel_workers=parameters["max_parallel_workers"],
             quantization_type=parameters["quantization_type"],
+            table_quantization_type=parameters["table_quantization_type"],
             reranking=parameters["reranking"],
             reranking_metric=parameters["reranking_metric"],
             quantized_fetch_limit=parameters["quantized_fetch_limit"],

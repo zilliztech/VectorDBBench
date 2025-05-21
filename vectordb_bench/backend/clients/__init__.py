@@ -38,13 +38,18 @@ class DB(Enum):
     Chroma = "Chroma"
     AWSOpenSearch = "OpenSearch"
     AliyunElasticsearch = "AliyunElasticsearch"
+    MariaDB = "MariaDB"
     Test = "test"
     AliyunOpenSearch = "AliyunOpenSearch"
     MongoDB = "MongoDB"
     OceanBase = "OceanBase"
+    TiDB = "TiDB"
+    Clickhouse = "Clickhouse"
+    Vespa = "Vespa"
+    LanceDB = "LanceDB"
 
     @property
-    def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901
+    def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901, PLR0915
         """Import while in use"""
         if self == DB.Milvus:
             from .milvus.milvus import Milvus
@@ -116,6 +121,11 @@ class DB(Enum):
 
             return AWSOpenSearch
 
+        if self == DB.Clickhouse:
+            from .clickhouse.clickhouse import Clickhouse
+
+            return Clickhouse
+
         if self == DB.AlloyDB:
             from .alloydb.alloydb import AlloyDB
 
@@ -141,16 +151,36 @@ class DB(Enum):
             
             return OceanBase
 
+        if self == DB.MariaDB:
+            from .mariadb.mariadb import MariaDB
+
+            return MariaDB
+
+        if self == DB.TiDB:
+            from .tidb.tidb import TiDB
+
+            return TiDB
+
         if self == DB.Test:
             from .test.test import Test
 
             return Test
 
+        if self == DB.Vespa:
+            from .vespa.vespa import Vespa
+
+            return Vespa
+
+        if self == DB.LanceDB:
+            from .lancedb.lancedb import LanceDB
+
+            return LanceDB
+
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
 
     @property
-    def config_cls(self) -> type[DBConfig]:  # noqa: PLR0911, PLR0912, C901
+    def config_cls(self) -> type[DBConfig]:  # noqa: PLR0911, PLR0912, C901, PLR0915
         """Import while in use"""
         if self == DB.Milvus:
             from .milvus.config import MilvusConfig
@@ -222,6 +252,11 @@ class DB(Enum):
 
             return AWSOpenSearchConfig
 
+        if self == DB.Clickhouse:
+            from .clickhouse.config import ClickhouseConfig
+
+            return ClickhouseConfig
+
         if self == DB.AlloyDB:
             from .alloydb.config import AlloyDBConfig
 
@@ -247,15 +282,35 @@ class DB(Enum):
 
             return OceanBaseConfig
 
+        if self == DB.MariaDB:
+            from .mariadb.config import MariaDBConfig
+
+            return MariaDBConfig
+
+        if self == DB.TiDB:
+            from .tidb.config import TiDBConfig
+
+            return TiDBConfig
+
         if self == DB.Test:
             from .test.config import TestConfig
 
             return TestConfig
 
+        if self == DB.Vespa:
+            from .vespa.config import VespaConfig
+
+            return VespaConfig
+
+        if self == DB.LanceDB:
+            from .lancedb.config import LanceDBConfig
+
+            return LanceDBConfig
+
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
 
-    def case_config_cls(  # noqa: PLR0911
+    def case_config_cls(  # noqa: C901, PLR0911, PLR0912
         self,
         index_type: IndexType | None = None,
     ) -> type[DBCaseConfig]:
@@ -299,6 +354,11 @@ class DB(Enum):
 
             return AWSOpenSearchIndexConfig
 
+        if self == DB.Clickhouse:
+            from .clickhouse.config import ClickhouseHNSWConfig
+
+            return ClickhouseHNSWConfig
+
         if self == DB.PgVectorScale:
             from .pgvectorscale.config import _pgvectorscale_case_config
 
@@ -333,6 +393,26 @@ class DB(Enum):
             from .oceanbase.config import _oceanbase_case_config
             
             return _oceanbase_case_config.get(IndexType.HNSW)
+
+        if self == DB.MariaDB:
+            from .mariadb.config import _mariadb_case_config
+
+            return _mariadb_case_config.get(index_type)
+
+        if self == DB.TiDB:
+            from .tidb.config import TiDBIndexConfig
+
+            return TiDBIndexConfig
+
+        if self == DB.Vespa:
+            from .vespa.config import VespaHNSWConfig
+
+            return VespaHNSWConfig
+
+        if self == DB.LanceDB:
+            from .lancedb.config import _lancedb_case_config
+
+            return _lancedb_case_config.get(index_type)
 
         # DB.Pinecone, DB.Chroma, DB.Redis
         return EmptyDBCaseConfig

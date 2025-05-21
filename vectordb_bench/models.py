@@ -12,6 +12,7 @@ from .backend.clients import (
     DB,
     DBCaseConfig,
     DBConfig,
+    EmptyDBCaseConfig,
 )
 from .base import BaseModel
 from .metric import Metric
@@ -27,6 +28,11 @@ class LoadTimeoutError(TimeoutError):
 class PerformanceTimeoutError(TimeoutError):
     def __init__(self):
         super().__init__("Performance case optimize timeout")
+
+
+class ConcurrencySlotTimeoutError(TimeoutError):
+    def __init__(self):
+        super().__init__("Timeout while waiting for a concurrency slot to become available")
 
 
 class CaseConfigParamType(Enum):
@@ -49,11 +55,13 @@ class CaseConfigParamType(Enum):
     probes = "probes"
     quantizationType = "quantization_type"
     quantizationRatio = "quantization_ratio"
+    tableQuantizationType = "table_quantization_type"
     reranking = "reranking"
     rerankingMetric = "reranking_metric"
     quantizedFetchLimit = "quantized_fetch_limit"
     m = "m"
     nbits = "nbits"
+    nrq = "nrq"
     intermediate_graph_degree = "intermediate_graph_degree"
     graph_degree = "graph_degree"
     itopk_size = "itopk_size"
@@ -64,6 +72,11 @@ class CaseConfigParamType(Enum):
     build_algo = "build_algo"
     cache_dataset_on_device = "cache_dataset_on_device"
     refine_ratio = "refine_ratio"
+    refine = "refine"
+    refine_type = "refine_type"
+    refine_k = "refine_k"
+    rbq_bits_query = "rbq_bits_query"
+    sq_type = "sq_type"
     level = "level"
     maintenance_work_mem = "maintenance_work_mem"
     max_parallel_workers = "max_parallel_workers"
@@ -87,6 +100,11 @@ class CaseConfigParamType(Enum):
     preReorderingNumNeigbors = "pre_reordering_num_neighbors"
     numSearchThreads = "num_search_threads"
     maxNumPrefetchDatasets = "max_num_prefetch_datasets"
+    storage_engine = "storage_engine"
+    max_cache_size = "max_cache_size"
+    num_partitions = "num_partitions"
+    num_sub_vectors = "num_sub_vectors"
+    sample_rate = "sample_rate"
 
     # mongodb params
     mongodb_quantization_type = "quantization"
@@ -100,6 +118,7 @@ class CustomizedCase(BaseModel):
 class ConcurrencySearchConfig(BaseModel):
     num_concurrency: list[int] = config.NUM_CONCURRENCY
     concurrency_duration: int = config.CONCURRENCY_DURATION
+    concurrency_timeout: int = config.CONCURRENCY_TIMEOUT
 
 
 class CaseConfig(BaseModel):
@@ -238,13 +257,19 @@ class TestResult(BaseModel):
                 test_result["task_label"] = test_result["run_id"]
 
             for case_result in test_result["results"]:
-                task_config = case_result.get("task_config")
-                db = DB(task_config.get("db"))
+                task_config = case_result["task_config"]
+                db = DB(task_config["db"])
 
                 task_config["db_config"] = db.config_cls(**task_config["db_config"])
-                task_config["db_case_config"] = db.case_config_cls(
-                    index_type=task_config["db_case_config"].get("index", None),
-                )(**task_config["db_case_config"])
+
+                # Safely instantiate DBCaseConfig (fallback to EmptyDBCaseConfig on None)
+                raw_case_cfg = task_config.get("db_case_config") or {}
+                index_value = raw_case_cfg.get("index", None)
+                try:
+                    task_config["db_case_config"] = db.case_config_cls(index_type=index_value)(**raw_case_cfg)
+                except Exception:
+                    log.exception(f"Couldn't get class for index '{index_value}' ({full_path})")
+                    task_config["db_case_config"] = EmptyDBCaseConfig(**raw_case_cfg)
 
                 case_result["task_config"] = task_config
 
@@ -260,7 +285,6 @@ class TestResult(BaseModel):
                     )
             return TestResult.validate(test_result)
 
-    # ruff: noqa
     def display(self, dbs: list[DB] | None = None):
         filter_list = dbs if dbs and isinstance(dbs, list) else None
         sorted_results = sorted(
@@ -291,7 +315,7 @@ class TestResult(BaseModel):
         max_qps = 10 if max_qps < 10 else max_qps
         max_recall = 13 if max_recall < 13 else max_recall
 
-        LENGTH = (
+        LENGTH = (  # noqa: N806
             max_db,
             max_db_labels,
             max_case,
@@ -304,13 +328,13 @@ class TestResult(BaseModel):
             5,
         )
 
-        DATA_FORMAT = (
+        DATA_FORMAT = (  # noqa: N806
             f"%-{max_db}s | %-{max_db_labels}s %-{max_case}s %-{len(self.task_label)}s"
             f" | %-{max_load_dur}s %-{max_qps}s %-15s %-{max_recall}s %-14s"
             f" | %-5s"
         )
 
-        TITLE = DATA_FORMAT % (
+        TITLE = DATA_FORMAT % (  # noqa: N806
             "DB",
             "db_label",
             "case",
@@ -322,8 +346,8 @@ class TestResult(BaseModel):
             "max_load_count",
             "label",
         )
-        SPLIT = DATA_FORMAT % tuple(map(lambda x: "-" * x, LENGTH))
-        SUMMARY_FORMAT = ("Task summary: run_id=%s, task_label=%s") % (
+        SPLIT = DATA_FORMAT % tuple(map(lambda x: "-" * x, LENGTH))  # noqa: C417, N806
+        SUMMARY_FORMAT = ("Task summary: run_id=%s, task_label=%s") % (  # noqa: N806
             self.run_id[:5],
             self.task_label,
         )

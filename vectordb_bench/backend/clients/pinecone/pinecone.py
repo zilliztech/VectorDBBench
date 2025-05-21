@@ -67,7 +67,7 @@ class Pinecone(VectorDB):
         embeddings: list[list[float]],
         metadata: list[int],
         **kwargs,
-    ) -> (int, Exception):
+    ) -> tuple[int, Exception]:
         assert len(embeddings) == len(metadata)
         insert_count = 0
         try:

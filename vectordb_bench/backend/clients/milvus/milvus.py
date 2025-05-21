@@ -61,6 +61,7 @@ class Milvus(VectorDB):
                 consistency_level="Session",
             )
 
+            log.info(f"{self.name} create index: index_params: {self.case_config.index_param()}")
             col.create_index(
                 self._vector_field,
                 self.case_config.index_param(),
@@ -71,7 +72,7 @@ class Milvus(VectorDB):
         connections.disconnect("default")
 
     @contextmanager
-    def init(self) -> None:
+    def init(self):
         """
         Examples:
             >>> with self.init():
@@ -126,6 +127,7 @@ class Milvus(VectorDB):
                 try:
                     self.col.compact()
                     self.col.wait_for_compaction_completed()
+                    log.info("compactation completed. waiting for the rest of index buliding.")
                 except Exception as e:
                     log.warning(f"{self.name} compact error: {e}")
                     if hasattr(e, "code"):
@@ -155,7 +157,7 @@ class Milvus(VectorDB):
         embeddings: Iterable[list[float]],
         metadata: list[int],
         **kwargs,
-    ) -> (int, Exception):
+    ) -> tuple[int, Exception]:
         """Insert embeddings into Milvus. should call self.init() first"""
         # use the first insert_embeddings to init collection
         assert self.col is not None

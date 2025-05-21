@@ -27,7 +27,7 @@ dependencies = [
     "click",
     "pytz",
     "streamlit-autorefresh",
-    "streamlit!=1.34.0",
+    "streamlit<1.44,!=1.34.0", # There is a breaking change in 1.44 related to get_page https://discuss.streamlit.io/t/from-streamlit-source-util-import-get-pages-gone-in-v-1-44-0-need-urgent-help/98399
     "streamlit_extras",
     "tqdm",
     "s3fs",
@@ -35,7 +35,7 @@ dependencies = [
     "psutil",
     "polars",
     "plotly",
-    "environs",
+    "environs<14.1.0",
     "pydantic<v2",
     "scikit-learn",
     "pymilvus", # with pandas, numpy, ujson
@@ -69,6 +69,11 @@ all = [
     "memorydb",
     "alibabacloud_ha3engine_vector",
     "alibabacloud_searchengine20211025",
+    "mariadb",
+    "PyMySQL",
+    "clickhouse-connect",
+    "pyvespa",
+    "lancedb",
 ]
 
 qdrant          = [ "qdrant-client" ]
@@ -87,6 +92,11 @@ chromadb        = [ "chromadb" ]
 opensearch      = [ "opensearch-py" ]
 aliyun_opensearch = [ "alibabacloud_ha3engine_vector", "alibabacloud_searchengine20211025"]
 mongodb         = [ "pymongo" ]
+mariadb         = [ "mariadb" ]
+tidb            = [ "PyMySQL" ]
+clickhouse      = [ "clickhouse-connect" ]
+vespa           = [ "pyvespa" ]
+lancedb         = [ "lancedb" ]
 
 [project.urls]
 "repository" = "https://github.com/zilliztech/VectorDBBench"

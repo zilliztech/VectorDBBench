@@ -18,19 +18,33 @@ class IndexType(str, Enum):
     HNSW = "HNSW"
     HNSW_SQ = "HNSW_SQ"
     HNSW_BQ = "HNSW_BQ"
+    HNSW_PQ = "HNSW_PQ"
+    HNSW_PRQ = "HNSW_PRQ"
     DISKANN = "DISKANN"
     STREAMING_DISKANN = "DISKANN"
     IVFFlat = "IVF_FLAT"
+    IVFPQ = "IVF_PQ"
     IVFSQ8 = "IVF_SQ8"
     IVFPQ = "IVF_PQ"
+    IVF_RABITQ = "IVF_RABITQ"
     Flat = "FLAT"
     AUTOINDEX = "AUTOINDEX"
     ES_HNSW = "hnsw"
     ES_IVFFlat = "ivfflat"
     GPU_IVF_FLAT = "GPU_IVF_FLAT"
+    GPU_BRUTE_FORCE = "GPU_BRUTE_FORCE"
     GPU_IVF_PQ = "GPU_IVF_PQ"
     GPU_CAGRA = "GPU_CAGRA"
     SCANN = "scann"
+    NONE = "NONE"
+
+
+class SQType(str, Enum):
+    SQ6 = "SQ6"
+    SQ8 = "SQ8"
+    BF16 = "BF16"
+    FP16 = "FP16"
+    FP32 = "FP32"
 
 
 class DBConfig(ABC, BaseModel):
@@ -164,7 +178,7 @@ class VectorDB(ABC):
         embeddings: list[list[float]],
         metadata: list[int],
         **kwargs,
-    ) -> (int, Exception):
+    ) -> tuple[int, Exception]:
         """Insert the embeddings to the vector database. The default number of embeddings for
         each insert_embeddings is 5000.
 
