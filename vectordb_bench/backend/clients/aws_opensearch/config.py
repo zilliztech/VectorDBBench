@@ -96,7 +96,7 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
             "ef_construction": self.efConstruction,
             "m": self.M
         }
-        # 仅 faiss 且启用 fp16 时添加 encoder
+
         if self.engine == AWSOS_Engine.faiss and self.faiss_use_fp16:
             parameters["encoder"] = {
                 "name": "sq",
