@@ -48,16 +48,6 @@ class AWSOpenSearchTypedDict(TypedDict):
         ),
     ]
 
-    number_of_indexing_clients: Annotated[
-        int,
-        click.option(
-            "--number-of-indexing-clients",
-            type=int,
-            help="Number of concurrent indexing clients",
-            default=1,
-        ),
-    ]
-
     number_of_segments: Annotated[
         int,
         click.option("--number-of-segments", type=int, help="Target number of segments after merging", default=1),
@@ -117,9 +107,12 @@ def AWSOpenSearch(**parameters: Unpack[AWSOpenSearchHNSWTypedDict]):
             refresh_interval=parameters["refresh_interval"],
             force_merge_enabled=parameters["force_merge_enabled"],
             flush_threshold_size=parameters["flush_threshold_size"],
-            number_of_indexing_clients=parameters["number_of_indexing_clients"],
             index_thread_qty_during_force_merge=parameters["index_thread_qty_during_force_merge"],
             cb_threshold=parameters["cb_threshold"],
+            efConstruction=parameters["ef_construction"],
+            efSearch=parameters["ef_runtime"],
+            M=parameters["m"],
+
         ),
         **parameters,
     )

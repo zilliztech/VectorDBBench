@@ -28,7 +28,6 @@ class AWSOpenSearchConfig(DBConfig, BaseModel):
 
 
 class AWSOS_Engine(Enum):
-    nmslib = "nmslib"
     faiss = "faiss"
     lucene = "Lucene"
 
@@ -46,7 +45,6 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
     refresh_interval: str | None = "60s"
     force_merge_enabled: bool | None = True
     flush_threshold_size: str | None = "5120mb"
-    number_of_indexing_clients: int | None = 1
     index_thread_qty_during_force_merge: int
     cb_threshold: str | None = "50%"
 
@@ -54,11 +52,6 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
         if self.metric_type == MetricType.IP:
             return "innerproduct"
         if self.metric_type == MetricType.COSINE:
-            if self.engine == AWSOS_Engine.faiss:
-                log.info(
-                    "Using innerproduct because faiss doesn't support cosine as metric type for Opensearch",
-                )
-                return "innerproduct"
             return "cosinesimil"
         return "l2"
 

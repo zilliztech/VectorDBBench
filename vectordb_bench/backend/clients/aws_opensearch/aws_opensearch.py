@@ -36,6 +36,7 @@ class AWSOpenSearch(VectorDB):
         self.vector_col_name = vector_col_name
 
         log.info(f"AWS_OpenSearch client config: {self.db_config}")
+        log.info(f"AWS_OpenSearch db case config : {self.case_config}")
         client = OpenSearch(**self.db_config)
         if drop_old:
             log.info(f"AWS_OpenSearch client drop old index: {self.index_name}")
@@ -65,17 +66,17 @@ class AWSOpenSearch(VectorDB):
                 "knn": True,
                 "number_of_shards": self.case_config.number_of_shards,
                 "number_of_replicas": 0,
-                "translog.flush_threshold_size": self.case_config.flush_threshold_size,
                 # Setting trans log threshold to 5GB
-                **(
-                    {"knn.algo_param.ef_search": self.case_config.ef_search}
-                    if self.case_config.engine == AWSOS_Engine.nmslib
-                    else {}
-                ),
+                "translog.flush_threshold_size": self.case_config.flush_threshold_size,
+                "knn.advanced.approximate_threshold": "-1"
             },
             "refresh_interval": self.case_config.refresh_interval,
         }
         mappings = {
+            "_source": {
+                "excludes": [self.vector_col_name],
+                "recovery_source_excludes": [self.vector_col_name]
+            },
             "properties": {
                 **{categoryCol: {"type": "keyword"} for categoryCol in self.category_col_names},
                 self.vector_col_name: {
@@ -151,7 +152,7 @@ class AWSOpenSearch(VectorDB):
 
         body = {
             "size": k,
-            "query": {"knn": {self.vector_col_name: {"vector": query, "k": k}}},
+            "query": {"knn": {self.vector_col_name: {"vector": query, "k": k, "method_parameters" : {"ef_search": self.case_config.efSearch}}}},
             **({"filter": {"range": {self.id_col_name: {"gt": filters["id"]}}}} if filters else {}),
         }
         try:
@@ -162,6 +163,7 @@ class AWSOpenSearch(VectorDB):
                 _source=False,
                 docvalue_fields=[self.id_col_name],
                 stored_fields="_none_",
+                preference="_local"
             )
             log.debug(f"Search took: {resp['took']}")
             log.debug(f"Search shards: {resp['_shards']}")
@@ -200,7 +202,7 @@ class AWSOpenSearch(VectorDB):
         while True:
             res = self.client.cat.indices(index=self.index_name, h="health", format="json")
             health = res[0]["health"]
-            if health != "green":
+            if health == "green":
                 break
             log.info(f"The index {self.index_name} has health : {health} and is not green. Retrying")
             time.sleep(SECONDS_WAITING_FOR_REPLICAS_TO_BE_ENABLED_SEC)
@@ -228,6 +230,14 @@ class AWSOpenSearch(VectorDB):
             "persistent": {"knn.algo_param.index_thread_qty": self.case_config.index_thread_qty_during_force_merge}
         }
         self.client.cluster.put_settings(cluster_settings_body)
+
+        log.info("Updating the graph threshold to ensure that during merge we can do graph creation.")
+        settings = {
+            "index.knn.advanced.approximate_threshold": "0"
+        }
+        output = self.client.indices.put_settings(index=self.index_name, body=settings)
+        log.info(f"response of updating setting is: {output}")
+
         log.debug(f"Starting force merge for index {self.index_name}")
         force_merge_endpoint = f"/{self.index_name}/_forcemerge?max_num_segments=1&wait_for_completion=false"
         force_merge_task_id = self.client.transport.perform_request("POST", force_merge_endpoint)["task"]
