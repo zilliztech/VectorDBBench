@@ -245,6 +245,44 @@ milvushnsw:
 > - Options passed on the command line will override the configuration file*
 > - Parameter names use an _ not -
 
+#### Using a batch configuration file.
+
+The vectordbbench command can read a batch configuration file to run all the test cases in the yaml formatted configuration file.
+
+By default, configuration files are expected to be in vectordb_bench/config-files/, this can be overridden by setting  
+the environment variable CONFIG_LOCAL_DIR or by passing the full path to the file. 
+
+The required format is:
+```yaml
+commandname:
+  - parameter_name: parameter_value
+    another_parameter_name: parameter_value
+```
+Example:
+```yaml
+pgvectorhnsw:
+  - db_label: pgConfigTest
+    user_name: vectordbbench
+    password: vectordbbench
+    db_name:  vectordbbench
+    host: localhost
+    m: 16
+    ef_construction: 128
+    ef_search: 128
+milvushnsw:
+  - skip_search_serial: True
+    case_type: Performance1536D50K
+    uri: http://localhost:19530
+    m: 16
+    ef_construction: 128
+    ef_search: 128
+    drop_old: False
+    load: False
+```
+> Notes: 
+> - Options can only be passed through configuration files
+> - Parameter names use an _ not -
+
 ## Leaderboard
 ### Introduction
 To facilitate the presentation of test results and provide a comprehensive performance analysis report, we offer a [leaderboard page](https://zilliz.com/benchmark). It allows us to choose from QPS, QP$, and latency metrics, and provides a comprehensive assessment of a system's performance based on the test results of various cases and a set of scoring mechanisms (to be introduced later). On this leaderboard, we can select the systems and models to be compared, and filter out cases we do not want to consider. Comprehensive scores are always ranked from best to worst, and the specific test results of each query will be presented in the list below.
