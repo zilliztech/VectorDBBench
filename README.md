@@ -283,6 +283,11 @@ milvushnsw:
 > - Options can only be passed through configuration files
 > - Parameter names use an _ not -
 
+How to use?
+```shell
+vectordbbench batchcli --batch-config-file <your-yaml-configuration-file>
+```
+
 ## Leaderboard
 ### Introduction
 To facilitate the presentation of test results and provide a comprehensive performance analysis report, we offer a [leaderboard page](https://zilliz.com/benchmark). It allows us to choose from QPS, QP$, and latency metrics, and provides a comprehensive assessment of a system's performance based on the test results of various cases and a set of scoring mechanisms (to be introduced later). On this leaderboard, we can select the systems and models to be compared, and filter out cases we do not want to consider. Comprehensive scores are always ranked from best to worst, and the specific test results of each query will be presented in the list below.
