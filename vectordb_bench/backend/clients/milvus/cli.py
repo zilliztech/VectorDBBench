@@ -98,6 +98,7 @@ def MilvusHNSW(**parameters: Unpack[MilvusHNSWTypedDict]):
             uri=SecretStr(parameters["uri"]),
             user=parameters["user_name"],
             password=SecretStr(parameters["password"]) if parameters["password"] else None,
+            num_shards=int(parameters["num_shards"]),
         ),
         db_case_config=HNSWConfig(
             M=parameters["m"],
