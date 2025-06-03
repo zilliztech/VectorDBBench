@@ -10,6 +10,7 @@ from ..backend.clients.pgvecto_rs.cli import PgVectoRSHNSW, PgVectoRSIVFFlat
 from ..backend.clients.pgvector.cli import PgVectorHNSW
 from ..backend.clients.pgvectorscale.cli import PgVectorScaleDiskAnn
 from ..backend.clients.qdrant_cloud.cli import QdrantCloud
+from ..backend.clients.qdrant_local.cli import QdrantLocal
 from ..backend.clients.redis.cli import Redis
 from ..backend.clients.test.cli import Test
 from ..backend.clients.tidb.cli import TiDB
@@ -37,6 +38,7 @@ cli.add_command(Clickhouse)
 cli.add_command(Vespa)
 cli.add_command(LanceDB)
 cli.add_command(QdrantCloud)
+cli.add_command(QdrantLocal)
 
 
 if __name__ == "__main__":
