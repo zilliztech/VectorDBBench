@@ -15,11 +15,15 @@ from .. import DB
 class WeaviateTypedDict(CommonTypedDict):
     api_key: Annotated[
         str,
-        click.option("--api-key", type=str, help="Weaviate api key", required=True),
+        click.option("--api-key", type=str, help="Weaviate api key", required=False, default=''),
     ]
     url: Annotated[
         str,
         click.option("--url", type=str, help="Weaviate url", required=True),
+    ]
+    no_auth: Annotated[
+        bool,
+        click.option("--no-auth", is_flag=True, help="Do not use api-key, set it to true if you are using a local setup. Default is False.", default=False),
     ]
 
 
@@ -32,8 +36,9 @@ def Weaviate(**parameters: Unpack[WeaviateTypedDict]):
         db=DB.WeaviateCloud,
         db_config=WeaviateConfig(
             db_label=parameters["db_label"],
-            api_key=SecretStr(parameters["api_key"]),
+            api_key=SecretStr(parameters["api_key"]) if parameters["api_key"] != '' else SecretStr("-"),
             url=SecretStr(parameters["url"]),
+            no_auth=parameters["no_auth"],
         ),
         db_case_config=WeaviateIndexConfig(ef=256, efConstruction=256, maxConnections=16),
         **parameters,
