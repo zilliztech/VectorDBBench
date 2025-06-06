@@ -25,6 +25,24 @@ class WeaviateTypedDict(CommonTypedDict):
         bool,
         click.option("--no-auth", is_flag=True, help="Do not use api-key, set it to true if you are using a local setup. Default is False.", default=False),
     ]
+    m: Annotated[
+        int,
+        click.option(
+            "--m", type=int, default=16, help="HNSW index parameter m."
+        ),
+    ]
+    ef_construct: Annotated[
+        int,
+        click.option(
+            "--ef-construction", type=int, default=256, help="HNSW index parameter ef_construction"
+        ),
+    ]
+    ef: Annotated[
+        int,
+        click.option(
+            "--ef", type=int, default=256, help="HNSW index parameter ef for search"
+        ),
+    ]
 
 
 @cli.command()
@@ -40,6 +58,10 @@ def Weaviate(**parameters: Unpack[WeaviateTypedDict]):
             url=SecretStr(parameters["url"]),
             no_auth=parameters["no_auth"],
         ),
-        db_case_config=WeaviateIndexConfig(ef=256, efConstruction=256, maxConnections=16),
+        db_case_config=WeaviateIndexConfig(
+            efConstruction=parameters["ef_construction"],
+            maxConnections=parameters["m"],
+            ef=parameters["ef"],
+        ),
         **parameters,
     )
