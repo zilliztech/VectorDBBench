@@ -10,17 +10,21 @@ log = logging.getLogger(__name__)
 
 class AWSOpenSearchConfig(DBConfig, BaseModel):
     host: str = ""
-    port: int = 443
+    port: int = 80
     user: str = ""
     password: SecretStr = ""
 
     def to_dict(self) -> dict:
+        use_ssl = self.port == 443
+        http_auth = (
+            (self.user, self.password.get_secret_value()) if len(self.user) != 0 and len(self.password) != 0 else ()
+        )
         return {
             "hosts": [{"host": self.host, "port": self.port}],
-            "http_auth": (self.user, self.password.get_secret_value()),
-            "use_ssl": True,
+            "http_auth": http_auth,
+            "use_ssl": use_ssl,
             "http_compress": True,
-            "verify_certs": True,
+            "verify_certs": use_ssl,
             "ssl_assert_hostname": False,
             "ssl_show_warn": False,
             "timeout": 600,
@@ -29,7 +33,12 @@ class AWSOpenSearchConfig(DBConfig, BaseModel):
 
 class AWSOS_Engine(Enum):
     faiss = "faiss"
-    lucene = "Lucene"
+    lucene = "lucene"
+
+
+class AWSOSQuantization(Enum):
+    fp32 = "fp32"
+    fp16 = "fp16"
 
 
 class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
@@ -47,6 +56,7 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
     flush_threshold_size: str | None = "5120mb"
     index_thread_qty_during_force_merge: int
     cb_threshold: str | None = "50%"
+    quantization_type: AWSOSQuantization = AWSOSQuantization.fp32
 
     def parse_metric(self) -> str:
         if self.metric_type == MetricType.IP:
@@ -64,6 +74,11 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
                 "ef_construction": self.efConstruction,
                 "m": self.M,
                 "ef_search": self.efSearch,
+                **(
+                    {"encoder": {"name": "sq", "parameters": {"type": self.quantization_type.fp16.value}}}
+                    if self.quantization_type is not AWSOSQuantization.fp32
+                    else {}
+                ),
             },
         }
 

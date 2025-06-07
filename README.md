@@ -201,9 +201,12 @@ Options:
   --force-merge-enabled BOOLEAN   Whether to perform force merge operation
   --flush-threshold-size TEXT     Size threshold for flushing the transaction
                                   log
+  --engine TEXT                   type of engine to use valid values [faiss, lucene]
   # Memory Management
   --cb-threshold TEXT             k-NN Memory circuit breaker threshold
-
+  
+  # Quantization Type
+  --quantization-type TEXT        which type of quantization to use valid values [fp32, fp16]
   --help                          Show this message and exit.
   ```
 

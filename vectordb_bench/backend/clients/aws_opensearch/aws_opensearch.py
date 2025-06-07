@@ -68,15 +68,12 @@ class AWSOpenSearch(VectorDB):
                 "number_of_replicas": 0,
                 # Setting trans log threshold to 5GB
                 "translog.flush_threshold_size": self.case_config.flush_threshold_size,
-                "knn.advanced.approximate_threshold": "-1"
+                "knn.advanced.approximate_threshold": "-1",
             },
             "refresh_interval": self.case_config.refresh_interval,
         }
         mappings = {
-            "_source": {
-                "excludes": [self.vector_col_name],
-                "recovery_source_excludes": [self.vector_col_name]
-            },
+            "_source": {"excludes": [self.vector_col_name], "recovery_source_excludes": [self.vector_col_name]},
             "properties": {
                 **{categoryCol: {"type": "keyword"} for categoryCol in self.category_col_names},
                 self.vector_col_name: {
@@ -152,9 +149,18 @@ class AWSOpenSearch(VectorDB):
 
         body = {
             "size": k,
-            "query": {"knn": {self.vector_col_name: {"vector": query, "k": k, "method_parameters" : {"ef_search": self.case_config.efSearch}}}},
+            "query": {
+                "knn": {
+                    self.vector_col_name: {
+                        "vector": query,
+                        "k": k,
+                        "method_parameters": {"ef_search": self.case_config.efSearch},
+                    }
+                }
+            },
             **({"filter": {"range": {self.id_col_name: {"gt": filters["id"]}}}} if filters else {}),
         }
+
         try:
             resp = self.client.search(
                 index=self.index_name,
@@ -163,7 +169,7 @@ class AWSOpenSearch(VectorDB):
                 _source=False,
                 docvalue_fields=[self.id_col_name],
                 stored_fields="_none_",
-                preference="_local"
+                preference="_only_local" if self.case_config.number_of_shards == 1 else None,
             )
             log.debug(f"Search took: {resp['took']}")
             log.debug(f"Search shards: {resp['_shards']}")
@@ -232,14 +238,14 @@ class AWSOpenSearch(VectorDB):
         self.client.cluster.put_settings(cluster_settings_body)
 
         log.info("Updating the graph threshold to ensure that during merge we can do graph creation.")
-        settings = {
-            "index.knn.advanced.approximate_threshold": "0"
-        }
-        output = self.client.indices.put_settings(index=self.index_name, body=settings)
+        output = self.client.indices.put_settings(
+            index=self.index_name, body={"index.knn.advanced.approximate_threshold": "0"}
+        )
         log.info(f"response of updating setting is: {output}")
 
         log.debug(f"Starting force merge for index {self.index_name}")
-        force_merge_endpoint = f"/{self.index_name}/_forcemerge?max_num_segments=1&wait_for_completion=false"
+        segments = self.case_config.number_of_segments
+        force_merge_endpoint = f"/{self.index_name}/_forcemerge?max_num_segments={segments}&wait_for_completion=false"
         force_merge_task_id = self.client.transport.perform_request("POST", force_merge_endpoint)["task"]
         while True:
             time.sleep(WAITING_FOR_FORCE_MERGE_SEC)
