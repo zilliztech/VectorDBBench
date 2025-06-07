@@ -15,6 +15,7 @@ from qdrant_client.http.models import (
     OptimizersConfigDiff,
     PayloadSchemaType,
     Range,
+    SearchParams,
     VectorParams,
 )
 
@@ -52,6 +53,7 @@ class QdrantLocal(VectorDB):
         self.name = name
         self.db_config = db_config
         self.case_config = db_case_config
+        self.search_parameter = self.case_config.search_param()
         self.collection_name = collection_name
         self.client = None
         
@@ -59,6 +61,10 @@ class QdrantLocal(VectorDB):
         self._vector_field = "vector"
         
         client = QdrantClient(**self.db_config)
+        
+        # Lets just print the parameters here for double check
+        log.info(f"Case config: {self.case_config.index_param()}")
+        log.info(f"Search parameter: {self.search_parameter}")
         
         if drop_old and qdrant_collection_exists(client, self.collection_name):
             log.info(f"{self.name} client drop_old collection: {self.collection_name}")
@@ -216,6 +222,8 @@ class QdrantLocal(VectorDB):
                 query=query,
                 limit=k,
                 query_filter=f,
+                search_params=SearchParams(**self.search_parameter),
+                
             ).points
         )
         

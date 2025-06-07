@@ -15,6 +15,7 @@ class QdrantLocalIndexConfig(BaseModel, DBCaseConfig):
     metric_type: MetricType | None = None
     m: int
     ef_construct: int
+    hnsw_ef: int | None = 0
     on_disk: bool | None = False
     
     def parse_metric(self) -> str:
@@ -27,7 +28,6 @@ class QdrantLocalIndexConfig(BaseModel, DBCaseConfig):
         return "Cosine"
     
     def index_param(self) -> dict:
-        
         return {
             "distance": self.parse_metric(),
             "m": self.m,
@@ -36,4 +36,11 @@ class QdrantLocalIndexConfig(BaseModel, DBCaseConfig):
         }
     
     def search_param(self) -> dict:
-        return {}
+        search_params = {
+            "exact": False, # Force to use ANNs
+        }
+        
+        if self.hnsw_ef != 0:
+            search_params["hnsw_ef"] = self.hnsw_ef
+        
+        return search_params

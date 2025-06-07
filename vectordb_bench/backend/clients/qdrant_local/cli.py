@@ -38,7 +38,12 @@ class QdrantLocalTypedDict(CommonTypedDict):
             "--ef-construct", type=int, default=200, help="HNSW index parameter ef_construct"
         ),
     ]
-
+    hnsw_ef: Annotated[
+        int,
+        click.option(
+            "--hnsw-ef", type=int, default=0, help="HNSW index parameter hnsw_ef, set 0 to use ef_construct for search",
+        ),
+    ]
 
 @cli.command()
 @click_parameter_decorators_from_typed_dict(QdrantLocalTypedDict)
@@ -54,6 +59,7 @@ def QdrantLocal(**parameters: Unpack[QdrantLocalTypedDict]):
             on_disk=parameters["on_disk"],
             m=parameters["m"],
             ef_construct=parameters["ef_construct"],
+            hnsw_ef=parameters["hnsw_ef"],
         ),
         **parameters,
     )
