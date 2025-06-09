@@ -45,7 +45,7 @@ class LanceDB(VectorDB):
             db.open_table(self.table_name)
         except Exception:
             schema = pa.schema(
-                [pa.field("id", pa.int64()), pa.field("vector", pa.list_(pa.float64(), list_size=self.dim))]
+                [pa.field("id", pa.int64()), pa.field("vector", pa.list_(pa.float32(), list_size=self.dim))]
             )
             db.create_table(self.table_name, schema=schema, mode="overwrite")
 
