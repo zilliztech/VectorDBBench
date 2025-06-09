@@ -47,7 +47,6 @@ class DB(Enum):
     Clickhouse = "Clickhouse"
     Vespa = "Vespa"
     LanceDB = "LanceDB"
-    
 
     @property
     def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901, PLR0915
@@ -76,10 +75,10 @@ class DB(Enum):
             from .qdrant_cloud.qdrant_cloud import QdrantCloud
 
             return QdrantCloud
-        
+
         if self == DB.QdrantLocal:
             from .qdrant_local.qdrant_local import QdrantLocal
-            
+
             return QdrantLocal
 
         if self == DB.WeaviateCloud:
@@ -207,9 +206,11 @@ class DB(Enum):
             from .qdrant_cloud.config import QdrantConfig
 
             return QdrantConfig
-        
+
         if self == DB.QdrantLocal:
             from .qdrant_local.config import QdrantLocalConfig
+
+            return QdrantLocalConfig
 
         if self == DB.WeaviateCloud:
             from .weaviate_cloud.config import WeaviateConfig
@@ -332,10 +333,10 @@ class DB(Enum):
             from .qdrant_cloud.config import QdrantIndexConfig
 
             return QdrantIndexConfig
-        
+
         if self == DB.QdrantLocal:
             from .qdrant_local.config import QdrantLocalIndexConfig
-            
+
             return QdrantLocalIndexConfig
 
         if self == DB.WeaviateCloud:
