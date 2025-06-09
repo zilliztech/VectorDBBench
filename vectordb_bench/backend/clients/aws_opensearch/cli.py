@@ -11,12 +11,13 @@ from ....cli.cli import (
     run,
 )
 from .. import DB
+from .config import AWSOS_Engine, AWSOSQuantization
 
 
 class AWSOpenSearchTypedDict(TypedDict):
     host: Annotated[str, click.option("--host", type=str, help="Db host", required=True)]
-    port: Annotated[int, click.option("--port", type=int, default=443, help="Db Port")]
-    user: Annotated[str, click.option("--user", type=str, default="admin", help="Db User")]
+    port: Annotated[int, click.option("--port", type=int, default=80, help="Db Port")]
+    user: Annotated[str, click.option("--user", type=str, help="Db User")]
     password: Annotated[str, click.option("--password", type=str, help="Db password")]
     number_of_shards: Annotated[
         int,
@@ -45,16 +46,6 @@ class AWSOpenSearchTypedDict(TypedDict):
             type=int,
             help="Thread count during force merge operations",
             default=4,
-        ),
-    ]
-
-    number_of_indexing_clients: Annotated[
-        int,
-        click.option(
-            "--number-of-indexing-clients",
-            type=int,
-            help="Number of concurrent indexing clients",
-            default=1,
         ),
     ]
 
@@ -92,6 +83,28 @@ class AWSOpenSearchTypedDict(TypedDict):
         ),
     ]
 
+    quantization_type: Annotated[
+        str | None,
+        click.option(
+            "--quantization-type",
+            type=click.Choice(["fp32", "fp16"]),
+            help="quantization type for vectors (in index)",
+            default="fp32",
+            required=False,
+        ),
+    ]
+
+    engine: Annotated[
+        str | None,
+        click.option(
+            "--engine",
+            type=click.Choice(["faiss", "lucene"]),
+            help="quantization type for vectors (in index)",
+            default="faiss",
+            required=False,
+        ),
+    ]
+
 
 class AWSOpenSearchHNSWTypedDict(CommonTypedDict, AWSOpenSearchTypedDict, HNSWFlavor2): ...
 
@@ -117,9 +130,13 @@ def AWSOpenSearch(**parameters: Unpack[AWSOpenSearchHNSWTypedDict]):
             refresh_interval=parameters["refresh_interval"],
             force_merge_enabled=parameters["force_merge_enabled"],
             flush_threshold_size=parameters["flush_threshold_size"],
-            number_of_indexing_clients=parameters["number_of_indexing_clients"],
             index_thread_qty_during_force_merge=parameters["index_thread_qty_during_force_merge"],
             cb_threshold=parameters["cb_threshold"],
+            efConstruction=parameters["ef_construction"],
+            efSearch=parameters["ef_runtime"],
+            M=parameters["m"],
+            engine=AWSOS_Engine(parameters["engine"]),
+            quantization_type=AWSOSQuantization(parameters["quantization_type"]),
         ),
         **parameters,
     )
