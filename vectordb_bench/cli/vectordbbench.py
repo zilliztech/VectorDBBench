@@ -16,6 +16,7 @@ from ..backend.clients.tidb.cli import TiDB
 from ..backend.clients.vespa.cli import Vespa
 from ..backend.clients.weaviate_cloud.cli import Weaviate
 from ..backend.clients.zilliz_cloud.cli import ZillizAutoIndex
+from .batch_cli import BatchCli
 from .cli import cli
 
 cli.add_command(PgVectorHNSW)
@@ -37,6 +38,7 @@ cli.add_command(Clickhouse)
 cli.add_command(Vespa)
 cli.add_command(LanceDB)
 cli.add_command(QdrantCloud)
+cli.add_command(BatchCli)
 
 
 if __name__ == "__main__":
