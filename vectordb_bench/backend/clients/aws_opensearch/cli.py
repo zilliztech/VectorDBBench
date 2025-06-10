@@ -96,7 +96,6 @@ class AWSOpenSearchTypedDict(TypedDict):
         ),
     ]
 
-
     quantization_type: Annotated[
         str | None,
         click.option(
@@ -126,16 +125,12 @@ class AWSOpenSearchHNSWTypedDict(CommonTypedDict, AWSOpenSearchTypedDict, HNSWFl
 @cli.command()
 @click_parameter_decorators_from_typed_dict(AWSOpenSearchHNSWTypedDict)
 def AWSOpenSearch(**parameters: Unpack[AWSOpenSearchHNSWTypedDict]):
-    from vectordb_bench.backend.clients.api import MetricType
 
-    from .config import AWSOpenSearchConfig, AWSOpenSearchIndexConfig, AWSOS_Engine
+    from .config import AWSOpenSearchConfig, AWSOpenSearchIndexConfig
 
     log.info(f"CLI parameters: {parameters}")
 
     ef_search = parameters.get("ef_search", 256)
-    ef_construction = parameters.get("ef_construction", 256)
-    m = parameters.get("m", 16)
-
     engine_name = parameters.get("engine", "faiss")
     metric_type_name = parameters.get("metric_type", "l2")
 
