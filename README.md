@@ -1,10 +1,10 @@
-# VectorDBBench: A Benchmark Tool for VectorDB
+# VectorDBBench(VDBBench): A Benchmark Tool for VectorDB
 
 [![version](https://img.shields.io/pypi/v/vectordb-bench.svg?color=blue)](https://pypi.org/project/vectordb-bench/)
 [![Downloads](https://pepy.tech/badge/vectordb-bench)](https://pepy.tech/project/vectordb-bench)
 
 ## What is VectorDBBench
-VectorDBBench is not just an offering of benchmark results for mainstream vector databases and cloud services, it's your go-to tool for the ultimate performance and cost-effectiveness comparison. Designed with ease-of-use in mind, VectorDBBench is devised to help users, even non-professionals, reproduce results or test new systems, making the hunt for the optimal choice amongst a plethora of cloud services and open-source vector databases a breeze.
+VectorDBBench(VDBBench) is not just an offering of benchmark results for mainstream vector databases and cloud services, it's your go-to tool for the ultimate performance and cost-effectiveness comparison. Designed with ease-of-use in mind, VectorDBBench is devised to help users, even non-professionals, reproduce results or test new systems, making the hunt for the optimal choice amongst a plethora of cloud services and open-source vector databases a breeze.
 
 Understanding the importance of user experience, we provide an intuitive visual interface. This not only empowers users to initiate benchmarks at ease, but also to view comparative result reports, thereby reproducing benchmark results effortlessly.
 To add more relevance and practicality, we provide cost-effectiveness reports particularly for cloud services. This allows for a more realistic and applicable benchmarking process.
@@ -114,6 +114,10 @@ Options:
   --num-concurrency TEXT          Comma-separated list of concurrency values
                                   to test during concurrent search  [default:
                                   1,10,20]
+  --concurrency-timeout INTEGER   Timeout (in seconds) to wait for a
+                                  concurrency slot before failing. Set to a
+                                  negative value to wait indefinitely.
+                                  [default: 3600]
   --user-name TEXT                Db username  [required]
   --password TEXT                 Db password  [required]
   --host TEXT                     Db host  [required]
@@ -197,9 +201,12 @@ Options:
   --force-merge-enabled BOOLEAN   Whether to perform force merge operation
   --flush-threshold-size TEXT     Size threshold for flushing the transaction
                                   log
+  --engine TEXT                   type of engine to use valid values [faiss, lucene]
   # Memory Management
   --cb-threshold TEXT             k-NN Memory circuit breaker threshold
-
+  
+  # Quantization Type
+  --quantization-type TEXT        which type of quantization to use valid values [fp32, fp16]
   --help                          Show this message and exit.
   ```
 
@@ -240,6 +247,49 @@ milvushnsw:
 > Notes: 
 > - Options passed on the command line will override the configuration file*
 > - Parameter names use an _ not -
+
+#### Using a batch configuration file.
+
+The vectordbbench command can read a batch configuration file to run all the test cases in the yaml formatted configuration file.
+
+By default, configuration files are expected to be in vectordb_bench/config-files/, this can be overridden by setting  
+the environment variable CONFIG_LOCAL_DIR or by passing the full path to the file. 
+
+The required format is:
+```yaml
+commandname:
+  - parameter_name: parameter_value
+    another_parameter_name: parameter_value
+```
+Example:
+```yaml
+pgvectorhnsw:
+  - db_label: pgConfigTest
+    user_name: vectordbbench
+    password: vectordbbench
+    db_name:  vectordbbench
+    host: localhost
+    m: 16
+    ef_construction: 128
+    ef_search: 128
+milvushnsw:
+  - skip_search_serial: True
+    case_type: Performance1536D50K
+    uri: http://localhost:19530
+    m: 16
+    ef_construction: 128
+    ef_search: 128
+    drop_old: False
+    load: False
+```
+> Notes: 
+> - Options can only be passed through configuration files
+> - Parameter names use an _ not -
+
+How to use?
+```shell
+vectordbbench batchcli --batch-config-file <your-yaml-configuration-file>
+```
 
 ## Leaderboard
 ### Introduction
