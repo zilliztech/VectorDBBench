@@ -27,6 +27,7 @@ class DB(Enum):
     Pinecone = "Pinecone"
     ElasticCloud = "ElasticCloud"
     QdrantCloud = "QdrantCloud"
+    QdrantLocal = "QdrantLocal"
     WeaviateCloud = "WeaviateCloud"
     PgVector = "PgVector"
     PgVectoRS = "PgVectoRS"
@@ -75,6 +76,11 @@ class DB(Enum):
             from .qdrant_cloud.qdrant_cloud import QdrantCloud
 
             return QdrantCloud
+
+        if self == DB.QdrantLocal:
+            from .qdrant_local.qdrant_local import QdrantLocal
+
+            return QdrantLocal
 
         if self == DB.WeaviateCloud:
             from .weaviate_cloud.weaviate_cloud import WeaviateCloud
@@ -207,6 +213,11 @@ class DB(Enum):
 
             return QdrantConfig
 
+        if self == DB.QdrantLocal:
+            from .qdrant_local.config import QdrantLocalConfig
+
+            return QdrantLocalConfig
+
         if self == DB.WeaviateCloud:
             from .weaviate_cloud.config import WeaviateConfig
 
@@ -333,6 +344,11 @@ class DB(Enum):
             from .qdrant_cloud.config import QdrantIndexConfig
 
             return QdrantIndexConfig
+
+        if self == DB.QdrantLocal:
+            from .qdrant_local.config import QdrantLocalIndexConfig
+
+            return QdrantLocalIndexConfig
 
         if self == DB.WeaviateCloud:
             from .weaviate_cloud.config import WeaviateIndexConfig

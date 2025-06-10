@@ -6,11 +6,13 @@ from ..api import DBCaseConfig, DBConfig, MetricType
 class WeaviateConfig(DBConfig):
     url: SecretStr
     api_key: SecretStr
+    no_auth: bool | None = False
 
     def to_dict(self) -> dict:
         return {
             "url": self.url.get_secret_value(),
             "auth_client_secret": self.api_key.get_secret_value(),
+            "no_auth": self.no_auth,
         }
 
 

@@ -202,9 +202,12 @@ Options:
   --force-merge-enabled BOOLEAN   Whether to perform force merge operation
   --flush-threshold-size TEXT     Size threshold for flushing the transaction
                                   log
+  --engine TEXT                   type of engine to use valid values [faiss, lucene]
   # Memory Management
   --cb-threshold TEXT             k-NN Memory circuit breaker threshold
-
+  
+  # Quantization Type
+  --quantization-type TEXT        which type of quantization to use valid values [fp32, fp16]
   --help                          Show this message and exit.
   ```
 
@@ -245,6 +248,49 @@ milvushnsw:
 > Notes: 
 > - Options passed on the command line will override the configuration file*
 > - Parameter names use an _ not -
+
+#### Using a batch configuration file.
+
+The vectordbbench command can read a batch configuration file to run all the test cases in the yaml formatted configuration file.
+
+By default, configuration files are expected to be in vectordb_bench/config-files/, this can be overridden by setting  
+the environment variable CONFIG_LOCAL_DIR or by passing the full path to the file. 
+
+The required format is:
+```yaml
+commandname:
+  - parameter_name: parameter_value
+    another_parameter_name: parameter_value
+```
+Example:
+```yaml
+pgvectorhnsw:
+  - db_label: pgConfigTest
+    user_name: vectordbbench
+    password: vectordbbench
+    db_name:  vectordbbench
+    host: localhost
+    m: 16
+    ef_construction: 128
+    ef_search: 128
+milvushnsw:
+  - skip_search_serial: True
+    case_type: Performance1536D50K
+    uri: http://localhost:19530
+    m: 16
+    ef_construction: 128
+    ef_search: 128
+    drop_old: False
+    load: False
+```
+> Notes: 
+> - Options can only be passed through configuration files
+> - Parameter names use an _ not -
+
+How to use?
+```shell
+vectordbbench batchcli --batch-config-file <your-yaml-configuration-file>
+```
 
 ## Leaderboard
 ### Introduction

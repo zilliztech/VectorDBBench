@@ -7,6 +7,7 @@ class MilvusConfig(DBConfig):
     uri: SecretStr = "http://localhost:19530"
     user: str | None = None
     password: SecretStr | None = None
+    num_shards: int = 1
 
     def to_dict(self) -> dict:
         return {
