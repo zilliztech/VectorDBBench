@@ -392,7 +392,7 @@ class DB(Enum):
         if self == DB.OceanBase:
             from .oceanbase.config import _oceanbase_case_config
             
-            return _oceanbase_case_config.get(IndexType.HNSW)
+            return _oceanbase_case_config.get(index_type)
 
         if self == DB.MariaDB:
             from .mariadb.config import _mariadb_case_config
