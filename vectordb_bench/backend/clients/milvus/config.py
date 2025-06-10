@@ -14,6 +14,7 @@ class MilvusConfig(DBConfig):
             "uri": self.uri.get_secret_value(),
             "user": self.user if self.user else None,
             "password": self.password.get_secret_value() if self.password else None,
+            "num_shards": self.num_shards,
         }
 
     @validator("*")
