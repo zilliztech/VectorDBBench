@@ -53,22 +53,13 @@ class OceanBase(VectorDB):
 
     def _connect(self):
         try:
-            if self.db_config["unix_socket"]:
-                self._conn = mysql.connect(
-                    unix_socket=self.db_config["unix_socket"],
-                    user=self.db_config["user"],
-                    port=self.db_config["port"],
-                    password=self.db_config["password"],
-                    database=self.db_config["database"],
-                )
-            else:
-                self._conn = mysql.connect(
-                    host=self.db_config["host"],
-                    user=self.db_config["user"],
-                    port=self.db_config["port"],
-                    password=self.db_config["password"],
-                    database=self.db_config["database"],
-                )
+            self._conn = mysql.connect(
+                host=self.db_config["host"],
+                user=self.db_config["user"],
+                port=self.db_config["port"],
+                password=self.db_config["password"],
+                database=self.db_config["database"],
+            )
             self._cursor = self._conn.cursor()
         except mysql.Error as e:
             log.error(f"Failed to connect to the database: {e}")
@@ -112,12 +103,12 @@ class OceanBase(VectorDB):
             raise ValueError("Cursor is not initialized")
 
         log.info(f"Creating table {self.table_name}")
-        create_table_query = (
-            f"CREATE TABLE {self.table_name} ("
-            f"id INT PRIMARY KEY, "
-            f"embedding VECTOR({self.dim})"
-            f");"
-        )
+        create_table_query = f"""
+        CREATE TABLE {self.table_name} (
+            id INT PRIMARY KEY,
+            embedding VECTOR({self.dim})
+        );
+        """
         self._cursor.execute(create_table_query)
 
     def optimize(self, data_size: int):
@@ -209,7 +200,7 @@ class OceanBase(VectorDB):
             raise ValueError("Cursor is not initialized")
 
         packed = struct.pack(f'<{len(query)}f', *query)
-        hex_vec = packed.hex();
+        hex_vec = packed.hex()
         filter_clause = f"WHERE id >= {filters['id']}" if filters else ""
         query_str = (
             f"SELECT id FROM {self.table_name} "

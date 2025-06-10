@@ -18,9 +18,6 @@ class OceanBaseTypedDict(CommonTypedDict):
     host: Annotated[
         str, click.option("--host", type=str, help="OceanBase host", default="")
     ]
-    unixsock: Annotated[
-        str, click.option("--unixsock", type=str, help="Unix socket file path", default="")
-    ]
     user: Annotated[
         str, click.option("--user", type=str, help="OceanBase username", required=True)
     ]
@@ -53,13 +50,12 @@ def OceanBaseHNSW(**parameters: Unpack[OceanBaseHNSWTypedDict]):
             db_label=parameters["db_label"],
             user=SecretStr(parameters["user"]),
             password=SecretStr(parameters["password"]),
-            unix_socket=parameters["unixsock"],
             host=parameters["host"],
             port=parameters["port"],
             database=parameters["database"],
         ),
         db_case_config=OceanBaseHNSWConfig(
-            M=parameters["m"],
+            m=parameters["m"],
             efConstruction=parameters["ef_construction"],
             ef_search=parameters["ef_search"],
             index=parameters["index_type"],
@@ -95,13 +91,12 @@ def OceanBaseIVF(**parameters: Unpack[OceanBaseIVFTypedDict]):
             db_label=parameters["db_label"],
             user=SecretStr(parameters["user"]),
             password=SecretStr(parameters["password"]),
-            unix_socket=parameters["unixsock"],
             host=parameters["host"],
             port=parameters["port"],
             database=parameters["database"],
         ),
         db_case_config=OceanBaseIVFConfig(
-            M=input_m,
+            m=input_m,
             nlist=parameters["nlist"],
             sample_per_nlist=parameters["sample_per_nlist"],
             index=input_index_type,

@@ -3,7 +3,6 @@ from pydantic import BaseModel, SecretStr, validator
 from ..api import DBCaseConfig, DBConfig, IndexType, MetricType
 
 class OceanBaseConfigDict(TypedDict):
-    unix_socket: str
     user: str
     host: str
     port: str
@@ -13,7 +12,6 @@ class OceanBaseConfigDict(TypedDict):
 class OceanBaseConfig(DBConfig):
     user: SecretStr = SecretStr("root@perf")
     password: SecretStr
-    unix_socket: str = ""
     host: str
     port: int
     database: str
@@ -22,7 +20,6 @@ class OceanBaseConfig(DBConfig):
         user_str = self.user.get_secret_value()
         pwd_str = self.password.get_secret_value()
         return {
-            "unix_socket": self.unix_socket,
             "user": user_str,
             "host": self.host,
             "port": self.port,
@@ -32,7 +29,7 @@ class OceanBaseConfig(DBConfig):
     
     @validator("*")
     def not_empty_field(cls, v, field):
-        if field.name in ["password", "unix_socket", "host", "db_label"]:
+        if field.name in ["password", "host", "db_label"]:
             return v
         if isinstance(v, (str, SecretStr)) and len(v) == 0:
             raise ValueError("Empty string!")
@@ -57,7 +54,7 @@ class OceanBaseIndexConfig(BaseModel):
         return "cosine_distance"
 
 class OceanBaseHNSWConfig(OceanBaseIndexConfig, DBCaseConfig):
-    M: int
+    m: int
     efConstruction: int
     ef_search: int | None = None
     index: IndexType
@@ -67,7 +64,7 @@ class OceanBaseHNSWConfig(OceanBaseIndexConfig, DBCaseConfig):
             "lib": self.lib,
             "metric_type": self.parse_metric(),
             "index_type": self.index.value,
-            "params": { "m": self.M, "ef_construction": self.efConstruction }
+            "params": { "m": self.m, "ef_construction": self.efConstruction }
         }
 
     def search_param(self) -> dict:
@@ -77,7 +74,7 @@ class OceanBaseHNSWConfig(OceanBaseIndexConfig, DBCaseConfig):
         }
 
 class OceanBaseIVFConfig(OceanBaseIndexConfig, DBCaseConfig):
-    M: int
+    m: int
     sample_per_nlist: int
     nlist: int
     index: IndexType
