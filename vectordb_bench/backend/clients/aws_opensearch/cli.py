@@ -125,18 +125,7 @@ class AWSOpenSearchHNSWTypedDict(CommonTypedDict, AWSOpenSearchTypedDict, HNSWFl
 @cli.command()
 @click_parameter_decorators_from_typed_dict(AWSOpenSearchHNSWTypedDict)
 def AWSOpenSearch(**parameters: Unpack[AWSOpenSearchHNSWTypedDict]):
-
     from .config import AWSOpenSearchConfig, AWSOpenSearchIndexConfig
-
-    log.info(f"CLI parameters: {parameters}")
-
-    ef_search = parameters.get("ef_search", 256)
-    engine_name = parameters.get("engine", "faiss")
-    metric_type_name = parameters.get("metric_type", "l2")
-
-    log.info(f"ef_search from CLI: {ef_search}")
-    log.info(f"engine from CLI: {engine_name}")
-    log.info(f"metric_type from CLI: {metric_type_name}")
 
     run(
         db=DB.AWSOpenSearch,
@@ -145,7 +134,6 @@ def AWSOpenSearch(**parameters: Unpack[AWSOpenSearchHNSWTypedDict]):
             port=parameters["port"],
             user=parameters["user"],
             password=SecretStr(parameters["password"]),
-            db_label=parameters.get("db_label", ""),
         ),
         db_case_config=AWSOpenSearchIndexConfig(
             number_of_shards=parameters["number_of_shards"],
