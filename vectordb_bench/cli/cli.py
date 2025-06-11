@@ -110,7 +110,7 @@ def click_parameter_decorators_from_typed_dict(
     return deco
 
 
-def click_arg_split(ctx: click.Context, param: click.core.Option, value):  # noqa: ANN001, ARG001
+def click_arg_split(ctx: click.Context, param: click.core.Option, value: any):  # noqa: ARG001
     """Will split a comma-separated list input into an actual list.
 
     Args:

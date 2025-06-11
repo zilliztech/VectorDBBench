@@ -17,7 +17,7 @@ def get_image_as_base64(image_path):
         img.save(buffered, format="PNG")
         return f"data:image/png;base64,{base64.b64encode(buffered.getvalue()).decode()}"
     except Exception as e:
-        raise (f"wrong loading: {e}")
+        return None
 
 
 def welcomePrams(st):

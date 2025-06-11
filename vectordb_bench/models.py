@@ -1,7 +1,7 @@
 import logging
 import pathlib
 from datetime import date, datetime
-from enum import Enum, StrEnum, auto
+from enum import Enum, StrEnum
 from typing import Self
 
 import ujson
@@ -112,13 +112,9 @@ class CaseConfigParamType(Enum):
     index_thread_qty = "index_thread_qty"
     engine_name = "engine_name"
     metric_type_name = "metric_type_name"
-
-    # mongodb params
     mongodb_quantization_type = "quantization"
     mongodb_num_candidates_ratio = "num_candidates_ratio"
     use_partition_key = "use_partition_key"
-    number_of_shards = "number_of_shards"
-    number_of_replicas = "number_of_replicas"
     refresh_interval = "refresh_interval"
     use_rescore = "use_rescore"
     oversample_ratio = "oversample_ratio"
