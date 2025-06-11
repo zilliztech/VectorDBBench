@@ -44,6 +44,14 @@ class AWSOpenSearch(VectorDB):
             if is_existed:
                 client.indices.delete(index=self.index_name)
             self._create_index(client)
+        else:
+            is_existed = client.indices.exists(index=self.index_name)
+            if not is_existed:
+                self._create_index(client)
+                log.info(f"AWS_OpenSearch client create index: {self.index_name}")
+
+            self._update_ef_search_before_search(client)
+            self._load_graphs_to_memory(client)
 
     @classmethod
     def config_cls(cls) -> AWSOpenSearchConfig:
@@ -53,7 +61,17 @@ class AWSOpenSearch(VectorDB):
     def case_config_cls(cls, index_type: IndexType | None = None) -> AWSOpenSearchIndexConfig:
         return AWSOpenSearchIndexConfig
 
-    def _create_index(self, client: OpenSearch):
+    def _create_index(self, client: OpenSearch) -> None:
+        ef_search_value = (
+            self.case_config.ef_search if self.case_config.ef_search is not None else self.case_config.efSearch
+        )
+        log.info(f"Creating index with ef_search: {ef_search_value}")
+        log.info(f"Creating index with number_of_replicas: {self.case_config.number_of_replicas}")
+
+        log.info(f"Creating index with engine: {self.case_config.engine}")
+        log.info(f"Creating index with metric type: {self.case_config.metric_type_name}")
+        log.info(f"All case_config parameters: {self.case_config.__dict__}")
+
         cluster_settings_body = {
             "persistent": {
                 "knn.algo_param.index_thread_qty": self.case_config.index_thread_qty,
@@ -65,13 +83,13 @@ class AWSOpenSearch(VectorDB):
             "index": {
                 "knn": True,
                 "number_of_shards": self.case_config.number_of_shards,
-                "number_of_replicas": 0,
-                # Setting trans log threshold to 5GB
+                "number_of_replicas": self.case_config.number_of_replicas,
                 "translog.flush_threshold_size": self.case_config.flush_threshold_size,
                 "knn.advanced.approximate_threshold": "-1",
             },
             "refresh_interval": self.case_config.refresh_interval,
         }
+        settings["index"]["knn.algo_param.ef_search"] = ef_search_value
         mappings = {
             "_source": {"excludes": [self.vector_col_name], "recovery_source_excludes": [self.vector_col_name]},
             "properties": {
@@ -84,6 +102,8 @@ class AWSOpenSearch(VectorDB):
             },
         }
         try:
+            log.info(f"Creating index with settings: {settings}")
+            log.info(f"Creating index with mappings: {mappings}")
             client.indices.create(
                 index=self.index_name,
                 body={"settings": settings, "mappings": mappings},
@@ -110,6 +130,18 @@ class AWSOpenSearch(VectorDB):
         """Insert the embeddings to the opensearch."""
         assert self.client is not None, "should self.init() first"
 
+        num_clients = self.case_config.number_of_indexing_clients or 1
+        log.info(f"Number of indexing clients from case_config: {num_clients}")
+
+        if num_clients <= 1:
+            log.info("Using single client for data insertion")
+            return self._insert_with_single_client(embeddings, metadata)
+        log.info(f"Using {num_clients} parallel clients for data insertion")
+        return self._insert_with_multiple_clients(embeddings, metadata, num_clients)
+
+    def _insert_with_single_client(
+        self, embeddings: Iterable[list[float]], metadata: list[int]
+    ) -> tuple[int, Exception]:
         insert_data = []
         for i in range(len(embeddings)):
             insert_data.append(
@@ -127,7 +159,108 @@ class AWSOpenSearch(VectorDB):
         except Exception as e:
             log.warning(f"Failed to insert data: {self.index_name} error: {e!s}")
             time.sleep(10)
-            return self.insert_embeddings(embeddings, metadata)
+            return self._insert_with_single_client(embeddings, metadata)
+
+    def _insert_with_multiple_clients(
+        self, embeddings: Iterable[list[float]], metadata: list[int], num_clients: int
+    ) -> tuple[int, Exception]:
+        import concurrent.futures
+        from concurrent.futures import ThreadPoolExecutor
+
+        embeddings_list = list(embeddings)
+        chunk_size = max(1, len(embeddings_list) // num_clients)
+        chunks = []
+
+        for i in range(0, len(embeddings_list), chunk_size):
+            end = min(i + chunk_size, len(embeddings_list))
+            chunks.append((embeddings_list[i:end], metadata[i:end]))
+
+        clients = []
+        for _ in range(min(num_clients, len(chunks))):
+            client = OpenSearch(**self.db_config)
+            clients.append(client)
+
+        log.info(f"AWS_OpenSearch using {len(clients)} parallel clients for data insertion")
+
+        def insert_chunk(client_idx: int, chunk_idx: int):
+            chunk_embeddings, chunk_metadata = chunks[chunk_idx]
+            client = clients[client_idx]
+
+            insert_data = []
+            for i in range(len(chunk_embeddings)):
+                insert_data.append(
+                    {"index": {"_index": self.index_name, self.id_col_name: chunk_metadata[i]}},
+                )
+                insert_data.append({self.vector_col_name: chunk_embeddings[i]})
+
+            try:
+                resp = client.bulk(insert_data)
+                log.info(f"Client {client_idx} added {len(resp['items'])} documents")
+                return len(chunk_embeddings), None
+            except Exception as e:
+                log.warning(f"Client {client_idx} failed to insert data: {e!s}")
+                return 0, e
+
+        results = []
+        with ThreadPoolExecutor(max_workers=len(clients)) as executor:
+            futures = []
+
+            for chunk_idx in range(len(chunks)):
+                client_idx = chunk_idx % len(clients)
+                futures.append(executor.submit(insert_chunk, client_idx, chunk_idx))
+
+            for future in concurrent.futures.as_completed(futures):
+                count, error = future.result()
+                results.append((count, error))
+
+        from contextlib import suppress
+
+        for client in clients:
+            with suppress(Exception):
+                client.close()
+
+        total_count = sum(count for count, _ in results)
+        errors = [error for _, error in results if error is not None]
+
+        if errors:
+            log.warning("Some clients failed to insert data, retrying with single client")
+            time.sleep(10)
+            return self._insert_with_single_client(embeddings, metadata)
+
+        resp = self.client.indices.stats(self.index_name)
+        log.info(
+            f"""Total document count in index after parallel insertion:
+                {resp['_all']['primaries']['indexing']['index_total']}""",
+        )
+
+        return (total_count, None)
+
+    def _update_ef_search_before_search(self, client: OpenSearch):
+        ef_search_value = (
+            self.case_config.ef_search if self.case_config.ef_search is not None else self.case_config.efSearch
+        )
+
+        try:
+            index_settings = client.indices.get_settings(index=self.index_name)
+            current_ef_search = (
+                index_settings.get(self.index_name, {})
+                .get("settings", {})
+                .get("index", {})
+                .get("knn.algo_param", {})
+                .get("ef_search")
+            )
+
+            if current_ef_search != str(ef_search_value):
+                log.info(f"Updating ef_search before search from {current_ef_search} to {ef_search_value}")
+                settings_body = {"index": {"knn.algo_param.ef_search": ef_search_value}}
+                client.indices.put_settings(index=self.index_name, body=settings_body)
+                log.info(f"Successfully updated ef_search to {ef_search_value} before search")
+
+            log.info(f"Current engine: {self.case_config.engine}")
+            log.info(f"Current metric_type: {self.case_config.metric_type_name}")
+
+        except Exception as e:
+            log.warning(f"Failed to update ef_search parameter before search: {e}")
 
     def search_embedding(
         self,
@@ -181,6 +314,7 @@ class AWSOpenSearch(VectorDB):
 
     def optimize(self, data_size: int | None = None):
         """optimize will be called between insertion and search in performance cases."""
+        self._update_ef_search()
         # Call refresh first to ensure that all segments are created
         self._refresh_index()
         if self.case_config.force_merge_enabled:
@@ -190,7 +324,22 @@ class AWSOpenSearch(VectorDB):
         # Call refresh again to ensure that the index is ready after force merge.
         self._refresh_index()
         # ensure that all graphs are loaded in memory and ready for search
-        self._load_graphs_to_memory()
+        self._load_graphs_to_memory(self.client)
+
+    def _update_ef_search(self):
+        ef_search_value = (
+            self.case_config.ef_search if self.case_config.ef_search is not None else self.case_config.efSearch
+        )
+        log.info(f"Updating ef_search parameter to: {ef_search_value}")
+
+        settings_body = {"index": {"knn.algo_param.ef_search": ef_search_value}}
+        try:
+            self.client.indices.put_settings(index=self.index_name, body=settings_body)
+            log.info(f"Successfully updated ef_search to {ef_search_value}")
+            log.info(f"Current engine: {self.case_config.engine}")
+            log.info(f"Current metric_type: {self.case_config.metric_type}")
+        except Exception as e:
+            log.warning(f"Failed to update ef_search parameter: {e}")
 
     def _update_replicas(self):
         index_settings = self.client.indices.get_settings(index=self.index_name)
@@ -254,8 +403,8 @@ class AWSOpenSearch(VectorDB):
                 break
         log.debug(f"Completed force merge for index {self.index_name}")
 
-    def _load_graphs_to_memory(self):
+    def _load_graphs_to_memory(self, client: OpenSearch):
         if self.case_config.engine != AWSOS_Engine.lucene:
             log.info("Calling warmup API to load graphs into memory")
             warmup_endpoint = f"/_plugins/_knn/warmup/{self.index_name}"
-            self.client.transport.perform_request("GET", warmup_endpoint)
+            client.transport.perform_request("GET", warmup_endpoint)
