@@ -34,7 +34,7 @@ class LanceDB(VectorDB):
         self.uri = db_config["uri"]
         # avoid the search_param being called every time during the search process
         self.search_config = db_case_config.search_param()
-        
+
         log.info(f"Search config: {self.search_config}")
 
         db = lancedb.connect(self.uri)
@@ -81,27 +81,22 @@ class LanceDB(VectorDB):
         filters: dict | None = None,
     ) -> list[int]:
         if filters:
-            results = (
-                self.table.search(query)
-                .select(["id"])
-                .where(f"id >= {filters['id']}", prefilter=True)
-                .limit(k)
-            )
-            if self.case_config.index == IndexType.IVFPQ and 'nprobes' in self.search_config.keys():
+            results = self.table.search(query).select(["id"]).where(f"id >= {filters['id']}", prefilter=True).limit(k)
+            if self.case_config.index == IndexType.IVFPQ and "nprobes" in self.search_config:
                 results = results.nprobes(self.search_config["nprobes"]).to_list()
-            elif self.case_config.index == IndexType.HNSW and 'ef' in self.search_config.keys():
-                results = results.ef(self.search_config['ef']).to_list()
+            elif self.case_config.index == IndexType.HNSW and "ef" in self.search_config:
+                results = results.ef(self.search_config["ef"]).to_list()
             else:
                 results = results.to_list()
         else:
             results = self.table.search(query).select(["id"]).limit(k)
-            if self.case_config.index == IndexType.IVFPQ and 'nprobes' in self.search_config.keys():
+            if self.case_config.index == IndexType.IVFPQ and "nprobes" in self.search_config:
                 results = results.nprobes(self.search_config["nprobes"]).to_list()
-            elif self.case_config.index == IndexType.HNSW and 'ef' in self.search_config.keys():
-                results = results.ef(self.search_config['ef']).to_list()
+            elif self.case_config.index == IndexType.HNSW and "ef" in self.search_config:
+                results = results.ef(self.search_config["ef"]).to_list()
             else:
                 results = results.to_list()
-    
+
         return [int(result["id"]) for result in results]
 
     def optimize(self, data_size: int | None = None):

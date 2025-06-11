@@ -56,7 +56,7 @@ class LanceDBIndexConfig(BaseModel, DBCaseConfig):
         params = {}
         if self.nprobes > 0:
             params["nprobes"] = self.nprobes
-        
+
         return params
 
     def parse_metric(self) -> str:
@@ -99,11 +99,12 @@ class LanceDBHNSWIndexConfig(LanceDBIndexConfig):
             params["ef_construction"] = self.ef_construction
 
         return params
+
     def search_param(self) -> dict:
         params = {}
         if self.ef != 0:
             params = {"ef": self.ef}
-        
+
         return params
 
 
