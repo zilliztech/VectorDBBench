@@ -45,7 +45,9 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
     metric_type: MetricType = MetricType.L2
     engine: AWSOS_Engine = AWSOS_Engine.faiss
     efConstruction: int = 256
-    efSearch: int = 256
+    ef_search: int = 200
+    engine_name: str | None = None
+    metric_type_name: str | None = None
     M: int = 16
     index_thread_qty: int | None = 4
     number_of_shards: int | None = 1
@@ -59,16 +61,29 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
     quantization_type: AWSOSQuantization = AWSOSQuantization.fp32
 
     def parse_metric(self) -> str:
+        log.info(f"User specified metric_type: {self.metric_type_name}")
+        self.metric_type = MetricType[self.metric_type_name.upper()]
         if self.metric_type == MetricType.IP:
             return "innerproduct"
         if self.metric_type == MetricType.COSINE:
             return "cosinesimil"
+        if self.metric_type == MetricType.L2:
+            log.info("Using l2 as specified by user")
+            return "l2"
         return "l2"
 
     def index_param(self) -> dict:
+        log.info(f"Using engine: {self.engine} for index creation")
+        log.info(f"Using metric_type: {self.metric_type_name} for index creation")
+        log.info(f"Resulting space_type: {self.parse_metric()} for index creation")
+
+        parameters = {"ef_construction": self.efConstruction, "m": self.M}
+
+        if self.engine == AWSOS_Engine.faiss and self.faiss_use_fp16:
+            parameters["encoder"] = {"name": "sq", "parameters": {"type": "fp16"}}
+
         return {
             "name": "hnsw",
-            "space_type": self.parse_metric(),
             "engine": self.engine.value,
             "parameters": {
                 "ef_construction": self.efConstruction,

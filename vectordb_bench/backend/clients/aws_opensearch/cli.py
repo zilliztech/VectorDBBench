@@ -1,3 +1,4 @@
+import logging
 from typing import Annotated, TypedDict, Unpack
 
 import click
@@ -5,13 +6,15 @@ from pydantic import SecretStr
 
 from ....cli.cli import (
     CommonTypedDict,
-    HNSWFlavor2,
+    HNSWFlavor1,
     cli,
     click_parameter_decorators_from_typed_dict,
     run,
 )
 from .. import DB
 from .config import AWSOS_Engine, AWSOSQuantization
+
+log = logging.getLogger(__name__)
 
 
 class AWSOpenSearchTypedDict(TypedDict):
@@ -39,13 +42,23 @@ class AWSOpenSearchTypedDict(TypedDict):
         ),
     ]
 
-    index_thread_qty_during_force_merge: Annotated[
-        int,
+    engine: Annotated[
+        str,
         click.option(
-            "--index-thread-qty-during-force-merge",
-            type=int,
-            help="Thread count during force merge operations",
-            default=4,
+            "--engine",
+            type=click.Choice(["nmslib", "faiss", "lucene"], case_sensitive=False),
+            help="HNSW algorithm implementation to use",
+            default="faiss",
+        ),
+    ]
+
+    metric_type: Annotated[
+        str,
+        click.option(
+            "--metric-type",
+            type=click.Choice(["l2", "cosine", "ip"], case_sensitive=False),
+            help="Distance metric type for vector similarity",
+            default="l2",
         ),
     ]
 
@@ -55,26 +68,26 @@ class AWSOpenSearchTypedDict(TypedDict):
     ]
 
     refresh_interval: Annotated[
-        int,
+        str,
         click.option(
             "--refresh-interval", type=str, help="How often to make new data available for search", default="60s"
         ),
     ]
 
     force_merge_enabled: Annotated[
-        int,
+        bool,
         click.option("--force-merge-enabled", type=bool, help="Whether to perform force merge operation", default=True),
     ]
 
     flush_threshold_size: Annotated[
-        int,
+        str,
         click.option(
             "--flush-threshold-size", type=str, help="Size threshold for flushing the transaction log", default="5120mb"
         ),
     ]
 
     cb_threshold: Annotated[
-        int,
+        str,
         click.option(
             "--cb-threshold",
             type=str,
@@ -106,7 +119,7 @@ class AWSOpenSearchTypedDict(TypedDict):
     ]
 
 
-class AWSOpenSearchHNSWTypedDict(CommonTypedDict, AWSOpenSearchTypedDict, HNSWFlavor2): ...
+class AWSOpenSearchHNSWTypedDict(CommonTypedDict, AWSOpenSearchTypedDict, HNSWFlavor1): ...
 
 
 @cli.command()
