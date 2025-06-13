@@ -31,6 +31,7 @@ class ElasticCloudIndexConfig(BaseModel, DBCaseConfig):
     use_rescore: bool = False
     oversample_ratio: float = 2.0
     use_routing: bool = False
+    use_force_merge: bool = True
 
     metric_type: MetricType | None = None
     efConstruction: int | None = None
