@@ -486,6 +486,7 @@ class IVFFlatTypedDictN(TypedDict):
         click.option("--probes", "nprobe", type=int, help="ivfflat probes", required=True),
     ]
 
+
 class OceanBaseIVFTypedDict(TypedDict):
     index_type: Annotated[
         str | None,
@@ -502,16 +503,31 @@ class OceanBaseIVFTypedDict(TypedDict):
     ]
     sample_per_nlist: Annotated[
         int | None,
-        click.option("--sample_per_nlist", "sample_per_nlist", type=int, help="The cluster centers are calculated by total sampling sample_per_nlist * nlist vectors", required=True),
+        click.option(
+            "--sample_per_nlist",
+            "sample_per_nlist",
+            type=int,
+            help="The cluster centers are calculated by total sampling sample_per_nlist * nlist vectors",
+            required=True,
+        ),
     ]
     ivf_nprobes: Annotated[
         int | None,
-        click.option("--ivf_nprobes", "ivf_nprobes", type=str, help="How many clustering centers to search during the query", required=True),
+        click.option(
+            "--ivf_nprobes",
+            "ivf_nprobes",
+            type=str,
+            help="How many clustering centers to search during the query",
+            required=True,
+        ),
     ]
     m: Annotated[
         int | None,
-        click.option("--m", "m", type=int, help="The number of sub-vectors that each data vector is divided into during IVF-PQ"),
+        click.option(
+            "--m", "m", type=int, help="The number of sub-vectors that each data vector is divided into during IVF-PQ"
+        ),
     ]
+
 
 @click.group()
 def cli(): ...

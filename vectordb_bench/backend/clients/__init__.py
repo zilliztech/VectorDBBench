@@ -151,10 +151,10 @@ class DB(Enum):
             from .mongodb.mongodb import MongoDB
 
             return MongoDB
-        
+
         if self == DB.OceanBase:
             from .oceanbase.oceanbase import OceanBase
-            
+
             return OceanBase
 
         if self == DB.MariaDB:
@@ -287,7 +287,7 @@ class DB(Enum):
             from .mongodb.config import MongoDBConfig
 
             return MongoDBConfig
-        
+
         if self == DB.OceanBase:
             from .oceanbase.config import OceanBaseConfig
 
@@ -404,10 +404,10 @@ class DB(Enum):
             from .mongodb.config import MongoDBIndexConfig
 
             return MongoDBIndexConfig
-        
+
         if self == DB.OceanBase:
             from .oceanbase.config import _oceanbase_case_config
-            
+
             return _oceanbase_case_config.get(index_type)
 
         if self == DB.MariaDB:

@@ -5,6 +5,7 @@ from ..backend.clients.lancedb.cli import LanceDB
 from ..backend.clients.mariadb.cli import MariaDBHNSW
 from ..backend.clients.memorydb.cli import MemoryDB
 from ..backend.clients.milvus.cli import MilvusAutoIndex
+from ..backend.clients.oceanbase.cli import OceanBaseHNSW, OceanBaseIVF
 from ..backend.clients.pgdiskann.cli import PgDiskAnn
 from ..backend.clients.pgvecto_rs.cli import PgVectoRSHNSW, PgVectoRSIVFFlat
 from ..backend.clients.pgvector.cli import PgVectorHNSW
@@ -17,7 +18,6 @@ from ..backend.clients.tidb.cli import TiDB
 from ..backend.clients.vespa.cli import Vespa
 from ..backend.clients.weaviate_cloud.cli import Weaviate
 from ..backend.clients.zilliz_cloud.cli import ZillizAutoIndex
-from ..backend.clients.oceanbase.cli import OceanBaseHNSW, OceanBaseIVF
 from .batch_cli import BatchCli
 from .cli import cli
 

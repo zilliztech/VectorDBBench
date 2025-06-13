@@ -1,6 +1,9 @@
-from typing import Any, Mapping, Optional, Sequence, TypedDict
+from typing import TypedDict
+
 from pydantic import BaseModel, SecretStr, validator
+
 from ..api import DBCaseConfig, DBConfig, IndexType, MetricType
+
 
 class OceanBaseConfigDict(TypedDict):
     user: str
@@ -8,6 +11,7 @@ class OceanBaseConfigDict(TypedDict):
     port: str
     password: str
     database: str
+
 
 class OceanBaseConfig(DBConfig):
     user: SecretStr = SecretStr("root@perf")
@@ -26,14 +30,15 @@ class OceanBaseConfig(DBConfig):
             "password": pwd_str,
             "database": self.database,
         }
-    
+
     @validator("*")
-    def not_empty_field(cls, v, field):
+    def not_empty_field(cls, v: any, field: any):
         if field.name in ["password", "host", "db_label"]:
             return v
-        if isinstance(v, (str, SecretStr)) and len(v) == 0:
+        if isinstance(v, str | SecretStr) and len(v) == 0:
             raise ValueError("Empty string!")
         return v
+
 
 class OceanBaseIndexConfig(BaseModel):
     index: IndexType
@@ -41,18 +46,23 @@ class OceanBaseIndexConfig(BaseModel):
     lib: str = "vsag"
 
     def parse_metric(self) -> str:
-        if self.metric_type == MetricType.L2 or (self.index == IndexType.HNSW_BQ and self.metric_type == MetricType.COSINE):
+        if self.metric_type == MetricType.L2 or (
+            self.index == IndexType.HNSW_BQ and self.metric_type == MetricType.COSINE
+        ):
             return "l2"
-        elif self.metric_type == MetricType.IP:
+        if self.metric_type == MetricType.IP:
             return "inner_product"
         return "cosine"
 
     def parse_metric_func_str(self) -> str:
-        if self.metric_type == MetricType.L2 or (self.index == IndexType.HNSW_BQ and self.metric_type == MetricType.COSINE):
+        if self.metric_type == MetricType.L2 or (
+            self.index == IndexType.HNSW_BQ and self.metric_type == MetricType.COSINE
+        ):
             return "l2_distance"
-        elif self.metric_type == MetricType.IP:
+        if self.metric_type == MetricType.IP:
             return "negative_inner_product"
         return "cosine_distance"
+
 
 class OceanBaseHNSWConfig(OceanBaseIndexConfig, DBCaseConfig):
     m: int
@@ -65,14 +75,12 @@ class OceanBaseHNSWConfig(OceanBaseIndexConfig, DBCaseConfig):
             "lib": self.lib,
             "metric_type": self.parse_metric(),
             "index_type": self.index.value,
-            "params": { "m": self.m, "ef_construction": self.efConstruction }
+            "params": {"m": self.m, "ef_construction": self.efConstruction},
         }
 
     def search_param(self) -> dict:
-        return {
-            "metric_type": self.parse_metric_func_str(),
-            "params": { "ef_search": self.ef_search }
-        }
+        return {"metric_type": self.parse_metric_func_str(), "params": {"ef_search": self.ef_search}}
+
 
 class OceanBaseIVFConfig(OceanBaseIndexConfig, DBCaseConfig):
     m: int
@@ -87,30 +95,26 @@ class OceanBaseIVFConfig(OceanBaseIndexConfig, DBCaseConfig):
                 "lib": "OB",
                 "metric_type": self.parse_metric(),
                 "index_type": self.index.value,
-                "params": { 
-                    "m": self.M, 
-                    "sample_per_nlist": self.sample_per_nlist, 
+                "params": {
+                    "m": self.M,
+                    "sample_per_nlist": self.sample_per_nlist,
                     "nlist": self.nlist,
-                }
+                },
             }
-        else:
-            return {
-                "lib": "OB",
-                "metric_type": self.parse_metric(),
-                "index_type": self.index.value,
-                "params": { 
-                    "sample_per_nlist": self.sample_per_nlist, 
-                    "nlist": self.nlist,
-                }
-            }
-        
+        return {
+            "lib": "OB",
+            "metric_type": self.parse_metric(),
+            "index_type": self.index.value,
+            "params": {
+                "sample_per_nlist": self.sample_per_nlist,
+                "nlist": self.nlist,
+            },
+        }
 
     def search_param(self) -> dict:
-        return {
-            "metric_type": self.metric_type,
-            "params": { "ivf_nprobes": self.ivf_nprobes }
-        }
-    
+        return {"metric_type": self.metric_type, "params": {"ivf_nprobes": self.ivf_nprobes}}
+
+
 _oceanbase_case_config = {
     IndexType.HNSW_SQ: OceanBaseHNSWConfig,
     IndexType.HNSW: OceanBaseHNSWConfig,

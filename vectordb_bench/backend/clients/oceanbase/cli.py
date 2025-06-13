@@ -1,9 +1,10 @@
 import os
-from typing import Annotated, TypedDict, Unpack
+from typing import Annotated, Unpack
+
 import click
 from pydantic import SecretStr
-from ..api import IndexType, MetricType
 
+from vectordb_bench.backend.clients import DB
 from vectordb_bench.cli.cli import (
     CommonTypedDict,
     HNSWFlavor4,
@@ -12,32 +13,28 @@ from vectordb_bench.cli.cli import (
     click_parameter_decorators_from_typed_dict,
     run,
 )
-from vectordb_bench.backend.clients import DB
+
+from ..api import IndexType
+
 
 class OceanBaseTypedDict(CommonTypedDict):
-    host: Annotated[
-        str, click.option("--host", type=str, help="OceanBase host", default="")
-    ]
-    user: Annotated[
-        str, click.option("--user", type=str, help="OceanBase username", required=True)
-    ]
+    host: Annotated[str, click.option("--host", type=str, help="OceanBase host", default="")]
+    user: Annotated[str, click.option("--user", type=str, help="OceanBase username", required=True)]
     password: Annotated[
         str,
-        click.option("--password",
-                     type=str,
-                     help="OceanBase database password",
-                     default=lambda: os.environ.get("OB_PASSWORD", ""),
-                     ),
+        click.option(
+            "--password",
+            type=str,
+            help="OceanBase database password",
+            default=lambda: os.environ.get("OB_PASSWORD", ""),
+        ),
     ]
-    database: Annotated[
-        str, click.option("--database", type=str, help="DataBase name", required=True)
-    ]
-    port: Annotated[
-        int, click.option("--port", type=int, help="OceanBase port", required=True)
-    ]
+    database: Annotated[str, click.option("--database", type=str, help="DataBase name", required=True)]
+    port: Annotated[int, click.option("--port", type=int, help="OceanBase port", required=True)]
 
-class OceanBaseHNSWTypedDict(CommonTypedDict, OceanBaseTypedDict, HNSWFlavor4):
-    ...
+
+class OceanBaseHNSWTypedDict(CommonTypedDict, OceanBaseTypedDict, HNSWFlavor4): ...
+
 
 @cli.command()
 @click_parameter_decorators_from_typed_dict(OceanBaseHNSWTypedDict)
@@ -63,14 +60,15 @@ def OceanBaseHNSW(**parameters: Unpack[OceanBaseHNSWTypedDict]):
         **parameters,
     )
 
-class OceanBaseIVFTypedDict(CommonTypedDict, OceanBaseTypedDict, OceanBaseIVFTypedDict):
-    ...
-    
+
+class OceanBaseIVFTypedDict(CommonTypedDict, OceanBaseTypedDict, OceanBaseIVFTypedDict): ...
+
+
 @cli.command()
 @click_parameter_decorators_from_typed_dict(OceanBaseIVFTypedDict)
 def OceanBaseIVF(**parameters: Unpack[OceanBaseIVFTypedDict]):
     from .config import OceanBaseConfig, OceanBaseIVFConfig
-    
+
     type_str = parameters["index_type"]
     if type_str == "IVF_FLAT":
         input_index_type = IndexType.IVFFlat
@@ -78,12 +76,8 @@ def OceanBaseIVF(**parameters: Unpack[OceanBaseIVFTypedDict]):
         input_index_type = IndexType.IVFPQ
     elif type_str == "IVF_SQ8":
         input_index_type = IndexType.IVFSQ8
-    
-    if parameters["m"] is None:
-        # ivf pq will cause error, sq and flat are unused
-        input_m = 0 
-    else:
-        input_m = parameters["m"]
+
+    input_m = 0 if parameters["m"] is None else parameters["m"]
 
     run(
         db=DB.OceanBase,
@@ -100,7 +94,7 @@ def OceanBaseIVF(**parameters: Unpack[OceanBaseIVFTypedDict]):
             nlist=parameters["nlist"],
             sample_per_nlist=parameters["sample_per_nlist"],
             index=input_index_type,
-            ivf_nprobes=parameters["ivf_nprobes"]
+            ivf_nprobes=parameters["ivf_nprobes"],
         ),
         **parameters,
     )
