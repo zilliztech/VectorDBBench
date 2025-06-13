@@ -234,14 +234,15 @@ class ElasticCloud(VectorDB):
         """optimize will be called between insertion and search in performance cases."""
         assert self.client is not None, "should self.init() first"
         self.client.indices.refresh(index=self.indice)
-        force_merge_task_id = self.client.indices.forcemerge(
-            index=self.indice,
-            max_num_segments=1,
-            wait_for_completion=False,
-        )["task"]
-        log.info(f"Elasticsearch force merge task id: {force_merge_task_id}")
-        while True:
-            time.sleep(SECONDS_WAITING_FOR_FORCE_MERGE_API_CALL_SEC)
-            task_status = self.client.tasks.get(task_id=force_merge_task_id)
-            if task_status["completed"]:
-                return
+        if self.case_config.use_force_merge:
+            force_merge_task_id = self.client.indices.forcemerge(
+                index=self.indice,
+                max_num_segments=1,
+                wait_for_completion=False,
+            )["task"]
+            log.info(f"Elasticsearch force merge task id: {force_merge_task_id}")
+            while True:
+                time.sleep(SECONDS_WAITING_FOR_FORCE_MERGE_API_CALL_SEC)
+                task_status = self.client.tasks.get(task_id=force_merge_task_id)
+                if task_status["completed"]:
+                    return
