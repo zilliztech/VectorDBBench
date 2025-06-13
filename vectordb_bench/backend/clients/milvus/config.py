@@ -35,6 +35,7 @@ class MilvusIndexConfig(BaseModel):
 
     index: IndexType
     metric_type: MetricType | None = None
+    use_partition_key: bool = True  # for label-filter
 
     @property
     def is_gpu_index(self) -> bool:

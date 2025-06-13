@@ -78,8 +78,12 @@ class ChromaClient(VectorDB):
         """
         ids = [str(i) for i in metadata]
         metadata = [{"id": int(i)} for i in metadata]
-        if len(embeddings) > 0:
-            self.collection.add(embeddings=embeddings, ids=ids, metadatas=metadata)
+        try:
+            if len(embeddings) > 0:
+                self.collection.add(embeddings=embeddings, ids=ids, metadatas=metadata)
+        except Exception as e:
+            log.warning(f"Failed to insert data: error: {e!s}")
+            return 0, e
         return len(embeddings), None
 
     def search_embedding(

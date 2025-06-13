@@ -14,6 +14,16 @@ class CustomDatasetConfig(BaseModel):
     file_count: int = 1
     use_shuffled: bool = False
     with_gt: bool = True
+    train_name: str = "train"
+    test_name: str = "test"
+    gt_name: str = "neighbors"
+    train_id_name: str = "id"
+    train_col_name: str = "emb"
+    test_col_name: str = "emb"
+    gt_col_name: str = "neighbors_id"
+    scalar_labels_name: str = "scalar_labels"
+    label_percentages: list[str] = []
+    with_label_percentages: list[float] = [0.001, 0.02, 0.5]
 
 
 class CustomCaseConfig(BaseModel):

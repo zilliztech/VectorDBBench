@@ -18,37 +18,16 @@ class config:
     DEFAULT_DATASET_URL = env.str("DEFAULT_DATASET_URL", AWS_S3_URL)
     DATASET_LOCAL_DIR = env.path("DATASET_LOCAL_DIR", "/tmp/vectordb_bench/dataset")
     NUM_PER_BATCH = env.int("NUM_PER_BATCH", 100)
+    TIME_PER_BATCH = 1  # 1s. for streaming insertion.
+    MAX_INSERT_RETRY = 5
+    MAX_SEARCH_RETRY = 5
+
+    LOAD_MAX_TRY_COUNT = 10
 
     DROP_OLD = env.bool("DROP_OLD", True)
     USE_SHUFFLED_DATA = env.bool("USE_SHUFFLED_DATA", True)
 
-    NUM_CONCURRENCY = env.list(
-        "NUM_CONCURRENCY",
-        [
-            1,
-            5,
-            10,
-            15,
-            20,
-            25,
-            30,
-            35,
-            40,
-            45,
-            50,
-            55,
-            60,
-            65,
-            70,
-            75,
-            80,
-            85,
-            90,
-            95,
-            100,
-        ],
-        subcast=int,
-    )
+    NUM_CONCURRENCY = env.list("NUM_CONCURRENCY", [1, 5, 10, 20, 30, 40, 60, 80], subcast=int)
 
     CONCURRENCY_DURATION = 30
 
@@ -68,6 +47,7 @@ class config:
 
     CAPACITY_TIMEOUT_IN_SECONDS = 24 * 3600  # 24h
     LOAD_TIMEOUT_DEFAULT = 24 * 3600  # 24h
+    LOAD_TIMEOUT_768D_100K = 24 * 3600  # 24h
     LOAD_TIMEOUT_768D_1M = 24 * 3600  # 24h
     LOAD_TIMEOUT_768D_10M = 240 * 3600  # 10d
     LOAD_TIMEOUT_768D_100M = 2400 * 3600  # 100d
@@ -75,13 +55,20 @@ class config:
     LOAD_TIMEOUT_1536D_500K = 24 * 3600  # 24h
     LOAD_TIMEOUT_1536D_5M = 240 * 3600  # 10d
 
+    LOAD_TIMEOUT_1024D_1M = 24 * 3600  # 24h
+    LOAD_TIMEOUT_1024D_10M = 240 * 3600  # 10d
+
     OPTIMIZE_TIMEOUT_DEFAULT = 24 * 3600  # 24h
+    OPTIMIZE_TIMEOUT_768D_100K = 24 * 3600  # 24h
     OPTIMIZE_TIMEOUT_768D_1M = 24 * 3600  # 24h
     OPTIMIZE_TIMEOUT_768D_10M = 240 * 3600  # 10d
     OPTIMIZE_TIMEOUT_768D_100M = 2400 * 3600  # 100d
 
     OPTIMIZE_TIMEOUT_1536D_500K = 24 * 3600  # 24h
     OPTIMIZE_TIMEOUT_1536D_5M = 240 * 3600  # 10d
+
+    OPTIMIZE_TIMEOUT_1024D_1M = 24 * 3600  # 24h
+    OPTIMIZE_TIMEOUT_1024D_10M = 240 * 3600  # 10d
 
     def display(self) -> str:
         return [

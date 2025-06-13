@@ -45,7 +45,7 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
     metric_type: MetricType = MetricType.L2
     engine: AWSOS_Engine = AWSOS_Engine.faiss
     efConstruction: int = 256
-    ef_search: int = 200
+    efSearch: int = 100
     engine_name: str | None = None
     metric_type_name: str | None = None
     M: int = 16
@@ -56,9 +56,24 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
     refresh_interval: str | None = "60s"
     force_merge_enabled: bool | None = True
     flush_threshold_size: str | None = "5120mb"
-    index_thread_qty_during_force_merge: int
+    index_thread_qty_during_force_merge: int = 8
     cb_threshold: str | None = "50%"
+    number_of_indexing_clients: int | None = 1
+    use_routing: bool = False  # for label-filter cases
+    oversample_factor: float = 1.0
     quantization_type: AWSOSQuantization = AWSOSQuantization.fp32
+
+    def __eq__(self, obj: any):
+        return (
+            self.engine == obj.engine
+            and self.M == obj.M
+            and self.efConstruction == obj.efConstruction
+            and self.number_of_shards == obj.number_of_shards
+            and self.number_of_replicas == obj.number_of_replicas
+            and self.number_of_segments == obj.number_of_segments
+            and self.use_routing == obj.use_routing
+            and self.quantization_type == obj.quantization_type
+        )
 
     def parse_metric(self) -> str:
         log.info(f"User specified metric_type: {self.metric_type_name}")
@@ -71,6 +86,10 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
             log.info("Using l2 as specified by user")
             return "l2"
         return "l2"
+
+    @property
+    def use_quant(self) -> bool:
+        return self.quantization_type is not AWSOSQuantization.fp32
 
     def index_param(self) -> dict:
         log.info(f"Using engine: {self.engine} for index creation")
@@ -91,11 +110,11 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
                 "ef_search": self.efSearch,
                 **(
                     {"encoder": {"name": "sq", "parameters": {"type": self.quantization_type.fp16.value}}}
-                    if self.quantization_type is not AWSOSQuantization.fp32
+                    if self.use_quant
                     else {}
                 ),
             },
         }
 
     def search_param(self) -> dict:
-        return {}
+        return {"ef_search": self.efSearch}

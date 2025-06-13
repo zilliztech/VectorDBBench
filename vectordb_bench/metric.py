@@ -13,8 +13,12 @@ class Metric:
     # for load cases
     max_load_count: int = 0
 
+    # for both performace and streaming cases
+    insert_duration: float = 0.0
+    optimize_duration: float = 0.0
+    load_duration: float = 0.0  # insert + optimize
+
     # for performance cases
-    load_duration: float = 0.0  # duration to load all dataset into DB
     qps: float = 0.0
     serial_latency_p99: float = 0.0
     recall: float = 0.0
@@ -23,6 +27,16 @@ class Metric:
     conc_qps_list: list[float] = field(default_factory=list)
     conc_latency_p99_list: list[float] = field(default_factory=list)
     conc_latency_avg_list: list[float] = field(default_factory=list)
+
+    # for streaming cases
+    st_ideal_insert_duration: int = 0
+    st_search_stage_list: list[int] = field(default_factory=list)
+    st_search_time_list: list[float] = field(default_factory=list)
+    st_max_qps_list_list: list[float] = field(default_factory=list)
+    st_recall_list: list[float] = field(default_factory=list)
+    st_ndcg_list: list[float] = field(default_factory=list)
+    st_serial_latency_p99_list: list[float] = field(default_factory=list)
+    st_conc_failed_rate_list: list[float] = field(default_factory=list)
 
 
 QURIES_PER_DOLLAR_METRIC = "QP$ (Quries per Dollar)"
