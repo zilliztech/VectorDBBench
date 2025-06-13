@@ -6,7 +6,7 @@ from typing import Generator, Any, Tuple, Optional, List, Dict
 import mysql.connector as mysql
 import numpy as np
 from ..api import VectorDB, IndexType, MetricType
-from .config import OceanBaseIndexConfig, OceanBaseConfigDict
+from .config import OceanBaseHNSWConfig, OceanBaseConfigDict
 import struct
 
 log = logging.getLogger(__name__)
@@ -19,7 +19,7 @@ class OceanBase(VectorDB):
         self,
         dim: int,
         db_config: OceanBaseConfigDict,
-        db_case_config: OceanBaseIndexConfig,
+        db_case_config: OceanBaseHNSWConfig,
         collection_name: str = "items",
         drop_old: bool = False,
         **kwargs,
@@ -33,8 +33,6 @@ class OceanBase(VectorDB):
         self._index_name = "vidx"
         self._primary_field = "id"
         self._vector_field = "embedding"
-        if self.db_case_config.index == IndexType.HNSW_BQ:
-            self.db_case_config.metric_type = MetricType.L2
 
         log.info(
             f"{self.name} initialized with config:\nDatabase: {self.db_config}\nCase Config: {self.db_case_config}"
@@ -146,6 +144,10 @@ class OceanBase(VectorDB):
             raise
 
     def need_normalize_cosine(self) -> bool:
+        if self.db_case_config.index == IndexType.HNSW_BQ:
+            log.info("current HNSW_BQ only supports L2, cosine dataset need normalize.")
+            return True
+
         return False
 
     def _wait_for_major_compaction(self):

@@ -36,18 +36,19 @@ class OceanBaseConfig(DBConfig):
         return v
 
 class OceanBaseIndexConfig(BaseModel):
+    index: IndexType
     metric_type: MetricType | None = None
     lib: str = "vsag"
 
     def parse_metric(self) -> str:
-        if self.metric_type == MetricType.L2:
+        if self.metric_type == MetricType.L2 or (self.index == IndexType.HNSW_BQ and self.metric_type == MetricType.COSINE):
             return "l2"
         elif self.metric_type == MetricType.IP:
             return "inner_product"
         return "cosine"
 
     def parse_metric_func_str(self) -> str:
-        if self.metric_type == MetricType.L2:
+        if self.metric_type == MetricType.L2 or (self.index == IndexType.HNSW_BQ and self.metric_type == MetricType.COSINE):
             return "l2_distance"
         elif self.metric_type == MetricType.IP:
             return "negative_inner_product"
