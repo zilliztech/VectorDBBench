@@ -57,6 +57,7 @@ All the database client supported
 | mongodb                  | `pip install vectordb-bench[mongodb]`       |
 | tidb                     | `pip install vectordb-bench[tidb]`          |
 | vespa                    | `pip install vectordb-bench[vespa]`         |
+| oceanbase                | `pip install vectordb-bench[oceanbase]`     |
 
 ### Run
 
@@ -208,6 +209,72 @@ Options:
   # Quantization Type
   --quantization-type TEXT        which type of quantization to use valid values [fp32, fp16]
   --help                          Show this message and exit.
+  ```
+### Run OceanBase from command line
+
+Execute tests for the index types: HNSW, HNSW_SQ, or HNSW_BQ.
+
+```shell
+vectordbbench oceanbasehnsw --host xxx --port xxx --user root@mysql_tenant --database test \
+--m 16 --ef-construction 200 --case-type Performance1536D50K \
+--index-type HNSW --ef-search 100
+```
+
+To list the options for oceanbase, execute `vectordbbench oceanbasehnsw --help`, The following are some OceanBase-specific command-line options.
+
+```text
+$ vectordbbench oceanbasehnsw --help
+Usage: vectordbbench oceanbasehnsw [OPTIONS]
+
+Options:
+  [...]
+  --host TEXT                     OceanBase host
+  --user TEXT                     OceanBase username  [required]
+  --password TEXT                 OceanBase database password
+  --database TEXT                 DataBase name  [required]
+  --port INTEGER                  OceanBase port  [required]
+  --m INTEGER                     hnsw m  [required]
+  --ef-construction INTEGER       hnsw ef-construction  [required]
+  --ef-search INTEGER             hnsw ef-search  [required]
+  --index-type [HNSW|HNSW_SQ|HNSW_BQ]
+                                  Type of index to use. Supported values:
+                                  HNSW, HNSW_SQ, HNSW_BQ  [required]
+  --help                          Show this message and exit.
+  ```
+
+Execute tests for the index types: IVF_FLAT, IVF_SQ8, or IVF_PQ.
+
+```shell
+vectordbbench oceanbaseivf --host xxx --port xxx --user root@mysql_tenant --database test \
+--nlist 1000 --sample_per_nlist 256 --case-type Performance768D1M \
+--index-type IVF_FLAT --ivf_nprobes 100
+```
+
+To list the options for oceanbase, execute `vectordbbench oceanbaseivf --help`, The following are some OceanBase-specific command-line options.
+
+```text
+$ vectordbbench oceanbaseivf --help
+Usage: vectordbbench oceanbaseivf [OPTIONS]
+
+Options:
+  [...]
+  --host TEXT                     OceanBase host
+  --user TEXT                     OceanBase username  [required]
+  --password TEXT                 OceanBase database password
+  --database TEXT                 DataBase name  [required]
+  --port INTEGER                  OceanBase port  [required]
+  --index-type [IVF_FLAT|IVF_SQ8|IVF_PQ]
+                                  Type of index to use. Supported values:
+                                  IVF_FLAT, IVF_SQ8, IVF_PQ  [required]
+  --nlist INTEGER                 Number of cluster centers  [required]
+  --sample_per_nlist INTEGER      The cluster centers are calculated by total
+                                  sampling sample_per_nlist * nlist vectors
+                                  [required]
+  --ivf_nprobes TEXT              How many clustering centers to search during
+                                  the query  [required]
+  --m INTEGER                     The number of sub-vectors that each data
+                                  vector is divided into during IVF-PQ
+  --help                          Show this message and exit.                       Show this message and exit.
   ```
 
 #### Using a configuration file.
