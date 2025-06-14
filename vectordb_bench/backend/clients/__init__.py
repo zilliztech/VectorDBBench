@@ -47,6 +47,7 @@ class DB(Enum):
     Clickhouse = "Clickhouse"
     Vespa = "Vespa"
     LanceDB = "LanceDB"
+    OceanBase = "OceanBase"
 
     @property
     def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901, PLR0915
@@ -150,6 +151,11 @@ class DB(Enum):
             from .mongodb.mongodb import MongoDB
 
             return MongoDB
+
+        if self == DB.OceanBase:
+            from .oceanbase.oceanbase import OceanBase
+
+            return OceanBase
 
         if self == DB.MariaDB:
             from .mariadb.mariadb import MariaDB
@@ -282,6 +288,11 @@ class DB(Enum):
 
             return MongoDBConfig
 
+        if self == DB.OceanBase:
+            from .oceanbase.config import OceanBaseConfig
+
+            return OceanBaseConfig
+
         if self == DB.MariaDB:
             from .mariadb.config import MariaDBConfig
 
@@ -393,6 +404,11 @@ class DB(Enum):
             from .mongodb.config import MongoDBIndexConfig
 
             return MongoDBIndexConfig
+
+        if self == DB.OceanBase:
+            from .oceanbase.config import _oceanbase_case_config
+
+            return _oceanbase_case_config.get(index_type)
 
         if self == DB.MariaDB:
             from .mariadb.config import _mariadb_case_config

@@ -5,6 +5,7 @@ from ..backend.clients.lancedb.cli import LanceDB
 from ..backend.clients.mariadb.cli import MariaDBHNSW
 from ..backend.clients.memorydb.cli import MemoryDB
 from ..backend.clients.milvus.cli import MilvusAutoIndex
+from ..backend.clients.oceanbase.cli import OceanBaseHNSW, OceanBaseIVF
 from ..backend.clients.pgdiskann.cli import PgDiskAnn
 from ..backend.clients.pgvecto_rs.cli import PgVectoRSHNSW, PgVectoRSIVFFlat
 from ..backend.clients.pgvector.cli import PgVectorHNSW
@@ -33,6 +34,8 @@ cli.add_command(AWSOpenSearch)
 cli.add_command(PgVectorScaleDiskAnn)
 cli.add_command(PgDiskAnn)
 cli.add_command(AlloyDBScaNN)
+cli.add_command(OceanBaseHNSW)
+cli.add_command(OceanBaseIVF)
 cli.add_command(MariaDBHNSW)
 cli.add_command(TiDB)
 cli.add_command(Clickhouse)

@@ -455,6 +455,22 @@ class HNSWFlavor3(HNSWBaseRequiredTypedDict):
     ]
 
 
+class HNSWFlavor4(HNSWBaseRequiredTypedDict):
+    ef_search: Annotated[
+        int | None,
+        click.option("--ef-search", type=int, help="hnsw ef-search", required=True),
+    ]
+    index_type: Annotated[
+        str | None,
+        click.option(
+            "--index-type",
+            type=click.Choice(["HNSW", "HNSW_SQ", "HNSW_BQ"], case_sensitive=False),
+            help="Type of index to use. Supported values: HNSW, HNSW_SQ, HNSW_BQ",
+            required=True,
+        ),
+    ]
+
+
 class IVFFlatTypedDict(TypedDict):
     lists: Annotated[int | None, click.option("--lists", type=int, help="ivfflat lists")]
     probes: Annotated[int | None, click.option("--probes", type=int, help="ivfflat probes")]
@@ -468,6 +484,48 @@ class IVFFlatTypedDictN(TypedDict):
     nprobe: Annotated[
         int | None,
         click.option("--probes", "nprobe", type=int, help="ivfflat probes", required=True),
+    ]
+
+
+class OceanBaseIVFTypedDict(TypedDict):
+    index_type: Annotated[
+        str | None,
+        click.option(
+            "--index-type",
+            type=click.Choice(["IVF_FLAT", "IVF_SQ8", "IVF_PQ"], case_sensitive=False),
+            help="Type of index to use. Supported values: IVF_FLAT, IVF_SQ8, IVF_PQ",
+            required=True,
+        ),
+    ]
+    nlist: Annotated[
+        int | None,
+        click.option("--nlist", "nlist", type=int, help="Number of cluster centers", required=True),
+    ]
+    sample_per_nlist: Annotated[
+        int | None,
+        click.option(
+            "--sample_per_nlist",
+            "sample_per_nlist",
+            type=int,
+            help="The cluster centers are calculated by total sampling sample_per_nlist * nlist vectors",
+            required=True,
+        ),
+    ]
+    ivf_nprobes: Annotated[
+        int | None,
+        click.option(
+            "--ivf_nprobes",
+            "ivf_nprobes",
+            type=str,
+            help="How many clustering centers to search during the query",
+            required=True,
+        ),
+    ]
+    m: Annotated[
+        int | None,
+        click.option(
+            "--m", "m", type=int, help="The number of sub-vectors that each data vector is divided into during IVF-PQ"
+        ),
     ]
 
 
