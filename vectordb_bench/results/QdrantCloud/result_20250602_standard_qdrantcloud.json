@@ -1,0 +1,3556 @@
+{
+    "run_id": "d60af9965dec47739a5924d55bd3ca8d",
+    "task_label": "standard_2025",
+    "results": [
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 1319.08,
+                "optimize_duration": 20.1262,
+                "load_duration": 1339.2062,
+                "qps": 4318.9697,
+                "serial_latency_p99": 0.0043,
+                "recall": 1.0,
+                "ndcg": 1.0,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    293.2625,
+                    1418.2237,
+                    2503.3143,
+                    4040.6711,
+                    4318.9697,
+                    4231.1635,
+                    3968.657,
+                    3873.9566
+                ],
+                "conc_latency_p99_list": [
+                    0.004108009400451913,
+                    0.00469942291992993,
+                    0.005965515149819113,
+                    0.009690882539725878,
+                    0.015310119479809219,
+                    0.019062151899652286,
+                    0.02478109099949506,
+                    0.030745067499719874
+                ],
+                "conc_latency_avg_list": [
+                    0.0033968326940370785,
+                    0.003504317851431097,
+                    0.003958530295749986,
+                    0.004864683437812893,
+                    0.006765798381240783,
+                    0.009086413973290202,
+                    0.014139072129676184,
+                    0.018795127060711247
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "QdrantCloud",
+                "db_config": {
+                    "db_label": "16c64g-payload-index",
+                    "version": "1.14.1",
+                    "note": "",
+                    "url": "**********",
+                    "api_key": "**********"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "m": 16,
+                    "payload_m": 16,
+                    "create_payload_int_index": false,
+                    "create_payload_keyword_index": true,
+                    "is_tenant": false,
+                    "use_scalar_quant": false,
+                    "sq_quantile": 0.99,
+                    "default_segment_number": 0,
+                    "use_rescore": false,
+                    "oversampling": 1.0,
+                    "indexed_only": false,
+                    "hnsw_ef": 100,
+                    "exact": false,
+                    "with_payload": false
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Medium Cohere (768dim, 1M)",
+                        "label_percentage": 0.001
+                    },
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 1319.08,
+                "optimize_duration": 20.1262,
+                "load_duration": 1339.2062,
+                "qps": 4250.2894,
+                "serial_latency_p99": 0.0046,
+                "recall": 1.0,
+                "ndcg": 1.0,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    277.4786,
+                    1318.99,
+                    2393.7592,
+                    3833.7677,
+                    4250.2894,
+                    4184.1166,
+                    4000.5926,
+                    3862.6429
+                ],
+                "conc_latency_p99_list": [
+                    0.004508941039603082,
+                    0.004984925999924594,
+                    0.006595623899847849,
+                    0.010582116120258365,
+                    0.01574212464009181,
+                    0.018370582070228906,
+                    0.02465197935991454,
+                    0.030694995440426295
+                ],
+                "conc_latency_avg_list": [
+                    0.0035900876433641237,
+                    0.003769701729715891,
+                    0.004140400060134759,
+                    0.005126895276394362,
+                    0.006872501639850592,
+                    0.00918103882152727,
+                    0.014044806699768219,
+                    0.01873456016794685
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "QdrantCloud",
+                "db_config": {
+                    "db_label": "16c64g-payload-index",
+                    "version": "1.14.1",
+                    "note": "",
+                    "url": "**********",
+                    "api_key": "**********"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "m": 16,
+                    "payload_m": 16,
+                    "create_payload_int_index": false,
+                    "create_payload_keyword_index": true,
+                    "is_tenant": false,
+                    "use_scalar_quant": false,
+                    "sq_quantile": 0.99,
+                    "default_segment_number": 0,
+                    "use_rescore": false,
+                    "oversampling": 1.0,
+                    "indexed_only": false,
+                    "hnsw_ef": 100,
+                    "exact": false,
+                    "with_payload": false
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Medium Cohere (768dim, 1M)",
+                        "label_percentage": 0.002
+                    },
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 1319.08,
+                "optimize_duration": 20.1262,
+                "load_duration": 1339.2062,
+                "qps": 2997.4391,
+                "serial_latency_p99": 0.0061,
+                "recall": 1.0,
+                "ndcg": 1.0,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    259.2959,
+                    1178.8468,
+                    2018.6883,
+                    2490.6234,
+                    2893.8137,
+                    2996.8477,
+                    2988.859,
+                    2997.4391
+                ],
+                "conc_latency_p99_list": [
+                    0.004596146079784376,
+                    0.005777928030111063,
+                    0.00855043300963189,
+                    0.015129041220061491,
+                    0.019837499320237838,
+                    0.02368464209943336,
+                    0.03564275155032192,
+                    0.046053308929758716
+                ],
+                "conc_latency_avg_list": [
+                    0.003842165242025026,
+                    0.004217991263362464,
+                    0.00491051189097537,
+                    0.007205748604411966,
+                    0.010093602282638538,
+                    0.01287320282645513,
+                    0.018831706458738242,
+                    0.024423919263035544
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "QdrantCloud",
+                "db_config": {
+                    "db_label": "16c64g-payload-index",
+                    "version": "1.14.1",
+                    "note": "",
+                    "url": "**********",
+                    "api_key": "**********"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "m": 16,
+                    "payload_m": 16,
+                    "create_payload_int_index": false,
+                    "create_payload_keyword_index": true,
+                    "is_tenant": false,
+                    "use_scalar_quant": false,
+                    "sq_quantile": 0.99,
+                    "default_segment_number": 0,
+                    "use_rescore": false,
+                    "oversampling": 1.0,
+                    "indexed_only": false,
+                    "hnsw_ef": 100,
+                    "exact": false,
+                    "with_payload": false
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Medium Cohere (768dim, 1M)",
+                        "label_percentage": 0.005
+                    },
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 1319.08,
+                "optimize_duration": 20.1262,
+                "load_duration": 1339.2062,
+                "qps": 1494.5334,
+                "serial_latency_p99": 0.007,
+                "recall": 1.0,
+                "ndcg": 1.0,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    203.6708,
+                    969.6341,
+                    1428.3563,
+                    1486.8859,
+                    1494.5334,
+                    1483.2116,
+                    1474.5178,
+                    1368.0349
+                ],
+                "conc_latency_p99_list": [
+                    0.005929753999680542,
+                    0.007170458190130376,
+                    0.013735425040104018,
+                    0.021000384040271457,
+                    0.0289086314002634,
+                    0.0352984104501047,
+                    0.04928370412053478,
+                    0.062043446079951534
+                ],
+                "conc_latency_avg_list": [
+                    0.004891689839344045,
+                    0.005125268532403679,
+                    0.006941333195860831,
+                    0.01323872120834617,
+                    0.019574734836527944,
+                    0.026080113358016896,
+                    0.03856528288604421,
+                    0.05103612621286848
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "QdrantCloud",
+                "db_config": {
+                    "db_label": "16c64g-payload-index",
+                    "version": "1.14.1",
+                    "note": "",
+                    "url": "**********",
+                    "api_key": "**********"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "m": 16,
+                    "payload_m": 16,
+                    "create_payload_int_index": false,
+                    "create_payload_keyword_index": true,
+                    "is_tenant": false,
+                    "use_scalar_quant": false,
+                    "sq_quantile": 0.99,
+                    "default_segment_number": 0,
+                    "use_rescore": false,
+                    "oversampling": 1.0,
+                    "indexed_only": false,
+                    "hnsw_ef": 100,
+                    "exact": false,
+                    "with_payload": false
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Medium Cohere (768dim, 1M)",
+                        "label_percentage": 0.01
+                    },
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 1319.08,
+                "optimize_duration": 20.1262,
+                "load_duration": 1339.2062,
+                "qps": 1108.6473,
+                "serial_latency_p99": 0.0074,
+                "recall": 0.995,
+                "ndcg": 0.9953,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    155.0156,
+                    759.7266,
+                    1098.4745,
+                    1108.6473,
+                    1107.189,
+                    1010.1489,
+                    1100.3861,
+                    1007.2433
+                ],
+                "conc_latency_p99_list": [
+                    0.00785500895030964,
+                    0.008967568600201054,
+                    0.015656784659768146,
+                    0.028236765000110544,
+                    0.03794425167947339,
+                    0.04669991659957308,
+                    0.06410694274995876,
+                    0.08198375469952227
+                ],
+                "conc_latency_avg_list": [
+                    0.006427684545643792,
+                    0.006545558126009102,
+                    0.009028796154110398,
+                    0.017762212212337446,
+                    0.0264548593750186,
+                    0.03507294947193464,
+                    0.051781498749312135,
+                    0.06840506317045031
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "QdrantCloud",
+                "db_config": {
+                    "db_label": "16c64g-payload-index",
+                    "version": "1.14.1",
+                    "note": "",
+                    "url": "**********",
+                    "api_key": "**********"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "m": 16,
+                    "payload_m": 16,
+                    "create_payload_int_index": false,
+                    "create_payload_keyword_index": true,
+                    "is_tenant": false,
+                    "use_scalar_quant": false,
+                    "sq_quantile": 0.99,
+                    "default_segment_number": 0,
+                    "use_rescore": false,
+                    "oversampling": 1.0,
+                    "indexed_only": false,
+                    "hnsw_ef": 100,
+                    "exact": false,
+                    "with_payload": false
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Medium Cohere (768dim, 1M)",
+                        "label_percentage": 0.02
+                    },
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 1319.08,
+                "optimize_duration": 20.1262,
+                "load_duration": 1339.2062,
+                "qps": 1289.5164,
+                "serial_latency_p99": 0.0064,
+                "recall": 0.9906,
+                "ndcg": 0.9914,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    192.663,
+                    894.383,
+                    1260.0815,
+                    1289.5164,
+                    1287.7963,
+                    1175.2373,
+                    1168.3505,
+                    1162.7818
+                ],
+                "conc_latency_p99_list": [
+                    0.006316989139695581,
+                    0.008128716850251365,
+                    0.015395553400521745,
+                    0.026328772799861355,
+                    0.03552735675981239,
+                    0.04340343913015204,
+                    0.05868663019987247,
+                    0.07328483299988875
+                ],
+                "conc_latency_avg_list": [
+                    0.005170983138963148,
+                    0.0055568424552364356,
+                    0.00787051162470654,
+                    0.015257475040559534,
+                    0.022746841193685464,
+                    0.030291182935339646,
+                    0.04500688047272738,
+                    0.058709776506761735
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "QdrantCloud",
+                "db_config": {
+                    "db_label": "16c64g-payload-index",
+                    "version": "1.14.1",
+                    "note": "",
+                    "url": "**********",
+                    "api_key": "**********"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "m": 16,
+                    "payload_m": 16,
+                    "create_payload_int_index": false,
+                    "create_payload_keyword_index": true,
+                    "is_tenant": false,
+                    "use_scalar_quant": false,
+                    "sq_quantile": 0.99,
+                    "default_segment_number": 0,
+                    "use_rescore": false,
+                    "oversampling": 1.0,
+                    "indexed_only": false,
+                    "hnsw_ef": 100,
+                    "exact": false,
+                    "with_payload": false
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Medium Cohere (768dim, 1M)",
+                        "label_percentage": 0.05
+                    },
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 1319.08,
+                "optimize_duration": 20.1262,
+                "load_duration": 1339.2062,
+                "qps": 1059.3394,
+                "serial_latency_p99": 0.0078,
+                "recall": 0.9856,
+                "ndcg": 0.9865,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    182.0687,
+                    817.4502,
+                    1050.4022,
+                    1059.3394,
+                    1057.7988,
+                    1027.603,
+                    963.131,
+                    959.5137
+                ],
+                "conc_latency_p99_list": [
+                    0.006470868200085524,
+                    0.008868805800193518,
+                    0.017504915279787377,
+                    0.029769426550319604,
+                    0.03973150839992743,
+                    0.04859697681950819,
+                    0.06808674165962657,
+                    0.08627920324966
+                ],
+                "conc_latency_avg_list": [
+                    0.005472145389340478,
+                    0.006080082797610136,
+                    0.009440536055800997,
+                    0.018597708752576308,
+                    0.027687777141859785,
+                    0.036729990492687103,
+                    0.05458301345296143,
+                    0.07152907761295225
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "QdrantCloud",
+                "db_config": {
+                    "db_label": "16c64g-payload-index",
+                    "version": "1.14.1",
+                    "note": "",
+                    "url": "**********",
+                    "api_key": "**********"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "m": 16,
+                    "payload_m": 16,
+                    "create_payload_int_index": false,
+                    "create_payload_keyword_index": true,
+                    "is_tenant": false,
+                    "use_scalar_quant": false,
+                    "sq_quantile": 0.99,
+                    "default_segment_number": 0,
+                    "use_rescore": false,
+                    "oversampling": 1.0,
+                    "indexed_only": false,
+                    "hnsw_ef": 100,
+                    "exact": false,
+                    "with_payload": false
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Medium Cohere (768dim, 1M)",
+                        "label_percentage": 0.1
+                    },
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 1319.08,
+                "optimize_duration": 20.1262,
+                "load_duration": 1339.2062,
+                "qps": 987.0795,
+                "serial_latency_p99": 0.0071,
+                "recall": 0.9804,
+                "ndcg": 0.9814,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    170.2351,
+                    799.1863,
+                    976.5353,
+                    987.0795,
+                    982.7753,
+                    896.5894,
+                    971.9598,
+                    883.3496
+                ],
+                "conc_latency_p99_list": [
+                    0.007034681559271121,
+                    0.00902814224973554,
+                    0.018402551080162078,
+                    0.031121550620100604,
+                    0.04181672295933825,
+                    0.051991278479690664,
+                    0.07187199053005315,
+                    0.09237229285055035
+                ],
+                "conc_latency_avg_list": [
+                    0.005852643577169901,
+                    0.006221069343522768,
+                    0.010157681946698735,
+                    0.019942006644400066,
+                    0.0298103925036599,
+                    0.039504880680964735,
+                    0.058654024613022694,
+                    0.077525677224489
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "QdrantCloud",
+                "db_config": {
+                    "db_label": "16c64g-payload-index",
+                    "version": "1.14.1",
+                    "note": "",
+                    "url": "**********",
+                    "api_key": "**********"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "m": 16,
+                    "payload_m": 16,
+                    "create_payload_int_index": false,
+                    "create_payload_keyword_index": true,
+                    "is_tenant": false,
+                    "use_scalar_quant": false,
+                    "sq_quantile": 0.99,
+                    "default_segment_number": 0,
+                    "use_rescore": false,
+                    "oversampling": 1.0,
+                    "indexed_only": false,
+                    "hnsw_ef": 100,
+                    "exact": false,
+                    "with_payload": false
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Medium Cohere (768dim, 1M)",
+                        "label_percentage": 0.2
+                    },
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 1319.08,
+                "optimize_duration": 20.1262,
+                "load_duration": 1339.2062,
+                "qps": 1591.7055,
+                "serial_latency_p99": 0.0078,
+                "recall": 0.8506,
+                "ndcg": 0.8538,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    204.7748,
+                    985.4012,
+                    1468.5406,
+                    1591.7055,
+                    1457.7184,
+                    1590.3698,
+                    1489.2644,
+                    1454.2574
+                ],
+                "conc_latency_p99_list": [
+                    0.006079022370122401,
+                    0.007035757980193004,
+                    0.01645851233961361,
+                    0.02284473285999411,
+                    0.03139393492060659,
+                    0.03826638910008112,
+                    0.05060729249998985,
+                    0.06300347028023684
+                ],
+                "conc_latency_avg_list": [
+                    0.004865269940793477,
+                    0.005044995872658895,
+                    0.0067500134283456316,
+                    0.012369487155991286,
+                    0.01833301637215765,
+                    0.024331188459427163,
+                    0.0360246762552596,
+                    0.047445003783414805
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "QdrantCloud",
+                "db_config": {
+                    "db_label": "16c64g-payload-index",
+                    "version": "1.14.1",
+                    "note": "",
+                    "url": "**********",
+                    "api_key": "**********"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "m": 16,
+                    "payload_m": 16,
+                    "create_payload_int_index": false,
+                    "create_payload_keyword_index": true,
+                    "is_tenant": false,
+                    "use_scalar_quant": false,
+                    "sq_quantile": 0.99,
+                    "default_segment_number": 0,
+                    "use_rescore": false,
+                    "oversampling": 1.0,
+                    "indexed_only": false,
+                    "hnsw_ef": 100,
+                    "exact": false,
+                    "with_payload": false
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Medium Cohere (768dim, 1M)",
+                        "label_percentage": 0.5
+                    },
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 14293.8033,
+                "optimize_duration": 15.235,
+                "load_duration": 14309.0383,
+                "qps": 1202.8677,
+                "serial_latency_p99": 0.007,
+                "recall": 1.0,
+                "ndcg": 1.0,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    206.967,
+                    911.4194,
+                    1148.5274,
+                    1100.4431,
+                    1119.6533,
+                    1110.5234,
+                    1201.3445,
+                    1202.8677
+                ],
+                "conc_latency_p99_list": [
+                    0.005655336518393597,
+                    0.008416454441903623,
+                    0.021868546077021246,
+                    0.028908773838775235,
+                    0.03925096478807966,
+                    0.04731271557880973,
+                    0.06442837212060115,
+                    0.08021722926117947
+                ],
+                "conc_latency_avg_list": [
+                    0.004814049540212592,
+                    0.005456099164853924,
+                    0.008637005004549426,
+                    0.0163061362063892,
+                    0.024269634272066843,
+                    0.03209051234716432,
+                    0.047439863532524634,
+                    0.06192339823549479
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "QdrantCloud",
+                "db_config": {
+                    "db_label": "16c64g-payload-index",
+                    "version": "1.14.1",
+                    "note": "",
+                    "url": "**********",
+                    "api_key": "**********"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "m": 16,
+                    "payload_m": 16,
+                    "create_payload_int_index": false,
+                    "create_payload_keyword_index": true,
+                    "is_tenant": false,
+                    "use_scalar_quant": false,
+                    "sq_quantile": 0.99,
+                    "default_segment_number": 0,
+                    "use_rescore": false,
+                    "oversampling": 1.0,
+                    "indexed_only": false,
+                    "hnsw_ef": 100,
+                    "exact": false,
+                    "with_payload": false
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Large Cohere (768dim, 10M)",
+                        "label_percentage": 0.001
+                    },
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 14293.8033,
+                "optimize_duration": 15.235,
+                "load_duration": 14309.0383,
+                "qps": 639.3991,
+                "serial_latency_p99": 0.0073,
+                "recall": 1.0,
+                "ndcg": 1.0,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    167.8168,
+                    629.6706,
+                    636.3062,
+                    639.3991,
+                    635.9869,
+                    585.4089,
+                    633.1348,
+                    631.6696
+                ],
+                "conc_latency_p99_list": [
+                    0.006691822270004194,
+                    0.014931110736870323,
+                    0.025915584146059694,
+                    0.041898286758514605,
+                    0.05745977048325586,
+                    0.07294807943864724,
+                    0.10194685441900218,
+                    0.1351531705029629
+                ],
+                "conc_latency_avg_list": [
+                    0.0059370943387183715,
+                    0.007896892117463701,
+                    0.015588208636262504,
+                    0.03081194091131072,
+                    0.046093567302827605,
+                    0.06091807750021593,
+                    0.09030891374826104,
+                    0.11862098875833996
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "QdrantCloud",
+                "db_config": {
+                    "db_label": "16c64g-payload-index",
+                    "version": "1.14.1",
+                    "note": "",
+                    "url": "**********",
+                    "api_key": "**********"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "m": 16,
+                    "payload_m": 16,
+                    "create_payload_int_index": false,
+                    "create_payload_keyword_index": true,
+                    "is_tenant": false,
+                    "use_scalar_quant": false,
+                    "sq_quantile": 0.99,
+                    "default_segment_number": 0,
+                    "use_rescore": false,
+                    "oversampling": 1.0,
+                    "indexed_only": false,
+                    "hnsw_ef": 100,
+                    "exact": false,
+                    "with_payload": false
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Large Cohere (768dim, 10M)",
+                        "label_percentage": 0.002
+                    },
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 14293.8033,
+                "optimize_duration": 15.235,
+                "load_duration": 14309.0383,
+                "qps": 274.8559,
+                "serial_latency_p99": 0.0099,
+                "recall": 1.0,
+                "ndcg": 1.0,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    111.8443,
+                    274.8559,
+                    273.919,
+                    273.2946,
+                    248.1112,
+                    272.0351,
+                    248.232,
+                    251.5627
+                ],
+                "conc_latency_p99_list": [
+                    0.010098347063612897,
+                    0.02121279940183743,
+                    0.03981989816180431,
+                    0.07721344975107058,
+                    0.11303051400172993,
+                    0.15008354073906957,
+                    0.22340935355983674,
+                    0.29631453135276387
+                ],
+                "conc_latency_avg_list": [
+                    0.008908439349240458,
+                    0.01809537173827183,
+                    0.036229195362535445,
+                    0.07212283733843941,
+                    0.10802966199286358,
+                    0.14274027652628404,
+                    0.2124717999302204,
+                    0.279949356427757
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "QdrantCloud",
+                "db_config": {
+                    "db_label": "16c64g-payload-index",
+                    "version": "1.14.1",
+                    "note": "",
+                    "url": "**********",
+                    "api_key": "**********"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "m": 16,
+                    "payload_m": 16,
+                    "create_payload_int_index": false,
+                    "create_payload_keyword_index": true,
+                    "is_tenant": false,
+                    "use_scalar_quant": false,
+                    "sq_quantile": 0.99,
+                    "default_segment_number": 0,
+                    "use_rescore": false,
+                    "oversampling": 1.0,
+                    "indexed_only": false,
+                    "hnsw_ef": 100,
+                    "exact": false,
+                    "with_payload": false
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Large Cohere (768dim, 10M)",
+                        "label_percentage": 0.005
+                    },
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 14293.8033,
+                "optimize_duration": 15.235,
+                "load_duration": 14309.0383,
+                "qps": 441.4152,
+                "serial_latency_p99": 0.0083,
+                "recall": 0.997,
+                "ndcg": 0.9971,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    143.4669,
+                    436.254,
+                    441.4152,
+                    438.6738,
+                    399.6966,
+                    432.7183,
+                    429.2645,
+                    394.5522
+                ],
+                "conc_latency_p99_list": [
+                    0.008762944238405885,
+                    0.01626307624981564,
+                    0.028729068860702648,
+                    0.05270900674076984,
+                    0.07277014915714972,
+                    0.09666912357643015,
+                    0.1437478300393559,
+                    0.18816683990880848
+                ],
+                "conc_latency_avg_list": [
+                    0.006945026401799453,
+                    0.011399085068879888,
+                    0.022478999864959583,
+                    0.04491813725015799,
+                    0.06726079640580303,
+                    0.08962663279288086,
+                    0.1333593012912701,
+                    0.1745350267776829
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "QdrantCloud",
+                "db_config": {
+                    "db_label": "16c64g-payload-index",
+                    "version": "1.14.1",
+                    "note": "",
+                    "url": "**********",
+                    "api_key": "**********"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "m": 16,
+                    "payload_m": 16,
+                    "create_payload_int_index": false,
+                    "create_payload_keyword_index": true,
+                    "is_tenant": false,
+                    "use_scalar_quant": false,
+                    "sq_quantile": 0.99,
+                    "default_segment_number": 0,
+                    "use_rescore": false,
+                    "oversampling": 1.0,
+                    "indexed_only": false,
+                    "hnsw_ef": 100,
+                    "exact": false,
+                    "with_payload": false
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Large Cohere (768dim, 10M)",
+                        "label_percentage": 0.01
+                    },
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 14293.8033,
+                "optimize_duration": 15.235,
+                "load_duration": 14309.0383,
+                "qps": 358.8949,
+                "serial_latency_p99": 0.0095,
+                "recall": 0.995,
+                "ndcg": 0.9951,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    116.5584,
+                    356.5275,
+                    358.8949,
+                    324.8888,
+                    355.3511,
+                    351.7406,
+                    326.7391,
+                    349.4246
+                ],
+                "conc_latency_p99_list": [
+                    0.010250616880657617,
+                    0.01863548950059339,
+                    0.0321760157468816,
+                    0.06016570479914661,
+                    0.0885519881368236,
+                    0.11717015530601202,
+                    0.17205338899948402,
+                    0.23131503604490716
+                ],
+                "conc_latency_avg_list": [
+                    0.008548762044159492,
+                    0.01394755542425568,
+                    0.027644554680582297,
+                    0.05522321678649889,
+                    0.08252783976879721,
+                    0.1103059612746877,
+                    0.16326103678644524,
+                    0.2149607624005845
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "QdrantCloud",
+                "db_config": {
+                    "db_label": "16c64g-payload-index",
+                    "version": "1.14.1",
+                    "note": "",
+                    "url": "**********",
+                    "api_key": "**********"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "m": 16,
+                    "payload_m": 16,
+                    "create_payload_int_index": false,
+                    "create_payload_keyword_index": true,
+                    "is_tenant": false,
+                    "use_scalar_quant": false,
+                    "sq_quantile": 0.99,
+                    "default_segment_number": 0,
+                    "use_rescore": false,
+                    "oversampling": 1.0,
+                    "indexed_only": false,
+                    "hnsw_ef": 100,
+                    "exact": false,
+                    "with_payload": false
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Large Cohere (768dim, 10M)",
+                        "label_percentage": 0.02
+                    },
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 14293.8033,
+                "optimize_duration": 15.235,
+                "load_duration": 14309.0383,
+                "qps": 325.2245,
+                "serial_latency_p99": 0.0103,
+                "recall": 0.9909,
+                "ndcg": 0.9909,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    123.0427,
+                    325.1471,
+                    325.2245,
+                    295.1217,
+                    292.9007,
+                    322.4289,
+                    319.6973,
+                    320.7764
+                ],
+                "conc_latency_p99_list": [
+                    0.00931106200099748,
+                    0.020588611690036486,
+                    0.035066349752305555,
+                    0.06571827707251941,
+                    0.09726342149588163,
+                    0.12768566494181868,
+                    0.1897035929947742,
+                    0.25184306000272044
+                ],
+                "conc_latency_avg_list": [
+                    0.008098515189237565,
+                    0.01529155639642761,
+                    0.030518992861499915,
+                    0.06095409537227186,
+                    0.0914411181375523,
+                    0.12030570511547133,
+                    0.17938279938524543,
+                    0.23454913445770756
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "QdrantCloud",
+                "db_config": {
+                    "db_label": "16c64g-payload-index",
+                    "version": "1.14.1",
+                    "note": "",
+                    "url": "**********",
+                    "api_key": "**********"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "m": 16,
+                    "payload_m": 16,
+                    "create_payload_int_index": false,
+                    "create_payload_keyword_index": true,
+                    "is_tenant": false,
+                    "use_scalar_quant": false,
+                    "sq_quantile": 0.99,
+                    "default_segment_number": 0,
+                    "use_rescore": false,
+                    "oversampling": 1.0,
+                    "indexed_only": false,
+                    "hnsw_ef": 100,
+                    "exact": false,
+                    "with_payload": false
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Large Cohere (768dim, 10M)",
+                        "label_percentage": 0.05
+                    },
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 14293.8033,
+                "optimize_duration": 15.235,
+                "load_duration": 14309.0383,
+                "qps": 273.4174,
+                "serial_latency_p99": 0.0133,
+                "recall": 0.9789,
+                "ndcg": 0.9787,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    110.8047,
+                    272.4043,
+                    273.4174,
+                    271.6536,
+                    247.8823,
+                    270.479,
+                    244.699,
+                    246.9894
+                ],
+                "conc_latency_p99_list": [
+                    0.010369178601467872,
+                    0.023040348696231366,
+                    0.04003402912028832,
+                    0.07837427703983849,
+                    0.11477441169990926,
+                    0.15143905847704442,
+                    0.22774383698764722,
+                    0.3014751199996681
+                ],
+                "conc_latency_avg_list": [
+                    0.00899149234024069,
+                    0.018262957926889967,
+                    0.03629607029711298,
+                    0.07254300809577825,
+                    0.10818437217162749,
+                    0.14350989930487565,
+                    0.21475331164430142,
+                    0.28076783016090423
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "QdrantCloud",
+                "db_config": {
+                    "db_label": "16c64g-payload-index",
+                    "version": "1.14.1",
+                    "note": "",
+                    "url": "**********",
+                    "api_key": "**********"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "m": 16,
+                    "payload_m": 16,
+                    "create_payload_int_index": false,
+                    "create_payload_keyword_index": true,
+                    "is_tenant": false,
+                    "use_scalar_quant": false,
+                    "sq_quantile": 0.99,
+                    "default_segment_number": 0,
+                    "use_rescore": false,
+                    "oversampling": 1.0,
+                    "indexed_only": false,
+                    "hnsw_ef": 100,
+                    "exact": false,
+                    "with_payload": false
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Large Cohere (768dim, 10M)",
+                        "label_percentage": 0.1
+                    },
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 14293.8033,
+                "optimize_duration": 15.235,
+                "load_duration": 14309.0383,
+                "qps": 262.8314,
+                "serial_latency_p99": 0.0113,
+                "recall": 0.9808,
+                "ndcg": 0.9803,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    108.7174,
+                    262.1674,
+                    255.4049,
+                    262.8314,
+                    250.187,
+                    259.8525,
+                    260.7161,
+                    244.5148
+                ],
+                "conc_latency_p99_list": [
+                    0.01143218348093795,
+                    0.024378688477445384,
+                    0.04247373699261517,
+                    0.08093938276135304,
+                    0.11894121329678455,
+                    0.15802012887754244,
+                    0.23411726899939822,
+                    0.31060514779637743
+                ],
+                "conc_latency_avg_list": [
+                    0.009165488431407798,
+                    0.018973467987600433,
+                    0.03771409502210758,
+                    0.07494889929330883,
+                    0.1121941421376435,
+                    0.14947845852134778,
+                    0.21990355361726233,
+                    0.2905831009492956
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "QdrantCloud",
+                "db_config": {
+                    "db_label": "16c64g-payload-index",
+                    "version": "1.14.1",
+                    "note": "",
+                    "url": "**********",
+                    "api_key": "**********"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "m": 16,
+                    "payload_m": 16,
+                    "create_payload_int_index": false,
+                    "create_payload_keyword_index": true,
+                    "is_tenant": false,
+                    "use_scalar_quant": false,
+                    "sq_quantile": 0.99,
+                    "default_segment_number": 0,
+                    "use_rescore": false,
+                    "oversampling": 1.0,
+                    "indexed_only": false,
+                    "hnsw_ef": 100,
+                    "exact": false,
+                    "with_payload": false
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Large Cohere (768dim, 10M)",
+                        "label_percentage": 0.2
+                    },
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 14293.8033,
+                "optimize_duration": 15.235,
+                "load_duration": 14309.0383,
+                "qps": 434.5481,
+                "serial_latency_p99": 0.0085,
+                "recall": 0.7237,
+                "ndcg": 0.7219,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    146.5507,
+                    432.7754,
+                    434.5481,
+                    432.2032,
+                    427.358,
+                    429.1023,
+                    397.9899,
+                    420.7208
+                ],
+                "conc_latency_p99_list": [
+                    0.008506639694678568,
+                    0.016457689051821954,
+                    0.03029727175802691,
+                    0.05180674914037809,
+                    0.07415859206215827,
+                    0.09747324070434843,
+                    0.144179983921349,
+                    0.18923682705222744
+                ],
+                "conc_latency_avg_list": [
+                    0.006799216841598663,
+                    0.011487961056909447,
+                    0.022828979750202868,
+                    0.04558859892952997,
+                    0.06864003222227749,
+                    0.09041309401874563,
+                    0.13320785231271542,
+                    0.17517457189081279
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "QdrantCloud",
+                "db_config": {
+                    "db_label": "16c64g-payload-index",
+                    "version": "1.14.1",
+                    "note": "",
+                    "url": "**********",
+                    "api_key": "**********"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "m": 16,
+                    "payload_m": 16,
+                    "create_payload_int_index": false,
+                    "create_payload_keyword_index": true,
+                    "is_tenant": false,
+                    "use_scalar_quant": false,
+                    "sq_quantile": 0.99,
+                    "default_segment_number": 0,
+                    "use_rescore": false,
+                    "oversampling": 1.0,
+                    "indexed_only": false,
+                    "hnsw_ef": 100,
+                    "exact": false,
+                    "with_payload": false
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Large Cohere (768dim, 10M)",
+                        "label_percentage": 0.5
+                    },
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 15697.2116,
+                "optimize_duration": 25.248,
+                "load_duration": 15722.4597,
+                "qps": 446.9116,
+                "serial_latency_p99": 0.0092,
+                "recall": 0.9357,
+                "ndcg": 0.9335,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    142.7501,
+                    443.3815,
+                    446.9116,
+                    443.2777,
+                    441.5765,
+                    401.0699,
+                    402.4964,
+                    398.8342
+                ],
+                "conc_latency_p99_list": [
+                    0.008392416880233212,
+                    0.01584005208598683,
+                    0.028442546800943082,
+                    0.05118929252625094,
+                    0.07514514699869324,
+                    0.09705145264073507,
+                    0.14375627939181868,
+                    0.19555685989616903
+                ],
+                "conc_latency_avg_list": [
+                    0.006980073732057059,
+                    0.01121524413576223,
+                    0.022193516598336436,
+                    0.04443628341357066,
+                    0.06647024051023769,
+                    0.08843647627449298,
+                    0.13041777449940556,
+                    0.1724508536656257
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "QdrantCloud",
+                "db_config": {
+                    "db_label": "16c64g",
+                    "version": "1.14.1",
+                    "note": "",
+                    "url": "**********",
+                    "api_key": "**********"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "m": 16,
+                    "payload_m": 16,
+                    "create_payload_int_index": false,
+                    "create_payload_keyword_index": true,
+                    "is_tenant": false,
+                    "use_scalar_quant": false,
+                    "sq_quantile": 0.99,
+                    "default_segment_number": 0,
+                    "use_rescore": false,
+                    "oversampling": 1.0,
+                    "indexed_only": false,
+                    "hnsw_ef": 100,
+                    "exact": false,
+                    "with_payload": false
+                },
+                "case_config": {
+                    "case_id": 4,
+                    "custom_case": null,
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 15697.2116,
+                "optimize_duration": 25.248,
+                "load_duration": 15722.4597,
+                "qps": 388.3028,
+                "serial_latency_p99": 0.0096,
+                "recall": 0.9431,
+                "ndcg": 0.9408,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    131.5849,
+                    386.79,
+                    388.3028,
+                    384.3793,
+                    350.2126,
+                    382.9576,
+                    357.9247,
+                    345.2787
+                ],
+                "conc_latency_p99_list": [
+                    0.009005484194494788,
+                    0.017353906916105187,
+                    0.03040585625058156,
+                    0.057311439691548,
+                    0.08304099037777633,
+                    0.10989078817598055,
+                    0.17235435267328283,
+                    0.2187008540763054
+                ],
+                "conc_latency_avg_list": [
+                    0.007572031373672018,
+                    0.012854121107101395,
+                    0.025544531089812063,
+                    0.05126603037090653,
+                    0.07649834288550998,
+                    0.10133032444037796,
+                    0.15425695780864176,
+                    0.20059700252203141
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "QdrantCloud",
+                "db_config": {
+                    "db_label": "16c64g",
+                    "version": "1.14.1",
+                    "note": "",
+                    "url": "**********",
+                    "api_key": "**********"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "m": 16,
+                    "payload_m": 16,
+                    "create_payload_int_index": false,
+                    "create_payload_keyword_index": true,
+                    "is_tenant": false,
+                    "use_scalar_quant": false,
+                    "sq_quantile": 0.99,
+                    "default_segment_number": 0,
+                    "use_rescore": false,
+                    "oversampling": 1.0,
+                    "indexed_only": false,
+                    "hnsw_ef": 120,
+                    "exact": false,
+                    "with_payload": false
+                },
+                "case_config": {
+                    "case_id": 4,
+                    "custom_case": null,
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 15697.2116,
+                "optimize_duration": 25.248,
+                "load_duration": 15722.4597,
+                "qps": 323.3964,
+                "serial_latency_p99": 0.0098,
+                "recall": 0.9507,
+                "ndcg": 0.9483,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    124.2697,
+                    318.5581,
+                    322.1527,
+                    323.3964,
+                    322.1696,
+                    320.3444,
+                    294.1645,
+                    299.0843
+                ],
+                "conc_latency_p99_list": [
+                    0.010349974400014606,
+                    0.020900160419550954,
+                    0.0361085274803918,
+                    0.06776922240387649,
+                    0.1010101246323029,
+                    0.1304961043482763,
+                    0.19832630217249972,
+                    0.2581200256987359
+                ],
+                "conc_latency_avg_list": [
+                    0.008017921087583696,
+                    0.015609509724329028,
+                    0.030780220204673667,
+                    0.060905707038577506,
+                    0.09105612227316368,
+                    0.12116364518938445,
+                    0.18088966608844861,
+                    0.23796571711282502
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "QdrantCloud",
+                "db_config": {
+                    "db_label": "16c64g",
+                    "version": "1.14.1",
+                    "note": "",
+                    "url": "**********",
+                    "api_key": "**********"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "m": 16,
+                    "payload_m": 16,
+                    "create_payload_int_index": false,
+                    "create_payload_keyword_index": true,
+                    "is_tenant": false,
+                    "use_scalar_quant": false,
+                    "sq_quantile": 0.99,
+                    "default_segment_number": 0,
+                    "use_rescore": false,
+                    "oversampling": 1.0,
+                    "indexed_only": false,
+                    "hnsw_ef": 150,
+                    "exact": false,
+                    "with_payload": false
+                },
+                "case_config": {
+                    "case_id": 4,
+                    "custom_case": null,
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 15697.2116,
+                "optimize_duration": 25.248,
+                "load_duration": 15722.4597,
+                "qps": 256.4668,
+                "serial_latency_p99": 0.0113,
+                "recall": 0.9588,
+                "ndcg": 0.9565,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    109.5611,
+                    256.4668,
+                    256.1527,
+                    254.6602,
+                    254.0357,
+                    230.7082,
+                    231.7745,
+                    231.2401
+                ],
+                "conc_latency_p99_list": [
+                    0.011419588899880154,
+                    0.023989050570235114,
+                    0.04468748835133739,
+                    0.08459992891002913,
+                    0.12495911995429194,
+                    0.1651804892499058,
+                    0.24398564357354185,
+                    0.3289348165634146
+                ],
+                "conc_latency_avg_list": [
+                    0.009094595299014826,
+                    0.01939382785093295,
+                    0.03874371727302175,
+                    0.07740749485565217,
+                    0.11551361239043029,
+                    0.15364336360536066,
+                    0.22721854368843947,
+                    0.30011830827724206
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "QdrantCloud",
+                "db_config": {
+                    "db_label": "16c64g",
+                    "version": "1.14.1",
+                    "note": "",
+                    "url": "**********",
+                    "api_key": "**********"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "m": 16,
+                    "payload_m": 16,
+                    "create_payload_int_index": false,
+                    "create_payload_keyword_index": true,
+                    "is_tenant": false,
+                    "use_scalar_quant": false,
+                    "sq_quantile": 0.99,
+                    "default_segment_number": 0,
+                    "use_rescore": false,
+                    "oversampling": 1.0,
+                    "indexed_only": false,
+                    "hnsw_ef": 200,
+                    "exact": false,
+                    "with_payload": false
+                },
+                "case_config": {
+                    "case_id": 4,
+                    "custom_case": null,
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 15697.2116,
+                "optimize_duration": 25.248,
+                "load_duration": 15722.4597,
+                "qps": 145.5316,
+                "serial_latency_p99": 0.0184,
+                "recall": 0.9726,
+                "ndcg": 0.9707,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    74.3446,
+                    145.5316,
+                    145.1482,
+                    145.102,
+                    143.753,
+                    142.6857,
+                    143.4072,
+                    131.2489
+                ],
+                "conc_latency_p99_list": [
+                    0.0165358613866556,
+                    0.04113009970023996,
+                    0.077625898544502,
+                    0.14813462275924394,
+                    0.22295340399432462,
+                    0.294517316972051,
+                    0.4269371400595992,
+                    0.57246596743993
+                ],
+                "conc_latency_avg_list": [
+                    0.013403153333653934,
+                    0.03417354834242769,
+                    0.06837094118196142,
+                    0.13579538898822568,
+                    0.20402374799944983,
+                    0.2720148916482139,
+                    0.40060691868951254,
+                    0.5273792696663513
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "QdrantCloud",
+                "db_config": {
+                    "db_label": "16c64g",
+                    "version": "1.14.1",
+                    "note": "",
+                    "url": "**********",
+                    "api_key": "**********"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "m": 16,
+                    "payload_m": 16,
+                    "create_payload_int_index": false,
+                    "create_payload_keyword_index": true,
+                    "is_tenant": false,
+                    "use_scalar_quant": false,
+                    "sq_quantile": 0.99,
+                    "default_segment_number": 0,
+                    "use_rescore": false,
+                    "oversampling": 1.0,
+                    "indexed_only": false,
+                    "hnsw_ef": 400,
+                    "exact": false,
+                    "with_payload": false
+                },
+                "case_config": {
+                    "case_id": 4,
+                    "custom_case": null,
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 1494.757,
+                "optimize_duration": 5.1229,
+                "load_duration": 1499.8799,
+                "qps": 1242.428,
+                "serial_latency_p99": 0.0064,
+                "recall": 0.9474,
+                "ndcg": 0.9486,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    207.8059,
+                    902.797,
+                    1219.065,
+                    1240.8819,
+                    1242.428,
+                    1237.4131,
+                    1124.9325,
+                    1229.1616
+                ],
+                "conc_latency_p99_list": [
+                    0.0060893742035841554,
+                    0.008183636299363537,
+                    0.01749036556459033,
+                    0.027307031642994833,
+                    0.03601452884089667,
+                    0.04419223924487593,
+                    0.060375755269196814,
+                    0.07551046840235356
+                ],
+                "conc_latency_avg_list": [
+                    0.004791590131146785,
+                    0.005505182189747005,
+                    0.008129613384402488,
+                    0.015862831474249578,
+                    0.02355766877181347,
+                    0.03122876961641923,
+                    0.04634096147879825,
+                    0.06034169457423981
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "QdrantCloud",
+                "db_config": {
+                    "db_label": "16c64g",
+                    "version": "1.14.1",
+                    "note": "",
+                    "url": "**********",
+                    "api_key": "**********"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "m": 16,
+                    "payload_m": 16,
+                    "create_payload_int_index": false,
+                    "create_payload_keyword_index": true,
+                    "is_tenant": false,
+                    "use_scalar_quant": false,
+                    "sq_quantile": 0.99,
+                    "default_segment_number": 0,
+                    "use_rescore": false,
+                    "oversampling": 1.0,
+                    "indexed_only": false,
+                    "hnsw_ef": 100,
+                    "exact": false,
+                    "with_payload": false
+                },
+                "case_config": {
+                    "case_id": 5,
+                    "custom_case": null,
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 1494.757,
+                "optimize_duration": 5.1229,
+                "load_duration": 1499.8799,
+                "qps": 1111.3633,
+                "serial_latency_p99": 0.007,
+                "recall": 0.955,
+                "ndcg": 0.956,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    199.8141,
+                    785.9127,
+                    1091.3633,
+                    1111.3633,
+                    1107.3346,
+                    1019.6958,
+                    1093.839,
+                    1001.0577
+                ],
+                "conc_latency_p99_list": [
+                    0.006530326353822624,
+                    0.008225571255024985,
+                    0.017999547327926833,
+                    0.029327484158857265,
+                    0.03849634404294192,
+                    0.047883413638337514,
+                    0.06567232204484762,
+                    0.08299460219568575
+                ],
+                "conc_latency_avg_list": [
+                    0.00498352885090105,
+                    0.005752180062709554,
+                    0.009082087941841361,
+                    0.017690200270742782,
+                    0.026413517018950422,
+                    0.03529832812277323,
+                    0.052006293456525306,
+                    0.06830146688681735
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "QdrantCloud",
+                "db_config": {
+                    "db_label": "16c64g",
+                    "version": "1.14.1",
+                    "note": "",
+                    "url": "**********",
+                    "api_key": "**********"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "m": 16,
+                    "payload_m": 16,
+                    "create_payload_int_index": false,
+                    "create_payload_keyword_index": true,
+                    "is_tenant": false,
+                    "use_scalar_quant": false,
+                    "sq_quantile": 0.99,
+                    "default_segment_number": 0,
+                    "use_rescore": false,
+                    "oversampling": 1.0,
+                    "indexed_only": false,
+                    "hnsw_ef": 120,
+                    "exact": false,
+                    "with_payload": false
+                },
+                "case_config": {
+                    "case_id": 5,
+                    "custom_case": null,
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 1494.757,
+                "optimize_duration": 5.1229,
+                "load_duration": 1499.8799,
+                "qps": 955.4701,
+                "serial_latency_p99": 0.0072,
+                "recall": 0.9629,
+                "ndcg": 0.9632,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    185.6622,
+                    793.3415,
+                    946.8505,
+                    874.562,
+                    955.4701,
+                    885.0771,
+                    864.3945,
+                    878.4182
+                ],
+                "conc_latency_p99_list": [
+                    0.0064235684403683956,
+                    0.009337397581984989,
+                    0.018315727375738763,
+                    0.031765532111166984,
+                    0.042694028073310616,
+                    0.05360910270901515,
+                    0.07373746164739715,
+                    0.09410388803691604
+                ],
+                "conc_latency_avg_list": [
+                    0.005364062557172294,
+                    0.006263937348206006,
+                    0.01046897073615085,
+                    0.02055041627559809,
+                    0.03061415695899272,
+                    0.040724336093685407,
+                    0.06015554927031619,
+                    0.0788253454650213
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "QdrantCloud",
+                "db_config": {
+                    "db_label": "16c64g",
+                    "version": "1.14.1",
+                    "note": "",
+                    "url": "**********",
+                    "api_key": "**********"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "m": 16,
+                    "payload_m": 16,
+                    "create_payload_int_index": false,
+                    "create_payload_keyword_index": true,
+                    "is_tenant": false,
+                    "use_scalar_quant": false,
+                    "sq_quantile": 0.99,
+                    "default_segment_number": 0,
+                    "use_rescore": false,
+                    "oversampling": 1.0,
+                    "indexed_only": false,
+                    "hnsw_ef": 150,
+                    "exact": false,
+                    "with_payload": false
+                },
+                "case_config": {
+                    "case_id": 5,
+                    "custom_case": null,
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 1494.757,
+                "optimize_duration": 5.1229,
+                "load_duration": 1499.8799,
+                "qps": 783.5207,
+                "serial_latency_p99": 0.0077,
+                "recall": 0.971,
+                "ndcg": 0.9707,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    166.4231,
+                    708.7004,
+                    782.3072,
+                    749.9331,
+                    783.5207,
+                    715.0206,
+                    772.7293,
+                    766.1657
+                ],
+                "conc_latency_p99_list": [
+                    0.007752005998918312,
+                    0.011055799241439674,
+                    0.01983165598663617,
+                    0.03580881697766016,
+                    0.04827545183929032,
+                    0.06106030683557037,
+                    0.0860168857887038,
+                    0.11303307615977244
+                ],
+                "conc_latency_avg_list": [
+                    0.005984532021070551,
+                    0.007016301564799948,
+                    0.012666817424782246,
+                    0.025068033731047566,
+                    0.03733852664949933,
+                    0.04976950311346699,
+                    0.07373640385407187,
+                    0.09734759330709476
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "QdrantCloud",
+                "db_config": {
+                    "db_label": "16c64g",
+                    "version": "1.14.1",
+                    "note": "",
+                    "url": "**********",
+                    "api_key": "**********"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "m": 16,
+                    "payload_m": 16,
+                    "create_payload_int_index": false,
+                    "create_payload_keyword_index": true,
+                    "is_tenant": false,
+                    "use_scalar_quant": false,
+                    "sq_quantile": 0.99,
+                    "default_segment_number": 0,
+                    "use_rescore": false,
+                    "oversampling": 1.0,
+                    "indexed_only": false,
+                    "hnsw_ef": 200,
+                    "exact": false,
+                    "with_payload": false
+                },
+                "case_config": {
+                    "case_id": 5,
+                    "custom_case": null,
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 1494.757,
+                "optimize_duration": 5.1229,
+                "load_duration": 1499.8799,
+                "qps": 470.8546,
+                "serial_latency_p99": 0.0095,
+                "recall": 0.9835,
+                "ndcg": 0.983,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    128.7549,
+                    463.3066,
+                    470.8546,
+                    449.3394,
+                    425.8643,
+                    467.8202,
+                    424.3519,
+                    461.6996
+                ],
+                "conc_latency_p99_list": [
+                    0.009610975488612894,
+                    0.015854567807982656,
+                    0.02673192903806921,
+                    0.04810779881445335,
+                    0.0697591826786811,
+                    0.08984742730972357,
+                    0.133888148713595,
+                    0.17759855342650552
+                ],
+                "conc_latency_avg_list": [
+                    0.00773696570017495,
+                    0.010733455494322586,
+                    0.021064175327174202,
+                    0.0418164996085016,
+                    0.06287635106079846,
+                    0.08275500306312698,
+                    0.1233307168734776,
+                    0.16212584284777362
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "QdrantCloud",
+                "db_config": {
+                    "db_label": "16c64g",
+                    "version": "1.14.1",
+                    "note": "",
+                    "url": "**********",
+                    "api_key": "**********"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "m": 16,
+                    "payload_m": 16,
+                    "create_payload_int_index": false,
+                    "create_payload_keyword_index": true,
+                    "is_tenant": false,
+                    "use_scalar_quant": false,
+                    "sq_quantile": 0.99,
+                    "default_segment_number": 0,
+                    "use_rescore": false,
+                    "oversampling": 1.0,
+                    "indexed_only": false,
+                    "hnsw_ef": 400,
+                    "exact": false,
+                    "with_payload": false
+                },
+                "case_config": {
+                    "case_id": 5,
+                    "custom_case": null,
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 20000.296593046995,
+                "optimize_duration": 5.1060515040007886,
+                "load_duration": 0.0,
+                "qps": 0.0,
+                "serial_latency_p99": 0.0,
+                "recall": 0.0,
+                "ndcg": 0.0,
+                "conc_num_list": [],
+                "conc_qps_list": [],
+                "conc_latency_p99_list": [],
+                "conc_latency_avg_list": [],
+                "st_ideal_insert_duration": 20000,
+                "st_search_stage_list": [
+                    10,
+                    20,
+                    30,
+                    40,
+                    50,
+                    60,
+                    70,
+                    80,
+                    90,
+                    100,
+                    110
+                ],
+                "st_search_time_list": [
+                    2001.8252,
+                    4001.8289,
+                    6001.8338,
+                    8001.8531,
+                    10001.845,
+                    12001.8527,
+                    14001.8583,
+                    16001.8614,
+                    18001.8645,
+                    20001.823,
+                    20138.2828
+                ],
+                "st_max_qps_list_list": [
+                    917.7631,
+                    798.2215,
+                    783.596,
+                    689.1114,
+                    602.6186,
+                    523.3032,
+                    471.7532,
+                    423.088,
+                    393.753,
+                    432.3835,
+                    439.1116
+                ],
+                "st_recall_list": [
+                    0.0964,
+                    0.1889,
+                    0.2779,
+                    0.3667,
+                    0.4587,
+                    0.5518,
+                    0.6444,
+                    0.7394,
+                    0.835,
+                    0.9279,
+                    0.9278
+                ],
+                "st_ndcg_list": [
+                    0.0962,
+                    0.1884,
+                    0.2781,
+                    0.367,
+                    0.4592,
+                    0.5519,
+                    0.644,
+                    0.7386,
+                    0.8337,
+                    0.9261,
+                    0.926
+                ],
+                "st_serial_latency_p99_list": [
+                    0.006,
+                    0.0088,
+                    0.0094,
+                    0.009,
+                    0.0091,
+                    0.0095,
+                    0.0098,
+                    0.0093,
+                    0.0162,
+                    0.0091,
+                    0.0082
+                ],
+                "st_conc_failed_rate_list": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0
+                ]
+            },
+            "task_config": {
+                "db": "QdrantCloud",
+                "db_config": {
+                    "db_label": "16c64g",
+                    "version": "1.14.1",
+                    "note": "",
+                    "url": "**********",
+                    "api_key": "**********"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "m": 16,
+                    "payload_m": 16,
+                    "create_payload_int_index": false,
+                    "create_payload_keyword_index": false,
+                    "is_tenant": false,
+                    "use_scalar_quant": false,
+                    "sq_quantile": 0.99,
+                    "default_segment_number": 0,
+                    "use_rescore": false,
+                    "oversampling": 1.0,
+                    "indexed_only": false,
+                    "hnsw_ef": 100,
+                    "exact": false,
+                    "with_payload": false
+                },
+                "case_config": {
+                    "case_id": 200,
+                    "custom_case": {
+                        "dataset_with_size_type": "Large Cohere (768dim, 10M)",
+                        "insert_rate": 500,
+                        "search_stages": [
+                            0.1,
+                            0.2,
+                            0.3,
+                            0.4,
+                            0.5,
+                            0.6,
+                            0.7,
+                            0.8,
+                            0.9
+                        ],
+                        "concurrencies": [
+                            5,
+                            10,
+                            20
+                        ]
+                    },
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 11178.049474759988,
+                "optimize_duration": 5.107795905001694,
+                "load_duration": 0.0,
+                "qps": 0.0,
+                "serial_latency_p99": 0.0,
+                "recall": 0.0,
+                "ndcg": 0.0,
+                "conc_num_list": [],
+                "conc_qps_list": [],
+                "conc_latency_p99_list": [],
+                "conc_latency_avg_list": [],
+                "st_ideal_insert_duration": 10000,
+                "st_search_stage_list": [
+                    10,
+                    20,
+                    30,
+                    40,
+                    50,
+                    60,
+                    70,
+                    80,
+                    90,
+                    100,
+                    110
+                ],
+                "st_search_time_list": [
+                    1052.3021,
+                    2196.7439,
+                    3334.1675,
+                    4464.7879,
+                    5593.3489,
+                    6716.0947,
+                    7834.9031,
+                    8949.4354,
+                    10068.6546,
+                    11179.6041,
+                    11317.8056
+                ],
+                "st_max_qps_list_list": [
+                    735.1562,
+                    563.6946,
+                    623.9262,
+                    584.5904,
+                    517.4969,
+                    450.3825,
+                    385.8495,
+                    351.788,
+                    347.5774,
+                    436.6905,
+                    434.8848
+                ],
+                "st_recall_list": [
+                    0.0972,
+                    0.1923,
+                    0.2838,
+                    0.3735,
+                    0.4657,
+                    0.5586,
+                    0.6521,
+                    0.7481,
+                    0.8439,
+                    0.9364,
+                    0.9363
+                ],
+                "st_ndcg_list": [
+                    0.097,
+                    0.1919,
+                    0.2839,
+                    0.3733,
+                    0.4657,
+                    0.5581,
+                    0.6513,
+                    0.7468,
+                    0.842,
+                    0.9339,
+                    0.9338
+                ],
+                "st_serial_latency_p99_list": [
+                    0.0094,
+                    0.0123,
+                    0.0098,
+                    0.0132,
+                    0.0118,
+                    0.0111,
+                    0.0131,
+                    0.0116,
+                    0.0118,
+                    0.011,
+                    0.0088
+                ],
+                "st_conc_failed_rate_list": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0
+                ]
+            },
+            "task_config": {
+                "db": "QdrantCloud",
+                "db_config": {
+                    "db_label": "16c64g",
+                    "version": "1.14.1",
+                    "note": "",
+                    "url": "**********",
+                    "api_key": "**********"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "m": 16,
+                    "payload_m": 16,
+                    "create_payload_int_index": false,
+                    "create_payload_keyword_index": false,
+                    "is_tenant": false,
+                    "use_scalar_quant": false,
+                    "sq_quantile": 0.99,
+                    "default_segment_number": 0,
+                    "use_rescore": false,
+                    "oversampling": 1.0,
+                    "indexed_only": false,
+                    "hnsw_ef": 100,
+                    "exact": false,
+                    "with_payload": false
+                },
+                "case_config": {
+                    "case_id": 200,
+                    "custom_case": {
+                        "dataset_with_size_type": "Large Cohere (768dim, 10M)",
+                        "insert_rate": 1000,
+                        "search_stages": [
+                            0.1,
+                            0.2,
+                            0.3,
+                            0.4,
+                            0.5,
+                            0.6,
+                            0.7,
+                            0.8,
+                            0.9
+                        ],
+                        "concurrencies": [
+                            5,
+                            10,
+                            20
+                        ]
+                    },
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        }
+    ],
+    "file_fmt": "result_{}_{}_{}.json",
+    "timestamp": 1748822400.0
+}

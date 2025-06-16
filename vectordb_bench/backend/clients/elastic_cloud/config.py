@@ -23,12 +23,30 @@ class ESElementType(str, Enum):
 
 class ElasticCloudIndexConfig(BaseModel, DBCaseConfig):
     element_type: ESElementType = ESElementType.float
-    index: IndexType = IndexType.ES_HNSW  # ES only support 'hnsw'
+    index: IndexType = IndexType.ES_HNSW
+    number_of_shards: int = 1
+    number_of_replicas: int = 0
+    refresh_interval: str = "30s"
+    merge_max_thread_count: int = 8
+    use_rescore: bool = False
+    oversample_ratio: float = 2.0
+    use_routing: bool = False
+    use_force_merge: bool = True
 
     metric_type: MetricType | None = None
     efConstruction: int | None = None
     M: int | None = None
     num_candidates: int | None = None
+
+    def __eq__(self, obj: any):
+        return (
+            self.index == obj.index
+            and self.number_of_shards == obj.number_of_shards
+            and self.number_of_replicas == obj.number_of_replicas
+            and self.use_routing == obj.use_routing
+            and self.efConstruction == obj.efConstruction
+            and self.M == obj.M
+        )
 
     def parse_metric(self) -> str:
         if self.metric_type == MetricType.L2:

@@ -12,7 +12,7 @@ from multiprocessing.connection import Connection
 import psutil
 
 from . import config
-from .backend.assembler import Assembler
+from .backend.assembler import Assembler, FilterNotSupportedError
 from .backend.data_source import DatasetSource
 from .backend.result_collector import ResultCollector
 from .backend.task_runner import TaskRunner
@@ -88,6 +88,10 @@ class BenchMarkRunner:
             log.warning(msg)
             self.latest_error = msg
             return True
+        except FilterNotSupportedError as e:
+            log.warning(e.args[0])
+            self.latest_error = e.args[0]
+            return True
 
         return self._run_async(send_conn)
 
@@ -97,7 +101,7 @@ class BenchMarkRunner:
         return ResultCollector.collect(target_dir)
 
     def _try_get_signal(self):
-        if self.receive_conn and self.receive_conn.poll():
+        while self.receive_conn and self.receive_conn.poll():
             sig, received = self.receive_conn.recv()
             log.debug(f"Sigal received to process: {sig}, {received}")
             if sig == SIGNAL.ERROR:
