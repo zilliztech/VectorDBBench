@@ -48,6 +48,7 @@ class DB(Enum):
     Vespa = "Vespa"
     LanceDB = "LanceDB"
     OceanBase = "OceanBase"
+    SPANNER = "Spanner"
 
     @property
     def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901, PLR0915
@@ -181,6 +182,10 @@ class DB(Enum):
             from .lancedb.lancedb import LanceDB
 
             return LanceDB
+
+        if self == DB.SPANNER:
+            from .spanner.spanner import SpannerVectorDB
+            return SpannerVectorDB
 
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
@@ -318,6 +323,10 @@ class DB(Enum):
 
             return LanceDBConfig
 
+        if self == DB.SPANNER:
+            from .spanner.config import SpannerConfig
+            return SpannerConfig
+
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
 
@@ -429,6 +438,10 @@ class DB(Enum):
             from .lancedb.config import _lancedb_case_config
 
             return _lancedb_case_config.get(index_type)
+
+        if self == DB.SPANNER:
+            from .spanner.config import SpannerCaseConfig
+            return SpannerCaseConfig
 
         # DB.Pinecone, DB.Chroma, DB.Redis
         return EmptyDBCaseConfig

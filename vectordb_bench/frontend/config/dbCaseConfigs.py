@@ -1788,4 +1788,8 @@ CASE_CONFIG_MAP = {
         CaseLabel.Load: AWSOpensearchLoadingConfig,
         CaseLabel.Performance: AWSOpenSearchPerformanceConfig,
     },
+    DB.SPANNER: {
+        CaseLabel.Load: [],
+        CaseLabel.Performance: [],
+    },
 }
