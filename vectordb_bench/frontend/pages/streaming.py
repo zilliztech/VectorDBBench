@@ -36,7 +36,7 @@ def main():
 
     allResults = benchmark_runner.get_results()
 
-    def check_conc_data(res: TestResult):
+    def check_streaming_data(res: TestResult):
         case_results = res.results
         flag = False
         for case_result in case_results:
@@ -45,7 +45,7 @@ def main():
 
         return flag
 
-    checkedResults = [res for res in allResults if check_conc_data(res)]
+    checkedResults = [res for res in allResults if check_streaming_data(res)]
 
     st.title("VDBBench - Streaming Performance")
 

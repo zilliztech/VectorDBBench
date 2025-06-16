@@ -115,10 +115,6 @@ def get_custom_case_items() -> list[UICaseItem]:
     return [
         UICaseItem(
             label=f"{custom_config.dataset_config.name} - None Filter",
-            description=(
-                f"[Batch Cases] This case tests the search performance of a vector database with your own dataset, at varying parallel levels."
-                f"Results will show index building time, recall, and maximum QPS."
-            ),
             cases=[
                 CaseConfig(
                     case_id=CaseType.PerformanceCustomDataset,
@@ -182,7 +178,7 @@ custom_streaming_config: list[ConfigInput] = [
     ConfigInput(
         label=CaseConfigParamType.insert_rate,
         inputType=InputType.Number,
-        inputConfig=dict(step=100, min=100, max=4_000, value=1000),
+        inputConfig=dict(step=100, min=100, max=4_000, value=200),
         inputHelp="fixed insertion rate (rows/s), must be divisible by 100",
     ),
     ConfigInput(
@@ -194,7 +190,7 @@ custom_streaming_config: list[ConfigInput] = [
     ConfigInput(
         label=CaseConfigParamType.concurrencies,
         inputType=InputType.Text,
-        inputConfig=dict(value="[2, 3]"),
+        inputConfig=dict(value="[5, 10, 20]"),
         inputHelp="concurrent num of search test while insertion; record max-qps.",
     ),
     ConfigInput(

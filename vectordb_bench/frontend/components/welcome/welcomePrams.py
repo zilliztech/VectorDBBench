@@ -24,13 +24,13 @@ def welcomePrams(st):
     st.title("Welcome to VectorDB Benchmark!")
     options = [
         {
-            "title": "Results",
+            "title": "Standard Test Results",
             "description": (
                 "<span style='font-size: 17px;'>"
                 "Select a specific run or compare all results side by side to view the results of previous tests."
                 "</span>"
             ),
-            "image": "/Users/zilliz/static/results.png",
+            "image": "fig/homepage/bar-chart.png",
             "link": "results",
         },
         {
@@ -41,7 +41,7 @@ def welcomePrams(st):
                 "(similar to qps in Results) "
                 "</span>"
             ),
-            "image": "/Users/zilliz/static/qpd.png",
+            "image": "fig/homepage/qp$.png",
             "link": "quries_per_dollar",
         },
         {
@@ -49,7 +49,7 @@ def welcomePrams(st):
             "description": (
                 "<span style='font-size: 17px;'>" "To view the results of differnt datasets in tables." "</span>"
             ),
-            "image": "/Users/zilliz/static/tables.png",
+            "image": "fig/homepage/table.png",
             "link": "tables",
         },
         {
@@ -59,17 +59,17 @@ def welcomePrams(st):
                 "To view the variation of qps with latency under different concurrent."
                 "</span>"
             ),
-            "image": "/Users/zilliz/static/concurrent.png",
+            "image": "fig/homepage/concurrent.png",
             "link": "concurrent",
         },
         {
-            "title": "Label Filter",
+            "title": "Label Filter Performance",
             "description": (
                 "<span style='font-size: 17px;'>"
                 "To view the perfomance of datasets under different filter ratios "
                 "</span>"
             ),
-            "image": "/Users/zilliz/static/label_filter.png",
+            "image": "fig/homepage/label_filter.png",
             "link": "label_filter",
         },
         {
@@ -79,7 +79,7 @@ def welcomePrams(st):
                 "To view the perfomance of datasets under different search stages and insertion rates. "
                 "</span>"
             ),
-            "image": "/Users/zilliz/static/streaming.png",
+            "image": "fig/homepage/streaming.png",
             "link": "streaming",
         },
         {
@@ -90,7 +90,7 @@ def welcomePrams(st):
                 "The test results will be displayed in Results."
                 "</span>"
             ),
-            "image": "/Users/zilliz/static/run_test.png",
+            "image": "fig/homepage/run_test.png",
             "link": "run_test",
         },
         {
@@ -100,7 +100,7 @@ def welcomePrams(st):
                 "Define users' own datasets with detailed descriptions of setting each parameter."
                 "</span>"
             ),
-            "image": "/Users/zilliz/static/custom.png",
+            "image": "fig/homepage/custom.png",
             "link": "custom",
         },
     ]
@@ -124,7 +124,7 @@ def welcomePrams(st):
     html_content += """
     </div>
     <div class="title-row">
-        <h2>Set And Run</h2>
+        <h2>Run Your Own Test</h2>
     </div>
     <div class="last-row">
     """

@@ -1,6 +1,6 @@
 import logging
 
-from vectordb_bench.backend.clients import EmptyDBCaseConfig
+from vectordb_bench.backend.clients import DB, EmptyDBCaseConfig
 from vectordb_bench.backend.data_source import DatasetSource
 from vectordb_bench.backend.filter import FilterOp
 from vectordb_bench.models import TaskConfig
@@ -9,6 +9,13 @@ from .cases import CaseLabel
 from .task_runner import CaseRunner, RunningStatus, TaskRunner
 
 log = logging.getLogger(__name__)
+
+
+class FilterNotSupportedError(ValueError):
+    """Raised when a filter type is not supported by a vector database."""
+
+    def __init__(self, db_name: str, filter_type: FilterOp):
+        super().__init__(f"{filter_type} Filter test is not supported by {db_name}.")
 
 
 class Assembler:
@@ -43,16 +50,19 @@ class Assembler:
         streaming_runners = [r for r in runners if r.ca.label == CaseLabel.Streaming]
 
         # group by db
-        db2runner = {}
+        db2runner: dict[DB, list[CaseRunner]] = {}
         for r in perf_runners:
             db = r.config.db
             if db not in db2runner:
                 db2runner[db] = []
             db2runner[db].append(r)
 
-        # check dbclient installed
-        for k in db2runner:
-            _ = k.init_cls
+        # check
+        for db, runners in db2runner.items():
+            db_instance = db.init_cls
+            for runner in runners:
+                if not db_instance.filter_supported(runner.ca.filters):
+                    raise FilterNotSupportedError(db.value, runner.ca.filters.type)
 
         # sort by dataset size
         for _, runner in db2runner.items():

@@ -30,8 +30,8 @@ def NavToPages(st):
         {"name": "Label Filter", "link": "label_filter"},
         {"name": "Quries Per Dollar", "link": "quries_per_dollar"},
         {"name": "Tables", "link": "tables"},
-        {"name": "Custom", "link": "custom"},
         {"name": "Streaming", "link": "streaming"},
+        {"name": "Custom Dataset", "link": "custom"},
     ]
 
     html = ""

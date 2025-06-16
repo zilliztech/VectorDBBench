@@ -59,6 +59,7 @@ def pagestyle():
         width: 100%;
         height: 185px;
         object-fit: cover;
+        object-position: 0 0;
         border-radius: 5px;
         margin-bottom: 10px;
     }
