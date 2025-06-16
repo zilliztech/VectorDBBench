@@ -11,13 +11,16 @@
     "bus_crit": 32.6
   },
   "ElasticCloud": {
-    "upTo2.5c8g": 0.4793
+    "upTo2.5c8g": 0.4793,
+    "8c60g": 1.26,
+    "8c60g-force_merge": 1.26
   },
   "QdrantCloud": {
     "0.5c4g-1node": 0.052,
     "2c8g-1node": 0.166,
     "4c16g-1node": 0.2852,
-    "4c16g-5node": 1.426
+    "4c16g-5node": 1.426,
+    "16c64g": 1.14
   },
   "Pinecone": {
     "s1.x1": 0.0973,
@@ -26,7 +29,12 @@
     "p2.x1": 0.146,
     "p2.x1-8node": 1.168,
     "p1.x1-8node": 0.779,
-    "s1.x1-2node": 0.195
+    "s1.x1-2node": 0.195,
+    "p2.x8-1node": 1.31
   },
-  "PgVector": {}
+  "PgVector": {},
+  "OpenSearch": {
+    "16c128g": 1.418,
+    "16c128g-force_merge": 1.418
+  }
 }

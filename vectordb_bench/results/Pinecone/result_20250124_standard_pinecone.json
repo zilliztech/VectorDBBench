@@ -1,0 +1,2365 @@
+{
+    "run_id": "d60af9965dec47739a5924d55bd3ca8d",
+    "task_label": "standard_2025",
+    "results": [
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 0.0,
+                "optimize_duration": 0.0,
+                "load_duration": 2126.2513,
+                "qps": 1146.5286,
+                "serial_latency_p99": 0.0137,
+                "recall": 0.9262,
+                "ndcg": 0.9375,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    89.7103,
+                    451.0448,
+                    800.7429,
+                    1146.5286,
+                    1127.2749,
+                    1100.9547,
+                    1090.3778,
+                    1093.5092
+                ],
+                "conc_latency_p99_list": [
+                    0.013791601013508625,
+                    0.015605529843596738,
+                    0.016484409999102355,
+                    0.031263737997505814,
+                    0.057778209032840054,
+                    0.06871087484061714,
+                    0.09453640032414101,
+                    0.12561580335852338
+                ],
+                "conc_latency_avg_list": [
+                    0.011108749377182344,
+                    0.011024819903126834,
+                    0.012355533754605541,
+                    0.01724225393612859,
+                    0.026232689714905187,
+                    0.0333120584177395,
+                    0.05166847654314772,
+                    0.07077118145617282
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "Pinecone",
+                "db_config": {
+                    "db_label": "p2.x8-1node",
+                    "version": "v2025.1",
+                    "note": "",
+                    "api_key": "**********",
+                    "index_name": "***"
+                },
+                "db_case_config": {
+                    "null": null
+                },
+                "case_config": {
+                    "case_id": 5,
+                    "custom_case": null,
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 0.0,
+                "optimize_duration": 0.0,
+                "load_duration": 2126.2513,
+                "qps": 1148.1735,
+                "serial_latency_p99": 0.0089,
+                "recall": 0.9801,
+                "ndcg": 0.9856,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    118.4761,
+                    629.4662,
+                    1003.6994,
+                    1148.1735,
+                    1134.485,
+                    1106.5084,
+                    1057.0022,
+                    1095.6968
+                ],
+                "conc_latency_p99_list": [
+                    0.010198568325722595,
+                    0.011580736243049615,
+                    0.012750407813873606,
+                    0.035005421918758634,
+                    0.0488859723976929,
+                    0.06385278060872217,
+                    0.09591716366281611,
+                    0.12398869160097085
+                ],
+                "conc_latency_avg_list": [
+                    0.008404164337577874,
+                    0.007886417234427203,
+                    0.009873810345217133,
+                    0.017262488735400622,
+                    0.026062020521209463,
+                    0.03509230240574552,
+                    0.05255895479978243,
+                    0.07044940903706345
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "Pinecone",
+                "db_config": {
+                    "db_label": "p2.x8-1node",
+                    "version": "v2025.1",
+                    "note": "",
+                    "api_key": "**********",
+                    "index_name": "***"
+                },
+                "db_case_config": {
+                    "null": null
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Medium Cohere (768dim, 1M)",
+                        "label_percentage": 0.001
+                    },
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 0.0,
+                "optimize_duration": 0.0,
+                "load_duration": 2126.2513,
+                "qps": 1149.1219,
+                "serial_latency_p99": 0.0103,
+                "recall": 0.9764,
+                "ndcg": 0.9829,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    122.1141,
+                    599.9108,
+                    992.8201,
+                    1149.1219,
+                    1127.7954,
+                    1127.6137,
+                    1109.5524,
+                    1094.059
+                ],
+                "conc_latency_p99_list": [
+                    0.010228544765122935,
+                    0.012254990946530599,
+                    0.013002205097582181,
+                    0.03493648969888454,
+                    0.051992585002153695,
+                    0.06399628202518218,
+                    0.09365851940048733,
+                    0.1258584584266646
+                ],
+                "conc_latency_avg_list": [
+                    0.0081461877431091,
+                    0.008292232734199538,
+                    0.009986036937053603,
+                    0.017203606093717096,
+                    0.026305949480317403,
+                    0.03492611695088149,
+                    0.052883698617605966,
+                    0.07113856674401632
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "Pinecone",
+                "db_config": {
+                    "db_label": "p2.x8-1node",
+                    "version": "v2025.1",
+                    "note": "",
+                    "api_key": "**********",
+                    "index_name": "***"
+                },
+                "db_case_config": {
+                    "null": null
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Medium Cohere (768dim, 1M)",
+                        "label_percentage": 0.002
+                    },
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 0.0,
+                "optimize_duration": 0.0,
+                "load_duration": 2126.2513,
+                "qps": 1140.4099,
+                "serial_latency_p99": 0.0135,
+                "recall": 0.9716,
+                "ndcg": 0.9795,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    91.0535,
+                    511.9188,
+                    895.68,
+                    1140.4099,
+                    1137.9673,
+                    1111.8374,
+                    1104.0823,
+                    1094.6803
+                ],
+                "conc_latency_p99_list": [
+                    0.012947398360993246,
+                    0.014624544030375547,
+                    0.015493546993820922,
+                    0.03511927481769818,
+                    0.0549006280042522,
+                    0.06538223753042983,
+                    0.09603407779533879,
+                    0.12705528265360044
+                ],
+                "conc_latency_avg_list": [
+                    0.010938345796112522,
+                    0.009713978906251959,
+                    0.011060514624400991,
+                    0.017303961415158265,
+                    0.02605609118725089,
+                    0.035318296011843484,
+                    0.05268246433266521,
+                    0.07052755559466646
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "Pinecone",
+                "db_config": {
+                    "db_label": "p2.x8-1node",
+                    "version": "v2025.1",
+                    "note": "",
+                    "api_key": "**********",
+                    "index_name": "***"
+                },
+                "db_case_config": {
+                    "null": null
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Medium Cohere (768dim, 1M)",
+                        "label_percentage": 0.005
+                    },
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 0.0,
+                "optimize_duration": 0.0,
+                "load_duration": 2126.2513,
+                "qps": 1123.5147,
+                "serial_latency_p99": 0.0185,
+                "recall": 0.9688,
+                "ndcg": 0.9774,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    65.4827,
+                    335.3104,
+                    574.1917,
+                    1094.9839,
+                    1076.2269,
+                    1123.5147,
+                    1103.555,
+                    1096.3059
+                ],
+                "conc_latency_p99_list": [
+                    0.016914594155969097,
+                    0.019950488850008698,
+                    0.021503399780340264,
+                    0.03213390766904922,
+                    0.05303824923801584,
+                    0.06920307081076317,
+                    0.10063651869277243,
+                    0.12733303321176206
+                ],
+                "conc_latency_avg_list": [
+                    0.015205357505339415,
+                    0.014773703509475542,
+                    0.017270813409320684,
+                    0.018030726756816676,
+                    0.02745925030449534,
+                    0.034960502325556767,
+                    0.05308033917166618,
+                    0.07048289867591259
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "Pinecone",
+                "db_config": {
+                    "db_label": "p2.x8-1node",
+                    "version": "v2025.1",
+                    "note": "",
+                    "api_key": "**********",
+                    "index_name": "***"
+                },
+                "db_case_config": {
+                    "null": null
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Medium Cohere (768dim, 1M)",
+                        "label_percentage": 0.01
+                    },
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 0.0,
+                "optimize_duration": 0.0,
+                "load_duration": 2126.2513,
+                "qps": 487.8343,
+                "serial_latency_p99": 0.0254,
+                "recall": 0.9668,
+                "ndcg": 0.9759,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    40.5157,
+                    207.5031,
+                    386.2551,
+                    475.1791,
+                    426.7192,
+                    433.6369,
+                    437.2957,
+                    487.8343
+                ],
+                "conc_latency_p99_list": [
+                    0.02630955680506304,
+                    0.027984925381169888,
+                    0.03076737125229556,
+                    0.054454336302878804,
+                    0.15612186648242682,
+                    0.7413580868815188,
+                    0.7662904710927975,
+                    0.2712144359975355
+                ],
+                "conc_latency_avg_list": [
+                    0.024577685126248767,
+                    0.02396539893233684,
+                    0.02569801655532319,
+                    0.04173864294326265,
+                    0.06936145049048321,
+                    0.09078064205038794,
+                    0.13272548683380164,
+                    0.15918668983699333
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "Pinecone",
+                "db_config": {
+                    "db_label": "p2.x8-1node",
+                    "version": "v2025.1",
+                    "note": "",
+                    "api_key": "**********",
+                    "index_name": "***"
+                },
+                "db_case_config": {
+                    "null": null
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Medium Cohere (768dim, 1M)",
+                        "label_percentage": 0.02
+                    },
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 0.0,
+                "optimize_duration": 0.0,
+                "load_duration": 2126.2513,
+                "qps": 264.9324,
+                "serial_latency_p99": 0.0496,
+                "recall": 0.936,
+                "ndcg": 0.9483,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    29.6317,
+                    148.7753,
+                    264.9324,
+                    249.6521,
+                    241.4427,
+                    241.4529,
+                    240.9326,
+                    252.3715
+                ],
+                "conc_latency_p99_list": [
+                    0.047371959277661524,
+                    0.050403122927527834,
+                    0.05848660764226224,
+                    0.11839474710359522,
+                    0.7284840404131682,
+                    0.7582129785086726,
+                    0.8299701955541969,
+                    0.8885020964744035
+                ],
+                "conc_latency_avg_list": [
+                    0.03361354643990148,
+                    0.03342152088152943,
+                    0.037538623392592466,
+                    0.0793943308500512,
+                    0.12274700045002969,
+                    0.16313217267037464,
+                    0.2431635238924095,
+                    0.30585054528823524
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "Pinecone",
+                "db_config": {
+                    "db_label": "p2.x8-1node",
+                    "version": "v2025.1",
+                    "note": "",
+                    "api_key": "**********",
+                    "index_name": "***"
+                },
+                "db_case_config": {
+                    "null": null
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Medium Cohere (768dim, 1M)",
+                        "label_percentage": 0.05
+                    },
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 0.0,
+                "optimize_duration": 0.0,
+                "load_duration": 2126.2513,
+                "qps": 492.4887,
+                "serial_latency_p99": 0.0296,
+                "recall": 0.9269,
+                "ndcg": 0.9406,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    45.6283,
+                    228.8224,
+                    429.0672,
+                    492.362,
+                    492.4887,
+                    492.1122,
+                    483.3098,
+                    479.2334
+                ],
+                "conc_latency_p99_list": [
+                    0.029842858490883372,
+                    0.03140155753877477,
+                    0.03398649209295399,
+                    0.05796141434111629,
+                    0.07744239267485681,
+                    0.09997811100183752,
+                    0.14843028450690327,
+                    0.19112906069698504
+                ],
+                "conc_latency_avg_list": [
+                    0.02182855403709056,
+                    0.021738771298434958,
+                    0.02315883672415145,
+                    0.0401627410417922,
+                    0.060190110414398854,
+                    0.0800248239793686,
+                    0.12079962916444917,
+                    0.1626050597608812
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "Pinecone",
+                "db_config": {
+                    "db_label": "p2.x8-1node",
+                    "version": "v2025.1",
+                    "note": "",
+                    "api_key": "**********",
+                    "index_name": "***"
+                },
+                "db_case_config": {
+                    "null": null
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Medium Cohere (768dim, 1M)",
+                        "label_percentage": 0.1
+                    },
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 0.0,
+                "optimize_duration": 0.0,
+                "load_duration": 2126.2513,
+                "qps": 823.1775,
+                "serial_latency_p99": 0.0205,
+                "recall": 0.9148,
+                "ndcg": 0.9295,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    63.9655,
+                    325.1899,
+                    596.2744,
+                    822.2527,
+                    823.1775,
+                    815.7257,
+                    815.4912,
+                    810.8009
+                ],
+                "conc_latency_p99_list": [
+                    0.020400863321847283,
+                    0.02129151475324759,
+                    0.023600401997100562,
+                    0.03618957087208394,
+                    0.04801011800780543,
+                    0.061494000008678995,
+                    0.08658009324790328,
+                    0.11109914914180989
+                ],
+                "conc_latency_avg_list": [
+                    0.015562828481866986,
+                    0.015247509371216874,
+                    0.01666730220395721,
+                    0.02408525876172286,
+                    0.03596944002898247,
+                    0.048311288232140044,
+                    0.07183615920169807,
+                    0.09593956600052911
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "Pinecone",
+                "db_config": {
+                    "db_label": "p2.x8-1node",
+                    "version": "v2025.1",
+                    "note": "",
+                    "api_key": "**********",
+                    "index_name": "***"
+                },
+                "db_case_config": {
+                    "null": null
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Medium Cohere (768dim, 1M)",
+                        "label_percentage": 0.2
+                    },
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 0.0,
+                "optimize_duration": 0.0,
+                "load_duration": 2126.2513,
+                "qps": 1147.1977,
+                "serial_latency_p99": 0.0133,
+                "recall": 0.8999,
+                "ndcg": 0.9157,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    93.1754,
+                    440.7722,
+                    796.7488,
+                    1147.1977,
+                    1132.5094,
+                    1130.2844,
+                    1110.4012,
+                    1096.8985
+                ],
+                "conc_latency_p99_list": [
+                    0.013215548178413883,
+                    0.01585558185703121,
+                    0.01664793356670997,
+                    0.030344165831920688,
+                    0.054945265403948715,
+                    0.06816595857744691,
+                    0.09562398723370269,
+                    0.12422144682612266
+                ],
+                "conc_latency_avg_list": [
+                    0.010685030243638288,
+                    0.01128223451835917,
+                    0.01246204521816795,
+                    0.017187018085831767,
+                    0.0261614998043631,
+                    0.03484493213140737,
+                    0.05278776547064244,
+                    0.07062121728866878
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "Pinecone",
+                "db_config": {
+                    "db_label": "p2.x8-1node",
+                    "version": "v2025.1",
+                    "note": "",
+                    "api_key": "**********",
+                    "index_name": "***"
+                },
+                "db_case_config": {
+                    "null": null
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Medium Cohere (768dim, 1M)",
+                        "label_percentage": 0.5
+                    },
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 0.0,
+                "optimize_duration": 0.0,
+                "load_duration": 28509.4338,
+                "qps": 1131.3087,
+                "serial_latency_p99": 0.0141,
+                "recall": 0.9024,
+                "ndcg": 0.9154,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    90.849,
+                    407.02,
+                    735.5371,
+                    1118.1641,
+                    1131.3087,
+                    1120.8586,
+                    1099.0279,
+                    1057.3003
+                ],
+                "conc_latency_p99_list": [
+                    0.013515190919133602,
+                    0.017234839714365093,
+                    0.018275173522415568,
+                    0.02860271738085433,
+                    0.056761728207493305,
+                    0.06929460785097043,
+                    0.097589283852576,
+                    0.12905132810046782
+                ],
+                "conc_latency_avg_list": [
+                    0.01095240891166025,
+                    0.012221095620562733,
+                    0.01347222318774823,
+                    0.01769807080872599,
+                    0.025982393898555493,
+                    0.034840590310236876,
+                    0.05306375182203569,
+                    0.07060993108546462
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "Pinecone",
+                "db_config": {
+                    "db_label": "p2.x8-1node",
+                    "version": "v2025.1",
+                    "note": "",
+                    "api_key": "**********",
+                    "index_name": "***"
+                },
+                "db_case_config": {
+                    "null": null
+                },
+                "case_config": {
+                    "case_id": 4,
+                    "custom_case": null,
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 0.0,
+                "optimize_duration": 0.0,
+                "load_duration": 28509.4338,
+                "qps": 1114.952,
+                "serial_latency_p99": 0.0127,
+                "recall": 0.97,
+                "ndcg": 0.9783,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    90.5627,
+                    437.4478,
+                    760.7818,
+                    1106.9575,
+                    1113.5451,
+                    1114.952,
+                    1090.4887,
+                    1092.3931
+                ],
+                "conc_latency_p99_list": [
+                    0.012854363380465656,
+                    0.014500056750948715,
+                    0.015446821160840049,
+                    0.030688926820985216,
+                    0.05206975059918472,
+                    0.06555691049230505,
+                    0.09492760553170229,
+                    0.12494878920042535
+                ],
+                "conc_latency_avg_list": [
+                    0.010506901054991424,
+                    0.01073385374424058,
+                    0.012292819722916409,
+                    0.016879903060319217,
+                    0.02529760059472378,
+                    0.03279151763150447,
+                    0.051204498251696685,
+                    0.06913170831099856
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "Pinecone",
+                "db_config": {
+                    "db_label": "p2.x8-1node",
+                    "version": "v2025.1",
+                    "note": "",
+                    "api_key": "**********",
+                    "index_name": "***"
+                },
+                "db_case_config": {
+                    "null": null
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Large Cohere (768dim, 10M)",
+                        "label_percentage": 0.001
+                    },
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 0.0,
+                "optimize_duration": 0.0,
+                "load_duration": 28509.4338,
+                "qps": 583.5009,
+                "serial_latency_p99": 0.023,
+                "recall": 0.9668,
+                "ndcg": 0.9759,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    67.3878,
+                    263.1014,
+                    430.7184,
+                    571.6975,
+                    583.5009,
+                    568.4436,
+                    568.1708,
+                    572.4906
+                ],
+                "conc_latency_p99_list": [
+                    0.021462515089478985,
+                    0.023866306961608644,
+                    0.027115660702111206,
+                    0.04820888617956375,
+                    0.06530862996038196,
+                    0.08745708624104737,
+                    0.12193633456117824,
+                    0.1545460256014484
+                ],
+                "conc_latency_avg_list": [
+                    0.014776227643867547,
+                    0.017753697074181677,
+                    0.02213448188138263,
+                    0.0329851098273663,
+                    0.05030243790175194,
+                    0.06737997281617648,
+                    0.09680808542082442,
+                    0.13057080247166022
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "Pinecone",
+                "db_config": {
+                    "db_label": "p2.x8-1node",
+                    "version": "v2025.1",
+                    "note": "",
+                    "api_key": "**********",
+                    "index_name": "***"
+                },
+                "db_case_config": {
+                    "null": null
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Large Cohere (768dim, 10M)",
+                        "label_percentage": 0.002
+                    },
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 0.0,
+                "optimize_duration": 0.0,
+                "load_duration": 28509.4338,
+                "qps": 31.4779,
+                "serial_latency_p99": 0.351,
+                "recall": 0.9414,
+                "ndcg": 0.9541,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    4.3198,
+                    19.1413,
+                    30.4599,
+                    30.4017,
+                    30.6316,
+                    30.2655,
+                    31.4779,
+                    29.6477
+                ],
+                "conc_latency_p99_list": [
+                    0.3619136803019499,
+                    0.3523363888596213,
+                    0.4751970390998031,
+                    0.7914956652001276,
+                    1.107237294701481,
+                    1.4272101175198257,
+                    2.0577846891398073,
+                    2.7552646648690278
+                ],
+                "conc_latency_avg_list": [
+                    0.22943486568687052,
+                    0.24802064679067656,
+                    0.3134136860633699,
+                    0.6188877826036492,
+                    0.9182841400914843,
+                    1.2256008265330056,
+                    1.7779670730124897,
+                    2.4486907511976583
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "Pinecone",
+                "db_config": {
+                    "db_label": "p2.x8-1node",
+                    "version": "v2025.1",
+                    "note": "",
+                    "api_key": "**********",
+                    "index_name": "***"
+                },
+                "db_case_config": {
+                    "null": null
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Large Cohere (768dim, 10M)",
+                        "label_percentage": 0.005
+                    },
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 0.0,
+                "optimize_duration": 0.0,
+                "load_duration": 28509.4338,
+                "qps": 57.8988,
+                "serial_latency_p99": 0.2001,
+                "recall": 0.9332,
+                "ndcg": 0.9468,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    7.0749,
+                    34.8679,
+                    55.2805,
+                    56.1467,
+                    56.665,
+                    57.8988,
+                    57.1717,
+                    56.2749
+                ],
+                "conc_latency_p99_list": [
+                    0.21104647180181932,
+                    0.2108999284995661,
+                    0.27348768418189134,
+                    0.4394125210181663,
+                    0.6318989706414868,
+                    0.7912053661224491,
+                    1.1383832841957338,
+                    1.5200451774567771
+                ],
+                "conc_latency_avg_list": [
+                    0.13628724267859302,
+                    0.13768700175984208,
+                    0.17218041142733337,
+                    0.3409596207650808,
+                    0.4953826850098498,
+                    0.6516730440882924,
+                    0.9772891496444811,
+                    1.3051331751763418
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "Pinecone",
+                "db_config": {
+                    "db_label": "p2.x8-1node",
+                    "version": "v2025.1",
+                    "note": "",
+                    "api_key": "**********",
+                    "index_name": "***"
+                },
+                "db_case_config": {
+                    "null": null
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Large Cohere (768dim, 10M)",
+                        "label_percentage": 0.01
+                    },
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 0.0,
+                "optimize_duration": 0.0,
+                "load_duration": 28509.4338,
+                "qps": 101.1774,
+                "serial_latency_p99": 0.1161,
+                "recall": 0.9241,
+                "ndcg": 0.9388,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    12.648,
+                    60.967,
+                    99.3555,
+                    97.0975,
+                    100.2324,
+                    99.6057,
+                    99.3196,
+                    101.1774
+                ],
+                "conc_latency_p99_list": [
+                    0.112565766798798,
+                    0.11971512002324741,
+                    0.1487955656446866,
+                    0.2592605054263549,
+                    0.36047108154816676,
+                    0.46077777919563234,
+                    0.6784228897774299,
+                    0.8538449384335399
+                ],
+                "conc_latency_avg_list": [
+                    0.07408682850995668,
+                    0.07850101477429011,
+                    0.09643367660443229,
+                    0.19343726049070478,
+                    0.27824098990330887,
+                    0.37553753237614473,
+                    0.5652041354910056,
+                    0.7495476608112455
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "Pinecone",
+                "db_config": {
+                    "db_label": "p2.x8-1node",
+                    "version": "v2025.1",
+                    "note": "",
+                    "api_key": "**********",
+                    "index_name": "***"
+                },
+                "db_case_config": {
+                    "null": null
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Large Cohere (768dim, 10M)",
+                        "label_percentage": 0.02
+                    },
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 0.0,
+                "optimize_duration": 0.0,
+                "load_duration": 28509.4338,
+                "qps": 212.7466,
+                "serial_latency_p99": 0.0587,
+                "recall": 0.9099,
+                "ndcg": 0.9257,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    25.439,
+                    119.731,
+                    196.4422,
+                    212.7466,
+                    211.5371,
+                    209.1208,
+                    209.4669,
+                    211.1247
+                ],
+                "conc_latency_p99_list": [
+                    0.05828394692100118,
+                    0.0634566752925457,
+                    0.07846361254138173,
+                    0.12517219290144568,
+                    0.17513354650014662,
+                    0.22177759199665162,
+                    0.3242466379706457,
+                    0.4192473373207031
+                ],
+                "conc_latency_avg_list": [
+                    0.03905844482848436,
+                    0.04145640161689432,
+                    0.048258142588734565,
+                    0.09264635079011461,
+                    0.13337490028865584,
+                    0.1819488868174765,
+                    0.2705504307427727,
+                    0.3517622626939955
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "Pinecone",
+                "db_config": {
+                    "db_label": "p2.x8-1node",
+                    "version": "v2025.1",
+                    "note": "",
+                    "api_key": "**********",
+                    "index_name": "***"
+                },
+                "db_case_config": {
+                    "null": null
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Large Cohere (768dim, 10M)",
+                        "label_percentage": 0.05
+                    },
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 0.0,
+                "optimize_duration": 0.0,
+                "load_duration": 28509.4338,
+                "qps": 372.2462,
+                "serial_latency_p99": 0.0359,
+                "recall": 0.8977,
+                "ndcg": 0.9144,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    40.3583,
+                    156.8383,
+                    325.9717,
+                    356.9097,
+                    368.8438,
+                    372.2462,
+                    367.3872,
+                    356.9887
+                ],
+                "conc_latency_p99_list": [
+                    0.035145813025228546,
+                    0.03881652459967883,
+                    0.04533428478971472,
+                    0.07258239452348784,
+                    0.10110301843073102,
+                    0.12868865168478805,
+                    0.1909981646368396,
+                    0.24811056845937857
+                ],
+                "conc_latency_avg_list": [
+                    0.02412668327262766,
+                    0.025689656896213994,
+                    0.028737803124804118,
+                    0.05169956989733857,
+                    0.07589492486475118,
+                    0.1009001980597061,
+                    0.15286646664873463,
+                    0.19985151834115583
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "Pinecone",
+                "db_config": {
+                    "db_label": "p2.x8-1node",
+                    "version": "v2025.1",
+                    "note": "",
+                    "api_key": "**********",
+                    "index_name": "***"
+                },
+                "db_case_config": {
+                    "null": null
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Large Cohere (768dim, 10M)",
+                        "label_percentage": 0.1
+                    },
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 0.0,
+                "optimize_duration": 0.0,
+                "load_duration": 28509.4338,
+                "qps": 617.0881,
+                "serial_latency_p99": 0.0224,
+                "recall": 0.8844,
+                "ndcg": 0.9025,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    55.7853,
+                    266.7827,
+                    488.8253,
+                    607.1061,
+                    609.3167,
+                    617.0881,
+                    614.9136,
+                    603.6542
+                ],
+                "conc_latency_p99_list": [
+                    0.023146135569768377,
+                    0.025465623447453237,
+                    0.02846403649033163,
+                    0.04483356902128431,
+                    0.06086368759803008,
+                    0.0785337177220208,
+                    0.11133191424924009,
+                    0.1459527112510841
+                ],
+                "conc_latency_avg_list": [
+                    0.017103368856267256,
+                    0.017628148835740175,
+                    0.019325287352050427,
+                    0.030972281445919656,
+                    0.04654549774614595,
+                    0.0609126179573557,
+                    0.09111022406320932,
+                    0.12400019281335911
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "Pinecone",
+                "db_config": {
+                    "db_label": "p2.x8-1node",
+                    "version": "v2025.1",
+                    "note": "",
+                    "api_key": "**********",
+                    "index_name": "***"
+                },
+                "db_case_config": {
+                    "null": null
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Large Cohere (768dim, 10M)",
+                        "label_percentage": 0.2
+                    },
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 0.0,
+                "optimize_duration": 0.0,
+                "load_duration": 28509.4338,
+                "qps": 1094.5967,
+                "serial_latency_p99": 0.0143,
+                "recall": 0.8659,
+                "ndcg": 0.8854,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    20,
+                    30,
+                    40,
+                    60,
+                    80
+                ],
+                "conc_qps_list": [
+                    87.2893,
+                    391.005,
+                    703.4222,
+                    1079.1062,
+                    1088.7975,
+                    1094.5967,
+                    1077.4104,
+                    1065.4778
+                ],
+                "conc_latency_p99_list": [
+                    0.013830654038756615,
+                    0.01712545307993423,
+                    0.01850793520308798,
+                    0.025446242557372878,
+                    0.05512046027812172,
+                    0.07343901599670064,
+                    0.10232758972008019,
+                    0.13014544384568572
+                ],
+                "conc_latency_avg_list": [
+                    0.010906762150558113,
+                    0.012191352217792134,
+                    0.013591502213806766,
+                    0.01745915249624072,
+                    0.025780819081531257,
+                    0.03341044864251269,
+                    0.05180792240455562,
+                    0.06978683498213636
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "Pinecone",
+                "db_config": {
+                    "db_label": "p2.x8-1node",
+                    "version": "v2025.1",
+                    "note": "",
+                    "api_key": "**********",
+                    "index_name": "***"
+                },
+                "db_case_config": {
+                    "null": null
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Large Cohere (768dim, 10M)",
+                        "label_percentage": 0.5
+                    },
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 22825.014884851,
+                "optimize_duration": 0.03767456900095567,
+                "load_duration": 0.0,
+                "qps": 0.0,
+                "serial_latency_p99": 0.0,
+                "recall": 0.0,
+                "ndcg": 0.0,
+                "conc_num_list": [],
+                "conc_qps_list": [],
+                "conc_latency_p99_list": [],
+                "conc_latency_avg_list": [],
+                "st_ideal_insert_duration": 20000,
+                "st_search_stage_list": [
+                    10,
+                    20,
+                    30,
+                    40,
+                    50,
+                    60,
+                    70,
+                    80,
+                    90,
+                    100,
+                    110
+                ],
+                "st_search_time_list": [
+                    2000.7527,
+                    4164.1309,
+                    6360.6054,
+                    8632.6723,
+                    10934.6608,
+                    13275.7304,
+                    15664.5283,
+                    18059.2308,
+                    20477.9703,
+                    22826.2556,
+                    23005.368
+                ],
+                "st_max_qps_list_list": [
+                    349.7492,
+                    373.5938,
+                    392.9454,
+                    379.7178,
+                    396.0267,
+                    394.7847,
+                    381.3392,
+                    368.2059,
+                    367.4299,
+                    1133.86,
+                    1157.1545
+                ],
+                "st_recall_list": [
+                    0.0986,
+                    0.1962,
+                    0.2897,
+                    0.38,
+                    0.4727,
+                    0.5663,
+                    0.6597,
+                    0.7526,
+                    0.845,
+                    0.9023,
+                    0.9023
+                ],
+                "st_ndcg_list": [
+                    0.0987,
+                    0.1965,
+                    0.291,
+                    0.3814,
+                    0.4753,
+                    0.5695,
+                    0.6638,
+                    0.7583,
+                    0.8533,
+                    0.9152,
+                    0.9152
+                ],
+                "st_serial_latency_p99_list": [
+                    0.1627,
+                    0.186,
+                    0.1995,
+                    0.2034,
+                    0.8869,
+                    1.299,
+                    1.5292,
+                    1.5506,
+                    1.8286,
+                    0.2083,
+                    0.0146
+                ],
+                "st_conc_failed_rate_list": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    2.8953616306676705e-05,
+                    0.0
+                ]
+            },
+            "task_config": {
+                "db": "Pinecone",
+                "db_config": {
+                    "db_label": "p2.x8-1node",
+                    "version": "v2025.1",
+                    "note": "",
+                    "api_key": "**********",
+                    "index_name": "***"
+                },
+                "db_case_config": {
+                    "null": null
+                },
+                "case_config": {
+                    "case_id": 200,
+                    "custom_case": {
+                        "dataset_with_size_type": "Large Cohere (768dim, 10M)",
+                        "insert_rate": 500,
+                        "search_stages": [
+                            0.1,
+                            0.2,
+                            0.3,
+                            0.4,
+                            0.5,
+                            0.6,
+                            0.7,
+                            0.8,
+                            0.9
+                        ],
+                        "concurrencies": [
+                            10,
+                            15,
+                            20
+                        ]
+                    },
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            15,
+                            20,
+                            25,
+                            30,
+                            35,
+                            40,
+                            45,
+                            50,
+                            55,
+                            60,
+                            65,
+                            70,
+                            75,
+                            80,
+                            85,
+                            90,
+                            95,
+                            100
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 18419.824247966004,
+                "optimize_duration": 0.03693918000499252,
+                "load_duration": 0.0,
+                "qps": 0.0,
+                "serial_latency_p99": 0.0,
+                "recall": 0.0,
+                "ndcg": 0.0,
+                "conc_num_list": [],
+                "conc_qps_list": [],
+                "conc_latency_p99_list": [],
+                "conc_latency_avg_list": [],
+                "st_ideal_insert_duration": 10000,
+                "st_search_stage_list": [
+                    10,
+                    20,
+                    30,
+                    40,
+                    50,
+                    60,
+                    70,
+                    80,
+                    90,
+                    100,
+                    110
+                ],
+                "st_search_time_list": [
+                    1635.6835,
+                    3462.1376,
+                    5305.9346,
+                    7176.6576,
+                    9000.4662,
+                    10845.2049,
+                    12698.407,
+                    14569.2157,
+                    16470.5286,
+                    18421.0961,
+                    18749.8044
+                ],
+                "st_max_qps_list_list": [
+                    331.1683,
+                    359.9183,
+                    391.4605,
+                    396.0265,
+                    392.1749,
+                    399.3687,
+                    398.9593,
+                    398.7458,
+                    369.6771,
+                    1092.3705,
+                    1125.0873
+                ],
+                "st_recall_list": [
+                    0.1007,
+                    0.2042,
+                    0.3004,
+                    0.3915,
+                    0.4826,
+                    0.5735,
+                    0.6647,
+                    0.7572,
+                    0.8451,
+                    0.9025,
+                    0.9028
+                ],
+                "st_ndcg_list": [
+                    0.1007,
+                    0.2045,
+                    0.3016,
+                    0.3931,
+                    0.4851,
+                    0.5768,
+                    0.6688,
+                    0.763,
+                    0.8532,
+                    0.9154,
+                    0.9157
+                ],
+                "st_serial_latency_p99_list": [
+                    0.315,
+                    1.1674,
+                    5.0472,
+                    1.4148,
+                    2.3238,
+                    3.68,
+                    4.1368,
+                    5.7254,
+                    5.992,
+                    6.9972,
+                    0.014
+                ],
+                "st_conc_failed_rate_list": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.642764444006374e-05,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0
+                ]
+            },
+            "task_config": {
+                "db": "Pinecone",
+                "db_config": {
+                    "db_label": "p2.x8-1node",
+                    "version": "v2025.1",
+                    "note": "",
+                    "api_key": "**********",
+                    "index_name": "***"
+                },
+                "db_case_config": {
+                    "null": null
+                },
+                "case_config": {
+                    "case_id": 200,
+                    "custom_case": {
+                        "dataset_with_size_type": "Large Cohere (768dim, 10M)",
+                        "insert_rate": 1000,
+                        "search_stages": [
+                            0.1,
+                            0.2,
+                            0.3,
+                            0.4,
+                            0.5,
+                            0.6,
+                            0.7,
+                            0.8,
+                            0.9
+                        ],
+                        "concurrencies": [
+                            10,
+                            15,
+                            20
+                        ]
+                    },
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        }
+    ],
+    "file_fmt": "result_{}_{}_{}.json",
+    "timestamp": 1737676800.0
+}

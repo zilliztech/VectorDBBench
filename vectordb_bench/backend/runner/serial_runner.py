@@ -6,10 +6,10 @@ import time
 import traceback
 
 import numpy as np
-import pandas as pd
 import psutil
 
 from vectordb_bench.backend.dataset import DatasetManager
+from vectordb_bench.backend.filter import Filter, FilterOp, non_filter
 
 from ... import config
 from ...metric import calc_ndcg, calc_recall, get_ideal_dcg
@@ -18,8 +18,7 @@ from .. import utils
 from ..clients import api
 
 NUM_PER_BATCH = config.NUM_PER_BATCH
-LOAD_MAX_TRY_COUNT = 10
-WAITTING_TIME = 60
+LOAD_MAX_TRY_COUNT = config.LOAD_MAX_TRY_COUNT
 
 log = logging.getLogger(__name__)
 
@@ -30,12 +29,26 @@ class SerialInsertRunner:
         db: api.VectorDB,
         dataset: DatasetManager,
         normalize: bool,
+        filters: Filter = non_filter,
         timeout: float | None = None,
     ):
         self.timeout = timeout if isinstance(timeout, int | float) else None
         self.dataset = dataset
         self.db = db
         self.normalize = normalize
+        self.filters = filters
+
+    def retry_insert(self, db: api.VectorDB, retry_idx: int = 0, **kwargs):
+        _, error = db.insert_embeddings(**kwargs)
+        if error is not None:
+            log.warning(f"Insert Failed, try_idx={retry_idx}, Exception: {error}")
+            retry_idx += 1
+            if retry_idx <= config.MAX_INSERT_RETRY:
+                time.sleep(retry_idx)
+                self.retry_insert(db, retry_idx=retry_idx, **kwargs)
+            else:
+                msg = f"Insert failed and retried more than {config.MAX_INSERT_RETRY} times"
+                raise RuntimeError(msg) from None
 
     def task(self) -> int:
         count = 0
@@ -43,9 +56,9 @@ class SerialInsertRunner:
             log.info(f"({mp.current_process().name:16}) Start inserting embeddings in batch {config.NUM_PER_BATCH}")
             start = time.perf_counter()
             for data_df in self.dataset:
-                all_metadata = data_df["id"].tolist()
+                all_metadata = data_df[self.dataset.data.train_id_field].tolist()
 
-                emb_np = np.stack(data_df["emb"])
+                emb_np = np.stack(data_df[self.dataset.data.train_vector_field])
                 if self.normalize:
                     log.debug("normalize the 100k train data")
                     all_embeddings = (emb_np / np.linalg.norm(emb_np, axis=1)[:, np.newaxis]).tolist()
@@ -54,12 +67,25 @@ class SerialInsertRunner:
                 del emb_np
                 log.debug(f"batch dataset size: {len(all_embeddings)}, {len(all_metadata)}")
 
+                labels_data = None
+                if self.filters.type == FilterOp.StrEqual:
+                    if self.dataset.data.scalar_labels_file_separated:
+                        labels_data = self.dataset.scalar_labels[self.filters.label_field][all_metadata].to_list()
+                    else:
+                        labels_data = data_df[self.filters.label_field].tolist()
+
                 insert_count, error = self.db.insert_embeddings(
                     embeddings=all_embeddings,
                     metadata=all_metadata,
+                    labels_data=labels_data,
                 )
                 if error is not None:
-                    raise error
+                    self.retry_insert(
+                        self.db,
+                        embeddings=all_embeddings,
+                        metadata=all_metadata,
+                        labels_data=labels_data,
+                    )
 
                 assert insert_count == len(all_metadata)
                 count += insert_count
@@ -101,7 +127,7 @@ class SerialInsertRunner:
                     already_insert_count += insert_count
                     if error is not None:
                         retry_count += 1
-                        time.sleep(WAITTING_TIME)
+                        time.sleep(10)
 
                         log.info(f"Failed to insert data, try {retry_count} time")
                         if retry_count >= LOAD_MAX_TRY_COUNT:
@@ -149,8 +175,8 @@ class SerialInsertRunner:
         # only 1 file
         data_df = next(iter(self.dataset))
         all_embeddings, all_metadata = (
-            np.stack(data_df["emb"]).tolist(),
-            data_df["id"].tolist(),
+            np.stack(data_df[self.dataset.data.train_vector_field]).tolist(),
+            data_df[self.dataset.data.train_id_field].tolist(),
         )
 
         start_time = time.perf_counter()
@@ -188,9 +214,9 @@ class SerialSearchRunner:
         self,
         db: api.VectorDB,
         test_data: list[list[float]],
-        ground_truth: pd.DataFrame,
+        ground_truth: list[list[int]],
         k: int = 100,
-        filters: dict | None = None,
+        filters: Filter = non_filter,
     ):
         self.db = db
         self.k = k
@@ -202,35 +228,42 @@ class SerialSearchRunner:
             self.test_data = test_data
         self.ground_truth = ground_truth
 
-    def search(self, args: tuple[list, pd.DataFrame]) -> tuple[float, float, float]:
+    def _get_db_search_res(self, emb: list[float], retry_idx: int = 0) -> list[int]:
+        try:
+            results = self.db.search_embedding(emb, self.k)
+        except Exception as e:
+            log.warning(f"Serial search failed, retry_idx={retry_idx}, Exception: {e}")
+            if retry_idx < config.MAX_SEARCH_RETRY:
+                return self._get_db_search_res(emb=emb, retry_idx=retry_idx + 1)
+
+            msg = f"Serial search failed and retried more than {config.MAX_SEARCH_RETRY} times"
+            raise RuntimeError(msg) from e
+
+        return results
+
+    def search(self, args: tuple[list, list[list[int]]]) -> tuple[float, float, float]:
         log.info(f"{mp.current_process().name:14} start search the entire test_data to get recall and latency")
         with self.db.init():
+            self.db.prepare_filter(self.filters)
             test_data, ground_truth = args
             ideal_dcg = get_ideal_dcg(self.k)
 
             log.debug(f"test dataset size: {len(test_data)}")
-            if ground_truth is not None:
-                log.debug(f"ground truth size: {ground_truth.columns}, shape: {ground_truth.shape}")
+            log.debug(f"ground truth size: {len(ground_truth)}")
 
             latencies, recalls, ndcgs = [], [], []
             for idx, emb in enumerate(test_data):
                 s = time.perf_counter()
                 try:
-                    results = self.db.search_embedding(
-                        emb,
-                        self.k,
-                        self.filters,
-                    )
-
+                    results = self._get_db_search_res(emb)
                 except Exception as e:
                     log.warning(f"VectorDB search_embedding error: {e}")
-                    traceback.print_exc(chain=True)
                     raise e from None
 
                 latencies.append(time.perf_counter() - s)
 
                 if ground_truth is not None:
-                    gt = ground_truth["neighbors_id"][idx]
+                    gt = ground_truth[idx]
                     recalls.append(calc_recall(self.k, gt[: self.k], results))
                     ndcgs.append(calc_ndcg(gt[: self.k], results, ideal_dcg))
                 else:
@@ -253,7 +286,7 @@ class SerialSearchRunner:
             f"cost={cost}s, "
             f"queries={len(latencies)}, "
             f"avg_recall={avg_recall}, "
-            f"avg_ndcg={avg_ndcg},"
+            f"avg_ndcg={avg_ndcg}, "
             f"avg_latency={avg_latency}, "
             f"p99={p99}"
         )

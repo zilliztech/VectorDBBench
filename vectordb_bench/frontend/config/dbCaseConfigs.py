@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from vectordb_bench.backend.cases import CaseLabel, CaseType
 from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.clients.api import IndexType, MetricType, SQType
+from vectordb_bench.backend.dataset import DatasetWithSizeType
 from vectordb_bench.frontend.components.custom.getCustomConfig import get_custom_configs
 
 from vectordb_bench.models import CaseConfig, CaseConfigParamType
@@ -23,32 +24,58 @@ class BatchCaseConfig(BaseModel):
     cases: list[CaseConfig] = []
 
 
+class InputType(IntEnum):
+    Text = 20001
+    Number = 20002
+    Option = 20003
+    Float = 20004
+    Bool = 20005
+
+
+class ConfigInput(BaseModel):
+    label: CaseConfigParamType
+    inputType: InputType = InputType.Text
+    inputConfig: dict = {}
+    inputHelp: str = ""
+    displayLabel: str = ""
+
+
+class CaseConfigInput(ConfigInput):
+    # todo type should be a function
+    isDisplayed: typing.Any = lambda config: True
+
+
 class UICaseItem(BaseModel):
     isLine: bool = False
+    key: str = ""
     label: str = ""
     description: str = ""
     cases: list[CaseConfig] = []
     caseLabel: CaseLabel = CaseLabel.Performance
+    extra_custom_case_config_inputs: list[ConfigInput] = []
+    tmp_custom_config: dict = dict()
 
     def __init__(
         self,
         isLine: bool = False,
-        case_id: CaseType | None = None,
-        custom_case: dict | None = None,
-        cases: list[CaseConfig] | None = None,
+        cases: list[CaseConfig] = None,
         label: str = "",
         description: str = "",
         caseLabel: CaseLabel = CaseLabel.Performance,
+        **kwargs,
     ):
         if isLine is True:
-            super().__init__(isLine=True)
-        elif case_id is not None and isinstance(case_id, CaseType):
-            c = case_id.case_cls(custom_case)
+            super().__init__(isLine=True, **kwargs)
+        if cases is None:
+            cases = []
+        elif len(cases) == 1:
+            c = cases[0].case
             super().__init__(
-                label=c.name,
-                description=c.description,
-                cases=[CaseConfig(case_id=case_id, custom_case=custom_case)],
-                caseLabel=c.label,
+                label=label if label else c.name,
+                description=description if description else c.description,
+                cases=cases,
+                caseLabel=caseLabel,
+                **kwargs,
             )
         else:
             super().__init__(
@@ -56,10 +83,26 @@ class UICaseItem(BaseModel):
                 description=description,
                 cases=cases,
                 caseLabel=caseLabel,
+                **kwargs,
             )
 
     def __hash__(self) -> int:
-        return hash(self.json())
+        return hash(self.key if self.key else self.label)
+
+    def get_cases(self) -> list[CaseConfig]:
+        # return self.cases
+        if len(self.extra_custom_case_config_inputs) == 0:
+            return self.cases
+        cases = [
+            CaseConfig(
+                case_id=c.case_id,
+                k=c.k,
+                concurrency_search_config=c.concurrency_search_config,
+                custom_case={**c.custom_case, **self.tmp_custom_config},
+            )
+            for c in self.cases
+        ]
+        return cases
 
 
 class UICaseItemCluster(BaseModel):
@@ -70,47 +113,181 @@ class UICaseItemCluster(BaseModel):
 def get_custom_case_items() -> list[UICaseItem]:
     custom_configs = get_custom_configs()
     return [
-        UICaseItem(case_id=CaseType.PerformanceCustomDataset, custom_case=custom_config.dict())
+        UICaseItem(
+            label=f"{custom_config.dataset_config.name} - None Filter",
+            cases=[
+                CaseConfig(
+                    case_id=CaseType.PerformanceCustomDataset,
+                    custom_case={
+                        **custom_config.dict(),
+                        "use_filter": False,
+                    },
+                )
+            ],
+        )
         for custom_config in custom_configs
+    ] + [
+        UICaseItem(
+            label=f"{custom_config.dataset_config.name} - Filter",
+            description=(
+                f'[Batch Cases] This case evaluate search performance under filtering constraints like "color==red."'
+                f"Vdbbench provides an additional column of randomly distributed labels with fixed proportions, "
+                f"such as [0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5]. "
+                f"Essentially, vdbbench will test each filter label in your own dataset to"
+                " assess the vector database's search performance across different filtering conditions."
+            ),
+            cases=[
+                CaseConfig(
+                    case_id=CaseType.PerformanceCustomDataset,
+                    custom_case={
+                        **custom_config.dict(),
+                        "use_filter": True,
+                        "label_percentage": label_percentage,
+                    },
+                )
+                for label_percentage in custom_config.dataset_config.label_percentages
+            ],
+        )
+        for custom_config in custom_configs
+        if custom_config.dataset_config.label_percentages
     ]
+
+
+def generate_normal_cases(case_id: CaseType, custom_case: dict | None = None) -> list[CaseConfig]:
+    return [CaseConfig(case_id=case_id, custom_case=custom_case)]
 
 
 def get_custom_case_cluter() -> UICaseItemCluster:
     return UICaseItemCluster(label="Custom Search Performance Test", uiCaseItems=get_custom_case_items())
 
 
+def generate_custom_streaming_case() -> CaseConfig:
+    return CaseConfig(
+        case_id=CaseType.StreamingPerformanceCase,
+        custom_case=dict(),
+    )
+
+
+custom_streaming_config: list[ConfigInput] = [
+    ConfigInput(
+        label=CaseConfigParamType.dataset_with_size_type,
+        displayLabel="dataset",
+        inputType=InputType.Option,
+        inputConfig=dict(options=[dataset.value for dataset in DatasetWithSizeType]),
+    ),
+    ConfigInput(
+        label=CaseConfigParamType.insert_rate,
+        inputType=InputType.Number,
+        inputConfig=dict(step=100, min=100, max=4_000, value=200),
+        inputHelp="fixed insertion rate (rows/s), must be divisible by 100",
+    ),
+    ConfigInput(
+        label=CaseConfigParamType.search_stages,
+        inputType=InputType.Text,
+        inputConfig=dict(value="[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]"),
+        inputHelp="0<=stage<1.0; do search test when inserting a specified amount of data.",
+    ),
+    ConfigInput(
+        label=CaseConfigParamType.concurrencies,
+        inputType=InputType.Text,
+        inputConfig=dict(value="[5, 10, 20]"),
+        inputHelp="concurrent num of search test while insertion; record max-qps.",
+    ),
+    ConfigInput(
+        label=CaseConfigParamType.optimize_after_write,
+        inputType=InputType.Option,
+        inputConfig=dict(options=[True, False]),
+        inputHelp="whether to optimize after inserting all data",
+    ),
+    ConfigInput(
+        label=CaseConfigParamType.read_dur_after_write,
+        inputType=InputType.Number,
+        inputConfig=dict(step=10, min=30, max=360_000, value=30),
+        inputHelp="search test duration after inserting all data",
+    ),
+]
+
+
+def generate_label_filter_cases(dataset_with_size_type: DatasetWithSizeType) -> list[CaseConfig]:
+    label_percentages = dataset_with_size_type.get_manager().data.scalar_label_percentages
+    return [
+        CaseConfig(
+            case_id=CaseType.LabelFilterPerformanceCase,
+            custom_case=dict(dataset_with_size_type=dataset_with_size_type, label_percentage=label_percentage),
+        )
+        for label_percentage in label_percentages
+    ]
+
+
 UI_CASE_CLUSTERS: list[UICaseItemCluster] = [
     UICaseItemCluster(
         label="Search Performance Test",
         uiCaseItems=[
-            UICaseItem(case_id=CaseType.Performance768D100M),
-            UICaseItem(case_id=CaseType.Performance768D10M),
-            UICaseItem(case_id=CaseType.Performance768D1M),
+            UICaseItem(cases=generate_normal_cases(CaseType.Performance768D100M)),
+            UICaseItem(cases=generate_normal_cases(CaseType.Performance768D10M)),
+            UICaseItem(cases=generate_normal_cases(CaseType.Performance768D1M)),
             UICaseItem(isLine=True),
-            UICaseItem(case_id=CaseType.Performance1536D5M),
-            UICaseItem(case_id=CaseType.Performance1536D500K),
-            UICaseItem(case_id=CaseType.Performance1536D50K),
+            UICaseItem(cases=generate_normal_cases(CaseType.Performance1024D1M)),
+            UICaseItem(cases=generate_normal_cases(CaseType.Performance1024D10M)),
+            UICaseItem(isLine=True),
+            UICaseItem(cases=generate_normal_cases(CaseType.Performance1536D5M)),
+            UICaseItem(cases=generate_normal_cases(CaseType.Performance1536D500K)),
+            UICaseItem(cases=generate_normal_cases(CaseType.Performance1536D50K)),
         ],
     ),
     UICaseItemCluster(
-        label="Filter Search Performance Test",
+        label="Int-Filter Search Performance Test",
         uiCaseItems=[
-            UICaseItem(case_id=CaseType.Performance768D10M1P),
-            UICaseItem(case_id=CaseType.Performance768D10M99P),
-            UICaseItem(case_id=CaseType.Performance768D1M1P),
-            UICaseItem(case_id=CaseType.Performance768D1M99P),
+            UICaseItem(cases=generate_normal_cases(CaseType.Performance768D10M1P)),
+            UICaseItem(cases=generate_normal_cases(CaseType.Performance768D10M99P)),
+            UICaseItem(cases=generate_normal_cases(CaseType.Performance768D1M1P)),
+            UICaseItem(cases=generate_normal_cases(CaseType.Performance768D1M99P)),
             UICaseItem(isLine=True),
-            UICaseItem(case_id=CaseType.Performance1536D5M1P),
-            UICaseItem(case_id=CaseType.Performance1536D5M99P),
-            UICaseItem(case_id=CaseType.Performance1536D500K1P),
-            UICaseItem(case_id=CaseType.Performance1536D500K99P),
+            UICaseItem(cases=generate_normal_cases(CaseType.Performance1536D5M1P)),
+            UICaseItem(cases=generate_normal_cases(CaseType.Performance1536D5M99P)),
+            UICaseItem(cases=generate_normal_cases(CaseType.Performance1536D500K1P)),
+            UICaseItem(cases=generate_normal_cases(CaseType.Performance1536D500K99P)),
+        ],
+    ),
+    UICaseItemCluster(
+        label="Label-Filter Search Performance Test",
+        uiCaseItems=[
+            UICaseItem(
+                label=f"Label-Filter Search Performance Test - {dataset_with_size_type.value}",
+                description=(
+                    f'[Batch Cases] These cases evaluate search performance under filtering constraints like "color==red." '
+                    "Vdbbench provides an additional column of randomly distributed labels with fixed proportions, "
+                    f"such as {dataset_with_size_type.get_manager().data.scalar_label_percentages}. "
+                    f"Essentially, vdbbench will test each filter label in {dataset_with_size_type.value} to "
+                    "assess the vector database's search performance across different filtering conditions. "
+                ),
+                cases=generate_label_filter_cases(dataset_with_size_type),
+            )
+            for dataset_with_size_type in DatasetWithSizeType
         ],
     ),
     UICaseItemCluster(
         label="Capacity Test",
         uiCaseItems=[
-            UICaseItem(case_id=CaseType.CapacityDim960),
-            UICaseItem(case_id=CaseType.CapacityDim128),
+            UICaseItem(cases=generate_normal_cases(CaseType.CapacityDim960)),
+            UICaseItem(cases=generate_normal_cases(CaseType.CapacityDim128)),
+        ],
+    ),
+    UICaseItemCluster(
+        label="Streaming Test",
+        uiCaseItems=[
+            UICaseItem(
+                label="Customize Streaming Test",
+                description=(
+                    "This case test the search performance during insertion. "
+                    "VDBB will send insert requests to VectorDB at a fixed rate and "
+                    "conduct a search test once the insert count reaches the search_stages. "
+                    "After all data is inserted, optimization and search tests can be "
+                    "optionally performed."
+                ),
+                cases=[generate_custom_streaming_case()],
+                extra_custom_case_config_inputs=custom_streaming_config,
+            )
         ],
     ),
 ]
@@ -123,14 +300,8 @@ DISPLAY_CASE_ORDER: list[CaseType] = [
     CaseType.Performance1536D5M,
     CaseType.Performance1536D500K,
     CaseType.Performance1536D50K,
-    CaseType.Performance768D10M1P,
-    CaseType.Performance768D1M1P,
-    CaseType.Performance1536D5M1P,
-    CaseType.Performance1536D500K1P,
-    CaseType.Performance768D10M99P,
-    CaseType.Performance768D1M99P,
-    CaseType.Performance1536D5M99P,
-    CaseType.Performance1536D500K99P,
+    CaseType.Performance1024D1M,
+    CaseType.Performance1024D10M,
     CaseType.CapacityDim960,
     CaseType.CapacityDim128,
 ]
@@ -455,7 +626,7 @@ CaseConfigParamInput_EFConstruction_ES = CaseConfigInput(
     inputConfig={
         "min": 8,
         "max": 512,
-        "value": 360,
+        "value": 128,
     },
 )
 
@@ -557,6 +728,67 @@ CaseConfigParamInput_EFConstruction_PgVector = CaseConfigInput(
     isDisplayed=lambda config: config[CaseConfigParamType.IndexType] == IndexType.HNSW.value,
 )
 
+CaseConfigParamInput_IndexType_ES = CaseConfigInput(
+    label=CaseConfigParamType.IndexType,
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [
+            IndexType.ES_HNSW.value,
+            IndexType.ES_HNSW_INT8.value,
+            IndexType.ES_HNSW_INT4.value,
+            IndexType.ES_HNSW_BBQ.value,
+        ],
+    },
+)
+
+CaseConfigParamInput_NumShards_ES = CaseConfigInput(
+    label=CaseConfigParamType.number_of_shards,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 128,
+        "value": 1,
+    },
+)
+
+CaseConfigParamInput_NumReplica_ES = CaseConfigInput(
+    label=CaseConfigParamType.number_of_replicas,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 0,
+        "max": 10,
+        "value": 0,
+    },
+)
+
+CaseConfigParamInput_RefreshInterval_ES = CaseConfigInput(
+    label=CaseConfigParamType.refresh_interval,
+    inputType=InputType.Text,
+    inputConfig={"value": "30s"},
+)
+
+CaseConfigParamInput_UseRescore_ES = CaseConfigInput(
+    label=CaseConfigParamType.use_rescore,
+    inputType=InputType.Bool,
+    inputConfig={"value": False},
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) != IndexType.ES_HNSW.value,
+)
+
+CaseConfigParamInput_OversampleRatio_ES = CaseConfigInput(
+    label=CaseConfigParamType.oversample_ratio,
+    inputType=InputType.Float,
+    inputConfig={"min": 1.0, "max": 100.0, "value": 2.0},
+    isDisplayed=lambda config: config.get(CaseConfigParamType.use_rescore, False),
+    inputHelp="num_oversample = oversample_ratio * top_k.",
+)
+
+CaseConfigParamInput_UseRouting_ES = CaseConfigInput(
+    label=CaseConfigParamType.use_routing,
+    inputType=InputType.Bool,
+    inputConfig={"value": False},
+    inputHelp="Using routing to improve label-filter case performance",
+)
+
 
 CaseConfigParamInput_M_ES = CaseConfigInput(
     label=CaseConfigParamType.M,
@@ -564,9 +796,10 @@ CaseConfigParamInput_M_ES = CaseConfigInput(
     inputConfig={
         "min": 4,
         "max": 64,
-        "value": 30,
+        "value": 16,
     },
 )
+
 
 CaseConfigParamInput_NumCandidates_ES = CaseConfigInput(
     label=CaseConfigParamType.numCandidates,
@@ -1204,6 +1437,13 @@ CaseConfigParamInput_CacheSize_MariaDB = CaseConfigInput(
     },
     isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
 )
+CaseConfigParamInput_Milvus_use_partition_key = CaseConfigInput(
+    label=CaseConfigParamType.use_partition_key,
+    inputType=InputType.Option,
+    inputHelp="whether to use partition_key for label-filter cases. only works in label-filter cases",
+    inputConfig={"options": [True, False]},
+)
+
 
 CaseConfigParamInput_MongoDBQuantizationType = CaseConfigInput(
     label=CaseConfigParamType.mongodb_quantization_type,
@@ -1362,6 +1602,7 @@ MilvusLoadConfig = [
     CaseConfigParamInput_Refine,
     CaseConfigParamInput_RefineType,
     CaseConfigParamInput_NRQ,
+    CaseConfigParamInput_Milvus_use_partition_key,
 ]
 MilvusPerformanceConfig = [
     CaseConfigParamInput_IndexType,
@@ -1389,6 +1630,7 @@ MilvusPerformanceConfig = [
     CaseConfigParamInput_Refine,
     CaseConfigParamInput_RefineType,
     CaseConfigParamInput_RefineK,
+    CaseConfigParamInput_Milvus_use_partition_key,
 ]
 
 WeaviateLoadConfig = [
@@ -1401,11 +1643,25 @@ WeaviatePerformanceConfig = [
     CaseConfigParamInput_EF_Weaviate,
 ]
 
-ESLoadingConfig = [CaseConfigParamInput_EFConstruction_ES, CaseConfigParamInput_M_ES]
+ESLoadingConfig = [
+    CaseConfigParamInput_IndexType_ES,
+    CaseConfigParamInput_NumShards_ES,
+    CaseConfigParamInput_NumReplica_ES,
+    CaseConfigParamInput_RefreshInterval_ES,
+    CaseConfigParamInput_EFConstruction_ES,
+    CaseConfigParamInput_M_ES,
+]
 ESPerformanceConfig = [
+    CaseConfigParamInput_IndexType_ES,
+    CaseConfigParamInput_NumShards_ES,
+    CaseConfigParamInput_NumReplica_ES,
+    CaseConfigParamInput_RefreshInterval_ES,
     CaseConfigParamInput_EFConstruction_ES,
     CaseConfigParamInput_M_ES,
     CaseConfigParamInput_NumCandidates_ES,
+    CaseConfigParamInput_UseRescore_ES,
+    CaseConfigParamInput_OversampleRatio_ES,
+    CaseConfigParamInput_UseRouting_ES,
 ]
 
 AWSOpensearchLoadingConfig = [
@@ -1724,6 +1980,7 @@ CASE_CONFIG_MAP = {
     DB.Milvus: {
         CaseLabel.Load: MilvusLoadConfig,
         CaseLabel.Performance: MilvusPerformanceConfig,
+        CaseLabel.Streaming: MilvusPerformanceConfig,
     },
     DB.ZillizCloud: {
         CaseLabel.Performance: ZillizCloudPerformanceConfig,
@@ -1789,3 +2046,13 @@ CASE_CONFIG_MAP = {
         CaseLabel.Performance: AWSOpenSearchPerformanceConfig,
     },
 }
+
+
+def get_case_config_inputs(db: DB, case_label: CaseLabel) -> list[CaseConfigInput]:
+    if db not in CASE_CONFIG_MAP:
+        return []
+    if case_label == CaseLabel.Load:
+        return CASE_CONFIG_MAP[db][CaseLabel.Load]
+    elif case_label == CaseLabel.Performance or case_label == CaseLabel.Streaming:
+        return CASE_CONFIG_MAP[db][CaseLabel.Performance]
+    return []
