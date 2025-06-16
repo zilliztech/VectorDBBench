@@ -26,11 +26,11 @@ def NavToPages(st):
     options = [
         {"name": "Run Test", "link": "run_test"},
         {"name": "Results", "link": "results"},
+        {"name": "Quries Per Dollar", "link": "quries_per_dollar"},
         {"name": "Concurrent", "link": "concurrent"},
         {"name": "Label Filter", "link": "label_filter"},
-        {"name": "Quries Per Dollar", "link": "quries_per_dollar"},
-        {"name": "Tables", "link": "tables"},
         {"name": "Streaming", "link": "streaming"},
+        {"name": "Tables", "link": "tables"},
         {"name": "Custom Dataset", "link": "custom"},
     ]
 
