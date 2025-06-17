@@ -21,7 +21,7 @@ def get_image_as_base64(image_path):
 
 
 def welcomePrams(st):
-    st.title("Welcome to VectorDB Benchmark!")
+    st.title("Welcome to VDBBench!")
     options = [
         {
             "title": "Standard Test Results",

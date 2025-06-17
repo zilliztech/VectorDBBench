@@ -63,6 +63,20 @@ class QdrantIndexConfig(BaseModel, DBCaseConfig):
             and self.default_segment_number == obj.default_segment_number
         )
 
+    def __hash__(self) -> int:
+        return hash(
+            (
+                self.m,
+                self.payload_m,
+                self.create_payload_int_index,
+                self.create_payload_keyword_index,
+                self.is_tenant,
+                self.use_scalar_quant,
+                self.sq_quantile,
+                self.default_segment_number,
+            )
+        )
+
     def parse_metric(self) -> str:
         if self.metric_type == MetricType.L2:
             return "Euclid"

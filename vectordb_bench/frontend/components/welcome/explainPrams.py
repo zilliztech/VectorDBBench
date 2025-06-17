@@ -1,16 +1,16 @@
 def explainPrams(st):
     st.markdown("## descriptions")
-    st.markdown("### 1.Overview")
+    st.markdown("### 1. Overview")
     st.markdown(
         """
-- **VectorDBBench** is an open-source benchmarking tool designed specifically for vector databases. Its main features include:
+- **VectorDBBench(VDBBench)** is an open-source benchmarking tool designed specifically for vector databases. Its main features include:
     - (1) An easy-to-use **web UI** for configuration of tests and visual analysis of results.
     - (2) A comprehensive set of **standards for testing and metric collection**.
     - (3) Support for **various scenarios**, including additional support for **Filter** and **Streaming** based on standard tests.
-- VectorDBBench embraces open-source and welcome contributions of code and test result submissions. The testing process and extended scenarios of VectorDBBench, as well as the intention behind our design will be introduced as follows.
+- VDBBench embraces open-source and welcome contributions of code and test result submissions. The testing process and extended scenarios of VDBBench, as well as the intention behind our design will be introduced as follows.
 """
     )
-    st.markdown("### 2.Dataset")
+    st.markdown("### 2. Dataset")
     st.markdown(
         """
 - We provide two embedding datasets:
@@ -19,7 +19,7 @@ def explainPrams(st):
     - (3)*OpenAI 1536dim*, generated using the **OpenAI** model based on the [C4 corpus](https://huggingface.co/datasets/legacy-datasets/c4).
 """
     )
-    st.markdown("### 3.Standard Test")
+    st.markdown("### 3. Standard Test")
     st.markdown(
         """
 The test is actually divided into 3 sub-processes
@@ -42,19 +42,19 @@ The test is actually divided into 3 sub-processes
 """,
         unsafe_allow_html=True,
     )
-    st.markdown("### 4.Filter Search Test")
+    st.markdown("### 4. Filter Search Test")
     st.markdown(
         """
 - Compared to the Standard Test, the **Filter Search** introduces additional scalar constraints (e.g. **color == red**) during the Search Test. Different **filter_ratios** present varying levels of challenge to the VectorDB's search performance.
 - We provide an additional **string column** containing 10 labels with different distribution ratios (50%,20%,10%,5%,2%,1%,0.5%,0.2%,0.1%). For each label, we conduct both a **Serial Test** and a **Concurrency Test** to observe the VectorDB's performance in terms of **QPS, latency, and recall** under different filtering conditions.
 """
     )
-    st.markdown("### 5.Streaming Search Test")
+    st.markdown("### 5. Streaming Search Test")
     st.markdown(
         """
 Different from Standard's load and search separation, Streaming Search Test primarily focuses on **search performance during the insertion process**. 
 Different **base dataset sizes** and varying **insertion rates** set distinct challenges to the VectorDB's search capabilities.
-VectorDBBench will send insert requests at a **fixed rate**, maintaining consistent insertion pressure. The search test consists of three steps as follows:
+VDBBench will send insert requests at a **fixed rate**, maintaining consistent insertion pressure. The search test consists of three steps as follows:
 - 1.**Streaming Search** 
     - Users can configure **multiple search stages**. When the inserted data volume reaches a specified stage, a **Serial Test** and a **Concurrent Test** will be conducted, recording qps, latency, and recall performance.
 - 2.**Streaming Final Search**
