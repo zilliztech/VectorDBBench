@@ -95,7 +95,8 @@ class BenchMarkRunner:
 
         return self._run_async(send_conn)
 
-    def get_results(self, result_dir: pathlib.Path | None = None) -> list[TestResult]:
+    @staticmethod
+    def get_results(result_dir: pathlib.Path | None = None) -> list[TestResult]:
         """results of all runs, each TestResult represents one run."""
         target_dir = result_dir if result_dir else config.RESULTS_LOCAL_DIR
         return ResultCollector.collect(target_dir)
