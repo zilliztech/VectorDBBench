@@ -242,6 +242,9 @@ class DatasetManager(BaseModel):
             return self.data.name == obj.data.name and self.data.label == obj.data.label
         return False
 
+    def __hash__(self) -> int:
+        return hash((self.data.name, self.data.label))
+
     def set_reader(self, reader: DatasetReader):
         self.reader = reader
 

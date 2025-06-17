@@ -59,6 +59,17 @@ class CaseRunner(BaseModel):
             )
         return False
 
+    def __hash__(self) -> int:
+        """Hash method to maintain consistency with __eq__ method."""
+        return hash(
+            (
+                self.ca.label,
+                self.config.db,
+                self.config.db_case_config,
+                self.ca.dataset,
+            )
+        )
+
     def display(self) -> dict:
         c_dict = self.ca.dict(
             include={

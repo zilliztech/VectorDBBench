@@ -48,6 +48,18 @@ class ElasticCloudIndexConfig(BaseModel, DBCaseConfig):
             and self.M == obj.M
         )
 
+    def __hash__(self) -> int:
+        return hash(
+            (
+                self.index,
+                self.number_of_shards,
+                self.number_of_replicas,
+                self.use_routing,
+                self.efConstruction,
+                self.M,
+            )
+        )
+
     def parse_metric(self) -> str:
         if self.metric_type == MetricType.L2:
             return "l2_norm"

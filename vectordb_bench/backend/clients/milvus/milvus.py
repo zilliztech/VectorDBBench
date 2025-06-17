@@ -29,7 +29,7 @@ class Milvus(VectorDB):
         dim: int,
         db_config: dict,
         db_case_config: MilvusIndexConfig,
-        collection_name: str = "VectorDBBenchCollection",
+        collection_name: str = "VDBBench",
         drop_old: bool = False,
         name: str = "Milvus",
         with_scalar_labels: bool = False,

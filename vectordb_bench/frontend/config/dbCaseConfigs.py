@@ -520,7 +520,7 @@ CaseConfigParamInput_M = CaseConfigInput(
     inputConfig={
         "min": 4,
         "max": 64,
-        "value": 30,
+        "value": 16,
     },
     isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
     in [
@@ -550,7 +550,7 @@ CaseConfigParamInput_EFConstruction_Milvus = CaseConfigInput(
     inputConfig={
         "min": 8,
         "max": 512,
-        "value": 360,
+        "value": 256,
     },
     isDisplayed=lambda config: config[CaseConfigParamType.IndexType]
     in [
@@ -1441,7 +1441,7 @@ CaseConfigParamInput_Milvus_use_partition_key = CaseConfigInput(
     label=CaseConfigParamType.use_partition_key,
     inputType=InputType.Option,
     inputHelp="whether to use partition_key for label-filter cases. only works in label-filter cases",
-    inputConfig={"options": [True, False]},
+    inputConfig={"options": [False, True]},
 )
 
 
