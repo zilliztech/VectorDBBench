@@ -75,6 +75,20 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
             and self.quantization_type == obj.quantization_type
         )
 
+    def __hash__(self) -> int:
+        return hash(
+            (
+                self.engine,
+                self.M,
+                self.efConstruction,
+                self.number_of_shards,
+                self.number_of_replicas,
+                self.number_of_segments,
+                self.use_routing,
+                self.quantization_type,
+            )
+        )
+
     def parse_metric(self) -> str:
         log.info(f"User specified metric_type: {self.metric_type_name}")
         self.metric_type = MetricType[self.metric_type_name.upper()]

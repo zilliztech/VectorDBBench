@@ -4,7 +4,7 @@ from vectordb_bench.frontend.config.styles import HEADER_ICON
 def drawHeaderIcon(st):
     st.markdown(
         f"""
-    <a href="/vdb_benchmark" target="_self">
+    <a href="/vdbbench" target="_self">
         <div class="headerIconContainer"></div>
     </a>
 
@@ -16,8 +16,10 @@ def drawHeaderIcon(st):
         width: 100%;
         border-bottom: 2px solid #E8EAEE;
         background-image: url({HEADER_ICON});
+        background-size: contain;
+        background-position: left top;
         background-repeat: no-repeat;
-        cursor: pointer; 
+        cursor: pointer;
     }}
     </style>
     """,

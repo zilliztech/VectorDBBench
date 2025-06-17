@@ -220,3 +220,9 @@ builtins-ignorelist = [
     # "dict", # TODO
     # "filter",
 ]
+
+[tool.ruff.lint.per-file-ignores]
+"vectordb_bench/backend/clients/*" = ["PLC0415"]
+"vectordb_bench/cli/batch_cli.py" = ["PLC0415"]
+"vectordb_bench/backend/data_source.py" = ["PLC0415"]
+
