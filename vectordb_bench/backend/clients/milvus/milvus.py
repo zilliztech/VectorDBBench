@@ -88,7 +88,7 @@ class Milvus(VectorDB):
                 name=self.collection_name,
                 schema=CollectionSchema(fields),
                 consistency_level="Session",
-                num_shards=self.db_config.get("num_shards"),
+                num_shards=self.db_config.get("num_shards", 1),
             )
 
             self.create_index()
