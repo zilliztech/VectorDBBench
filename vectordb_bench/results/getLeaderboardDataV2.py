@@ -49,7 +49,7 @@ def main():
                     "qps": round(qps, 4),
                     "latency": round(latency, 4),
                     "recall": round(recall, 4),
-                    "filter_ratio": round(filter_ratio, 2),
+                    "filter_ratio": round(filter_ratio, 3),
                 }
             )
     save_to_json(data, config.RESULTS_LOCAL_DIR / "leaderboard_v2.json")
