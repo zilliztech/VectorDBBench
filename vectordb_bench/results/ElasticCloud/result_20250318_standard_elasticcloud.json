@@ -4139,7 +4139,7 @@
             "task_config": {
                 "db": "ElasticCloud",
                 "db_config": {
-                    "db_label": "8c60g",
+                    "db_label": "8c60g-force_merge",
                     "version": "8.17",
                     "note": "",
                     "cloud_id": "**********",
@@ -4250,7 +4250,7 @@
             "task_config": {
                 "db": "ElasticCloud",
                 "db_config": {
-                    "db_label": "8c60g",
+                    "db_label": "8c60g-force_merge",
                     "version": "8.17",
                     "note": "",
                     "cloud_id": "**********",
@@ -4361,7 +4361,7 @@
             "task_config": {
                 "db": "ElasticCloud",
                 "db_config": {
-                    "db_label": "8c60g",
+                    "db_label": "8c60g-force_merge",
                     "version": "8.17",
                     "note": "",
                     "cloud_id": "**********",
@@ -4472,7 +4472,7 @@
             "task_config": {
                 "db": "ElasticCloud",
                 "db_config": {
-                    "db_label": "8c60g",
+                    "db_label": "8c60g-force_merge",
                     "version": "8.17",
                     "note": "",
                     "cloud_id": "**********",
@@ -4583,7 +4583,7 @@
             "task_config": {
                 "db": "ElasticCloud",
                 "db_config": {
-                    "db_label": "8c60g",
+                    "db_label": "8c60g-force_merge",
                     "version": "8.17",
                     "note": "",
                     "cloud_id": "**********",
@@ -4694,7 +4694,7 @@
             "task_config": {
                 "db": "ElasticCloud",
                 "db_config": {
-                    "db_label": "8c60g",
+                    "db_label": "8c60g-force_merge",
                     "version": "8.17",
                     "note": "",
                     "cloud_id": "**********",

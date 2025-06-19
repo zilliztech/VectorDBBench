@@ -77,7 +77,7 @@
         "qps": 3033.786,
         "latency": 8.7,
         "recall": 0.9934,
-        "filter_ratio": 1.0
+        "filter_ratio": 0.999
     },
     {
         "dataset": "Cohere (Medium)",
@@ -87,7 +87,7 @@
         "qps": 3019.2416,
         "latency": 9.5,
         "recall": 0.9765,
-        "filter_ratio": 1.0
+        "filter_ratio": 0.998
     },
     {
         "dataset": "Cohere (Medium)",
@@ -97,7 +97,7 @@
         "qps": 2890.9523,
         "latency": 9.4,
         "recall": 0.9625,
-        "filter_ratio": 0.99
+        "filter_ratio": 0.995
     },
     {
         "dataset": "Cohere (Medium)",
@@ -207,7 +207,7 @@
         "qps": 350.0132,
         "latency": 29.7,
         "recall": 1.0,
-        "filter_ratio": 1.0
+        "filter_ratio": 0.999
     },
     {
         "dataset": "Cohere (Large)",
@@ -217,7 +217,7 @@
         "qps": 179.5204,
         "latency": 51.4,
         "recall": 1.0,
-        "filter_ratio": 1.0
+        "filter_ratio": 0.998
     },
     {
         "dataset": "Cohere (Large)",
@@ -227,7 +227,7 @@
         "qps": 72.99,
         "latency": 111.4,
         "recall": 1.0,
-        "filter_ratio": 0.99
+        "filter_ratio": 0.995
     },
     {
         "dataset": "Cohere (Large)",
@@ -382,8 +382,8 @@
     {
         "dataset": "Cohere (Medium)",
         "db": "ElasticCloud",
-        "label": "8c60g",
-        "db_name": "ElasticCloud-8c60g",
+        "label": "8c60g-force_merge",
+        "db_name": "ElasticCloud-8c60g-force_merge",
         "qps": 2095.7067,
         "latency": 12.4,
         "recall": 0.8961,
@@ -392,8 +392,8 @@
     {
         "dataset": "Cohere (Medium)",
         "db": "ElasticCloud",
-        "label": "8c60g",
-        "db_name": "ElasticCloud-8c60g",
+        "label": "8c60g-force_merge",
+        "db_name": "ElasticCloud-8c60g-force_merge",
         "qps": 1925.3019,
         "latency": 11.3,
         "recall": 0.9141,
@@ -402,8 +402,8 @@
     {
         "dataset": "Cohere (Medium)",
         "db": "ElasticCloud",
-        "label": "8c60g",
-        "db_name": "ElasticCloud-8c60g",
+        "label": "8c60g-force_merge",
+        "db_name": "ElasticCloud-8c60g-force_merge",
         "qps": 1707.8841,
         "latency": 10.0,
         "recall": 0.9314,
@@ -412,8 +412,8 @@
     {
         "dataset": "Cohere (Medium)",
         "db": "ElasticCloud",
-        "label": "8c60g",
-        "db_name": "ElasticCloud-8c60g",
+        "label": "8c60g-force_merge",
+        "db_name": "ElasticCloud-8c60g-force_merge",
         "qps": 1442.0638,
         "latency": 10.1,
         "recall": 0.9482,
@@ -422,8 +422,8 @@
     {
         "dataset": "Cohere (Medium)",
         "db": "ElasticCloud",
-        "label": "8c60g",
-        "db_name": "ElasticCloud-8c60g",
+        "label": "8c60g-force_merge",
+        "db_name": "ElasticCloud-8c60g-force_merge",
         "qps": 1115.106,
         "latency": 13.1,
         "recall": 0.9662,
@@ -432,8 +432,8 @@
     {
         "dataset": "Cohere (Medium)",
         "db": "ElasticCloud",
-        "label": "8c60g",
-        "db_name": "ElasticCloud-8c60g",
+        "label": "8c60g-force_merge",
+        "db_name": "ElasticCloud-8c60g-force_merge",
         "qps": 910.4322,
         "latency": 14.2,
         "recall": 0.9748,
@@ -447,7 +447,7 @@
         "qps": 2175.2694,
         "latency": 9.8,
         "recall": 1.0,
-        "filter_ratio": 1.0
+        "filter_ratio": 0.999
     },
     {
         "dataset": "Cohere (Medium)",
@@ -457,7 +457,7 @@
         "qps": 1430.0244,
         "latency": 12.6,
         "recall": 1.0,
-        "filter_ratio": 1.0
+        "filter_ratio": 0.998
     },
     {
         "dataset": "Cohere (Medium)",
@@ -467,7 +467,7 @@
         "qps": 692.5751,
         "latency": 18.7,
         "recall": 1.0,
-        "filter_ratio": 0.99
+        "filter_ratio": 0.995
     },
     {
         "dataset": "Cohere (Medium)",
@@ -617,7 +617,7 @@
         "qps": 3680.6045,
         "latency": 2.2,
         "recall": 0.9954,
-        "filter_ratio": 1.0
+        "filter_ratio": 0.999
     },
     {
         "dataset": "Cohere (Medium)",
@@ -627,7 +627,7 @@
         "qps": 3407.9972,
         "latency": 2.2,
         "recall": 0.994,
-        "filter_ratio": 1.0
+        "filter_ratio": 0.998
     },
     {
         "dataset": "Cohere (Medium)",
@@ -637,7 +637,7 @@
         "qps": 3062.6755,
         "latency": 2.4,
         "recall": 0.9932,
-        "filter_ratio": 0.99
+        "filter_ratio": 0.995
     },
     {
         "dataset": "Cohere (Medium)",
@@ -707,7 +707,7 @@
         "qps": 11763.5538,
         "latency": 1.5,
         "recall": 1.0,
-        "filter_ratio": 1.0
+        "filter_ratio": 0.999
     },
     {
         "dataset": "Cohere (Medium)",
@@ -717,7 +717,7 @@
         "qps": 11803.1944,
         "latency": 1.5,
         "recall": 0.9778,
-        "filter_ratio": 1.0
+        "filter_ratio": 0.998
     },
     {
         "dataset": "Cohere (Medium)",
@@ -727,7 +727,7 @@
         "qps": 11520.9234,
         "latency": 1.5,
         "recall": 0.9634,
-        "filter_ratio": 0.99
+        "filter_ratio": 0.995
     },
     {
         "dataset": "Cohere (Medium)",
@@ -877,7 +877,7 @@
         "qps": 432.8374,
         "latency": 5.0,
         "recall": 0.9865,
-        "filter_ratio": 1.0
+        "filter_ratio": 0.999
     },
     {
         "dataset": "Cohere (Large)",
@@ -887,7 +887,7 @@
         "qps": 368.6042,
         "latency": 5.4,
         "recall": 0.9843,
-        "filter_ratio": 1.0
+        "filter_ratio": 0.998
     },
     {
         "dataset": "Cohere (Large)",
@@ -897,7 +897,7 @@
         "qps": 318.8159,
         "latency": 7.1,
         "recall": 0.9836,
-        "filter_ratio": 0.99
+        "filter_ratio": 0.995
     },
     {
         "dataset": "Cohere (Large)",
@@ -967,7 +967,7 @@
         "qps": 11397.7043,
         "latency": 1.6,
         "recall": 0.9597,
-        "filter_ratio": 1.0
+        "filter_ratio": 0.999
     },
     {
         "dataset": "Cohere (Large)",
@@ -977,7 +977,7 @@
         "qps": 10891.7531,
         "latency": 1.7,
         "recall": 0.9408,
-        "filter_ratio": 1.0
+        "filter_ratio": 0.998
     },
     {
         "dataset": "Cohere (Large)",
@@ -987,7 +987,7 @@
         "qps": 10276.7451,
         "latency": 1.7,
         "recall": 0.9159,
-        "filter_ratio": 0.99
+        "filter_ratio": 0.995
     },
     {
         "dataset": "Cohere (Large)",
@@ -1067,7 +1067,7 @@
         "qps": 1148.1735,
         "latency": 8.9,
         "recall": 0.9801,
-        "filter_ratio": 1.0
+        "filter_ratio": 0.999
     },
     {
         "dataset": "Cohere (Medium)",
@@ -1077,7 +1077,7 @@
         "qps": 1149.1219,
         "latency": 10.3,
         "recall": 0.9764,
-        "filter_ratio": 1.0
+        "filter_ratio": 0.998
     },
     {
         "dataset": "Cohere (Medium)",
@@ -1087,7 +1087,7 @@
         "qps": 1140.4099,
         "latency": 13.5,
         "recall": 0.9716,
-        "filter_ratio": 0.99
+        "filter_ratio": 0.995
     },
     {
         "dataset": "Cohere (Medium)",
@@ -1167,7 +1167,7 @@
         "qps": 1114.952,
         "latency": 12.7,
         "recall": 0.97,
-        "filter_ratio": 1.0
+        "filter_ratio": 0.999
     },
     {
         "dataset": "Cohere (Large)",
@@ -1177,7 +1177,7 @@
         "qps": 583.5009,
         "latency": 23.0,
         "recall": 0.9668,
-        "filter_ratio": 1.0
+        "filter_ratio": 0.998
     },
     {
         "dataset": "Cohere (Large)",
@@ -1187,7 +1187,7 @@
         "qps": 31.4779,
         "latency": 351.0,
         "recall": 0.9414,
-        "filter_ratio": 0.99
+        "filter_ratio": 0.995
     },
     {
         "dataset": "Cohere (Large)",
@@ -1257,7 +1257,7 @@
         "qps": 4318.9697,
         "latency": 4.3,
         "recall": 1.0,
-        "filter_ratio": 1.0
+        "filter_ratio": 0.999
     },
     {
         "dataset": "Cohere (Medium)",
@@ -1267,7 +1267,7 @@
         "qps": 4250.2894,
         "latency": 4.6,
         "recall": 1.0,
-        "filter_ratio": 1.0
+        "filter_ratio": 0.998
     },
     {
         "dataset": "Cohere (Medium)",
@@ -1277,7 +1277,7 @@
         "qps": 2997.4391,
         "latency": 6.1,
         "recall": 1.0,
-        "filter_ratio": 0.99
+        "filter_ratio": 0.995
     },
     {
         "dataset": "Cohere (Medium)",
@@ -1347,7 +1347,7 @@
         "qps": 1202.8677,
         "latency": 7.0,
         "recall": 1.0,
-        "filter_ratio": 1.0
+        "filter_ratio": 0.999
     },
     {
         "dataset": "Cohere (Large)",
@@ -1357,7 +1357,7 @@
         "qps": 639.3991,
         "latency": 7.3,
         "recall": 1.0,
-        "filter_ratio": 1.0
+        "filter_ratio": 0.998
     },
     {
         "dataset": "Cohere (Large)",
@@ -1367,7 +1367,7 @@
         "qps": 274.8559,
         "latency": 9.9,
         "recall": 1.0,
-        "filter_ratio": 0.99
+        "filter_ratio": 0.995
     },
     {
         "dataset": "Cohere (Large)",
@@ -1727,7 +1727,7 @@
         "qps": 3099.4124,
         "latency": 6.2,
         "recall": 1.0,
-        "filter_ratio": 1.0
+        "filter_ratio": 0.999
     },
     {
         "dataset": "Cohere (Medium)",
@@ -1737,7 +1737,7 @@
         "qps": 3014.2483,
         "latency": 7.0,
         "recall": 1.0,
-        "filter_ratio": 1.0
+        "filter_ratio": 0.998
     },
     {
         "dataset": "Cohere (Medium)",
@@ -1747,7 +1747,7 @@
         "qps": 2073.2153,
         "latency": 11.0,
         "recall": 1.0,
-        "filter_ratio": 0.99
+        "filter_ratio": 0.995
     },
     {
         "dataset": "Cohere (Medium)",
@@ -1827,7 +1827,7 @@
         "qps": 3103.0539,
         "latency": 5.6,
         "recall": 1.0,
-        "filter_ratio": 1.0
+        "filter_ratio": 0.999
     },
     {
         "dataset": "Cohere (Medium)",
@@ -1837,7 +1837,7 @@
         "qps": 3086.1957,
         "latency": 6.7,
         "recall": 1.0,
-        "filter_ratio": 1.0
+        "filter_ratio": 0.998
     },
     {
         "dataset": "Cohere (Medium)",
@@ -1847,7 +1847,7 @@
         "qps": 3090.0478,
         "latency": 6.4,
         "recall": 0.9628,
-        "filter_ratio": 0.99
+        "filter_ratio": 0.995
     },
     {
         "dataset": "Cohere (Medium)",
@@ -1947,7 +1947,7 @@
         "qps": 1022.2696,
         "latency": 17.9,
         "recall": 0.936,
-        "filter_ratio": 1.0
+        "filter_ratio": 0.999
     },
     {
         "dataset": "Cohere (Large)",
@@ -1957,7 +1957,7 @@
         "qps": 696.9777,
         "latency": 24.6,
         "recall": 0.997,
-        "filter_ratio": 1.0
+        "filter_ratio": 0.998
     },
     {
         "dataset": "Cohere (Large)",
@@ -1967,7 +1967,7 @@
         "qps": 353.7862,
         "latency": 45.2,
         "recall": 1.0,
-        "filter_ratio": 0.99
+        "filter_ratio": 0.995
     },
     {
         "dataset": "Cohere (Large)",
@@ -2037,7 +2037,7 @@
         "qps": 3033.5491,
         "latency": 6.4,
         "recall": 0.9844,
-        "filter_ratio": 1.0
+        "filter_ratio": 0.999
     },
     {
         "dataset": "Cohere (Large)",
@@ -2047,7 +2047,7 @@
         "qps": 2988.4205,
         "latency": 7.6,
         "recall": 0.9741,
-        "filter_ratio": 1.0
+        "filter_ratio": 0.998
     },
     {
         "dataset": "Cohere (Large)",
@@ -2057,7 +2057,7 @@
         "qps": 2950.717,
         "latency": 6.9,
         "recall": 0.9558,
-        "filter_ratio": 0.99
+        "filter_ratio": 0.995
     },
     {
         "dataset": "Cohere (Large)",
@@ -2217,7 +2217,7 @@
         "qps": 9773.6593,
         "latency": 3.7,
         "recall": 0.9955,
-        "filter_ratio": 1.0
+        "filter_ratio": 0.999
     },
     {
         "dataset": "Cohere (Medium)",
@@ -2227,7 +2227,7 @@
         "qps": 9081.1518,
         "latency": 3.0,
         "recall": 0.9943,
-        "filter_ratio": 1.0
+        "filter_ratio": 0.998
     },
     {
         "dataset": "Cohere (Medium)",
@@ -2237,7 +2237,7 @@
         "qps": 8455.2896,
         "latency": 4.0,
         "recall": 0.9921,
-        "filter_ratio": 0.99
+        "filter_ratio": 0.995
     },
     {
         "dataset": "Cohere (Medium)",
@@ -2307,7 +2307,7 @@
         "qps": 10089.4308,
         "latency": 2.6,
         "recall": 0.9934,
-        "filter_ratio": 1.0
+        "filter_ratio": 0.999
     },
     {
         "dataset": "Cohere (Medium)",
@@ -2317,7 +2317,7 @@
         "qps": 10557.4373,
         "latency": 2.7,
         "recall": 0.9393,
-        "filter_ratio": 1.0
+        "filter_ratio": 0.998
     },
     {
         "dataset": "Cohere (Medium)",
@@ -2327,7 +2327,7 @@
         "qps": 9805.0401,
         "latency": 2.6,
         "recall": 0.9257,
-        "filter_ratio": 0.99
+        "filter_ratio": 0.995
     },
     {
         "dataset": "Cohere (Medium)",
@@ -2397,7 +2397,7 @@
         "qps": 8695.2765,
         "latency": 4.3,
         "recall": 0.9603,
-        "filter_ratio": 1.0
+        "filter_ratio": 0.999
     },
     {
         "dataset": "Cohere (Large)",
@@ -2407,7 +2407,7 @@
         "qps": 9244.1135,
         "latency": 4.2,
         "recall": 0.9724,
-        "filter_ratio": 1.0
+        "filter_ratio": 0.998
     },
     {
         "dataset": "Cohere (Large)",
@@ -2417,7 +2417,7 @@
         "qps": 9289.0118,
         "latency": 4.2,
         "recall": 0.9574,
-        "filter_ratio": 0.99
+        "filter_ratio": 0.995
     },
     {
         "dataset": "Cohere (Large)",
@@ -2577,7 +2577,7 @@
         "qps": 3411.0934,
         "latency": 3.3,
         "recall": 0.995,
-        "filter_ratio": 1.0
+        "filter_ratio": 0.999
     },
     {
         "dataset": "Cohere (Large)",
@@ -2587,7 +2587,7 @@
         "qps": 2838.356,
         "latency": 3.8,
         "recall": 0.9946,
-        "filter_ratio": 1.0
+        "filter_ratio": 0.998
     },
     {
         "dataset": "Cohere (Large)",
@@ -2597,7 +2597,7 @@
         "qps": 1826.0672,
         "latency": 5.3,
         "recall": 0.9938,
-        "filter_ratio": 0.99
+        "filter_ratio": 0.995
     },
     {
         "dataset": "Cohere (Large)",
