@@ -58,6 +58,7 @@ All the database client supported
 | tidb                     | `pip install vectordb-bench[tidb]`          |
 | vespa                    | `pip install vectordb-bench[vespa]`         |
 | oceanbase                | `pip install vectordb-bench[oceanbase]`     |
+| hologres                 | `pip install vectordb-bench[hologres]`      |
 
 ### Run
 
@@ -275,6 +276,37 @@ Options:
   --m INTEGER                     The number of sub-vectors that each data
                                   vector is divided into during IVF-PQ
   --help                          Show this message and exit.                       Show this message and exit.
+  ```
+
+### Run Hologres from command line
+
+Execute tests for the index types: HGraph.
+
+```shell
+vectordbbench hologreshgraph --host xxx --port xxx --user root@mysql_tenant --database test \
+--m 64 --ef-construction 400 --case-type Performance768D1M \
+--index-type HGraph --ef-search 51 --k 10
+```
+
+To list the options for Hologres, execute `vectordbbench hologreshgraph --help`, The following are some Hologres-specific command-line options.
+
+```text
+$ vectordbbench hologreshgraph --help
+Usage: vectordbbench hologreshgraph [OPTIONS]
+
+Options:
+  [...]
+  --host TEXT                     Hologres host
+  --user TEXT                     Hologres username  [required]
+  --password TEXT                 Hologres database password
+  --database TEXT                 Hologres database name  [required]
+  --port INTEGER                  Hologres port  [required]
+  --m INTEGER                     hnsw m  [required]
+  --ef-construction INTEGER       hnsw ef-construction  [required]
+  --ef-search INTEGER             hnsw ef-search  [required]
+  --index-type [HGraph]           Type of index to use. Supported values:
+                                  HGraph [required]
+  --help                          Show this message and exit.
   ```
 
 #### Using a configuration file.

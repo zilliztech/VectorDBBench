@@ -471,6 +471,22 @@ class HNSWFlavor4(HNSWBaseRequiredTypedDict):
     ]
 
 
+class HNSWFlavor5(HNSWBaseRequiredTypedDict):
+    ef_search: Annotated[
+        int | None,
+        click.option("--ef-search", type=int, help="hnsw ef-search", required=True),
+    ]
+    index_type: Annotated[
+        str | None,
+        click.option(
+            "--index-type",
+            type=click.Choice(["HGraph"], case_sensitive=True),
+            help="Type of index to use. Supported values: HGraph",
+            required=True,
+        ),
+    ]
+
+
 class IVFFlatTypedDict(TypedDict):
     lists: Annotated[int | None, click.option("--lists", type=int, help="ivfflat lists")]
     probes: Annotated[int | None, click.option("--probes", type=int, help="ivfflat probes")]
