@@ -485,6 +485,17 @@ class HNSWFlavor5(HNSWBaseRequiredTypedDict):
             required=True,
         ),
     ]
+    use_reorder: Annotated[
+        bool,
+        click.option(
+            "--use-reorder/--no-use-reorder",
+            is_flag=True,
+            type=bool,
+            help="use reorder index",
+            default=True,
+            show_default=True,
+        ),
+    ]
 
 
 class IVFFlatTypedDict(TypedDict):

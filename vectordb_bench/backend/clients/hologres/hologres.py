@@ -37,7 +37,7 @@ class Hologres(VectorDB):
         drop_old: bool = False,
         **kwargs,
     ):
-        self.name = "Alibaba Cloud Hologres"
+        self.name = "Hologres"
         self.db_config = db_config
         self.case_config = db_case_config
         self.table_name = collection_name
@@ -246,7 +246,7 @@ class Hologres(VectorDB):
             builder_params=sql.SQL(json.dumps(self.case_config.builder_params())),
         )
 
-        log.info(f"{self.name} client create index on table : {self.table_name}, with sql: {sql_index}")
+        log.info(f"{self.name} client create index on table : {self.table_name}, with sql: {sql_index.as_string()}")
         try:
             self.cursor.execute(sql_index)
             self.conn.commit()
@@ -280,7 +280,7 @@ class Hologres(VectorDB):
             dim=dim,
             tg_name=sql.SQL(self._tg_name),
         )
-        log.info(f"{self.name} client create table : {self.table_name}, with sql: {sql_table}")
+        log.info(f"{self.name} client create table : {self.table_name}, with sql: {sql_table.as_string()}")
         try:
             self.cursor.execute(sql_table)
             self.conn.commit()

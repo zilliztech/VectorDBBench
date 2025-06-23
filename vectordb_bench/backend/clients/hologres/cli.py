@@ -44,6 +44,7 @@ def HologresHGraph(**parameters: Unpack[HologresHGraphTypedDict]):
             max_degree=parameters["m"],
             ef_construction=parameters["ef_construction"],
             ef_search=parameters["ef_search"],
+            use_reorder=parameters["use_reorder"],
         ),
         **parameters,
     )

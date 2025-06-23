@@ -98,6 +98,11 @@ class HologresIndexConfig(BaseModel, DBCaseConfig):
         return "ASC"
 
     def builder_params(self) -> dict:
+        if self.use_reorder:
+            self.base_quantization_type = "sq8_uniform"
+        else:
+            self.base_quantization_type = "fp32"
+
         return {
             "min_flush_proxima_row_count": self.min_flush_proxima_row_count,
             "min_compaction_proxima_row_count": self.min_compaction_proxima_row_count,
