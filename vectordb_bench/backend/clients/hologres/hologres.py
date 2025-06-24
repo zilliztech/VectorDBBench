@@ -104,6 +104,8 @@ class Hologres(VectorDB):
         if self._use_prepared_query:
             self._prepare_query()
 
+        self._set_search_guc()
+
         try:
             yield
         finally:
@@ -153,6 +155,15 @@ class Hologres(VectorDB):
                 order_direction=sql.SQL(self.case_config.order_direction()),
             )
         )
+
+    def _set_search_guc(self):
+        assert self.conn is not None, "Connection is not initialized"
+        assert self.cursor is not None, "Cursor is not initialized"
+
+        sql_guc = sql.SQL(f"SET hg_vector_ef_search = {self.case_config.ef_search};")
+        log.info(f"{self.name} client set search guc: {sql_guc.as_string()}")
+        self.cursor.execute(sql_guc)
+        self.conn.commit()
 
     def _drop_table(self):
         assert self.conn is not None, "Connection is not initialized"
