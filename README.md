@@ -13,7 +13,7 @@ Closely mimicking real-world production environments, we've set up diverse testi
 
 Prepare to delve into the world of VDBBench, and let it guide you in uncovering your perfect vector database match.  
 
-VDBBench is sponsered by Zilliz，the leading opensource vectorDB company behind Milvus. Choose smarter with VDBBench - start your free test on [zilliz cloud](https://zilliz.com/) today!
+VDBBench is sponsored by Zilliz，the leading opensource vectorDB company behind Milvus. Choose smarter with VDBBench - start your free test on [zilliz cloud](https://zilliz.com/) today!
 
 **Leaderboard:** https://zilliz.com/benchmark
 ## Quick Start
@@ -721,4 +721,4 @@ This multi-tiered timeout approach allows our benchmark to be more representativ
     </tr>
 </table>
 
-**Note:** Some datapoints in the standard benchmark results that voilate this timeout will be kept for now for reference. We will remove them in the future.
+**Note:** Some datapoints in the standard benchmark results that violate this timeout will be kept for now for reference. We will remove them in the future.
