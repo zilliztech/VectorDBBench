@@ -294,6 +294,7 @@ class DatasetManager(BaseModel):
             download_files.extend([gt_file, test_file])
             if self.data.with_scalar_labels and self.data.scalar_labels_file_separated:
                 download_files.append(self.data.scalar_labels_file)
+            download_files = [file for file in download_files if file is not None]
             source.reader().read(
                 dataset=self.data.dir_name.lower(),
                 files=download_files,
