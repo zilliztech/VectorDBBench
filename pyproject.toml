@@ -67,7 +67,6 @@ all = [
     "opensearch-py",
     "memorydb",
     "alibabacloud_ha3engine_vector",
-    "alibabacloud_searchengine20211025",
     "mariadb",
     "PyMySQL",
     "clickhouse-connect",
@@ -90,7 +89,7 @@ redis           = [ "redis" ]
 memorydb        = [ "memorydb" ]
 chromadb        = [ "chromadb" ]
 opensearch      = [ "opensearch-py" ]
-aliyun_opensearch = [ "alibabacloud_ha3engine_vector", "alibabacloud_searchengine20211025"]
+aliyun_opensearch = [ "alibabacloud_ha3engine_vector" ]
 mongodb         = [ "pymongo" ]
 mariadb         = [ "mariadb" ]
 tidb            = [ "PyMySQL" ]
