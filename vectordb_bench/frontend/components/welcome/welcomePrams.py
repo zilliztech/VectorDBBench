@@ -20,11 +20,11 @@ def get_image_as_base64(image_path):
                 package_parts = ["vectordb_bench"] + image_path.split("/")[:-1]
                 package_name = ".".join(package_parts)
                 file_name = os.path.basename(image_path)
-                
+
                 # Get the resource content using importlib.resources
                 files = resources.files(package_name)
                 img_data = (files / file_name).read_bytes()
-                
+
                 img = Image.open(BytesIO(img_data))
                 buffered = BytesIO()
                 img.save(buffered, format="PNG")
@@ -32,14 +32,14 @@ def get_image_as_base64(image_path):
             except Exception:
                 # If package resource fails, try the original path
                 pass
-        
+
         # Fallback to file system path (for development)
         path = os.path.expanduser(image_path)
         if not os.path.isabs(path):
             # Try relative to the vectordb_bench package directory
             package_dir = Path(__file__).parent.parent.parent
             path = package_dir / path
-        
+
         img = Image.open(path)
         buffered = BytesIO()
         img.save(buffered, format="PNG")
