@@ -139,19 +139,14 @@ class MilvusRefineTypedDict(TypedDict):
     ]
 
 
-class MilvusHNSWPQTypedDict(
-    CommonTypedDict,
-    MilvusTypedDict,
-    MilvusHNSWTypedDict,
-    MilvusRefineTypedDict
-):
+class MilvusHNSWPQTypedDict(CommonTypedDict, MilvusTypedDict, MilvusHNSWTypedDict, MilvusRefineTypedDict):
     nbits: Annotated[
         int,
         click.option(
             "--nbits",
             type=int,
             required=True,
-        )
+        ),
     ]
 
 
@@ -194,7 +189,7 @@ class MilvusHNSWPRQTypedDict(
             type=int,
             help="The number of residual subquantizers.",
             required=True,
-        )
+        ),
     ]
 
 
@@ -220,7 +215,7 @@ def MilvusHNSWPRQ(**parameters: Unpack[MilvusHNSWPRQTypedDict]):
             refine=parameters["refine"],
             refine_type=parameters["refine_type"],
             refine_k=parameters["refine_k"],
-            nrq=parameters["nrq"]
+            nrq=parameters["nrq"],
         ),
         **parameters,
     )
