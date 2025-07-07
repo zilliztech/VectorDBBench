@@ -19,7 +19,7 @@ def NavToQuriesPerDollar(st):
 def NavToResults(st, key="nav-to-results"):
     navClick = st.button("< &nbsp;&nbsp;Back to Results", key=key)
     if navClick:
-        switch_page("vdb benchmark")
+        switch_page("results")
 
 
 def NavToPages(st):
