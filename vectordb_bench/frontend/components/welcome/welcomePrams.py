@@ -2,6 +2,8 @@ import base64
 from PIL import Image
 from io import BytesIO
 import os
+from pathlib import Path
+from importlib import resources
 
 from vectordb_bench.frontend.components.welcome.pagestyle import pagestyle
 
@@ -11,12 +13,38 @@ def get_image_as_base64(image_path):
         if image_path.startswith("http"):
             return image_path
 
+        # Try to load from package resources first (for pip installed package)
+        if image_path.startswith("fig/homepage/"):
+            try:
+                # Convert fig/homepage/xxx.png to vectordb_bench.fig.homepage
+                package_parts = ["vectordb_bench"] + image_path.split("/")[:-1]
+                package_name = ".".join(package_parts)
+                file_name = os.path.basename(image_path)
+                
+                # Get the resource content using importlib.resources
+                files = resources.files(package_name)
+                img_data = (files / file_name).read_bytes()
+                
+                img = Image.open(BytesIO(img_data))
+                buffered = BytesIO()
+                img.save(buffered, format="PNG")
+                return f"data:image/png;base64,{base64.b64encode(buffered.getvalue()).decode()}"
+            except Exception:
+                # If package resource fails, try the original path
+                pass
+        
+        # Fallback to file system path (for development)
         path = os.path.expanduser(image_path)
+        if not os.path.isabs(path):
+            # Try relative to the vectordb_bench package directory
+            package_dir = Path(__file__).parent.parent.parent
+            path = package_dir / path
+        
         img = Image.open(path)
         buffered = BytesIO()
         img.save(buffered, format="PNG")
         return f"data:image/png;base64,{base64.b64encode(buffered.getvalue()).decode()}"
-    except Exception as e:
+    except Exception:
         return None
 
 
@@ -110,7 +138,7 @@ def welcomePrams(st):
     for option in options:
         option["image"] = get_image_as_base64(option["image"])
 
-    for i, option in enumerate(options[:6]):
+    for option in options[:6]:
         html_content += f"""
         <a href="/{option['link']}" target="_self" style="text-decoration: none;">
             <div class="section-card">
