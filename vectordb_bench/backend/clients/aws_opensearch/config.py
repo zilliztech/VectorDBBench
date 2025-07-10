@@ -43,7 +43,7 @@ class AWSOSQuantization(Enum):
 
 class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
     metric_type: MetricType = MetricType.L2
-    engine: AWSOS_Engine = AWSOS_Engine.faiss
+    engine: AWSOS_Engine = AWSOS_Engine.lucene
     efConstruction: int = 256
     efSearch: int = 100
     engine_name: str | None = None
@@ -110,24 +110,24 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
         log.info(f"Using metric_type: {self.metric_type_name} for index creation")
         log.info(f"Resulting space_type: {self.parse_metric()} for index creation")
 
-        parameters = {"ef_construction": self.efConstruction, "m": self.M}
-
-        if self.engine == AWSOS_Engine.faiss and self.faiss_use_fp16:
-            parameters["encoder"] = {"name": "sq", "parameters": {"type": "fp16"}}
+        # Build parameters based on engine type
+        parameters = {
+            "ef_construction": self.efConstruction,
+            "m": self.M,
+        }
+        
+        # Only include ef_search for FAISS engine, not for Lucene
+        if self.engine == AWSOS_Engine.faiss:
+            parameters["ef_search"] = self.efSearch
+            
+        # Add quantization if enabled
+        if self.use_quant:
+            parameters["encoder"] = {"name": "sq", "parameters": {"type": self.quantization_type.value}}
 
         return {
             "name": "hnsw",
             "engine": self.engine.value,
-            "parameters": {
-                "ef_construction": self.efConstruction,
-                "m": self.M,
-                "ef_search": self.efSearch,
-                **(
-                    {"encoder": {"name": "sq", "parameters": {"type": self.quantization_type.fp16.value}}}
-                    if self.use_quant
-                    else {}
-                ),
-            },
+            "parameters": parameters,
         }
 
     def search_param(self) -> dict:

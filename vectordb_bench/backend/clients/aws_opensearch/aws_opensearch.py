@@ -65,9 +65,7 @@ class AWSOpenSearch(VectorDB):
             self._load_graphs_to_memory(client)
 
     def _create_index(self, client: OpenSearch) -> None:
-        ef_search_value = (
-            self.case_config.ef_search if self.case_config.ef_search is not None else self.case_config.efSearch
-        )
+        ef_search_value = self.case_config.efSearch
         log.info(f"Creating index with ef_search: {ef_search_value}")
         log.info(f"Creating index with number_of_replicas: {self.case_config.number_of_replicas}")
 
@@ -81,29 +79,32 @@ class AWSOpenSearch(VectorDB):
                 "knn.memory.circuit_breaker.limit": self.case_config.cb_threshold,
             }
         }
-        client.cluster.put_settings(cluster_settings_body)
+        client.cluster.put_settings(body=cluster_settings_body)
         settings = {
             "index": {
                 "knn": True,
                 "number_of_shards": self.case_config.number_of_shards,
                 "number_of_replicas": self.case_config.number_of_replicas,
                 "translog.flush_threshold_size": self.case_config.flush_threshold_size,
-                "knn.advanced.approximate_threshold": "-1",
             },
             "refresh_interval": self.case_config.refresh_interval,
         }
-        settings["index"]["knn.algo_param.ef_search"] = ef_search_value
+        # Only set ef_search for FAISS engine, not for Lucene
+        if self.case_config.engine == AWSOS_Engine.faiss:
+            settings["index"]["knn.algo_param.ef_search"] = ef_search_value
+        # Build properties, but skip _id field as it's a reserved system field in OpenSearch
+        properties = {}
+        if self.id_col_name != "_id":
+            properties[self.id_col_name] = {"type": "integer", "store": True}
+        properties[self.label_col_name] = {"type": "keyword"}
+        properties[self.vector_col_name] = {
+            "type": "knn_vector",
+            "dimension": self.dim,
+            "method": self.case_config.index_param(),
+        }
+        
         mappings = {
-            "_source": {"excludes": [self.vector_col_name], "recovery_source_excludes": [self.vector_col_name]},
-            "properties": {
-                self.id_col_name: {"type": "integer", "store": True},
-                self.label_col_name: {"type": "keyword"},
-                self.vector_col_name: {
-                    "type": "knn_vector",
-                    "dimension": self.dim,
-                    "method": self.case_config.index_param(),
-                },
-            },
+            "properties": properties,
         }
         try:
             log.info(f"Creating index with settings: {settings}")
@@ -163,7 +164,7 @@ class AWSOpenSearch(VectorDB):
             insert_data.append(other_data)
 
         try:
-            self.client.bulk(insert_data)
+            self.client.bulk(body=insert_data)
             return len(embeddings), None
         except Exception as e:
             log.warning(f"Failed to insert data: {self.index_name} error: {e!s}")
@@ -212,7 +213,7 @@ class AWSOpenSearch(VectorDB):
                 insert_data.append(other_data)
 
             try:
-                resp = client.bulk(insert_data)
+                resp = client.bulk(body=insert_data)
                 log.info(f"Client {client_idx} added {len(resp['items'])} documents")
                 return len(chunk_embeddings), None
             except Exception as e:
@@ -254,9 +255,12 @@ class AWSOpenSearch(VectorDB):
         return (total_count, None)
 
     def _update_ef_search_before_search(self, client: OpenSearch):
-        ef_search_value = (
-            self.case_config.ef_search if self.case_config.ef_search is not None else self.case_config.efSearch
-        )
+        # Only update ef_search for FAISS engine, not for Lucene
+        if self.case_config.engine != AWSOS_Engine.faiss:
+            log.info(f"Skipping ef_search update for {self.case_config.engine} engine")
+            return
+            
+        ef_search_value = self.case_config.efSearch
 
         try:
             index_settings = client.indices.get_settings(index=self.index_name)
@@ -317,21 +321,32 @@ class AWSOpenSearch(VectorDB):
         }
 
         try:
-            resp = self.client.search(
-                index=self.index_name,
-                body=body,
-                size=k,
-                _source=False,
-                docvalue_fields=[self.id_col_name],
-                stored_fields="_none_",
-                preference="_only_local" if self.case_config.number_of_shards == 1 else None,
-                routing=self.routing_key,
-            )
+            # For _id field, we don't need docvalue_fields as it's always available in metadata
+            search_params = {
+                "index": self.index_name,
+                "body": body,
+                "size": k,
+                "_source": False,
+                "stored_fields": "_none_",
+                "preference": "_only_local" if self.case_config.number_of_shards == 1 else None,
+                "routing": self.routing_key,
+            }
+            
+            # Only add docvalue_fields if we're not using the _id field
+            if self.id_col_name != "_id":
+                search_params["docvalue_fields"] = [self.id_col_name]
+            
+            resp = self.client.search(**search_params)
             log.debug(f"Search took: {resp['took']}")
             log.debug(f"Search shards: {resp['_shards']}")
             log.debug(f"Search hits total: {resp['hits']['total']}")
             try:
-                return [int(h["fields"][self.id_col_name][0]) for h in resp["hits"]["hits"]]
+                if self.id_col_name == "_id":
+                    # For _id field, access it from metadata
+                    return [int(h["_id"]) for h in resp["hits"]["hits"]]
+                else:
+                    # For other fields, access from docvalue_fields
+                    return [int(h["fields"][self.id_col_name][0]) for h in resp["hits"]["hits"]]
             except Exception:
                 # empty results
                 return []
@@ -368,9 +383,12 @@ class AWSOpenSearch(VectorDB):
         self._load_graphs_to_memory(self.client)
 
     def _update_ef_search(self):
-        ef_search_value = (
-            self.case_config.ef_search if self.case_config.ef_search is not None else self.case_config.efSearch
-        )
+        # Only update ef_search for FAISS engine, not for Lucene
+        if self.case_config.engine != AWSOS_Engine.faiss:
+            log.info(f"Skipping ef_search update for {self.case_config.engine} engine")
+            return
+            
+        ef_search_value = self.case_config.efSearch
         log.info(f"Updating ef_search parameter to: {ef_search_value}")
 
         settings_body = {"index": {"knn.algo_param.ef_search": ef_search_value}}
@@ -425,13 +443,9 @@ class AWSOpenSearch(VectorDB):
         cluster_settings_body = {
             "persistent": {"knn.algo_param.index_thread_qty": self.case_config.index_thread_qty_during_force_merge}
         }
-        self.client.cluster.put_settings(cluster_settings_body)
+        self.client.cluster.put_settings(body=cluster_settings_body)
 
-        log.info("Updating the graph threshold to ensure that during merge we can do graph creation.")
-        output = self.client.indices.put_settings(
-            index=self.index_name, body={"index.knn.advanced.approximate_threshold": "0"}
-        )
-        log.info(f"response of updating setting is: {output}")
+        log.info("Skipping graph threshold update as it may not be supported in this OpenSearch version.")
 
         log.info(f"Starting force merge for index {self.index_name}")
         segments = self.case_config.number_of_segments
