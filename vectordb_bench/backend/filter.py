@@ -51,6 +51,23 @@ class IntFilter(Filter):
         raise RuntimeError(msg)
 
 
+class NewIntFilter(Filter):
+    type: FilterOp = FilterOp.NumGE
+    int_field: str = "id"
+    int_value: int
+
+    @property
+    def int_rate(self) -> str:
+        r = self.filter_rate * 100
+        if 1 <= r <= 99:
+            return f"int_{int(r)}p"
+        return f"int_{r:.1f}p"
+
+    @property
+    def groundtruth_file(self) -> str:
+        return f"neighbors_{self.int_rate}.parquet"
+
+
 class LabelFilter(Filter):
     """
     filter expr: label_field == label_value, like `color == "red"`

@@ -94,11 +94,21 @@ def welcomePrams(st):
             "title": "Label Filter Performance",
             "description": (
                 "<span style='font-size: 17px;'>"
-                "To view the perfomance of datasets under different filter ratios "
+                "To view the perfomance of datasets under different label filter ratios "
                 "</span>"
             ),
             "image": "fig/homepage/label_filter.png",
             "link": "label_filter",
+        },
+        {
+            "title": "Int Filter Performance",
+            "description": (
+                "<span style='font-size: 17px;'>"
+                "To view the perfomance of datasets under different int filter ratios "
+                "</span>"
+            ),
+            "image": "fig/homepage/label_filter.png",
+            "link": "int_filter",
         },
         {
             "title": "Streaming Performance",
@@ -138,7 +148,7 @@ def welcomePrams(st):
     for option in options:
         option["image"] = get_image_as_base64(option["image"])
 
-    for option in options[:6]:
+    for option in options[:7]:
         html_content += f"""
         <a href="/{option['link']}" target="_self" style="text-decoration: none;">
             <div class="section-card">
@@ -157,7 +167,7 @@ def welcomePrams(st):
     <div class="last-row">
     """
 
-    for option in options[6:8]:
+    for option in options[7:9]:
         html_content += f"""
         <a href="/{option['link']}" target="_self" style="text-decoration: none;">
             <div class="section-card">
