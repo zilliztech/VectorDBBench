@@ -12,12 +12,12 @@ from ....cli.cli import (
     run,
 )
 from .. import DB
-from .config import AWSOS_Engine, AWSOSQuantization
+from .config import OSSOS_Engine, OSSOpenSearchQuantization
 
 log = logging.getLogger(__name__)
 
 
-class AWSOpenSearchTypedDict(TypedDict):
+class OSSOpenSearchTypedDict(TypedDict):
     host: Annotated[str, click.option("--host", type=str, help="Db host", required=True)]
     port: Annotated[int, click.option("--port", type=int, default=80, help="Db Port")]
     user: Annotated[str, click.option("--user", type=str, help="Db User")]
@@ -119,23 +119,23 @@ class AWSOpenSearchTypedDict(TypedDict):
     ]
 
 
-class AWSOpenSearchHNSWTypedDict(CommonTypedDict, AWSOpenSearchTypedDict, HNSWFlavor1): ...
+class OSSOpenSearchHNSWTypedDict(CommonTypedDict, OSSOpenSearchTypedDict, HNSWFlavor1): ...
 
 
 @cli.command()
-@click_parameter_decorators_from_typed_dict(AWSOpenSearchHNSWTypedDict)
-def AWSOpenSearch(**parameters: Unpack[AWSOpenSearchHNSWTypedDict]):
-    from .config import AWSOpenSearchConfig, AWSOpenSearchIndexConfig
+@click_parameter_decorators_from_typed_dict(OSSOpenSearchHNSWTypedDict)
+def OSSOpenSearch(**parameters: Unpack[OSSOpenSearchHNSWTypedDict]):
+    from .config import OSSOpenSearchConfig, OSSOpenSearchIndexConfig
 
     run(
-        db=DB.AWSOpenSearch,
-        db_config=AWSOpenSearchConfig(
+        db=DB.OSSOpenSearch,
+        db_config=OSSOpenSearchConfig(
             host=parameters["host"],
             port=parameters["port"],
             user=parameters["user"],
             password=SecretStr(parameters["password"]),
         ),
-        db_case_config=AWSOpenSearchIndexConfig(
+        db_case_config=OSSOpenSearchIndexConfig(
             number_of_shards=parameters["number_of_shards"],
             number_of_replicas=parameters["number_of_replicas"],
             index_thread_qty=parameters["index_thread_qty"],
@@ -148,8 +148,8 @@ def AWSOpenSearch(**parameters: Unpack[AWSOpenSearchHNSWTypedDict]):
             efConstruction=parameters["ef_construction"],
             efSearch=parameters["ef_runtime"],
             M=parameters["m"],
-            engine=AWSOS_Engine(parameters["engine"]),
-            quantization_type=AWSOSQuantization(parameters["quantization_type"]),
+            engine=OSSOS_Engine(parameters["engine"]),
+            quantization_type=OSSOpenSearchQuantization(parameters["quantization_type"]),
         ),
         **parameters,
     )
