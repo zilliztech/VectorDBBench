@@ -1,5 +1,6 @@
 from ..backend.clients.alloydb.cli import AlloyDBScaNN
 from ..backend.clients.aws_opensearch.cli import AWSOpenSearch
+from ..backend.clients.oss_opensearch.cli import OSSOpenSearch
 from ..backend.clients.clickhouse.cli import Clickhouse
 from ..backend.clients.lancedb.cli import LanceDB
 from ..backend.clients.mariadb.cli import MariaDBHNSW
@@ -31,6 +32,7 @@ cli.add_command(Test)
 cli.add_command(ZillizAutoIndex)
 cli.add_command(MilvusAutoIndex)
 cli.add_command(AWSOpenSearch)
+cli.add_command(OSSOpenSearch)
 cli.add_command(PgVectorScaleDiskAnn)
 cli.add_command(PgDiskAnn)
 cli.add_command(AlloyDBScaNN)

@@ -38,6 +38,7 @@ class DB(Enum):
     MemoryDB = "MemoryDB"
     Chroma = "Chroma"
     AWSOpenSearch = "OpenSearch"
+    OSSOpenSearch = "OSSOpenSearch"
     AliyunElasticsearch = "AliyunElasticsearch"
     MariaDB = "MariaDB"
     Test = "test"
@@ -126,6 +127,11 @@ class DB(Enum):
             from .aws_opensearch.aws_opensearch import AWSOpenSearch
 
             return AWSOpenSearch
+
+        if self == DB.OSSOpenSearch:
+            from .oss_opensearch.oss_opensearch import OSSOpenSearch
+
+            return OSSOpenSearch
 
         if self == DB.Clickhouse:
             from .clickhouse.clickhouse import Clickhouse
@@ -263,6 +269,11 @@ class DB(Enum):
 
             return AWSOpenSearchConfig
 
+        if self == DB.OSSOpenSearch:
+            from .oss_opensearch.config import OSSOpenSearchConfig
+
+            return OSSOpenSearchConfig
+
         if self == DB.Clickhouse:
             from .clickhouse.config import ClickhouseConfig
 
@@ -369,6 +380,11 @@ class DB(Enum):
             from .aws_opensearch.config import AWSOpenSearchIndexConfig
 
             return AWSOpenSearchIndexConfig
+
+        if self == DB.OSSOpenSearch:
+            from .oss_opensearch.config import OSSOpenSearchIndexConfig
+
+            return OSSOpenSearchIndexConfig
 
         if self == DB.Clickhouse:
             from .clickhouse.config import ClickhouseHNSWConfig
