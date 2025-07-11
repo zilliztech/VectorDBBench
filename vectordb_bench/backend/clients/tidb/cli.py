@@ -17,7 +17,6 @@ class TiDBTypedDict(CommonTypedDict):
             help="Username",
             default="root",
             show_default=True,
-            required=True,
         ),
     ]
     password: Annotated[
@@ -37,7 +36,6 @@ class TiDBTypedDict(CommonTypedDict):
             type=str,
             default="127.0.0.1",
             show_default=True,
-            required=True,
             help="Db host",
         ),
     ]
@@ -48,7 +46,6 @@ class TiDBTypedDict(CommonTypedDict):
             type=int,
             default=4000,
             show_default=True,
-            required=True,
             help="Db Port",
         ),
     ]
@@ -59,7 +56,6 @@ class TiDBTypedDict(CommonTypedDict):
             type=str,
             default="test",
             show_default=True,
-            required=True,
             help="Db name",
         ),
     ]

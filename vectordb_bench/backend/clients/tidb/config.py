@@ -1,7 +1,17 @@
-from pydantic import BaseModel, SecretStr
+from typing import TypedDict
+
+from pydantic import BaseModel, SecretStr, validator
 
 from ..api import DBCaseConfig, DBConfig, MetricType
 
+class TiDBConfigDict(TypedDict):
+    host: str
+    port: int
+    user: str
+    password: str
+    database: str
+    ssl_verify_cert: bool
+    ssl_verify_identity: bool
 
 class TiDBConfig(DBConfig):
     user_name: str = "root"
@@ -11,7 +21,7 @@ class TiDBConfig(DBConfig):
     db_name: str = "test"
     ssl: bool = False
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> TiDBConfigDict:
         pwd_str = self.password.get_secret_value()
         return {
             "host": self.host,
@@ -22,6 +32,14 @@ class TiDBConfig(DBConfig):
             "ssl_verify_cert": self.ssl,
             "ssl_verify_identity": self.ssl,
         }
+
+    @validator("*")
+    def not_empty_field(cls, v: any, field: any):
+        if field.name in ["password", "db_label"]:
+            return v
+        if isinstance(v, str | SecretStr) and len(v) == 0:
+            raise ValueError("Empty string!")
+        return v
 
 
 class TiDBIndexConfig(BaseModel, DBCaseConfig):
