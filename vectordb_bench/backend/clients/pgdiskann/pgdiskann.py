@@ -75,7 +75,13 @@ class PgDiskANN(VectorDB):
     @staticmethod
     def _create_connection(**kwargs) -> tuple[Connection, Cursor]:
         conn = psycopg.connect(**kwargs)
-        conn.cursor().execute("CREATE EXTENSION IF NOT EXISTS pg_diskann CASCADE")
+        cursor = conn.cursor()
+        
+        # Enable required extensions
+        cursor.execute("CREATE EXTENSION IF NOT EXISTS pg_diskann CASCADE")
+        cursor.execute("CREATE EXTENSION IF NOT EXISTS citus CASCADE")
+        cursor.execute("CREATE EXTENSION IF NOT EXISTS vector CASCADE")
+        
         conn.commit()
         register_vector(conn)
         conn.autocommit = False
@@ -263,15 +269,77 @@ class PgDiskANN(VectorDB):
         try:
             log.info(f"{self.name} client create table : {self.table_name}")
 
+            # Create the table first
             self.cursor.execute(
                 sql.SQL(
                     "CREATE TABLE IF NOT EXISTS public.{table_name} (id BIGINT PRIMARY KEY, embedding vector({dim}));",
                 ).format(table_name=sql.Identifier(self.table_name), dim=dim),
             )
             self.conn.commit()
+
+            # Check if Citus extension is available and create distributed table
+            self._create_distributed_table()
+            
         except Exception as e:
             log.warning(f"Failed to create pgdiskann table: {self.table_name} error: {e}")
             raise e from None
+
+    def _create_distributed_table(self):
+        """Create a distributed table using Citus for 500K rows with 1536 dimensions"""
+        assert self.conn is not None, "Connection is not initialized"
+        assert self.cursor is not None, "Cursor is not initialized"
+
+        # Check if Citus distribution is enabled in config
+        if not getattr(self.case_config, 'enable_citus_distribution', True):
+            log.info(f"{self.name} Citus distribution disabled in config")
+            return
+
+        try:
+            # Check if Citus extension is available
+            self.cursor.execute(
+                "SELECT EXISTS(SELECT 1 FROM pg_extension WHERE extname = 'citus');"
+            )
+            citus_available = self.cursor.fetchone()[0]
+            
+            if citus_available:
+                log.info(f"{self.name} Citus extension found, creating distributed table")
+                
+                # Create distributed table with hash distribution on id column
+                # For 500K rows, we'll use hash distribution which is optimal for DiskANN
+                self.cursor.execute(
+                    sql.SQL("SELECT create_distributed_table({table_name}, 'id');").format(
+                        table_name=sql.Literal(self.table_name)
+                    )
+                )
+                self.conn.commit()
+                
+                # Set shard count from config (optimized for 500K rows)
+                shard_count = getattr(self.case_config, 'shard_count', 8)
+                self.cursor.execute(
+                    sql.SQL("ALTER TABLE {table_name} SET (shard_count = {shard_count});").format(
+                        table_name=sql.Identifier(self.table_name),
+                        shard_count=sql.Literal(shard_count)
+                    )
+                )
+                self.conn.commit()
+                
+                log.info(f"{self.name} Successfully created distributed table with {shard_count} shards")
+                
+                # Get distribution info
+                self.cursor.execute(
+                    sql.SQL("SELECT * FROM pg_dist_partition WHERE logicalrelid = {table_name}::regclass;").format(
+                        table_name=sql.Literal(self.table_name)
+                    )
+                )
+                dist_info = self.cursor.fetchall()
+                log.info(f"{self.name} Distribution info: {dist_info}")
+                
+            else:
+                log.warning(f"{self.name} Citus extension not found, creating regular table")
+                
+        except Exception as e:
+            log.warning(f"Failed to create distributed table: {e}")
+            log.info(f"{self.name} Falling back to regular table creation")
 
     def insert_embeddings(
         self,

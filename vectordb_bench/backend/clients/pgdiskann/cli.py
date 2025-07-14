@@ -77,6 +77,23 @@ class PgDiskAnnTypedDict(CommonTypedDict):
             required=False,
         ),
     ]
+    enable_citus_distribution: Annotated[
+        bool,
+        click.option(
+            "--enable-citus-distribution/--disable-citus-distribution",
+            default=True,
+            help="Enable Citus distributed table creation for better performance with large datasets",
+        ),
+    ]
+    shard_count: Annotated[
+        int,
+        click.option(
+            "--shard-count",
+            type=int,
+            default=8,
+            help="Number of shards for Citus distributed table (default: 8, optimal for 500K rows)",
+        ),
+    ]
 
 
 @cli.command()
@@ -101,6 +118,8 @@ def PgDiskAnn(
             l_value_is=parameters["l_value_is"],
             max_parallel_workers=parameters["max_parallel_workers"],
             maintenance_work_mem=parameters["maintenance_work_mem"],
+            enable_citus_distribution=parameters["enable_citus_distribution"],
+            shard_count=parameters["shard_count"],
         ),
         **parameters,
     )

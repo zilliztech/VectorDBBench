@@ -118,6 +118,8 @@ class PgDiskANNImplConfig(PgDiskANNIndexConfig):
     l_value_is: float | None
     maintenance_work_mem: str | None = None
     max_parallel_workers: int | None = None
+    enable_citus_distribution: bool = True  # Enable Citus distribution by default
+    shard_count: int = 8  # Optimal for 500K rows (8 shards * ~62.5K rows per shard)
 
     def index_param(self) -> dict:
         return {
