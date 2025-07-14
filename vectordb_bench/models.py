@@ -308,6 +308,16 @@ class TestResult(BaseModel):
                     case_result["metrics"]["serial_latency_p99"] = (
                         cur_latency * 1000 if cur_latency > 0 else cur_latency
                     )
+                    
+                    # Handle P95 latency for backward compatibility with existing result files
+                    if "serial_latency_p95" in case_result["metrics"]:
+                        cur_latency_p95 = case_result["metrics"]["serial_latency_p95"]
+                        case_result["metrics"]["serial_latency_p95"] = (
+                            cur_latency_p95 * 1000 if cur_latency_p95 > 0 else cur_latency_p95
+                        )
+                    else:
+                        # Default to 0 for older result files that don't have P95 data
+                        case_result["metrics"]["serial_latency_p95"] = 0.0
             return TestResult.validate(test_result)
 
     def display(self, dbs: list[DB] | None = None):
@@ -350,6 +360,7 @@ class TestResult(BaseModel):
             max_load_dur,
             max_qps,
             15,
+            15,
             max_recall,
             14,
             5,
@@ -357,7 +368,7 @@ class TestResult(BaseModel):
 
         DATA_FORMAT = (  # noqa: N806
             f"%-{max_db}s | %-{max_db_labels}s %-{max_case}s %-{len(self.task_label)}s"
-            f" | %-{max_load_dur}s %-{max_qps}s %-15s %-{max_recall}s %-14s"
+            f" | %-{max_load_dur}s %-{max_qps}s %-15s %-15s %-{max_recall}s %-14s"
             f" | %-5s"
         )
 
@@ -369,6 +380,7 @@ class TestResult(BaseModel):
             "load_dur",
             "qps",
             "latency(p99)",
+            "latency(p95)",
             "recall",
             "max_load_count",
             "label",
@@ -391,6 +403,7 @@ class TestResult(BaseModel):
                     f.metrics.load_duration,
                     f.metrics.qps,
                     f.metrics.serial_latency_p99,
+                    f.metrics.serial_latency_p95,
                     f.metrics.recall,
                     f.metrics.max_load_count,
                     f.label.value,
