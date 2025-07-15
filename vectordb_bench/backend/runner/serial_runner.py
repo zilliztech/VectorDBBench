@@ -306,8 +306,7 @@ class SerialSearchRunner:
             msg = "empty test_data"
             raise RuntimeError(msg)
 
-        with utils.time_it(f"Serial search {len(self.test_data)} test data"):
-            return self._run_in_subprocess()
+        return self._run_in_subprocess()
 
     @utils.time_it
     def run_with_cost(self) -> tuple[tuple[float, float, float, float], float]:
@@ -321,5 +320,4 @@ class SerialSearchRunner:
             msg = "empty test_data"
             raise RuntimeError(msg)
 
-        with utils.time_it(f"Serial search {len(self.test_data)} test data"):
-            return self._run_in_subprocess()
+        return self._run_in_subprocess()
