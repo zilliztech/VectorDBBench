@@ -125,8 +125,7 @@ class Hologres(VectorDB):
                     {distance_function}(embedding, $1::REAL[]) AS distance
                 FROM {table_name}
                 ORDER BY distance {order_direction}
-                -- LIMIT $2::INT
-                LIMIT 10;
+                LIMIT $2::INT
                 """
             ).format(
                 prepared_query=sql.SQL(self._prepared_query_q_k),
