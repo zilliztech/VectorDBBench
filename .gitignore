@@ -12,3 +12,18 @@ venv/
 .idea/
 results/
 logs/
+pgdiskann_config.yml
+chat_conversation_summary.md
+DETAILED_CODE_CHANGES.md
+COMPREHENSIVE_CODE_CHANGES.md
+COMPLETE_INTEGRATION_JOURNEY.md
+
+# Documentation files (keep in repo for reference)
+PERFORMANCE_ANALYSIS.md
+LOG_EXPLANATION.md
+QUICK_REFERENCE.md
+
+# Additional log files
+*.log
+vectordb_bench.log
+benchmark_*.log

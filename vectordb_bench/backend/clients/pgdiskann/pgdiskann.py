@@ -77,12 +77,35 @@ class PgDiskANN(VectorDB):
         conn = psycopg.connect(**kwargs)
         cursor = conn.cursor()
         
-        # Enable required extensions
-        cursor.execute("CREATE EXTENSION IF NOT EXISTS pg_diskann CASCADE")
-        cursor.execute("CREATE EXTENSION IF NOT EXISTS citus CASCADE")
-        cursor.execute("CREATE EXTENSION IF NOT EXISTS vector CASCADE")
+        # Enable extensions - Azure Database for PostgreSQL has pre-installed extensions
+        # We need to enable them, not create them
+        try:
+            # Check which extensions are already enabled
+            cursor.execute("SELECT extname FROM pg_extension WHERE extname IN ('pg_diskann', 'vector', 'citus');")
+            enabled_extensions = [row[0] for row in cursor.fetchall()]
+            
+            # Enable pg_diskann extension if not already enabled
+            if 'pg_diskann' not in enabled_extensions:
+                cursor.execute("CREATE EXTENSION IF NOT EXISTS pg_diskann CASCADE")
+                log.info("PgDiskANN extension enabled successfully")
+            
+            # Enable vector extension if not already enabled
+            if 'vector' not in enabled_extensions:
+                cursor.execute("CREATE EXTENSION IF NOT EXISTS vector CASCADE")
+                log.info("Vector extension enabled successfully")
+                
+            # Enable citus extension if not already enabled (for Azure Citus)
+            if 'citus' not in enabled_extensions:
+                cursor.execute("CREATE EXTENSION IF NOT EXISTS citus CASCADE")
+                log.info("Citus extension enabled successfully")
+                
+            conn.commit()
+            
+        except Exception as e:
+            log.warning(f"Extension setup warning: {e}")
+            # Try to continue anyway, extensions might already be available
+            conn.rollback()
         
-        conn.commit()
         register_vector(conn)
         conn.autocommit = False
         cursor = conn.cursor()
@@ -285,7 +308,6 @@ class PgDiskANN(VectorDB):
             raise e from None
 
     def _create_distributed_table(self):
-        """Create a distributed table using Citus for 500K rows with 1536 dimensions"""
         assert self.conn is not None, "Connection is not initialized"
         assert self.cursor is not None, "Cursor is not initialized"
 
@@ -295,7 +317,7 @@ class PgDiskANN(VectorDB):
             return
 
         try:
-            # Check if Citus extension is available
+            # Check if Citus extension is enabled (Azure Citus should have it pre-installed)
             self.cursor.execute(
                 "SELECT EXISTS(SELECT 1 FROM pg_extension WHERE extname = 'citus');"
             )
@@ -305,7 +327,6 @@ class PgDiskANN(VectorDB):
                 log.info(f"{self.name} Citus extension found, creating distributed table")
                 
                 # Create distributed table with hash distribution on id column
-                # For 500K rows, we'll use hash distribution which is optimal for DiskANN
                 self.cursor.execute(
                     sql.SQL("SELECT create_distributed_table({table_name}, 'id');").format(
                         table_name=sql.Literal(self.table_name)
@@ -315,15 +336,7 @@ class PgDiskANN(VectorDB):
                 
                 # Set shard count from config (optimized for 500K rows)
                 shard_count = getattr(self.case_config, 'shard_count', 8)
-                self.cursor.execute(
-                    sql.SQL("ALTER TABLE {table_name} SET (shard_count = {shard_count});").format(
-                        table_name=sql.Identifier(self.table_name),
-                        shard_count=sql.Literal(shard_count)
-                    )
-                )
-                self.conn.commit()
-                
-                log.info(f"{self.name} Successfully created distributed table with {shard_count} shards")
+                log.info(f"{self.name} Setting shard count to {shard_count}")
                 
                 # Get distribution info
                 self.cursor.execute(
@@ -332,7 +345,36 @@ class PgDiskANN(VectorDB):
                     )
                 )
                 dist_info = self.cursor.fetchall()
+                log.info(f"{self.name} Successfully created distributed table with {len(dist_info)} partition(s)")
                 log.info(f"{self.name} Distribution info: {dist_info}")
+                
+                # Get shard distribution across workers
+                try:
+                    # Get basic shard information
+                    self.cursor.execute(
+                        sql.SQL("SELECT count(*) FROM pg_dist_shard WHERE logicalrelid = {table_name}::regclass;").format(
+                            table_name=sql.Literal(self.table_name)
+                        )
+                    )
+                    actual_shard_count = self.cursor.fetchone()[0]
+                    log.info(f"{self.name} Actual shard count created: {actual_shard_count}")
+                    
+                    # Get shard placement information
+                    self.cursor.execute(
+                        sql.SQL("SELECT sp.shardid, sp.shardstate, sp.nodename, sp.nodeport FROM pg_dist_shard_placement sp JOIN pg_dist_shard s ON sp.shardid = s.shardid WHERE s.logicalrelid = {table_name}::regclass ORDER BY sp.shardid;").format(
+                            table_name=sql.Literal(self.table_name)
+                        )
+                    )
+                    shard_info = self.cursor.fetchall()
+                    log.info(f"{self.name} Shard distribution: {shard_info}")
+                    
+                    # Get worker node information
+                    self.cursor.execute("SELECT nodename, nodeport FROM pg_dist_node WHERE isactive = true;")
+                    worker_info = self.cursor.fetchall()
+                    log.info(f"{self.name} Active worker nodes: {worker_info}")
+                    
+                except Exception as e:
+                    log.info(f"{self.name} Could not get shard distribution info: {e}")
                 
             else:
                 log.warning(f"{self.name} Citus extension not found, creating regular table")

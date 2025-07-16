@@ -1,0 +1,12 @@
+filename,timestamp,status,citus_enabled,shard_count,insert_duration,optimize_duration,load_duration,max_qps,serial_latency_p99,recall,ndcg
+result_20250715_1cad133298d0489f9507ec0c0ddeed80_pgdiskann.json,2025-07-15,:),False,8,12.3284,98.4608,110.7892,518.2829,0.0075,0.9909,0.9927
+result_20250715_5a5b72e0e6d0413898d64faa7da2f8a4_pgdiskann.json,2025-07-15,:),True,8,18.3109,80.5328,98.8437,20.5525,0.233,1.0,1.0
+result_20250714_6cf5377dd16f4e93b40cc53cf20ce7f9_pgdiskann.json,2025-07-14,x,False,8,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+result_20250714_65775d047dbf4a91bd11cc4fc68b85cc_pgdiskann.json,2025-07-14,:),True,8,144.7,1371.5621,1516.2621,0.0,0.0,0.0,0.0
+result_20250714_f09f9c6e95d2400fa51601b7cfa73915_pgdiskann.json,2025-07-14,:),False,8,13.1558,102.1651,115.3209,0.0,0.0,0.0,0.0
+result_20250715_3449e2c57fed4e389cf6b9f673b6f62b_pgdiskann.json,2025-07-15,:),False,8,12.1734,99.1596,111.333,0.0,0.0,0.0,0.0
+result_20250714_21eee446764f4bd182b8e4dc5a9dbc9e_pgdiskann.json,2025-07-14,x,True,8,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+result_20250714_cc1b71fdb54144588603eee5bb47e1c4_pgdiskann.json,2025-07-14,x,False,8,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+result_20250715_675071e68b6342cc83ddfc5162afac29_pgdiskann.json,2025-07-15,x,False,8,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+result_20250716_2025071612_pgdiskann.json,2025-07-16,:),True,8,20.8085,28.029,48.8375,19.6652,0.2399,1.0,1.0
+result_20250715_156de23f5071474388bf453d98593b02_pgdiskann.json,2025-07-15,:),True,8,18.7031,80.7262,99.4293,0.0,0.0,0.0,0.0
