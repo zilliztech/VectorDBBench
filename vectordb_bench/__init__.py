@@ -17,7 +17,7 @@ class config:
 
     DEFAULT_DATASET_URL = env.str("DEFAULT_DATASET_URL", AWS_S3_URL)
     DATASET_LOCAL_DIR = env.path("DATASET_LOCAL_DIR", "/tmp/vectordb_bench/dataset")
-    NUM_PER_BATCH = env.int("NUM_PER_BATCH", 50)
+    NUM_PER_BATCH = env.int("NUM_PER_BATCH", 100)
     TIME_PER_BATCH = 1  # 1s. for streaming insertion.
     MAX_INSERT_RETRY = 5
     MAX_SEARCH_RETRY = 5
