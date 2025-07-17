@@ -29,6 +29,7 @@ def NavToPages(st):
         {"name": "Quries Per Dollar", "link": "quries_per_dollar"},
         {"name": "Concurrent", "link": "concurrent"},
         {"name": "Label Filter", "link": "label_filter"},
+        {"name": "Int Filter", "link": "int_filter"},
         {"name": "Streaming", "link": "streaming"},
         {"name": "Tables", "link": "tables"},
         {"name": "Custom Dataset", "link": "custom"},
