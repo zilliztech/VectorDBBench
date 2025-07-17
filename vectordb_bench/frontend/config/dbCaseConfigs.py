@@ -1997,6 +1997,10 @@ CASE_CONFIG_MAP = {
         CaseLabel.Load: AWSOpensearchLoadingConfig,
         CaseLabel.Performance: AWSOpenSearchPerformanceConfig,
     },
+    DB.OSSOpenSearch: {
+        CaseLabel.Load: AWSOpensearchLoadingConfig,
+        CaseLabel.Performance: AWSOpenSearchPerformanceConfig,
+    },
     DB.PgVector: {
         CaseLabel.Load: PgVectorLoadingConfig,
         CaseLabel.Performance: PgVectorPerformanceConfig,
@@ -2040,10 +2044,6 @@ CASE_CONFIG_MAP = {
     DB.LanceDB: {
         CaseLabel.Load: LanceDBLoadConfig,
         CaseLabel.Performance: LanceDBPerformanceConfig,
-    },
-    DB.AWSOpenSearch: {
-        CaseLabel.Load: AWSOpensearchLoadingConfig,
-        CaseLabel.Performance: AWSOpenSearchPerformanceConfig,
     },
 }
 
