@@ -98,10 +98,10 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
         log.info("Search after write - Serial search start")
         test_time = round(time.perf_counter(), 4)
         res, ssearch_dur = self.serial_search_runner.run()
-        recall, ndcg, p99_latency = res
+        recall, ndcg, p99_latency, p95_latency = res
         log.info(
             f"Search after write - Serial search - recall={recall}, ndcg={ndcg}, "
-            f"p99={p99_latency}, dur={ssearch_dur:.4f}",
+            f"p99={p99_latency}, p95={p95_latency}, dur={ssearch_dur:.4f}",
         )
         log.info(
             f"Search after wirte - Conc search start, dur for each conc={self.read_dur_after_write}",
@@ -109,7 +109,7 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
         max_qps, conc_failed_rate = self.run_by_dur(self.read_dur_after_write)
         log.info(f"Search after wirte - Conc search finished, max_qps={max_qps}")
 
-        return [(perc, test_time, max_qps, recall, ndcg, p99_latency, conc_failed_rate)]
+        return [(perc, test_time, max_qps, recall, ndcg, p99_latency, p95_latency, conc_failed_rate)]
 
     def run_read_write(self) -> Metric:
         """
@@ -157,7 +157,8 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
                     m.st_recall_list = [d[3] for d in r]
                     m.st_ndcg_list = [d[4] for d in r]
                     m.st_serial_latency_p99_list = [d[5] for d in r]
-                    m.st_conc_failed_rate_list = [d[6] for d in r]
+                    m.st_serial_latency_p95_list = [d[6] for d in r]
+                    m.st_conc_failed_rate_list = [d[7] for d in r]
 
                 except Exception as e:
                     log.warning(f"Read and write error: {e}")
@@ -201,7 +202,7 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
         """
         result, start_batch = [], 0
         total_batch = math.ceil(self.data_volume / self.insert_rate)
-        recall, ndcg, p99_latency = None, None, None
+        recall, ndcg, p99_latency, p95_latency = None, None, None, None
 
         def wait_next_target(start: int, target_batch: int) -> bool:
             """Return False when receive True or None"""
@@ -224,15 +225,15 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
 
             log.info(f"Insert {perc}% done, total batch={total_batch}")
             test_time = round(time.perf_counter(), 4)
-            max_qps, recall, ndcg, p99_latency, conc_failed_rate = 0, 0, 0, 0, 0
+            max_qps, recall, ndcg, p99_latency, p95_latency, conc_failed_rate = 0, 0, 0, 0, 0, 0
             try:
                 log.info(f"[{target_batch}/{total_batch}] Serial search - {perc}% start")
                 res, ssearch_dur = self.serial_search_runner.run()
                 ssearch_dur = round(ssearch_dur, 4)
-                recall, ndcg, p99_latency = res
+                recall, ndcg, p99_latency, p95_latency = res
                 log.info(
                     f"[{target_batch}/{total_batch}] Serial search - {perc}% done, "
-                    f"recall={recall}, ndcg={ndcg}, p99={p99_latency}, dur={ssearch_dur}"
+                    f"recall={recall}, ndcg={ndcg}, p99={p99_latency}, p95={p95_latency}, dur={ssearch_dur}"
                 )
 
                 each_conc_search_dur = self.get_each_conc_search_dur(
@@ -250,7 +251,7 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
                     log.warning(f"Skip concurrent tests, each_conc_search_dur={each_conc_search_dur} less than 10s.")
             except Exception as e:
                 log.warning(f"Streaming Search Failed at stage={stage}. Exception: {e}")
-            result.append((perc, test_time, max_qps, recall, ndcg, p99_latency, conc_failed_rate))
+            result.append((perc, test_time, max_qps, recall, ndcg, p99_latency, p95_latency, conc_failed_rate))
             start_batch = target_batch
 
         # Drain the queue
