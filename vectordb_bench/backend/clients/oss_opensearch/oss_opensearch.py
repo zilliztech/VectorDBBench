@@ -171,7 +171,7 @@ class OSSOpenSearch(VectorDB):
         except Exception as e:
             log.warning(f"Failed to insert data: {self.index_name} error: {e!s}")
             time.sleep(10)
-            return self._insert_with_single_client(embeddings, metadata)
+            return self._insert_with_single_client(embeddings, metadata, labels_data)
 
     def _insert_with_multiple_clients(
         self,
@@ -246,7 +246,7 @@ class OSSOpenSearch(VectorDB):
         if errors:
             log.warning("Some clients failed to insert data, retrying with single client")
             time.sleep(10)
-            return self._insert_with_single_client(embeddings, metadata)
+            return self._insert_with_single_client(embeddings, metadata, labels_data)
 
         resp = self.client.indices.stats(self.index_name)
         log.info(
