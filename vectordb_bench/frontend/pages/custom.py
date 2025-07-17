@@ -78,7 +78,7 @@ def main():
         )
 
     st.button(
-        "\+ New Dataset",
+        "+ New Dataset",
         key="add_custom_configs",
         type="primary",
         on_click=lambda: customCaseManager.addCase(),
