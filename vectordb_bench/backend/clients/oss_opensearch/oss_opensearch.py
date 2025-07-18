@@ -64,6 +64,10 @@ class OSSOpenSearch(VectorDB):
             self._update_ef_search_before_search(client)
             self._load_graphs_to_memory(client)
 
+    def need_normalize_cosine(self) -> bool:
+        """Wheather this database need to normalize dataset to support COSINE"""
+        return True
+
     def _create_index(self, client: OpenSearch) -> None:
         ef_search_value = self.case_config.efSearch
         log.info(f"Creating index with ef_search: {ef_search_value}")
@@ -285,6 +289,7 @@ class OSSOpenSearch(VectorDB):
         self,
         query: list[float],
         k: int = 100,
+        filters: Filter | None = None,
         **kwargs,
     ) -> list[int]:
         """Get k most similar embeddings to query vector.
@@ -292,6 +297,7 @@ class OSSOpenSearch(VectorDB):
         Args:
             query(list[float]): query embedding to look up documents similar to.
             k(int): Number of most similar embeddings to return. Defaults to 100.
+            filters(Filter, optional): filtering expression to filter the data while searching.
 
         Returns:
             list[int]: list of k most similar ids to the query embedding.
