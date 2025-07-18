@@ -326,13 +326,13 @@ class OSSOpenSearch(VectorDB):
         try:
             # Handle docvalue_fields differently for _id vs custom id fields
             if self.id_col_name == "_id":
-                # _id is not a docvalue field, so don't include it in docvalue_fields
+                # _id is not a docvalue field, so we need to include it in stored_fields
                 resp = self.client.search(
                     index=self.index_name,
                     body=body,
                     size=k,
                     _source=False,
-                    stored_fields="_none_",
+                    stored_fields="_id",
                     preference="_only_local" if self.case_config.number_of_shards == 1 else None,
                     routing=self.routing_key,
                 )
@@ -355,10 +355,17 @@ class OSSOpenSearch(VectorDB):
             try:
                 if self.id_col_name == "_id":
                     # Get _id directly from hit metadata
-                    return [int(h["_id"]) for h in resp["hits"]["hits"]]
+                    result_ids = []
+                    for h in resp["hits"]["hits"]:
+                        if (doc_id := h.get("_id")) is not None:
+                            result_ids.append(int(doc_id))
+                        else:
+                            log.warning(f"Hit missing _id in final extraction: {h}")
                 else:
                     # Get custom id field from docvalue fields
-                    return [int(h["fields"][self.id_col_name][0]) for h in resp["hits"]["hits"]]
+                    result_ids = [int(h["fields"][self.id_col_name][0]) for h in resp["hits"]["hits"]]
+                
+                return result_ids
             except Exception:
                 # empty results
                 return []
@@ -378,6 +385,7 @@ class OSSOpenSearch(VectorDB):
                 self.routing_key = filters.label_value
         else:
             msg = f"Not support Filter for OpenSearch - {filters}"
+            log.error(f"Unsupported filter type: {filters.type}")
             raise ValueError(msg)
 
     def optimize(self, data_size: int | None = None):
