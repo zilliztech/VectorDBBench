@@ -65,9 +65,7 @@ class AWSOpenSearch(VectorDB):
             self._load_graphs_to_memory(client)
 
     def _create_index(self, client: OpenSearch) -> None:
-        ef_search_value = (
-            self.case_config.ef_search if self.case_config.ef_search is not None else self.case_config.efSearch
-        )
+        ef_search_value = self.case_config.ef_search
         log.info(f"Creating index with ef_search: {ef_search_value}")
         log.info(f"Creating index with number_of_replicas: {self.case_config.number_of_replicas}")
 
@@ -93,25 +91,81 @@ class AWSOpenSearch(VectorDB):
             "refresh_interval": self.case_config.refresh_interval,
         }
         settings["index"]["knn.algo_param.ef_search"] = ef_search_value
-        mappings = {
-            "_source": {"excludes": [self.vector_col_name], "recovery_source_excludes": [self.vector_col_name]},
-            "properties": {
-                self.id_col_name: {"type": "integer", "store": True},
-                self.label_col_name: {"type": "keyword"},
-                self.vector_col_name: {
-                    "type": "knn_vector",
-                    "dimension": self.dim,
-                    "method": self.case_config.index_param(),
-                },
-            },
+        
+        # Get method configuration and log it for debugging
+        method_config = self.case_config.index_param()
+        log.info(f"Raw method config from index_param(): {method_config}")
+        
+        # For s3vector engine, ensure method only contains engine field
+        if self.case_config.engine == AWSOS_Engine.s3vector:
+            method_config = {"engine": "s3vector"}
+            log.info(f"Cleaned method config for s3vector: {method_config}")
+        
+        # Prepare vector field configuration
+        vector_field_config = {
+            "type": "knn_vector",
+            "store": True,
+            "dimension": self.dim,
+            "method": method_config,
         }
+        
+        # For s3vector engine, space_type should be set at the vector field level
+        if self.case_config.engine == AWSOS_Engine.s3vector:
+            space_type = self.case_config.parse_metric()
+            vector_field_config["space_type"] = space_type
+            
+            # Ensure method config is absolutely clean for s3vector - remove any potential extra fields
+            vector_field_config["method"] = {"engine": "s3vector"}
+            
+            log.info(f"Setting space_type '{space_type}' at vector field level for s3vector engine")
+            log.info(f"Final vector field config for s3vector: {vector_field_config}")
+        
+        # Configure mappings based on engine type
+        if self.case_config.engine == AWSOS_Engine.s3vector:
+            # For s3vector engine, use simplified mappings without _source configuration
+            mappings = {
+                "properties": {
+                    # self.id_col_name: {"type": "integer", "store": True},
+                    self.label_col_name: {"type": "keyword"},
+                    self.vector_col_name: vector_field_config,
+                },
+            }
+            log.info("Using simplified mappings for s3vector engine (no _source configuration)")
+        else:
+            # For other engines (faiss, lucene), use standard mappings with _source configuration
+            mappings = {
+                "_source": {"excludes": [self.vector_col_name], "recovery_source_excludes": [self.vector_col_name]},
+                "properties": {
+                    # self.id_col_name: {"type": "integer", "store": True},
+                    self.label_col_name: {"type": "keyword"},
+                    self.vector_col_name: vector_field_config,
+                },
+            }
+            log.info("Using standard mappings with _source configuration for non-s3vector engines")
         try:
             log.info(f"Creating index with settings: {settings}")
             log.info(f"Creating index with mappings: {mappings}")
+            
+            # Additional logging for s3vector to confirm method config before sending
+            if self.case_config.engine == AWSOS_Engine.s3vector:
+                method_in_mappings = mappings["properties"][self.vector_col_name]["method"]
+                log.info(f"Final method config being sent to OpenSearch: {method_in_mappings}")
+                
             client.indices.create(
                 index=self.index_name,
                 body={"settings": settings, "mappings": mappings},
             )
+            
+            # For s3vector, verify the actual index configuration after creation
+            if self.case_config.engine == AWSOS_Engine.s3vector:
+                try:
+                    actual_mapping = client.indices.get_mapping(index=self.index_name)
+                    actual_method = actual_mapping[self.index_name]["mappings"]["properties"][self.vector_col_name]["method"]
+                    log.info(f"Actual method config in created index: {actual_method}")
+                        
+                except Exception as e:
+                    log.warning(f"Failed to verify index configuration: {e}")
+                    
         except Exception as e:
             log.warning(f"Failed to create index: {self.index_name} error: {e!s}")
             raise e from None
@@ -153,12 +207,12 @@ class AWSOpenSearch(VectorDB):
         insert_data = []
         for i in range(len(embeddings)):
             index_data = {"index": {"_index": self.index_name, self.id_col_name: metadata[i]}}
-            if self.with_scalar_labels and self.case_config.use_routing:
+            if self.with_scalar_labels and self.case_config.use_routing and labels_data is not None:
                 index_data["routing"] = labels_data[i]
             insert_data.append(index_data)
 
             other_data = {self.vector_col_name: embeddings[i]}
-            if self.with_scalar_labels:
+            if self.with_scalar_labels and labels_data is not None:
                 other_data[self.label_col_name] = labels_data[i]
             insert_data.append(other_data)
 
@@ -168,7 +222,7 @@ class AWSOpenSearch(VectorDB):
         except Exception as e:
             log.warning(f"Failed to insert data: {self.index_name} error: {e!s}")
             time.sleep(10)
-            return self._insert_with_single_client(embeddings, metadata)
+            return self._insert_with_single_client(embeddings, metadata, labels_data)
 
     def _insert_with_multiple_clients(
         self,
@@ -186,7 +240,8 @@ class AWSOpenSearch(VectorDB):
 
         for i in range(0, len(embeddings_list), chunk_size):
             end = min(i + chunk_size, len(embeddings_list))
-            chunks.append((embeddings_list[i:end], metadata[i:end], labels_data[i:end]))
+            chunk_labels = labels_data[i:end] if labels_data is not None else None
+            chunks.append((embeddings_list[i:end], metadata[i:end], chunk_labels))
 
         clients = []
         for _ in range(min(num_clients, len(chunks))):
@@ -202,12 +257,12 @@ class AWSOpenSearch(VectorDB):
             insert_data = []
             for i in range(len(chunk_embeddings)):
                 index_data = {"index": {"_index": self.index_name, self.id_col_name: chunk_metadata[i]}}
-                if self.with_scalar_labels and self.case_config.use_routing:
+                if self.with_scalar_labels and self.case_config.use_routing and chunk_labels_data is not None:
                     index_data["routing"] = chunk_labels_data[i]
                 insert_data.append(index_data)
 
                 other_data = {self.vector_col_name: chunk_embeddings[i]}
-                if self.with_scalar_labels:
+                if self.with_scalar_labels and chunk_labels_data is not None:
                     other_data[self.label_col_name] = chunk_labels_data[i]
                 insert_data.append(other_data)
 
@@ -254,10 +309,7 @@ class AWSOpenSearch(VectorDB):
         return (total_count, None)
 
     def _update_ef_search_before_search(self, client: OpenSearch):
-        ef_search_value = (
-            self.case_config.ef_search if self.case_config.ef_search is not None else self.case_config.efSearch
-        )
-
+        ef_search_value = self.case_config.ef_search
         try:
             index_settings = client.indices.get_settings(index=self.index_name)
             current_ef_search = (
@@ -297,21 +349,35 @@ class AWSOpenSearch(VectorDB):
         """
         assert self.client is not None, "should self.init() first"
 
+        # Configure query based on engine type
+        if self.case_config.engine == AWSOS_Engine.s3vector:
+            # For s3vector engine, use simplified query without method_parameters
+            knn_query = {
+                "vector": query,
+                "k": k,
+                **({"filter": self.filter} if self.filter else {}),
+            }
+            log.debug("Using simplified knn query for s3vector engine (no method_parameters)")
+        else:
+            # For other engines (faiss, lucene), use standard query with method_parameters
+            knn_query = {
+                "vector": query,
+                "k": k,
+                "method_parameters": self.case_config.search_param(),
+                **({"filter": self.filter} if self.filter else {}),
+                **(
+                    {"rescore": {"oversample_factor": self.case_config.oversample_factor}}
+                    if self.case_config.use_quant
+                    else {}
+                ),
+            }
+            log.debug("Using standard knn query with method_parameters for non-s3vector engines")
+
         body = {
             "size": k,
             "query": {
                 "knn": {
-                    self.vector_col_name: {
-                        "vector": query,
-                        "k": k,
-                        "method_parameters": self.case_config.search_param(),
-                        **({"filter": self.filter} if self.filter else {}),
-                        **(
-                            {"rescore": {"oversample_factor": self.case_config.oversample_factor}}
-                            if self.case_config.use_quant
-                            else {}
-                        ),
-                    }
+                    self.vector_col_name: knn_query
                 }
             },
         }

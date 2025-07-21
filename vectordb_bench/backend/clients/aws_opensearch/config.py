@@ -34,6 +34,7 @@ class AWSOpenSearchConfig(DBConfig, BaseModel):
 class AWSOS_Engine(Enum):
     faiss = "faiss"
     lucene = "lucene"
+    s3vector = "s3vector"
 
 
 class AWSOSQuantization(Enum):
@@ -44,11 +45,11 @@ class AWSOSQuantization(Enum):
 class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
     metric_type: MetricType = MetricType.L2
     engine: AWSOS_Engine = AWSOS_Engine.faiss
-    efConstruction: int = 256
-    efSearch: int = 100
+    efConstruction: int | None = 256
+    ef_search: int | None = 100
     engine_name: str | None = None
     metric_type_name: str | None = None
-    M: int = 16
+    M: int | None = 16
     index_thread_qty: int | None = 4
     number_of_shards: int | None = 1
     number_of_replicas: int | None = 0
@@ -91,6 +92,13 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
 
     def parse_metric(self) -> str:
         log.info(f"User specified metric_type: {self.metric_type_name}")
+        
+        # Handle None or empty metric_type_name
+        if self.metric_type_name is None or self.metric_type_name == "":
+            log.info("No metric_type_name specified, defaulting to l2")
+            self.metric_type = MetricType.L2
+            return "l2"
+            
         self.metric_type = MetricType[self.metric_type_name.upper()]
         if self.metric_type == MetricType.IP:
             return "innerproduct"
@@ -108,20 +116,34 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
     def index_param(self) -> dict:
         log.info(f"Using engine: {self.engine} for index creation")
         log.info(f"Using metric_type: {self.metric_type_name} for index creation")
-        log.info(f"Resulting space_type: {self.parse_metric()} for index creation")
+        space_type = self.parse_metric()
+        log.info(f"Resulting space_type: {space_type} for index creation")
+
+        # Handle s3vector engine with simplified configuration
+        # For s3vector, space_type should be set at the vector field level, not in method
+        if self.engine == AWSOS_Engine.s3vector:
+            return {
+                "engine": "s3vector"
+            }
+
+        # For other engines, ensure HNSW parameters are provided
+        if self.efConstruction is None or self.M is None or self.ef_search is None:
+            raise ValueError(f"HNSW parameters (efConstruction, M, ef_search) are required for {self.engine.value} engine")
 
         parameters = {"ef_construction": self.efConstruction, "m": self.M}
 
-        if self.engine == AWSOS_Engine.faiss and self.faiss_use_fp16:
+        if self.engine == AWSOS_Engine.faiss and self.quantization_type == AWSOSQuantization.fp16:
             parameters["encoder"] = {"name": "sq", "parameters": {"type": "fp16"}}
 
+        # For other engines (faiss, lucene), space_type is set at method level
         return {
             "name": "hnsw",
             "engine": self.engine.value,
+            "space_type": space_type,
             "parameters": {
                 "ef_construction": self.efConstruction,
                 "m": self.M,
-                "ef_search": self.efSearch,
+                "ef_search": self.ef_search,
                 **(
                     {"encoder": {"name": "sq", "parameters": {"type": self.quantization_type.fp16.value}}}
                     if self.use_quant
@@ -131,4 +153,12 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
         }
 
     def search_param(self) -> dict:
-        return {"ef_search": self.efSearch}
+        # s3vector engine doesn't use ef_search parameter
+        if self.engine == AWSOS_Engine.s3vector:
+            return {}
+        
+        # For other engines, ef_search is required
+        if self.ef_search is None:
+            raise ValueError(f"ef_search parameter is required for {self.engine.value} engine")
+            
+        return {"ef_search": self.ef_search}
