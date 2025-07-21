@@ -92,13 +92,13 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
 
     def parse_metric(self) -> str:
         log.info(f"User specified metric_type: {self.metric_type_name}")
-        
+
         # Handle None or empty metric_type_name
         if self.metric_type_name is None or self.metric_type_name == "":
             log.info("No metric_type_name specified, defaulting to l2")
             self.metric_type = MetricType.L2
             return "l2"
-            
+
         self.metric_type = MetricType[self.metric_type_name.upper()]
         if self.metric_type == MetricType.IP:
             return "innerproduct"
@@ -122,13 +122,7 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
         # Handle s3vector engine with simplified configuration
         # For s3vector, space_type should be set at the vector field level, not in method
         if self.engine == AWSOS_Engine.s3vector:
-            return {
-                "engine": "s3vector"
-            }
-
-        # For other engines, ensure HNSW parameters are provided
-        if self.efConstruction is None or self.M is None or self.ef_search is None:
-            raise ValueError(f"HNSW parameters (efConstruction, M, ef_search) are required for {self.engine.value} engine")
+            return {"engine": "s3vector"}
 
         parameters = {"ef_construction": self.efConstruction, "m": self.M}
 
@@ -156,9 +150,5 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
         # s3vector engine doesn't use ef_search parameter
         if self.engine == AWSOS_Engine.s3vector:
             return {}
-        
-        # For other engines, ef_search is required
-        if self.ef_search is None:
-            raise ValueError(f"ef_search parameter is required for {self.engine.value} engine")
-            
+
         return {"ef_search": self.ef_search}

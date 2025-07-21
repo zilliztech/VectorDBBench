@@ -91,16 +91,16 @@ class AWSOpenSearch(VectorDB):
             "refresh_interval": self.case_config.refresh_interval,
         }
         settings["index"]["knn.algo_param.ef_search"] = ef_search_value
-        
+
         # Get method configuration and log it for debugging
         method_config = self.case_config.index_param()
         log.info(f"Raw method config from index_param(): {method_config}")
-        
+
         # For s3vector engine, ensure method only contains engine field
         if self.case_config.engine == AWSOS_Engine.s3vector:
             method_config = {"engine": "s3vector"}
             log.info(f"Cleaned method config for s3vector: {method_config}")
-        
+
         # Prepare vector field configuration
         vector_field_config = {
             "type": "knn_vector",
@@ -108,18 +108,18 @@ class AWSOpenSearch(VectorDB):
             "dimension": self.dim,
             "method": method_config,
         }
-        
+
         # For s3vector engine, space_type should be set at the vector field level
         if self.case_config.engine == AWSOS_Engine.s3vector:
             space_type = self.case_config.parse_metric()
             vector_field_config["space_type"] = space_type
-            
+
             # Ensure method config is absolutely clean for s3vector - remove any potential extra fields
             vector_field_config["method"] = {"engine": "s3vector"}
-            
+
             log.info(f"Setting space_type '{space_type}' at vector field level for s3vector engine")
             log.info(f"Final vector field config for s3vector: {vector_field_config}")
-        
+
         # Configure mappings based on engine type
         if self.case_config.engine == AWSOS_Engine.s3vector:
             # For s3vector engine, use simplified mappings without _source configuration
@@ -145,27 +145,29 @@ class AWSOpenSearch(VectorDB):
         try:
             log.info(f"Creating index with settings: {settings}")
             log.info(f"Creating index with mappings: {mappings}")
-            
+
             # Additional logging for s3vector to confirm method config before sending
             if self.case_config.engine == AWSOS_Engine.s3vector:
                 method_in_mappings = mappings["properties"][self.vector_col_name]["method"]
                 log.info(f"Final method config being sent to OpenSearch: {method_in_mappings}")
-                
+
             client.indices.create(
                 index=self.index_name,
                 body={"settings": settings, "mappings": mappings},
             )
-            
+
             # For s3vector, verify the actual index configuration after creation
             if self.case_config.engine == AWSOS_Engine.s3vector:
                 try:
                     actual_mapping = client.indices.get_mapping(index=self.index_name)
-                    actual_method = actual_mapping[self.index_name]["mappings"]["properties"][self.vector_col_name]["method"]
+                    actual_method = actual_mapping[self.index_name]["mappings"]["properties"][self.vector_col_name][
+                        "method"
+                    ]
                     log.info(f"Actual method config in created index: {actual_method}")
-                        
+
                 except Exception as e:
                     log.warning(f"Failed to verify index configuration: {e}")
-                    
+
         except Exception as e:
             log.warning(f"Failed to create index: {self.index_name} error: {e!s}")
             raise e from None
@@ -375,11 +377,7 @@ class AWSOpenSearch(VectorDB):
 
         body = {
             "size": k,
-            "query": {
-                "knn": {
-                    self.vector_col_name: knn_query
-                }
-            },
+            "query": {"knn": {self.vector_col_name: knn_query}},
         }
 
         try:

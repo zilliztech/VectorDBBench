@@ -150,9 +150,9 @@ def AWSOpenSearch(**parameters: Unpack[AWSOpenSearchHNSWTypedDict]):
     # Set default values for HNSW parameters if not provided and not using s3vector
     engine = AWSOS_Engine(parameters["engine"])
     ef_construction = parameters.get("ef_construction")
-    ef_search = parameters.get("ef_search") 
+    ef_search = parameters.get("ef_search")
     m = parameters.get("m")
-    
+
     # For non-s3vector engines, provide defaults if None
     if engine != AWSOS_Engine.s3vector:
         if ef_construction is None:
