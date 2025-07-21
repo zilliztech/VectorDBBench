@@ -109,6 +109,157 @@ def MilvusHNSW(**parameters: Unpack[MilvusHNSWTypedDict]):
     )
 
 
+class MilvusRefineTypedDict(TypedDict):
+    refine: Annotated[
+        bool,
+        click.option(
+            "--refine",
+            type=bool,
+            required=True,
+            help="Whether refined data is reserved during index building.",
+        ),
+    ]
+    refine_type: Annotated[
+        str | None,
+        click.option(
+            "--refine-type",
+            type=click.Choice(["SQ6", "SQ8", "BF16", "FP16", "FP32"], case_sensitive=False),
+            help="The data type of the refine index to use. Supported values: SQ6,SQ8,BF16,FP16,FP32",
+            required=True,
+        ),
+    ]
+    refine_k: Annotated[
+        float,
+        click.option(
+            "--refine-k",
+            type=float,
+            help="The magnification factor of refine compared to k.",
+            required=True,
+        ),
+    ]
+
+
+class MilvusHNSWPQTypedDict(CommonTypedDict, MilvusTypedDict, MilvusHNSWTypedDict, MilvusRefineTypedDict):
+    nbits: Annotated[
+        int,
+        click.option(
+            "--nbits",
+            type=int,
+            required=True,
+        ),
+    ]
+
+
+@cli.command()
+@click_parameter_decorators_from_typed_dict(MilvusHNSWPQTypedDict)
+def MilvusHNSWPQ(**parameters: Unpack[MilvusHNSWPQTypedDict]):
+    from .config import HNSWPQConfig, MilvusConfig
+
+    run(
+        db=DBTYPE,
+        db_config=MilvusConfig(
+            db_label=parameters["db_label"],
+            uri=SecretStr(parameters["uri"]),
+            user=parameters["user_name"],
+            password=SecretStr(parameters["password"]) if parameters["password"] else None,
+            num_shards=int(parameters["num_shards"]),
+        ),
+        db_case_config=HNSWPQConfig(
+            M=parameters["m"],
+            efConstruction=parameters["ef_construction"],
+            ef=parameters["ef_search"],
+            nbits=parameters["nbits"],
+            refine=parameters["refine"],
+            refine_type=parameters["refine_type"],
+            refine_k=parameters["refine_k"],
+        ),
+        **parameters,
+    )
+
+
+class MilvusHNSWPRQTypedDict(
+    CommonTypedDict,
+    MilvusTypedDict,
+    MilvusHNSWPQTypedDict,
+):
+    nrq: Annotated[
+        int,
+        click.option(
+            "--nrq",
+            type=int,
+            help="The number of residual subquantizers.",
+            required=True,
+        ),
+    ]
+
+
+@cli.command()
+@click_parameter_decorators_from_typed_dict(MilvusHNSWPRQTypedDict)
+def MilvusHNSWPRQ(**parameters: Unpack[MilvusHNSWPRQTypedDict]):
+    from .config import HNSWPRQConfig, MilvusConfig
+
+    run(
+        db=DBTYPE,
+        db_config=MilvusConfig(
+            db_label=parameters["db_label"],
+            uri=SecretStr(parameters["uri"]),
+            user=parameters["user_name"],
+            password=SecretStr(parameters["password"]) if parameters["password"] else None,
+            num_shards=int(parameters["num_shards"]),
+        ),
+        db_case_config=HNSWPRQConfig(
+            M=parameters["m"],
+            efConstruction=parameters["ef_construction"],
+            ef=parameters["ef_search"],
+            nbits=parameters["nbits"],
+            refine=parameters["refine"],
+            refine_type=parameters["refine_type"],
+            refine_k=parameters["refine_k"],
+            nrq=parameters["nrq"],
+        ),
+        **parameters,
+    )
+
+
+class MilvusHNSWSQTypedDict(CommonTypedDict, MilvusTypedDict, MilvusHNSWTypedDict, MilvusRefineTypedDict):
+    sq_type: Annotated[
+        str | None,
+        click.option(
+            "--sq-type",
+            type=click.Choice(["SQ6", "SQ8", "BF16", "FP16", "FP32"], case_sensitive=False),
+            help="Scalar quantizer type. Supported values: SQ6,SQ8,BF16,FP16,FP32",
+            required=True,
+        ),
+    ]
+
+
+@cli.command()
+@click_parameter_decorators_from_typed_dict(MilvusHNSWSQTypedDict)
+def MilvusHNSWSQ(**parameters: Unpack[MilvusHNSWSQTypedDict]):
+    from .config import HNSWSQConfig, MilvusConfig
+
+    run(
+        db=DBTYPE,
+        db_config=MilvusConfig(
+            db_label=parameters["db_label"],
+            uri=SecretStr(parameters["uri"]),
+            user=parameters["user_name"],
+            password=SecretStr(parameters["password"]) if parameters["password"] else None,
+            num_shards=int(parameters["num_shards"]),
+        ),
+        db_case_config=HNSWSQConfig(
+            M=parameters["m"],
+            efConstruction=parameters["ef_construction"],
+            ef=parameters["ef_search"],
+            sq_type=parameters["sq_type"],
+            refine=parameters["refine"],
+            refine_type=parameters["refine_type"],
+            refine_k=parameters["refine_k"],
+        ),
+        **parameters,
+    )
+
+
 class MilvusIVFFlatTypedDict(CommonTypedDict, MilvusTypedDict, IVFFlatTypedDictN): ...
 
 
@@ -151,6 +302,71 @@ def MilvusIVFSQ8(**parameters: Unpack[MilvusIVFFlatTypedDict]):
         db_case_config=IVFSQ8Config(
             nlist=parameters["nlist"],
             nprobe=parameters["nprobe"],
+        ),
+        **parameters,
+    )
+
+
+class MilvusIVFRABITQTypedDict(CommonTypedDict, MilvusTypedDict, MilvusIVFFlatTypedDict):
+    rbq_bits_query: Annotated[
+        int,
+        click.option(
+            "--rbq-bits-query",
+            type=int,
+            help="The magnification factor of refine compared to k.",
+            required=True,
+        ),
+    ]
+    refine: Annotated[
+        bool,
+        click.option(
+            "--refine",
+            type=bool,
+            required=True,
+            help="Whether refined data is reserved during index building.",
+        ),
+    ]
+    refine_type: Annotated[
+        str | None,
+        click.option(
+            "--refine-type",
+            type=click.Choice(["SQ6", "SQ8", "BF16", "FP16", "FP32"], case_sensitive=False),
+            help="The data type of the refine index to use. Supported values: SQ6,SQ8,BF16,FP16,FP32",
+            required=True,
+        ),
+    ]
+    refine_k: Annotated[
+        float,
+        click.option(
+            "--refine-k",
+            type=float,
+            help="The magnification factor of refine compared to k.",
+            required=True,
+        ),
+    ]
+
+
+@cli.command()
+@click_parameter_decorators_from_typed_dict(MilvusIVFRABITQTypedDict)
+def MilvusIVFRabitQ(**parameters: Unpack[MilvusIVFRABITQTypedDict]):
+    from .config import IVFRABITQConfig, MilvusConfig
+
+    run(
+        db=DBTYPE,
+        db_config=MilvusConfig(
+            db_label=parameters["db_label"],
+            uri=SecretStr(parameters["uri"]),
+            user=parameters["user_name"],
+            password=SecretStr(parameters["password"]) if parameters["password"] else None,
+            num_shards=int(parameters["num_shards"]),
+        ),
+        db_case_config=IVFRABITQConfig(
+            nlist=parameters["nlist"],
+            nprobe=parameters["nprobe"],
+            rbq_bits_query=parameters["rbq_bits_query"],
+            refine=parameters["refine"],
+            refine_type=parameters["refine_type"],
+            refine_k=parameters["refine_k"],
         ),
         **parameters,
     )

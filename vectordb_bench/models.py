@@ -1,13 +1,13 @@
 import logging
 import pathlib
 from datetime import date, datetime
-from enum import Enum, StrEnum, auto
+from enum import Enum, StrEnum
 from typing import Self
 
 import ujson
 
 from . import config
-from .backend.cases import CaseType
+from .backend.cases import Case, CaseType
 from .backend.clients import (
     DB,
     DBCaseConfig,
@@ -105,10 +105,27 @@ class CaseConfigParamType(Enum):
     num_partitions = "num_partitions"
     num_sub_vectors = "num_sub_vectors"
     sample_rate = "sample_rate"
-
-    # mongodb params
+    index_thread_qty_during_force_merge = "index_thread_qty_during_force_merge"
+    number_of_indexing_clients = "number_of_indexing_clients"
+    number_of_shards = "number_of_shards"
+    number_of_replicas = "number_of_replicas"
+    index_thread_qty = "index_thread_qty"
+    engine_name = "engine_name"
+    metric_type_name = "metric_type_name"
     mongodb_quantization_type = "quantization"
     mongodb_num_candidates_ratio = "num_candidates_ratio"
+    use_partition_key = "use_partition_key"
+    refresh_interval = "refresh_interval"
+    use_rescore = "use_rescore"
+    oversample_ratio = "oversample_ratio"
+    use_routing = "use_routing"
+
+    dataset_with_size_type = "dataset_with_size_type"
+    insert_rate = "insert_rate"
+    search_stages = "search_stages"
+    concurrencies = "concurrencies"
+    optimize_after_write = "optimize_after_write"
+    read_dur_after_write = "read_dur_after_write"
 
 
 class CustomizedCase(BaseModel):
@@ -144,14 +161,22 @@ class CaseConfig(BaseModel):
     def __hash__(self) -> int:
         return hash(self.json())
 
+    @property
+    def case(self) -> Case:
+        return self.case_id.case_cls(self.custom_case)
+
+    @property
+    def case_name(self) -> str:
+        return self.case.name
+
 
 class TaskStage(StrEnum):
     """Enumerations of various stages of the task"""
 
-    DROP_OLD = auto()
-    LOAD = auto()
-    SEARCH_SERIAL = auto()
-    SEARCH_CONCURRENT = auto()
+    DROP_OLD = "drop_old"
+    LOAD = "load"
+    SEARCH_SERIAL = "search_serial"
+    SEARCH_CONCURRENT = "search_concurrent"
 
     def __repr__(self) -> str:
         return str.__repr__(self.value)
@@ -292,12 +317,14 @@ class TestResult(BaseModel):
             key=lambda x: (
                 x.task_config.db.name,
                 x.task_config.db_config.db_label,
-                x.task_config.case_config.case_id.name,
+                x.task_config.case_config.case_name,
             ),
             reverse=True,
         )
 
         filtered_results = [r for r in sorted_results if not filter_list or r.task_config.db not in filter_list]
+        if len(filtered_results) == 0:
+            return
 
         def append_return(x: any, y: any):
             x.append(y)
@@ -305,7 +332,7 @@ class TestResult(BaseModel):
 
         max_db = max(map(len, [f.task_config.db.name for f in filtered_results]))
         max_db_labels = max(map(len, [f.task_config.db_config.db_label for f in filtered_results])) + 3
-        max_case = max(map(len, [f.task_config.case_config.case_id.name for f in filtered_results]))
+        max_case = max(map(len, [f.task_config.case_config.case_name for f in filtered_results]))
         max_load_dur = max(map(len, [str(f.metrics.load_duration) for f in filtered_results])) + 3
         max_qps = max(map(len, [str(f.metrics.qps) for f in filtered_results])) + 3
         max_recall = max(map(len, [str(f.metrics.recall) for f in filtered_results])) + 3
@@ -359,7 +386,7 @@ class TestResult(BaseModel):
                 % (
                     f.task_config.db.name,
                     f.task_config.db_config.db_label,
-                    f.task_config.case_config.case_id.name,
+                    f.task_config.case_config.case_name,
                     self.task_label,
                     f.metrics.load_duration,
                     f.metrics.qps,

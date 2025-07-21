@@ -12,18 +12,11 @@ class AliyunOpenSearchConfig(DBConfig, BaseModel):
     user: str = ""
     password: SecretStr = ""
 
-    ak: str = ""
-    sk: SecretStr = ""
-    control_host: str = "searchengine.cn-hangzhou.aliyuncs.com"
-
     def to_dict(self) -> dict:
         return {
             "host": self.host,
             "user": self.user,
             "password": self.password.get_secret_value(),
-            "ak": self.ak,
-            "sk": self.sk.get_secret_value(),
-            "control_host": self.control_host,
         }
 
 

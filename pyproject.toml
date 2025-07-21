@@ -4,6 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.package-data]
 "vectordb_bench.results" = ["*.json"]
+"vectordb_bench.fig.homepage" = ["*.png"]
 
 [tool.setuptools.packages.find]
 where = ["."]
@@ -35,7 +36,7 @@ dependencies = [
     "psutil",
     "polars",
     "plotly",
-    "environs<14.1.0",
+    "environs",
     "pydantic<v2",
     "scikit-learn",
     "pymilvus", # with pandas, numpy, ujson
@@ -67,7 +68,6 @@ all = [
     "opensearch-py",
     "memorydb",
     "alibabacloud_ha3engine_vector",
-    "alibabacloud_searchengine20211025",
     "mariadb",
     "PyMySQL",
     "clickhouse-connect",
@@ -90,7 +90,7 @@ redis           = [ "redis" ]
 memorydb        = [ "memorydb" ]
 chromadb        = [ "chromadb" ]
 opensearch      = [ "opensearch-py" ]
-aliyun_opensearch = [ "alibabacloud_ha3engine_vector", "alibabacloud_searchengine20211025"]
+aliyun_opensearch = [ "alibabacloud_ha3engine_vector" ]
 mongodb         = [ "pymongo" ]
 mariadb         = [ "mariadb" ]
 tidb            = [ "PyMySQL" ]
@@ -220,3 +220,9 @@ builtins-ignorelist = [
     # "dict", # TODO
     # "filter",
 ]
+
+[tool.ruff.lint.per-file-ignores]
+"vectordb_bench/backend/clients/*" = ["PLC0415"]
+"vectordb_bench/cli/batch_cli.py" = ["PLC0415"]
+"vectordb_bench/backend/data_source.py" = ["PLC0415"]
+

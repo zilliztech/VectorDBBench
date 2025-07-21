@@ -14,6 +14,7 @@ class MilvusConfig(DBConfig):
             "uri": self.uri.get_secret_value(),
             "user": self.user if self.user else None,
             "password": self.password.get_secret_value() if self.password else None,
+            "num_shards": self.num_shards,
         }
 
     @validator("*")
@@ -34,6 +35,7 @@ class MilvusIndexConfig(BaseModel):
 
     index: IndexType
     metric_type: MetricType | None = None
+    use_partition_key: bool = True  # for label-filter
 
     @property
     def is_gpu_index(self) -> bool:

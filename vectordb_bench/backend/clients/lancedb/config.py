@@ -25,6 +25,7 @@ class LanceDBIndexConfig(BaseModel, DBCaseConfig):
     nbits: int = 8  # Must be 4 or 8
     sample_rate: int = 256
     max_iterations: int = 50
+    nprobes: int = 0
 
     def index_param(self) -> dict:
         if self.index not in [
@@ -52,7 +53,11 @@ class LanceDBIndexConfig(BaseModel, DBCaseConfig):
         return params
 
     def search_param(self) -> dict:
-        pass
+        params = {}
+        if self.nprobes > 0:
+            params["nprobes"] = self.nprobes
+
+        return params
 
     def parse_metric(self) -> str:
         if self.metric_type in [MetricType.L2, MetricType.COSINE]:
@@ -81,6 +86,7 @@ class LanceDBHNSWIndexConfig(LanceDBIndexConfig):
     index: IndexType = IndexType.HNSW
     m: int = 0
     ef_construction: int = 0
+    ef: int = 0
 
     def index_param(self) -> dict:
         params = LanceDBIndexConfig.index_param(self)
@@ -91,6 +97,13 @@ class LanceDBHNSWIndexConfig(LanceDBIndexConfig):
             params["m"] = self.m
         if self.ef_construction > 0:
             params["ef_construction"] = self.ef_construction
+
+        return params
+
+    def search_param(self) -> dict:
+        params = {}
+        if self.ef != 0:
+            params = {"ef": self.ef}
 
         return params
 
