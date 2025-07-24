@@ -1629,10 +1629,7 @@ CaseConfigParamInput_REFRESH_INTERVAL_AWSOpensearch = CaseConfigInput(
     displayLabel="Refresh Interval",
     inputHelp="How often to make new data searchable. (e.g., 30s, 1m).",
     inputType=InputType.Text,
-    inputConfig={
-        "value": "60s",
-        "placeholder": "e.g. 30s, 1m"
-    },
+    inputConfig={"value": "60s", "placeholder": "e.g. 30s, 1m"},
 )
 
 MilvusLoadConfig = [
@@ -2003,26 +2000,26 @@ AWSOpensearchLoadingConfig = [
     CaseConfigParamInput_ENGINE_NAME_AWSOpensearch,
     CaseConfigParamInput_METRIC_TYPE_NAME_AWSOpensearch,
     CaseConfigParamInput_M_AWSOpensearch,
-    CaseConfigParamInput_EFConstruction_AWSOpensearch,    
+    CaseConfigParamInput_EFConstruction_AWSOpensearch,
     CaseConfigParamInput_NUMBER_OF_SHARDS_AWSOpensearch,
-    CaseConfigParamInput_NUMBER_OF_REPLICAS_AWSOpensearch,    
+    CaseConfigParamInput_NUMBER_OF_REPLICAS_AWSOpensearch,
     CaseConfigParamInput_NUMBER_OF_INDEXING_CLIENTS_AWSOpensearch,
-    CaseConfigParamInput_INDEX_THREAD_QTY_AWSOpensearch,           
-    CaseConfigParamInput_INDEX_THREAD_QTY_DURING_FORCE_MERGE_AWSOpensearch, 
+    CaseConfigParamInput_INDEX_THREAD_QTY_AWSOpensearch,
+    CaseConfigParamInput_INDEX_THREAD_QTY_DURING_FORCE_MERGE_AWSOpensearch,
 ]
 
 AWSOpenSearchPerformanceConfig = [
     CaseConfigParamInput_REFRESH_INTERVAL_AWSOpensearch,
     CaseConfigParamInput_EF_SEARCH_AWSOpensearch,
     CaseConfigParamInput_ENGINE_NAME_AWSOpensearch,
-    CaseConfigParamInput_METRIC_TYPE_NAME_AWSOpensearch, 
-    CaseConfigParamInput_M_AWSOpensearch,       
+    CaseConfigParamInput_METRIC_TYPE_NAME_AWSOpensearch,
+    CaseConfigParamInput_M_AWSOpensearch,
     CaseConfigParamInput_EFConstruction_AWSOpensearch,
     CaseConfigParamInput_NUMBER_OF_SHARDS_AWSOpensearch,
-    CaseConfigParamInput_NUMBER_OF_REPLICAS_AWSOpensearch,    
+    CaseConfigParamInput_NUMBER_OF_REPLICAS_AWSOpensearch,
     CaseConfigParamInput_NUMBER_OF_INDEXING_CLIENTS_AWSOpensearch,
-    CaseConfigParamInput_INDEX_THREAD_QTY_AWSOpensearch,           
-    CaseConfigParamInput_INDEX_THREAD_QTY_DURING_FORCE_MERGE_AWSOpensearch, 
+    CaseConfigParamInput_INDEX_THREAD_QTY_AWSOpensearch,
+    CaseConfigParamInput_INDEX_THREAD_QTY_DURING_FORCE_MERGE_AWSOpensearch,
 ]
 
 # Map DB to config

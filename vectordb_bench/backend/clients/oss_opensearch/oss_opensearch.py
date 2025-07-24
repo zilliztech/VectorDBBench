@@ -2,7 +2,7 @@ import logging
 import time
 from collections.abc import Iterable
 from contextlib import contextmanager, suppress
-from typing import Final, Any
+from typing import Any, Final
 
 from opensearchpy import OpenSearch
 
@@ -17,9 +17,9 @@ WAITING_FOR_REFRESH_SEC: Final[int] = 30
 WAITING_FOR_FORCE_MERGE_SEC: Final[int] = 30
 SECONDS_WAITING_FOR_REPLICAS_TO_BE_ENABLED_SEC: Final[int] = 30
 
-class OpenSearchException(Exception):
+
+class OpenSearchError(Exception):
     """Custom exception for OpenSearch operations."""
-    pass
 
 
 class OpenSearchSettingsManager:
@@ -34,20 +34,24 @@ class OpenSearchSettingsManager:
         try:
             response = self.client.cluster.put_settings(body={"persistent": settings})
             log.info(log_message)
-            return response
         except Exception as e:
             log.warning(f"Failed to apply cluster settings: {e}")
-            raise OpenSearchException(f"Cluster settings application failed: {e}") from e
+            error_msg = f"Cluster settings application failed: {e}"
+            raise OpenSearchError(error_msg) from e
+        else:
+            return response
 
     def apply_index_settings(self, settings: dict[str, Any], log_message: str = "Applied index settings") -> dict:
         """Apply index-level settings."""
         try:
             response = self.client.indices.put_settings(index=self.index_name, body={"index": settings})
             log.info(log_message)
-            return response
         except Exception as e:
             log.warning(f"Failed to apply index settings: {e}")
-            raise OpenSearchException(f"Index settings application failed: {e}") from e
+            error_msg = f"Index settings application failed: {e}"
+            raise OpenSearchError(error_msg) from e
+        else:
+            return response
 
 
 class BulkInsertManager:
@@ -66,14 +70,16 @@ class BulkInsertManager:
         id_col_name: str,
         vector_col_name: str,
         label_col_name: str,
-        with_scalar_labels: bool
+        with_scalar_labels: bool,
     ) -> list[dict[str, Any]]:
         """Prepare bulk actions for OpenSearch bulk insert."""
         if len(embeddings) != len(metadata):
-            raise ValueError(f"Embeddings ({len(embeddings)}) and metadata ({len(metadata)}) length mismatch")
+            error_msg = f"Embeddings ({len(embeddings)}) and metadata ({len(metadata)}) length mismatch"
+            raise ValueError(error_msg)
 
         if with_scalar_labels and labels_data and len(labels_data) != len(embeddings):
-            raise ValueError(f"Labels data ({len(labels_data)}) and embeddings ({len(embeddings)}) length mismatch")
+            error_msg = f"Labels data ({len(labels_data)}) and embeddings ({len(embeddings)}) length mismatch"
+            raise ValueError(error_msg)
 
         insert_data: list[dict[str, Any]] = []
         for i in range(len(embeddings)):
@@ -92,7 +98,7 @@ class BulkInsertManager:
         """Execute bulk insert with single client and retry logic."""
         try:
             response = self.client.bulk(body=insert_data)
-            if response.get('errors'):
+            if response.get("errors"):
                 log.warning(f"Bulk insert had errors: {response}")
             return len(insert_data) // 2, None
         except Exception as e:
@@ -109,10 +115,7 @@ class SearchQueryBuilder:
         self.vector_col_name = vector_col_name
 
     def build_knn_query(
-        self,
-        query_vector: list[float],
-        k: int,
-        filter_clause: dict[str, Any] | None = None
+        self, query_vector: list[float], k: int, filter_clause: dict[str, Any] | None = None
     ) -> dict[str, Any]:
         """Build a KNN query with optional filtering."""
         knn_config: dict[str, Any] = {
@@ -127,18 +130,10 @@ class SearchQueryBuilder:
         if self.case_config.use_quant:
             knn_config["rescore"] = {"oversample_factor": self.case_config.oversample_factor}
 
-        return {
-            "size": k,
-            "query": {"knn": {self.vector_col_name: knn_config}}
-        }
+        return {"size": k, "query": {"knn": {self.vector_col_name: knn_config}}}
 
     def build_search_kwargs(
-        self,
-        index_name: str,
-        body: dict[str, Any],
-        k: int,
-        id_col_name: str,
-        routing_key: str | None = None
+        self, index_name: str, body: dict[str, Any], k: int, id_col_name: str, routing_key: str | None = None
     ) -> dict[str, Any]:
         """Build search kwargs with proper field selection."""
         search_kwargs: dict[str, Any] = {
@@ -242,7 +237,9 @@ class OSSOpenSearch(VectorDB):
             "knn.algo_param.index_thread_qty": self.case_config.index_thread_qty,
             "knn.memory.circuit_breaker.limit": self.case_config.cb_threshold,
         }
-        settings_manager.apply_cluster_settings(cluster_settings, "Successfully updated cluster settings for index creation")
+        settings_manager.apply_cluster_settings(
+            cluster_settings, "Successfully updated cluster settings for index creation"
+        )
         settings = {
             "index": {
                 "knn": True,
@@ -300,9 +297,13 @@ class OSSOpenSearch(VectorDB):
         """Prepare the list of bulk actions for OpenSearch bulk insert."""
         bulk_manager = self._get_bulk_manager(self.client)
         return bulk_manager.prepare_bulk_data(
-            list(embeddings), metadata, labels_data,
-            self.id_col_name, self.vector_col_name, self.label_col_name,
-            self.with_scalar_labels
+            list(embeddings),
+            metadata,
+            labels_data,
+            self.id_col_name,
+            self.vector_col_name,
+            self.label_col_name,
+            self.with_scalar_labels,
         )
 
     def insert_embeddings(
@@ -370,7 +371,9 @@ class OSSOpenSearch(VectorDB):
 
         results = []
         with ThreadPoolExecutor(max_workers=len(clients)) as executor:
-            futures = [executor.submit(insert_chunk, chunk_idx % len(clients), chunk_idx) for chunk_idx in range(len(chunks))]
+            futures = [
+                executor.submit(insert_chunk, chunk_idx % len(clients), chunk_idx) for chunk_idx in range(len(chunks))
+            ]
             for future in concurrent.futures.as_completed(futures):
                 count, error = future.result()
                 results.append((count, error))
@@ -462,10 +465,11 @@ class OSSOpenSearch(VectorDB):
                     # Get custom id field from docvalue fields
                     result_ids = [int(h["fields"][self.id_col_name][0]) for h in response["hits"]["hits"]]
 
-                return result_ids
             except Exception:
                 # empty results
                 return []
+            else:
+                return result_ids
         except Exception as e:
             log.warning(f"Failed to search: {self.index_name} error: {e!s}")
             raise e from None
@@ -551,10 +555,12 @@ class OSSOpenSearch(VectorDB):
 
         settings_manager = self._get_settings_manager(self.client)
         cluster_settings = {"knn.algo_param.index_thread_qty": self.case_config.index_thread_qty_during_force_merge}
-        log_message_cluster = f"Successfully updated cluster index thread qty to {self.case_config.index_thread_qty_during_force_merge}"
+        log_message_cluster = (
+            f"Successfully updated cluster index thread qty to {self.case_config.index_thread_qty_during_force_merge}"
+        )
         settings_manager.apply_cluster_settings(cluster_settings, log_message_cluster)
         log.info("Updating the graph threshold to ensure that during merge we can do graph creation.")
-        log_message_index = f"Successfully updated index approximate threshold to 0"
+        log_message_index = "Successfully updated index approximate threshold to 0"
         output = settings_manager.apply_index_settings({"knn.advanced.approximate_threshold": "0"}, log_message_index)
         log.info(f"response of updating setting is: {output}")
 
