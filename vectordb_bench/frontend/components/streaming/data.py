@@ -55,7 +55,11 @@ def get_streaming_data(data) -> list[StreamingData]:
             adjusted_recall=round(d["st_recall_list"][i] / min(search_stage, 100) * 100, 4),
             adjusted_ndcg=round(d["st_ndcg_list"][i] / min(search_stage, 100) * 100, 4),
             latency_p99=round(d["st_serial_latency_p99_list"][i] * 1000, 2),
-            latency_p95=round(d["st_serial_latency_p95_list"][i] * 1000, 2) if "st_serial_latency_p95_list" in d and i < len(d["st_serial_latency_p95_list"]) else 0.0,
+            latency_p95=(
+                round(d["st_serial_latency_p95_list"][i] * 1000, 2)
+                if "st_serial_latency_p95_list" in d and i < len(d["st_serial_latency_p95_list"])
+                else 0.0
+            ),
             ideal_insert_duration=d["st_ideal_insert_duration"],
             insert_duration=d["insert_duration"],
             optimize_duration=d["optimize_duration"],

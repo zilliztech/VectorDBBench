@@ -327,7 +327,7 @@ class TestResult(BaseModel):
                     case_result["metrics"]["serial_latency_p99"] = (
                         cur_latency * 1000 if cur_latency > 0 else cur_latency
                     )
-                    
+
                     # Handle P95 latency for backward compatibility with existing result files
                     if "serial_latency_p95" in case_result["metrics"]:
                         cur_latency_p95 = case_result["metrics"]["serial_latency_p95"]
