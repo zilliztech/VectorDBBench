@@ -4,6 +4,7 @@ from pydantic import BaseModel, SecretStr, validator
 
 from ..api import DBCaseConfig, DBConfig, MetricType
 
+
 class TiDBConfigDict(TypedDict):
     host: str
     port: int
@@ -12,6 +13,7 @@ class TiDBConfigDict(TypedDict):
     database: str
     ssl_verify_cert: bool
     ssl_verify_identity: bool
+
 
 class TiDBConfig(DBConfig):
     user_name: str = "root"
