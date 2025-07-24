@@ -29,10 +29,10 @@ class S3VectorsIndexConfig(DBCaseConfig, BaseModel):
     def parse_metric(self) -> str:
         if self.metric_type == MetricType.COSINE:
             return "cosine"
-        elif self.metric_type == MetricType.L2:
+        if self.metric_type == MetricType.L2:
             return "euclidean"
-        else:
-            raise ValueError(f"Unsupported metric type: {self.metric_type}")
+        msg = f"Unsupported metric type: {self.metric_type}"
+        raise ValueError(msg)
 
     def index_param(self) -> dict:
         return {}

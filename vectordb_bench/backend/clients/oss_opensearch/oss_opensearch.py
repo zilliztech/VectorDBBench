@@ -93,18 +93,18 @@ class OSSOpenSearch(VectorDB):
         settings["index"]["knn.algo_param.ef_search"] = ef_search_value
         # Build properties mapping, excluding _id which is automatically handled by OpenSearch
         properties = {}
-        
+
         # Only add id field to properties if it's not the special _id field
         if self.id_col_name != "_id":
             properties[self.id_col_name] = {"type": "integer", "store": True}
-            
+
         properties[self.label_col_name] = {"type": "keyword"}
         properties[self.vector_col_name] = {
             "type": "knn_vector",
             "dimension": self.dim,
             "method": self.case_config.index_param(),
         }
-        
+
         mappings = {
             "properties": properties,
         }
@@ -342,7 +342,7 @@ class OSSOpenSearch(VectorDB):
                     preference="_only_local" if self.case_config.number_of_shards == 1 else None,
                     routing=self.routing_key,
                 )
-                
+
             log.debug(f"Search took: {resp['took']}")
             log.debug(f"Search shards: {resp['_shards']}")
             log.debug(f"Search hits total: {resp['hits']['total']}")
@@ -350,9 +350,8 @@ class OSSOpenSearch(VectorDB):
                 if self.id_col_name == "_id":
                     # Get _id directly from hit metadata
                     return [int(h["_id"]) for h in resp["hits"]["hits"]]
-                else:
-                    # Get custom id field from docvalue fields
-                    return [int(h["fields"][self.id_col_name][0]) for h in resp["hits"]["hits"]]
+                # Get custom id field from docvalue fields
+                return [int(h["fields"][self.id_col_name][0]) for h in resp["hits"]["hits"]]
             except Exception:
                 # empty results
                 return []
