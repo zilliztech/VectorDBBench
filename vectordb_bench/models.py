@@ -6,6 +6,9 @@ from typing import Self
 
 import ujson
 
+from vectordb_bench.backend.cases import type2case
+from vectordb_bench.backend.dataset import DatasetWithSizeMap
+
 from . import config
 from .backend.cases import Case, CaseType
 from .backend.clients import (
@@ -270,6 +273,21 @@ class TestResult(BaseModel):
             b = partial.json(exclude={"db_config": {"password", "api_key"}})
             f.write(b)
 
+    def get_case_config(case_config: CaseConfig) -> dict[CaseConfig]:
+        if case_config["case_id"] in {6, 7, 8, 9, 12, 13, 14, 15}:
+            case_instance = type2case[CaseType(case_config["case_id"])]()
+            custom_case = case_config["custom_case"]
+            if custom_case is None:
+                custom_case = {}
+            custom_case["filter_rate"] = case_instance.filter_rate
+            for dataset, size_type in DatasetWithSizeMap.items():
+                if case_instance.dataset == size_type:
+                    custom_case["dataset_with_size_type"] = dataset
+                    break
+            case_config["case_id"] = CaseType.NewIntFilterPerformanceCase
+            case_config["custom_case"] = custom_case
+        return case_config
+
     @classmethod
     def read_file(cls, full_path: pathlib.Path, trans_unit: bool = False) -> Self:
         if not full_path.exists():
@@ -280,10 +298,10 @@ class TestResult(BaseModel):
             test_result = ujson.loads(f.read())
             if "task_label" not in test_result:
                 test_result["task_label"] = test_result["run_id"]
-
             for case_result in test_result["results"]:
-                task_config = case_result["task_config"]
-                db = DB(task_config["db"])
+                task_config = case_result.get("task_config")
+                case_config = task_config.get("case_config")
+                db = DB(task_config.get("db"))
 
                 task_config["db_config"] = db.config_cls(**task_config["db_config"])
 
@@ -296,6 +314,7 @@ class TestResult(BaseModel):
                     log.exception(f"Couldn't get class for index '{index_value}' ({full_path})")
                     task_config["db_case_config"] = EmptyDBCaseConfig(**raw_case_cfg)
 
+                task_config["case_config"] = cls.get_case_config(case_config=case_config)
                 case_result["task_config"] = task_config
 
                 if trans_unit:
