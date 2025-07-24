@@ -1,11 +1,11 @@
 """Wrapper around the Milvus vector database over VectorDB"""
 
 import logging
-import time
 from collections.abc import Iterable
 from contextlib import contextmanager
 
 import boto3
+
 from vectordb_bench.backend.filter import Filter, FilterOp
 
 from ..api import VectorDB
