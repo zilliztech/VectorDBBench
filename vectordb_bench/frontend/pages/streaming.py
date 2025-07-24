@@ -83,15 +83,15 @@ def main():
         value=False,
         help="Since vdbbench inserts may be faster than vetordb can process them, the time it actually reaches search_stage may have different delays.",
     )
-    
+
     # Latency type selection
     latency_type = control_panel[2].radio(
-        "Latency Type", 
-        options=["latency_p99", "latency_p95"], 
+        "Latency Type",
+        options=["latency_p99", "latency_p95"],
         index=0,
-        help="Choose between P99 (slowest 1%) or P95 (slowest 5%) latency metrics."
+        help="Choose between P99 (slowest 1%) or P95 (slowest 5%) latency metrics.",
     )
-    
+
     accuracy_metric = DisplayedMetric.recall
     show_ndcg = control_panel[1].toggle(
         "Show **NDCG** instead of Recall.",
@@ -111,11 +111,11 @@ def main():
     else:
         if need_adjust:
             accuracy_metric = DisplayedMetric.adjusted_recall
-            
+
     # Determine which latency metric to display
     latency_metric = DisplayedMetric.latency_p99 if latency_type == "latency_p99" else DisplayedMetric.latency_p95
     latency_desc = "serial lantency (p99)" if latency_type == "latency_p99" else "serial lantency (p95)"
-    
+
     line_chart_displayed_y_metrics: list[tuple[DisplayedMetric, str]] = [
         (
             DisplayedMetric.qps,
