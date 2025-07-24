@@ -17,8 +17,8 @@ class OSSOpenSearchConfig(DBConfig, BaseModel):
     def to_dict(self) -> dict:
         use_ssl = self.port == 443
         http_auth = (
-            (self.user, self.password.get_secret_value()) 
-            if self.user is not None and self.password is not None and len(self.user) != 0 and len(self.password) != 0 
+            (self.user, self.password.get_secret_value())
+            if self.user is not None and self.password is not None and len(self.user) != 0 and len(self.password) != 0
             else ()
         )
         return {
@@ -78,7 +78,7 @@ class OSSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
     quantization_type: OSSOpenSearchQuantization = OSSOpenSearchQuantization.fp32
 
     @root_validator
-    def validate_engine_name(cls, values):
+    def validate_engine_name(cls, values: dict):
         """Map engine_name string from UI to engine enum"""
         if values.get("engine_name"):
             engine_name = values["engine_name"].lower()
@@ -137,8 +137,6 @@ class OSSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
         log.info(f"Using engine: {self.engine} for index creation")
         log.info(f"Using metric_type: {self.metric_type_name} for index creation")
         log.info(f"Resulting space_type: {self.parse_metric()} for index creation")
-
-        parameters = {"ef_construction": self.efConstruction, "m": self.M}
 
         return {
             "name": "hnsw",

@@ -24,11 +24,11 @@ class OpenSearchException(Exception):
 
 class OpenSearchSettingsManager:
     """Manages OpenSearch cluster and index settings."""
-    
+
     def __init__(self, client: OpenSearch, index_name: str) -> None:
         self.client = client
         self.index_name = index_name
-    
+
     def apply_cluster_settings(self, settings: dict[str, Any], log_message: str = "Applied cluster settings") -> dict:
         """Apply cluster-level settings."""
         try:
@@ -38,7 +38,7 @@ class OpenSearchSettingsManager:
         except Exception as e:
             log.warning(f"Failed to apply cluster settings: {e}")
             raise OpenSearchException(f"Cluster settings application failed: {e}") from e
-    
+
     def apply_index_settings(self, settings: dict[str, Any], log_message: str = "Applied index settings") -> dict:
         """Apply index-level settings."""
         try:
@@ -52,42 +52,42 @@ class OpenSearchSettingsManager:
 
 class BulkInsertManager:
     """Manages bulk insertion operations with chunking and parallelization."""
-    
+
     def __init__(self, client: OpenSearch, index_name: str, case_config: OSSOpenSearchIndexConfig) -> None:
         self.client = client
         self.index_name = index_name
         self.case_config = case_config
-    
+
     def prepare_bulk_data(
-        self, 
-        embeddings: list[list[float]], 
-        metadata: list[int], 
-        labels_data: list[str] | None, 
+        self,
+        embeddings: list[list[float]],
+        metadata: list[int],
+        labels_data: list[str] | None,
         id_col_name: str,
-        vector_col_name: str, 
-        label_col_name: str, 
+        vector_col_name: str,
+        label_col_name: str,
         with_scalar_labels: bool
     ) -> list[dict[str, Any]]:
         """Prepare bulk actions for OpenSearch bulk insert."""
         if len(embeddings) != len(metadata):
             raise ValueError(f"Embeddings ({len(embeddings)}) and metadata ({len(metadata)}) length mismatch")
-        
+
         if with_scalar_labels and labels_data and len(labels_data) != len(embeddings):
             raise ValueError(f"Labels data ({len(labels_data)}) and embeddings ({len(embeddings)}) length mismatch")
-        
+
         insert_data: list[dict[str, Any]] = []
         for i in range(len(embeddings)):
             index_data = {"index": {"_index": self.index_name, id_col_name: metadata[i]}}
             if with_scalar_labels and self.case_config.use_routing and labels_data:
                 index_data["routing"] = labels_data[i]
             insert_data.append(index_data)
-            
+
             other_data = {vector_col_name: embeddings[i]}
             if with_scalar_labels and labels_data:
                 other_data[label_col_name] = labels_data[i]
             insert_data.append(other_data)
         return insert_data
-    
+
     def execute_single_client_insert(self, insert_data: list[dict[str, Any]]) -> tuple[int, Exception | None]:
         """Execute bulk insert with single client and retry logic."""
         try:
@@ -103,15 +103,15 @@ class BulkInsertManager:
 
 class SearchQueryBuilder:
     """Builds OpenSearch KNN queries with proper configuration."""
-    
+
     def __init__(self, case_config: OSSOpenSearchIndexConfig, vector_col_name: str) -> None:
         self.case_config = case_config
         self.vector_col_name = vector_col_name
-    
+
     def build_knn_query(
-        self, 
-        query_vector: list[float], 
-        k: int, 
+        self,
+        query_vector: list[float],
+        k: int,
         filter_clause: dict[str, Any] | None = None
     ) -> dict[str, Any]:
         """Build a KNN query with optional filtering."""
@@ -120,24 +120,24 @@ class SearchQueryBuilder:
             "k": k,
             "method_parameters": self.case_config.search_param(),
         }
-        
+
         if filter_clause:
             knn_config["filter"] = filter_clause
-            
+
         if self.case_config.use_quant:
             knn_config["rescore"] = {"oversample_factor": self.case_config.oversample_factor}
-        
+
         return {
             "size": k,
             "query": {"knn": {self.vector_col_name: knn_config}}
         }
-    
+
     def build_search_kwargs(
-        self, 
-        index_name: str, 
-        body: dict[str, Any], 
-        k: int, 
-        id_col_name: str, 
+        self,
+        index_name: str,
+        body: dict[str, Any],
+        k: int,
+        id_col_name: str,
         routing_key: str | None = None
     ) -> dict[str, Any]:
         """Build search kwargs with proper field selection."""
@@ -149,19 +149,19 @@ class SearchQueryBuilder:
             "preference": "_only_local" if self.case_config.number_of_shards == 1 else None,
             "routing": routing_key,
         }
-        
+
         if id_col_name == "_id":
             search_kwargs["stored_fields"] = "_id"
         else:
             search_kwargs["docvalue_fields"] = [id_col_name]
             search_kwargs["stored_fields"] = "_none_"
-            
+
         return search_kwargs
 
 
 class OSSOpenSearch(VectorDB):
     """OpenSearch client implementation for VectorDBBench."""
-    
+
     supported_filter_types: list[FilterOp] = [
         FilterOp.NonFilter,
         FilterOp.NumGE,
@@ -190,7 +190,7 @@ class OSSOpenSearch(VectorDB):
         self.label_col_name = label_col_name
         self.vector_col_name = vector_col_name
         self.with_scalar_labels = with_scalar_labels
-        
+
         # Initialize client state
         self.client: OpenSearch | None = None
         self.filter: dict[str, Any] | None = None
@@ -224,7 +224,7 @@ class OSSOpenSearch(VectorDB):
     def _get_settings_manager(self, client: OpenSearch) -> OpenSearchSettingsManager:
         """Get settings manager for the given client."""
         return OpenSearchSettingsManager(client, self.index_name)
-    
+
     def _get_bulk_manager(self, client: OpenSearch) -> BulkInsertManager:
         """Get bulk insert manager for the given client."""
         return BulkInsertManager(client, self.index_name, self.case_config)
@@ -256,18 +256,18 @@ class OSSOpenSearch(VectorDB):
         settings["index"]["knn.algo_param.ef_search"] = ef_search_value
         # Build properties mapping, excluding _id which is automatically handled by OpenSearch
         properties = {}
-        
+
         # Only add id field to properties if it's not the special _id field
         if self.id_col_name != "_id":
             properties[self.id_col_name] = {"type": "integer", "store": True}
-            
+
         properties[self.label_col_name] = {"type": "keyword"}
         properties[self.vector_col_name] = {
             "type": "knn_vector",
             "dimension": self.dim,
             "method": self.case_config.index_param(),
         }
-        
+
         mappings = {
             "properties": properties,
         }
@@ -461,7 +461,7 @@ class OSSOpenSearch(VectorDB):
                 else:
                     # Get custom id field from docvalue fields
                     result_ids = [int(h["fields"][self.id_col_name][0]) for h in response["hits"]["hits"]]
-                
+
                 return result_ids
             except Exception:
                 # empty results
