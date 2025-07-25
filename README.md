@@ -174,7 +174,7 @@ vectordbbench awsopensearch --db-label awsopensearch \
 --m 16 --ef-construction 256 \
 --host search-vector-db-prod-h4f6m4of6x7yp2rz7gdmots7w4.us-west-2.es.amazonaws.com --port 443 \
 --user vector --password '<password>' \
---case-type Performance1536D5M --num-insert-workers 10  \
+--case-type Performance1536D5M --number-of-indexing-clients 10  \
 --skip-load --num-concurrency 75
 ```
 
@@ -202,7 +202,7 @@ Options:
   --force-merge-enabled BOOLEAN   Whether to perform force merge operation
   --flush-threshold-size TEXT     Size threshold for flushing the transaction
                                   log
-  --engine TEXT                   type of engine to use valid values [faiss, lucene]
+  --engine TEXT                   type of engine to use valid values [faiss, lucene, s3vector]
   # Memory Management
   --cb-threshold TEXT             k-NN Memory circuit breaker threshold
   
