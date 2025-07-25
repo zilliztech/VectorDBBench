@@ -60,7 +60,7 @@ def main():
     getResults(resultesContainer, "vectordb_bench_concurrent")
 
     # main
-    latency_type = st.radio("Latency Type", options=["latency_p99", "latency_avg"])
+    latency_type = st.radio("Latency Type", options=["latency_p99", "latency_p95", "latency_avg"])
     drawChartsByCase(shownData, showCaseNames, st.container(), latency_type=latency_type)
 
     # footer
