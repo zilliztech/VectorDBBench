@@ -1,0 +1,2509 @@
+{
+    "run_id": "d60af9965dec47739a5924d55bd3ca8d",
+    "task_label": "standard_2025",
+    "results": [
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 2970.4726,
+                "optimize_duration": 0.0324,
+                "load_duration": 2970.505,
+                "qps": 199.4972,
+                "serial_latency_p99": 0.3371,
+                "recall": 0.8717,
+                "ndcg": 0.8838,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    15,
+                    20,
+                    25,
+                    30,
+                    40,
+                    50,
+                    60,
+                    70,
+                    80,
+                    90,
+                    100
+                ],
+                "conc_qps_list": [
+                    5.5921,
+                    32.448,
+                    69.6075,
+                    106.5674,
+                    145.5834,
+                    186.4408,
+                    199.4972,
+                    148.2356,
+                    138.4338,
+                    136.3931,
+                    141.4886,
+                    140.7321,
+                    143.3282,
+                    158.5491
+                ],
+                "conc_latency_p99_list": [
+                    0.3057268663402646,
+                    0.29286937245284206,
+                    0.2689738546160515,
+                    0.2666801520221633,
+                    0.2591465408721705,
+                    0.2562654330645455,
+                    0.9055340573028662,
+                    2.6205989362485758,
+                    4.214876335293486,
+                    5.548211481111834,
+                    5.860073060470753,
+                    7.030681503431443,
+                    7.150496072808162,
+                    7.454363987408566
+                ],
+                "conc_latency_avg_list": [
+                    0.17877813466726789,
+                    0.1539926040293229,
+                    0.14355259011723448,
+                    0.14057451599100018,
+                    0.13709053315632305,
+                    0.13375001383421867,
+                    0.14955758877293948,
+                    0.2574387009127791,
+                    0.31749838548130993,
+                    0.3639443052363144,
+                    0.3930872011390246,
+                    0.4370199322238293,
+                    0.44931074305892155,
+                    0.44128390770244413
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "S3Vectors",
+                "db_config": {
+                    "db_label": "",
+                    "version": "",
+                    "note": "",
+                    "region_name": "us-east-1",
+                    "access_key_id": "**********",
+                    "secret_access_key": "**********",
+                    "bucket_name": "s3vectors-east-1",
+                    "index_name": "vdbbench-index"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "data_type": "float32"
+                },
+                "case_config": {
+                    "case_id": 5,
+                    "custom_case": null,
+                    "k": 30,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            15,
+                            20,
+                            25,
+                            30,
+                            40,
+                            50,
+                            60,
+                            70,
+                            80,
+                            90,
+                            100
+                        ],
+                        "concurrency_duration": 180,
+                        "concurrency_timeout": 3600
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 0.0,
+                "optimize_duration": 0.0,
+                "load_duration": 0.0,
+                "qps": 192.1164,
+                "serial_latency_p99": 0.3456,
+                "recall": 0.4276,
+                "ndcg": 0.4798,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    15,
+                    20,
+                    25,
+                    30
+                ],
+                "conc_qps_list": [
+                    4.8758,
+                    30.4836,
+                    72.5956,
+                    107.1847,
+                    149.9406,
+                    192.1164,
+                    170.8968
+                ],
+                "conc_latency_p99_list": [
+                    0.32926209951518104,
+                    0.2970751485106298,
+                    0.25644857229141094,
+                    0.2727285704837415,
+                    0.254873042370891,
+                    0.2459075423690955,
+                    1.0701303746562918
+                ],
+                "conc_latency_avg_list": [
+                    0.20494631408819447,
+                    0.16344266400725194,
+                    0.1374262750580602,
+                    0.13936750741124818,
+                    0.13279457812828163,
+                    0.12940155565726036,
+                    0.16526157093735963
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "S3Vectors",
+                "db_config": {
+                    "db_label": "",
+                    "version": "",
+                    "note": "",
+                    "region_name": "us-east-1",
+                    "access_key_id": "**********",
+                    "secret_access_key": "**********",
+                    "bucket_name": "s3vectors-east-1",
+                    "index_name": "vdbbench-index"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "data_type": "float32"
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Medium Cohere (768dim, 1M)",
+                        "label_percentage": 0.001
+                    },
+                    "k": 30,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            15,
+                            20,
+                            25,
+                            30
+                        ],
+                        "concurrency_duration": 60,
+                        "concurrency_timeout": 3600
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 0.0,
+                "optimize_duration": 0.0,
+                "load_duration": 0.0,
+                "qps": 197.4455,
+                "serial_latency_p99": 0.3493,
+                "recall": 0.5314,
+                "ndcg": 0.5755,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    15,
+                    20,
+                    25,
+                    30
+                ],
+                "conc_qps_list": [
+                    5.1084,
+                    33.5471,
+                    68.2957,
+                    105.8788,
+                    144.8791,
+                    185.4856,
+                    197.4455
+                ],
+                "conc_latency_p99_list": [
+                    0.7816582751926034,
+                    0.29464222808601315,
+                    0.30184637255442787,
+                    0.27352764647221156,
+                    0.2619378386589227,
+                    0.2627684409084031,
+                    0.8492211898852832
+                ],
+                "conc_latency_avg_list": [
+                    0.19561624129629673,
+                    0.14872712125238183,
+                    0.1460010165238937,
+                    0.14107773315843697,
+                    0.1373406008466785,
+                    0.1340945516297796,
+                    0.14899160872176243
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "S3Vectors",
+                "db_config": {
+                    "db_label": "",
+                    "version": "",
+                    "note": "",
+                    "region_name": "us-east-1",
+                    "access_key_id": "**********",
+                    "secret_access_key": "**********",
+                    "bucket_name": "s3vectors-east-1",
+                    "index_name": "vdbbench-index"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "data_type": "float32"
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Medium Cohere (768dim, 1M)",
+                        "label_percentage": 0.002
+                    },
+                    "k": 30,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            15,
+                            20,
+                            25,
+                            30
+                        ],
+                        "concurrency_duration": 60,
+                        "concurrency_timeout": 3600
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 0.0,
+                "optimize_duration": 0.0,
+                "load_duration": 0.0,
+                "qps": 196.9391,
+                "serial_latency_p99": 0.2634,
+                "recall": 0.6549,
+                "ndcg": 0.6898,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    15,
+                    20,
+                    25,
+                    30
+                ],
+                "conc_qps_list": [
+                    5.675,
+                    31.8811,
+                    67.4951,
+                    102.5763,
+                    141.6207,
+                    179.814,
+                    196.9391
+                ],
+                "conc_latency_p99_list": [
+                    0.7444819935830348,
+                    0.3069360829598733,
+                    0.29420441156718896,
+                    0.26985632870404475,
+                    0.2657526725350176,
+                    0.2610060953185895,
+                    0.815150408020133
+                ],
+                "conc_latency_avg_list": [
+                    0.17608577868139202,
+                    0.15649657269173345,
+                    0.147809565744648,
+                    0.14573910107307306,
+                    0.14054977110591665,
+                    0.1380776505557241,
+                    0.1512662943119532
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "S3Vectors",
+                "db_config": {
+                    "db_label": "",
+                    "version": "",
+                    "note": "",
+                    "region_name": "us-east-1",
+                    "access_key_id": "**********",
+                    "secret_access_key": "**********",
+                    "bucket_name": "s3vectors-east-1",
+                    "index_name": "vdbbench-index"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "data_type": "float32"
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Medium Cohere (768dim, 1M)",
+                        "label_percentage": 0.005
+                    },
+                    "k": 30,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            15,
+                            20,
+                            25,
+                            30
+                        ],
+                        "concurrency_duration": 60,
+                        "concurrency_timeout": 3600
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 0.0,
+                "optimize_duration": 0.0,
+                "load_duration": 0.0,
+                "qps": 201.5401,
+                "serial_latency_p99": 0.2824,
+                "recall": 0.7086,
+                "ndcg": 0.7368,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    15,
+                    20,
+                    25,
+                    30
+                ],
+                "conc_qps_list": [
+                    6.0604,
+                    31.3102,
+                    66.8635,
+                    102.4307,
+                    137.0544,
+                    174.9476,
+                    201.5401
+                ],
+                "conc_latency_p99_list": [
+                    0.2943547100026627,
+                    0.288298530371394,
+                    0.27279032936668957,
+                    0.26144427472900134,
+                    0.2709142048709327,
+                    0.25804895919049164,
+                    0.37156653454701877
+                ],
+                "conc_latency_avg_list": [
+                    0.16488580476664708,
+                    0.1593260142217583,
+                    0.14920043242154704,
+                    0.14590159505882977,
+                    0.14526904837368781,
+                    0.14220184481398934,
+                    0.14764247648479953
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "S3Vectors",
+                "db_config": {
+                    "db_label": "",
+                    "version": "",
+                    "note": "",
+                    "region_name": "us-east-1",
+                    "access_key_id": "**********",
+                    "secret_access_key": "**********",
+                    "bucket_name": "s3vectors-east-1",
+                    "index_name": "vdbbench-index"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "data_type": "float32"
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Medium Cohere (768dim, 1M)",
+                        "label_percentage": 0.01
+                    },
+                    "k": 30,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            15,
+                            20,
+                            25,
+                            30
+                        ],
+                        "concurrency_duration": 60,
+                        "concurrency_timeout": 3600
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 0.0,
+                "optimize_duration": 0.0,
+                "load_duration": 0.0,
+                "qps": 202.2424,
+                "serial_latency_p99": 0.3017,
+                "recall": 0.7592,
+                "ndcg": 0.7812,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    15,
+                    20,
+                    25,
+                    30
+                ],
+                "conc_qps_list": [
+                    5.5099,
+                    31.0969,
+                    64.0501,
+                    96.6608,
+                    132.3824,
+                    169.7848,
+                    202.2424
+                ],
+                "conc_latency_p99_list": [
+                    0.28144256640225646,
+                    0.28266542118974025,
+                    0.28745006633573184,
+                    0.2887180608802009,
+                    0.2737992306554224,
+                    0.266253309850581,
+                    0.3075238355837064
+                ],
+                "conc_latency_avg_list": [
+                    0.1813592702564305,
+                    0.16037075466013828,
+                    0.15561127622732157,
+                    0.15461495328035568,
+                    0.1499613637952411,
+                    0.14630668502042168,
+                    0.14729734342766834
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "S3Vectors",
+                "db_config": {
+                    "db_label": "",
+                    "version": "",
+                    "note": "",
+                    "region_name": "us-east-1",
+                    "access_key_id": "**********",
+                    "secret_access_key": "**********",
+                    "bucket_name": "s3vectors-east-1",
+                    "index_name": "vdbbench-index"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "data_type": "float32"
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Medium Cohere (768dim, 1M)",
+                        "label_percentage": 0.02
+                    },
+                    "k": 30,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            15,
+                            20,
+                            25,
+                            30
+                        ],
+                        "concurrency_duration": 60,
+                        "concurrency_timeout": 3600
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 0.0,
+                "optimize_duration": 0.0,
+                "load_duration": 0.0,
+                "qps": 198.599,
+                "serial_latency_p99": 0.3588,
+                "recall": 0.8085,
+                "ndcg": 0.824,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    15,
+                    20,
+                    25,
+                    30
+                ],
+                "conc_qps_list": [
+                    5.4389,
+                    32.3909,
+                    63.6649,
+                    99.8077,
+                    135.1746,
+                    170.4683,
+                    198.599
+                ],
+                "conc_latency_p99_list": [
+                    0.3162948441389017,
+                    0.2929340754216537,
+                    0.29956613731395926,
+                    0.27734781362582034,
+                    0.2848844401980749,
+                    0.27146368539193677,
+                    0.3210610778466799
+                ],
+                "conc_latency_avg_list": [
+                    0.1837291808513033,
+                    0.15405556739487042,
+                    0.15673738707459153,
+                    0.14965542208934704,
+                    0.14737036746554527,
+                    0.14562790749368398,
+                    0.14859330926523254
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "S3Vectors",
+                "db_config": {
+                    "db_label": "",
+                    "version": "",
+                    "note": "",
+                    "region_name": "us-east-1",
+                    "access_key_id": "**********",
+                    "secret_access_key": "**********",
+                    "bucket_name": "s3vectors-east-1",
+                    "index_name": "vdbbench-index"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "data_type": "float32"
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Medium Cohere (768dim, 1M)",
+                        "label_percentage": 0.05
+                    },
+                    "k": 30,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            15,
+                            20,
+                            25,
+                            30
+                        ],
+                        "concurrency_duration": 60,
+                        "concurrency_timeout": 3600
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 0.0,
+                "optimize_duration": 0.0,
+                "load_duration": 0.0,
+                "qps": 199.0349,
+                "serial_latency_p99": 0.2753,
+                "recall": 0.8325,
+                "ndcg": 0.8442,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    15,
+                    20,
+                    25,
+                    30
+                ],
+                "conc_qps_list": [
+                    4.8696,
+                    31.3333,
+                    66.5694,
+                    104.2362,
+                    139.0719,
+                    172.2119,
+                    199.0349
+                ],
+                "conc_latency_p99_list": [
+                    0.9459384199604335,
+                    0.4258276104211084,
+                    0.2784014346660115,
+                    0.26199020874337287,
+                    0.2646811329695631,
+                    0.27463690769043747,
+                    0.37999025870813036
+                ],
+                "conc_latency_avg_list": [
+                    0.20520533806105612,
+                    0.159053406815181,
+                    0.14975306031034372,
+                    0.14334582615591107,
+                    0.1429548468611905,
+                    0.14433168370307262,
+                    0.14961306354543724
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "S3Vectors",
+                "db_config": {
+                    "db_label": "",
+                    "version": "",
+                    "note": "",
+                    "region_name": "us-east-1",
+                    "access_key_id": "**********",
+                    "secret_access_key": "**********",
+                    "bucket_name": "s3vectors-east-1",
+                    "index_name": "vdbbench-index"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "data_type": "float32"
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Medium Cohere (768dim, 1M)",
+                        "label_percentage": 0.1
+                    },
+                    "k": 30,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            15,
+                            20,
+                            25,
+                            30
+                        ],
+                        "concurrency_duration": 60,
+                        "concurrency_timeout": 3600
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 0.0,
+                "optimize_duration": 0.0,
+                "load_duration": 0.0,
+                "qps": 202.1405,
+                "serial_latency_p99": 0.2826,
+                "recall": 0.8492,
+                "ndcg": 0.8593,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    15,
+                    20,
+                    25,
+                    30
+                ],
+                "conc_qps_list": [
+                    6.2425,
+                    33.4941,
+                    67.3777,
+                    104.4543,
+                    138.9241,
+                    146.6979,
+                    202.1405
+                ],
+                "conc_latency_p99_list": [
+                    0.2561170053563546,
+                    0.2629233490268233,
+                    0.2786194805294506,
+                    0.2620396741002323,
+                    0.2721249624039043,
+                    0.275872534196824,
+                    0.5125790551502745
+                ],
+                "conc_latency_avg_list": [
+                    0.16007621229657282,
+                    0.14897182012048557,
+                    0.14795937857751476,
+                    0.14309594409935683,
+                    0.14326260496059487,
+                    0.15233913391160195,
+                    0.14743800728245085
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "S3Vectors",
+                "db_config": {
+                    "db_label": "",
+                    "version": "",
+                    "note": "",
+                    "region_name": "us-east-1",
+                    "access_key_id": "**********",
+                    "secret_access_key": "**********",
+                    "bucket_name": "s3vectors-east-1",
+                    "index_name": "vdbbench-index"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "data_type": "float32"
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Medium Cohere (768dim, 1M)",
+                        "label_percentage": 0.2
+                    },
+                    "k": 30,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            15,
+                            20,
+                            25,
+                            30
+                        ],
+                        "concurrency_duration": 60,
+                        "concurrency_timeout": 3600
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 0.0,
+                "optimize_duration": 0.0,
+                "load_duration": 0.0,
+                "qps": 201.1282,
+                "serial_latency_p99": 0.2692,
+                "recall": 0.8637,
+                "ndcg": 0.8749,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    15,
+                    20,
+                    25,
+                    30
+                ],
+                "conc_qps_list": [
+                    5.8624,
+                    33.5361,
+                    69.1636,
+                    104.8417,
+                    140.9376,
+                    176.9636,
+                    201.1282
+                ],
+                "conc_latency_p99_list": [
+                    0.3044514204916778,
+                    0.26760380705818526,
+                    0.26628886790014816,
+                    0.26692828512517686,
+                    0.26154959074920053,
+                    0.26205542255192993,
+                    0.4432655484159461
+                ],
+                "conc_latency_avg_list": [
+                    0.17045623565768023,
+                    0.14877978406152068,
+                    0.14426341717878755,
+                    0.1425052129256506,
+                    0.14110002266788405,
+                    0.1404733362146569,
+                    0.1478939573660762
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "S3Vectors",
+                "db_config": {
+                    "db_label": "",
+                    "version": "",
+                    "note": "",
+                    "region_name": "us-east-1",
+                    "access_key_id": "**********",
+                    "secret_access_key": "**********",
+                    "bucket_name": "s3vectors-east-1",
+                    "index_name": "vdbbench-index"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "data_type": "float32"
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Medium Cohere (768dim, 1M)",
+                        "label_percentage": 0.5
+                    },
+                    "k": 30,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            15,
+                            20,
+                            25,
+                            30
+                        ],
+                        "concurrency_duration": 60,
+                        "concurrency_timeout": 3600
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 18283.7299,
+                "optimize_duration": 0.0431,
+                "load_duration": 18283.773,
+                "qps": 194.8021,
+                "serial_latency_p99": 0.5598,
+                "recall": 0.86,
+                "ndcg": 0.8711,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    15,
+                    20,
+                    25,
+                    30,
+                    40,
+                    50,
+                    60,
+                    70,
+                    80,
+                    90,
+                    100
+                ],
+                "conc_qps_list": [
+                    3.0143,
+                    19.7214,
+                    41.2286,
+                    68.42,
+                    91.9925,
+                    119.2562,
+                    145.7568,
+                    194.8021,
+                    175.3113,
+                    154.094,
+                    139.0243,
+                    137.0152,
+                    136.9753,
+                    148.2486
+                ],
+                "conc_latency_p99_list": [
+                    0.5265677035803672,
+                    0.4156031924713169,
+                    0.4006210068403743,
+                    0.36790279168810214,
+                    0.3758108571916819,
+                    0.3622747381753288,
+                    0.35375411363318543,
+                    0.35835539473453565,
+                    1.80868591776699,
+                    3.120272358419594,
+                    5.120826761483369,
+                    6.037255773596679,
+                    6.555112633776209,
+                    7.530691414061005
+                ],
+                "conc_latency_avg_list": [
+                    0.33162897625148235,
+                    0.2531889479229043,
+                    0.2419514681069688,
+                    0.21862107713167664,
+                    0.21690321055106906,
+                    0.208987360773395,
+                    0.20500410319548723,
+                    0.20425706607350047,
+                    0.2735218531669894,
+                    0.3597729722675132,
+                    0.42812774128895226,
+                    0.4839677828505012,
+                    0.5255217312511777,
+                    0.5344663876457051
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "S3Vectors",
+                "db_config": {
+                    "db_label": "",
+                    "version": "",
+                    "note": "",
+                    "region_name": "us-east-1",
+                    "access_key_id": "**********",
+                    "secret_access_key": "**********",
+                    "bucket_name": "s3vectors-east-1",
+                    "index_name": "vdbbench-index"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "data_type": "float32"
+                },
+                "case_config": {
+                    "case_id": 4,
+                    "custom_case": null,
+                    "k": 30,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            15,
+                            20,
+                            25,
+                            30,
+                            40,
+                            50,
+                            60,
+                            70,
+                            80,
+                            90,
+                            100
+                        ],
+                        "concurrency_duration": 120,
+                        "concurrency_timeout": 3600
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 0.0,
+                "optimize_duration": 0.0,
+                "load_duration": 0.0,
+                "qps": 187.4268,
+                "serial_latency_p99": 0.4537,
+                "recall": 0.4692,
+                "ndcg": 0.5189,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    15,
+                    20,
+                    25,
+                    30,
+                    40,
+                    50
+                ],
+                "conc_qps_list": [
+                    2.6726,
+                    15.2372,
+                    32.3581,
+                    51.8251,
+                    68.8006,
+                    89.7959,
+                    114.1564,
+                    145.0215,
+                    187.4268
+                ],
+                "conc_latency_p99_list": [
+                    0.558423354185652,
+                    0.4868009101017379,
+                    0.49411141405231285,
+                    0.46562842677813004,
+                    0.46276188636024046,
+                    0.44683693168219185,
+                    0.422478049620986,
+                    0.45179960425244653,
+                    0.43213706685928627
+                ],
+                "conc_latency_avg_list": [
+                    0.37403186548314843,
+                    0.32768382831440807,
+                    0.30850593052599434,
+                    0.2886127291405558,
+                    0.2898631480925624,
+                    0.2774442439592566,
+                    0.2618160285977717,
+                    0.27425664379211806,
+                    0.26500430787944396
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "S3Vectors",
+                "db_config": {
+                    "db_label": "",
+                    "version": "",
+                    "note": "",
+                    "region_name": "us-east-1",
+                    "access_key_id": "**********",
+                    "secret_access_key": "**********",
+                    "bucket_name": "s3vectors-east-1",
+                    "index_name": "vdbbench-index"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "data_type": "float32"
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Large Cohere (768dim, 10M)",
+                        "label_percentage": 0.001
+                    },
+                    "k": 30,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            15,
+                            20,
+                            25,
+                            30,
+                            40,
+                            50
+                        ],
+                        "concurrency_duration": 120,
+                        "concurrency_timeout": 3600
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 0.0,
+                "optimize_duration": 0.0,
+                "load_duration": 0.0,
+                "qps": 198.397,
+                "serial_latency_p99": 0.5069,
+                "recall": 0.5409,
+                "ndcg": 0.583,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    15,
+                    20,
+                    25,
+                    30,
+                    40,
+                    50
+                ],
+                "conc_qps_list": [
+                    2.7458,
+                    16.2434,
+                    34.5524,
+                    52.7311,
+                    72.7504,
+                    96.1006,
+                    116.6115,
+                    158.4903,
+                    198.397
+                ],
+                "conc_latency_p99_list": [
+                    0.5412072664377042,
+                    0.4398492124193581,
+                    0.4616037914011393,
+                    0.4520418062619862,
+                    0.43112011939403594,
+                    0.4201923584972978,
+                    0.41751666231662987,
+                    0.41244613734539565,
+                    0.8685830348095661
+                ],
+                "conc_latency_avg_list": [
+                    0.364050299453789,
+                    0.3075824910749804,
+                    0.2885927725157661,
+                    0.28370028398216446,
+                    0.2741255327259186,
+                    0.2591086112359427,
+                    0.256095442670376,
+                    0.2511196609211916,
+                    0.2495782575736313
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "S3Vectors",
+                "db_config": {
+                    "db_label": "",
+                    "version": "",
+                    "note": "",
+                    "region_name": "us-east-1",
+                    "access_key_id": "**********",
+                    "secret_access_key": "**********",
+                    "bucket_name": "s3vectors-east-1",
+                    "index_name": "vdbbench-index"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "data_type": "float32"
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Large Cohere (768dim, 10M)",
+                        "label_percentage": 0.002
+                    },
+                    "k": 30,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            15,
+                            20,
+                            25,
+                            30,
+                            40,
+                            50
+                        ],
+                        "concurrency_duration": 120,
+                        "concurrency_timeout": 3600
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 0.0,
+                "optimize_duration": 0.0,
+                "load_duration": 0.0,
+                "qps": 174.3549,
+                "serial_latency_p99": 0.4969,
+                "recall": 0.6279,
+                "ndcg": 0.6601,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    15,
+                    20,
+                    25,
+                    30,
+                    40,
+                    50
+                ],
+                "conc_qps_list": [
+                    2.8553,
+                    16.5337,
+                    36.7964,
+                    56.7117,
+                    75.5556,
+                    82.9818,
+                    99.0002,
+                    132.4292,
+                    174.3549
+                ],
+                "conc_latency_p99_list": [
+                    0.45376017893664516,
+                    0.44813311758218316,
+                    0.42432168450904995,
+                    0.43569353796076044,
+                    0.440997409076081,
+                    0.484473014894174,
+                    0.5039040255069267,
+                    0.49455512693559317,
+                    0.46598410551319797
+                ],
+                "conc_latency_avg_list": [
+                    0.35009942597841287,
+                    0.3019104116590019,
+                    0.2712048981974938,
+                    0.26384581109458205,
+                    0.2638924889765985,
+                    0.30024374225892075,
+                    0.3016029519634407,
+                    0.3005380444163379,
+                    0.2840002673315207
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "S3Vectors",
+                "db_config": {
+                    "db_label": "",
+                    "version": "",
+                    "note": "",
+                    "region_name": "us-east-1",
+                    "access_key_id": "**********",
+                    "secret_access_key": "**********",
+                    "bucket_name": "s3vectors-east-1",
+                    "index_name": "vdbbench-index"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "data_type": "float32"
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Large Cohere (768dim, 10M)",
+                        "label_percentage": 0.005
+                    },
+                    "k": 30,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            15,
+                            20,
+                            25,
+                            30,
+                            40,
+                            50
+                        ],
+                        "concurrency_duration": 120,
+                        "concurrency_timeout": 3600
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 0.0,
+                "optimize_duration": 0.0,
+                "load_duration": 0.0,
+                "qps": 172.95,
+                "serial_latency_p99": 0.5156,
+                "recall": 0.7004,
+                "ndcg": 0.7253,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    15,
+                    20,
+                    25,
+                    30,
+                    40,
+                    50
+                ],
+                "conc_qps_list": [
+                    2.6274,
+                    14.6154,
+                    31.2299,
+                    50.9982,
+                    67.2038,
+                    85.2195,
+                    106.2608,
+                    133.4809,
+                    172.95
+                ],
+                "conc_latency_p99_list": [
+                    0.547288335094345,
+                    0.5017968477343676,
+                    0.49248093454807523,
+                    0.464813823304139,
+                    0.47070235666353255,
+                    0.4728234008484287,
+                    0.4532600020460086,
+                    0.4910402821341996,
+                    0.46973878620890896
+                ],
+                "conc_latency_avg_list": [
+                    0.3804705326892642,
+                    0.3414292937254368,
+                    0.31917288861747456,
+                    0.293509111682151,
+                    0.296753375912928,
+                    0.2921559299730053,
+                    0.2811883913532294,
+                    0.2978465235595297,
+                    0.28710858363851804
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "S3Vectors",
+                "db_config": {
+                    "db_label": "",
+                    "version": "",
+                    "note": "",
+                    "region_name": "us-east-1",
+                    "access_key_id": "**********",
+                    "secret_access_key": "**********",
+                    "bucket_name": "s3vectors-east-1",
+                    "index_name": "vdbbench-index"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "data_type": "float32"
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Large Cohere (768dim, 10M)",
+                        "label_percentage": 0.01
+                    },
+                    "k": 30,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            15,
+                            20,
+                            25,
+                            30,
+                            40,
+                            50
+                        ],
+                        "concurrency_duration": 120,
+                        "concurrency_timeout": 3600
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 0.0,
+                "optimize_duration": 0.0,
+                "load_duration": 0.0,
+                "qps": 190.9747,
+                "serial_latency_p99": 0.5174,
+                "recall": 0.7398,
+                "ndcg": 0.7609,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    15,
+                    20,
+                    25,
+                    30,
+                    40,
+                    50
+                ],
+                "conc_qps_list": [
+                    2.5905,
+                    15.1315,
+                    32.5661,
+                    51.3531,
+                    70.859,
+                    92.1273,
+                    106.2614,
+                    146.6415,
+                    190.9747
+                ],
+                "conc_latency_p99_list": [
+                    0.5359640973678322,
+                    0.5038611659430894,
+                    0.4727835458039771,
+                    0.4578898529458093,
+                    0.44936108179041145,
+                    0.4493892845755921,
+                    0.44525163223734127,
+                    0.4456483786657919,
+                    0.42966096448653823
+                ],
+                "conc_latency_avg_list": [
+                    0.3858861763917817,
+                    0.3300191992241019,
+                    0.3063704047322927,
+                    0.2914914843424382,
+                    0.2812321226193738,
+                    0.2703860804524464,
+                    0.28123297384133383,
+                    0.27112162543941165,
+                    0.2602231424690716
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "S3Vectors",
+                "db_config": {
+                    "db_label": "",
+                    "version": "",
+                    "note": "",
+                    "region_name": "us-east-1",
+                    "access_key_id": "**********",
+                    "secret_access_key": "**********",
+                    "bucket_name": "s3vectors-east-1",
+                    "index_name": "vdbbench-index"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "data_type": "float32"
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Large Cohere (768dim, 10M)",
+                        "label_percentage": 0.02
+                    },
+                    "k": 30,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            15,
+                            20,
+                            25,
+                            30,
+                            40,
+                            50
+                        ],
+                        "concurrency_duration": 120,
+                        "concurrency_timeout": 3600
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 0.0,
+                "optimize_duration": 0.0,
+                "load_duration": 0.0,
+                "qps": 186.0237,
+                "serial_latency_p99": 0.474,
+                "recall": 0.7847,
+                "ndcg": 0.803,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    15,
+                    20,
+                    25,
+                    30,
+                    40,
+                    50
+                ],
+                "conc_qps_list": [
+                    2.5318,
+                    14.5521,
+                    31.2245,
+                    50.2005,
+                    65.5451,
+                    85.5296,
+                    104.9942,
+                    143.4204,
+                    186.0237
+                ],
+                "conc_latency_p99_list": [
+                    0.5324654311995247,
+                    0.5404962703760248,
+                    0.4962297047779427,
+                    0.4716085807973288,
+                    0.5047204344696364,
+                    0.4746078232186847,
+                    0.47090065246447926,
+                    0.452439703999554,
+                    0.4452963033004198
+                ],
+                "conc_latency_avg_list": [
+                    0.39482895703737375,
+                    0.3431497387012991,
+                    0.3196624369807591,
+                    0.29812974119250274,
+                    0.30423598276791675,
+                    0.2911854029193207,
+                    0.28455497776356575,
+                    0.27746096306112,
+                    0.2668085950808965
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "S3Vectors",
+                "db_config": {
+                    "db_label": "",
+                    "version": "",
+                    "note": "",
+                    "region_name": "us-east-1",
+                    "access_key_id": "**********",
+                    "secret_access_key": "**********",
+                    "bucket_name": "s3vectors-east-1",
+                    "index_name": "vdbbench-index"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "data_type": "float32"
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Large Cohere (768dim, 10M)",
+                        "label_percentage": 0.05
+                    },
+                    "k": 30,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            15,
+                            20,
+                            25,
+                            30,
+                            40,
+                            50
+                        ],
+                        "concurrency_duration": 120,
+                        "concurrency_timeout": 3600
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 0.0,
+                "optimize_duration": 0.0,
+                "load_duration": 0.0,
+                "qps": 192.1458,
+                "serial_latency_p99": 0.4805,
+                "recall": 0.8103,
+                "ndcg": 0.8229,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    15,
+                    20,
+                    25,
+                    30,
+                    40,
+                    50
+                ],
+                "conc_qps_list": [
+                    2.7398,
+                    15.4167,
+                    33.9829,
+                    55.0042,
+                    70.9437,
+                    94.0349,
+                    114.3355,
+                    148.4342,
+                    192.1458
+                ],
+                "conc_latency_p99_list": [
+                    0.5046815221232828,
+                    0.484930241847178,
+                    0.4836470659670888,
+                    0.43167894504615095,
+                    0.45311440610093995,
+                    0.4434100269706679,
+                    0.426801529576187,
+                    0.44005047504382694,
+                    0.4274993393034665
+                ],
+                "conc_latency_avg_list": [
+                    0.36485076367777464,
+                    0.32397690761592385,
+                    0.29381537385921624,
+                    0.27217157280678167,
+                    0.2811709847599061,
+                    0.26485245462376733,
+                    0.2612452901977557,
+                    0.267842898266305,
+                    0.2585550665767442
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "S3Vectors",
+                "db_config": {
+                    "db_label": "",
+                    "version": "",
+                    "note": "",
+                    "region_name": "us-east-1",
+                    "access_key_id": "**********",
+                    "secret_access_key": "**********",
+                    "bucket_name": "s3vectors-east-1",
+                    "index_name": "vdbbench-index"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "data_type": "float32"
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Large Cohere (768dim, 10M)",
+                        "label_percentage": 0.1
+                    },
+                    "k": 30,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            15,
+                            20,
+                            25,
+                            30,
+                            40,
+                            50
+                        ],
+                        "concurrency_duration": 120,
+                        "concurrency_timeout": 3600
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 0.0,
+                "optimize_duration": 0.0,
+                "load_duration": 0.0,
+                "qps": 179.4203,
+                "serial_latency_p99": 0.4975,
+                "recall": 0.8273,
+                "ndcg": 0.841,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    15,
+                    20,
+                    25,
+                    30,
+                    40,
+                    50
+                ],
+                "conc_qps_list": [
+                    2.8308,
+                    16.0583,
+                    30.5308,
+                    47.3615,
+                    63.1972,
+                    81.2939,
+                    101.5995,
+                    141.9673,
+                    179.4203
+                ],
+                "conc_latency_p99_list": [
+                    0.47774682923685763,
+                    0.4583682000241243,
+                    0.5285271699976875,
+                    0.49221092734835037,
+                    0.5155015790706966,
+                    0.51426090602763,
+                    0.4712264502665494,
+                    0.4578040716639959,
+                    0.46363746090210045
+                ],
+                "conc_latency_avg_list": [
+                    0.3531220891750897,
+                    0.3106564776484316,
+                    0.32694680486576516,
+                    0.31603691522206145,
+                    0.31527973038386675,
+                    0.3064528471658255,
+                    0.29378804824334526,
+                    0.2803020946615617,
+                    0.27547515726924465
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "S3Vectors",
+                "db_config": {
+                    "db_label": "",
+                    "version": "",
+                    "note": "",
+                    "region_name": "us-east-1",
+                    "access_key_id": "**********",
+                    "secret_access_key": "**********",
+                    "bucket_name": "s3vectors-east-1",
+                    "index_name": "vdbbench-index"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "data_type": "float32"
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Large Cohere (768dim, 10M)",
+                        "label_percentage": 0.2
+                    },
+                    "k": 30,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            15,
+                            20,
+                            25,
+                            30,
+                            40,
+                            50
+                        ],
+                        "concurrency_duration": 120,
+                        "concurrency_timeout": 3600
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 0.0,
+                "optimize_duration": 0.0,
+                "load_duration": 0.0,
+                "qps": 199.5444,
+                "serial_latency_p99": 0.4639,
+                "recall": 0.8478,
+                "ndcg": 0.8577,
+                "conc_num_list": [
+                    1,
+                    5,
+                    10,
+                    15,
+                    20,
+                    25,
+                    30,
+                    40,
+                    50
+                ],
+                "conc_qps_list": [
+                    2.829,
+                    16.3022,
+                    34.3169,
+                    55.8885,
+                    72.7821,
+                    93.6099,
+                    116.6718,
+                    160.6381,
+                    199.5444
+                ],
+                "conc_latency_p99_list": [
+                    0.4829293444426732,
+                    0.46692242537683337,
+                    0.454294371768483,
+                    0.43225170329562346,
+                    0.4534143943234808,
+                    0.4341565519862345,
+                    0.41950699321751017,
+                    0.4045942402590298,
+                    0.4522178557817817
+                ],
+                "conc_latency_avg_list": [
+                    0.35335366733505746,
+                    0.3060283094405901,
+                    0.2909273705048065,
+                    0.2676834368088299,
+                    0.273801436712963,
+                    0.266098154148968,
+                    0.2560115152344485,
+                    0.24769191672002275,
+                    0.24878019274411803
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_conc_failed_rate_list": []
+            },
+            "task_config": {
+                "db": "S3Vectors",
+                "db_config": {
+                    "db_label": "",
+                    "version": "",
+                    "note": "",
+                    "region_name": "us-east-1",
+                    "access_key_id": "**********",
+                    "secret_access_key": "**********",
+                    "bucket_name": "s3vectors-east-1",
+                    "index_name": "vdbbench-index"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "data_type": "float32"
+                },
+                "case_config": {
+                    "case_id": 300,
+                    "custom_case": {
+                        "dataset_with_size_type": "Large Cohere (768dim, 10M)",
+                        "label_percentage": 0.5
+                    },
+                    "k": 30,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            15,
+                            20,
+                            25,
+                            30,
+                            40,
+                            50
+                        ],
+                        "concurrency_duration": 120,
+                        "concurrency_timeout": 3600
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 20000.23065447202,
+                "optimize_duration": 0.0,
+                "load_duration": 0.0,
+                "qps": 0.0,
+                "serial_latency_p99": 0.0,
+                "recall": 0.0,
+                "ndcg": 0.0,
+                "conc_num_list": [],
+                "conc_qps_list": [],
+                "conc_latency_p99_list": [],
+                "conc_latency_avg_list": [],
+                "st_ideal_insert_duration": 20000,
+                "st_search_stage_list": [
+                    10,
+                    20,
+                    30,
+                    40,
+                    50,
+                    60,
+                    70,
+                    80,
+                    90,
+                    100
+                ],
+                "st_search_time_list": [
+                    2001.1755,
+                    4032.922,
+                    6056.7118,
+                    8087.6446,
+                    10117.7889,
+                    12147.7899,
+                    14178.1805,
+                    16209.3112,
+                    18239.0474,
+                    20259.618
+                ],
+                "st_max_qps_list_list": [
+                    194.5102,
+                    197.6167,
+                    197.9959,
+                    193.94,
+                    197.5605,
+                    188.6792,
+                    190.5382,
+                    190.4678,
+                    180.9549,
+                    173.8912
+                ],
+                "st_recall_list": [
+                    0.0985,
+                    0.1886,
+                    0.283,
+                    0.368,
+                    0.4588,
+                    0.542,
+                    0.6331,
+                    0.721,
+                    0.7969,
+                    0.8498
+                ],
+                "st_ndcg_list": [
+                    0.0997,
+                    0.1912,
+                    0.286,
+                    0.3725,
+                    0.4629,
+                    0.5474,
+                    0.6394,
+                    0.7288,
+                    0.8064,
+                    0.8619
+                ],
+                "st_serial_latency_p99_list": [
+                    0.3944,
+                    0.6105,
+                    0.8203,
+                    0.3878,
+                    0.4302,
+                    0.397,
+                    0.4123,
+                    0.4301,
+                    0.4204,
+                    0.4575
+                ],
+                "st_conc_failed_rate_list": [
+                    1.776151612301626e-05,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0
+                ]
+            },
+            "task_config": {
+                "db": "S3Vectors",
+                "db_config": {
+                    "db_label": "",
+                    "version": "",
+                    "note": "",
+                    "region_name": "us-east-1",
+                    "access_key_id": "**********",
+                    "secret_access_key": "**********",
+                    "bucket_name": "s3vectors-east-1",
+                    "index_name": "vdbbench-index"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "data_type": "float32"
+                },
+                "case_config": {
+                    "case_id": 200,
+                    "custom_case": {
+                        "dataset_with_size_type": "Large Cohere (768dim, 10M)",
+                        "insert_rate": 500,
+                        "search_stages": [
+                            0.1,
+                            0.2,
+                            0.3,
+                            0.4,
+                            0.5,
+                            0.6,
+                            0.7,
+                            0.8,
+                            0.9
+                        ],
+                        "concurrencies": [
+                            20,
+                            30,
+                            40
+                        ],
+                        "optimize_after_write": false
+                    },
+                    "k": 30,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30,
+                        "concurrency_timeout": 3600
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },{
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 13068.03754887695,
+                "optimize_duration": 0.0,
+                "load_duration": 0.0,
+                "qps": 0.0,
+                "serial_latency_p99": 0.0,
+                "recall": 0.0,
+                "ndcg": 0.0,
+                "conc_num_list": [],
+                "conc_qps_list": [],
+                "conc_latency_p99_list": [],
+                "conc_latency_avg_list": [],
+                "st_ideal_insert_duration": 10000,
+                "st_search_stage_list": [
+                    10,
+                    20,
+                    30,
+                    40,
+                    50,
+                    60,
+                    70,
+                    80,
+                    90,
+                    100
+                ],
+                "st_search_time_list": [
+                    1267.0537,
+                    2591.9491,
+                    3904.5826,
+                    5208.0713,
+                    6507.959,
+                    7817.1373,
+                    9135.001,
+                    10448.1642,
+                    11759.1251,
+                    13069.5158
+                ],
+                "st_max_qps_list_list": [
+                    195.9212,
+                    191.7485,
+                    191.769,
+                    193.3097,
+                    193.2091,
+                    184.6033,
+                    188.7796,
+                    189.7405,
+                    167.2689,
+                    154.8537
+                ],
+                "st_recall_list": [
+                    0.0999,
+                    0.1935,
+                    0.2839,
+                    0.3678,
+                    0.4552,
+                    0.5427,
+                    0.6333,
+                    0.7139,
+                    0.7946,
+                    0.8532
+                ],
+                "st_ndcg_list": [
+                    0.1014,
+                    0.1954,
+                    0.2869,
+                    0.3709,
+                    0.4593,
+                    0.5477,
+                    0.6385,
+                    0.7219,
+                    0.8042,
+                    0.8647
+                ],
+                "st_serial_latency_p99_list": [
+                    0.3862,
+                    0.4236,
+                    0.4858,
+                    0.4288,
+                    0.4312,
+                    0.437,
+                    0.4461,
+                    0.4943,
+                    0.5048,
+                    0.5632
+                ],
+                "st_conc_failed_rate_list": [
+                    0.0,
+                    4.4161808867691223e-05,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0
+                ]
+            },
+            "task_config": {
+                "db": "S3Vectors",
+                "db_config": {
+                    "db_label": "",
+                    "version": "",
+                    "note": "",
+                    "region_name": "us-east-1",
+                    "access_key_id": "**********",
+                    "secret_access_key": "**********",
+                    "bucket_name": "s3vectors-east-1",
+                    "index_name": "vdbbench-index"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "data_type": "float32"
+                },
+                "case_config": {
+                    "case_id": 200,
+                    "custom_case": {
+                        "dataset_with_size_type": "Large Cohere (768dim, 10M)",
+                        "insert_rate": 1000,
+                        "search_stages": [
+                            0.1,
+                            0.2,
+                            0.3,
+                            0.4,
+                            0.5,
+                            0.6,
+                            0.7,
+                            0.8,
+                            0.9
+                        ],
+                        "concurrencies": [
+                            20,
+                            30,
+                            40
+                        ],
+                        "optimize_after_write": false
+                    },
+                    "k": 30,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            1,
+                            5,
+                            10,
+                            20,
+                            30,
+                            40,
+                            60,
+                            80
+                        ],
+                        "concurrency_duration": 30,
+                        "concurrency_timeout": 3600
+                    }
+                },
+                "stages": [
+                    "drop_old",
+                    "load",
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        }
+    ],
+    "file_fmt": "result_{}_{}_{}.json",
+    "timestamp": 1753142400.0
+}

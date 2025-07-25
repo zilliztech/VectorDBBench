@@ -6,6 +6,9 @@ from typing import Self
 
 import ujson
 
+from vectordb_bench.backend.cases import type2case
+from vectordb_bench.backend.dataset import DatasetWithSizeMap
+
 from . import config
 from .backend.cases import Case, CaseType
 from .backend.clients import (
@@ -270,6 +273,21 @@ class TestResult(BaseModel):
             b = partial.json(exclude={"db_config": {"password", "api_key"}})
             f.write(b)
 
+    def get_case_config(case_config: CaseConfig) -> dict[CaseConfig]:
+        if case_config["case_id"] in {6, 7, 8, 9, 12, 13, 14, 15}:
+            case_instance = type2case[CaseType(case_config["case_id"])]()
+            custom_case = case_config["custom_case"]
+            if custom_case is None:
+                custom_case = {}
+            custom_case["filter_rate"] = case_instance.filter_rate
+            for dataset, size_type in DatasetWithSizeMap.items():
+                if case_instance.dataset == size_type:
+                    custom_case["dataset_with_size_type"] = dataset
+                    break
+            case_config["case_id"] = CaseType.NewIntFilterPerformanceCase
+            case_config["custom_case"] = custom_case
+        return case_config
+
     @classmethod
     def read_file(cls, full_path: pathlib.Path, trans_unit: bool = False) -> Self:
         if not full_path.exists():
@@ -280,10 +298,10 @@ class TestResult(BaseModel):
             test_result = ujson.loads(f.read())
             if "task_label" not in test_result:
                 test_result["task_label"] = test_result["run_id"]
-
             for case_result in test_result["results"]:
-                task_config = case_result["task_config"]
-                db = DB(task_config["db"])
+                task_config = case_result.get("task_config")
+                case_config = task_config.get("case_config")
+                db = DB(task_config.get("db"))
 
                 task_config["db_config"] = db.config_cls(**task_config["db_config"])
 
@@ -296,6 +314,7 @@ class TestResult(BaseModel):
                     log.exception(f"Couldn't get class for index '{index_value}' ({full_path})")
                     task_config["db_case_config"] = EmptyDBCaseConfig(**raw_case_cfg)
 
+                task_config["case_config"] = cls.get_case_config(case_config=case_config)
                 case_result["task_config"] = task_config
 
                 if trans_unit:
@@ -308,6 +327,16 @@ class TestResult(BaseModel):
                     case_result["metrics"]["serial_latency_p99"] = (
                         cur_latency * 1000 if cur_latency > 0 else cur_latency
                     )
+
+                    # Handle P95 latency for backward compatibility with existing result files
+                    if "serial_latency_p95" in case_result["metrics"]:
+                        cur_latency_p95 = case_result["metrics"]["serial_latency_p95"]
+                        case_result["metrics"]["serial_latency_p95"] = (
+                            cur_latency_p95 * 1000 if cur_latency_p95 > 0 else cur_latency_p95
+                        )
+                    else:
+                        # Default to 0 for older result files that don't have P95 data
+                        case_result["metrics"]["serial_latency_p95"] = 0.0
             return TestResult.validate(test_result)
 
     def display(self, dbs: list[DB] | None = None):
@@ -350,6 +379,7 @@ class TestResult(BaseModel):
             max_load_dur,
             max_qps,
             15,
+            15,
             max_recall,
             14,
             5,
@@ -357,7 +387,7 @@ class TestResult(BaseModel):
 
         DATA_FORMAT = (  # noqa: N806
             f"%-{max_db}s | %-{max_db_labels}s %-{max_case}s %-{len(self.task_label)}s"
-            f" | %-{max_load_dur}s %-{max_qps}s %-15s %-{max_recall}s %-14s"
+            f" | %-{max_load_dur}s %-{max_qps}s %-15s %-15s %-{max_recall}s %-14s"
             f" | %-5s"
         )
 
@@ -369,6 +399,7 @@ class TestResult(BaseModel):
             "load_dur",
             "qps",
             "latency(p99)",
+            "latency(p95)",
             "recall",
             "max_load_count",
             "label",
@@ -391,6 +422,7 @@ class TestResult(BaseModel):
                     f.metrics.load_duration,
                     f.metrics.qps,
                     f.metrics.serial_latency_p99,
+                    f.metrics.serial_latency_p95,
                     f.metrics.recall,
                     f.metrics.max_load_count,
                     f.label.value,

@@ -12,7 +12,7 @@ from ....cli.cli import (
     run,
 )
 from .. import DB
-from .config import OSSOS_Engine, OSSOpenSearchQuantization
+from .config import OSSOpenSearchQuantization, OSSOS_Engine
 
 log = logging.getLogger(__name__)
 

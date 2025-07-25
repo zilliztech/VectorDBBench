@@ -219,6 +219,17 @@ def generate_label_filter_cases(dataset_with_size_type: DatasetWithSizeType) -> 
     ]
 
 
+def generate_int_filter_cases(dataset_with_size_type: DatasetWithSizeType) -> list[CaseConfig]:
+    filter_rates = dataset_with_size_type.get_manager().data.scalar_int_rates
+    return [
+        CaseConfig(
+            case_id=CaseType.NewIntFilterPerformanceCase,
+            custom_case=dict(dataset_with_size_type=dataset_with_size_type, filter_rate=filter_rate),
+        )
+        for filter_rate in filter_rates
+    ]
+
+
 UI_CASE_CLUSTERS: list[UICaseItemCluster] = [
     UICaseItemCluster(
         label="Search Performance Test",
@@ -247,6 +258,29 @@ UI_CASE_CLUSTERS: list[UICaseItemCluster] = [
             UICaseItem(cases=generate_normal_cases(CaseType.Performance1536D5M99P)),
             UICaseItem(cases=generate_normal_cases(CaseType.Performance1536D500K1P)),
             UICaseItem(cases=generate_normal_cases(CaseType.Performance1536D500K99P)),
+        ],
+    ),
+    UICaseItemCluster(
+        label="New-Int-Filter Search Performance Test",
+        uiCaseItems=[
+            UICaseItem(
+                label=f"Int-Filter Search Performance Test - {dataset_with_size_type.value}",
+                description=(
+                    f"[Batch Cases]These cases test the search performance of a vector database "
+                    f"with dataset {dataset_with_size_type.value}"
+                    f"under filtering rates of {dataset_with_size_type.get_manager().data.scalar_int_rates}, at varying parallel levels."
+                    f"Results will show index building time, recall, and maximum QPS."
+                ),
+                cases=generate_int_filter_cases(dataset_with_size_type),
+            )
+            for dataset_with_size_type in [
+                DatasetWithSizeType.CohereMedium,
+                DatasetWithSizeType.CohereLarge,
+                DatasetWithSizeType.OpenAIMedium,
+                DatasetWithSizeType.OpenAILarge,
+                DatasetWithSizeType.BioasqMedium,
+                DatasetWithSizeType.BioasqLarge,
+            ]
         ],
     ),
     UICaseItemCluster(
@@ -632,6 +666,7 @@ CaseConfigParamInput_EFConstruction_ES = CaseConfigInput(
 
 CaseConfigParamInput_EFConstruction_AWSOpensearch = CaseConfigInput(
     label=CaseConfigParamType.EFConstruction,
+    displayLabel="EF Construction",
     inputType=InputType.Number,
     inputConfig={
         "min": 100,
@@ -642,6 +677,7 @@ CaseConfigParamInput_EFConstruction_AWSOpensearch = CaseConfigInput(
 
 CaseConfigParamInput_M_AWSOpensearch = CaseConfigInput(
     label=CaseConfigParamType.M,
+    displayLabel="M",
     inputType=InputType.Number,
     inputConfig={
         "min": 4,
@@ -652,6 +688,7 @@ CaseConfigParamInput_M_AWSOpensearch = CaseConfigInput(
 
 CaseConfigParamInput_EF_SEARCH_AWSOpensearch = CaseConfigInput(
     label=CaseConfigParamType.ef_search,
+    displayLabel="EF Search",
     inputType=InputType.Number,
     inputConfig={
         "min": 1,
@@ -1177,7 +1214,7 @@ CaseConfigParamInput_ZillizLevel = CaseConfigInput(
     inputType=InputType.Number,
     inputConfig={
         "min": 1,
-        "max": 3,
+        "max": 10,
         "value": 1,
     },
 )
@@ -1587,6 +1624,14 @@ CaseConfigParamInput_METRIC_TYPE_NAME_AWSOpensearch = CaseConfigInput(
     },
 )
 
+CaseConfigParamInput_REFRESH_INTERVAL_AWSOpensearch = CaseConfigInput(
+    label=CaseConfigParamType.refresh_interval,
+    displayLabel="Refresh Interval",
+    inputHelp="How often to make new data searchable. (e.g., 30s, 1m).",
+    inputType=InputType.Text,
+    inputConfig={"value": "60s", "placeholder": "e.g. 30s, 1m"},
+)
+
 MilvusLoadConfig = [
     CaseConfigParamInput_IndexType,
     CaseConfigParamInput_M,
@@ -1951,28 +1996,30 @@ LanceDBLoadConfig = [
 LanceDBPerformanceConfig = LanceDBLoadConfig
 
 AWSOpensearchLoadingConfig = [
-    CaseConfigParamInput_EFConstruction_AWSOpensearch,
-    CaseConfigParamInput_M_AWSOpensearch,
+    CaseConfigParamInput_REFRESH_INTERVAL_AWSOpensearch,
     CaseConfigParamInput_ENGINE_NAME_AWSOpensearch,
     CaseConfigParamInput_METRIC_TYPE_NAME_AWSOpensearch,
-    CaseConfigParamInput_INDEX_THREAD_QTY_DURING_FORCE_MERGE_AWSOpensearch,
-    CaseConfigParamInput_NUMBER_OF_INDEXING_CLIENTS_AWSOpensearch,
+    CaseConfigParamInput_M_AWSOpensearch,
+    CaseConfigParamInput_EFConstruction_AWSOpensearch,
     CaseConfigParamInput_NUMBER_OF_SHARDS_AWSOpensearch,
     CaseConfigParamInput_NUMBER_OF_REPLICAS_AWSOpensearch,
+    CaseConfigParamInput_NUMBER_OF_INDEXING_CLIENTS_AWSOpensearch,
     CaseConfigParamInput_INDEX_THREAD_QTY_AWSOpensearch,
+    CaseConfigParamInput_INDEX_THREAD_QTY_DURING_FORCE_MERGE_AWSOpensearch,
 ]
 
 AWSOpenSearchPerformanceConfig = [
-    CaseConfigParamInput_EFConstruction_AWSOpensearch,
-    CaseConfigParamInput_M_AWSOpensearch,
+    CaseConfigParamInput_REFRESH_INTERVAL_AWSOpensearch,
     CaseConfigParamInput_EF_SEARCH_AWSOpensearch,
     CaseConfigParamInput_ENGINE_NAME_AWSOpensearch,
     CaseConfigParamInput_METRIC_TYPE_NAME_AWSOpensearch,
-    CaseConfigParamInput_INDEX_THREAD_QTY_DURING_FORCE_MERGE_AWSOpensearch,
-    CaseConfigParamInput_NUMBER_OF_INDEXING_CLIENTS_AWSOpensearch,
+    CaseConfigParamInput_M_AWSOpensearch,
+    CaseConfigParamInput_EFConstruction_AWSOpensearch,
     CaseConfigParamInput_NUMBER_OF_SHARDS_AWSOpensearch,
     CaseConfigParamInput_NUMBER_OF_REPLICAS_AWSOpensearch,
+    CaseConfigParamInput_NUMBER_OF_INDEXING_CLIENTS_AWSOpensearch,
     CaseConfigParamInput_INDEX_THREAD_QTY_AWSOpensearch,
+    CaseConfigParamInput_INDEX_THREAD_QTY_DURING_FORCE_MERGE_AWSOpensearch,
 ]
 
 # Map DB to config
