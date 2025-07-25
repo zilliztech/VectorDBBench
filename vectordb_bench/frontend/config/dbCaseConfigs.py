@@ -666,6 +666,7 @@ CaseConfigParamInput_EFConstruction_ES = CaseConfigInput(
 
 CaseConfigParamInput_EFConstruction_AWSOpensearch = CaseConfigInput(
     label=CaseConfigParamType.EFConstruction,
+    displayLabel="EF Construction",
     inputType=InputType.Number,
     inputConfig={
         "min": 100,
@@ -676,6 +677,7 @@ CaseConfigParamInput_EFConstruction_AWSOpensearch = CaseConfigInput(
 
 CaseConfigParamInput_M_AWSOpensearch = CaseConfigInput(
     label=CaseConfigParamType.M,
+    displayLabel="M",
     inputType=InputType.Number,
     inputConfig={
         "min": 4,
@@ -686,6 +688,7 @@ CaseConfigParamInput_M_AWSOpensearch = CaseConfigInput(
 
 CaseConfigParamInput_EF_SEARCH_AWSOpensearch = CaseConfigInput(
     label=CaseConfigParamType.ef_search,
+    displayLabel="EF Search",
     inputType=InputType.Number,
     inputConfig={
         "min": 1,
@@ -1621,6 +1624,14 @@ CaseConfigParamInput_METRIC_TYPE_NAME_AWSOpensearch = CaseConfigInput(
     },
 )
 
+CaseConfigParamInput_REFRESH_INTERVAL_AWSOpensearch = CaseConfigInput(
+    label=CaseConfigParamType.refresh_interval,
+    displayLabel="Refresh Interval",
+    inputHelp="How often to make new data searchable. (e.g., 30s, 1m).",
+    inputType=InputType.Text,
+    inputConfig={"value": "60s", "placeholder": "e.g. 30s, 1m"},
+)
+
 MilvusLoadConfig = [
     CaseConfigParamInput_IndexType,
     CaseConfigParamInput_M,
@@ -1985,28 +1996,30 @@ LanceDBLoadConfig = [
 LanceDBPerformanceConfig = LanceDBLoadConfig
 
 AWSOpensearchLoadingConfig = [
-    CaseConfigParamInput_EFConstruction_AWSOpensearch,
-    CaseConfigParamInput_M_AWSOpensearch,
+    CaseConfigParamInput_REFRESH_INTERVAL_AWSOpensearch,
     CaseConfigParamInput_ENGINE_NAME_AWSOpensearch,
     CaseConfigParamInput_METRIC_TYPE_NAME_AWSOpensearch,
-    CaseConfigParamInput_INDEX_THREAD_QTY_DURING_FORCE_MERGE_AWSOpensearch,
-    CaseConfigParamInput_NUMBER_OF_INDEXING_CLIENTS_AWSOpensearch,
+    CaseConfigParamInput_M_AWSOpensearch,
+    CaseConfigParamInput_EFConstruction_AWSOpensearch,
     CaseConfigParamInput_NUMBER_OF_SHARDS_AWSOpensearch,
     CaseConfigParamInput_NUMBER_OF_REPLICAS_AWSOpensearch,
+    CaseConfigParamInput_NUMBER_OF_INDEXING_CLIENTS_AWSOpensearch,
     CaseConfigParamInput_INDEX_THREAD_QTY_AWSOpensearch,
+    CaseConfigParamInput_INDEX_THREAD_QTY_DURING_FORCE_MERGE_AWSOpensearch,
 ]
 
 AWSOpenSearchPerformanceConfig = [
-    CaseConfigParamInput_EFConstruction_AWSOpensearch,
-    CaseConfigParamInput_M_AWSOpensearch,
+    CaseConfigParamInput_REFRESH_INTERVAL_AWSOpensearch,
     CaseConfigParamInput_EF_SEARCH_AWSOpensearch,
     CaseConfigParamInput_ENGINE_NAME_AWSOpensearch,
     CaseConfigParamInput_METRIC_TYPE_NAME_AWSOpensearch,
-    CaseConfigParamInput_INDEX_THREAD_QTY_DURING_FORCE_MERGE_AWSOpensearch,
-    CaseConfigParamInput_NUMBER_OF_INDEXING_CLIENTS_AWSOpensearch,
+    CaseConfigParamInput_M_AWSOpensearch,
+    CaseConfigParamInput_EFConstruction_AWSOpensearch,
     CaseConfigParamInput_NUMBER_OF_SHARDS_AWSOpensearch,
     CaseConfigParamInput_NUMBER_OF_REPLICAS_AWSOpensearch,
+    CaseConfigParamInput_NUMBER_OF_INDEXING_CLIENTS_AWSOpensearch,
     CaseConfigParamInput_INDEX_THREAD_QTY_AWSOpensearch,
+    CaseConfigParamInput_INDEX_THREAD_QTY_DURING_FORCE_MERGE_AWSOpensearch,
 ]
 
 # Map DB to config
