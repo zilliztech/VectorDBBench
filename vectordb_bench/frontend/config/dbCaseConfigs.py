@@ -1214,7 +1214,7 @@ CaseConfigParamInput_ZillizLevel = CaseConfigInput(
     inputType=InputType.Number,
     inputConfig={
         "min": 1,
-        "max": 3,
+        "max": 10,
         "value": 1,
     },
 )
