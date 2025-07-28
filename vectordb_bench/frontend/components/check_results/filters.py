@@ -89,7 +89,7 @@ def getShowDbsAndCases(st, result: list[CaseResult], filter_type: FilterOp) -> t
             col=1,
         )
 
-    if filter_type == FilterOp.StrEqual:
+    if filter_type == FilterOp.StrEqual or filter_type == FilterOp.NumGE:
         container = st.container()
         datasetWithSizeTypes = [dataset_with_size_type for dataset_with_size_type in DatasetWithSizeType]
         showDatasetWithSizeTypes = filterView(
@@ -101,9 +101,6 @@ def getShowDbsAndCases(st, result: list[CaseResult], filter_type: FilterOp) -> t
         )
         datasets = [dataset_with_size_type.get_manager() for dataset_with_size_type in showDatasetWithSizeTypes]
         showCaseNames = list(set([case.name for case in allCases if case.dataset in datasets]))
-
-    if filter_type == FilterOp.NumGE:
-        raise NotImplementedError
 
     return showDBNames, showCaseNames
 

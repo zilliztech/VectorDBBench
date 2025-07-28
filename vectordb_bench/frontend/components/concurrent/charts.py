@@ -20,6 +20,11 @@ def drawChartsByCase(allData, showCaseNames: list[str], st, latency_type: str):
                     if 0 <= i < len(caseData["conc_latency_p99_list"])
                     else 0
                 ),
+                "latency_p95": (
+                    caseData["conc_latency_p95_list"][i] * 1000
+                    if "conc_latency_p95_list" in caseData and 0 <= i < len(caseData["conc_latency_p95_list"])
+                    else 0
+                ),
                 "latency_avg": (
                     caseData["conc_latency_avg_list"][i] * 1000
                     if 0 <= i < len(caseData["conc_latency_avg_list"])

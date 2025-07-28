@@ -46,7 +46,7 @@ class AWSOpenSearchTypedDict(TypedDict):
         str,
         click.option(
             "--engine",
-            type=click.Choice(["nmslib", "faiss", "lucene"], case_sensitive=False),
+            type=click.Choice(["faiss", "lucene", "s3vector"], case_sensitive=False),
             help="HNSW algorithm implementation to use",
             default="faiss",
         ),
@@ -96,6 +96,37 @@ class AWSOpenSearchTypedDict(TypedDict):
         ),
     ]
 
+    index_thread_qty_during_force_merge: Annotated[
+        int,
+        click.option(
+            "--index-thread-qty-during-force-merge",
+            type=int,
+            help="Thread count during force merge operations",
+            default=8,
+        ),
+    ]
+
+    number_of_indexing_clients: Annotated[
+        int,
+        click.option(
+            "--number-of-indexing-clients",
+            type=int,
+            help="Number of concurrent indexing clients",
+            default=1,
+        ),
+    ]
+
+    ef_construction: Annotated[
+        int | None,
+        click.option(
+            "--ef-construction",
+            type=int,
+            help="ef parameter for HNSW construction (not used for s3vector engine)",
+            default=None,
+            required=False,
+        ),
+    ]
+
     quantization_type: Annotated[
         str | None,
         click.option(
@@ -103,17 +134,6 @@ class AWSOpenSearchTypedDict(TypedDict):
             type=click.Choice(["fp32", "fp16"]),
             help="quantization type for vectors (in index)",
             default="fp32",
-            required=False,
-        ),
-    ]
-
-    engine: Annotated[
-        str | None,
-        click.option(
-            "--engine",
-            type=click.Choice(["faiss", "lucene"]),
-            help="quantization type for vectors (in index)",
-            default="faiss",
             required=False,
         ),
     ]
@@ -126,6 +146,21 @@ class AWSOpenSearchHNSWTypedDict(CommonTypedDict, AWSOpenSearchTypedDict, HNSWFl
 @click_parameter_decorators_from_typed_dict(AWSOpenSearchHNSWTypedDict)
 def AWSOpenSearch(**parameters: Unpack[AWSOpenSearchHNSWTypedDict]):
     from .config import AWSOpenSearchConfig, AWSOpenSearchIndexConfig
+
+    # Set default values for HNSW parameters if not provided and not using s3vector
+    engine = AWSOS_Engine(parameters["engine"])
+    ef_construction = parameters.get("ef_construction")
+    ef_search = parameters.get("ef_search")
+    m = parameters.get("m")
+
+    # For non-s3vector engines, provide defaults if None
+    if engine != AWSOS_Engine.s3vector:
+        if ef_construction is None:
+            ef_construction = 200
+        if ef_search is None:
+            ef_search = 100
+        if m is None:
+            m = 16
 
     run(
         db=DB.AWSOpenSearch,
@@ -144,12 +179,14 @@ def AWSOpenSearch(**parameters: Unpack[AWSOpenSearchHNSWTypedDict]):
             force_merge_enabled=parameters["force_merge_enabled"],
             flush_threshold_size=parameters["flush_threshold_size"],
             index_thread_qty_during_force_merge=parameters["index_thread_qty_during_force_merge"],
+            number_of_indexing_clients=parameters["number_of_indexing_clients"],
             cb_threshold=parameters["cb_threshold"],
-            efConstruction=parameters["ef_construction"],
-            efSearch=parameters["ef_runtime"],
-            M=parameters["m"],
-            engine=AWSOS_Engine(parameters["engine"]),
+            efConstruction=ef_construction,
+            ef_search=ef_search,
+            M=m,
+            engine=engine,
             quantization_type=AWSOSQuantization(parameters["quantization_type"]),
+            metric_type_name=parameters["metric_type"],
         ),
         **parameters,
     )
