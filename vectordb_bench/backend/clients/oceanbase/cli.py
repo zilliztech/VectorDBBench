@@ -93,6 +93,7 @@ def OceanBaseIVF(**parameters: Unpack[OceanBaseIVFTypedDict]):
             m=input_m,
             nlist=parameters["nlist"],
             sample_per_nlist=parameters["sample_per_nlist"],
+            nbits=parameters["nbits"],
             index=input_index_type,
             ivf_nprobes=parameters["ivf_nprobes"],
         ),
