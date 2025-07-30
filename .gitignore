@@ -18,9 +18,6 @@ pgdiskann_config.yml
 specialized_analysis.py
 analyses/
 
-# Research directory and files
-research/
-
 # Additional log files
 *.log
 vectordb_bench.log

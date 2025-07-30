@@ -3,6 +3,7 @@
 import logging
 from collections.abc import Generator
 from contextlib import contextmanager
+from datetime import datetime
 from typing import Any
 
 import numpy as np
@@ -437,3 +438,371 @@ class PgDiskANN(VectorDB):
             result = self.cursor.execute(self._unfiltered_search, (q, k), prepare=True, binary=True)
 
         return [int(i[0]) for i in result.fetchall()]
+
+    def collect_post_benchmark_config(self) -> dict:
+        """
+        Collect comprehensive database configuration metrics after benchmark completion.
+        This runs while data is still loaded to capture actual runtime state.
+                
+        Returns:
+            dict: Comprehensive configuration metrics collected from the live database
+        """
+        try:
+            # Re-establish connection for post-benchmark analysis if needed
+            with psycopg.connect(**self.db_config) as conn:
+                with conn.cursor() as cursor:
+                    
+                    log.info("🔍 POST_BENCHMARK_ANALYSIS_START")
+                    
+                    config_metrics = {
+                        'collection_timestamp': datetime.now().isoformat(),
+                        'data_still_loaded': True,
+                        'analysis_phase': 'post_benchmark'
+                    }
+                    
+                    
+                    # 1. Current GUC parameters (live state) - ACTIVE
+                    config_metrics['current_guc_parameters'] = self._collect_live_guc_parameters(cursor)
+                    
+                    # 2. Current Citus state (if enabled) - ACTIVE
+                    #if self.case_config.enable_citus_distribution:
+                    #    config_metrics['citus_runtime_state'] = self._collect_citus_runtime_state(cursor)
+                    
+                    # COMMENTED OUT - Not needed for current use case
+                    # config_metrics['table_statistics'] = self._collect_current_table_stats(cursor)
+                    # config_metrics['session_state'] = self._collect_session_state(cursor)
+                    # config_metrics['index_statistics'] = self._collect_index_statistics(cursor)
+                    # config_metrics['memory_usage'] = self._collect_memory_usage(cursor)
+                    # config_metrics['query_performance_settings'] = self._collect_query_performance_settings(cursor)
+                    
+                    log.info("🔍 POST_BENCHMARK_ANALYSIS_END")
+                    
+                    return config_metrics
+                    
+        except Exception as e:
+            log.error(f"Error collecting post-benchmark config: {e}")
+            return {'error': str(e)}
+    
+    
+    def _collect_live_guc_parameters(self, cursor) -> dict:
+        """Collect current GUC parameter values in live system."""
+        try:
+            guc_params = {}
+            
+            # Define all the Citus parameters to collect
+            citus_parameters = [
+                'citus.all_modifications_commutative',
+                'citus.background_task_queue_interval',
+                'citus.cluster_name',
+                'citus.coordinator_aggregation_strategy',
+                'citus.count_distinct_error_rate',
+                'citus.cpu_priority',
+                'citus.cpu_priority_for_logical_replication_senders',
+                'citus.defer_drop_after_shard_move',
+                'citus.defer_drop_after_shard_split',
+                'citus.defer_shard_delete_interval',
+                'citus.desired_percent_disk_available_after_move',
+                'citus.distributed_deadlock_detection_factor',
+                'citus.enable_binary_protocol',
+                'citus.enable_change_data_capture',
+                'citus.enable_create_role_propagation',
+                'citus.enable_deadlock_prevention',
+                'citus.enable_local_execution',
+                'citus.enable_local_reference_table_foreign_keys',
+                'citus.enable_repartition_joins',
+                'citus.enable_schema_based_sharding',
+                'citus.enable_statistics_collection',
+                'citus.explain_all_tasks',
+                'citus.explain_analyze_sort_method',
+                'citus.limit_clause_row_fetch_count',
+                'citus.local_hostname',
+                'citus.local_shared_pool_size',
+                'citus.local_table_join_policy',
+                'citus.log_remote_commands',
+                'citus.max_adaptive_executor_pool_size',
+                'citus.max_background_task_executors',
+                'citus.max_background_task_executors_per_node',
+                'citus.max_cached_connection_lifetime',
+                'citus.max_cached_conns_per_worker',
+                'citus.max_client_connections',
+                'citus.max_high_priority_background_processes',
+                'citus.max_intermediate_result_size',
+                'citus.max_matview_size_to_auto_recreate',
+                'citus.max_shared_pool_size',
+                'citus.max_worker_nodes_tracked',
+                'citus.multi_shard_modify_mode',
+                'citus.multi_task_query_log_level',
+                'citus.node_connection_timeout',
+                'citus.node_conninfo',
+                'citus.propagate_set_commands',
+                'citus.recover_2pc_interval',
+                'citus.remote_task_check_interval',
+                'citus.shard_count',
+                'citus.shard_replication_factor',
+                'citus.show_shards_for_app_name_prefixes',
+                'citus.skip_constraint_validation',
+                'citus.skip_jsonb_validation_in_copy',
+                'citus.stat_statements_track',
+                'citus.stat_tenants_limit',
+                'citus.stat_tenants_log_level',
+                'citus.stat_tenants_period',
+                'citus.stat_tenants_track',
+                'citus.stat_tenants_untracked_sample_rate',
+                'citus.task_assignment_policy',
+                'citus.task_executor_type',
+                'citus.use_citus_managed_tables',
+                'citus.use_secondary_nodes',
+                'citus.values_materialization_threshold',
+                'citus.version',
+                'citus.worker_min_messages',
+                'citus.writable_standby_coordinator'
+            ]
+            
+            # Use simple SHOW commands for each parameter
+            successful_params = 0
+            failed_params = 0
+            
+            for param in citus_parameters:
+                try:
+                    cursor.execute(f"SHOW {param}")
+                    result = cursor.fetchone()
+                    guc_params[param] = result[0] if result else 'NOT_AVAILABLE'
+                    successful_params += 1
+                except Exception as e:
+                    guc_params[param] = f'ERROR: {str(e)}'
+                    failed_params += 1
+            
+            # Add collection metadata
+            guc_params['_collection_info'] = {
+                'timestamp': datetime.now().isoformat(),
+                'total_parameters_requested': len(citus_parameters),
+                'successful_parameters': successful_params,
+                'failed_parameters': failed_params,
+                'method': 'SHOW_commands',
+                'success_rate': f"{(successful_params/len(citus_parameters)*100):.1f}%"
+            }
+            
+            log.info(f"Collected {successful_params}/{len(citus_parameters)} Citus GUC parameters using SHOW commands")
+            return guc_params
+            
+        except Exception as e:
+            log.error(f"Error collecting Citus GUC parameters: {e}")
+            return {'error': str(e)}
+    
+    def _collect_citus_runtime_state(self, cursor) -> dict:
+        """Collect current Citus runtime state."""
+        try:
+            citus_state = {}
+            
+            # 1. Get basic shard information
+            cursor.execute(f"""
+                SELECT 
+                    COUNT(*) as total_shards,
+                    MIN(shardid) as min_shard_id,
+                    MAX(shardid) as max_shard_id
+                FROM pg_dist_shard 
+                WHERE logicalrelid = '{self.table_name}'::regclass
+            """)
+            shard_summary = cursor.fetchone()
+            if shard_summary:
+                citus_state['shard_summary'] = {
+                    'total_shards': shard_summary[0],
+                    'min_shard_id': shard_summary[1],
+                    'max_shard_id': shard_summary[2]
+                }
+            
+            # 2. Get detailed shard distribution across workers
+            cursor.execute(f"""
+                SELECT 
+                    s.shardid,
+                    s.shardminvalue,
+                    s.shardmaxvalue,
+                    n.nodename,
+                    n.nodeport,
+                    p.shardstate,
+                    CASE 
+                        WHEN p.shardstate = 1 THEN 'ACTIVE'
+                        WHEN p.shardstate = 3 THEN 'INACTIVE'
+                        ELSE 'UNKNOWN'
+                    END as state_description
+                FROM pg_dist_shard s
+                JOIN pg_dist_placement p ON s.shardid = p.shardid
+                JOIN pg_dist_node n ON p.groupid = n.groupid
+                WHERE s.logicalrelid = '{self.table_name}'::regclass
+                ORDER BY s.shardid
+            """)
+            shard_details = cursor.fetchall()
+            
+            citus_state['shard_distribution'] = []
+            for shard in shard_details:
+                citus_state['shard_distribution'].append({
+                    'shard_id': shard[0],
+                    'min_hash_value': shard[1],
+                    'max_hash_value': shard[2],
+                    'worker_node': shard[3],
+                    'worker_port': shard[4],
+                    'shard_state': shard[5],
+                    'state_description': shard[6]
+                })
+            
+            # 3. Get worker node information
+            cursor.execute("""
+                SELECT 
+                    nodename,
+                    nodeport,
+                    isactive,
+                    noderole,
+                    shouldhaveshards
+                FROM pg_dist_node
+                WHERE noderole = 'primary'
+                ORDER BY nodename
+            """)
+            worker_nodes = cursor.fetchall()
+            
+            citus_state['worker_nodes'] = []
+            for worker in worker_nodes:
+                citus_state['worker_nodes'].append({
+                    'node_name': worker[0],
+                    'node_port': worker[1],
+                    'is_active': worker[2],
+                    'node_role': worker[3],
+                    'should_have_shards': worker[4]
+                })
+            
+            # 4. Calculate shards per worker
+            cursor.execute(f"""
+                SELECT 
+                    n.nodename,
+                    n.nodeport,
+                    COUNT(*) as shard_count
+                FROM pg_dist_shard s
+                JOIN pg_dist_placement p ON s.shardid = p.shardid
+                JOIN pg_dist_node n ON p.groupid = n.groupid
+                WHERE s.logicalrelid = '{self.table_name}'::regclass
+                AND p.shardstate = 1
+                GROUP BY n.nodename, n.nodeport
+                ORDER BY n.nodename
+            """)
+            shards_per_worker_results = cursor.fetchall()
+            
+            citus_state['shards_per_worker'] = []
+            for worker_shard in shards_per_worker_results:
+                citus_state['shards_per_worker'].append({
+                    'worker_node': worker_shard[0],
+                    'worker_port': worker_shard[1],
+                    'shard_count': worker_shard[2]
+                })
+            
+            # 5. Get row count per shard (entries per shard)
+            # This requires querying each shard individually
+            entries_per_shard = []
+            total_entries = 0
+            
+            try:
+                for shard_info in citus_state['shard_distribution']:
+                    shard_id = shard_info['shard_id']
+                    try:
+                        # Query the specific shard table
+                        cursor.execute(f"""
+                            SELECT COUNT(*) 
+                            FROM {self.table_name}_{shard_id}
+                        """)
+                        row_count = cursor.fetchone()[0]
+                        entries_per_shard.append({
+                            'shard_id': shard_id,
+                            'worker_node': shard_info['worker_node'],
+                            'entry_count': row_count
+                        })
+                        total_entries += row_count
+                    except Exception as e:
+                        # If direct shard query fails, try alternative method
+                        entries_per_shard.append({
+                            'shard_id': shard_id,
+                            'worker_node': shard_info['worker_node'],
+                            'entry_count': f'ERROR: {str(e)}'
+                        })
+                
+                citus_state['entries_per_shard'] = entries_per_shard
+                citus_state['total_entries_across_shards'] = total_entries
+                
+            except Exception as e:
+                log.warning(f"Could not get per-shard row counts: {e}")
+                
+                # Alternative: Get total table row count
+                try:
+                    cursor.execute(f"SELECT COUNT(*) FROM {self.table_name}")
+                    total_rows = cursor.fetchone()[0]
+                    citus_state['total_table_rows'] = total_rows
+                    
+                    # Estimate entries per shard
+                    if citus_state['shard_summary']['total_shards'] > 0:
+                        avg_entries_per_shard = total_rows / citus_state['shard_summary']['total_shards']
+                        citus_state['estimated_avg_entries_per_shard'] = round(avg_entries_per_shard, 2)
+                    
+                except Exception as e2:
+                    citus_state['row_count_error'] = str(e2)
+            
+            # 6. Get distribution quality metrics
+            if citus_state.get('shards_per_worker'):
+                shard_counts = [worker['shard_count'] for worker in citus_state['shards_per_worker']]
+                if shard_counts:
+                    min_shards = min(shard_counts)
+                    max_shards = max(shard_counts)
+                    avg_shards = sum(shard_counts) / len(shard_counts)
+                    
+                    citus_state['distribution_quality'] = {
+                        'min_shards_per_worker': min_shards,
+                        'max_shards_per_worker': max_shards,
+                        'avg_shards_per_worker': round(avg_shards, 2),
+                        'distribution_variance': round(max_shards - min_shards, 2),
+                        'is_balanced': max_shards - min_shards <= 1  # Within 1 shard difference
+                    }
+            
+            # 7. Add collection metadata
+            citus_state['_collection_info'] = {
+                'timestamp': datetime.now().isoformat(),
+                'table_name': self.table_name,
+                'total_workers': len(citus_state.get('worker_nodes', [])),
+                'active_workers': len([w for w in citus_state.get('worker_nodes', []) if w['is_active']]),
+                'method': 'citus_metadata_queries'
+            }
+            
+            log.info(f"Collected Citus runtime state: {citus_state['shard_summary']['total_shards']} shards across {citus_state['_collection_info']['active_workers']} workers")
+            return citus_state
+            
+        except Exception as e:
+            log.error(f"Error collecting Citus runtime state: {e}")
+            return {'error': str(e)}
+    
+    # COMMENTED OUT SKELETON METHODS - Not needed for current use case
+    # Uncomment and implement when needed in the future
+    
+    # def _collect_current_table_stats(self, cursor) -> dict:
+    #     """Collect current table statistics while data is loaded."""
+    #     # TODO: Implement table size, row count, etc. queries here
+    #     # Example: cursor.execute(f"SELECT pg_size_pretty(pg_total_relation_size('{self.table_name}'))")
+    #     return {'placeholder': 'implement_table_stats_queries_here'}
+    
+    # def _collect_session_state(self, cursor) -> dict:
+    #     """Collect current session and connection state."""
+    #     # TODO: Implement session info queries here
+    #     # Example: cursor.execute("SELECT current_database(), current_user, version()")
+    #     return {'placeholder': 'implement_session_queries_here'}
+    
+    # def _collect_index_statistics(self, cursor) -> dict:
+    #     """Collect current index usage statistics."""
+    #     # TODO: Implement index stats queries here
+    #     # Example: cursor.execute("SELECT * FROM pg_stat_user_indexes WHERE tablename = %s", (self.table_name,))
+    #     return {'placeholder': 'implement_index_stats_queries_here'}
+    
+    # def _collect_memory_usage(self, cursor) -> dict:
+    #     """Collect current memory usage information."""
+    #     # TODO: Implement memory usage queries here
+    #     # Example: cursor.execute("SELECT name, setting FROM pg_settings WHERE name LIKE '%mem%'")
+    #     return {'placeholder': 'implement_memory_queries_here'}
+    
+    # def _collect_query_performance_settings(self, cursor) -> dict:
+    #     """Collect current query performance related settings."""
+    #     # TODO: Implement query performance settings queries here
+    #     # Example: cursor.execute("SELECT name, setting FROM pg_settings WHERE name LIKE 'enable_%'")
+    #     return {'placeholder': 'implement_performance_queries_here'}

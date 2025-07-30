@@ -38,6 +38,9 @@ class Metric:
     st_serial_latency_p99_list: list[float] = field(default_factory=list)
     st_conc_failed_rate_list: list[float] = field(default_factory=list)
 
+    # for post-benchmark configuration analysis
+    post_benchmark_metrics: dict = field(default_factory=dict)
+
 
 QURIES_PER_DOLLAR_METRIC = "QP$ (Quries per Dollar)"
 LOAD_DURATION_METRIC = "load_duration"
