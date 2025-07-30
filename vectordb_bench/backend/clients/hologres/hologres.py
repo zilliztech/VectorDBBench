@@ -121,10 +121,9 @@ class Hologres(VectorDB):
                 -- DEALLOCATE {prepared_query};
                 PREPARE {prepared_query}(real[], int) AS
                 SELECT
-                    id,
-                    {distance_function}(embedding, $1::REAL[]) AS distance
+                    id
                 FROM {table_name}
-                ORDER BY distance {order_direction}
+                ORDER BY {distance_function}(embedding, $1::REAL[]) {order_direction}
                 LIMIT $2::INT
                 """
             ).format(
@@ -140,11 +139,10 @@ class Hologres(VectorDB):
                 -- DEALLOCATE {prepared_query};
                 PREPARE {prepared_query}(real[], bigint, int) AS
                 SELECT
-                    id,
-                    {distance_function}(embedding, $1::REAL[]) AS distance
+                    id
                 FROM {table_name}
                 WHERE id >= $2
-                ORDER BY distance {order_direction}
+                ORDER BY {distance_function}(embedding, $1::REAL[]) {order_direction}
                 LIMIT $3::INT;
                 """
             ).format(
@@ -328,11 +326,10 @@ class Hologres(VectorDB):
         return sql.SQL(
             """
             SELECT
-                id,
-                {distance_function}(embedding, '{{{query}}}') AS distance
+                id
             FROM {table_name}
             {where_clause}
-            ORDER BY distance {order_direction}
+            ORDER BY {distance_function}(embedding, '{{{query}}}') {order_direction}
             LIMIT {limit}::int;
             """
         ).format(
