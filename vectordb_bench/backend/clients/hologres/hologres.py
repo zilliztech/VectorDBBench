@@ -24,7 +24,7 @@ class Hologres(VectorDB):
 
     _tg_name: str = "vdb_bench_tg_1"
 
-    _use_prepared_query: bool = True
+    _use_prepared_query: bool = False
     _prepared_query_q_k: str = "prepared_query_q_k"
     _prepared_query_q_f_k: str = "prepared_query_q_f_k"
 
@@ -322,24 +322,35 @@ class Hologres(VectorDB):
             log.warning(f"Failed to insert data into table ({self.table_name}), error: {e}")
             return 0, e
 
-    def _compose_query(self, vec: list[float], topk: int, ge_id: int | None = None) -> sql.Composed:
-        return sql.SQL(
+    def _compose_query_and_params(self, vec: list[float], topk: int, ge_id: int | None = None):
+        parts = []
+        params = []
+
+        where_clause = sql.SQL("")
+        if ge_id is not None:
+            where_clause = sql.SQL(" WHERE id >= %s ")
+            params.append(ge_id)
+
+        params.append('{' + ",".join(["%f" % x for x in vec]) + '}')
+        params.append(topk)
+
+        query = sql.SQL(
             """
-            SELECT
-                id
+            SELECT id
             FROM {table_name}
             {where_clause}
-            ORDER BY {distance_function}(embedding, '{{{query}}}') {order_direction}
-            LIMIT {limit}::int;
+            ORDER BY {distance_function}(embedding, %s)
+            {order_direction}
+            LIMIT %s;
             """
         ).format(
-            distance_function=sql.SQL(self.case_config.distance_function()),
-            query=sql.SQL(",".join(["%f" % x for x in vec])),
             table_name=sql.Identifier(self.table_name),
-            where_clause=sql.SQL("WHERE id >= %s" % str(ge_id)) if ge_id is not None else sql.SQL(""),
+            distance_function=sql.SQL(self.case_config.distance_function()),
+            where_clause=where_clause,
             order_direction=sql.SQL(self.case_config.order_direction()),
-            limit=topk,
         )
+
+        return query, params
 
     def _search_prepared_query(
         self,
@@ -370,6 +381,6 @@ class Hologres(VectorDB):
             return self._search_prepared_query(query, k, filters, timeout)
 
         ge = filters.get("id") if filters else None
-        q = self._compose_query(query, k, ge)
-        result = self.cursor.execute(q)
+        q, params = self._compose_query_and_params(query, k, ge)
+        result = self.cursor.execute(q, params, prepare=True)
         return [int(i[0]) for i in result.fetchall()]
