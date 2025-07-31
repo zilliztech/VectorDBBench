@@ -501,6 +501,15 @@ class OceanBaseIVFTypedDict(TypedDict):
         int | None,
         click.option("--nlist", "nlist", type=int, help="Number of cluster centers", required=True),
     ]
+    nbits: Annotated[
+        int | None,
+        click.option(
+            "--nbits",
+            "nbits",
+            type=int,
+            help="Number of bits used to encode the index of a sub-vector's centroid in the compressed representation",
+        ),
+    ]
     sample_per_nlist: Annotated[
         int | None,
         click.option(

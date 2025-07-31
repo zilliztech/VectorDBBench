@@ -85,6 +85,7 @@ class OceanBaseHNSWConfig(OceanBaseIndexConfig, DBCaseConfig):
 class OceanBaseIVFConfig(OceanBaseIndexConfig, DBCaseConfig):
     m: int
     sample_per_nlist: int
+    nbits: int | None = None
     nlist: int
     index: IndexType
     ivf_nprobes: int | None = None
@@ -96,8 +97,9 @@ class OceanBaseIVFConfig(OceanBaseIndexConfig, DBCaseConfig):
                 "metric_type": self.parse_metric(),
                 "index_type": self.index.value,
                 "params": {
-                    "m": self.M,
+                    "m": self.m,
                     "sample_per_nlist": self.sample_per_nlist,
+                    "nbits": self.nbits,
                     "nlist": self.nlist,
                 },
             }

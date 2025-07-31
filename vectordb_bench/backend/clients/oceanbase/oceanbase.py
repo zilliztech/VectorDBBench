@@ -7,6 +7,8 @@ from typing import Any
 
 import mysql.connector as mysql
 
+from vectordb_bench.backend.filter import Filter, FilterOp
+
 from ..api import IndexType, VectorDB
 from .config import OceanBaseConfigDict, OceanBaseHNSWConfig
 
@@ -16,6 +18,12 @@ OCEANBASE_DEFAULT_LOAD_BATCH_SIZE = 256
 
 
 class OceanBase(VectorDB):
+    supported_filter_types: list[FilterOp] = [
+        FilterOp.NonFilter,
+        FilterOp.NumGE,
+        FilterOp.StrEqual,
+    ]
+
     def __init__(
         self,
         dim: int,
@@ -187,22 +195,30 @@ class OceanBase(VectorDB):
 
         return insert_count, None
 
+    def prepare_filter(self, filters: Filter):
+        if filters.type == FilterOp.NonFilter:
+            self.expr = ""
+        elif filters.type == FilterOp.NumGE:
+            self.expr = f"WHERE id >= {filters.int_value}"
+        elif filters.type == FilterOp.StrEqual:
+            self.expr = f"WHERE id == '{filters.label_value}'"
+        else:
+            msg = f"Not support Filter for Oceanbase - {filters}"
+            raise ValueError(msg)
+
     def search_embedding(
         self,
         query: list[float],
         k: int = 100,
-        filters: dict[str, Any] | None = None,
-        timeout: int | None = None,
     ) -> list[int]:
         if not self._cursor:
             raise ValueError("Cursor is not initialized")
 
         packed = struct.pack(f"<{len(query)}f", *query)
         hex_vec = packed.hex()
-        filter_clause = f"WHERE id >= {filters['id']}" if filters else ""
         query_str = (
             f"SELECT id FROM {self.table_name} "  # noqa: S608
-            f"{filter_clause} ORDER BY "
+            f"{self.expr} ORDER BY "
             f"{self.db_case_config.parse_metric_func_str()}(embedding, X'{hex_vec}') "
             f"APPROXIMATE LIMIT {k}"
         )
