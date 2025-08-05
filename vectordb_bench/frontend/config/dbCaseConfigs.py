@@ -431,7 +431,7 @@ CaseConfigParamInput_reranking_PgDiskANN = CaseConfigInput(
         similarity search with PQ",
     inputConfig={
         "value": False,
-    }
+    },
 )
 
 CaseConfigParamInput_quantized_fetch_limit_PgDiskANN = CaseConfigInput(

@@ -95,8 +95,7 @@ class PgDiskANN(VectorDB):
         if len(session_options) > 0:
             for setting_name, setting_val in session_options.items():
                 command = sql.SQL("SET {setting_name} = {setting_val};").format(
-                    setting_name=sql.Identifier(setting_name),
-                    setting_val=sql.Literal(setting_val)
+                    setting_name=sql.Identifier(setting_name), setting_val=sql.Literal(setting_val)
                 )
                 log.debug(command.as_string(self.cursor))
                 self.cursor.execute(command)
@@ -106,7 +105,8 @@ class PgDiskANN(VectorDB):
 
         if search_params.get("reranking"):
             # Reranking-enabled queries
-            self._filtered_search = sql.SQL("""
+            self._filtered_search = sql.SQL(
+                """
                 SELECT i.id
                 FROM (
                     SELECT id, embedding
@@ -117,14 +117,16 @@ class PgDiskANN(VectorDB):
                 ) i
                 ORDER BY i.embedding {reranking_metric_fun_op} %s::vector
                 LIMIT %s::int
-            """).format(
+            """
+            ).format(
                 table_name=sql.Identifier(self.table_name),
                 metric_fun_op=sql.SQL(search_params["metric_fun_op"]),
                 reranking_metric_fun_op=sql.SQL(search_params["reranking_metric_fun_op"]),
                 quantized_fetch_limit=sql.Literal(search_params["quantized_fetch_limit"]),
             )
 
-            self._unfiltered_search = sql.SQL("""
+            self._unfiltered_search = sql.SQL(
+                """
                 SELECT i.id
                 FROM (
                     SELECT id, embedding
@@ -134,7 +136,8 @@ class PgDiskANN(VectorDB):
                 ) i
                 ORDER BY i.embedding {reranking_metric_fun_op} %s::vector
                 LIMIT %s::int
-            """).format(
+            """
+            ).format(
                 table_name=sql.Identifier(self.table_name),
                 metric_fun_op=sql.SQL(search_params["metric_fun_op"]),
                 reranking_metric_fun_op=sql.SQL(search_params["reranking_metric_fun_op"]),
@@ -143,23 +146,24 @@ class PgDiskANN(VectorDB):
 
         else:
             self._filtered_search = sql.Composed(
-                    [
-                        sql.SQL(
-                            "SELECT id FROM public.{table_name} WHERE id >= %s ORDER BY embedding ",
-                            ).format(table_name=sql.Identifier(self.table_name)),
-                        sql.SQL(search_params["metric_fun_op"]),
-                        sql.SQL(" %s::vector LIMIT %s::int"),
-                    ])
+                [
+                    sql.SQL(
+                        "SELECT id FROM public.{table_name} WHERE id >= %s ORDER BY embedding ",
+                    ).format(table_name=sql.Identifier(self.table_name)),
+                    sql.SQL(search_params["metric_fun_op"]),
+                    sql.SQL(" %s::vector LIMIT %s::int"),
+                ]
+            )
 
             self._unfiltered_search = sql.Composed(
-                    [
-                        sql.SQL("SELECT id FROM public.{table_name} ORDER BY embedding ").format(
-                            table_name=sql.Identifier(self.table_name)
-                            ),
-                        sql.SQL(search_params["metric_fun_op"]),
-                        sql.SQL(" %s::vector LIMIT %s::int"),
-                    ])
-
+                [
+                    sql.SQL("SELECT id FROM public.{table_name} ORDER BY embedding ").format(
+                        table_name=sql.Identifier(self.table_name)
+                    ),
+                    sql.SQL(search_params["metric_fun_op"]),
+                    sql.SQL(" %s::vector LIMIT %s::int"),
+                ]
+            )
 
         log.debug(f"Unfiltered search query={self._unfiltered_search.as_string(self.conn)}")
         log.debug(f"Filtered search query={self._filtered_search.as_string(self.conn)}")
@@ -363,32 +367,31 @@ class PgDiskANN(VectorDB):
             gt = filters.get("id")
             if is_reranking:
                 result = self.cursor.execute(
-                        self._filtered_search,
-                        (gt, q, q, k),
-                        prepare=True,
-                        binary=True,
-                        )
+                    self._filtered_search,
+                    (gt, q, q, k),
+                    prepare=True,
+                    binary=True,
+                )
             else:
                 result = self.cursor.execute(
-                        self._filtered_search,
-                        (gt, q, k),
-                        prepare=True,
-                        binary=True,
+                    self._filtered_search,
+                    (gt, q, k),
+                    prepare=True,
+                    binary=True,
                 )
-        else:
-            if is_reranking:
-                result = self.cursor.execute(
-                        self._unfiltered_search,
-                        (q, q, k),
-                        prepare=True,
-                        binary=True,
+        elif is_reranking:
+            result = self.cursor.execute(
+                self._unfiltered_search,
+                (q, q, k),
+                prepare=True,
+                binary=True,
             )
-            else:
-                result = self.cursor.execute(
-                        self._unfiltered_search,
-                        (q, k),
-                        prepare=True,
-                        binary=True,
-                )
+        else:
+            result = self.cursor.execute(
+                self._unfiltered_search,
+                (q, k),
+                prepare=True,
+                binary=True,
+            )
 
         return [int(i[0]) for i in result.fetchall()]
