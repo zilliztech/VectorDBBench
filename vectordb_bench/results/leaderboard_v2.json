@@ -2658,5 +2658,205 @@
         "latency": 3.3,
         "recall": 0.9147,
         "filter_ratio": 0.5
+    },
+    {
+        "dataset": "Cohere (Medium)",
+        "db": "S3Vectors",
+        "label": "",
+        "db_name": "S3Vectors",
+        "qps": 199.4972,
+        "latency": 337.1,
+        "recall": 0.8717,
+        "filter_ratio": 0.0
+    },
+    {
+        "dataset": "Cohere (Medium)",
+        "db": "S3Vectors",
+        "label": "",
+        "db_name": "S3Vectors",
+        "qps": 192.1164,
+        "latency": 345.6,
+        "recall": 0.4276,
+        "filter_ratio": 0.999
+    },
+    {
+        "dataset": "Cohere (Medium)",
+        "db": "S3Vectors",
+        "label": "",
+        "db_name": "S3Vectors",
+        "qps": 197.4455,
+        "latency": 349.3,
+        "recall": 0.5314,
+        "filter_ratio": 0.998
+    },
+    {
+        "dataset": "Cohere (Medium)",
+        "db": "S3Vectors",
+        "label": "",
+        "db_name": "S3Vectors",
+        "qps": 196.9391,
+        "latency": 263.4,
+        "recall": 0.6549,
+        "filter_ratio": 0.995
+    },
+    {
+        "dataset": "Cohere (Medium)",
+        "db": "S3Vectors",
+        "label": "",
+        "db_name": "S3Vectors",
+        "qps": 201.5401,
+        "latency": 282.4,
+        "recall": 0.7086,
+        "filter_ratio": 0.99
+    },
+    {
+        "dataset": "Cohere (Medium)",
+        "db": "S3Vectors",
+        "label": "",
+        "db_name": "S3Vectors",
+        "qps": 202.2424,
+        "latency": 301.7,
+        "recall": 0.7592,
+        "filter_ratio": 0.98
+    },
+    {
+        "dataset": "Cohere (Medium)",
+        "db": "S3Vectors",
+        "label": "",
+        "db_name": "S3Vectors",
+        "qps": 198.599,
+        "latency": 358.8,
+        "recall": 0.8085,
+        "filter_ratio": 0.95
+    },
+    {
+        "dataset": "Cohere (Medium)",
+        "db": "S3Vectors",
+        "label": "",
+        "db_name": "S3Vectors",
+        "qps": 199.0349,
+        "latency": 275.3,
+        "recall": 0.8325,
+        "filter_ratio": 0.9
+    },
+    {
+        "dataset": "Cohere (Medium)",
+        "db": "S3Vectors",
+        "label": "",
+        "db_name": "S3Vectors",
+        "qps": 202.1405,
+        "latency": 282.6,
+        "recall": 0.8492,
+        "filter_ratio": 0.8
+    },
+    {
+        "dataset": "Cohere (Medium)",
+        "db": "S3Vectors",
+        "label": "",
+        "db_name": "S3Vectors",
+        "qps": 201.1282,
+        "latency": 269.2,
+        "recall": 0.8637,
+        "filter_ratio": 0.5
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "S3Vectors",
+        "label": "",
+        "db_name": "S3Vectors",
+        "qps": 194.8021,
+        "latency": 559.8,
+        "recall": 0.86,
+        "filter_ratio": 0.0
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "S3Vectors",
+        "label": "",
+        "db_name": "S3Vectors",
+        "qps": 187.4268,
+        "latency": 453.7,
+        "recall": 0.4692,
+        "filter_ratio": 0.999
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "S3Vectors",
+        "label": "",
+        "db_name": "S3Vectors",
+        "qps": 198.397,
+        "latency": 506.9,
+        "recall": 0.5409,
+        "filter_ratio": 0.998
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "S3Vectors",
+        "label": "",
+        "db_name": "S3Vectors",
+        "qps": 174.3549,
+        "latency": 496.9,
+        "recall": 0.6279,
+        "filter_ratio": 0.995
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "S3Vectors",
+        "label": "",
+        "db_name": "S3Vectors",
+        "qps": 172.95,
+        "latency": 515.6,
+        "recall": 0.7004,
+        "filter_ratio": 0.99
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "S3Vectors",
+        "label": "",
+        "db_name": "S3Vectors",
+        "qps": 190.9747,
+        "latency": 517.4,
+        "recall": 0.7398,
+        "filter_ratio": 0.98
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "S3Vectors",
+        "label": "",
+        "db_name": "S3Vectors",
+        "qps": 186.0237,
+        "latency": 474.0,
+        "recall": 0.7847,
+        "filter_ratio": 0.95
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "S3Vectors",
+        "label": "",
+        "db_name": "S3Vectors",
+        "qps": 192.1458,
+        "latency": 480.5,
+        "recall": 0.8103,
+        "filter_ratio": 0.9
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "S3Vectors",
+        "label": "",
+        "db_name": "S3Vectors",
+        "qps": 179.4203,
+        "latency": 497.5,
+        "recall": 0.8273,
+        "filter_ratio": 0.8
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "S3Vectors",
+        "label": "",
+        "db_name": "S3Vectors",
+        "qps": 199.5444,
+        "latency": 463.9,
+        "recall": 0.8478,
+        "filter_ratio": 0.5
     }
 ]
