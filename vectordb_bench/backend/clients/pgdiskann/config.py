@@ -60,6 +60,13 @@ class PgDiskANNIndexConfig(BaseModel, DBCaseConfig):
             return "<#>"
         return "<=>"
 
+    def parse_reranking_metric_fun_op(self) -> LiteralString:
+        if self.reranking_metric == MetricType.L2:
+            return "<->"
+        if self.reranking_metric == MetricType.IP:
+            return "<#>"
+        return "<=>"
+
     def parse_metric_fun_str(self) -> str:
         if self.metric_type == MetricType.L2:
             return "l2_distance"
@@ -115,7 +122,11 @@ class PgDiskANNImplConfig(PgDiskANNIndexConfig):
     index: IndexType = IndexType.DISKANN
     max_neighbors: int | None
     l_value_ib: int | None
+    pq_param_num_chunks: int | None
     l_value_is: float | None
+    reranking: bool | None = None
+    reranking_metric: str | None = None
+    quantized_fetch_limit: int | None = None
     maintenance_work_mem: str | None = None
     max_parallel_workers: int | None = None
 
@@ -126,6 +137,8 @@ class PgDiskANNImplConfig(PgDiskANNIndexConfig):
             "options": {
                 "max_neighbors": self.max_neighbors,
                 "l_value_ib": self.l_value_ib,
+                "pq_param_num_chunks": self.pq_param_num_chunks,
+                "product_quantized": str(self.reranking),
             },
             "maintenance_work_mem": self.maintenance_work_mem,
             "max_parallel_workers": self.max_parallel_workers,
@@ -135,6 +148,9 @@ class PgDiskANNImplConfig(PgDiskANNIndexConfig):
         return {
             "metric": self.parse_metric(),
             "metric_fun_op": self.parse_metric_fun_op(),
+            "reranking": self.reranking,
+            "reranking_metric_fun_op": self.parse_reranking_metric_fun_op(),
+            "quantized_fetch_limit": self.quantized_fetch_limit,
         }
 
     def session_param(self) -> dict:
