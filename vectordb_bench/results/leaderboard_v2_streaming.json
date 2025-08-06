@@ -1,0 +1,156 @@
+[
+    {
+        "dataset": "Cohere (Large)",
+        "db": "ElasticCloud",
+        "label": "8c60g",
+        "db_name": "ElasticCloud-8c60g",
+        "insert_rate": 500,
+        "qps_avg": 73.0943,
+        "qps_std": 11.9516,
+        "latency_avg": 0.0741,
+        "latency_std": 0.0254
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "ElasticCloud",
+        "label": "8c60g",
+        "db_name": "ElasticCloud-8c60g",
+        "insert_rate": 1000,
+        "qps_avg": 65.0504,
+        "qps_std": 7.1721,
+        "latency_avg": 0.1216,
+        "latency_std": 0.0886
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "Milvus",
+        "label": "16c64g-sq8",
+        "db_name": "Milvus-16c64g-sq8",
+        "insert_rate": 500,
+        "qps_avg": 551.4718,
+        "qps_std": 224.6286,
+        "latency_avg": 0.0069,
+        "latency_std": 0.0022
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "Milvus",
+        "label": "16c64g-sq8",
+        "db_name": "Milvus-16c64g-sq8",
+        "insert_rate": 1000,
+        "qps_avg": 308.8962,
+        "qps_std": 138.3864,
+        "latency_avg": 0.0155,
+        "latency_std": 0.0104
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "Pinecone",
+        "label": "p2.x8-1node",
+        "db_name": "Pinecone-p2.x8-1node",
+        "insert_rate": 500,
+        "qps_avg": 378.1992,
+        "qps_std": 14.4105,
+        "latency_avg": 0.8718,
+        "latency_std": 0.6552
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "Pinecone",
+        "label": "p2.x8-1node",
+        "db_name": "Pinecone-p2.x8-1node",
+        "insert_rate": 1000,
+        "qps_avg": 381.9444,
+        "qps_std": 22.3178,
+        "latency_avg": 3.3114,
+        "latency_std": 1.9718
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "QdrantCloud",
+        "label": "16c64g",
+        "db_name": "QdrantCloud-16c64g",
+        "insert_rate": 500,
+        "qps_avg": 622.5787,
+        "qps_std": 174.3233,
+        "latency_avg": 0.0097,
+        "latency_std": 0.0025
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "QdrantCloud",
+        "label": "16c64g",
+        "db_name": "QdrantCloud-16c64g",
+        "insert_rate": 1000,
+        "qps_avg": 506.718,
+        "qps_std": 125.8131,
+        "latency_avg": 0.0116,
+        "latency_std": 0.0012
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "OpenSearch",
+        "label": "16c128g",
+        "db_name": "OpenSearch-16c128g",
+        "insert_rate": 1000,
+        "qps_avg": 181.1849,
+        "qps_std": 33.7733,
+        "latency_avg": 0.0698,
+        "latency_std": 0.0188
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "OpenSearch",
+        "label": "16c128g",
+        "db_name": "OpenSearch-16c128g",
+        "insert_rate": 500,
+        "qps_avg": 216.7565,
+        "qps_std": 45.1945,
+        "latency_avg": 0.0476,
+        "latency_std": 0.0119
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "ZillizCloud",
+        "label": "8cu-perf",
+        "db_name": "ZillizCloud-8cu-perf",
+        "insert_rate": 500,
+        "qps_avg": 2692.8245,
+        "qps_std": 396.4151,
+        "latency_avg": 0.0049,
+        "latency_std": 0.0013
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "ZillizCloud",
+        "label": "8cu-perf",
+        "db_name": "ZillizCloud-8cu-perf",
+        "insert_rate": 1000,
+        "qps_avg": 2166.0034,
+        "qps_std": 318.8514,
+        "latency_avg": 0.0124,
+        "latency_std": 0.0095
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "S3Vectors",
+        "label": "",
+        "db_name": "S3Vectors",
+        "insert_rate": 500,
+        "qps_avg": 192.4737,
+        "qps_std": 5.2065,
+        "latency_avg": 0.4781,
+        "latency_std": 0.1369
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "S3Vectors",
+        "label": "",
+        "db_name": "S3Vectors",
+        "insert_rate": 1000,
+        "qps_avg": 188.4833,
+        "qps_std": 8.091,
+        "latency_avg": 0.4486,
+        "latency_std": 0.0365
+    }
+]
