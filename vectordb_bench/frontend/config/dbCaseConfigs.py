@@ -423,8 +423,58 @@ CaseConfigParamInput_storage_layout = CaseConfigInput(
     },
 )
 
-CaseConfigParamInput_max_neighbors = CaseConfigInput(
+CaseConfigParamInput_reranking_PgDiskANN = CaseConfigInput(
+    label=CaseConfigParamType.reranking,
+    inputType=InputType.Bool,
+    displayLabel="Enable Reranking",
+    inputHelp="Enable if you want to use reranking while performing \
+        similarity search with PQ",
+    inputConfig={
+        "value": False,
+    },
+)
+
+CaseConfigParamInput_quantized_fetch_limit_PgDiskANN = CaseConfigInput(
+    label=CaseConfigParamType.quantized_fetch_limit,
+    displayLabel="Quantized Fetch Limit",
+    inputHelp="Limit top-k vectors using the quantized vector comparison",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 20,
+        "max": 1000,
+        "value": 200,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.reranking, False),
+)
+
+CaseConfigParamInput_pq_param_num_chunks_PgDiskANN = CaseConfigInput(
+    label=CaseConfigParamType.pq_param_num_chunks,
+    displayLabel="pq_param_num_chunks",
+    inputHelp="Number of chunks for product quantization (Defaults to 0). 0 means it is determined automatically, based on embedding dimensions.",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 0,
+        "max": 1028,
+        "value": 0,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.reranking, False),
+)
+
+
+CaseConfigParamInput_reranking_metric_PgDiskANN = CaseConfigInput(
+    label=CaseConfigParamType.reranking_metric,
+    displayLabel="Reranking Metric",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [metric.value for metric in MetricType if metric.value not in ["HAMMING", "JACCARD", "DP"]],
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.reranking, False),
+)
+
+
+CaseConfigParamInput_max_neighbors_PgDiskANN = CaseConfigInput(
     label=CaseConfigParamType.max_neighbors,
+    displayLabel="max_neighbors",
     inputType=InputType.Number,
     inputConfig={
         "min": 10,
@@ -454,6 +504,29 @@ CaseConfigParamInput_l_value_is = CaseConfigInput(
         "value": 40,
     },
     isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.DISKANN.value,
+)
+
+CaseConfigParamInput_maintenance_work_mem_PgDiskANN = CaseConfigInput(
+    label=CaseConfigParamType.maintenance_work_mem,
+    inputHelp="Memory to use during index builds. Not to exceed the available free memory."
+    "Specify in gigabytes. e.g. 8GB",
+    inputType=InputType.Text,
+    inputConfig={
+        "value": "8GB",
+    },
+)
+
+CaseConfigParamInput_max_parallel_workers_PgDiskANN = CaseConfigInput(
+    label=CaseConfigParamType.max_parallel_workers,
+    displayLabel="Max parallel workers",
+    inputHelp="Recommended value: (cpu cores - 1). This will set the parameters: max_parallel_maintenance_workers,"
+    " max_parallel_workers & table(parallel_workers)",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 0,
+        "max": 1024,
+        "value": 16,
+    },
 )
 
 CaseConfigParamInput_num_neighbors = CaseConfigInput(
@@ -1796,15 +1869,21 @@ PgVectorScalePerformanceConfig = [
 
 PgDiskANNLoadConfig = [
     CaseConfigParamInput_IndexType_PgDiskANN,
-    CaseConfigParamInput_max_neighbors,
+    CaseConfigParamInput_max_neighbors_PgDiskANN,
     CaseConfigParamInput_l_value_ib,
 ]
 
 PgDiskANNPerformanceConfig = [
     CaseConfigParamInput_IndexType_PgDiskANN,
-    CaseConfigParamInput_max_neighbors,
+    CaseConfigParamInput_reranking_PgDiskANN,
+    CaseConfigParamInput_max_neighbors_PgDiskANN,
     CaseConfigParamInput_l_value_ib,
     CaseConfigParamInput_l_value_is,
+    CaseConfigParamInput_maintenance_work_mem_PgDiskANN,
+    CaseConfigParamInput_max_parallel_workers_PgDiskANN,
+    CaseConfigParamInput_pq_param_num_chunks_PgDiskANN,
+    CaseConfigParamInput_quantized_fetch_limit_PgDiskANN,
+    CaseConfigParamInput_reranking_metric_PgDiskANN,
 ]
 
 
