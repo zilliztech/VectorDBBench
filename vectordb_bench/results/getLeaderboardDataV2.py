@@ -57,17 +57,9 @@ def main():
             )
         else:
             case: StreamingPerformanceCase = case
-            # only use streaming-results (reading while inserting), exclude streaming-final or streaming-optimized results.
-            qps_list = [
-                qps
-                for i, qps in enumerate(case_result.metrics.st_max_qps_list_list)
-                if case_result.metrics.st_search_stage_list[i] < 100
-            ]
-            latency_list = [
-                latency
-                for i, latency in enumerate(case_result.metrics.st_serial_latency_p99_list)
-                if case_result.metrics.st_search_stage_list[i] < 100
-            ]
+            # use 90p search stage results to represent streaming performance
+            qps_90p = metrics.st_max_qps_list_list[metrics.st_search_stage_list.index(90)]
+            latency_90p = metrics.st_serial_latency_p99_list[metrics.st_search_stage_list.index(90)]
             insert_rate = case.insert_rate
             streaming_data.append(
                 {
@@ -76,10 +68,8 @@ def main():
                     "label": label,
                     "db_name": db_name,
                     "insert_rate": insert_rate,
-                    "qps_avg": round(np.mean(qps_list), 4),
-                    "qps_std": round(np.std(qps_list), 4),
-                    "latency_avg": round(np.mean(latency_list), 4),
-                    "latency_std": round(np.std(latency_list), 4),
+                    "streaming_qps": round(qps_90p, 4),
+                    "streaming_latency": round(latency_90p, 4),
                 }
             )
     save_to_json(data, config.RESULTS_LOCAL_DIR / "leaderboard_v2.json")

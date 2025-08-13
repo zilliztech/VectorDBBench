@@ -5,10 +5,8 @@
         "label": "8c60g",
         "db_name": "ElasticCloud-8c60g",
         "insert_rate": 500,
-        "qps_avg": 73.0943,
-        "qps_std": 11.9516,
-        "latency_avg": 0.0741,
-        "latency_std": 0.0254
+        "streaming_qps": 61.6708,
+        "streaming_latency": 0.0794
     },
     {
         "dataset": "Cohere (Large)",
@@ -16,10 +14,8 @@
         "label": "8c60g",
         "db_name": "ElasticCloud-8c60g",
         "insert_rate": 1000,
-        "qps_avg": 65.0504,
-        "qps_std": 7.1721,
-        "latency_avg": 0.1216,
-        "latency_std": 0.0886
+        "streaming_qps": 61.8172,
+        "streaming_latency": 0.2223
     },
     {
         "dataset": "Cohere (Large)",
@@ -27,10 +23,8 @@
         "label": "16c64g-sq8",
         "db_name": "Milvus-16c64g-sq8",
         "insert_rate": 500,
-        "qps_avg": 551.4718,
-        "qps_std": 224.6286,
-        "latency_avg": 0.0069,
-        "latency_std": 0.0022
+        "streaming_qps": 305.9971,
+        "streaming_latency": 0.005
     },
     {
         "dataset": "Cohere (Large)",
@@ -38,10 +32,8 @@
         "label": "16c64g-sq8",
         "db_name": "Milvus-16c64g-sq8",
         "insert_rate": 1000,
-        "qps_avg": 308.8962,
-        "qps_std": 138.3864,
-        "latency_avg": 0.0155,
-        "latency_std": 0.0104
+        "streaming_qps": 155.9613,
+        "streaming_latency": 0.0203
     },
     {
         "dataset": "Cohere (Large)",
@@ -49,10 +41,8 @@
         "label": "p2.x8-1node",
         "db_name": "Pinecone-p2.x8-1node",
         "insert_rate": 500,
-        "qps_avg": 378.1992,
-        "qps_std": 14.4105,
-        "latency_avg": 0.8718,
-        "latency_std": 0.6552
+        "streaming_qps": 367.4299,
+        "streaming_latency": 1.8286
     },
     {
         "dataset": "Cohere (Large)",
@@ -60,10 +50,8 @@
         "label": "p2.x8-1node",
         "db_name": "Pinecone-p2.x8-1node",
         "insert_rate": 1000,
-        "qps_avg": 381.9444,
-        "qps_std": 22.3178,
-        "latency_avg": 3.3114,
-        "latency_std": 1.9718
+        "streaming_qps": 369.6771,
+        "streaming_latency": 5.992
     },
     {
         "dataset": "Cohere (Large)",
@@ -71,10 +59,8 @@
         "label": "16c64g",
         "db_name": "QdrantCloud-16c64g",
         "insert_rate": 500,
-        "qps_avg": 622.5787,
-        "qps_std": 174.3233,
-        "latency_avg": 0.0097,
-        "latency_std": 0.0025
+        "streaming_qps": 393.753,
+        "streaming_latency": 0.0162
     },
     {
         "dataset": "Cohere (Large)",
@@ -82,10 +68,8 @@
         "label": "16c64g",
         "db_name": "QdrantCloud-16c64g",
         "insert_rate": 1000,
-        "qps_avg": 506.718,
-        "qps_std": 125.8131,
-        "latency_avg": 0.0116,
-        "latency_std": 0.0012
+        "streaming_qps": 347.5774,
+        "streaming_latency": 0.0118
     },
     {
         "dataset": "Cohere (Large)",
@@ -93,10 +77,8 @@
         "label": "16c128g",
         "db_name": "OpenSearch-16c128g",
         "insert_rate": 1000,
-        "qps_avg": 181.1849,
-        "qps_std": 33.7733,
-        "latency_avg": 0.0698,
-        "latency_std": 0.0188
+        "streaming_qps": 149.7168,
+        "streaming_latency": 0.098
     },
     {
         "dataset": "Cohere (Large)",
@@ -104,10 +86,8 @@
         "label": "16c128g",
         "db_name": "OpenSearch-16c128g",
         "insert_rate": 500,
-        "qps_avg": 216.7565,
-        "qps_std": 45.1945,
-        "latency_avg": 0.0476,
-        "latency_std": 0.0119
+        "streaming_qps": 161.6694,
+        "streaming_latency": 0.052
     },
     {
         "dataset": "Cohere (Large)",
@@ -115,10 +95,8 @@
         "label": "8cu-perf",
         "db_name": "ZillizCloud-8cu-perf",
         "insert_rate": 500,
-        "qps_avg": 2692.8245,
-        "qps_std": 396.4151,
-        "latency_avg": 0.0049,
-        "latency_std": 0.0013
+        "streaming_qps": 2118.7516,
+        "streaming_latency": 0.0068
     },
     {
         "dataset": "Cohere (Large)",
@@ -126,10 +104,8 @@
         "label": "8cu-perf",
         "db_name": "ZillizCloud-8cu-perf",
         "insert_rate": 1000,
-        "qps_avg": 2166.0034,
-        "qps_std": 318.8514,
-        "latency_avg": 0.0124,
-        "latency_std": 0.0095
+        "streaming_qps": 1860.2575,
+        "streaming_latency": 0.0101
     },
     {
         "dataset": "Cohere (Large)",
@@ -137,10 +113,8 @@
         "label": "",
         "db_name": "S3Vectors",
         "insert_rate": 500,
-        "qps_avg": 192.4737,
-        "qps_std": 5.2065,
-        "latency_avg": 0.4781,
-        "latency_std": 0.1369
+        "streaming_qps": 180.9549,
+        "streaming_latency": 0.4204
     },
     {
         "dataset": "Cohere (Large)",
@@ -148,9 +122,7 @@
         "label": "",
         "db_name": "S3Vectors",
         "insert_rate": 1000,
-        "qps_avg": 188.4833,
-        "qps_std": 8.091,
-        "latency_avg": 0.4486,
-        "latency_std": 0.0365
+        "streaming_qps": 167.2689,
+        "streaming_latency": 0.5048
     }
 ]
