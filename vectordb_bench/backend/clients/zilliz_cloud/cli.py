@@ -36,6 +36,17 @@ class ZillizTypedDict(CommonTypedDict):
         str,
         click.option("--level", type=str, help="Zilliz index level", required=False),
     ]
+    num_shards: Annotated[
+        int,
+        click.option(
+            "--num-shards",
+            type=int,
+            help="Number of shards",
+            required=False,
+            default=1,
+            show_default=True,
+        ),
+    ]
 
 
 @cli.command()
@@ -50,9 +61,11 @@ def ZillizAutoIndex(**parameters: Unpack[ZillizTypedDict]):
             uri=SecretStr(parameters["uri"]),
             user=parameters["user_name"],
             password=SecretStr(parameters["password"]),
+            num_shards=parameters["num_shards"],
         ),
         db_case_config=AutoIndexConfig(
-            params={parameters["level"]},
+            level=int(parameters["level"]) if parameters["level"] else 1,
+            num_shards=parameters["num_shards"],
         ),
         **parameters,
     )

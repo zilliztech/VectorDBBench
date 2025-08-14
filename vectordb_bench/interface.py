@@ -43,7 +43,11 @@ class BenchMarkRunner:
         self.running_task: TaskRunner | None = None
         self.latest_error: str | None = None
         self.drop_old: bool = True
-        self.dataset_source: DatasetSource = DatasetSource.S3
+        # set default data source by ENV
+        if config.DATASET_SOURCE.upper() == "ALIYUNOSS":
+            self.dataset_source: DatasetSource = DatasetSource.AliyunOSS
+        else:
+            self.dataset_source: DatasetSource = DatasetSource.S3
 
     def set_drop_old(self, drop_old: bool):
         self.drop_old = drop_old
