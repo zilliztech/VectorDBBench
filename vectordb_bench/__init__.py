@@ -16,6 +16,7 @@ class config:
     LOG_LEVEL = env.str("LOG_LEVEL", "INFO")
 
     DEFAULT_DATASET_URL = env.str("DEFAULT_DATASET_URL", AWS_S3_URL)
+    DATASET_SOURCE = env.str("DATASET_SOURCE", "S3")  # Options "S3" or "AliyunOSS"
     DATASET_LOCAL_DIR = env.path("DATASET_LOCAL_DIR", "/tmp/vectordb_bench/dataset")
     NUM_PER_BATCH = env.int("NUM_PER_BATCH", 100)
     TIME_PER_BATCH = 1  # 1s. for streaming insertion.
