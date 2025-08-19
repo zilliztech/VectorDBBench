@@ -3,9 +3,11 @@ import logging
 import multiprocessing as mp
 import time
 from concurrent.futures import ThreadPoolExecutor
+from copy import deepcopy
 
 from vectordb_bench import config
 from vectordb_bench.backend.clients import api
+from vectordb_bench.backend.clients.pgvector.pgvector import PgVector
 from vectordb_bench.backend.dataset import DataSetIterator
 from vectordb_bench.backend.utils import time_it
 
@@ -33,17 +35,27 @@ class RatedMultiThreadingInsertRunner:
         self.executing_futures = []
         self.sig_idx = 0
 
-    def send_insert_task(self, db: api.VectorDB, emb: list[list[float]], metadata: list[str], retry_idx: int = 0):
-        _, error = db.insert_embeddings(emb, metadata)
-        if error is not None:
-            log.warning(f"Insert Failed, try_idx={retry_idx}, Exception: {error}")
-            retry_idx += 1
-            if retry_idx <= config.MAX_INSERT_RETRY:
-                time.sleep(retry_idx)
-                self.send_insert_task(db, emb=emb, metadata=metadata, retry_idx=retry_idx)
-            else:
-                msg = f"Insert failed and retried more than {config.MAX_INSERT_RETRY} times"
-                raise RuntimeError(msg) from None
+    def send_insert_task(self, db: api.VectorDB, emb: list[list[float]], metadata: list[str]):
+        def _insert_embeddings(db: api.VectorDB, emb: list[list[float]], metadata: list[str], retry_idx: int = 0):
+            _, error = db.insert_embeddings(emb, metadata)
+            if error is not None:
+                log.warning(f"Insert Failed, try_idx={retry_idx}, Exception: {error}")
+                retry_idx += 1
+                if retry_idx <= config.MAX_INSERT_RETRY:
+                    time.sleep(retry_idx)
+                    _insert_embeddings(db, emb=emb, metadata=metadata, retry_idx=retry_idx)
+                else:
+                    msg = f"Insert failed and retried more than {config.MAX_INSERT_RETRY} times"
+                    raise RuntimeError(msg) from None
+
+        if isinstance(db, PgVector):
+            # pgvector is not thread-safe for concurrent insert,
+            #   so we need to copy the db object, make sure each thread has its own connection
+            db_copy = deepcopy(db)
+            with db_copy.init():
+                _insert_embeddings(db_copy, emb, metadata, retry_idx=0)
+        else:
+            _insert_embeddings(db, emb, metadata, retry_idx=0)
 
     @time_it
     def run_with_rate(self, q: mp.Queue):
