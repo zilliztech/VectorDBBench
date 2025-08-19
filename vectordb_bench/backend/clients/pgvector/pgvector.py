@@ -10,6 +10,8 @@ import psycopg
 from pgvector.psycopg import register_vector
 from psycopg import Connection, Cursor, sql
 
+from vectordb_bench.backend.filter import Filter, FilterOp
+
 from ..api import VectorDB
 from .config import PgVectorConfigDict, PgVectorIndexConfig
 
@@ -19,39 +21,46 @@ log = logging.getLogger(__name__)
 class PgVector(VectorDB):
     """Use psycopg instructions"""
 
+    supported_filter_types: list[FilterOp] = [
+        FilterOp.NonFilter,
+        FilterOp.NumGE,
+        FilterOp.StrEqual,
+    ]
+
     conn: psycopg.Connection[Any] | None = None
     cursor: psycopg.Cursor[Any] | None = None
 
-    _filtered_search: sql.Composed
-    _unfiltered_search: sql.Composed
+    _search: sql.Composed
 
     def __init__(
         self,
         dim: int,
         db_config: PgVectorConfigDict,
         db_case_config: PgVectorIndexConfig,
-        collection_name: str = "pg_vector_collection",
         drop_old: bool = False,
+        with_scalar_labels: bool = False,
         **kwargs,
     ):
         self.name = "PgVector"
-        self.db_config = db_config
         self.case_config = db_case_config
-        self.table_name = collection_name
+        self.table_name = db_config["table_name"]
+        self.connect_config = db_config["connect_config"]
         self.dim = dim
+        self.with_scalar_labels = with_scalar_labels
 
         self._index_name = "pgvector_index"
         self._primary_field = "id"
         self._vector_field = "embedding"
+        self._scalar_label_field = "label"
 
         # construct basic units
-        self.conn, self.cursor = self._create_connection(**self.db_config)
+        self.conn, self.cursor = self._create_connection(**self.connect_config)
 
         # create vector extension
         self.cursor.execute("CREATE EXTENSION IF NOT EXISTS vector")
         self.conn.commit()
 
-        log.info(f"{self.name} config values: {self.db_config}\n{self.case_config}")
+        log.info(f"{self.name} config values: {self.connect_config}\n{self.case_config}")
         if not any(
             (
                 self.case_config.create_index_before_load,
@@ -60,7 +69,7 @@ class PgVector(VectorDB):
         ):
             msg = (
                 f"{self.name} config must create an index using create_index_before_load or create_index_after_load"
-                f"{self.name} config values: {self.db_config}\n{self.case_config}"
+                f"{self.name} config values: {self.connect_config}\n{self.case_config}"
             )
             log.error(msg)
             raise RuntimeError(msg)
@@ -89,13 +98,13 @@ class PgVector(VectorDB):
 
         return conn, cursor
 
-    def _generate_search_query(self, filtered: bool = False) -> sql.Composed:
+    def _generate_search_query(self) -> sql.Composed:
         index_param = self.case_config.index_param()
         reranking = self.case_config.search_param()["reranking"]
         column_name = (
-            sql.SQL("binary_quantize({0})").format(sql.Identifier("embedding"))
+            sql.SQL("binary_quantize({0})").format(sql.Identifier(self._vector_field))
             if index_param["quantization_type"] == "bit" and index_param["table_quantization_type"] != "bit"
-            else sql.SQL("embedding")
+            else sql.SQL(self._vector_field)
         )
         search_vector = (
             sql.SQL("binary_quantize({0})").format(sql.Placeholder())
@@ -114,12 +123,14 @@ class PgVector(VectorDB):
                             """
                             SELECT i.id
                             FROM (
-                                SELECT id, embedding {reranking_metric_fun_op} %s::{table_quantization_type} AS distance
+                                SELECT {primary_field}, {vector_field} {reranking_metric_fun_op} %s::{table_quantization_type} AS distance
                                 FROM public.{table_name} {where_clause}
                                 ORDER BY {column_name}::{quantization_type}({dim})
-                            """,
+                            """,  # noqa: E501
                         ).format(
                             table_name=sql.Identifier(self.table_name),
+                            primary_field=sql.Identifier(self._primary_field),
+                            vector_field=sql.Identifier(self._vector_field),
                             column_name=column_name,
                             reranking_metric_fun_op=sql.SQL(
                                 self.case_config.search_param()["reranking_metric_fun_op"],
@@ -128,7 +139,7 @@ class PgVector(VectorDB):
                             table_quantization_type=sql.SQL(index_param["table_quantization_type"]),
                             quantization_type=sql.SQL(index_param["quantization_type"]),
                             dim=sql.Literal(self.dim),
-                            where_clause=sql.SQL("WHERE id >= %s") if filtered else sql.SQL(""),
+                            where_clause=sql.SQL(self.where_clause),
                         ),
                         sql.SQL(self.case_config.search_param()["metric_fun_op"]),
                         sql.SQL(
@@ -154,15 +165,16 @@ class PgVector(VectorDB):
                     [
                         sql.SQL(
                             """
-                            SELECT id FROM public.{table_name}
+                            SELECT {primary_field} FROM public.{table_name}
                             {where_clause} ORDER BY {column_name}::{quantization_type}({dim})
                             """,
                         ).format(
                             table_name=sql.Identifier(self.table_name),
+                            primary_field=sql.Identifier(self._primary_field),
                             column_name=column_name,
                             quantization_type=sql.SQL(index_param["quantization_type"]),
                             dim=sql.Literal(self.dim),
-                            where_clause=sql.SQL("WHERE id >= %s") if filtered else sql.SQL(""),
+                            where_clause=sql.SQL(self.where_clause),
                         ),
                         sql.SQL(self.case_config.search_param()["metric_fun_op"]),
                         sql.SQL(" {search_vector}::{quantization_type}({dim}) LIMIT %s::int").format(
@@ -176,10 +188,12 @@ class PgVector(VectorDB):
             search_query = sql.Composed(
                 [
                     sql.SQL(
-                        "SELECT id FROM public.{table_name} {where_clause} ORDER BY embedding ",
+                        "SELECT {primary_field} FROM public.{table_name} {where_clause} ORDER BY {vector_field}",
                     ).format(
                         table_name=sql.Identifier(self.table_name),
-                        where_clause=sql.SQL("WHERE id >= %s") if filtered else sql.SQL(""),
+                        primary_field=sql.Identifier(self._primary_field),
+                        vector_field=sql.Identifier(self._vector_field),
+                        where_clause=sql.SQL(self.where_clause),
                     ),
                     sql.SQL(self.case_config.search_param()["metric_fun_op"]),
                     sql.SQL(" {search_vector}::{quantization_type}({dim}) LIMIT %s::int").format(
@@ -201,7 +215,7 @@ class PgVector(VectorDB):
             >>>     self.search_embedding()
         """
 
-        self.conn, self.cursor = self._create_connection(**self.db_config)
+        self.conn, self.cursor = self._create_connection(**self.connect_config)
 
         # index configuration may have commands defined that we should set during each client session
         session_options: Sequence[dict[str, Any]] = self.case_config.session_param()["session_options"]
@@ -215,9 +229,6 @@ class PgVector(VectorDB):
                 log.debug(command.as_string(self.cursor))
                 self.cursor.execute(command)
             self.conn.commit()
-
-        self._filtered_search = self._generate_search_query(filtered=True)
-        self._unfiltered_search = self._generate_search_query()
 
         try:
             yield
@@ -274,7 +285,7 @@ class PgVector(VectorDB):
             )
             self.cursor.execute(
                 sql.SQL("ALTER USER {} SET maintenance_work_mem TO {};").format(
-                    sql.Identifier(self.db_config["user"]),
+                    sql.Identifier(self.connect_config["user"]),
                     index_param["maintenance_work_mem"],
                 ),
             )
@@ -288,7 +299,7 @@ class PgVector(VectorDB):
             )
             self.cursor.execute(
                 sql.SQL("ALTER USER {} SET max_parallel_maintenance_workers TO '{}';").format(
-                    sql.Identifier(self.db_config["user"]),
+                    sql.Identifier(self.connect_config["user"]),
                     index_param["max_parallel_workers"],
                 ),
             )
@@ -299,7 +310,7 @@ class PgVector(VectorDB):
             )
             self.cursor.execute(
                 sql.SQL("ALTER USER {} SET max_parallel_workers TO '{}';").format(
-                    sql.Identifier(self.db_config["user"]),
+                    sql.Identifier(self.connect_config["user"]),
                     index_param["max_parallel_workers"],
                 ),
             )
@@ -382,18 +393,36 @@ class PgVector(VectorDB):
             log.info(f"{self.name} client create table : {self.table_name}")
 
             # create table
-            self.cursor.execute(
-                sql.SQL(
-                    """
-                    CREATE TABLE IF NOT EXISTS public.{table_name}
-                    (id BIGINT PRIMARY KEY, embedding {table_quantization_type}({dim}));
-                    """
-                ).format(
-                    table_name=sql.Identifier(self.table_name),
-                    table_quantization_type=sql.SQL(index_param["table_quantization_type"]),
-                    dim=dim,
+            if self.with_scalar_labels:
+                self.cursor.execute(
+                    sql.SQL(
+                        """
+                        CREATE TABLE IF NOT EXISTS public.{table_name}
+                        ({primary_field} BIGINT PRIMARY KEY, embedding {table_quantization_type}({dim}), {label_field} VARCHAR(64));
+                        """,  # noqa: E501
+                    ).format(
+                        table_name=sql.Identifier(self.table_name),
+                        table_quantization_type=sql.SQL(index_param["table_quantization_type"]),
+                        dim=dim,
+                        primary_field=sql.Identifier(self._primary_field),
+                        label_field=sql.Identifier(self._scalar_label_field),
+                    )
                 )
-            )
+            else:
+                self.cursor.execute(
+                    sql.SQL(
+                        """
+                        CREATE TABLE IF NOT EXISTS public.{table_name}
+                        ({primary_field} BIGINT PRIMARY KEY, embedding {table_quantization_type}({dim}));
+                        """
+                    ).format(
+                        table_name=sql.Identifier(self.table_name),
+                        table_quantization_type=sql.SQL(index_param["table_quantization_type"]),
+                        dim=dim,
+                        primary_field=sql.Identifier(self._primary_field),
+                    )
+                )
+
             self.cursor.execute(
                 sql.SQL(
                     "ALTER TABLE public.{table_name} ALTER COLUMN embedding SET STORAGE PLAIN;",
@@ -404,14 +433,17 @@ class PgVector(VectorDB):
             log.warning(f"Failed to create pgvector table: {self.table_name} error: {e}")
             raise e from None
 
-    def insert_embeddings(
+    def insert_embeddings(  # noqa: PLR0912
         self,
         embeddings: list[list[float]],
         metadata: list[int],
+        labels_data: list[str] | None = None,
         **kwargs: Any,
     ) -> tuple[int, Exception | None]:
         assert self.conn is not None, "Connection is not initialized"
         assert self.cursor is not None, "Cursor is not initialized"
+        if self.with_scalar_labels:
+            assert labels_data is not None, "labels_data should be provided if with_scalar_labels is set to True"
 
         index_param = self.case_config.index_param()
 
@@ -433,7 +465,10 @@ class PgVector(VectorDB):
                                 embeddings_bit += "1"
                             else:
                                 embeddings_bit += "0"
-                        copy.write_row((str(row), embeddings_bit))
+                        if self.with_scalar_labels:
+                            copy.write_row((str(row), embeddings_bit, labels_data[i]))
+                        else:
+                            copy.write_row((str(row), embeddings_bit))
             else:
                 with self.cursor.copy(
                     sql.SQL("COPY public.{table_name} FROM STDIN (FORMAT BINARY)").format(
@@ -441,29 +476,47 @@ class PgVector(VectorDB):
                     )
                 ) as copy:
                     if index_param["table_quantization_type"] == "halfvec":
-                        copy.set_types(["bigint", "halfvec"])
                         for i, row in enumerate(metadata_arr):
-                            copy.write_row((row, np.float16(embeddings_arr[i])))
+                            if self.with_scalar_labels:
+                                copy.set_types(["bigint", "halfvec", "varchar"])
+                                copy.write_row((row, np.float16(embeddings_arr[i]), labels_data[i]))
+                            else:
+                                copy.set_types(["bigint", "halfvec"])
+                                copy.write_row((row, np.float16(embeddings_arr[i])))
                     else:
-                        copy.set_types(["bigint", "vector"])
                         for i, row in enumerate(metadata_arr):
-                            copy.write_row((row, embeddings_arr[i]))
+                            if self.with_scalar_labels:
+                                copy.set_types(["bigint", "vector", "varchar"])
+                                copy.write_row((row, embeddings_arr[i], labels_data[i]))
+                            else:
+                                copy.set_types(["bigint", "vector"])
+                                copy.write_row((row, embeddings_arr[i]))
             self.conn.commit()
-
-            if kwargs.get("last_batch"):
-                self._post_insert()
 
             return len(metadata), None
         except Exception as e:
             log.warning(f"Failed to insert data into pgvector table ({self.table_name}), error: {e}")
             return 0, e
 
+    def prepare_filter(self, filters: Filter):
+        if filters.type == FilterOp.NonFilter:
+            self.where_clause = ""
+        elif filters.type == FilterOp.NumGE:
+            self.where_clause = f"WHERE {self._primary_field} >= {filters.int_value}"
+        elif filters.type == FilterOp.StrEqual:
+            self.where_clause = f"WHERE {self._scalar_label_field} = '{filters.label_value}'"
+        else:
+            msg = f"Not support Filter for PgVector - {filters}"
+            raise ValueError(msg)
+
+        self._search = self._generate_search_query()
+
     def search_embedding(
         self,
         query: list[float],
         k: int = 100,
-        filters: dict | None = None,
         timeout: int | None = None,
+        **kwargs: Any,
     ) -> list[int]:
         assert self.conn is not None, "Connection is not initialized"
         assert self.cursor is not None, "Cursor is not initialized"
@@ -471,36 +524,10 @@ class PgVector(VectorDB):
         index_param = self.case_config.index_param()
         search_param = self.case_config.search_param()
         q = np.asarray(query)
-        if filters:
-            gt = filters.get("id")
-            if index_param["quantization_type"] == "bit" and search_param["reranking"]:
-                result = self.cursor.execute(
-                    self._filtered_search,
-                    (q, gt, q, k),
-                    prepare=True,
-                    binary=True,
-                )
-            else:
-                result = self.cursor.execute(
-                    self._filtered_search,
-                    (gt, q, k),
-                    prepare=True,
-                    binary=True,
-                )
-
-        elif index_param["quantization_type"] == "bit" and search_param["reranking"]:
-            result = self.cursor.execute(
-                self._unfiltered_search,
-                (q, q, k),
-                prepare=True,
-                binary=True,
-            )
-        else:
-            result = self.cursor.execute(
-                self._unfiltered_search,
-                (q, k),
-                prepare=True,
-                binary=True,
-            )
-
+        result = self.cursor.execute(
+            self._search,
+            (q, q, k) if index_param["quantization_type"] == "bit" and search_param["reranking"] else (q, k),
+            prepare=True,
+            binary=True,
+        )
         return [int(i[0]) for i in result.fetchall()]
