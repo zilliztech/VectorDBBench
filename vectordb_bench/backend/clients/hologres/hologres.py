@@ -275,6 +275,17 @@ class Hologres(VectorDB):
         finally:
             self.conn.commit()
 
+        dbname = self.db_config["dbname"]
+        sql_tg_replica = sql.SQL(
+            f"CALL hg_table_group_set_warehouse_replica_count ('{dbname}.{self._tg_name}', 2, 'init_warehouse');")
+        log.info(f"{self.name} client set table group replica: {self._tg_name}, with sql: {sql_tg_replica}")
+        try:
+            self.cursor.execute(sql_tg_replica)
+        except Exception as e:
+            log.warning(f"Failed to set table group replica: {self._tg_name} error: {e}, ignore")
+        finally:
+            self.conn.commit()
+
         sql_table = sql.SQL(
             """
             CREATE TABLE IF NOT EXISTS {table_name} (
