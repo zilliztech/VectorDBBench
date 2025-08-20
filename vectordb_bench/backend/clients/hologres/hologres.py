@@ -82,7 +82,7 @@ class Hologres(VectorDB):
     @staticmethod
     def _create_connection(**kwargs) -> tuple[Connection, Cursor]:
         conn = psycopg.connect(**kwargs)
-        conn.autocommit = False
+        conn.autocommit = True
         cursor = conn.cursor()
 
         assert conn is not None, "Connection is not initialized"
@@ -209,7 +209,7 @@ class Hologres(VectorDB):
             log.warning(f"Failed to vacuum table: {self.table_name} error: {e}")
             raise e from None
         finally:
-            self.conn.autocommit = False
+            self.conn.autocommit = True
 
     def _analyze(self):
         log.info(f"{self.name} client analyze table : {self.table_name}")
