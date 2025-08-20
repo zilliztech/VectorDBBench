@@ -37,7 +37,7 @@ class Hologres(VectorDB):
         drop_old: bool = False,
         **kwargs,
     ):
-        self.name = "Hologres"
+        self.name = "Alibaba Cloud Hologres"
         self.db_config = db_config
         self.case_config = db_case_config
         self.table_name = collection_name

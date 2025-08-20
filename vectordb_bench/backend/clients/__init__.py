@@ -50,7 +50,7 @@ class DB(Enum):
     LanceDB = "LanceDB"
     OceanBase = "OceanBase"
     S3Vectors = "S3Vectors"
-    Hologres = "Hologres"
+    Hologres = "Alibaba Cloud Hologres"
 
     @property
     def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901, PLR0915
