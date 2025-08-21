@@ -342,7 +342,8 @@ class Hologres(VectorDB):
             where_clause = sql.SQL(" WHERE id >= %s ")
             params.append(ge_id)
 
-        params.append('{' + ",".join(["%f" % x for x in vec]) + '}')
+        vec_float4 = [psycopg._wrappers.Float4(i) for i in vec]
+        params.append(vec_float4)
         params.append(topk)
 
         query = sql.SQL(
@@ -350,7 +351,7 @@ class Hologres(VectorDB):
             SELECT id
             FROM {table_name}
             {where_clause}
-            ORDER BY {distance_function}(embedding, %s)
+            ORDER BY {distance_function}(embedding, %b)
             {order_direction}
             LIMIT %s;
             """
@@ -393,5 +394,5 @@ class Hologres(VectorDB):
 
         ge = filters.get("id") if filters else None
         q, params = self._compose_query_and_params(query, k, ge)
-        result = self.cursor.execute(q, params, prepare=True)
+        result = self.cursor.execute(q, params, prepare=True, binary=True)
         return [int(i[0]) for i in result.fetchall()]
