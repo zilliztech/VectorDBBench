@@ -92,7 +92,7 @@ class Milvus(VectorDB):
             )
 
             self.create_index()
-            col.load()
+            col.load(replica_number=self.db_config.get("replica_number", 1))
 
         connections.disconnect("default")
 
