@@ -262,6 +262,36 @@ class Hologres(VectorDB):
             log.warning(f"Failed to create index on table: {self.table_name} error: {e}")
             raise e from None
 
+    def _set_replica_count(self, replica_count=2):
+        assert self.conn is not None, "Connection is not initialized"
+        assert self.cursor is not None, "Cursor is not initialized"
+
+        try:
+            # non-warehouse mode by default
+            sql_tg_replica = sql.SQL(f"CALL hg_set_table_group_property('{self._tg_name}', 'replica_count', '{replica_count}');")
+
+            # check warehouse mode
+            sql_check = sql.SQL("select count(*) from hologres.hg_warehouse_table_groups;");
+            log.info(f"check warehouse mode with sql: {sql_check}")
+            self.cursor.execute(sql_check)
+            result_check = self.cursor.fetchone()[0]
+            if result_check > 0:
+                # get warehouse name
+                sql_get_warehouse_name = sql.SQL("select current_warehouse();")
+                log.info(f"get warehouse name with sql: {sql_get_warehouse_name}")
+                self.cursor.execute(sql_get_warehouse_name)
+                warehouse_name = self.cursor.fetchone()[0]
+                dbname = self.db_config["dbname"]
+                sql_tg_replica = sql.SQL(
+                    f"CALL hg_table_group_set_warehouse_replica_count ('{dbname}.{self._tg_name}', {replica_count}, '{warehouse_name}');")
+
+            log.info(f"{self.name} client set table group replica: {self._tg_name}, with sql: {sql_tg_replica}")
+            self.cursor.execute(sql_tg_replica)
+        except Exception as e:
+            log.warning(f"Failed to set replica count, error: {e}, ignore")
+        finally:
+            self.conn.commit()
+
     def _create_table(self, dim: int):
         assert self.conn is not None, "Connection is not initialized"
         assert self.cursor is not None, "Cursor is not initialized"
@@ -275,16 +305,7 @@ class Hologres(VectorDB):
         finally:
             self.conn.commit()
 
-        dbname = self.db_config["dbname"]
-        sql_tg_replica = sql.SQL(
-            f"CALL hg_table_group_set_warehouse_replica_count ('{dbname}.{self._tg_name}', 2, 'init_warehouse');")
-        log.info(f"{self.name} client set table group replica: {self._tg_name}, with sql: {sql_tg_replica}")
-        try:
-            self.cursor.execute(sql_tg_replica)
-        except Exception as e:
-            log.warning(f"Failed to set table group replica: {self._tg_name} error: {e}, ignore")
-        finally:
-            self.conn.commit()
+        self._set_replica_count(replica_count=2)
 
         sql_table = sql.SQL(
             """
