@@ -262,7 +262,7 @@ class Hologres(VectorDB):
             log.warning(f"Failed to create index on table: {self.table_name} error: {e}")
             raise e from None
 
-    def _set_replica_count(self, replica_count=2):
+    def _set_replica_count(self, replica_count: int = 2):
         assert self.conn is not None, "Connection is not initialized"
         assert self.cursor is not None, "Cursor is not initialized"
 
@@ -282,12 +282,20 @@ class Hologres(VectorDB):
                 sql_get_warehouse_name = sql.SQL("select current_warehouse();")
                 log.info(f"get warehouse name with sql: {sql_get_warehouse_name}")
                 self.cursor.execute(sql_get_warehouse_name)
-                warehouse_name = self.cursor.fetchone()[0]
-                dbname = self.db_config["dbname"]
                 sql_tg_replica = sql.SQL(
-                    f"CALL hg_table_group_set_warehouse_replica_count ('{dbname}.{self._tg_name}', {replica_count}, '{warehouse_name}');"
+                    """
+                    CALL hg_table_group_set_warehouse_replica_count (
+                        '{dbname}.{tg_name}',
+                        {replica_count},
+                        '{warehouse_name}'
+                    );
+                    """
+                ).format(
+                    tg_name=sql.SQL(self._tg_name),
+                    warehouse_name=sql.SQL(self.cursor.fetchone()[0]),
+                    dbname=sql.SQL(self.db_config["dbname"]),
+                    replica_count=replica_count,
                 )
-
             log.info(f"{self.name} client set table group replica: {self._tg_name}, with sql: {sql_tg_replica}")
             self.cursor.execute(sql_tg_replica)
         except Exception as e:
@@ -358,7 +366,6 @@ class Hologres(VectorDB):
             return 0, e
 
     def _compose_query_and_params(self, vec: list[float], topk: int, ge_id: int | None = None):
-        parts = []
         params = []
 
         where_clause = sql.SQL("")
