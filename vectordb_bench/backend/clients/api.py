@@ -40,6 +40,8 @@ class IndexType(str, Enum):
     GPU_IVF_PQ = "GPU_IVF_PQ"
     GPU_CAGRA = "GPU_CAGRA"
     SCANN = "scann"
+    Hologres_HGraph = "HGraph"
+    Hologres_Graph = "Graph"
     NONE = "NONE"
 
 
