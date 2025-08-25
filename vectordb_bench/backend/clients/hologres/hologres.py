@@ -24,10 +24,6 @@ class Hologres(VectorDB):
 
     _tg_name: str = "vdb_bench_tg_1"
 
-    _use_prepared_query: bool = False
-    _prepared_query_q_k: str = "prepared_query_q_k"
-    _prepared_query_q_f_k: str = "prepared_query_q_f_k"
-
     def __init__(
         self,
         dim: int,
@@ -101,9 +97,6 @@ class Hologres(VectorDB):
 
         self.conn, self.cursor = self._create_connection(**self.db_config)
 
-        if self._use_prepared_query:
-            self._prepare_query()
-
         self._set_search_guc()
 
         try:
@@ -113,45 +106,6 @@ class Hologres(VectorDB):
             self.conn.close()
             self.cursor = None
             self.conn = None
-
-    def _prepare_query(self):
-        self.cursor.execute(
-            sql.SQL(
-                """
-                -- DEALLOCATE {prepared_query};
-                PREPARE {prepared_query}(real[], int) AS
-                SELECT
-                    id
-                FROM {table_name}
-                ORDER BY {distance_function}(embedding, $1::REAL[]) {order_direction}
-                LIMIT $2::INT
-                """
-            ).format(
-                prepared_query=sql.SQL(self._prepared_query_q_k),
-                distance_function=sql.SQL(self.case_config.distance_function()),
-                table_name=sql.Identifier(self.table_name),
-                order_direction=sql.SQL(self.case_config.order_direction()),
-            )
-        )
-        self.cursor.execute(
-            sql.SQL(
-                """
-                -- DEALLOCATE {prepared_query};
-                PREPARE {prepared_query}(real[], bigint, int) AS
-                SELECT
-                    id
-                FROM {table_name}
-                WHERE id >= $2
-                ORDER BY {distance_function}(embedding, $1::REAL[]) {order_direction}
-                LIMIT $3::INT;
-                """
-            ).format(
-                prepared_query=sql.SQL(self._prepared_query_q_f_k),
-                distance_function=sql.SQL(self.case_config.distance_function()),
-                table_name=sql.Identifier(self.table_name),
-                order_direction=sql.SQL(self.case_config.order_direction()),
-            )
-        )
 
     def _set_search_guc(self):
         assert self.conn is not None, "Connection is not initialized"
@@ -273,7 +227,7 @@ class Hologres(VectorDB):
             )
 
             # check warehouse mode
-            sql_check = sql.SQL("select count(*) from hologres.hg_warehouse_table_groups;")
+            sql_check = sql.SQL("select count(*) from hologres.hg_warehouses;")
             log.info(f"check warehouse mode with sql: {sql_check}")
             self.cursor.execute(sql_check)
             result_check = self.cursor.fetchone()[0]
@@ -395,21 +349,6 @@ class Hologres(VectorDB):
 
         return query, params
 
-    def _search_prepared_query(
-        self,
-        query: list[float],
-        k: int = 100,
-        filters: dict | None = None,
-        timeout: int | None = None,
-    ) -> list[int]:
-        q = "'{" + ",".join("%f" % i for i in query) + "}'"
-        if filters:
-            ge = filters.get("id")
-            result = self.cursor.execute(sql.SQL(f"EXECUTE {self._prepared_query_q_f_k}({q}, {ge}, {k});"))
-        else:
-            result = self.cursor.execute(sql.SQL(f"EXECUTE {self._prepared_query_q_k}({q}, {k})"))
-        return [int(i[0]) for i in result.fetchall()]
-
     def search_embedding(
         self,
         query: list[float],
@@ -419,9 +358,6 @@ class Hologres(VectorDB):
     ) -> list[int]:
         assert self.conn is not None, "Connection is not initialized"
         assert self.cursor is not None, "Cursor is not initialized"
-
-        if self._use_prepared_query:
-            return self._search_prepared_query(query, k, filters, timeout)
 
         ge = filters.get("id") if filters else None
         q, params = self._compose_query_and_params(query, k, ge)
