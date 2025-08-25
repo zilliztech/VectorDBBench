@@ -268,10 +268,12 @@ class Hologres(VectorDB):
 
         try:
             # non-warehouse mode by default
-            sql_tg_replica = sql.SQL(f"CALL hg_set_table_group_property('{self._tg_name}', 'replica_count', '{replica_count}');")
+            sql_tg_replica = sql.SQL(
+                f"CALL hg_set_table_group_property('{self._tg_name}', 'replica_count', '{replica_count}');"
+            )
 
             # check warehouse mode
-            sql_check = sql.SQL("select count(*) from hologres.hg_warehouse_table_groups;");
+            sql_check = sql.SQL("select count(*) from hologres.hg_warehouse_table_groups;")
             log.info(f"check warehouse mode with sql: {sql_check}")
             self.cursor.execute(sql_check)
             result_check = self.cursor.fetchone()[0]
@@ -283,7 +285,8 @@ class Hologres(VectorDB):
                 warehouse_name = self.cursor.fetchone()[0]
                 dbname = self.db_config["dbname"]
                 sql_tg_replica = sql.SQL(
-                    f"CALL hg_table_group_set_warehouse_replica_count ('{dbname}.{self._tg_name}', {replica_count}, '{warehouse_name}');")
+                    f"CALL hg_table_group_set_warehouse_replica_count ('{dbname}.{self._tg_name}', {replica_count}, '{warehouse_name}');"
+                )
 
             log.info(f"{self.name} client set table group replica: {self._tg_name}, with sql: {sql_tg_replica}")
             self.cursor.execute(sql_tg_replica)
