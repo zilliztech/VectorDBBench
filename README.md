@@ -283,7 +283,7 @@ Options:
 Execute tests for the index types: HGraph.
 
 ```shell
-vectordbbench hologreshgraph --host xxx --port xxx --user root@mysql_tenant --database test \
+vectordbbench hologreshgraph --host xxx --port xxx --user ACCESS_ID --password ACCESS_KEY --database test \
 --m 64 --ef-construction 400 --case-type Performance768D1M \
 --index-type HGraph --ef-search 51 --k 10
 ```
