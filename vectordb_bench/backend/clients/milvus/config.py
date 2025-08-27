@@ -8,6 +8,7 @@ class MilvusConfig(DBConfig):
     user: str | None = None
     password: SecretStr | None = None
     num_shards: int = 1
+    replica_number: int = 1
 
     def to_dict(self) -> dict:
         return {
@@ -15,6 +16,7 @@ class MilvusConfig(DBConfig):
             "user": self.user if self.user else None,
             "password": self.password.get_secret_value() if self.password else None,
             "num_shards": self.num_shards,
+            "replica_number": self.replica_number,
         }
 
     @validator("*")
