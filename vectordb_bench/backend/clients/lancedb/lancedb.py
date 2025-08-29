@@ -65,6 +65,7 @@ class LanceDB(VectorDB):
         self,
         embeddings: list[list[float]],
         metadata: list[int],
+        **kwargs,
     ) -> tuple[int, Exception | None]:
         try:
             data = [{"id": meta, "vector": emb} for meta, emb in zip(metadata, embeddings, strict=False)]
