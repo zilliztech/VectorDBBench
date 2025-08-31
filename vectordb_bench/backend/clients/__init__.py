@@ -51,6 +51,7 @@ class DB(Enum):
     OceanBase = "OceanBase"
     S3Vectors = "S3Vectors"
     Hologres = "Alibaba Cloud Hologres"
+    EnVector = "EnVector"
 
     @property
     def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901, PLR0915
@@ -199,6 +200,11 @@ class DB(Enum):
             from .hologres.hologres import Hologres
 
             return Hologres
+
+        if self == DB.EnVector:
+            from .envector.envector import EnVector
+
+            return EnVector
 
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
@@ -351,6 +357,11 @@ class DB(Enum):
 
             return HologresConfig
 
+        if self == DB.EnVector:
+            from .envector.config import EnVectorConfig
+
+            return EnVectorConfig
+
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
 
@@ -476,6 +487,11 @@ class DB(Enum):
             from .hologres.config import HologresIndexConfig
 
             return HologresIndexConfig
+
+        if self == DB.EnVector:
+            from .envector.config import EnVectorIndexConfig
+
+            return EnVectorIndexConfig
 
         # DB.Pinecone, DB.Chroma, DB.Redis
         return EmptyDBCaseConfig
