@@ -1,9 +1,12 @@
 import logging
 from logging import config
 from pathlib import Path
+import os
 
 
 def init(log_level: str):
+    os.environ["TQDM_DISABLE"] = "1"
+    
     # Create logs directory if it doesn't exist
     log_dir = Path("logs")
     log_dir.mkdir(exist_ok=True)
