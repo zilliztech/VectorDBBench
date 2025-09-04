@@ -104,8 +104,6 @@ class HologresIndexConfig(BaseModel, DBCaseConfig):
             self.base_quantization_type = "fp32"
 
         return {
-            "min_flush_proxima_row_count": self.min_flush_proxima_row_count,
-            "min_compaction_proxima_row_count": self.min_compaction_proxima_row_count,
             "max_total_size_to_merge_mb": self.max_total_size_to_merge_mb,
             "build_thread_count": self.build_thread_count,
             "base_quantization_type": self.base_quantization_type,
@@ -113,6 +111,7 @@ class HologresIndexConfig(BaseModel, DBCaseConfig):
             "ef_construction": self.ef_construction,
             "precise_quantization_type": self.precise_quantization_type,
             "use_reorder": self.use_reorder,
+            "precise_io_type": "reader_io",
         }
 
     def searcher_params(self) -> dict:

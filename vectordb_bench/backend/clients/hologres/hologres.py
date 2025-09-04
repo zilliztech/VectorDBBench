@@ -129,10 +129,30 @@ class Hologres(VectorDB):
         self.conn.commit()
 
         try:
+            log.info(f"{self.name} client purge table recycle bin: {self.table_name}")
+            self.cursor.execute(
+                sql.SQL("purge TABLE {table_name};").format(
+                    table_name=sql.Identifier(self.table_name),
+                ),
+            )
+        except Exception as e:
+            log.info(f"{self.name} client purge table {self.table_name} recycle bin failed, error: {e}, ignore.")
+        finally:
+            self.conn.commit()
+
+        try:
             log.info(f"{self.name} client drop table group : {self._tg_name}")
             self.cursor.execute(sql.SQL(f"CALL HG_DROP_TABLE_GROUP('{self._tg_name}');"))
         except Exception as e:
             log.info(f"{self.name} client drop table group : {self._tg_name} failed, error: {e}, ignore.")
+        finally:
+            self.conn.commit()
+
+        try:
+            log.info(f"{self.name} client free cache")
+            self.cursor.execute("select hg_admin_command('freecache');")
+        except Exception as e:
+            log.info(f"{self.name} client free cache failed, error: {e}, ignore.")
         finally:
             self.conn.commit()
 
