@@ -183,6 +183,11 @@ def get_custom_case_config(parameters: dict) -> dict:
                 "with_gt": parameters["custom_dataset_with_gt"],
             },
         }
+    elif parameters["case_type"] == "NewIntFilterPerformanceCase" :
+        custom_case_config = {
+            "dataset_with_size_type" : parameters["dataset_with_size_type"],
+            "filter_rate": parameters["filter_rate"],
+        }
     return custom_case_config
 
 
@@ -416,7 +421,24 @@ class CommonTypedDict(TypedDict):
         ),
     ]
     task_label: Annotated[str, click.option("--task-label", help="Task label")]
-
+    dataset_with_size_type: Annotated[
+        str,
+        click.option(
+            "--dataset-with-size-type",
+            help="Dataset with size type for NewIntFilterPerformanceCase, you can use Medium Cohere (768dim, 1M)|Large Cohere (768dim, 10M)|Medium Bioasq (1024dim, 1M)|Large Bioasq (1024dim, 10M)|Large OpenAI (1536dim, 5M)|Medium OpenAI (1536dim, 500K)",
+            default="Medium Cohere (768dim, 1M)",
+            show_default=True,
+        )
+    ]
+    filter_rate: Annotated[
+        float,
+        click.option(
+            "--filter-rate",
+            help="Filter rate for NewIntFilterPerformanceCase",
+            default=0.01,
+            show_default=True,
+        )
+    ]
 
 class HNSWBaseTypedDict(TypedDict):
     m: Annotated[int | None, click.option("--m", type=int, help="hnsw m")]
