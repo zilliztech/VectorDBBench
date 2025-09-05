@@ -320,7 +320,6 @@ class GPUIVFFlatConfig(MilvusIndexConfig, DBCaseConfig):
 
 class GPUBruteForceConfig(MilvusIndexConfig, DBCaseConfig):
     limit: int = 10  # Default top-k for search
-    metric_type: str  # Metric type (e.g., 'L2', 'IP', etc.)
     index: IndexType = IndexType.GPU_BRUTE_FORCE  # Index type set to GPU_BRUTE_FORCE
 
     def index_param(self) -> dict:
