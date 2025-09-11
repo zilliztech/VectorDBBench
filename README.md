@@ -280,12 +280,18 @@ Options:
 
 ### Run Hologres from command line
 
+It is recommended to use the following code for installation.
+```shell
+pip install vectordb-bench[hologres] "psycopg[binary]" pgvector
+```
+
 Execute tests for the index types: HGraph.
 
 ```shell
-vectordbbench hologreshgraph --host xxx --port xxx --user ACCESS_ID --password ACCESS_KEY --database test \
---m 64 --ef-construction 400 --case-type Performance768D1M \
---index-type HGraph --ef-search 51 --k 10
+NUM_PER_BATCH=10000 vectordbbench hologreshgraph --host Hologres_Endpoint --port 80 \
+--user ACCESS_ID --password ACCESS_KEY --database DATABASE_NAME \
+--m 64 --ef-construction 400 --case-type Performance768D10M \
+--index-type HGraph --ef-search 400 --k 10 --num-concurrency 1,60,70,75,80,90,95,100,110,120
 ```
 
 To list the options for Hologres, execute `vectordbbench hologreshgraph --help`, The following are some Hologres-specific command-line options.
