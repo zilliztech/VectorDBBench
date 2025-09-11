@@ -205,7 +205,7 @@ class SerialInsertRunner:
             raise LoadTimeoutError(self.timeout)
 
     def run(self) -> int:
-        count, dur = self._insert_all_batches()
+        count, _ = self._insert_all_batches()
         return count
 
 

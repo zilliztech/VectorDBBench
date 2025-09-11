@@ -279,7 +279,7 @@ class BenchMarkRunner:
                 p.send_signal(sig)
             except psutil.NoSuchProcess:
                 pass
-        gone, alive = psutil.wait_procs(children, timeout=timeout, callback=on_terminate)
+        _, alive = psutil.wait_procs(children, timeout=timeout, callback=on_terminate)
 
         for p in alive:
             log.warning(f"force killing child process: {p}")
