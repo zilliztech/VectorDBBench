@@ -49,3 +49,4 @@ def S3Vectors(**parameters: Unpack[S3VectorsIndexTypedDict]):
         ),
         **parameters,
     )
+
