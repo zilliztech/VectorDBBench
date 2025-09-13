@@ -15,6 +15,7 @@ from ..backend.clients.pgvectorscale.cli import PgVectorScaleDiskAnn
 from ..backend.clients.qdrant_cloud.cli import QdrantCloud
 from ..backend.clients.qdrant_local.cli import QdrantLocal
 from ..backend.clients.redis.cli import Redis
+from ..backend.clients.s3_vectors.cli import S3Vectors
 from ..backend.clients.test.cli import Test
 from ..backend.clients.tidb.cli import TiDB
 from ..backend.clients.vespa.cli import Vespa
@@ -48,6 +49,7 @@ cli.add_command(HologresHGraph)
 cli.add_command(QdrantCloud)
 cli.add_command(QdrantLocal)
 cli.add_command(BatchCli)
+cli.add_command(S3Vectors)
 
 
 if __name__ == "__main__":
