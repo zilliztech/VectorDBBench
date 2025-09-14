@@ -36,5 +36,8 @@
   "OpenSearch": {
     "16c128g": 1.418,
     "16c128g-force_merge": 1.418
+  },
+  "Alibaba Cloud Hologres":{
+    "32c128g-4.0-hybrid-index": 1.128
   }
 }
