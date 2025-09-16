@@ -23,7 +23,7 @@ class ESElementType(str, Enum):
 
 class ElasticCloudIndexConfig(BaseModel, DBCaseConfig):
     element_type: ESElementType = ESElementType.float
-    index: IndexType = IndexType.ES_HNSW
+    index: IndexType = IndexType.ES_HNSW_INT8
     number_of_shards: int = 1
     number_of_replicas: int = 0
     refresh_interval: str = "30s"
