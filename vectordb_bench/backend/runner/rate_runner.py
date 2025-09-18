@@ -7,7 +7,6 @@ from copy import deepcopy
 
 from vectordb_bench import config
 from vectordb_bench.backend.clients import api
-from vectordb_bench.backend.clients.pgvector.pgvector import PgVector
 from vectordb_bench.backend.dataset import DataSetIterator
 from vectordb_bench.backend.utils import time_it
 
@@ -48,7 +47,7 @@ class RatedMultiThreadingInsertRunner:
                     msg = f"Insert failed and retried more than {config.MAX_INSERT_RETRY} times"
                     raise RuntimeError(msg) from None
 
-        if isinstance(db, PgVector):
+        if db.name == "PgVector":
             # pgvector is not thread-safe for concurrent insert,
             #   so we need to copy the db object, make sure each thread has its own connection
             db_copy = deepcopy(db)
