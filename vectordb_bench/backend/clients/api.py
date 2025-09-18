@@ -135,6 +135,7 @@ class VectorDB(ABC):
 
     "The filtering types supported by the VectorDB Client, default only non-filter"
     supported_filter_types: list[FilterOp] = [FilterOp.NonFilter]
+    name: str = ""
 
     @classmethod
     def filter_supported(cls, filters: Filter) -> bool:
