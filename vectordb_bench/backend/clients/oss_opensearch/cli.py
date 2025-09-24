@@ -42,16 +42,6 @@ class OSSOpenSearchTypedDict(TypedDict):
         ),
     ]
 
-    engine: Annotated[
-        str,
-        click.option(
-            "--engine",
-            type=click.Choice(["nmslib", "faiss", "lucene"], case_sensitive=False),
-            help="HNSW algorithm implementation to use",
-            default="faiss",
-        ),
-    ]
-
     metric_type: Annotated[
         str,
         click.option(
