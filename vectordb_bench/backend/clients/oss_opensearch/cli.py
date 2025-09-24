@@ -146,7 +146,7 @@ def OSSOpenSearch(**parameters: Unpack[OSSOpenSearchHNSWTypedDict]):
             index_thread_qty_during_force_merge=parameters["index_thread_qty_during_force_merge"],
             cb_threshold=parameters["cb_threshold"],
             efConstruction=parameters["ef_construction"],
-            efSearch=parameters["ef_runtime"],
+            efSearch=parameters["ef_search"],
             M=parameters["m"],
             engine=OSSOS_Engine(parameters["engine"]),
             quantization_type=OSSOpenSearchQuantization(parameters["quantization_type"]),
