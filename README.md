@@ -1,3 +1,39 @@
+# VectorDBBench with enVector
+
+## Installation
+
+```bash
+# 1. Create your environment
+python -m venv .venv
+source .venv/bin/activate
+
+# 2. Install vectordbbench
+pip install -e .
+
+# 3. Install es2
+pip install es2
+```
+
+## Run
+
+Make sure that ES2 server is running before starting VectorDBBench.
+
+```bash
+# FLAT
+python -m vectordb_bench.cli.vectordbbench envectorflat \
+    --uri "localhost:50050" \
+    --db-label "db-label-1" --case-type "Performance1536D50K"
+
+# IVF-FLAT
+python -m vectordb_bench.cli.vectordbbench envectorivfflat \
+    --uri "localhost:50050" \
+    --db-label "db-label-2" --case-type "Performance1536D500K" \
+    --index-type IVFFLAT --nlist 256 --nprobe 6
+```
+
+
+---------
+
 # VectorDBBench(VDBBench): A Benchmark Tool for VectorDB
 
 [![version](https://img.shields.io/pypi/v/vectordb-bench.svg?color=blue)](https://pypi.org/project/vectordb-bench/)
