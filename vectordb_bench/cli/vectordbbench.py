@@ -1,7 +1,7 @@
 from ..backend.clients.alloydb.cli import AlloyDBScaNN
 from ..backend.clients.aws_opensearch.cli import AWSOpenSearch
 from ..backend.clients.clickhouse.cli import Clickhouse
-from ..backend.clients.envector.cli import EnVectorFlat
+from ..backend.clients.envector.cli import EnVectorFlat, EnVectorIVFFlat
 from ..backend.clients.hologres.cli import HologresHGraph
 from ..backend.clients.lancedb.cli import LanceDB
 from ..backend.clients.mariadb.cli import MariaDBHNSW
@@ -49,6 +49,7 @@ cli.add_command(HologresHGraph)
 cli.add_command(QdrantCloud)
 cli.add_command(QdrantLocal)
 cli.add_command(EnVectorFlat)
+cli.add_command(EnVectorIVFFlat)
 cli.add_command(BatchCli)
 
 

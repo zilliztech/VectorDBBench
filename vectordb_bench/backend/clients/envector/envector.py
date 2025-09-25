@@ -50,7 +50,11 @@ class EnVector(VectorDB):
         self._scalar_id_index_name = "id_sort_idx"
         self._scalar_labels_index_name = "labels_idx"
 
-        es2.init(address=self.db_config.get("uri"), key_path=self.db_config.get("key_path"), key_id=self.db_config.get("key_id"))
+        es2.init(
+            address=self.db_config.get("uri"), 
+            key_path=self.db_config.get("key_path"), 
+            key_id=self.db_config.get("key_id"),
+        )
         if drop_old:
             log.info(f"{self.name} client drop_old index: {self.collection_name}")            
             if self.collection_name in es2.get_index_list():                
@@ -58,12 +62,13 @@ class EnVector(VectorDB):
                 index.drop()
         
         # Create the collection
-        log.info(f"{self.name} create index: {self.collection_name}")        
+        log.info(f"{self.name} create index: {self.collection_name}")
         es2.create_index(
             index_name=self.collection_name,
             dim=dim,
             key_path=self.db_config.get("key_path"),
-            key_id=self.db_config.get("key_id")
+            key_id=self.db_config.get("key_id"),
+            index_params=self.db_config.get("index_params", {}),
         )
         es2.disconnect()
 

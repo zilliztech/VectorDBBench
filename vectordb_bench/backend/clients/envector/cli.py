@@ -19,6 +19,18 @@ class EnVectorTypedDict(TypedDict):
         str,
         click.option("--uri", type=str, help="uri connection string", required=True),
     ]
+    index_type: Annotated[
+        str,
+        click.option("--index-type", type=str, help="Index type: FLAT or IVF_FLAT", default="FLAT"), 
+    ]
+    nlist: Annotated[
+        int,
+        click.option("--nlist", type=int, help="nlist for IVF index", default=256),
+    ]
+    nprobe: Annotated[
+        int,
+        click.option("--nprobe", type=int, help="nprobe for IVF index", default=6),
+    ]
     
 
 class EnVectorFlatIndexTypedDict(CommonTypedDict, EnVectorTypedDict): ...
@@ -36,5 +48,25 @@ def EnVectorFlat(**parameters: Unpack[EnVectorFlatIndexTypedDict]):
             uri=SecretStr(parameters["uri"]),
         ),
         db_case_config=FlatIndexConfig(),
+        **parameters,
+    )
+
+
+class EnVectorIVFFlatIndexTypedDict(CommonTypedDict, EnVectorTypedDict): ...
+
+
+@cli.command(name="envectorivfflat")
+@click_parameter_decorators_from_typed_dict(EnVectorIVFFlatIndexTypedDict)
+def EnVectorIVFFlat(**parameters: Unpack[EnVectorIVFFlatIndexTypedDict]):
+    from .config import IVFFlatIndexConfig, EnVectorConfig
+
+    run(
+        db=DBTYPE,
+        db_config=EnVectorConfig(
+            db_label=parameters["db_label"],
+            uri=SecretStr(parameters["uri"]),
+            index_params={"nlist": parameters["nlist"], "nprobe": parameters["nprobe"]},
+        ),
+        db_case_config=IVFFlatIndexConfig(),
         **parameters,
     )
