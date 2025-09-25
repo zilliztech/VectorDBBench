@@ -16,6 +16,12 @@ pip install -e .
 pip install es2
 ```
 
+## Setup
+
+```bash
+export NUM_PER_BATCH=128
+```
+
 ## Run
 
 Make sure that ES2 server is running before starting VectorDBBench.
