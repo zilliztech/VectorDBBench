@@ -43,35 +43,35 @@ class EnVectorIndexConfig(BaseModel):
 
 class FlatIndexConfig(EnVectorIndexConfig, DBCaseConfig):
     index: IndexType = IndexType.Flat
-    metric_type: MetricType = MetricType.COSINE  # envector는 cosine 유사도만 지원
+    metric_type: MetricType = MetricType.COSINE  # envector supports cosine similarity only
 
     def index_param(self) -> dict:
         return {
-            "metric_type": "COSINE",  # envector는 내적 기반 cosine만 지원
+            "metric_type": "COSINE",
             "index_type": self.index.value,
             "params": {},
         }
 
     def search_param(self) -> dict:
         return {
-            "metric_type": "COSINE",  # envector는 내적 기반 cosine만 지원
+            "metric_type": "COSINE",
         }
 
 
 class IVFFlatIndexConfig(EnVectorIndexConfig, DBCaseConfig):
     index: IndexType = IndexType.IVFFlat
-    metric_type: MetricType = MetricType.COSINE  # envector는 cosine 유사도만 지원
+    metric_type: MetricType = MetricType.COSINE  # envector supports cosine similarity only
 
     def index_param(self) -> dict:
         return {
-            "metric_type": "COSINE",  # envector는 내적 기반 cosine만 지원
+            "metric_type": "COSINE",
             "index_type": self.index.value,
-            "params": {"nlist": 256, "nprobe": 6},
+            "params": {"nlist": self.index_param["nlist"], "nprobe": self.index_param["nprobe"]},
         }
 
     def search_param(self) -> dict:
         return {
-            "metric_type": "COSINE",  # envector는 내적 기반 cosine만 지원
+            "metric_type": "COSINE",
         }
 
 
