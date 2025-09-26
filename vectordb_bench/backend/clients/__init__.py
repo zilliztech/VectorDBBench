@@ -356,6 +356,11 @@ class DB(Enum):
             from .hologres.config import HologresConfig
 
             return HologresConfig
+        
+        if self == DB.TencentElasticsearch:
+            from .tencent_elasticsearch.config import TencentElasticsearchConfig
+
+            return TencentElasticsearchConfig
 
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
@@ -484,9 +489,9 @@ class DB(Enum):
             return HologresIndexConfig
         
         if self == DB.TencentElasticsearch:
-            from .elastic_cloud.config import ElasticCloudIndexConfig
-
-            return ElasticCloudIndexConfig
+            from .tencent_elasticsearch.config import TencentElasticsearchIndexConfig
+            
+            return TencentElasticsearchIndexConfig
 
         # DB.Pinecone, DB.Chroma, DB.Redis
         return EmptyDBCaseConfig

@@ -5,14 +5,18 @@ from pydantic import BaseModel, SecretStr
 from ..api import DBCaseConfig, DBConfig, IndexType, MetricType
 
 
-class ElasticCloudConfig(DBConfig, BaseModel):
-    cloud_id: SecretStr
+class TencentElasticsearchConfig(DBConfig, BaseModel):
+    #: Protocol in use to connect to the node
+    scheme: str = "http"
+    host: str = ""
+    port: int = 9200
+    user: str = "elastic"
     password: SecretStr
 
     def to_dict(self) -> dict:
         return {
-            "cloud_id": self.cloud_id.get_secret_value(),
-            "basic_auth": ("elastic", self.password.get_secret_value()),
+            "hosts": [{"scheme": self.scheme, "host": self.host, "port": self.port}],
+            "basic_auth": (self.user, self.password.get_secret_value()),
         }
 
 
@@ -21,7 +25,7 @@ class ESElementType(str, Enum):
     byte = "byte"  # 1 byte, -128 to 127
 
 
-class ElasticCloudIndexConfig(BaseModel, DBCaseConfig):
+class TencentElasticsearchIndexConfig(BaseModel, DBCaseConfig):
     element_type: ESElementType = ESElementType.float
     index: IndexType = IndexType.ES_HNSW
     number_of_shards: int = 1
@@ -56,7 +60,7 @@ class ElasticCloudIndexConfig(BaseModel, DBCaseConfig):
                 self.number_of_replicas,
                 self.use_routing,
                 self.efConstruction,
-                self.M,
+                self.M,2
             )
         )
 
@@ -68,6 +72,20 @@ class ElasticCloudIndexConfig(BaseModel, DBCaseConfig):
         return "cosine"
 
     def index_param(self) -> dict:
+        if self.index == IndexType.TES_VSEARCH:
+            print(f"Tencent Elasticsearch use index type: {self.index}")
+            return {
+                "type": "dense_vector",
+                "index": True,
+                "element_type": self.element_type.value,
+                "similarity": self.parse_metric(),
+                "index_options": {
+                    "type": self.index.value,
+                    "index": "hnsw",
+                    "m": self.M,
+                    "ef_construction": self.efConstruction,
+                },
+            }
         return {
             "type": "dense_vector",
             "index": True,

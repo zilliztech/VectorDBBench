@@ -1492,6 +1492,44 @@ CaseConfigParamInput_NumCandidates_AliES = CaseConfigInput(
     },
 )
 
+CaseConfigParamInput_IndexType_TES = CaseConfigInput(
+    label=CaseConfigParamType.IndexType,
+    inputHelp="hnsw or vsearch",
+    inputType=InputType.Text,
+    inputConfig={
+        "value": "hnsw",
+    },
+)
+
+CaseConfigParamInput_EFConstruction_TES = CaseConfigInput(
+    label=CaseConfigParamType.EFConstruction,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 8,
+        "max": 512,
+        "value": 360,
+    },
+)
+
+CaseConfigParamInput_M_TES = CaseConfigInput(
+    label=CaseConfigParamType.M,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 4,
+        "max": 64,
+        "value": 30,
+    },
+)
+CaseConfigParamInput_NumCandidates_TES = CaseConfigInput(
+    label=CaseConfigParamType.numCandidates,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 10000,
+        "value": 100,
+    },
+)
+
 CaseConfigParamInput_IndexType_MariaDB = CaseConfigInput(
     label=CaseConfigParamType.IndexType,
     inputHelp="Select Index Type",
@@ -1922,6 +1960,17 @@ AliyunElasticsearchPerformanceConfig = [
     CaseConfigParamInput_NumCandidates_AliES,
 ]
 
+TencentElasticsearchLoadingConfig = [
+    CaseConfigParamInput_EFConstruction_TES,
+    CaseConfigParamInput_M_TES,
+    CaseConfigParamInput_IndexType_TES,
+]
+TencentElasticsearchPerformanceConfig = [
+    CaseConfigParamInput_EFConstruction_TES,
+    CaseConfigParamInput_M_AliES,
+    CaseConfigParamInput_NumCandidates_TES,
+]
+
 MongoDBLoadingConfig = [
     CaseConfigParamInput_MongoDBQuantizationType,
 ]
@@ -2170,6 +2219,10 @@ CASE_CONFIG_MAP = {
     DB.LanceDB: {
         CaseLabel.Load: LanceDBLoadConfig,
         CaseLabel.Performance: LanceDBPerformanceConfig,
+    },
+        DB.TencentElasticsearch: {
+        CaseLabel.Load: TencentElasticsearchLoadingConfig,
+        CaseLabel.Performance: TencentElasticsearchPerformanceConfig,
     },
 }
 
