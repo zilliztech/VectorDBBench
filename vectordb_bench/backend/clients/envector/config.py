@@ -55,23 +55,27 @@ class FlatIndexConfig(EnVectorIndexConfig, DBCaseConfig):
     def search_param(self) -> dict:
         return {
             "metric_type": "COSINE",
+            "search_params": {},
         }
 
 
 class IVFFlatIndexConfig(EnVectorIndexConfig, DBCaseConfig):
     index: IndexType = IndexType.IVFFlat
     metric_type: MetricType = MetricType.COSINE  # envector supports cosine similarity only
+    nlist : int = 0   # default nlist
+    nprobe: int = 0  # default nprobe
 
     def index_param(self) -> dict:
         return {
             "metric_type": "COSINE",
             "index_type": self.index.value,
-            "params": {"nlist": self.index_param["nlist"], "nprobe": self.index_param["nprobe"]},
+            "params": {"index_type": "IVF_FLAT", "nlist": self.nlist, "default_nprobe": self.nprobe},
         }
 
     def search_param(self) -> dict:
         return {
             "metric_type": "COSINE",
+            "search_params": {"nprobe": self.nprobe},
         }
 
 

@@ -21,7 +21,7 @@ class EnVectorTypedDict(TypedDict):
     ]
     index_type: Annotated[
         str,
-        click.option("--index-type", type=str, help="Index type: FLAT or IVF_FLAT", default="FLAT"), 
+        click.option("--index-type", type=str, help="Index type: FLAT or IVFFLAT", default="FLAT"), 
     ]
     nlist: Annotated[
         int,
@@ -41,11 +41,14 @@ class EnVectorFlatIndexTypedDict(CommonTypedDict, EnVectorTypedDict): ...
 def EnVectorFlat(**parameters: Unpack[EnVectorFlatIndexTypedDict]):
     from .config import FlatIndexConfig, EnVectorConfig
 
+    assert parameters["index_type"].upper() == "FLAT", "Index type must be FLAT for EnVectorFlat"
+
     run(
         db=DBTYPE,
         db_config=EnVectorConfig(
             db_label=parameters["db_label"],
             uri=SecretStr(parameters["uri"]),
+            index_params={},
         ),
         db_case_config=FlatIndexConfig(),
         **parameters,
@@ -60,6 +63,8 @@ class EnVectorIVFFlatIndexTypedDict(CommonTypedDict, EnVectorTypedDict): ...
 def EnVectorIVFFlat(**parameters: Unpack[EnVectorIVFFlatIndexTypedDict]):
     from .config import IVFFlatIndexConfig, EnVectorConfig
 
+    assert parameters["index_type"].upper() == "IVFFLAT", "Index type must be IVFFLAT for EnVectorIVFFlat"
+
     run(
         db=DBTYPE,
         db_config=EnVectorConfig(
@@ -67,6 +72,6 @@ def EnVectorIVFFlat(**parameters: Unpack[EnVectorIVFFlatIndexTypedDict]):
             uri=SecretStr(parameters["uri"]),
             index_params={"nlist": parameters["nlist"], "nprobe": parameters["nprobe"]},
         ),
-        db_case_config=IVFFlatIndexConfig(),
+        db_case_config=IVFFlatIndexConfig(nlist=parameters["nlist"], nprobe=parameters["nprobe"]),
         **parameters,
     )
