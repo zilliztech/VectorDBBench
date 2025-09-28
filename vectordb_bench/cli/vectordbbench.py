@@ -1,5 +1,6 @@
 from ..backend.clients.alloydb.cli import AlloyDBScaNN
 from ..backend.clients.aws_opensearch.cli import AWSOpenSearch
+from ..backend.clients.chroma.cli import Chroma
 from ..backend.clients.clickhouse.cli import Clickhouse
 from ..backend.clients.hologres.cli import HologresHGraph
 from ..backend.clients.lancedb.cli import LanceDB
@@ -23,6 +24,7 @@ from ..backend.clients.weaviate_cloud.cli import Weaviate
 from ..backend.clients.zilliz_cloud.cli import ZillizAutoIndex
 from .batch_cli import BatchCli
 from .cli import cli
+
 
 cli.add_command(PgVectorHNSW)
 cli.add_command(PgVectoRSHNSW)
@@ -50,6 +52,7 @@ cli.add_command(QdrantCloud)
 cli.add_command(QdrantLocal)
 cli.add_command(BatchCli)
 cli.add_command(S3Vectors)
+cli.add_command(Chroma)
 
 
 if __name__ == "__main__":
