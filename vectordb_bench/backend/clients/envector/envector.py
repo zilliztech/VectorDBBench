@@ -63,12 +63,13 @@ class EnVector(VectorDB):
         
         # Create the collection
         log.info(f"{self.name} create index: {self.collection_name}")
+        # print(f"{self.case_config.index_param().get('params', {})=}")
         es2.create_index(
             index_name=self.collection_name,
             dim=dim,
             key_path=self.db_config.get("key_path"),
             key_id=self.db_config.get("key_id"),
-            index_params=self.db_config.get("index_params", {}),
+            index_params=self.case_config.index_param().get("params", {}),
         )
         es2.disconnect()
 
@@ -143,7 +144,8 @@ class EnVector(VectorDB):
             res = self.col.search(
                 query=query,
                 top_k=k,
-                output_fields=["metadata"]
+                output_fields=["metadata"],
+                search_params=self.case_config.search_param().get("search_params", {}),
             )
 
             # Handle empty results
