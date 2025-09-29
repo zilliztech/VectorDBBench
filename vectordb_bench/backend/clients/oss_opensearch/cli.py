@@ -42,6 +42,16 @@ class OSSOpenSearchTypedDict(TypedDict):
         ),
     ]
 
+    index_thread_qty_during_force_merge: Annotated[
+        int,
+        click.option(
+            "--index_thread_qty_during_force_merge",
+            type=int,
+            help="Thread count for native engine indexing during force merge",
+            default=4,
+        ),
+    ]
+
     metric_type: Annotated[
         str,
         click.option(
