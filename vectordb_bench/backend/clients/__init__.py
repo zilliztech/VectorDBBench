@@ -477,7 +477,12 @@ class DB(Enum):
 
             return HologresIndexConfig
 
-        # DB.Pinecone, DB.Chroma, DB.Redis
+        if self == DB.Chroma:
+            from .chroma.config import ChromaIndexConfig
+
+            return ChromaIndexConfig
+
+        # DB.Pinecone, DB.Redis
         return EmptyDBCaseConfig
 
 
