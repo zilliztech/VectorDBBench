@@ -40,7 +40,7 @@ class EnVector(VectorDB):
         self.db_config = db_config
         self.case_config = db_case_config
         self.collection_name = collection_name
-        self.batch_size = 128 * 16
+        self.batch_size = 128 * 32
 
         self._primary_field = "pk"
         self._scalar_id_field = "id"
