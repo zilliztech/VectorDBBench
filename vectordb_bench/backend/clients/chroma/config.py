@@ -1,6 +1,6 @@
 from pydantic import SecretStr
 
-from ..api import DBConfig, DBCaseConfig, MetricType
+from ..api import DBCaseConfig, DBConfig, MetricType
 
 
 class ChromaConfig(DBConfig):
@@ -8,10 +8,7 @@ class ChromaConfig(DBConfig):
     port: int = 8000
 
     def to_dict(self) -> dict:
-        return {
-            "host": self.host.get_secret_value(),
-            "port": self.port
-        }
+        return {"host": self.host.get_secret_value(), "port": self.port}
 
 
 class ChromaIndexConfig(ChromaConfig, DBCaseConfig):
@@ -23,12 +20,11 @@ class ChromaIndexConfig(ChromaConfig, DBCaseConfig):
     def parse_metric(self) -> str:
         if self.metric_type == MetricType.L2:
             return "l2"
-        elif self.metric_type == MetricType.IP:
+        if self.metric_type == MetricType.IP:
             return "ip"
-        elif self.metric_type == MetricType.COSINE:
+        if self.metric_type == MetricType.COSINE:
             return "cosine"
-        else:
-            raise ValueError(f"Unsupported metric type: {self.metric_type}")
+        raise ValueError("Unsupported metric type: %s" % self.metric_type)
 
     def index_param(self):
         return {
@@ -41,6 +37,4 @@ class ChromaIndexConfig(ChromaConfig, DBCaseConfig):
         }
 
     def search_param(self) -> dict:
-        return {
-            "ef_search": self.ef_search
-        }
+        return {"ef_search": self.ef_search}

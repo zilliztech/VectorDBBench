@@ -11,30 +11,26 @@ from vectordb_bench.cli.cli import (
     run,
 )
 
-
 DBTYPE = DB.Chroma
 
 
 class ChromaTypeDict(CommonTypedDict):
     host: Annotated[
         str,
-        click.option("--host", type=str, help="Chroma host")
-        ]
-    port: Annotated[
-        int,
-        click.option("--port", type=int, help="Chroma port", default=8000)
+        click.option("--host", type=str, help="Chroma host", default="localhost"),
     ]
+    port: Annotated[int, click.option("--port", type=int, help="Chroma port", default=8000)]
     m: Annotated[
         int,
-        click.option("--m", type=int, help="HNSW Maximum Neighbors", default=16)
+        click.option("--m", type=int, help="HNSW Maximum Neighbors", default=16),
     ]
     ef_construct: Annotated[
         int,
-        click.option("--ef-construct", type=int, help="HNSW efConstruct", default=100)
+        click.option("--ef-construct", type=int, help="HNSW efConstruct", default=256),
     ]
     ef_search: Annotated[
         int,
-        click.option("--ef-search", type=int, help="HNSW efSearch", default=100)
+        click.option("--ef-search", type=int, help="HNSW efSearch", default=256),
     ]
 
 
@@ -42,10 +38,13 @@ class ChromaTypeDict(CommonTypedDict):
 @click_parameter_decorators_from_typed_dict(ChromaTypeDict)
 def Chroma(**parameters: Unpack[ChromaTypeDict]):
     from .config import ChromaConfig, ChromaIndexConfig
+
     run(
         db=DBTYPE,
-        db_config=ChromaConfig(host=SecretStr(parameters["host"]),
-                               port=parameters["port"]),
+        db_config=ChromaConfig(
+            host=SecretStr(parameters["host"]),
+            port=parameters["port"],
+        ),
         db_case_config=ChromaIndexConfig(
             m=parameters["m"],
             ef_construct=parameters["ef_construct"],
