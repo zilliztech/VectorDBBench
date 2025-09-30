@@ -64,13 +64,16 @@ class EnVector(VectorDB):
         # Create the collection
         log.info(f"{self.name} create index: {self.collection_name}")
         # print(f"{self.case_config.index_param().get('params', {})=}")
-        es2.create_index(
-            index_name=self.collection_name,
-            dim=dim,
-            key_path=self.db_config.get("key_path"),
-            key_id=self.db_config.get("key_id"),
-            index_params=self.case_config.index_param().get("params", {}),
-        )
+        if self.collection_name in es2.get_index_list():
+            log.info(f"{self.name} index {self.collection_name} already exists, skip creating")
+        else:
+            es2.create_index(
+                index_name=self.collection_name,
+                dim=dim,
+                key_path=self.db_config.get("key_path"),
+                key_id=self.db_config.get("key_id"),
+                index_params=self.case_config.index_param().get("params", {}),
+            )
         es2.disconnect()
 
     @contextmanager
