@@ -104,7 +104,6 @@ class AWSOpenSearch(VectorDB):
         # Prepare vector field configuration
         vector_field_config = {
             "type": "knn_vector",
-            "store": True,
             "dimension": self.dim,
             "method": method_config,
         }
@@ -219,7 +218,7 @@ class AWSOpenSearch(VectorDB):
             insert_data.append(other_data)
 
         try:
-            self.client.bulk(insert_data)
+            self.client.bulk(body=insert_data)
             return len(embeddings), None
         except Exception as e:
             log.warning(f"Failed to insert data: {self.index_name} error: {e!s}")
@@ -269,7 +268,7 @@ class AWSOpenSearch(VectorDB):
                 insert_data.append(other_data)
 
             try:
-                resp = client.bulk(insert_data)
+                resp = client.bulk(body=insert_data)
                 log.info(f"Client {client_idx} added {len(resp['items'])} documents")
                 return len(chunk_embeddings), None
             except Exception as e:
@@ -302,7 +301,7 @@ class AWSOpenSearch(VectorDB):
             time.sleep(10)
             return self._insert_with_single_client(embeddings, metadata)
 
-        resp = self.client.indices.stats(self.index_name)
+        resp = self.client.indices.stats(index=self.index_name)
         log.info(
             f"""Total document count in index after parallel insertion:
                 {resp['_all']['primaries']['indexing']['index_total']}""",
@@ -489,7 +488,7 @@ class AWSOpenSearch(VectorDB):
         cluster_settings_body = {
             "persistent": {"knn.algo_param.index_thread_qty": self.case_config.index_thread_qty_during_force_merge}
         }
-        self.client.cluster.put_settings(cluster_settings_body)
+        self.client.cluster.put_settings(body=cluster_settings_body)
 
         log.info("Updating the graph threshold to ensure that during merge we can do graph creation.")
         output = self.client.indices.put_settings(
