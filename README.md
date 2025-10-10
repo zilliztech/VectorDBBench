@@ -22,6 +22,12 @@ pip install es2
 export NUM_PER_BATCH=128
 ```
 
+or copy `.env.example` as `.env`
+
+```bash
+cp .env.example .env
+```
+
 ## Run
 
 Make sure that ES2 server is running before starting VectorDBBench.
