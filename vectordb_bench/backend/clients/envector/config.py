@@ -6,7 +6,7 @@ from ..api import DBCaseConfig, DBConfig, IndexType, MetricType, SQType
 class EnVectorConfig(DBConfig):
     uri: SecretStr = SecretStr("http://localhost:50050")
     key_path: str = "keys"
-    key_id: str = "default"
+    key_id: str = "default_key"
 
     def to_dict(self) -> dict:
         return {
@@ -44,11 +44,13 @@ class EnVectorIndexConfig(BaseModel):
 class FlatIndexConfig(EnVectorIndexConfig, DBCaseConfig):
     index: IndexType = IndexType.Flat
     metric_type: MetricType = MetricType.COSINE  # envector supports cosine similarity only
+    eval_mode: str = "mm"  # default eval_mode
 
     def index_param(self) -> dict:
         return {
             "metric_type": "COSINE",
             "index_type": self.index.value,
+            "eval_model": self.eval_mode,
             "params": {},
         }
 
@@ -62,13 +64,15 @@ class FlatIndexConfig(EnVectorIndexConfig, DBCaseConfig):
 class IVFFlatIndexConfig(EnVectorIndexConfig, DBCaseConfig):
     index: IndexType = IndexType.IVFFlat
     metric_type: MetricType = MetricType.COSINE  # envector supports cosine similarity only
-    nlist : int = 0   # default nlist
+    nlist : int = 0  # default nlist
     nprobe: int = 0  # default nprobe
+    eval_mode: str = "mm"  # default eval_mode
 
     def index_param(self) -> dict:
         return {
             "metric_type": "COSINE",
             "index_type": self.index.value,
+            "eval_model": self.eval_mode,
             "params": {"index_type": "IVF_FLAT", "nlist": self.nlist, "default_nprobe": self.nprobe},
         }
 

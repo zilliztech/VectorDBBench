@@ -19,6 +19,10 @@ class EnVectorTypedDict(TypedDict):
         str,
         click.option("--uri", type=str, help="uri connection string", required=True),
     ]
+    eval_mode: Annotated[
+        str,
+        click.option("--eval-mode", type=str, help="Evaluation mode", default="mm"),
+    ]
     index_type: Annotated[
         str,
         click.option("--index-type", type=str, help="Index type: FLAT or IVFFLAT", default="FLAT"), 
@@ -48,6 +52,7 @@ def EnVectorFlat(**parameters: Unpack[EnVectorFlatIndexTypedDict]):
         db_config=EnVectorConfig(
             db_label=parameters["db_label"],
             uri=SecretStr(parameters["uri"]),
+            eval_mode=parameters["eval_mode"],
             index_params={},
         ),
         db_case_config=FlatIndexConfig(),
@@ -70,6 +75,7 @@ def EnVectorIVFFlat(**parameters: Unpack[EnVectorIVFFlatIndexTypedDict]):
         db_config=EnVectorConfig(
             db_label=parameters["db_label"],
             uri=SecretStr(parameters["uri"]),
+            eval_mode=parameters["eval_mode"],
             index_params={"nlist": parameters["nlist"], "nprobe": parameters["nprobe"]},
         ),
         db_case_config=IVFFlatIndexConfig(nlist=parameters["nlist"], nprobe=parameters["nprobe"]),

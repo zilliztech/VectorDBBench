@@ -41,7 +41,7 @@ class EnVector(VectorDB):
         self.case_config = db_case_config
         self.collection_name = collection_name
         self.batch_size = 128 * 32
-
+        
         self._primary_field = "pk"
         self._scalar_id_field = "id"
         self._scalar_label_field = "label"
@@ -54,6 +54,7 @@ class EnVector(VectorDB):
             address=self.db_config.get("uri"), 
             key_path=self.db_config.get("key_path"), 
             key_id=self.db_config.get("key_id"),
+            eval_mode=self.case_config.eval_mode,
         )
         if drop_old:
             log.info(f"{self.name} client drop_old index: {self.collection_name}")            
@@ -67,12 +68,14 @@ class EnVector(VectorDB):
         if self.collection_name in es2.get_index_list():
             log.info(f"{self.name} index {self.collection_name} already exists, skip creating")
         else:
+            print(f"{self.case_config.eval_mode=}")
             es2.create_index(
                 index_name=self.collection_name,
                 dim=dim,
                 key_path=self.db_config.get("key_path"),
                 key_id=self.db_config.get("key_id"),
                 index_params=self.case_config.index_param().get("params", {}),
+                eval_mode=self.case_config.eval_mode,
             )
         es2.disconnect()
 
@@ -85,7 +88,12 @@ class EnVector(VectorDB):
             >>>     self.search_embedding()
         """
         self.col: es2.Index | None = None
-        es2.init(address=self.db_config.get("uri"), key_path=self.db_config.get("key_path"), key_id=self.db_config.get("key_id"))                
+        es2.init(
+            address=self.db_config.get("uri"), 
+            key_path=self.db_config.get("key_path"), 
+            key_id=self.db_config.get("key_id"),
+            eval_mode=self.case_config.eval_mode,
+        )
         self.col = es2.Index(self.collection_name)
         yield
 
