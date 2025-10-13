@@ -64,7 +64,7 @@ class TencentElasticsearch(VectorDB):
         """connect to elasticsearch"""
         from elasticsearch import Elasticsearch
 
-        self.client = Elasticsearch(**self.db_config, request_timeout=180)
+        self.client = Elasticsearch(**self.db_config, request_timeout=1800)
 
         yield
         self.client = None
@@ -81,6 +81,7 @@ class TencentElasticsearch(VectorDB):
                 },
             },
         }
+
         settings = {
             "index": {
                 "number_of_shards": self.case_config.number_of_shards,
@@ -234,6 +235,7 @@ class TencentElasticsearch(VectorDB):
         """optimize will be called between insertion and search in performance cases."""
         assert self.client is not None, "should self.init() first"
         self.client.indices.refresh(index=self.indice)
+        time.sleep(SECONDS_WAITING_FOR_FORCE_MERGE_API_CALL_SEC)
         if self.case_config.use_force_merge:
             force_merge_task_id = self.client.indices.forcemerge(
                 index=self.indice,

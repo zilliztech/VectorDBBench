@@ -200,7 +200,7 @@ class DB(Enum):
             from .hologres.hologres import Hologres
 
             return Hologres
-        
+
         if self == DB.TencentElasticsearch:
             from .tencent_elasticsearch.tencent_elasticsearch import TencentElasticsearch
 
@@ -356,7 +356,7 @@ class DB(Enum):
             from .hologres.config import HologresConfig
 
             return HologresConfig
-        
+
         if self == DB.TencentElasticsearch:
             from .tencent_elasticsearch.config import TencentElasticsearchConfig
 
@@ -487,10 +487,10 @@ class DB(Enum):
             from .hologres.config import HologresIndexConfig
 
             return HologresIndexConfig
-        
+
         if self == DB.TencentElasticsearch:
             from .tencent_elasticsearch.config import TencentElasticsearchIndexConfig
-            
+
             return TencentElasticsearchIndexConfig
 
         # DB.Pinecone, DB.Chroma, DB.Redis

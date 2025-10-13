@@ -27,10 +27,10 @@ class ESElementType(str, Enum):
 
 class TencentElasticsearchIndexConfig(BaseModel, DBCaseConfig):
     element_type: ESElementType = ESElementType.float
-    index: IndexType = IndexType.ES_HNSW
+    index: IndexType = IndexType.TES_VSEARCH
     number_of_shards: int = 1
     number_of_replicas: int = 0
-    refresh_interval: str = "30s"
+    refresh_interval: str = "3s"
     merge_max_thread_count: int = 8
     use_rescore: bool = False
     oversample_ratio: float = 2.0
@@ -60,7 +60,8 @@ class TencentElasticsearchIndexConfig(BaseModel, DBCaseConfig):
                 self.number_of_replicas,
                 self.use_routing,
                 self.efConstruction,
-                self.M,2
+                self.M,
+                2,
             )
         )
 
@@ -72,20 +73,6 @@ class TencentElasticsearchIndexConfig(BaseModel, DBCaseConfig):
         return "cosine"
 
     def index_param(self) -> dict:
-        if self.index == IndexType.TES_VSEARCH:
-            print(f"Tencent Elasticsearch use index type: {self.index}")
-            return {
-                "type": "dense_vector",
-                "index": True,
-                "element_type": self.element_type.value,
-                "similarity": self.parse_metric(),
-                "index_options": {
-                    "type": self.index.value,
-                    "index": "hnsw",
-                    "m": self.M,
-                    "ef_construction": self.efConstruction,
-                },
-            }
         return {
             "type": "dense_vector",
             "index": True,
@@ -93,6 +80,7 @@ class TencentElasticsearchIndexConfig(BaseModel, DBCaseConfig):
             "similarity": self.parse_metric(),
             "index_options": {
                 "type": self.index.value,
+                "index": "hnsw",
                 "m": self.M,
                 "ef_construction": self.efConstruction,
             },

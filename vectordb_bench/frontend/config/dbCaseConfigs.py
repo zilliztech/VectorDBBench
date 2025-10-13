@@ -1967,7 +1967,7 @@ TencentElasticsearchLoadingConfig = [
 ]
 TencentElasticsearchPerformanceConfig = [
     CaseConfigParamInput_EFConstruction_TES,
-    CaseConfigParamInput_M_AliES,
+    CaseConfigParamInput_M_TES,
     CaseConfigParamInput_NumCandidates_TES,
 ]
 
@@ -2220,7 +2220,7 @@ CASE_CONFIG_MAP = {
         CaseLabel.Load: LanceDBLoadConfig,
         CaseLabel.Performance: LanceDBPerformanceConfig,
     },
-        DB.TencentElasticsearch: {
+    DB.TencentElasticsearch: {
         CaseLabel.Load: TencentElasticsearchLoadingConfig,
         CaseLabel.Performance: TencentElasticsearchPerformanceConfig,
     },
