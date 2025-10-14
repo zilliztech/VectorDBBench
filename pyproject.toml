@@ -98,6 +98,7 @@ clickhouse      = [ "clickhouse-connect" ]
 vespa           = [ "pyvespa" ]
 lancedb         = [ "lancedb" ]
 oceanbase       = [ "mysql-connector-python" ]
+vexdb           = [ "psycopg", "psycopg-binary", "pgvector" ]
 
 [project.urls]
 "repository" = "https://github.com/zilliztech/VectorDBBench"

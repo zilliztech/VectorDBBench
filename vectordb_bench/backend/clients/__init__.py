@@ -493,7 +493,7 @@ class DB(Enum):
 
             return _vexdb_case_config.get(index_type)
 
-        DB.Pinecone, DB.Chroma, DB.Redis
+        # DB.Pinecone, DB.Chroma, DB.Redis
         return EmptyDBCaseConfig
 
 

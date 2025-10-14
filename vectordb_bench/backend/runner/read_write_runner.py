@@ -104,10 +104,10 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
             f"p99={p99_latency}, p95={p95_latency}, dur={ssearch_dur:.4f}",
         )
         log.info(
-            f"Search after wirte - Conc search start, dur for each conc={self.read_dur_after_write}",
+            f"Search after write - Conc search start, dur for each conc={self.read_dur_after_write}",
         )
         max_qps, conc_failed_rate = self.run_by_dur(self.read_dur_after_write)
-        log.info(f"Search after wirte - Conc search finished, max_qps={max_qps}")
+        log.info(f"Search after write - Conc search finished, max_qps={max_qps}")
 
         return [(perc, test_time, max_qps, recall, ndcg, p99_latency, p95_latency, conc_failed_rate)]
 

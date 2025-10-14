@@ -125,7 +125,7 @@ class CaseConfigParamType(Enum):
     use_rescore = "use_rescore"
     oversample_ratio = "oversample_ratio"
     use_routing = "use_routing"
-
+    create_index_before_load = "create_index_before_load"
     dataset_with_size_type = "dataset_with_size_type"
     filter_rate = "filter_rate"
     insert_rate = "insert_rate"
