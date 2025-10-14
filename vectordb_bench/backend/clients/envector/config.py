@@ -51,7 +51,7 @@ class FlatIndexConfig(EnVectorIndexConfig, DBCaseConfig):
             "metric_type": "COSINE",
             "index_type": self.index.value,
             "eval_model": self.eval_mode,
-            "params": {},
+            "params": {"index_type": "FLAT"},
         }
 
     def search_param(self) -> dict:
