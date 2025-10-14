@@ -21,7 +21,7 @@ class EnVectorTypedDict(TypedDict):
     ]
     eval_mode: Annotated[
         str,
-        click.option("--eval-mode", type=str, help="Evaluation mode", default="mm", choices=["mm", "rmp"]),
+        click.option("--eval-mode", help="Evaluation mode", type=click.Choice(["mm", "rmp"]), default="mm"),
     ]
     
 
