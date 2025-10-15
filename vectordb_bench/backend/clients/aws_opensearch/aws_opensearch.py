@@ -64,6 +64,12 @@ class AWSOpenSearch(VectorDB):
             self._update_ef_search_before_search(client)
             self._load_graphs_to_memory(client)
 
+    def need_normalize_cosine(self) -> bool:
+        if self.case_config.metric_type.upper() == 'COSINE':
+            log.info("cosine dataset need normalize.")
+            return True
+        return False
+        
     def _create_index(self, client: OpenSearch) -> None:
         ef_search_value = self.case_config.ef_search
         log.info(f"Creating index with ef_search: {ef_search_value}")
