@@ -138,6 +138,16 @@ class AWSOpenSearchTypedDict(TypedDict):
         ),
     ]
 
+    on_disk: Annotated[
+        bool,
+        click.option(
+            "--on-disk",
+            is_flag=True,
+            help="Enable on-disk vector storage mode",
+            default=False,
+        ),
+    ]
+
 
 class AWSOpenSearchHNSWTypedDict(CommonTypedDict, AWSOpenSearchTypedDict, HNSWFlavor1): ...
 
@@ -187,6 +197,7 @@ def AWSOpenSearch(**parameters: Unpack[AWSOpenSearchHNSWTypedDict]):
             engine=engine,
             quantization_type=AWSOSQuantization(parameters["quantization_type"]),
             metric_type_name=parameters["metric_type"],
+            on_disk=parameters["on_disk"],
         ),
         **parameters,
     )

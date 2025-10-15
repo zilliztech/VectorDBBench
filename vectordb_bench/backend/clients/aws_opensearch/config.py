@@ -63,6 +63,7 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
     use_routing: bool = False  # for label-filter cases
     oversample_factor: float = 1.0
     quantization_type: AWSOSQuantization = AWSOSQuantization.fp32
+    on_disk: bool = False
 
     def __eq__(self, obj: any):
         return (
@@ -74,6 +75,7 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
             and self.number_of_segments == obj.number_of_segments
             and self.use_routing == obj.use_routing
             and self.quantization_type == obj.quantization_type
+            and self.on_disk == obj.on_disk
         )
 
     def __hash__(self) -> int:
@@ -87,6 +89,7 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
                 self.number_of_segments,
                 self.use_routing,
                 self.quantization_type,
+                self.on_disk,
             )
         )
 
@@ -116,6 +119,7 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
     def index_param(self) -> dict:
         log.info(f"Using engine: {self.engine} for index creation")
         log.info(f"Using metric_type: {self.metric_type_name} for index creation")
+        log.info(f"Using on_disk mode: {self.on_disk} for index creation")
         space_type = self.parse_metric()
         log.info(f"Resulting space_type: {space_type} for index creation")
 
@@ -123,6 +127,10 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
         # For s3vector, space_type should be set at the vector field level, not in method
         if self.engine == AWSOS_Engine.s3vector:
             return {"engine": "s3vector"}
+
+        # For on-disk mode, return empty dict as no method config is needed
+        if self.on_disk:
+            return {}
 
         parameters = {"ef_construction": self.efConstruction, "m": self.M}
 

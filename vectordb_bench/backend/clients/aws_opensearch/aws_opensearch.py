@@ -100,16 +100,35 @@ class AWSOpenSearch(VectorDB):
         if self.case_config.engine == AWSOS_Engine.s3vector:
             method_config = {"engine": "s3vector"}
             log.info(f"Cleaned method config for s3vector: {method_config}")
+        elif self.case_config.on_disk:
+            # For on-disk mode, keep the method config as-is from index_param()
+            log.info(f"Using on-disk method config: {method_config}")
 
         # Prepare vector field configuration
-        vector_field_config = {
-            "type": "knn_vector",
-            "dimension": self.dim,
-            "method": method_config,
-        }
+        if self.case_config.on_disk:
+            # For on-disk mode, use simplified configuration without method
+            space_type = self.case_config.parse_metric()
+            vector_field_config = {
+                "type": "knn_vector",
+                "dimension": self.dim,
+                "space_type": space_type,
+                "data_type": "float",
+                "mode": "on_disk",
+                "compression_level": "32x",
+            }
+            log.info("Using on-disk vector configuration with compression_level: 32x")
+        else:
+            vector_field_config = {
+                "type": "knn_vector",
+                "dimension": self.dim,
+                "method": method_config,
+            }
 
-        # For s3vector engine, space_type should be set at the vector field level
-        if self.case_config.engine == AWSOS_Engine.s3vector:
+        # Add on-disk mode configuration if enabled
+        if self.case_config.on_disk:
+            log.info(f"Final on-disk vector field config: {vector_field_config}")
+        elif self.case_config.engine == AWSOS_Engine.s3vector:
+            # For s3vector engine, space_type should be set at the vector field level
             space_type = self.case_config.parse_metric()
             vector_field_config["space_type"] = space_type
 
@@ -118,6 +137,8 @@ class AWSOpenSearch(VectorDB):
 
             log.info(f"Setting space_type '{space_type}' at vector field level for s3vector engine")
             log.info(f"Final vector field config for s3vector: {vector_field_config}")
+        else:
+            log.info(f"Standard vector field config: {vector_field_config}")
 
         # Configure mappings based on engine type
         if self.case_config.engine == AWSOS_Engine.s3vector:
