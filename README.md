@@ -19,7 +19,7 @@ pip install es2
 ## Setup
 
 ```bash
-export NUM_PER_BATCH=128
+export NUM_PER_BATCH=4096
 ```
 
 or copy `.env.example` as `.env`
@@ -36,13 +36,16 @@ Make sure that ES2 server is running before starting VectorDBBench.
 # FLAT
 python -m vectordb_bench.cli.vectordbbench envectorflat \
     --uri "localhost:50050" \
-    --db-label "db-label-1" --case-type "Performance1536D50K"
+    --db-label "1536D-500K-FLAT" --case-type "Performance1536D500K" \
+    --eval-mode mm
 
 # IVF-FLAT
+export NUM_PER_BATCH=500000  # set database size for efficiency
 python -m vectordb_bench.cli.vectordbbench envectorivfflat \
     --uri "localhost:50050" \
-    --db-label "db-label-2" --case-type "Performance1536D500K" \
-    --index-type IVFFLAT --nlist 256 --nprobe 6
+    --db-label "1536D-500K-IVF" --case-type "Performance1536D500K" \
+    --index-type IVFFLAT --nlist 256 --nprobe 6 \
+    --eval-mode mm
 ```
 
 The origin README of VectorDBBench is following:
