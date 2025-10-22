@@ -5,7 +5,7 @@ import click
 from pydantic import SecretStr
 
 from vectordb_bench.backend.clients import DB
-from vectordb_bench.backend.clients.api import MetricType
+# from vectordb_bench.backend.clients.api import MetricType
 
 from ....cli.cli import (
     CommonTypedDict,
@@ -18,15 +18,7 @@ from ....cli.cli import (
 )
 
 
-def set_default_quantized_fetch_limit(ctx: any, param: any, value: any):  # noqa: ARG001
-    if ctx.params.get("reranking") and value is None:
-        # ef_search is the default value for quantized_fetch_limit as it's bound by ef_search.
-        # 100 is default value for quantized_fetch_limit for IVFFlat.
-        return ctx.params["ef_search"] if ctx.command.name == "pgvectorhnsw" else 100
-    return value
-
-
-class PgVectorTypedDict(CommonTypedDict):
+class VexDBTypedDict(CommonTypedDict):
     user_name: Annotated[
         str,
         click.option("--user-name", type=str, help="Db username", required=True),
@@ -76,73 +68,32 @@ class PgVectorTypedDict(CommonTypedDict):
             required=False,
         ),
     ]
-    quantization_type: Annotated[
-        str | None,
-        click.option(
-            "--quantization-type",
-            type=click.Choice(["none", "bit", "halfvec"]),
-            help="quantization type for vectors (in index)",
-            required=False,
-        ),
-    ]
-    table_quantization_type: Annotated[
-        str | None,
-        click.option(
-            "--table-quantization-type",
-            type=click.Choice(["none", "bit", "halfvec"]),
-            help="quantization type for vectors (in table). "
-            "If equal to bit, the parameter quantization_type will be set to bit too.",
-            required=False,
-        ),
-    ]
-    reranking: Annotated[
+    create_index_before_load: Annotated[
         bool | None,
         click.option(
-            "--reranking/--skip-reranking",
+            "--create-index-before-load",
             type=bool,
-            help="Enable reranking for HNSW search for binary quantization",
+            help="Whether create index before load,Streaming case recommended to be true，default is false",
+            required=False,
             default=False,
         ),
     ]
-    reranking_metric: Annotated[
-        str | None,
-        click.option(
-            "--reranking-metric",
-            type=click.Choice(
-                [metric.value for metric in MetricType if metric.value not in ["HAMMING", "JACCARD"]],
-            ),
-            help="Distance metric for reranking",
-            default="COSINE",
-            show_default=True,
-        ),
-    ]
-    quantized_fetch_limit: Annotated[
-        int | None,
-        click.option(
-            "--quantized-fetch-limit",
-            type=int,
-            help="Limit of fetching quantized vector ranked by distance for reranking \
-                -- bound by ef_search",
-            required=False,
-            callback=set_default_quantized_fetch_limit,
-        ),
-    ]
 
 
-class PgVectorIVFFlatTypedDict(PgVectorTypedDict, IVFFlatTypedDict): ...
+class VexDBIVFFlatTypedDict(VexDBTypedDict, IVFFlatTypedDict): ...
 
 
 @cli.command()
-@click_parameter_decorators_from_typed_dict(PgVectorIVFFlatTypedDict)
-def PgVectorIVFFlat(
-    **parameters: Unpack[PgVectorIVFFlatTypedDict],
+@click_parameter_decorators_from_typed_dict(VexDBIVFFlatTypedDict)
+def VexDBIVFFlat(
+    **parameters: Unpack[VexDBIVFFlatTypedDict],
 ):
-    from .config import PgVectorConfig, PgVectorIVFFlatConfig
+    from .config import VexDBConfig, VexDBIVFFlatConfig
 
     parameters["custom_case"] = get_custom_case_config(parameters)
     run(
-        db=DB.PgVector,
-        db_config=PgVectorConfig(
+        db=DB.VexDB,
+        db_config=VexDBConfig(
             db_label=parameters["db_label"],
             user_name=SecretStr(parameters["user_name"]),
             password=SecretStr(parameters["password"]),
@@ -150,34 +101,31 @@ def PgVectorIVFFlat(
             port=parameters["port"],
             db_name=parameters["db_name"],
         ),
-        db_case_config=PgVectorIVFFlatConfig(
-            metric_type=None,
+        db_case_config=VexDBIVFFlatConfig(
             lists=parameters["lists"],
             probes=parameters["probes"],
-            quantization_type=parameters["quantization_type"],
-            table_quantization_type=parameters["table_quantization_type"],
-            reranking=parameters["reranking"],
-            reranking_metric=parameters["reranking_metric"],
-            quantized_fetch_limit=parameters["quantized_fetch_limit"],
+            maintenance_work_mem=parameters["maintenance_work_mem"],
+            max_parallel_workers=parameters["max_parallel_workers"],
+            create_index_before_load=parameters["create_index_before_load"],
         ),
         **parameters,
     )
 
 
-class PgVectorHNSWTypedDict(PgVectorTypedDict, HNSWFlavor1): ...
+class VexDBHNSWTypedDict(VexDBTypedDict, HNSWFlavor1): ...
 
 
 @cli.command()
-@click_parameter_decorators_from_typed_dict(PgVectorHNSWTypedDict)
-def PgVectorHNSW(
-    **parameters: Unpack[PgVectorHNSWTypedDict],
+@click_parameter_decorators_from_typed_dict(VexDBHNSWTypedDict)
+def VexDBHNSW(
+    **parameters: Unpack[VexDBHNSWTypedDict],
 ):
-    from .config import PgVectorConfig, PgVectorHNSWConfig
+    from .config import VexDBConfig, VexDBHNSWConfig
 
     parameters["custom_case"] = get_custom_case_config(parameters)
     run(
-        db=DB.PgVector,
-        db_config=PgVectorConfig(
+        db=DB.VexDB,
+        db_config=VexDBConfig(
             db_label=parameters["db_label"],
             user_name=SecretStr(parameters["user_name"]),
             password=SecretStr(parameters["password"]),
@@ -185,17 +133,13 @@ def PgVectorHNSW(
             port=parameters["port"],
             db_name=parameters["db_name"],
         ),
-        db_case_config=PgVectorHNSWConfig(
+        db_case_config=VexDBHNSWConfig(
             m=parameters["m"],
             ef_construction=parameters["ef_construction"],
             ef_search=parameters["ef_search"],
             maintenance_work_mem=parameters["maintenance_work_mem"],
             max_parallel_workers=parameters["max_parallel_workers"],
-            quantization_type=parameters["quantization_type"],
-            table_quantization_type=parameters["table_quantization_type"],
-            reranking=parameters["reranking"],
-            reranking_metric=parameters["reranking_metric"],
-            quantized_fetch_limit=parameters["quantized_fetch_limit"],
+            create_index_before_load=parameters["create_index_before_load"],
         ),
         **parameters,
     )

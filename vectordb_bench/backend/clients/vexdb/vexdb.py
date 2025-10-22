@@ -122,6 +122,8 @@ class VexDB(VectorDB):
                 self.dim,
                 {"connect_config": self.connect_config, "table_name": self.table_name}, 
                 self.case_config,
+                False,
+                self.with_scalar_labels,
             ),
         )
 
