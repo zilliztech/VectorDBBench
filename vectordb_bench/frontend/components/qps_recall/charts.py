@@ -53,7 +53,6 @@ def drawBestperformance(data, y, group):
 
 
 def drawlinechart(st, data: list[object], metric, key: str):
-    unit = metric_unit_map.get(metric, "")
     minV = min([d.get(metric, 0) for d in data])
     maxV = max([d.get(metric, 0) for d in data])
     padding = maxV - minV
@@ -87,11 +86,14 @@ def drawlinechart(st, data: list[object], metric, key: str):
             go.Scatter(
                 x=db_data["recall"],
                 y=db_data["qps"],
-                mode="lines+markers",
+                mode="lines+markers+text",
                 name=db,
                 line=dict(color=color_map[db]),
                 marker=dict(color=color_map[db]),
                 showlegend=True,
+                hovertemplate="QPS=%{y:.4g}, Recall=%{x:.2f}",
+                text=[f"{qps:.4g}@{recall:.2f}" for recall, qps in zip(db_data["recall"], db_data["qps"])],
+                textposition="top right",
             )
         )
 
@@ -107,9 +109,8 @@ def drawlinechart(st, data: list[object], metric, key: str):
             )
         )
 
-    fig.update_xaxes(range=xrange)
-    fig.update_yaxes(range=yrange)
-    fig.update_traces(textposition="bottom right", texttemplate="%{y:,.4~r}" + unit)
+    fig.update_xaxes(range=xrange, title_text="Recall")
+    fig.update_yaxes(range=yrange, title_text="QPS")
     fig.update_layout(
         margin=dict(l=0, r=0, t=40, b=0, pad=8),
         legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="right", x=1, title=""),
