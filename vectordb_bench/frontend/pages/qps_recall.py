@@ -1,4 +1,6 @@
 import streamlit as st
+from vectordb_bench.backend.cases import CaseLabel
+from vectordb_bench.backend.filter import FilterOp
 from vectordb_bench.frontend.components.check_results.footer import footer
 from vectordb_bench.frontend.components.check_results.headerIcon import drawHeaderIcon
 from vectordb_bench.frontend.components.check_results.nav import (
@@ -12,6 +14,7 @@ from vectordb_bench.frontend.components.get_results.saveAsImage import getResult
 
 from vectordb_bench.frontend.config.styles import FAVICON
 from vectordb_bench.interface import benchmark_runner
+from vectordb_bench.models import CaseResult
 
 
 def main():
@@ -35,7 +38,18 @@ def main():
 
     # results selector and filter
     resultSelectorContainer = st.sidebar.container()
-    shownData, failedTasks, showCaseNames = getshownData(resultSelectorContainer, allResults)
+
+    def case_results_filter(case_result: CaseResult) -> bool:
+        case = case_result.task_config.case_config.case
+        return case.label == CaseLabel.Performance and case.filters.type == FilterOp.NonFilter
+
+    default_selected_task_labels = ["standard_2025"]
+    shownData, failedTasks, showCaseNames = getshownData(
+        resultSelectorContainer,
+        allResults,
+        case_results_filter=case_results_filter,
+        default_selected_task_labels=default_selected_task_labels,
+    )
 
     resultSelectorContainer.divider()
 
