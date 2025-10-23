@@ -1,5 +1,6 @@
 from ..backend.clients.alloydb.cli import AlloyDBScaNN
 from ..backend.clients.aws_opensearch.cli import AWSOpenSearch
+from ..backend.clients.chroma.cli import Chroma
 from ..backend.clients.clickhouse.cli import Clickhouse
 from ..backend.clients.hologres.cli import HologresHGraph
 from ..backend.clients.lancedb.cli import LanceDB
@@ -50,6 +51,7 @@ cli.add_command(QdrantCloud)
 cli.add_command(QdrantLocal)
 cli.add_command(BatchCli)
 cli.add_command(S3Vectors)
+cli.add_command(Chroma)
 
 
 if __name__ == "__main__":
