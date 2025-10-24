@@ -26,6 +26,7 @@ def NavToPages(st):
     options = [
         {"name": "Run Test", "link": "run_test"},
         {"name": "Results", "link": "results"},
+        {"name": "Qps & Recall", "link": "qps_recall"},
         {"name": "Quries Per Dollar", "link": "quries_per_dollar"},
         {"name": "Concurrent", "link": "concurrent"},
         {"name": "Label Filter", "link": "label_filter"},
