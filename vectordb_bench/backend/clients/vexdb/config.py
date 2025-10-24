@@ -104,7 +104,7 @@ class VexDBIndexConfig(BaseModel, DBCaseConfig):
         """Walk through options, creating 'SET 'key1 = "value1";' list"""
         session_options = []
         for setting_name, value in set_mapping.items():
-            if value:
+            if value is not None:
                 session_options.append(
                     {
                         "parameter": {
@@ -195,8 +195,45 @@ class VexDBHNSWConfig(VexDBIndexConfig):
         session_parameters = {"hnsw_ef_search": self.ef_search}
         return {"session_options": self._optionally_build_set_options(session_parameters)}
 
+class VexDBHybridANNConfig(VexDBIndexConfig):
+    m: int | None  # DETAIL:  Valid values are between "2" and "100".
+    ef_construction: int | None  # ef_construction must be greater than or equal to 2 * m
+    ef_search: int | None
+    index: IndexType = IndexType.HybridAnn
+    maintenance_work_mem: str | None = None
+    max_parallel_workers: int | None = None
+    create_index_before_load: bool = False
+    graph_magnitude_threshold: int | None = None
+    vec_index_magnitudes: str | None = None
+    hybrid_query_ivf_probes_factor: int | None = None
+    col_name_list: str | None
+
+
+    def index_param(self) -> VexDBIndexParam:
+        index_parameters = {"m": self.m, "ef_construction": self.ef_construction, "parallel_workers": self.max_parallel_workers, "graph_magnitude_threshold": self.graph_magnitude_threshold, "vec_index_magnitudes": self.vec_index_magnitudes}
+        return {
+            "metric": self.parse_metric(),
+            "index_type": self.index.value,
+            "index_creation_with_options": self._optionally_build_with_options(index_parameters),
+            "maintenance_work_mem": self.maintenance_work_mem,
+            "max_parallel_workers": self.max_parallel_workers,
+            "create_index_before_load": self.create_index_before_load,
+            "col_name_list": self.col_name_list,
+        }
+
+    def search_param(self) -> VexDBSearchParam:
+        return {
+            "metric_fun_op": self.parse_metric_fun_op(),
+        }
+
+    def session_param(self) -> VexDBSessionCommands:
+        session_parameters = {"hnsw_ef_search": self.ef_search, "hybrid_query_ivf_probes_factor": self.hybrid_query_ivf_probes_factor}
+        return {"session_options": self._optionally_build_set_options(session_parameters)}
+
+
 
 _vexdb_case_config = {
     IndexType.ES_HNSW: VexDBHNSWConfig,
     IndexType.ES_IVFFlat: VexDBIVFFlatConfig,
+    IndexType.HybridAnn: VexDBHybridANNConfig,
 }

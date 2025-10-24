@@ -133,6 +133,10 @@ class CaseConfigParamType(Enum):
     concurrencies = "concurrencies"
     optimize_after_write = "optimize_after_write"
     read_dur_after_write = "read_dur_after_write"
+    graph_magnitude_threshold = "graph_magnitude_threshold"
+    vec_index_magnitudes = "vec_index_magnitudes"
+    hybrid_query_ivf_probes_factor = "hybrid_query_ivf_probes_factor"
+    col_name_list = "col_name_list"
 
 
 class CustomizedCase(BaseModel):

@@ -288,12 +288,13 @@ class VexDB(VectorDB):
                     index_param["max_parallel_workers"],
                 ),
             )
-            self.cursor.execute(
-                sql.SQL("ALTER TABLE {} SET (parallel_workers = {});").format(
-                    sql.Identifier(self.table_name),
-                    index_param["max_parallel_workers"],
-                ),
-            )
+            # VexDB索引创建并行度在索引语法中指定
+            # self.cursor.execute(
+            #     sql.SQL("ALTER TABLE {} SET (parallel_workers = {});").format(
+            #         sql.Identifier(self.table_name),
+            #         index_param["max_parallel_workers"],
+            #     ),
+            # )
             self.conn.commit()
 
         results = self.cursor.execute(sql.SQL("SHOW max_parallel_maintenance_workers;")).fetchall()
@@ -319,18 +320,31 @@ class VexDB(VectorDB):
                 )
         with_clause = sql.SQL("WITH ({});").format(sql.SQL(", ").join(options)) if any(options) else sql.Composed(())
 
-
-        index_create_sql = sql.SQL(
-            """
-            CREATE INDEX IF NOT EXISTS {index_name} ON public.{table_name}
-            USING {index_type} (embedding {embedding_metric})
-            """,
-        ).format(
-            index_name=sql.Identifier(self._index_name),
-            table_name=sql.Identifier(self.table_name),
-            index_type=sql.Identifier(index_param["index_type"]),
-            embedding_metric=sql.Identifier(index_param["metric"]),
-        )
+        if not index_param.get("col_name_list"):
+            index_create_sql = sql.SQL(
+                """
+                CREATE INDEX IF NOT EXISTS {index_name} ON public.{table_name}
+                USING {index_type} (embedding {embedding_metric})
+                """,
+            ).format(
+                index_name=sql.Identifier(self._index_name),
+                table_name=sql.Identifier(self.table_name),
+                index_type=sql.Identifier(index_param["index_type"]),
+                embedding_metric=sql.Identifier(index_param["metric"]),
+            )
+        else:
+            index_create_sql = sql.SQL(
+                """
+                CREATE INDEX IF NOT EXISTS {index_name} ON public.{table_name}
+                USING {index_type} (embedding {embedding_metric}, {col_name_list})
+                """,
+            ).format(
+                index_name=sql.Identifier(self._index_name),
+                table_name=sql.Identifier(self.table_name),
+                index_type=sql.Identifier(index_param["index_type"]),
+                embedding_metric=sql.Identifier(index_param["metric"]),
+                col_name_list=sql.Identifier(index_param["col_name_list"]),
+            )
 
         index_create_sql_with_with_clause = (index_create_sql + with_clause).join(" ")
         log.debug(index_create_sql_with_with_clause.as_string(self.cursor))

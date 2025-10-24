@@ -143,3 +143,56 @@ def VexDBHNSW(
         ),
         **parameters,
     )
+
+
+class VexDBHybridANNTypedDict(VexDBTypedDict, HNSWFlavor1):
+    col_name_list: Annotated[
+        str | None,
+        click.option("--col-name-list", type=str, help="Which scalar fields will be created in hybridann index, for example: 'id'、'id, label'", required=True),
+    ]
+    hybrid_query_ivf_probes_factor: Annotated[
+        int | None,
+        click.option("--hybrid-query-ivf-probes-factor", type=int, help="Set hybrid_query_ivf_probes_factor before select"),
+    ]
+    vec_index_magnitudes: Annotated[
+        str | None,
+        click.option("--vec-index-magnitudes", type=str, help="The parameter vec_index_magnitudes in create index SQL"),
+    ]
+    graph_magnitude_threshold: Annotated[
+        int | None,
+        click.option("--graph-magnitude-threshold", type=int, help="The parameter graph_magnitude_threshold in create index SQL"),
+    ]
+
+
+@cli.command()
+@click_parameter_decorators_from_typed_dict(VexDBHybridANNTypedDict)
+def VexDBHybridANN(
+    **parameters: Unpack[VexDBHybridANNTypedDict],
+):
+    from .config import VexDBConfig, VexDBHybridANNConfig
+
+    parameters["custom_case"] = get_custom_case_config(parameters)
+    run(
+        db=DB.VexDB,
+        db_config=VexDBConfig(
+            db_label=parameters["db_label"],
+            user_name=SecretStr(parameters["user_name"]),
+            password=SecretStr(parameters["password"]),
+            host=parameters["host"],
+            port=parameters["port"],
+            db_name=parameters["db_name"],
+        ),
+        db_case_config=VexDBHybridANNConfig(
+            m=parameters["m"],
+            ef_construction=parameters["ef_construction"],
+            ef_search=parameters["ef_search"],
+            maintenance_work_mem=parameters["maintenance_work_mem"],
+            max_parallel_workers=parameters["max_parallel_workers"],
+            create_index_before_load=parameters["create_index_before_load"],
+            col_name_list=parameters["col_name_list"],
+            graph_magnitude_threshold=parameters["graph_magnitude_threshold"],
+            hybrid_query_ivf_probes_factor=parameters["hybrid_query_ivf_probes_factor"],
+            vec_index_magnitudes=parameters["vec_index_magnitudes"],
+        ),
+        **parameters,
+    )
