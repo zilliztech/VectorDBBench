@@ -1951,13 +1951,24 @@ AlloyDBPerformanceConfig = [
 ]
 
 AliyunElasticsearchLoadingConfig = [
+    CaseConfigParamInput_IndexType_ES,
+    CaseConfigParamInput_NumShards_ES,
+    CaseConfigParamInput_NumReplica_ES,
+    CaseConfigParamInput_RefreshInterval_ES,
     CaseConfigParamInput_EFConstruction_AliES,
     CaseConfigParamInput_M_AliES,
 ]
 AliyunElasticsearchPerformanceConfig = [
+    CaseConfigParamInput_IndexType_ES,
+    CaseConfigParamInput_NumShards_ES,
+    CaseConfigParamInput_NumReplica_ES,
+    CaseConfigParamInput_RefreshInterval_ES,
     CaseConfigParamInput_EFConstruction_AliES,
     CaseConfigParamInput_M_AliES,
     CaseConfigParamInput_NumCandidates_AliES,
+    CaseConfigParamInput_UseRescore_ES,
+    CaseConfigParamInput_OversampleRatio_ES,
+    CaseConfigParamInput_UseRouting_ES,
 ]
 
 TencentElasticsearchLoadingConfig = [
