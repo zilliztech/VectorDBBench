@@ -74,7 +74,7 @@ class EnVector(VectorDB):
         else:
             index_param = self.case_config.index_param().get("params", {})
             index_type = index_param.get("index_type", "FLAT")
-            print(f"{index_param=}")
+            
             if index_type == "IVF_FLAT" and index_param.get("train_centroids", False):
                 # need to train centroids before creating index
                 log.info(f"{self.name} training centroids for IVF_FLAT index...")
