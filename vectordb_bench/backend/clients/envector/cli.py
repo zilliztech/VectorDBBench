@@ -55,6 +55,11 @@ class EnVectorIVFFlatIndexTypedDict(CommonTypedDict, EnVectorTypedDict):
         int,
         click.option("--nprobe", type=int, help="nprobe for IVF index", default=6),
     ]
+    train_centroids: Annotated[
+        bool,
+        click.option("--train_centroids", help="train IVF centroids", default=False),
+    ]
+
 
 
 @cli.command(name="envectorivfflat")
@@ -70,6 +75,10 @@ def EnVectorIVFFlat(**parameters: Unpack[EnVectorIVFFlatIndexTypedDict]):
             eval_mode=parameters["eval_mode"],
             index_params={"nlist": parameters["nlist"], "nprobe": parameters["nprobe"]},
         ),
-        db_case_config=IVFFlatIndexConfig(nlist=parameters["nlist"], nprobe=parameters["nprobe"]),
+        db_case_config=IVFFlatIndexConfig(
+            nlist=parameters["nlist"], 
+            nprobe=parameters["nprobe"],
+            train_centroids=parameters["train_centroids"],
+        ),
         **parameters,
     )

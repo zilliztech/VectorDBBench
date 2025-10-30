@@ -6,6 +6,10 @@ import os
 from collections.abc import Iterable
 from contextlib import contextmanager
 
+import numpy as np
+from sklearn.cluster import KMeans
+# for GPU acceleration, we can use cuml.cluster.KMeans
+
 import es2
 
 from vectordb_bench.backend.filter import Filter, FilterOp
@@ -68,13 +72,31 @@ class EnVector(VectorDB):
         if self.collection_name in es2.get_index_list():
             log.info(f"{self.name} index {self.collection_name} already exists, skip creating")
         else:
-            print(f"{self.case_config.eval_mode=}")
+            index_param = self.case_config.index_param().get("params", {})
+            index_type = index_param.get("index_type", "FLAT")
+            print(f"{index_param=}")
+            if index_type == "IVF_FLAT" and index_param.get("train_centroids", False):
+                # need to train centroids before creating index
+                log.info(f"{self.name} training centroids for IVF_FLAT index...")
+
+                # n_lists = index_param.get("nlist", 250)
+                # kmeans = KMeans(n_clusters=n_lists, n_init=1)
+                # kmeans.fit(vectors)
+                # centroids = kmeans.cluster_centers_.copy()
+
+                # load centroids because we don't have data at first
+                centroids = np.load("Performance1536D500K_centroids.npy")
+                index_param["centroids"] = centroids.tolist()
+                
+                log.info(f"{self.name} finished training centroids for IVF_FLAT index.")
+            
+            # create index after training centroids
             es2.create_index(
                 index_name=self.collection_name,
                 dim=dim,
                 key_path=self.db_config.get("key_path"),
                 key_id=self.db_config.get("key_id"),
-                index_params=self.case_config.index_param().get("params", {}),
+                index_params=index_param,
                 eval_mode=self.case_config.eval_mode,
             )
         es2.disconnect()
