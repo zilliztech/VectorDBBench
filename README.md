@@ -59,7 +59,7 @@ All the database client supported
 | vespa                    | `pip install vectordb-bench[vespa]`         |
 | oceanbase                | `pip install vectordb-bench[oceanbase]`     |
 | hologres                 | `pip install vectordb-bench[hologres]`      |
-
+| tencent_es               | `pip install vectordb-bench[hologres]`      |
 ### Run
 
 ``` shell
