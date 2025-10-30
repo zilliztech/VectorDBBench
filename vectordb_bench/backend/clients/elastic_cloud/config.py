@@ -56,7 +56,8 @@ class ElasticCloudIndexConfig(BaseModel, DBCaseConfig):
                 self.number_of_replicas,
                 self.use_routing,
                 self.efConstruction,
-                self.M,2
+                self.M,
+                2,
             )
         )
 
