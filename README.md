@@ -43,8 +43,9 @@ python -m vectordb_bench.cli.vectordbbench envectorflat \
 export NUM_PER_BATCH=500000  # set database size for efficiency
 python -m vectordb_bench.cli.vectordbbench envectorivfflat \
     --uri "localhost:50050" \
-    --db-label "1536D-500K-IVF" --case-type "Performance1536D500K" \
-    --index-type IVFFLAT --nlist 256 --nprobe 6 \
+    --case-type "Performance1536D500K" \
+    --db-label "1536D-500K-IVF" \
+    --nlist 256 --nprobe 6 \
     --eval-mode mm
 ```
 
