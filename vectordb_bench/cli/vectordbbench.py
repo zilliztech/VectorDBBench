@@ -21,6 +21,7 @@ from ..backend.clients.tidb.cli import TiDB
 from ..backend.clients.vespa.cli import Vespa
 from ..backend.clients.weaviate_cloud.cli import Weaviate
 from ..backend.clients.zilliz_cloud.cli import ZillizAutoIndex
+from ..backend.clients.databend.cli import Databend
 from .batch_cli import BatchCli
 from .cli import cli
 
@@ -50,6 +51,7 @@ cli.add_command(QdrantCloud)
 cli.add_command(QdrantLocal)
 cli.add_command(BatchCli)
 cli.add_command(S3Vectors)
+cli.add_command(Databend)
 
 
 if __name__ == "__main__":

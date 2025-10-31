@@ -25,3 +25,4 @@ pymilvus
 clickhouse_connect
 pyvespa
 mysql-connector-python
+databend-driver

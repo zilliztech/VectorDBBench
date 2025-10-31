@@ -51,6 +51,7 @@ class DB(Enum):
     OceanBase = "OceanBase"
     S3Vectors = "S3Vectors"
     Hologres = "Alibaba Cloud Hologres"
+    Databend = "Databend"
 
     @property
     def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901, PLR0915
@@ -199,6 +200,11 @@ class DB(Enum):
             from .hologres.hologres import Hologres
 
             return Hologres
+
+        if self == DB.Databend:
+            from .databend.databend import Databend
+
+            return Databend
 
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
@@ -351,6 +357,11 @@ class DB(Enum):
 
             return HologresConfig
 
+        if self == DB.Databend:
+            from .databend.config import DatabendConfig
+
+            return DatabendConfig
+
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
 
@@ -475,7 +486,10 @@ class DB(Enum):
         if self == DB.Hologres:
             from .hologres.config import HologresIndexConfig
 
-            return HologresIndexConfig
+        if self == DB.Databend:
+            from .databend.config import DatabendIndexConfig
+
+            return DatabendIndexConfig
 
         # DB.Pinecone, DB.Chroma, DB.Redis
         return EmptyDBCaseConfig

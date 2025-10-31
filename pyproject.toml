@@ -74,6 +74,7 @@ all = [
     "pyvespa",
     "lancedb",
     "mysql-connector-python",
+    "databend-driver",
 ]
 
 qdrant          = [ "qdrant-client" ]
@@ -98,6 +99,7 @@ clickhouse      = [ "clickhouse-connect" ]
 vespa           = [ "pyvespa" ]
 lancedb         = [ "lancedb" ]
 oceanbase       = [ "mysql-connector-python" ]
+databend        = [ "databend-driver" ]
 
 [project.urls]
 "repository" = "https://github.com/zilliztech/VectorDBBench"
