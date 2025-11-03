@@ -389,8 +389,8 @@ class AWSOpenSearch(VectorDB):
                 **({"filter": self.filter} if self.filter else {}),
                 **(
                     {"rescore": {"oversample_factor": self.case_config.oversample_factor}}
-                    if self.case_config.use_quant
-                    else {}
+                    # if self.case_config.use_quant
+                    # else {}
                 ),
             }
             log.debug("Using standard knn query with method_parameters for non-s3vector engines")

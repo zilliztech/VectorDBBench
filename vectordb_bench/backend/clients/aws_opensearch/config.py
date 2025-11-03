@@ -40,6 +40,7 @@ class AWSOS_Engine(Enum):
 class AWSOSQuantization(Enum):
     fp32 = "fp32"
     fp16 = "fp16"
+    bq = "bq"
 
 
 class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
@@ -134,24 +135,19 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
 
         parameters = {"ef_construction": self.efConstruction, "m": self.M}
 
-        if self.engine == AWSOS_Engine.faiss and self.quantization_type == AWSOSQuantization.fp16:
-            parameters["encoder"] = {"name": "sq", "parameters": {"type": "fp16"}}
+        # Add encoder configuration based on quantization type
+        if self.engine == AWSOS_Engine.faiss and self.use_quant:
+            if self.quantization_type == AWSOSQuantization.fp16:
+                parameters["encoder"] = {"name": "sq", "parameters": {"type": "fp16"}}
+            elif self.quantization_type == AWSOSQuantization.bq:
+                parameters["encoder"] = {"name": "binary", "parameters": {"bits": 1}}
 
         # For other engines (faiss, lucene), space_type is set at method level
         return {
             "name": "hnsw",
             "engine": self.engine.value,
             "space_type": space_type,
-            "parameters": {
-                "ef_construction": self.efConstruction,
-                "m": self.M,
-                "ef_search": self.ef_search,
-                **(
-                    {"encoder": {"name": "sq", "parameters": {"type": self.quantization_type.fp16.value}}}
-                    if self.use_quant
-                    else {}
-                ),
-            },
+            "parameters": parameters,
         }
 
     def search_param(self) -> dict:
