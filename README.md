@@ -206,9 +206,11 @@ Options:
   --engine TEXT                   type of engine to use valid values [faiss, lucene, s3vector]
   # Memory Management
   --cb-threshold TEXT             k-NN Memory circuit breaker threshold
+
+  --ondisk                        Ondisk mode with binary quantization(32x compression)
   
   # Quantization Type
-  --quantization-type TEXT        which type of quantization to use valid values [fp32, fp16]
+  --quantization-type TEXT        which type of quantization to use valid values [fp32, fp16, bq]
   --help                          Show this message and exit.
   ```
 ### Run OceanBase from command line
