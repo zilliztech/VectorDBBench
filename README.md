@@ -208,6 +208,7 @@ Options:
   --cb-threshold TEXT             k-NN Memory circuit breaker threshold
 
   --ondisk                        Ondisk mode with binary quantization(32x compression)
+  --oversample-factor             Controls the degree of oversampling applied to minority classes in imbalanced datasets to improve model performance by balancing class distributions.(default 1.0)
   
   # Quantization Type
   --quantization-type TEXT        which type of quantization to use valid values [fp32, fp16, bq]

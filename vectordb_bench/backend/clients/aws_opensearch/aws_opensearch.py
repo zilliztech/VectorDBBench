@@ -65,14 +65,21 @@ class AWSOpenSearch(VectorDB):
             self._load_graphs_to_memory(client)
 
     def _create_index(self, client: OpenSearch) -> None:
-        ef_search_value = self.case_config.ef_search
-        log.info(f"Creating index with ef_search: {ef_search_value}")
-        log.info(f"Creating index with number_of_replicas: {self.case_config.number_of_replicas}")
+        self._log_index_creation_info()
+        self._configure_cluster_settings(client)
+        settings = self._build_index_settings()
+        vector_field_config = self._build_vector_field_config()
+        mappings = self._build_mappings(vector_field_config)
+        self._create_opensearch_index(client, settings, mappings)
 
+    def _log_index_creation_info(self) -> None:
+        log.info(f"Creating index with ef_search: {self.case_config.ef_search}")
+        log.info(f"Creating index with number_of_replicas: {self.case_config.number_of_replicas}")
         log.info(f"Creating index with engine: {self.case_config.engine}")
         log.info(f"Creating index with metric type: {self.case_config.metric_type_name}")
         log.info(f"All case_config parameters: {self.case_config.__dict__}")
 
+    def _configure_cluster_settings(self, client: OpenSearch) -> None:
         cluster_settings_body = {
             "persistent": {
                 "knn.algo_param.index_thread_qty": self.case_config.index_thread_qty,
@@ -80,33 +87,28 @@ class AWSOpenSearch(VectorDB):
             }
         }
         client.cluster.put_settings(body=cluster_settings_body)
-        settings = {
+
+    def _build_index_settings(self) -> dict:
+        return {
             "index": {
                 "knn": True,
                 "number_of_shards": self.case_config.number_of_shards,
                 "number_of_replicas": self.case_config.number_of_replicas,
                 "translog.flush_threshold_size": self.case_config.flush_threshold_size,
                 "knn.advanced.approximate_threshold": "-1",
+                "knn.algo_param.ef_search": self.case_config.ef_search,
             },
             "refresh_interval": self.case_config.refresh_interval,
         }
-        settings["index"]["knn.algo_param.ef_search"] = ef_search_value
 
-        # Get method configuration and log it for debugging
+    def _build_vector_field_config(self) -> dict:
         method_config = self.case_config.index_param()
         log.info(f"Raw method config from index_param(): {method_config}")
 
-        # For s3vector engine, ensure method only contains engine field
         if self.case_config.engine == AWSOS_Engine.s3vector:
             method_config = {"engine": "s3vector"}
-            log.info(f"Cleaned method config for s3vector: {method_config}")
-        elif self.case_config.on_disk:
-            # For on-disk mode, keep the method config as-is from index_param()
-            log.info(f"Using on-disk method config: {method_config}")
 
-        # Prepare vector field configuration
         if self.case_config.on_disk:
-            # For on-disk mode, use simplified configuration without method
             space_type = self.case_config.parse_metric()
             vector_field_config = {
                 "type": "knn_vector",
@@ -124,49 +126,43 @@ class AWSOpenSearch(VectorDB):
                 "method": method_config,
             }
 
-        # Add on-disk mode configuration if enabled
         if self.case_config.on_disk:
             log.info(f"Final on-disk vector field config: {vector_field_config}")
         elif self.case_config.engine == AWSOS_Engine.s3vector:
-            # For s3vector engine, space_type should be set at the vector field level
             space_type = self.case_config.parse_metric()
             vector_field_config["space_type"] = space_type
-
-            # Ensure method config is absolutely clean for s3vector - remove any potential extra fields
             vector_field_config["method"] = {"engine": "s3vector"}
-
-            log.info(f"Setting space_type '{space_type}' at vector field level for s3vector engine")
             log.info(f"Final vector field config for s3vector: {vector_field_config}")
         else:
             log.info(f"Standard vector field config: {vector_field_config}")
 
-        # Configure mappings based on engine type
+        return vector_field_config
+
+    def _build_mappings(self, vector_field_config: dict) -> dict:
         if self.case_config.engine == AWSOS_Engine.s3vector:
-            # For s3vector engine, use simplified mappings without _source configuration
             mappings = {
                 "properties": {
-                    # self.id_col_name: {"type": "integer", "store": True},
                     self.label_col_name: {"type": "keyword"},
                     self.vector_col_name: vector_field_config,
                 },
             }
             log.info("Using simplified mappings for s3vector engine (no _source configuration)")
         else:
-            # For other engines (faiss, lucene), use standard mappings with _source configuration
             mappings = {
                 "_source": {"excludes": [self.vector_col_name], "recovery_source_excludes": [self.vector_col_name]},
                 "properties": {
-                    # self.id_col_name: {"type": "integer", "store": True},
                     self.label_col_name: {"type": "keyword"},
                     self.vector_col_name: vector_field_config,
                 },
             }
             log.info("Using standard mappings with _source configuration for non-s3vector engines")
+        return mappings
+
+    def _create_opensearch_index(self, client: OpenSearch, settings: dict, mappings: dict) -> None:
         try:
             log.info(f"Creating index with settings: {settings}")
             log.info(f"Creating index with mappings: {mappings}")
 
-            # Additional logging for s3vector to confirm method config before sending
             if self.case_config.engine == AWSOS_Engine.s3vector:
                 method_in_mappings = mappings["properties"][self.vector_col_name]["method"]
                 log.info(f"Final method config being sent to OpenSearch: {method_in_mappings}")
@@ -176,21 +172,20 @@ class AWSOpenSearch(VectorDB):
                 body={"settings": settings, "mappings": mappings},
             )
 
-            # For s3vector, verify the actual index configuration after creation
             if self.case_config.engine == AWSOS_Engine.s3vector:
-                try:
-                    actual_mapping = client.indices.get_mapping(index=self.index_name)
-                    actual_method = actual_mapping[self.index_name]["mappings"]["properties"][self.vector_col_name][
-                        "method"
-                    ]
-                    log.info(f"Actual method config in created index: {actual_method}")
-
-                except Exception as e:
-                    log.warning(f"Failed to verify index configuration: {e}")
+                self._verify_s3vector_index_config(client)
 
         except Exception as e:
             log.warning(f"Failed to create index: {self.index_name} error: {e!s}")
             raise e from None
+
+    def _verify_s3vector_index_config(self, client: OpenSearch) -> None:
+        try:
+            actual_mapping = client.indices.get_mapping(index=self.index_name)
+            actual_method = actual_mapping[self.index_name]["mappings"]["properties"][self.vector_col_name]["method"]
+            log.info(f"Actual method config in created index: {actual_method}")
+        except Exception as e:
+            log.warning(f"Failed to verify index configuration: {e}")
 
     @contextmanager
     def init(self) -> None:
@@ -387,11 +382,10 @@ class AWSOpenSearch(VectorDB):
                 "k": k,
                 "method_parameters": self.case_config.search_param(),
                 **({"filter": self.filter} if self.filter else {}),
-                **(
-                    {"rescore": {"oversample_factor": self.case_config.oversample_factor}}
-                    # if self.case_config.use_quant
-                    # else {}
-                ),
+                "rescore": {"oversample_factor": self.case_config.oversample_factor}
+                # if self.case_config.use_quant
+                # else {}
+                ,
             }
             log.debug("Using standard knn query with method_parameters for non-s3vector engines")
 
