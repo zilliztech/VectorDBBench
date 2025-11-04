@@ -57,7 +57,11 @@ class EnVectorIVFFlatIndexTypedDict(CommonTypedDict, EnVectorTypedDict):
     ]
     train_centroids: Annotated[
         bool,
-        click.option("--train_centroids", help="train IVF centroids", default=False),
+        click.option("--train-centroids", type=bool, help="train IVF centroids", default=False),
+    ]
+    centroids: Annotated[
+        str,
+        click.option("--centroids", type=str, help="centroids for IVF index", default=None),
     ]
 
 
@@ -79,6 +83,7 @@ def EnVectorIVFFlat(**parameters: Unpack[EnVectorIVFFlatIndexTypedDict]):
             nlist=parameters["nlist"], 
             nprobe=parameters["nprobe"],
             train_centroids=parameters["train_centroids"],
+            centroids=parameters["centroids"],
         ),
         **parameters,
     )
