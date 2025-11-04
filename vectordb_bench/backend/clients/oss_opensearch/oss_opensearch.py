@@ -228,6 +228,7 @@ class OSSOpenSearch(VectorDB):
         ef_search_value = self.case_config.efSearch
         log.info(f"Creating index with ef_search: {ef_search_value}")
         log.info(f"Creating index with number_of_replicas: {self.case_config.number_of_replicas}")
+        log.info(f"Creating index with replication_type: {self.case_config.replication_type}")
         log.info(f"Creating index with engine: {self.case_config.engine}")
         log.info(f"Creating index with metric type: {self.case_config.metric_type_name}")
         log.info(f"All case_config parameters: {self.case_config.__dict__}")
@@ -247,6 +248,7 @@ class OSSOpenSearch(VectorDB):
                 "number_of_replicas": self.case_config.number_of_replicas,
                 "translog.flush_threshold_size": self.case_config.flush_threshold_size,
                 "knn.advanced.approximate_threshold": "-1",
+                "replication.type": self.case_config.replication_type,
             },
             "refresh_interval": self.case_config.refresh_interval,
         }

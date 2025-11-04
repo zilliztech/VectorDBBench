@@ -76,6 +76,7 @@ class OSSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
     use_routing: bool = False  # for label-filter cases
     oversample_factor: float = 1.0
     quantization_type: OSSOpenSearchQuantization = OSSOpenSearchQuantization.fp32
+    replication_type: str | None = "DOCUMENT"
 
     @root_validator
     def validate_engine_name(cls, values: dict):
@@ -101,6 +102,8 @@ class OSSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
             and self.number_of_segments == obj.number_of_segments
             and self.use_routing == obj.use_routing
             and self.quantization_type == obj.quantization_type
+            and self.replication_type == obj.replication_type
+
         )
 
     def __hash__(self) -> int:
@@ -114,6 +117,7 @@ class OSSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
                 self.number_of_segments,
                 self.use_routing,
                 self.quantization_type,
+                self.replication_type,
             )
         )
 
