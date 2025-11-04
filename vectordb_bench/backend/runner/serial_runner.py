@@ -295,20 +295,9 @@ class SerialSearchRunner:
         return (avg_recall, avg_ndcg, p99, p95)
 
     def _run_in_subprocess(self) -> tuple[float, float, float, float]:
-        try:
-            with concurrent.futures.ProcessPoolExecutor(
-                mp_context=mp.get_context("spawn"),
-                max_workers=1,
-            ) as executor:
-                future = executor.submit(self.search, (self.test_data, self.ground_truth))
-                return future.result()
-        except TypeError as exc:
-            # Some DB clients keep unpicklable resources (e.g. threading locks), so
-            # the process pool bootstrap fails. In that case fall back to in-process execution.
-            if "_thread.RLock" in str(exc):
-                log.warning("Process pool failed due to unpicklable resource, falling back to in-process run: %s", exc)
-                return self.search((self.test_data, self.ground_truth))
-            raise
+        with concurrent.futures.ProcessPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(self.search, (self.test_data, self.ground_truth))
+            return future.result()
 
     @utils.time_it
     def run(self) -> tuple[float, float, float, float]:
