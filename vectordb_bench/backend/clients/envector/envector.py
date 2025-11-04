@@ -76,19 +76,25 @@ class EnVector(VectorDB):
             index_type = index_param.get("index_type", "FLAT")
             
             if index_type == "IVF_FLAT" and index_param.get("train_centroids", False):
-                # need to train centroids before creating index
-                log.info(f"{self.name} training centroids for IVF_FLAT index...")
-
-                # n_lists = index_param.get("nlist", 250)
-                # kmeans = KMeans(n_clusters=n_lists, n_init=1)
-                # kmeans.fit(vectors)
-                # centroids = kmeans.cluster_centers_.copy()
-
-                # load centroids because we don't have data at first
-                centroids = np.load("Performance1536D500K_centroids.npy")
-                index_param["centroids"] = centroids.tolist()
                 
-                log.info(f"{self.name} finished training centroids for IVF_FLAT index.")
+                centroid_path = index_param.get("centroids", None)
+
+                if centroid_path is not None:
+                    if not os.path.exists(centroid_path):
+                        raise FileNotFoundError(f"Centroid file {centroid_path} not found for IVF_FLAT index training.")
+                    centroids = np.load(centroid_path)
+                    log.info(f"{self.name} loaded centroids from {centroid_path} for IVF_FLAT index training.")
+                else:
+                    centroids = None
+                    log.info(f"{self.name} No centroid file provided for IVF_FLAT index training, will use random centroids.")
+                    
+                    # train centroids using KMeans
+                    # n_lists = index_param.get("nlist", 250)
+                    # kmeans = KMeans(n_clusters=n_lists, n_init=1)
+                    # kmeans.fit(vectors)
+                    # centroids = kmeans.cluster_centers_.copy()
+
+                index_param["centroids"] = centroids.tolist()
             
             # create index after training centroids
             es2.create_index(
@@ -166,7 +172,7 @@ class EnVector(VectorDB):
     def search_embedding(
         self,
         query: list[float],
-        k: int = 100,
+        k: int = 10,
         timeout: int | None = None,
     ) -> list[int]:
         """Perform a search on a query embedding and return results."""
