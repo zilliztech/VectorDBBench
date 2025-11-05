@@ -36,7 +36,8 @@ Make sure that ES2 server is running before starting VectorDBBench.
 # FLAT
 python -m vectordb_bench.cli.vectordbbench envectorflat \
     --uri "localhost:50050" \
-    --db-label "1536D-500K-FLAT" --case-type "Performance1536D500K" \
+    --db-label "1536D-500K-FLAT" \
+    --case-type "Performance1536D500K" \
     --eval-mode mm
 
 # IVF-FLAT
@@ -45,7 +46,7 @@ python -m vectordb_bench.cli.vectordbbench envectorivfflat \
     --uri "localhost:50050" \
     --case-type "Performance1536D500K" \
     --db-label "1536D-500K-IVF" \
-    --nlist 256 --nprobe 6 \
+    --nlist 250 --nprobe 6 \
     --eval-mode mm
 ```
 
