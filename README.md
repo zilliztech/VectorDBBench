@@ -50,6 +50,18 @@ python -m vectordb_bench.cli.vectordbbench envectorivfflat \
     --eval-mode mm
 ```
 
+### Example of Results : FLAT
+
+```
+XXXX-XX-XX XX:XX:XX,XXX | INFO | Task summary: run_id=eb92d, task_label=eb92d5dcf7ee42eeb50a06c1a71fe5c9 (models.py:437)
+XXXX-XX-XX XX:XX:XX,XXX | INFO | DB       | db_label               case                                            label                            | load_dur    qps        latency(p99)    latency(p95)    recall        max_load_count | label (models.py:437)
+XXXX-XX-XX XX:XX:XX,XXX | INFO | -------- | ---------------------- ----------------------------------------------- -------------------------------- | ----------- ---------- --------------- --------------- ------------- -------------- | ----- (models.py:437)
+XXXX-XX-XX XX:XX:XX,XXX | INFO | EnVector | FLAT    Search Performance Test (50K Dataset, 1536 Dim) eb92d5dcf7ee42eeb50a06c1a71fe5c9 | 68.0537     52.0839    0.0614          0.0594          0.9997        0              | :slightly_smiling_face:    (models.py:437)
+```
+
+
+
+
 The origin README of VectorDBBench is following:
 
 
