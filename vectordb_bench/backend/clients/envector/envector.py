@@ -53,6 +53,7 @@ class EnVector(VectorDB):
         self._vector_index_name = "vector_idx"
         self._scalar_id_index_name = "id_sort_idx"
         self._scalar_labels_index_name = "labels_idx"
+        self.col: es2.Index | None = None
 
         es2.init(
             address=self.db_config.get("uri"), 
@@ -107,6 +108,15 @@ class EnVector(VectorDB):
             )
         es2.disconnect()
 
+    def __getstate__(self) -> dict:
+        """Drop live handles before pickling for multiprocessing."""
+        state = self.__dict__.copy()
+        state["col"] = None
+        return state
+
+    def __setstate__(self, state: dict) -> None:
+        self.__dict__.update(state)
+
     @contextmanager
     def init(self):
         """
@@ -115,15 +125,18 @@ class EnVector(VectorDB):
             >>>     self.insert_embeddings()
             >>>     self.search_embedding()
         """
-        self.col: es2.Index | None = None
         es2.init(
-            address=self.db_config.get("uri"), 
-            key_path=self.db_config.get("key_path"), 
+            address=self.db_config.get("uri"),
+            key_path=self.db_config.get("key_path"),
             key_id=self.db_config.get("key_id"),
             eval_mode=self.case_config.eval_mode,
         )
-        self.col = es2.Index(self.collection_name)
-        yield
+        try:
+            self.col = es2.Index(self.collection_name)
+            yield
+        finally:
+            self.col = None
+            es2.disconnect()
 
     def create_index(self):
         pass
