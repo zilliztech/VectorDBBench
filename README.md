@@ -47,7 +47,9 @@ python -m vectordb_bench.cli.vectordbbench envectorivfflat \
     --case-type "Performance1536D500K" \
     --db-label "1536D-500K-IVF" \
     --nlist 250 --nprobe 6 \
-    --eval-mode mm
+    --eval-mode mm \
+    --train-centroids True \
+    --centroids "centroids.npy"
 ```
 
 ### Example of Results : FLAT
