@@ -99,10 +99,10 @@ class EnVector(VectorDB):
                 index_param["centroids"] = centroids.tolist()
 
             if index_type == "IVF_FLAT":
-                self.batch_size = os.environ["NUM_PER_BATCH"]
-                log.info(
-                    f"Set EnVector IVF_FLAT insert batch size to {self.batch_size}"
-                    f"This should be the size of dataset for better performance."
+                self.batch_size = int(os.environ.get("NUM_PER_BATCH", 500_000))
+                log.debug(
+                    f"Set EnVector IVF_FLAT insert batch size to {self.batch_size}. "
+                    f"This should be the size of dataset for better performance when IVF_FLAT."
                 )
 
             # create index after training centroids
