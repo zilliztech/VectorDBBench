@@ -44,7 +44,8 @@ class EnVector(VectorDB):
         self.db_config = db_config
         self.case_config = db_case_config
         self.collection_name = collection_name
-        self.batch_size = 128 * 32
+
+        self.batch_size = 128 * 32 # default batch size for insertions, can be modified for IVF_FLAT
         
         self._primary_field = "pk"
         self._scalar_id_field = "id"
@@ -96,7 +97,14 @@ class EnVector(VectorDB):
                     # centroids = kmeans.cluster_centers_.copy()
 
                 index_param["centroids"] = centroids.tolist()
-            
+
+            if index_type == "IVF_FLAT":
+                self.batch_size = os.environ["NUM_PER_BATCH"]
+                log.info(
+                    f"Set EnVector IVF_FLAT insert batch size to {self.batch_size}"
+                    f"This should be the size of dataset for better performance."
+                )
+
             # create index after training centroids
             es2.create_index(
                 index_name=self.collection_name,
@@ -106,6 +114,7 @@ class EnVector(VectorDB):
                 index_params=index_param,
                 eval_mode=self.case_config.eval_mode,
             )
+
         es2.disconnect()
 
     def __getstate__(self) -> dict:
