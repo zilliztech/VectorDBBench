@@ -76,11 +76,12 @@ class EnVector(VectorDB):
         else:
             index_param = self.case_config.index_param().get("params", {})
             index_type = index_param.get("index_type", "FLAT")
+            train_centroids = self.case_config.index_param().get("train_centroids", False)
             
-            if index_type == "IVF_FLAT" and index_param.get("train_centroids", False):
+            if index_type == "IVF_FLAT" and train_centroids:
                 
-                centroid_path = index_param.get("centroids", None)
-
+                centroid_path = self.case_config.index_param().get("centroids", None)
+                
                 if centroid_path is not None:
                     if not os.path.exists(centroid_path):
                         raise FileNotFoundError(f"Centroid file {centroid_path} not found for IVF_FLAT index training.")
