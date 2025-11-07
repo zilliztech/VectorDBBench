@@ -105,7 +105,7 @@ class CaseRunner(BaseModel):
                 import re, hashlib
                 # Primary identifier = case-type enum name from CLI (e.g., Performance768D10M)
                 case_type_name = self.config.case_config.case_id.name
-                base = f"vdb_{case_type_name.lower()}"
+                base = f"{case_type_name.lower()}"
                 # Sanitize to [a-z0-9_]
                 base = re.sub(r"[^a-z0-9_]+", "_", base).strip("_")
                 # Cap to 63 chars; add short hash if truncated
