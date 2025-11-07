@@ -1,4 +1,5 @@
 import logging
+import os
 from contextlib import contextmanager
 from typing import Any, Optional, Tuple
 import pandas as pd
@@ -48,23 +49,65 @@ class Doris(VectorDB):
         # Initialize client and table as None (lazy initialization)
         self.client = None
         self.table = None
+        self._client_pid: int | None = None
 
         if drop_old:
             self._drop_table()
             self._create_table()
 
     def _ensure_client_initialized(self):
-        """Ensure the client is initialized when needed."""
+        """Ensure the client is initialized and bound to the current process.
+
+        Multiprocessing will pickle the DB wrapper. Any existing mysql connection or
+        table cursor cached from a different PID must be discarded and recreated here.
+        """
+        cur_pid = os.getpid()
+
+        need_new_client = False
         if self.client is None:
+            need_new_client = True
+        else:
+            # If client was created in another process or connection is not usable, recreate it
+            try:
+                # different process
+                if self._client_pid is None or self._client_pid != cur_pid:
+                    need_new_client = True
+                else:
+                    # check connection health if available
+                    conn = getattr(self.client, "connection", None)
+                    if conn is None or not getattr(conn, "is_connected", lambda: False)():
+                        need_new_client = True
+            except Exception:
+                need_new_client = True
+
+        if need_new_client:
+            # Drop any table cached from another PID (its cursors are not valid across processes)
+            self.table = None
+
+            # Recreate client and set sessions
             self.client = DorisVectorClient(
                 database=self.database_name,
                 auth_options=self.auth_options,
-                load_options=self.load_options
+                load_options=self.load_options,
             )
-            
-            # Configure session variables
+
             if hasattr(self.case_config, "session_vars") and self.case_config.session_vars:
                 self.client.with_sessions(self.case_config.session_vars)
+
+            self._client_pid = cur_pid
+
+            # Re-open table in this process to ensure fresh cursors
+            try:
+                self.table = self.client.open_table(self.table_name)
+                if hasattr(self.table, "index_options") and self.table.index_options:
+                    self.table.index_options.dim = self.dim
+                    if self.search_fn.startswith("inner_product"):
+                        self.table.index_options.metric_type = "inner_product"
+                    else:
+                        self.table.index_options.metric_type = "l2_distance"
+            except Exception:
+                # Table might not exist yet; leave it to ready_to_load
+                self.table = None
 
     @contextmanager
     def init(self):
@@ -75,6 +118,17 @@ class Doris(VectorDB):
                 try:
                     # Try to open existing table
                     self.table = self.client.open_table(self.table_name)
+                    # Avoid SHOW CREATE TABLE parsing in SDK by setting dim/metric directly
+                    try:
+                        if hasattr(self.table, "index_options") and self.table.index_options:
+                            self.table.index_options.dim = self.dim
+                            # Set metric_type according to current case
+                            if self.search_fn.startswith("inner_product"):
+                                self.table.index_options.metric_type = "inner_product"
+                            else:
+                                self.table.index_options.metric_type = "l2_distance"
+                    except Exception:
+                        pass
                 except Exception:
                     # Table doesn't exist, will be created in ready_to_load
                     self.table = None
@@ -124,6 +178,16 @@ class Doris(VectorDB):
                 index_options=index_options,
                 overwrite=True
             )
+            # Ensure SDK knows dim/metric to skip SHOW CREATE TABLE parsing later
+            try:
+                if hasattr(self.table, "index_options") and self.table.index_options:
+                    self.table.index_options.dim = self.dim
+                    if self.search_fn.startswith("inner_product"):
+                        self.table.index_options.metric_type = "inner_product"
+                    else:
+                        self.table.index_options.metric_type = "l2_distance"
+            except Exception:
+                pass
             
             log.info("Successfully created table %s", self.table_name)
             
@@ -156,6 +220,7 @@ class Doris(VectorDB):
     ) -> Tuple[int, Optional[Exception]]:
         """Insert embeddings using doris-vector-search library."""
         try:
+            self._ensure_client_initialized()
             # Prepare data in pandas DataFrame format
             data = pd.DataFrame([
                 {"id": metadata[i], "embedding": embeddings[i]} 
@@ -182,6 +247,7 @@ class Doris(VectorDB):
             **kwargs: Any,
     ) -> list[int]:
         try:
+            self._ensure_client_initialized()
             # Map metric functions to doris-vector-search metric types
             metric_type = "l2_distance"
             if self.search_fn.startswith("inner_product"):
@@ -217,6 +283,7 @@ class Doris(VectorDB):
             **kwargs: Any,
     ) -> list[int]:
         try:
+            self._ensure_client_initialized()
             # Map metric functions to doris-vector-search metric types
             metric_type = "l2_distance"
             if self.search_fn.startswith("inner_product"):
@@ -254,6 +321,7 @@ class Doris(VectorDB):
             **kwargs: Any,
     ) -> list[int]:
         try:
+            self._ensure_client_initialized()
             # Map metric functions to doris-vector-search metric types
             metric_type = "l2_distance"
             if self.search_fn.startswith("inner_product"):
@@ -285,6 +353,7 @@ class Doris(VectorDB):
                         query: list[float],
                         id: int | None = None):
         try:
+            self._ensure_client_initialized()
             # Use exact search to get distance for a specific id
             metric_type = self.search_fn
             if metric_type.endswith("_approximate"):
@@ -317,6 +386,7 @@ class Doris(VectorDB):
             **kwargs: Any,
     ) -> list[int]:
         try:
+            self._ensure_client_initialized()
             # Use exact search by removing approximate suffix
             metric_type = self.search_fn
             if metric_type.endswith("_approximate"):
