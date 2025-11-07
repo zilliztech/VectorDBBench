@@ -131,10 +131,30 @@ class AWSOpenSearchTypedDict(TypedDict):
         str | None,
         click.option(
             "--quantization-type",
-            type=click.Choice(["fp32", "fp16"]),
+            type=click.Choice(["fp32", "fp16", "bq"]),
             help="quantization type for vectors (in index)",
             default="fp32",
             required=False,
+        ),
+    ]
+
+    oversample_factor: Annotated[
+        float,
+        click.option(
+            "--oversample-factor",
+            type=float,
+            help="Oversample factor for vector search",
+            default=1.0,
+        ),
+    ]
+
+    on_disk: Annotated[
+        bool,
+        click.option(
+            "--on-disk",
+            is_flag=True,
+            help="Enable on-disk vector storage mode",
+            default=False,
         ),
     ]
 
@@ -187,6 +207,8 @@ def AWSOpenSearch(**parameters: Unpack[AWSOpenSearchHNSWTypedDict]):
             engine=engine,
             quantization_type=AWSOSQuantization(parameters["quantization_type"]),
             metric_type_name=parameters["metric_type"],
+            on_disk=parameters["on_disk"],
+            oversample_factor=parameters["oversample_factor"],
         ),
         **parameters,
     )
