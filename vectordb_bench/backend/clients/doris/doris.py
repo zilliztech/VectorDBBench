@@ -18,6 +18,7 @@ class Doris(VectorDB):
             dim: int,
             db_config: dict,
             db_case_config: DorisCaseConfig,
+            collection_name: str | None = None,
             drop_old: bool = False,
             **kwargs,
     ):
@@ -26,8 +27,9 @@ class Doris(VectorDB):
         self.case_config = db_case_config
         self.dim = dim
         self.search_fn = db_case_config.search_param()["metric_fn"]
+        # Prefer provided collection_name; otherwise fallback to a simple default
         # e.g. l2_distance128, inner_product128
-        self.table_name = self.search_fn + str(dim)
+        self.table_name = collection_name if collection_name else (self.search_fn + str(dim))
         
         # Store connection configuration for lazy initialization
         self.auth_options = AuthOptions(

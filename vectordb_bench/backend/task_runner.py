@@ -97,6 +97,25 @@ class CaseRunner(BaseModel):
 
     def init_db(self, drop_old: bool = True) -> None:
         db_cls = self.config.db.init_cls
+        # Compose a compact, case-unique collection/table name for Doris to avoid cross-case interference
+        collection_name = None
+        try:
+            from .clients import DB
+            if self.config.db == DB.Doris:
+                import re, hashlib
+                # Primary identifier = case-type enum name from CLI (e.g., Performance768D10M)
+                case_type_name = self.config.case_config.case_id.name
+                base = f"vdb_{case_type_name.lower()}"
+                # Sanitize to [a-z0-9_]
+                base = re.sub(r"[^a-z0-9_]+", "_", base).strip("_")
+                # Cap to 63 chars; add short hash if truncated
+                if len(base) > 63:
+                    h = hashlib.md5(base.encode()).hexdigest()[:6]
+                    base = f"{base[:(63-7)]}_{h}"
+                collection_name = base
+        except Exception:
+            # If anything goes wrong, fall back silently; Doris will use its default name logic
+            collection_name = None
 
         self.db = db_cls(
             dim=self.ca.dataset.data.dim,
@@ -104,6 +123,7 @@ class CaseRunner(BaseModel):
             db_case_config=self.config.db_case_config,
             drop_old=drop_old,
             with_scalar_labels=self.ca.with_scalar_labels,
+            **({"collection_name": collection_name} if collection_name else {}),
         )
 
     def _pre_run(self, drop_old: bool = True):
