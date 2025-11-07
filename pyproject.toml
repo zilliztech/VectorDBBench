@@ -98,6 +98,7 @@ clickhouse      = [ "clickhouse-connect" ]
 vespa           = [ "pyvespa" ]
 lancedb         = [ "lancedb" ]
 oceanbase       = [ "mysql-connector-python" ]
+doris           = [ "doris-vector-search" ]
 
 [project.urls]
 "repository" = "https://github.com/zilliztech/VectorDBBench"
