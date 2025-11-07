@@ -103,7 +103,6 @@ class OSSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
             and self.use_routing == obj.use_routing
             and self.quantization_type == obj.quantization_type
             and self.replication_type == obj.replication_type
-
         )
 
     def __hash__(self) -> int:
