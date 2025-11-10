@@ -51,6 +51,7 @@ class DB(Enum):
     OceanBase = "OceanBase"
     S3Vectors = "S3Vectors"
     Hologres = "Alibaba Cloud Hologres"
+    AliSQL = "AlibabaCloudRDSMySQL"
 
     @property
     def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901, PLR0915
@@ -199,6 +200,11 @@ class DB(Enum):
             from .hologres.hologres import Hologres
 
             return Hologres
+        
+        if self == DB.AliSQL:
+            from .alisql.alisql import AliSQL
+
+            return AliSQL
 
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
@@ -350,6 +356,11 @@ class DB(Enum):
             from .hologres.config import HologresConfig
 
             return HologresConfig
+        
+        if self == DB.AliSQL:
+            from .alisql.config import AliSQLConfig
+
+            return AliSQLConfig
 
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
@@ -476,6 +487,11 @@ class DB(Enum):
             from .hologres.config import HologresIndexConfig
 
             return HologresIndexConfig
+        
+        if self == DB.AliSQL:
+            from .alisql.alisql import AliSQLIndexConfig
+
+            return AliSQLIndexConfig
 
         # DB.Pinecone, DB.Chroma, DB.Redis
         return EmptyDBCaseConfig
