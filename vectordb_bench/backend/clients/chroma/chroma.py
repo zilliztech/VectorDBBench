@@ -1,10 +1,10 @@
 import logging
 from contextlib import contextmanager
-from typing import Any
 
 import chromadb
 
-from ..api import DBCaseConfig, VectorDB
+from ..api import VectorDB
+from .config import ChromaIndexConfig
 
 log = logging.getLogger(__name__)
 
@@ -21,35 +21,34 @@ class ChromaClient(VectorDB):
         self,
         dim: int,
         db_config: dict,
-        db_case_config: DBCaseConfig,
+        db_case_config: ChromaIndexConfig,
+        collection_name: str = "VectorDBBenchCollection",
         drop_old: bool = False,
         **kwargs,
     ):
         self.db_config = db_config
         self.case_config = db_case_config
-        self.collection_name = "example2"
+        self.collection_name = collection_name
 
-        client = chromadb.HttpClient(host=self.db_config["host"], port=self.db_config["port"])
+        client = chromadb.HttpClient(**db_config)
         assert client.heartbeat() is not None
+
         if drop_old:
             try:
-                client.reset()  # Reset the database
+                client.reset()
             except Exception:
                 drop_old = False
                 log.info(f"Chroma client drop_old collection: {self.collection_name}")
 
+        self.client = None
+        self.collection = None
+
     @contextmanager
-    def init(self) -> None:
-        """create and destory connections to database.
-
-        Examples:
-            >>> with self.init():
-            >>>     self.insert_embeddings()
-        """
-        # create connection
-        self.client = chromadb.HttpClient(host=self.db_config["host"], port=self.db_config["port"])
-
-        self.collection = self.client.get_or_create_collection("example2")
+    def init(self):
+        self.client = chromadb.HttpClient(**self.db_config)
+        self.collection = self.client.get_or_create_collection(
+            name=self.collection_name, configuration=self.case_config.index_param()
+        )
         yield
         self.client = None
         self.collection = None
@@ -58,62 +57,38 @@ class ChromaClient(VectorDB):
         pass
 
     def optimize(self, data_size: int | None = None):
-        pass
+        assert self.collection is not None, "Please call self.init() before"
+        try:
+            self.collection.modify(configuration=self.case_config.search_param())
+        except Exception as e:
+            log.warning(f"Optimize error: {e}")
+            raise
 
     def insert_embeddings(
         self,
         embeddings: list[list[float]],
         metadata: list[int],
-        **kwargs: Any,
+        **kwargs,
     ) -> tuple[int, Exception]:
-        """Insert embeddings into the database.
-
-        Args:
-            embeddings(list[list[float]]): list of embeddings
-            metadata(list[int]): list of metadata
-            kwargs: other arguments
-
-        Returns:
-            tuple[int, Exception]: number of embeddings inserted and exception if any
-        """
-        ids = [str(i) for i in metadata]
-        metadata = [{"id": int(i)} for i in metadata]
+        assert self.collection is not None, "Please call self.init() before"
+        ids = [f"{idx}" for idx in metadata]
+        metadata = [{"index": mid} for mid in metadata]
         try:
-            if len(embeddings) > 0:
-                self.collection.add(embeddings=embeddings, ids=ids, metadatas=metadata)
+            self.collection.add(ids=ids, embeddings=embeddings, metadatas=metadata)
         except Exception as e:
-            log.warning(f"Failed to insert data: error: {e!s}")
+            log.warning(f"Failed to insert data: {e}")
             return 0, e
-        return len(embeddings), None
+
+        return len(metadata), None
 
     def search_embedding(
-        self,
-        query: list[float],
-        k: int = 100,
-        filters: dict | None = None,
-        timeout: int | None = None,
-        **kwargs: Any,
-    ) -> dict:
-        """Search embeddings from the database.
-        Args:
-            embedding(list[float]): embedding to search
-            k(int): number of results to return
-            kwargs: other arguments
-
-        Returns:
-            Dict {ids: list[list[int]],
-                    embedding: list[list[float]]
-                    distance: list[list[float]]}
-        """
+        self, query: list[float], k: int = 100, filters: dict | None = None, timeout: int | None = None
+    ) -> list[int]:
+        assert self.client is not None, "Please call self.init() before"
         if filters:
-            # assumes benchmark test filters of format: {'metadata': '>=10000', 'id': 10000}
-            id_value = filters.get("id")
             results = self.collection.query(
-                query_embeddings=query,
-                n_results=k,
-                where={"id": {"$gt": id_value}},
+                query_embeddings=[query], n_results=k, where={"id": {"$gt": filters.get("id")}}
             )
-            # return list of id's in results
-            return [int(i) for i in results.get("ids")[0]]
-        results = self.collection.query(query_embeddings=query, n_results=k)
-        return [int(i) for i in results.get("ids")[0]]
+        else:
+            results = self.collection.query(query_embeddings=[query], n_results=k)
+        return [int(idx) for idx in results["ids"][0]]
