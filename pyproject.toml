@@ -40,6 +40,7 @@ dependencies = [
     "pydantic<v2",
     "scikit-learn",
     "pymilvus", # with pandas, numpy, ujson
+    "ujson",
 ]
 dynamic = ["version"]
 
