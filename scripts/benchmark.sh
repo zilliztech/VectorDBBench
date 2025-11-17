@@ -3,6 +3,7 @@
 set -euo pipefail
 
 DATASET_DIR=/data/vectordb_bench/dataset/PUBMED768D400K
+CENTROID_DIR=/data/ann/centroids/gas
 COMMON_ARGS=(
     --uri "localhost:50050"
     --eval-mode mm
@@ -29,4 +30,9 @@ run_case() {
 run_case envectorflat "PUBMED768D400K-FLAT"
 
 export NUM_PER_BATCH=500000  # set database size for efficiency
-run_case envectorivfflat "PUBMED768D400K-IVF" --nprobe 6
+run_case envectorivfflat "PUBMED768D400K-IVF" \
+    --is-vct True \
+    --train-centroids True \
+    --centroids "$CENTROID_DIR" \
+    --nlist 32000 \
+    --nprobe 6
