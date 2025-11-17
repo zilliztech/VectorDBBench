@@ -61,7 +61,7 @@ class EnVector(VectorDB):
 
         self.is_vct: bool = False
         self.vct_params: Dict[str, Any] = {}
-
+        
         es2.init(
             address=self.db_config.get("uri"), 
             key_path=self.db_config.get("key_path"), 
@@ -88,7 +88,7 @@ class EnVector(VectorDB):
                 
                 centroid_path = self.case_config.index_param().get("centroids", None)
                 is_vct = self.case_config.index_param().get("is_vct", False)
-                print(f"IS_VCT: {is_vct}, CENTROIDS: {centroid_path}") # for debug
+                log.debug(f"IS_VCT: {is_vct}, CENTROIDS: {centroid_path}") # for debug
                 
                 if centroid_path is not None:
                     if not os.path.exists(centroid_path):
@@ -107,6 +107,7 @@ class EnVector(VectorDB):
                         self.is_vct = True
                         index_param["virtual_cluster"] = True
                         index_param.update(new_index_params)
+                        log.info(f"{self.name} VCT parameters set for IVF_FLAT index creation.")
 
                     else:
                         # load trained centroids from file
@@ -244,6 +245,7 @@ class EnVector(VectorDB):
                 vectors_list = np.asarray(node_vectors, dtype=np.float32).tolist()
                 # metadata = [f"node={node_id},vector={vid}" for vid in vector_ids]
                 meta = np.take(metadata, vector_ids).tolist()
+                meta = [str(m) for m in meta]
 
                 assert len(vectors_list) == len(meta)
 
