@@ -59,6 +59,9 @@ class EnVector(VectorDB):
         self._scalar_labels_index_name = "labels_idx"
         self.col: es2.Index | None = None
 
+        self.is_vct: bool = False
+        self.vct_params: Dict[str, Any] = {}
+
         es2.init(
             address=self.db_config.get("uri"), 
             key_path=self.db_config.get("key_path"), 
