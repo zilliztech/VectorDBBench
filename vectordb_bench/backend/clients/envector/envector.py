@@ -1,14 +1,17 @@
 """Wrapper around the EnVector vector database over VectorDB"""
 
+from typing import Any, Dict
+
 import logging
-import time
 import os
 from collections.abc import Iterable
 from contextlib import contextmanager
 
 import numpy as np
-from sklearn.cluster import KMeans
-# for GPU acceleration, we can use cuml.cluster.KMeans
+# for IVF-FLAT centroid training
+# from sklearn.cluster import KMeans
+# or for GPU acceleration, we can use 
+# from cuml.cluster import KMeans
 
 import es2
 
@@ -81,24 +84,45 @@ class EnVector(VectorDB):
             if index_type == "IVF_FLAT" and train_centroids:
                 
                 centroid_path = self.case_config.index_param().get("centroids", None)
+                is_vct = self.case_config.index_param().get("is_vct", False)
+                print(f"IS_VCT: {is_vct}, CENTROIDS: {centroid_path}") # for debug
                 
                 if centroid_path is not None:
                     if not os.path.exists(centroid_path):
                         raise FileNotFoundError(f"Centroid file {centroid_path} not found for IVF_FLAT index training.")
-                    centroids = np.load(centroid_path)
-                    log.info(f"{self.name} loaded centroids from {centroid_path} for IVF_FLAT index training.")
-                else:
-                    centroids = None
-                    log.info(f"{self.name} No centroid file provided for IVF_FLAT index training, will use random centroids.")
                     
+                    if is_vct:
+                        # get VCT trained centroids
+                        new_index_params = get_vct_centroids(centroid_path)
+                        log.info(f"{self.name} loaded VCT centroids from {centroid_path} for IVF_FLAT index training.")
+                        
+                        self.vct_params = {
+                            "node_batches": new_index_params.pop("node_batches"),
+                            "centroid_node_ids": new_index_params.pop("centroid_node_ids"),
+                        }
+
+                        self.is_vct = True
+                        index_param["virtual_cluster"] = True
+                        index_param.update(new_index_params)
+
+                    else:
+                        # load trained centroids from file
+                        centroids = np.load(centroid_path)
+                        log.info(f"{self.name} loaded centroids from {centroid_path} for IVF_FLAT index training.")                        
+
+                        # set centroids for index creation
+                        index_param["centroids"] = centroids.tolist()
+
+                else:
                     # train centroids using KMeans
-                    # n_lists = index_param.get("nlist", 250)
-                    # kmeans = KMeans(n_clusters=n_lists, n_init=1)
-                    # kmeans.fit(vectors)
-                    # centroids = kmeans.cluster_centers_.copy()
+                    n_lists = index_param.get("nlist", 250)
+                    centroids = get_kmeans_centroids(n_lists)
+                    log.info(f"{self.name} No centroid file provided for IVF_FLAT index training, will use random centroids.")
 
-                index_param["centroids"] = centroids.tolist()
+                    # set centroids for index creation
+                    index_param["centroids"] = centroids.tolist()
 
+            # set larger batch size for IVF_FLAT insertions
             if index_type == "IVF_FLAT":
                 self.batch_size = int(os.environ.get("NUM_PER_BATCH", 500_000))
                 log.debug(
@@ -116,7 +140,7 @@ class EnVector(VectorDB):
                 eval_mode=self.case_config.eval_mode,
             )
 
-        es2.disconnect()
+        # es2.disconnect()
 
     def __getstate__(self) -> dict:
         """Drop live handles before pickling for multiprocessing."""
@@ -176,17 +200,58 @@ class EnVector(VectorDB):
         # use the first insert_embeddings to init collection
         assert self.col is not None
         assert len(embeddings) == len(metadata)
+        if self.is_vct:
+            return self._insert_vct(embeddings, metadata)
+        
+        else:
+            insert_count = 0
+            try:
+                for batch_start_offset in range(0, len(embeddings), self.batch_size):
+                    batch_end_offset = min(batch_start_offset + self.batch_size, len(embeddings))
+                    meta = [str(m) for m in metadata[batch_start_offset:batch_end_offset]]
+                    vectors = embeddings[batch_start_offset:batch_end_offset]
+                    self.col.insert(vectors, meta)
+                    insert_count += len(vectors)
+            except Exception as e:
+                log.info(f"Failed to insert data: {e}")
+                return insert_count, e
+            return insert_count, None
+    
+    def _insert_vct(
+        self,
+        embeddings: Iterable[list[float]],
+        metadata: list[int],
+    ) -> tuple[int, Exception]:
+        """Insert VCT nodes and their vectors into EnVector."""
+        node_batches = self.vct_params.get("node_batches", [])
         insert_count = 0
         try:
-            for batch_start_offset in range(0, len(embeddings), self.batch_size):
-                batch_end_offset = min(batch_start_offset + self.batch_size, len(embeddings))
-                meta = [str(m) for m in metadata[batch_start_offset:batch_end_offset]]
-                vectors = embeddings[batch_start_offset:batch_end_offset]
-                self.col.insert(vectors, meta)
-                insert_count += len(vectors)
+            for batch in node_batches:
+                node_id = int(batch["node_id"])
+                node_vectors = batch.get("vectors")
+                if node_vectors is None:
+                    continue
+                if len(node_vectors) == 0:
+                    continue
+
+                vector_count = len(node_vectors)
+                log.debug(f"Inserting node {node_id} with {vector_count} vectors") # debug
+                
+                vector_ids = batch.get("vector_ids") or range(len(node_vectors))
+                vectors_list = np.asarray(node_vectors, dtype=np.float32).tolist()
+                # metadata = [f"node={node_id},vector={vid}" for vid in vector_ids]
+                meta = np.take(metadata, vector_ids).tolist()
+
+                assert len(vectors_list) == len(meta)
+
+                self.col.insert_vct(vectors_list, metadata=meta, node_id=node_id)
+
+                insert_count += len(vectors_list)
+
         except Exception as e:
-            log.info(f"Failed to insert data: {e}")
+            log.info(f"Failed to insert VCT data: {e}")
             return insert_count, e
+        
         return insert_count, None
 
     def prepare_filter(self, filters: Filter):
@@ -202,13 +267,17 @@ class EnVector(VectorDB):
         assert self.col is not None
 
         try:
-            # Perform the search.
-            res = self.col.search(
-                query=query,
-                top_k=k,
-                output_fields=["metadata"],
-                search_params=self.case_config.search_param().get("search_params", {}),
-            )
+            if self.is_vct:
+                res = self._search_vct(query, k)
+            
+            else:
+                # Perform the search.
+                res = self.col.search(
+                    query=query,
+                    top_k=k,
+                    output_fields=["metadata"],
+                    search_params=self.case_config.search_param().get("search_params", {}),
+                )
 
             # Handle empty results
             if not res or len(res) == 0:
@@ -226,3 +295,77 @@ class EnVector(VectorDB):
         except Exception as e:
             log.error(f"Search failed: {e}")
             return []
+        
+    def _search_vct(
+        self,
+        query: list[float],
+        k: int = 10,
+    ):
+        """Perform a VCT search on a query embedding and return results."""
+        # get params
+        centroid_node_ids = self.vct_params.get("centroid_node_ids", [])
+        search_params = self.case_config.search_param().get("search_params", {})
+        nprobe = search_params.get("nprobe", 6)
+        centroids = self.col.index_config.index_params.get("centroids", [])
+
+        # find the nearest centroids
+        sims = centroids @ query
+        k = max(1, min(nprobe, len(sims)))
+        top_indices = np.argpartition(sims, -k)[-k:]
+        ordered_indices = top_indices[np.argsort(sims[top_indices])[::-1]]
+        centroid_list = [int(centroid_node_ids[idx]) for idx in ordered_indices]
+
+        # search
+        result = self.col.search_vct(
+            query=query,
+            top_k=k,
+            centroid_list=centroid_list,
+            output_fields=["metadata"],
+        )
+
+        return result
+
+
+def get_kmeans_centroids(n_lists: int):
+    """Train centroids using KMeans clustering."""
+    # kmeans = KMeans(n_clusters=n_lists, n_init=1)
+    # kmeans.fit(vectors)
+    # centroids = kmeans.cluster_centers_.copy()
+    return NotImplementedError("KMeans centroid training cannot be done without dataset.")
+
+def get_vct_centroids(file_path: str) -> Dict[str, Any]:
+    """Load VCT centroids from a given file."""
+    # load dataset
+    centroid_path = "prepared_data.npy"
+    tree_path = "preprocessed_data.npy"
+
+    prepared_payload = np.load(os.path.join(file_path, centroid_path), allow_pickle=True).item()
+
+    # centroids
+    tree_info = prepared_payload.get("tree")
+    nodes_payload = prepared_payload.get("nodes")
+    total_nodes = np.uint64(tree_info["total_nodes"])
+    nodes = [
+        {
+            "id": np.uint64(node["id"]),
+            "parent": np.uint64(node["parent"]),
+        } 
+        for node in nodes_payload
+    ]
+    centroids = prepared_payload.get("centroids")
+    clusters_info = prepared_payload.get("clusters")
+    centroid_node_ids = [int(cluster["node_id"]) for cluster in clusters_info]
+
+    # tree
+    preprocessed_payload = np.load(os.path.join(file_path, tree_path), allow_pickle=True).item()
+    
+    node_batches = preprocessed_payload.get("nodes")
+    node_batches = sorted(node_batches, key=lambda batch: int(batch["node_id"]))
+
+    return {
+        "centroids": centroids.tolist(),
+        "total_nodes": total_nodes,
+        "nodes": nodes,
+        "centroid_node_ids": centroid_node_ids,
+        "node_batches": node_batches,
+    }

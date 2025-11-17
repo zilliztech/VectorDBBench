@@ -69,6 +69,7 @@ class IVFFlatIndexConfig(EnVectorIndexConfig, DBCaseConfig):
     eval_mode: str = "mm"  # default eval_mode
     train_centroids: bool = False  # whether to train centroids before inserting data
     centroids: str | None = None  # path to centroids file
+    is_vct: bool = False  # whether use VCT index
 
     def index_param(self) -> dict:
         return {
@@ -78,6 +79,7 @@ class IVFFlatIndexConfig(EnVectorIndexConfig, DBCaseConfig):
             "params": {"index_type": "IVF_FLAT", "nlist": self.nlist, "default_nprobe": self.nprobe},
             "train_centroids": self.train_centroids,
             "centroids": self.centroids,
+            "is_vct": self.is_vct,
         }
 
     def search_param(self) -> dict:
