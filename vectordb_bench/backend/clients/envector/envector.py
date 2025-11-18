@@ -244,7 +244,7 @@ class EnVector(VectorDB):
                 log.debug(f"Inserting node {node_id} with {vector_count} vectors") # debug
                 
                 # vectors_list = np.asarray(node_vectors, dtype=np.float32).tolist()
-                vectors_list = embeddings[vector_ids]
+                vectors_list = np.take(embeddings, vector_ids)
                 
                 meta = np.take(metadata, vector_ids).tolist()
                 meta = [str(m) for m in meta]
@@ -346,8 +346,8 @@ def get_kmeans_centroids(n_lists: int):
 def get_vct_centroids(file_path: str) -> Dict[str, Any]:
     """Load VCT centroids from a given file."""
     # load dataset
-    centroid_path = "eliminated_prepared_data.npy"
-    tree_path = "eliminated_preprocessed_data.npy"
+    centroid_path = "eliminated_prepared.npy"
+    tree_path = "eliminated_preprocessed.npy"
     
     prepared_payload = np.load(os.path.join(file_path, centroid_path), allow_pickle=True).item()
 
