@@ -76,7 +76,7 @@ class EnVector(VectorDB):
         
         # Create the collection
         log.info(f"{self.name} create index: {self.collection_name}")
-        # print(f"{self.case_config.index_param().get('params', {})=}")
+        
         if self.collection_name in es2.get_index_list():
             log.info(f"{self.name} index {self.collection_name} already exists, skip creating")
         else:
@@ -146,14 +146,14 @@ class EnVector(VectorDB):
 
         es2.disconnect()
 
-    def __getstate__(self) -> dict:
-        """Drop live handles before pickling for multiprocessing."""
-        state = self.__dict__.copy()
-        state["col"] = None
-        return state
+    # def __getstate__(self) -> dict:
+    #     """Drop live handles before pickling for multiprocessing."""
+    #     state = self.__dict__.copy()
+    #     state["col"] = None
+    #     return state
 
-    def __setstate__(self, state: dict) -> None:
-        self.__dict__.update(state)
+    # def __setstate__(self, state: dict) -> None:
+    #     self.__dict__.update(state)
 
     @contextmanager
     def init(self):
@@ -227,12 +227,14 @@ class EnVector(VectorDB):
         metadata: list[int],
     ) -> tuple[int, Exception]:
         """Insert VCT nodes and their vectors into EnVector."""
-        node_batches = self.vct_params.get("node_batches", [])
+        node_batches = self.vct_params.pop("node_batches", [])
         insert_count = 0
         try:
             for batch in node_batches:
                 node_id = int(batch["node_id"])
                 node_vectors = batch.get("vectors")
+                vector_ids = batch.get("vector_ids") or range(len(node_vectors))
+                
                 if node_vectors is None:
                     continue
                 if len(node_vectors) == 0:
@@ -241,8 +243,8 @@ class EnVector(VectorDB):
                 vector_count = len(node_vectors)
                 log.debug(f"Inserting node {node_id} with {vector_count} vectors") # debug
                 
-                vector_ids = batch.get("vector_ids") or range(len(node_vectors))
                 vectors_list = np.asarray(node_vectors, dtype=np.float32).tolist()
+                # vectors_list = embeddings[vector_ids]
                 
                 meta = np.take(metadata, vector_ids).tolist()
                 meta = [str(m) for m in meta]
@@ -252,6 +254,8 @@ class EnVector(VectorDB):
                 self.col.insert_vct(vectors_list, metadata=meta, node_id=node_id)
 
                 insert_count += len(vectors_list)
+            
+            del node_batches
 
         except Exception as e:
             log.info(f"Failed to insert VCT data: {e}")
