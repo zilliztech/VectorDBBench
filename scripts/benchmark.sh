@@ -2,10 +2,37 @@
 
 set -euo pipefail
 
-DATASET_DIR=/data/vectordb_bench/dataset/PUBMED768D400K
-CENTROID_DIR=/data/ann/centroids/gas
+DATASET_DIR=/data/suyeong/vectordb_bench/dataset/PUBMED768D400K
+CENTROID_DIR=/data/suyeong/ann/centroids/gas
+ENVECTOR_URI="localhost:50159"
+REQUESTED_TYPE=""
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --type)
+            REQUESTED_TYPE="${2:-}"
+            shift 2
+            ;;
+        --type=*)
+            REQUESTED_TYPE="${1#--type=}"
+            shift
+            ;;
+        *)
+            echo "Unknown option: $1" >&2
+            exit 1
+            ;;
+    esac
+done
+
+case "$REQUESTED_TYPE" in
+    ""|flat|ivf) ;;
+    *)
+        echo "Invalid --type: $REQUESTED_TYPE (expected: flat or ivf)" >&2
+        exit 1
+        ;;
+esac
 COMMON_ARGS=(
-    --uri "localhost:50050"
+    --uri "$ENVECTOR_URI"
     --eval-mode mm
     --case-type PerformanceCustomDataset
     --custom-case-name PUBMED768D400K
@@ -14,7 +41,7 @@ COMMON_ARGS=(
     --custom-dataset-size 400335
     --custom-dataset-dim 768
     --custom-dataset-file-count 1
-    --skip-custom-dataset-with-gt
+    --custom-dataset-with-gt
 )
 
 run_case() {
@@ -27,12 +54,16 @@ run_case() {
         "$@"
 }
 
-run_case envectorflat "PUBMED768D400K-FLAT"
+if [[ -z "$REQUESTED_TYPE" || "$REQUESTED_TYPE" == "flat" ]]; then
+    run_case envectorflat "PUBMED768D400K-FLAT"
+fi
 
-export NUM_PER_BATCH=500000  # set database size for efficiency
-run_case envectorivfflat "PUBMED768D400K-IVF" \
-    --is-vct True \
-    --train-centroids True \
-    --centroids "$CENTROID_DIR" \
-    --nlist 32000 \
-    --nprobe 6
+if [[ -z "$REQUESTED_TYPE" || "$REQUESTED_TYPE" == "ivf" ]]; then
+    export NUM_PER_BATCH=500000  # set database size for efficiency
+    run_case envectorivfflat "PUBMED768D400K-IVF" \
+        --is-vct True \
+        --train-centroids True \
+        --centroids "$CENTROID_DIR" \
+        --nlist 32000 \
+        --nprobe 6
+fi
