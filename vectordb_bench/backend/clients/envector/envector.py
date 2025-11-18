@@ -190,8 +190,8 @@ class EnVector(VectorDB):
         self._optimize()
 
     def need_normalize_cosine(self) -> bool:
-        """Whether this database need to normalize dataset to support COSINE"""        
-        return True
+        """EnVector indices store normalized vectors, no extra preprocessing required."""
+        return False
 
     def insert_embeddings(
         self,
