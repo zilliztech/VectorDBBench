@@ -2,9 +2,9 @@
 
 set -euo pipefail
 
-DATASET_DIR=/data/suyeong/vectordb_bench/dataset/PUBMED768D400K
-CENTROID_DIR=/data/suyeong/ann/centroids/gas
-ENVECTOR_URI="localhost:50159"
+DATASET_DIR=/data/vectordb_bench/dataset/PUBMED768D400K
+CENTROID_DIR=/data/gas_centroids/PUBMED768D400K
+ENVECTOR_URI="localhost:50150"
 REQUESTED_TYPE=""
 
 while [[ $# -gt 0 ]]; do
