@@ -232,19 +232,19 @@ class EnVector(VectorDB):
         try:
             for batch in node_batches:
                 node_id = int(batch["node_id"])
-                node_vectors = batch.get("vectors")
-                vector_ids = batch.get("vector_ids") or range(len(node_vectors))
+                # node_vectors = batch.get("vectors")
+                vector_ids = batch.get("vector_ids") #or range(len(node_vectors))
                 
-                if node_vectors is None:
-                    continue
-                if len(node_vectors) == 0:
-                    continue
+                # if node_vectors is None:
+                #     continue
+                # if len(node_vectors) == 0:
+                #     continue
 
-                vector_count = len(node_vectors)
+                vector_count = len(vector_ids)
                 log.debug(f"Inserting node {node_id} with {vector_count} vectors") # debug
                 
-                vectors_list = np.asarray(node_vectors, dtype=np.float32).tolist()
-                # vectors_list = embeddings[vector_ids]
+                # vectors_list = np.asarray(node_vectors, dtype=np.float32).tolist()
+                vectors_list = embeddings[vector_ids]
                 
                 meta = np.take(metadata, vector_ids).tolist()
                 meta = [str(m) for m in meta]
@@ -346,8 +346,9 @@ def get_kmeans_centroids(n_lists: int):
 def get_vct_centroids(file_path: str) -> Dict[str, Any]:
     """Load VCT centroids from a given file."""
     # load dataset
-    centroid_path = "prepared_data.npy"
-    tree_path = "preprocessed_data.npy"
+    # centroid_path = "prepared_data.npy"
+    # tree_path = "preprocessed_data.npy"
+    centroid_path = "preprocessed_data.npy"
 
     prepared_payload = np.load(os.path.join(file_path, centroid_path), allow_pickle=True).item()
 
@@ -367,10 +368,10 @@ def get_vct_centroids(file_path: str) -> Dict[str, Any]:
     centroid_node_ids = [int(cluster["node_id"]) for cluster in clusters_info]
 
     # tree
-    preprocessed_payload = np.load(os.path.join(file_path, tree_path), allow_pickle=True).item()
+    # preprocessed_payload = np.load(os.path.join(file_path, tree_path), allow_pickle=True).item()
     
-    node_batches = preprocessed_payload.get("nodes")
-    node_batches = sorted(node_batches, key=lambda batch: int(batch["node_id"]))
+    # node_batches = preprocessed_payload.get("nodes")
+    node_batches = sorted(nodes_payload, key=lambda batch: int(batch["node_id"]))
 
     return {
         "centroids": centroids.tolist(),
