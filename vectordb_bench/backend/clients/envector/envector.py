@@ -204,6 +204,7 @@ class EnVector(VectorDB):
         # use the first insert_embeddings to init collection
         assert self.col is not None
         assert len(embeddings) == len(metadata)
+        print(f"{type(embeddings)=}")
         if self.is_vct:
             return self._insert_vct(embeddings, metadata)
         
@@ -228,12 +229,15 @@ class EnVector(VectorDB):
     ) -> tuple[int, Exception]:
         """Insert VCT nodes and their vectors into EnVector."""
         node_batches = self.vct_params.pop("node_batches", [])
+        embeddings = np.array(embeddings, dtype=np.float32)
+        metadata = np.array(metadata, dtype=int)
         insert_count = 0
         try:
             for batch in node_batches:
                 node_id = int(batch["node_id"])
                 # node_vectors = batch.get("vectors")
                 vector_ids = batch.get("vector_ids") #or range(len(node_vectors))
+                # print(f"{node_id=},{type(vector_ids[0])=}")
                 
                 # if node_vectors is None:
                 #     continue
@@ -244,9 +248,12 @@ class EnVector(VectorDB):
                 log.debug(f"Inserting node {node_id} with {vector_count} vectors") # debug
                 
                 # vectors_list = np.asarray(node_vectors, dtype=np.float32).tolist()
-                vectors_list = np.take(embeddings, vector_ids)
+                # print(f"{embeddings[:2]=}")
+                # print(f"{vector_ids[:2]=}")
+                vectors_list = embeddings[vector_ids].tolist()
+                # print(f"{vectors_list[:2]=}")
                 
-                meta = np.take(metadata, vector_ids).tolist()
+                meta = metadata[vector_ids]
                 meta = [str(m) for m in meta]
 
                 assert len(vectors_list) == len(meta)
