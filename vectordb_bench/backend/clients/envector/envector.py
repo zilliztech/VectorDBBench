@@ -8,10 +8,6 @@ from collections.abc import Iterable
 from contextlib import contextmanager
 
 import numpy as np
-# for IVF-FLAT centroid training
-# from sklearn.cluster import KMeans
-# or for GPU acceleration, we can use 
-# from cuml.cluster import KMeans
 
 import es2
 
@@ -146,15 +142,6 @@ class EnVector(VectorDB):
 
         es2.disconnect()
 
-    # def __getstate__(self) -> dict:
-    #     """Drop live handles before pickling for multiprocessing."""
-    #     state = self.__dict__.copy()
-    #     state["col"] = None
-    #     return state
-
-    # def __setstate__(self, state: dict) -> None:
-    #     self.__dict__.update(state)
-
     @contextmanager
     def init(self):
         """
@@ -204,7 +191,7 @@ class EnVector(VectorDB):
         # use the first insert_embeddings to init collection
         assert self.col is not None
         assert len(embeddings) == len(metadata)
-        print(f"{type(embeddings)=}")
+        
         if self.is_vct:
             return self._insert_vct(embeddings, metadata)
         
@@ -236,8 +223,7 @@ class EnVector(VectorDB):
             for batch in node_batches:
                 node_id = int(batch["node_id"])
                 # node_vectors = batch.get("vectors")
-                vector_ids = batch.get("vector_ids") #or range(len(node_vectors))
-                # print(f"{node_id=},{type(vector_ids[0])=}")
+                vector_ids = batch.get("vector_ids")
                 
                 # if node_vectors is None:
                 #     continue
@@ -248,14 +234,10 @@ class EnVector(VectorDB):
                 log.debug(f"Inserting node {node_id} with {vector_count} vectors") # debug
                 
                 # vectors_list = np.asarray(node_vectors, dtype=np.float32).tolist()
-                # print(f"{embeddings[:2]=}")
-                # print(f"{vector_ids[:2]=}")
                 vectors_list = embeddings[vector_ids].tolist()
-                # print(f"{vectors_list[:2]=}")
                 
-                meta = metadata[vector_ids]
-                meta = [str(m) for m in meta]
-
+                meta = [str(m) for m in metadata[vector_ids]]
+                
                 assert len(vectors_list) == len(meta)
 
                 self.col.insert_vct(vectors_list, metadata=meta, node_id=node_id)
@@ -345,6 +327,10 @@ class EnVector(VectorDB):
 
 def get_kmeans_centroids(n_lists: int):
     """Train centroids using KMeans clustering."""
+    # for IVF-FLAT centroid training
+    # from sklearn.cluster import KMeans
+    # or for GPU acceleration, we can use 
+    # from cuml.cluster import KMeans
     # kmeans = KMeans(n_clusters=n_lists, n_init=1)
     # kmeans.fit(vectors)
     # centroids = kmeans.cluster_centers_.copy()
