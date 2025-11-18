@@ -144,7 +144,7 @@ class EnVector(VectorDB):
                 eval_mode=self.case_config.eval_mode,
             )
 
-        # es2.disconnect()
+        es2.disconnect()
 
     def __getstate__(self) -> dict:
         """Drop live handles before pickling for multiprocessing."""
@@ -243,7 +243,7 @@ class EnVector(VectorDB):
                 
                 vector_ids = batch.get("vector_ids") or range(len(node_vectors))
                 vectors_list = np.asarray(node_vectors, dtype=np.float32).tolist()
-                # metadata = [f"node={node_id},vector={vid}" for vid in vector_ids]
+                
                 meta = np.take(metadata, vector_ids).tolist()
                 meta = [str(m) for m in meta]
 
@@ -319,6 +319,7 @@ class EnVector(VectorDB):
         top_indices = np.argpartition(sims, -k)[-k:]
         ordered_indices = top_indices[np.argsort(sims[top_indices])[::-1]]
         centroid_list = [int(centroid_node_ids[idx]) for idx in ordered_indices]
+        log.debug(f"VCT search {len(centroid_list)} centroids (nprobe={nprobe})")
 
         # search
         result = self.col.search_vct(
@@ -336,7 +337,7 @@ def get_kmeans_centroids(n_lists: int):
     # kmeans = KMeans(n_clusters=n_lists, n_init=1)
     # kmeans.fit(vectors)
     # centroids = kmeans.cluster_centers_.copy()
-    return NotImplementedError("KMeans centroid training cannot be done without dataset.")
+    raise NotImplementedError("KMeans centroid training cannot be done without dataset.")
 
 def get_vct_centroids(file_path: str) -> Dict[str, Any]:
     """Load VCT centroids from a given file."""
