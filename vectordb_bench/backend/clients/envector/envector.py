@@ -346,10 +346,9 @@ def get_kmeans_centroids(n_lists: int):
 def get_vct_centroids(file_path: str) -> Dict[str, Any]:
     """Load VCT centroids from a given file."""
     # load dataset
-    # centroid_path = "prepared_data.npy"
-    # tree_path = "preprocessed_data.npy"
-    centroid_path = "preprocessed_data.npy"
-
+    centroid_path = "eliminated_prepared_data.npy"
+    tree_path = "eliminated_preprocessed_data.npy"
+    
     prepared_payload = np.load(os.path.join(file_path, centroid_path), allow_pickle=True).item()
 
     # centroids
@@ -368,10 +367,10 @@ def get_vct_centroids(file_path: str) -> Dict[str, Any]:
     centroid_node_ids = [int(cluster["node_id"]) for cluster in clusters_info]
 
     # tree
-    # preprocessed_payload = np.load(os.path.join(file_path, tree_path), allow_pickle=True).item()
+    preprocessed_payload = np.load(os.path.join(file_path, tree_path), allow_pickle=True).item()
     
-    # node_batches = preprocessed_payload.get("nodes")
-    node_batches = sorted(nodes_payload, key=lambda batch: int(batch["node_id"]))
+    node_batches = preprocessed_payload.get("nodes")
+    node_batches = sorted(node_batches, key=lambda batch: int(batch["node_id"]))
 
     return {
         "centroids": centroids.tolist(),
