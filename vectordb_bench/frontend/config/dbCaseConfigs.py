@@ -2133,7 +2133,7 @@ CaseConfigParamInput_IndexType_VexDB = CaseConfigInput(
     inputType=InputType.Option,
     inputConfig={
         "options": [
-            IndexType.ES_HNSW.value,
+            IndexType.GRAPH_INDEX.value,
             IndexType.ES_IVFFlat.value,
             IndexType.HybridAnn.value,
         ],
@@ -2159,7 +2159,7 @@ CaseConfigParamInput_m_VexDB = CaseConfigInput(
         "max": 100,
         "value": 16,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) in [IndexType.HybridAnn.value,IndexType.ES_HNSW.value],
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) in [IndexType.HybridAnn.value,IndexType.GRAPH_INDEX.value],
 )
 
 CaseConfigParamInput_EFConstruction_VexDB = CaseConfigInput(
@@ -2170,7 +2170,7 @@ CaseConfigParamInput_EFConstruction_VexDB = CaseConfigInput(
         "max": 1000,
         "value": 64,
     },
-    isDisplayed=lambda config: config[CaseConfigParamType.IndexType] in [IndexType.HybridAnn.value,IndexType.ES_HNSW.value],
+    isDisplayed=lambda config: config[CaseConfigParamType.IndexType] in [IndexType.HybridAnn.value,IndexType.GRAPH_INDEX.value],
 )
 
 CaseConfigParamInput_maintenance_work_mem_VexDB = CaseConfigInput(
@@ -2204,7 +2204,7 @@ CaseConfigParamInput_EFSearch_VexDB = CaseConfigInput(
         "max": 32767,
         "value": 100,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) in [IndexType.HybridAnn.value,IndexType.ES_HNSW.value],
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) in [IndexType.HybridAnn.value,IndexType.GRAPH_INDEX.value],
 )
 
 CaseConfigParamInput_Probes_VexDB = CaseConfigInput(

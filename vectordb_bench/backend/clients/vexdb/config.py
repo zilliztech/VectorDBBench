@@ -159,7 +159,7 @@ class VexDBIVFFlatConfig(VexDBIndexConfig):
         return {"session_options": self._optionally_build_set_options(session_parameters)}
 
 
-class VexDBHNSWConfig(VexDBIndexConfig):
+class VexDBGRAPHINDEXConfig(VexDBIndexConfig):
     """
     An HNSW index creates a multilayer graph. It has better query performance than IVFFlat (in terms of
     speed-recall tradeoff), but has slower build times and uses more memory. Also, an index can be
@@ -169,7 +169,7 @@ class VexDBHNSWConfig(VexDBIndexConfig):
     m: int | None  # DETAIL:  Valid values are between "2" and "100".
     ef_construction: int | None  # ef_construction must be greater than or equal to 2 * m
     ef_search: int | None
-    index: IndexType = IndexType.ES_HNSW
+    index: IndexType = IndexType.GRAPH_INDEX
     maintenance_work_mem: str | None = None
     max_parallel_workers: int | None = None
     create_index_before_load: bool = False
@@ -233,7 +233,7 @@ class VexDBHybridANNConfig(VexDBIndexConfig):
 
 
 _vexdb_case_config = {
-    IndexType.ES_HNSW: VexDBHNSWConfig,
+    IndexType.GRAPH_INDEX: VexDBGRAPHINDEXConfig,
     IndexType.ES_IVFFlat: VexDBIVFFlatConfig,
     IndexType.HybridAnn: VexDBHybridANNConfig,
 }

@@ -112,15 +112,15 @@ def VexDBIVFFlat(
     )
 
 
-class VexDBHNSWTypedDict(VexDBTypedDict, HNSWFlavor1): ...
+class VexDBGRAPHINDEXTypedDict(VexDBTypedDict, HNSWFlavor1): ...
 
 
 @cli.command()
-@click_parameter_decorators_from_typed_dict(VexDBHNSWTypedDict)
-def VexDBHNSW(
-    **parameters: Unpack[VexDBHNSWTypedDict],
+@click_parameter_decorators_from_typed_dict(VexDBGRAPHINDEXTypedDict)
+def VexDBGRAPHINDEX(
+    **parameters: Unpack[VexDBGRAPHINDEXTypedDict],
 ):
-    from .config import VexDBConfig, VexDBHNSWConfig
+    from .config import VexDBConfig, VexDBGRAPHINDEXConfig
 
     parameters["custom_case"] = get_custom_case_config(parameters)
     run(
@@ -133,7 +133,7 @@ def VexDBHNSW(
             port=parameters["port"],
             db_name=parameters["db_name"],
         ),
-        db_case_config=VexDBHNSWConfig(
+        db_case_config=VexDBGRAPHINDEXConfig(
             m=parameters["m"],
             ef_construction=parameters["ef_construction"],
             ef_search=parameters["ef_search"],
