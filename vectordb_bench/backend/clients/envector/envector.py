@@ -316,7 +316,7 @@ class EnVector(VectorDB):
         top_indices = np.argpartition(sims, -nprobe)[-nprobe:]
         # ordered_indices = top_indices[np.argsort(sims[top_indices])[::-1]]
         centroid_list = [int(leaf_start_node_id + idx) for idx in top_indices]
-        log.debug(f"VCT search {len(centroid_list)} centroids (nprobe={nprobe})")
+        log.debug(f"VCT search {len(centroid_list)} centroids (nprobe={nprobe}): {centroid_list[:6]}")
 
         # search
         result = self.col.search_vct(
