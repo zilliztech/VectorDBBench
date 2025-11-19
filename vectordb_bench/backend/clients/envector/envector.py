@@ -284,6 +284,7 @@ class EnVector(VectorDB):
 
             # Extract metadata from results
             # res structure: [[{id: X, score: Y, metadata: Z}, ...]]
+            log.debug(f"Search results: {res[0][:3]}")  # Log first 3 results for debugging
             if len(res) > 0 and len(res[0]) > 0:
                 return [int(result["metadata"]) for result in res[0] if "metadata" in result]
             else:
@@ -308,8 +309,8 @@ class EnVector(VectorDB):
 
         # find the nearest centroids
         sims = centroids @ query
-        k = max(1, min(nprobe, len(sims)))
-        top_indices = np.argpartition(sims, -k)[-k:]
+        nprobe = max(1, min(nprobe, len(sims)))
+        top_indices = np.argpartition(sims, -nprobe)[-nprobe:]
         ordered_indices = top_indices[np.argsort(sims[top_indices])[::-1]]
         centroid_list = [int(centroid_node_ids[idx]) for idx in ordered_indices]
         log.debug(f"VCT search {len(centroid_list)} centroids (nprobe={nprobe})")
