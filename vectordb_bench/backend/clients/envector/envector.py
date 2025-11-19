@@ -344,9 +344,8 @@ def get_kmeans_centroids(n_lists: int):
 def get_vct_centroids(file_path: str) -> Dict[str, Any]:
     """Load VCT centroids and tree info from a given file."""
 
-    centroid_path = "eliminated.npy"
-    payload = np.load(os.path.join(file_path, centroid_path), allow_pickle=True).item()
-
+    payload = np.load(file_path, allow_pickle=True).item()
+    
     # centroids
     centroids = payload.get("centroids")
     if centroids is None:

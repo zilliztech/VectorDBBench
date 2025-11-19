@@ -3,8 +3,8 @@
 set -euo pipefail
 
 DATASET_DIR=/data/vectordb_bench/dataset/PUBMED768D400K
-CENTROID_DIR=/data/gas_centroids/PUBMED768D400K
-ENVECTOR_URI="localhost:50150"
+CENTROID_PATH=/data/gas_centroids/PUBMED768D400K/centroids.npy
+ENVECTOR_URI="localhost:50050"
 REQUESTED_TYPE=""
 
 while [[ $# -gt 0 ]]; do
@@ -42,6 +42,7 @@ COMMON_ARGS=(
     --custom-dataset-dim 768
     --custom-dataset-file-count 1
     --custom-dataset-with-gt
+    --k 10
 )
 
 run_case() {
@@ -63,7 +64,7 @@ if [[ -z "$REQUESTED_TYPE" || "$REQUESTED_TYPE" == "ivf" ]]; then
     run_case envectorivfflat "PUBMED768D400K-IVF" \
         --is-vct True \
         --train-centroids True \
-        --centroids "$CENTROID_DIR" \
+        --centroids "$CENTROID_PATH" \
         --nlist 32000 \
         --nprobe 6
 fi
