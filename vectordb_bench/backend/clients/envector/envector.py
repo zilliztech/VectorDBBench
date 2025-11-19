@@ -96,8 +96,8 @@ class EnVector(VectorDB):
                         log.info(f"{self.name} loaded VCT centroids from {centroid_path} for IVF_FLAT index training.")
                         
                         self.vct_params = {
+                            "leaf_start_node_id": new_index_params.pop("leaf_start_node_id"),
                             "node_batches": new_index_params.pop("node_batches"),
-                            "centroid_node_ids": new_index_params.pop("centroid_node_ids"),
                         }
 
                         self.is_vct = True
@@ -178,7 +178,7 @@ class EnVector(VectorDB):
 
     def need_normalize_cosine(self) -> bool:
         """EnVector indices store normalized vectors, no extra preprocessing required."""
-        return False
+        return True
 
     def insert_embeddings(
         self,
@@ -303,28 +303,19 @@ class EnVector(VectorDB):
     ):
         """Perform a VCT search on a query embedding and return results."""
         # get params
-        centroid_node_ids = self.vct_params.get("centroid_node_ids", [])
+        leaf_start_node_id = self.vct_params.get("leaf_start_node_id")
+        if leaf_start_node_id is None:
+            raise ValueError("leaf_start_node_id is not set in VCT parameters.")
         search_params = self.case_config.search_param().get("search_params", {})
         nprobe = search_params.get("nprobe", 6)
         centroids = self.col.index_config.index_params.get("centroids", [])
-
+        
         # find the nearest centroids
         sims = centroids @ query
         nprobe = max(1, min(nprobe, len(sims)))
         top_indices = np.argpartition(sims, -nprobe)[-nprobe:]
-        print(f"{top_indices[:3]=}")  # debug
-        ordered_indices = top_indices[np.argsort(sims[top_indices])[::-1]]
-        print(f"{ordered_indices[:3]=}")  # debug
-
-        n_centroid = len(centroid_node_ids)
-        if n_centroid < nprobe:
-            log.warning(
-                f"centroid_node_ids size ({n_centroid}) smaller than "
-                f"probe_count={nprobe}; results may be degraded."
-            )
-
-        centroid_list = [int(centroid_node_ids[idx]) for idx in ordered_indices]
-        print(f"{centroid_list[:3]=}")  # debug
+        # ordered_indices = top_indices[np.argsort(sims[top_indices])[::-1]]
+        centroid_list = [int(leaf_start_node_id + idx) for idx in top_indices]
         log.debug(f"VCT search {len(centroid_list)} centroids (nprobe={nprobe})")
 
         # search
@@ -349,39 +340,47 @@ def get_kmeans_centroids(n_lists: int):
     # centroids = kmeans.cluster_centers_.copy()
     raise NotImplementedError("KMeans centroid training cannot be done without dataset.")
 
+
 def get_vct_centroids(file_path: str) -> Dict[str, Any]:
-    """Load VCT centroids from a given file."""
-    # load dataset
-    centroid_path = "eliminated_prepared.npy"
-    tree_path = "eliminated_preprocessed.npy"
-    
-    prepared_payload = np.load(os.path.join(file_path, centroid_path), allow_pickle=True).item()
+    """Load VCT centroids and tree info from a given file."""
+
+    centroid_path = "eliminated.npy"
+    payload = np.load(os.path.join(file_path, centroid_path), allow_pickle=True).item()
 
     # centroids
-    tree_info = prepared_payload.get("tree")
-    nodes_payload = prepared_payload.get("nodes")
-    total_nodes = np.uint64(tree_info["total_nodes"])
+    centroids = payload.get("centroids")
+    if centroids is None:
+        raise ValueError("No centroids field found.")
+    centroids = np.asarray(centroids, dtype=np.float32)
+    
+    # tree info
+    tree_info = payload.get("tree")
+    if tree_info is None:
+        raise ValueError("No tree field found.")
+    leaf_start_node_id = int(tree_info.get("leaf_start_node_id", 0))
+    leaf_count = int(tree_info.get("leaf_count", 0))
+    total_nodes = int(tree_info.get("total_nodes", 0))
+
+    tree_nodes_payload = payload.get("tree_nodes")
     nodes = [
         {
             "id": np.uint64(node["id"]),
             "parent": np.uint64(node["parent"]),
-        } 
-        for node in nodes_payload
+        }
+        for node in tree_nodes_payload
     ]
-    centroids = prepared_payload.get("centroids")
-    clusters_info = prepared_payload.get("clusters")
-    centroid_node_ids = [int(cluster["node_id"]) for cluster in clusters_info]
 
-    # tree
-    preprocessed_payload = np.load(os.path.join(file_path, tree_path), allow_pickle=True).item()
-    
-    node_batches = preprocessed_payload.get("nodes")
+    # nodes
+    node_batches = payload.get("nodes")
+    if not node_batches:
+        raise ValueError("No nodes field found.")
     node_batches = sorted(node_batches, key=lambda batch: int(batch["node_id"]))
 
     return {
-        "centroids": centroids.tolist(),
+        "centroids": centroids,
+        "leaf_start_node_id": leaf_start_node_id,
+        "leaf_count": leaf_count,
         "total_nodes": total_nodes,
-        "nodes": nodes,
-        "centroid_node_ids": centroid_node_ids,
         "node_batches": node_batches,
+        "nodes": nodes,
     }
