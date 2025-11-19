@@ -215,32 +215,33 @@ class EnVector(VectorDB):
         metadata: list[int],
     ) -> tuple[int, Exception]:
         """Insert VCT nodes and their vectors into EnVector."""
+        
         node_batches = self.vct_params.pop("node_batches", [])
         embeddings = np.array(embeddings, dtype=np.float32)
         metadata = np.array(metadata, dtype=int)
+
         insert_count = 0
         try:
             for batch in node_batches:
-                node_id = int(batch["node_id"])
-                # node_vectors = batch.get("vectors")
+                # get node info
+                node_id = batch.get("node_id")
                 vector_ids = batch.get("vector_ids")
-                
-                # if node_vectors is None:
-                #     continue
-                # if len(node_vectors) == 0:
-                #     continue
-
                 vector_count = len(vector_ids)
-                log.debug(f"Inserting node {node_id} with {vector_count} vectors") # debug
                 
-                # vectors_list = np.asarray(node_vectors, dtype=np.float32).tolist()
+                if node_id is None:
+                    continue
+                if vector_count == 0:
+                    continue
+
+                log.debug(f"Inserting node {int(node_id)} with {vector_count} vectors")
+                
+                # insert vectors and the corresponding metadata
                 vectors_list = embeddings[vector_ids].tolist()
-                
                 meta = [str(m) for m in metadata[vector_ids]]
                 
                 assert len(vectors_list) == len(meta)
 
-                self.col.insert_vct(vectors_list, metadata=meta, node_id=node_id)
+                self.col.insert_vct(vectors_list, metadata=meta, node_id=int(node_id))
 
                 insert_count += len(vectors_list)
             
@@ -311,8 +312,19 @@ class EnVector(VectorDB):
         sims = centroids @ query
         nprobe = max(1, min(nprobe, len(sims)))
         top_indices = np.argpartition(sims, -nprobe)[-nprobe:]
+        print(f"{top_indices[:3]=}")  # debug
         ordered_indices = top_indices[np.argsort(sims[top_indices])[::-1]]
+        print(f"{ordered_indices[:3]=}")  # debug
+
+        n_centroid = len(centroid_node_ids)
+        if n_centroid < nprobe:
+            log.warning(
+                f"centroid_node_ids size ({n_centroid}) smaller than "
+                f"probe_count={nprobe}; results may be degraded."
+            )
+
         centroid_list = [int(centroid_node_ids[idx]) for idx in ordered_indices]
+        print(f"{centroid_list[:3]=}")  # debug
         log.debug(f"VCT search {len(centroid_list)} centroids (nprobe={nprobe})")
 
         # search
