@@ -365,11 +365,12 @@ class DatasetManager(BaseModel):
             if self.data.with_scalar_labels and self.data.scalar_labels_file_separated:
                 download_files.append(self.data.scalar_labels_file)
             download_files = [file for file in download_files if file is not None]
-            source.reader().read(
-                dataset=self.data.dir_name.lower(),
-                files=download_files,
-                local_ds_root=self.data_dir,
-            )
+            if not config.USE_LOCAL_DATA:
+                source.reader().read(
+                    dataset=self.data.dir_name.lower(),
+                    files=download_files,
+                    local_ds_root=self.data_dir,
+                )
 
         # read scalar_labels_file if separated
         if (

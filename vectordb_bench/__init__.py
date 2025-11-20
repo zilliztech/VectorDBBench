@@ -12,6 +12,7 @@ env.read_env(path=".env", recurse=False)
 class config:
     ALIYUN_OSS_URL = "assets.zilliz.com.cn/benchmark/"
     AWS_S3_URL = "assets.zilliz.com/benchmark/"
+    USE_LOCAL_DATA = env.bool("USE_LOCAL_DATA", False)
 
     LOG_LEVEL = env.str("LOG_LEVEL", "INFO")
 
