@@ -65,8 +65,9 @@ class EnVector(VectorDB):
             eval_mode=self.case_config.eval_mode,
         )
         if drop_old:
-            log.info(f"{self.name} client drop_old index: {self.collection_name}")            
-            es2.drop_index(self.collection_name)
+            log.info(f"{self.name} client drop_old index: {self.collection_name}")  
+            if self.collection_name in es2.get_index_list():          
+                es2.drop_index(self.collection_name)
         
         # Create the collection
         log.info(f"{self.name} create index: {self.collection_name}")
