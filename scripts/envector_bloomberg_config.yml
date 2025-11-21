@@ -1,0 +1,42 @@
+envectorflat:
+  uri: localhost:50050
+  eval_mode: mm
+  case_type: PerformanceCustomDataset
+  db_label: BLOOMBERG768D368K-FLAT
+  custom_case_name: BLOOMBERG768D368K
+  custom_case_description: BLOOMBERG768D368K benchmark (768D, 368K vectors)
+  custom_dataset_name: BLOOMBERG768D368K
+  custom_dataset_dir: 
+  custom_dataset_size: 368816
+  custom_dataset_dim: 768
+  custom_dataset_file_count: 1
+  custom_dataset_use_shuffled: false
+  custom_dataset_with_gt: true
+  k: 10
+  drop_old: true
+  load: true
+
+envectorivfflat:
+  uri: localhost:50050
+  eval_mode: mm
+  case_type: PerformanceCustomDataset
+  db_label: BLOOMBERG768D368K-IVF
+  custom_case_name: BLOOMBERG768D368K
+  custom_case_description: BLOOMBERG768D368K benchmark (768D, 368K vectors)
+  custom_dataset_name: BLOOMBERG768D368K
+  custom_dataset_dir: 
+  custom_dataset_size: 368816
+  custom_dataset_dim: 768
+  custom_dataset_file_count: 1
+  custom_dataset_use_shuffled: false
+  custom_dataset_with_gt: true
+  k: 10
+  nlist: 32768
+  nprobe: 6
+  train_centroids: true
+  is_vct: true
+  centroids_path: centroids/embeddinggemma-300m/centroids.npy
+  vct_path: centroids/embeddinggemma-300m/tree_info.pkl
+  drop_old: true
+  load: true
+  

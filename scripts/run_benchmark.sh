@@ -3,6 +3,7 @@
 set -euo pipefail
 
 export DATASET_LOCAL_DIR="./dataset"
+export NUM_PER_BATCH=4096
 
 CENTROID_PATH=centroids/embeddinggemma-300m/centroids.npy
 VCT_PATH=centroids/embeddinggemma-300m/tree_info.pkl

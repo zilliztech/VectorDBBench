@@ -49,7 +49,7 @@ From `scripts/prepare_dataset.py`, you can prepare the followings for the ANN be
 
 For ANN benchmark, we provide two datasets via huggingface:
 - PUBMED768D400K: [cryptolab-playground/pubmed-arxiv-abstract-embedding-gemma-300m](https://huggingface.co/datasets/cryptolab-playground/pubmed-arxiv-abstract-embedding-gemma-300m)
-- BLOOMBERG768D378K: [cryptolab-playground/Bloomberg-Financial-News-embedding-gemma-300m](https://huggingface.co/datasets/cryptolab-playground/Bloomberg-Financial-News-embedding-gemma-300m)
+- BLOOMBERG768D368K: [cryptolab-playground/Bloomberg-Financial-News-embedding-gemma-300m](https://huggingface.co/datasets/cryptolab-playground/Bloomberg-Financial-News-embedding-gemma-300m)
 
 Also, we provide centroids and tree info for VCT index for the given embedding model for ANN benchmark:
 - GASCENTROIDS: [cryptolab-playground/gas-centroids](https://huggingface.co/datasets/cryptolab-playground/gas-centroids)
