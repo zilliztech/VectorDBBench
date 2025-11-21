@@ -1,13 +1,14 @@
 import os
-import numpy as np
-import pandas as pd
-import pyarrow as pa
-import pyarrow.parquet as pq
+import wget
 import argparse
+# import numpy as np
+# import pandas as pd
+# import pyarrow as pa
+# import pyarrow.parquet as pq
 
-from datasets import load_dataset
+# from datasets import load_dataset
 
-import faiss
+# import faiss
 
 def get_args():
     parser = argparse.ArgumentParser(
@@ -24,6 +25,18 @@ def get_args():
         type=str,
         default="./dataset/pubmed768d400k",
         help="Dataset directory to save the dataset and neighbors.",
+    )
+    parser.add_argument(
+        "-e", "--embedding-model",
+        type=str,
+        default="embeddinggemma-300m",
+        help="Embedding model name to download centroids for.",
+    )
+    parser.add_argument(
+        "--centroids-dir",
+        type=str,
+        default="./centroids",
+        help="Directory to save the centroids and tree info.",
     )
     return parser.parse_args()
 
@@ -73,9 +86,25 @@ def prepare_neighbors(
     table = pa.Table.from_pandas(df)
     pq.write_table(table, f"{data_dir}/neighbors.parquet")
 
+def download_centroids(embedding_model: str, dataset_dir: str) -> None:
+    """Download pre-computed centroids and tree info for GAS VCT index."""
+    
+    if embedding_model != "embeddinggemma-300m":
+        raise ValueError(f"Centroids for {embedding_model} currently not available.")
+
+    # https://huggingface.co/datasets/cryptolab-playground/gas-centroids
+    dataset_link = f"https://huggingface.co/datasets/cryptolab-playground/gas-centroids/resolve/main/{embedding_model}"
+    
+    # download
+    os.makedirs(os.path.join(dataset_dir, embedding_model), exist_ok=True)
+    wget.download(f"{dataset_link}/centroids.npy", out=os.path.join(dataset_dir, embedding_model, "centroids.npy"))
+    wget.download(f"{dataset_link}/tree_info.pkl", out=os.path.join(dataset_dir, embedding_model, "tree_info.pkl"))
+    
+    
 if __name__ == "__main__":
     args = get_args()
     os.makedirs(args.dataset_dir, exist_ok=True)
 
-    download_dataset(args.dataset_name, args.dataset_dir)
-    prepare_neighbors(args.dataset_dir)
+    # download_dataset(args.dataset_name, args.dataset_dir)
+    # prepare_neighbors(args.dataset_dir)
+    download_centroids(args.embedding_model, args.centroids_dir)

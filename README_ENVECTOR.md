@@ -36,17 +36,26 @@ pip install es2==1.2.0a1
 
 ### Prepare dataset
 
-Download dataset from huggingface and prepare ground truth neighbors.
+From `scripts/prepare_dataset.py`, you can prepare the followings for the ANN benchmark:
+
+- download dataset from huggingface
+- prepare ground truth neighbors
+- download centroids and tree info for VCT index for corresponding embedding model
+
 For ANN benchmark, we provide two datasets via huggingface:
 - PUBMED768D400K: [cryptolab-playground/pubmed-arxiv-abstract-embedding-gemma-300m](https://huggingface.co/datasets/cryptolab-playground/pubmed-arxiv-abstract-embedding-gemma-300m)
 - BLOOMBERG768D378K: [cryptolab-playground/Bloomberg-Financial-News-embedding-gemma-300m](https://huggingface.co/datasets/cryptolab-playground/Bloomberg-Financial-News-embedding-gemma-300m)
+
+Also, we provide centroids and tree info for VCT index for the given embedding model for ANN benchmark:
+- GASCENTROIDS: [cryptolab-playground/gas-centroids](https://huggingface.co/datasets/cryptolab-playground/gas-centroids)
 
 To prepare dataset, run the following command as example:
 
 ```bash
 # Prepare dataset
 python ./scripts/prepare_dataset.py \
-    -d cryptolab-playground/pubmed-arxiv-abstract-embedding-gemma-300m
+    -d cryptolab-playground/pubmed-arxiv-abstract-embedding-gemma-300m \
+    -e embeddinggemma-300m
 ```
 
 ### Prepare enVector Server
@@ -65,7 +74,8 @@ cd envector-deployment/docker-compose
 ```bash
 # Set environment variables
 export DATASET_LOCAL_DIR="./dataset"
-export NUM_PER_BATCH=500000  # set database size for efficiency
+export NUM_PER_BATCH=4096
+# export NUM_PER_BATCH=500000 # set as database size for efficiency when IVF_FLAT
 ```
 
 ## Run Benchmark
