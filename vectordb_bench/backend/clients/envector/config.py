@@ -64,11 +64,11 @@ class FlatIndexConfig(EnVectorIndexConfig, DBCaseConfig):
 class IVFFlatIndexConfig(EnVectorIndexConfig, DBCaseConfig):
     index: IndexType = IndexType.IVFFlat
     metric_type: MetricType = MetricType.COSINE  # envector supports cosine similarity only
-    nlist : int = 0               # default nlist
-    nprobe: int = 0               # default nprobe
-    eval_mode: str = "mm"         # default eval_mode
+    nlist : int = 0
+    nprobe: int = 0
+    eval_mode: str = "mm"
     train_centroids: bool = False # whether to train centroids before inserting data
-    centroids: str | None = None  # path to centroids file
+    centroids_path: str | None = None  # path to centroids file
     is_vct: bool = False          # whether use VCT index
     vct_path: str | None = None   # path to VCT index file
 
@@ -79,7 +79,7 @@ class IVFFlatIndexConfig(EnVectorIndexConfig, DBCaseConfig):
             "eval_mode": self.eval_mode,
             "params": {"index_type": "IVF_FLAT", "nlist": self.nlist, "default_nprobe": self.nprobe},
             "train_centroids": self.train_centroids,
-            "centroids": self.centroids,
+            "centroids_path": self.centroids_path,
             "is_vct": self.is_vct,
             "vct_path": self.vct_path,
         }

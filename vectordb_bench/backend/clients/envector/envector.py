@@ -82,7 +82,7 @@ class EnVector(VectorDB):
             
             if index_type == "IVF_FLAT" and train_centroids:
                 
-                centroid_path = self.case_config.index_param().get("centroids", None)
+                centroid_path = self.case_config.index_param().get("centroids_path", None)
                 is_vct = self.case_config.index_param().get("is_vct", False)
                 log.debug(f"IS_VCT: {is_vct}")
                 
