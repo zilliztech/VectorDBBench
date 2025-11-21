@@ -26,16 +26,11 @@ pip install es2==1.2.0a0
 │   └── embeddinggemma-300m
 │       ├── centroids.npy
 │       └── tree_info.pkl
-├── dataset
-│   └── PUBMED768D400K
-│       ├── neighbors.parquet
-│       ├── test.parquet
-│       └── train.parquet
 ├── README_ENVECTOR.md
 └── scripts
-    ├── run_benchmark.sh
-    ├── envector_benchmark_config.yml
-    └── prepare_neighbors.py
+    ├── run_benchmark.sh              # benchmark script
+    ├── envector_benchmark_config.yml # benchmark config file
+    └── prepare_neighbors.py          # prepare ground truth neighbors for dataset
 ```
 
 ## Run Benchmark
