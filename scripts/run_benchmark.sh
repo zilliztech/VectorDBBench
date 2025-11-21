@@ -6,7 +6,7 @@ export DATASET_LOCAL_DIR="./dataset"
 
 CENTROID_PATH=centroids/embeddinggemma-300m/centroids.npy
 VCT_PATH=centroids/embeddinggemma-300m/tree_info.pkl
-ENVECTOR_URI="localhost:50159"
+ENVECTOR_URI="localhost:50050"
 REQUESTED_TYPE=""
 
 while [[ $# -gt 0 ]]; do
