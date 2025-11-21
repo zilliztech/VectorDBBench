@@ -246,7 +246,7 @@ class EnVector(VectorDB):
 
             # Extract metadata from results
             # res structure: [[{id: X, score: Y, metadata: Z}, ...]]
-            log.debug(f"Search results: {res[0][:3]}")  # Log first 3 results for debugging
+            log.debug(f"Search results: {res[0][:1]}")  # Log first 1 results for debugging
             if len(res) > 0 and len(res[0]) > 0:
                 return [int(result["metadata"]) for result in res[0] if "metadata" in result]
             else:
