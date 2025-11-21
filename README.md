@@ -1,3 +1,11 @@
+# enVector with ANN (GAS) in VectorDBBench
+
+The guide on how to use enVector with ANN index in VectorDBBench is available in [README_ENVECTOR.md](README_ENVECTOR.md).
+
+The followings are the original contents of README in VectorDBBench:
+
+---
+
 # VectorDBBench(VDBBench): A Benchmark Tool for VectorDB
 
 [![version](https://img.shields.io/pypi/v/vectordb-bench.svg?color=blue)](https://pypi.org/project/vectordb-bench/)
