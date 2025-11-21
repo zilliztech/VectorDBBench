@@ -3,7 +3,8 @@
 set -euo pipefail
 
 DATASET_DIR=/data/vectordb_bench/dataset/PUBMED768D400K
-CENTROID_PATH=/data/gas_centroids/PUBMED768D400K/centroids.npy
+CENTROID_PATH=/data/gas_centroids/embeddinggemma/centroids.npy
+VCT_PATH=/data/gas_centroids/embeddinggemma/tree_info.pkl
 ENVECTOR_URI="localhost:50050"
 REQUESTED_TYPE=""
 
@@ -64,7 +65,8 @@ if [[ -z "$REQUESTED_TYPE" || "$REQUESTED_TYPE" == "ivf" ]]; then
     run_case envectorivfflat "PUBMED768D400K-IVF" \
         --is-vct True \
         --train-centroids True \
-        --centroids "$CENTROID_PATH" \
-        --nlist 32000 \
+        --centroids_path "$CENTROID_PATH" \
+        --vct-path "$VCT_PATH" \
+        --nlist 32768 \
         --nprobe 6
 fi
