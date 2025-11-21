@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pandas as pd
 import pyarrow as pa
@@ -74,6 +75,7 @@ def prepare_neighbors(
 
 if __name__ == "__main__":
     args = get_args()
+    os.makedirs(args.dataset_dir, exist_ok=True)
 
-    # download_dataset(args.dataset_name, args.dataset_dir)
+    download_dataset(args.dataset_name, args.dataset_dir)
     prepare_neighbors(args.dataset_dir)
