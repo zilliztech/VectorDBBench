@@ -22,14 +22,14 @@ def get_args():
     parser.add_argument(
         "--dataset-dir",
         type=str,
-        default="./dataset/PUBMED768D400K",
+        default="./dataset/pubmed768d400k",
         help="Dataset directory to save the dataset and neighbors.",
     )
     return parser.parse_args()
 
 def download_dataset(
     dataset_name: str, 
-    output_dir: str = "./dataset"
+    output_dir: str = "./dataset/pubmed768d400k"
 ) -> None:
     """Download dataset from Huggingface and save as Parquet files."""
     # load dataset
@@ -45,7 +45,7 @@ def download_dataset(
     pq.write_table(test_table, f"{output_dir}/test.parquet")
 
 def prepare_neighbors(
-    data_dir: str = "./dataset/PUBMED768D400K",
+    data_dir: str = "./dataset/pubmed768d400k",
 ) -> None:
     """Prepare ground truth neighbors using brute-force flat search and save as Parquet."""
     # load dataset
