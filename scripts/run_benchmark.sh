@@ -2,10 +2,10 @@
 
 set -euo pipefail
 
-DATASET_DIR=/data/vectordb_bench/dataset/PUBMED768D400K
-CENTROID_PATH=/data/centroids/centroids.npy
-VCT_PATH=/data/centroids/tree_info.pkl
-ENVECTOR_URI="localhost:50050"
+DATASET_DIR=dataset/PUBMED768D400K
+CENTROID_PATH=centroids/embeddinggemma-300m/centroids.npy
+VCT_PATH=centroids/embeddinggemma-300m/tree_info.pkl
+ENVECTOR_URI="localhost:50159"
 REQUESTED_TYPE=""
 
 while [[ $# -gt 0 ]]; do
@@ -65,7 +65,7 @@ if [[ -z "$REQUESTED_TYPE" || "$REQUESTED_TYPE" == "ivf" ]]; then
     run_case envectorivfflat "PUBMED768D400K-IVF" \
         --is-vct True \
         --train-centroids True \
-        --centroids_path "$CENTROID_PATH" \
+        --centroids-path "$CENTROID_PATH" \
         --vct-path "$VCT_PATH" \
         --nlist 32768 \
         --nprobe 6

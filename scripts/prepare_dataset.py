@@ -1,12 +1,30 @@
-from typing import Tuple
-
 import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
+import argparse
+
 from datasets import load_dataset
 
 import faiss
+
+def get_args():
+    parser = argparse.ArgumentParser(
+        description="Prepare dataset and ground truth neighbors for benchmarking."
+    )
+    parser.add_argument(
+        "-d", "--dataset-name",
+        type=str,
+        default="cryptolab-playground/pubmed-arxiv-abstract-embedding-gemma-300m",
+        help="Huggingface dataset name to download.",
+    )
+    parser.add_argument(
+        "--dataset-dir",
+        type=str,
+        default="./dataset/PUBMED768D400K",
+        help="Dataset directory to save the dataset and neighbors.",
+    )
+    return parser.parse_args()
 
 def download_dataset(
     dataset_name: str, 
@@ -17,7 +35,7 @@ def download_dataset(
     ds = load_dataset(dataset_name)
     train = ds["train"].to_pandas()
     test = ds["test"].to_pandas()
-
+    
     # write to parquet
     train_table = pa.Table.from_pandas(train)
     pq.write_table(train_table, f"{output_dir}/train.parquet")
@@ -55,8 +73,7 @@ def prepare_neighbors(
     pq.write_table(table, f"{data_dir}/neighbors.parquet")
 
 if __name__ == "__main__":
-    dataset_name = "cryptolab-playground/pubmed-arxiv-abstract-embedding-gemma-300m"
-    data_dir = "./dataset/PUBMED768D400K"
+    args = get_args()
 
-    download_dataset(dataset_name, data_dir)
-    prepare_neighbors(data_dir)
+    # download_dataset(args.dataset_name, args.dataset_dir)
+    prepare_neighbors(args.dataset_dir)
