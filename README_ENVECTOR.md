@@ -29,7 +29,6 @@ source .venv/bin/activate
 
 # 2. Install VectorDBBench
 pip install -e .
-pip install -r requirements.txt  # additional dependencies for VectorDBBench
 
 # 3. Install es2
 pip install es2==1.2.0a0
