@@ -50,7 +50,7 @@ class FlatIndexConfig(EnVectorIndexConfig, DBCaseConfig):
         return {
             "metric_type": "COSINE",
             "index_type": self.index.value,
-            "eval_model": self.eval_mode,
+            "eval_mode": self.eval_mode,
             "params": {"index_type": "FLAT"},
         }
 
@@ -64,22 +64,24 @@ class FlatIndexConfig(EnVectorIndexConfig, DBCaseConfig):
 class IVFFlatIndexConfig(EnVectorIndexConfig, DBCaseConfig):
     index: IndexType = IndexType.IVFFlat
     metric_type: MetricType = MetricType.COSINE  # envector supports cosine similarity only
-    nlist : int = 0  # default nlist
-    nprobe: int = 0  # default nprobe
-    eval_mode: str = "mm"  # default eval_mode
-    train_centroids: bool = False  # whether to train centroids before inserting data
+    nlist : int = 0               # default nlist
+    nprobe: int = 0               # default nprobe
+    eval_mode: str = "mm"         # default eval_mode
+    train_centroids: bool = False # whether to train centroids before inserting data
     centroids: str | None = None  # path to centroids file
-    is_vct: bool = False  # whether use VCT index
+    is_vct: bool = False          # whether use VCT index
+    vct_path: str | None = None   # path to VCT index file
 
     def index_param(self) -> dict:
         return {
             "metric_type": "COSINE",
             "index_type": self.index.value,
-            "eval_model": self.eval_mode,
+            "eval_mode": self.eval_mode,
             "params": {"index_type": "IVF_FLAT", "nlist": self.nlist, "default_nprobe": self.nprobe},
             "train_centroids": self.train_centroids,
             "centroids": self.centroids,
             "is_vct": self.is_vct,
+            "vct_path": self.vct_path,
         }
 
     def search_param(self) -> dict:

@@ -90,10 +90,20 @@ class EnVector(VectorDB):
                     if not os.path.exists(centroid_path):
                         raise FileNotFoundError(f"Centroid file {centroid_path} not found for IVF_FLAT index training.")
                     
+                    # load trained centroids from file
+                    log.debug(f"Centroids: {centroid_path}")
+                    centroids = np.load(centroid_path)
+                    log.info(f"{self.name} loaded centroids from {centroid_path} for IVF_FLAT index training.")                        
+
+                    # set centroids for index creation
+                    index_param["centroids"] = centroids.tolist()
+
                     if is_vct:
                         # get VCT trained centroids
-                        new_index_params = get_vct_centroids(centroid_path)
-                        log.info(f"{self.name} loaded VCT centroids from {centroid_path} for IVF_FLAT index training.")
+                        vct_path = self.case_config.index_param().get("vct_path", None)
+                        log.debug(f"VCT: {vct_path}")
+                        new_index_params = get_vct_centroids(vct_path)
+                        log.info(f"{self.name} loaded VCT centroids for IVF_FLAT index training.")
                         
                         self.vct_params = {
                             "node_batches": new_index_params.pop("node_batches"),
@@ -104,14 +114,6 @@ class EnVector(VectorDB):
                         index_param["virtual_cluster"] = True
                         index_param.update(new_index_params)
                         log.info(f"{self.name} VCT parameters set for IVF_FLAT index creation.")
-
-                    else:
-                        # load trained centroids from file
-                        centroids = np.load(centroid_path)
-                        log.info(f"{self.name} loaded centroids from {centroid_path} for IVF_FLAT index training.")                        
-
-                        # set centroids for index creation
-                        index_param["centroids"] = centroids.tolist()
 
                 else:
                     # train centroids using KMeans
@@ -352,23 +354,24 @@ def get_kmeans_centroids(n_lists: int):
 def get_vct_centroids(file_path: str) -> Dict[str, Any]:
     """Load VCT centroids and tree info from a given file."""
 
-    node_path = file_path #"eliminated.npy"
-    tree_path = "251120_pca_tree_metadata_32768_128_1.pkl"
-    centroids_path = "251120_centroids_32768_128_1.npy"
-
-    # nodes
-    nodes_payload = np.load(node_path, allow_pickle=True).item()
-    
-    # nodes
-    node_batches = nodes_payload.get("nodes")
-    if not node_batches:
-        raise ValueError("No nodes field found.")
-    node_batches = sorted(node_batches, key=lambda batch: int(batch["node_id"]))
+    # node_path = file_path
+    # tree_path = "251120_pca_tree_metadata_32768_128_1.pkl"
+    # tree_path = "251120_tree_info.pkl"
+    # centroids_path = "251120_centroids_32768_128_1.npy"
 
     # tree structure
-    with open(tree_path, "rb") as f:
+    with open(file_path, "rb") as f:
         tree_meta = pickle.load(f)
 
+    # # nodes
+    # nodes_payload = np.load(node_path, allow_pickle=True).item()
+    
+    # nodes
+    node_batches = tree_meta.get("node_batches")
+    if not node_batches:
+        raise ValueError("No node_batches field found.")
+
+    # tree structure
     node_parents = tree_meta["node_parents"]
     leaf_ids_raw = tree_meta["leaf_ids"]
     leaf_to_centroid_idx_raw = tree_meta["leaf_to_centroid_idx"]
@@ -401,13 +404,13 @@ def get_vct_centroids(file_path: str) -> Dict[str, Any]:
     if leaf_start_node_id < 1 or leaf_count < 1 or total_nodes < 1:
         raise ValueError("Invalid tree structure information.")
 
-    # centroids
-    centroids_array = np.load(centroids_path, allow_pickle=False)
-    centroids_array = np.asarray(centroids_array, dtype=np.float32)
-    centroids_list = centroids_array.tolist()
+    # # centroids
+    # centroids_array = np.load(centroids_path, allow_pickle=False)
+    # centroids_array = np.asarray(centroids_array, dtype=np.float32)
+    # centroids_list = centroids_array.tolist()
 
     return {
-        "centroids": centroids_list,
+        # "centroids": centroids_list,
         "total_nodes": total_nodes,
         "node_batches": node_batches,
         "nodes": nodes,

@@ -61,11 +61,15 @@ class EnVectorIVFFlatIndexTypedDict(CommonTypedDict, EnVectorTypedDict):
     ]
     centroids: Annotated[
         str,
-        click.option("--centroids", type=str, help="centroids for IVF index", default=None),
+        click.option("--centroids", type=str, help="path to centroids for IVF index", default=None),
     ]
     is_vct: Annotated[
         bool,
         click.option("--is-vct", type=bool, help="whether use VCT index", default=False),
+    ]
+    vct_path: Annotated[
+        str,
+        click.option("--vct-path", type=str, help="path to VCT index file", default=None),
     ]
 
 
@@ -88,6 +92,7 @@ def EnVectorIVFFlat(**parameters: Unpack[EnVectorIVFFlatIndexTypedDict]):
             train_centroids=parameters["train_centroids"],
             centroids=parameters["centroids"],
             is_vct=parameters["is_vct"],
+            vct_path=parameters["vct_path"],
         ),
         **parameters,
     )
