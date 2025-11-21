@@ -76,7 +76,9 @@ all = [
     "mysql-connector-python",
     "ujson",
     "pgvector",
-    "psycopg"
+    "psycopg",
+    "datasets",
+    "faiss-cpu"
 ]
 
 qdrant          = [ "qdrant-client" ]
