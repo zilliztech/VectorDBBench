@@ -56,7 +56,9 @@ To run enVector server with VCT index, please refer to the [enVector Deployment 
 
 ```bash
 # Start enVector server
-./start_envector.sh --set VERSION_TAG=ann-v0.1
+git clone https://github.com/CryptoLabInc/envector-deployment
+cd envector-deployment/docker-compose 
+./start_envector.sh
 ```
 
 ### Set Environment Variables

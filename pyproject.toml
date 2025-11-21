@@ -74,6 +74,9 @@ all = [
     "pyvespa",
     "lancedb",
     "mysql-connector-python",
+    "ujson",
+    "pgvector",
+    "psycopg"
 ]
 
 qdrant          = [ "qdrant-client" ]
