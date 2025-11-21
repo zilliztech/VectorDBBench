@@ -1,14 +1,14 @@
 import os
 import wget
 import argparse
-# import numpy as np
-# import pandas as pd
-# import pyarrow as pa
-# import pyarrow.parquet as pq
+import numpy as np
+import pandas as pd
+import pyarrow as pa
+import pyarrow.parquet as pq
 
-# from datasets import load_dataset
+from datasets import load_dataset
 
-# import faiss
+import faiss
 
 def get_args():
     parser = argparse.ArgumentParser(
@@ -105,6 +105,6 @@ if __name__ == "__main__":
     args = get_args()
     os.makedirs(args.dataset_dir, exist_ok=True)
 
-    # download_dataset(args.dataset_name, args.dataset_dir)
-    # prepare_neighbors(args.dataset_dir)
+    download_dataset(args.dataset_name, args.dataset_dir)
+    prepare_neighbors(args.dataset_dir)
     download_centroids(args.embedding_model, args.centroids_dir)
