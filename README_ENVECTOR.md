@@ -10,10 +10,10 @@ Basic usage of enVector with VectorDBBench follows the standard procedure for [V
 .
 ├── centroids
 │   └── embeddinggemma-300m
-│       ├── centroids.npy             # centroids file for VCT
-│       └── tree_info.pkl             # tree metadata for VCT
+│       ├── centroids.npy             # centroids file for ANN
+│       └── tree_info.pkl             # tree metadata for ANN
 ├── dataset
-│   └── pubmed768d400k
+│   └── pubmed768d400k                # VectorDB ANN benchmark dataset
 │       ├── neighbors.parquet
 │       ├── test.npy
 │       └── train.pkl
