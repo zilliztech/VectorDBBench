@@ -422,6 +422,9 @@ python -m vectordb_bench
 
 OR:
 
+If you are using [dev container](https://code.visualstudio.com/docs/devcontainers/containers), create
+the following dataset directory first:
+
 ```shell
 init_bench
 ```
