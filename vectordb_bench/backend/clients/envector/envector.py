@@ -58,6 +58,7 @@ class EnVector(VectorDB):
 
         self.is_vct: bool = False
         self.vct_params: Dict[str, Any] = {}
+        kwargs: Dict[str, Any] = {}
         
         es2.init(
             address=self.db_config.get("uri"), 
@@ -98,31 +99,33 @@ class EnVector(VectorDB):
                     # set centroids for index creation
                     index_param["centroids"] = centroids.tolist()
 
+                    # if is_vct:
+                    #     # get VCT trained centroids
+                    #     vct_path = self.case_config.index_param().get("vct_path", None)
+                    #     log.debug(f"VCT: {vct_path}")
+                    #     new_index_params = get_vct_centroids(vct_path)
+                    #     log.info(f"{self.name} loaded VCT centroids for IVF_FLAT index training.")
+                        
+                    #     self.vct_params = {
+                    #         "node_batches": new_index_params.pop("node_batches"),
+                    #         "centroid_idx_to_leaf": new_index_params.pop("centroid_idx_to_leaf"),
+                    #     }
+
+                    #     self.is_vct = True
+                    #     index_param["virtual_cluster"] = True
+                    #     index_param.update(new_index_params)
+                    #     log.info(f"{self.name} VCT parameters set for IVF_FLAT index creation.")
+
                     if is_vct:
-                        # get VCT trained centroids
                         vct_path = self.case_config.index_param().get("vct_path", None)
                         log.debug(f"VCT: {vct_path}")
-                        new_index_params = get_vct_centroids(vct_path)
-                        log.info(f"{self.name} loaded VCT centroids for IVF_FLAT index training.")
-                        
-                        self.vct_params = {
-                            "node_batches": new_index_params.pop("node_batches"),
-                            "centroid_idx_to_leaf": new_index_params.pop("centroid_idx_to_leaf"),
-                        }
-
-                        self.is_vct = True
                         index_param["virtual_cluster"] = True
-                        index_param.update(new_index_params)
+                        kwargs["tree_description"] = vct_path
+                        self.is_vct = True
                         log.info(f"{self.name} VCT parameters set for IVF_FLAT index creation.")
 
                 else:
-                    # train centroids using KMeans
-                    n_lists = index_param.get("nlist", 250)
-                    centroids = get_kmeans_centroids(n_lists)
-                    log.info(f"{self.name} No centroid file provided for IVF_FLAT index training, will use random centroids.")
-
-                    # set centroids for index creation
-                    index_param["centroids"] = centroids.tolist()
+                    raise ValueError("Centroids path must be provided for IVF_FLAT index training.")
 
             # set larger batch size for IVF_FLAT insertions
             if index_type == "IVF_FLAT":
@@ -140,6 +143,7 @@ class EnVector(VectorDB):
                 key_id=self.db_config.get("key_id"),
                 index_params=index_param,
                 eval_mode=self.case_config.eval_mode,
+                **kwargs,
             )
 
         es2.disconnect()
@@ -194,67 +198,70 @@ class EnVector(VectorDB):
         assert self.col is not None
         assert len(embeddings) == len(metadata)
         
-        if self.is_vct:
-            return self._insert_vct(embeddings, metadata)
+        # if self.is_vct:
+        #     return self._insert_vct(embeddings, metadata)
         
-        else:
-            insert_count = 0
-            try:
-                for batch_start_offset in range(0, len(embeddings), self.batch_size):
-                    batch_end_offset = min(batch_start_offset + self.batch_size, len(embeddings))
-                    meta = [str(m) for m in metadata[batch_start_offset:batch_end_offset]]
-                    vectors = embeddings[batch_start_offset:batch_end_offset]
-                    self.col.insert(vectors, meta)
-                    insert_count += len(vectors)
-            except Exception as e:
-                log.info(f"Failed to insert data: {e}")
-                return insert_count, e
-            return insert_count, None
-    
-    def _insert_vct(
-        self,
-        embeddings: Iterable[list[float]],
-        metadata: list[int],
-    ) -> tuple[int, Exception]:
-        """Insert VCT nodes and their vectors into EnVector."""
-        
-        node_batches = self.vct_params.pop("node_batches", [])
-        embeddings = np.array(embeddings, dtype=np.float32)
-        metadata = np.array(metadata, dtype=int)
-
+        # else:
         insert_count = 0
         try:
-            for batch in node_batches:
-                # get node info
-                node_id = batch.get("node_id")
-                vector_ids = batch.get("vector_ids")
-                vector_count = len(vector_ids)
-                
-                if node_id is None:
-                    continue
-                if vector_count == 0:
-                    continue
-
-                log.debug(f"Inserting node {int(node_id)} with {vector_count} vectors")
-                
-                # insert vectors and the corresponding metadata
-                vectors_list = embeddings[vector_ids].tolist()
-                meta = [str(m) for m in metadata[vector_ids]]
-                
-                assert len(vectors_list) == len(meta)
-
-                self.col.insert_vct(vectors_list, metadata=meta, node_id=int(node_id))
-
-                insert_count += len(vectors_list)
-            
-            assert insert_count == len(embeddings)
-            del node_batches
-
+            for batch_start_offset in range(0, len(embeddings), self.batch_size):
+                batch_end_offset = min(batch_start_offset + self.batch_size, len(embeddings))
+                meta = [str(m) for m in metadata[batch_start_offset:batch_end_offset]]
+                vectors = embeddings[batch_start_offset:batch_end_offset]
+                if self.is_vct:
+                    self.col.insert_vct(vectors, meta)
+                else:
+                    self.col.insert(vectors, meta)
+                insert_count += len(vectors)
         except Exception as e:
-            log.info(f"Failed to insert VCT data: {e}")
+            log.info(f"Failed to insert data: {e}")
             return insert_count, e
-        
         return insert_count, None
+    
+    # def _insert_vct(
+    #     self,
+    #     embeddings: Iterable[list[float]],
+    #     metadata: list[int],
+    # ) -> tuple[int, Exception]:
+    #     """Insert VCT nodes and their vectors into EnVector."""
+        
+    #     node_batches = self.vct_params.pop("node_batches", [])
+    #     embeddings = np.array(embeddings, dtype=np.float32)
+    #     metadata = np.array(metadata, dtype=int)
+
+    #     insert_count = 0
+    #     try:
+    #         for batch in node_batches:
+    #             # get node info
+    #             node_id = batch.get("node_id")
+    #             vector_ids = batch.get("vector_ids")
+    #             vector_count = len(vector_ids)
+                
+    #             if node_id is None:
+    #                 continue
+    #             if vector_count == 0:
+    #                 continue
+
+    #             log.debug(f"Inserting node {int(node_id)} with {vector_count} vectors")
+                
+    #             # insert vectors and the corresponding metadata
+    #             vectors_list = embeddings[vector_ids].tolist()
+    #             meta = [str(m) for m in metadata[vector_ids]]
+                
+    #             assert len(vectors_list) == len(meta)
+
+    #             self.col.insert_vct(vectors_list, metadata=meta, node_id=int(node_id))
+
+    #             insert_count += len(vectors_list)
+            
+    #         assert insert_count == len(embeddings)
+    #         del node_batches
+
+    #     except Exception as e:
+    #         log.info(f"Failed to insert VCT data: {e}")
+    #         return insert_count, e
+        
+    #     return insert_count, None
 
     def prepare_filter(self, filters: Filter):
         pass
@@ -270,7 +277,12 @@ class EnVector(VectorDB):
 
         try:
             if self.is_vct:
-                res = self._search_vct(query, k)
+                res = self.col.search_vct(
+                    query=query,
+                    top_k=k,
+                    output_fields=["metadata"],
+                    search_params=self.case_config.search_param().get("search_params", {}),
+                )
             
             else:
                 # Perform the search.
@@ -299,95 +311,95 @@ class EnVector(VectorDB):
             log.error(f"Search failed: {e}")
             return []
         
-    def _search_vct(
-        self,
-        query: list[float],
-        k: int = 10,
-    ):
-        """Perform a VCT search on a query embedding and return results."""
-        # get params
-        centroid_idx_to_leaf = self.vct_params.get("centroid_idx_to_leaf", {})
-        if not centroid_idx_to_leaf:
-            raise ValueError("centroid_idx_to_leaf mapping is not set in VCT parameters.")
-        search_params = self.case_config.search_param().get("search_params", {})
-        nprobe = search_params.get("nprobe", 6)
-        centroids = self.col.index_config.index_params.get("centroids", [])
+#     def _search_vct(
+#         self,
+#         query: list[float],
+#         k: int = 10,
+#     ):
+#         """Perform a VCT search on a query embedding and return results."""
+#         # get params
+#         centroid_idx_to_leaf = self.vct_params.get("centroid_idx_to_leaf", {})
+#         if not centroid_idx_to_leaf:
+#             raise ValueError("centroid_idx_to_leaf mapping is not set in VCT parameters.")
+#         search_params = self.case_config.search_param().get("search_params", {})
+#         nprobe = search_params.get("nprobe", 6)
+#         centroids = self.col.index_config.index_params.get("centroids", [])
         
-        # find the nearest centroids
-        sims = centroids @ query
-        nprobe = max(1, min(nprobe, len(sims)))
-        top_indices = np.argpartition(sims, -nprobe)[-nprobe:]
-        ordered_indices = top_indices[np.argsort(sims[top_indices])[::-1]]
+#         # find the nearest centroids
+#         sims = centroids @ query
+#         nprobe = max(1, min(nprobe, len(sims)))
+#         top_indices = np.argpartition(sims, -nprobe)[-nprobe:]
+#         ordered_indices = top_indices[np.argsort(sims[top_indices])[::-1]]
 
-        centroid_list = []
-        for idx in ordered_indices:
-            leaf_id = centroid_idx_to_leaf.get(int(idx))
-            if leaf_id is None:
-                raise ValueError(f"Fail to map centroid index {int(idx)} to leaf id")
-            centroid_list.append(int(leaf_id))
+#         centroid_list = []
+#         for idx in ordered_indices:
+#             leaf_id = centroid_idx_to_leaf.get(int(idx))
+#             if leaf_id is None:
+#                 raise ValueError(f"Fail to map centroid index {int(idx)} to leaf id")
+#             centroid_list.append(int(leaf_id))
         
-        log.debug(f"VCT search {len(centroid_list)} centroids (nprobe={nprobe}): {centroid_list[:6]}")
+#         log.debug(f"VCT search {len(centroid_list)} centroids (nprobe={nprobe}): {centroid_list[:6]}")
 
-        # search
-        result = self.col.search_vct(
-            query=query,
-            top_k=k,
-            centroid_list=centroid_list,
-            output_fields=["metadata"],
-        )
+#         # search
+#         result = self.col.search_vct(
+#             query=query,
+#             top_k=k,
+#             centroid_list=centroid_list,
+#             output_fields=["metadata"],
+#         )
 
-        return result
+#         return result
 
 
-def get_vct_centroids(file_path: str) -> Dict[str, Any]:
-    """Load VCT centroids and tree info from a given file."""
+# def get_vct_centroids(file_path: str) -> Dict[str, Any]:
+#     """Load VCT centroids and tree info from a given file."""
 
-    # get tree metadata
-    with open(file_path, "rb") as f:
-        tree_meta = pickle.load(f)
+#     # get tree metadata
+#     with open(file_path, "rb") as f:
+#         tree_meta = pickle.load(f)
 
-    # nodes
-    node_batches = tree_meta.get("node_batches")
-    if not node_batches:
-        raise ValueError("No node_batches field found.")
+#     # nodes
+#     node_batches = tree_meta.get("node_batches")
+#     if not node_batches:
+#         raise ValueError("No node_batches field found.")
 
-    # tree structure
-    node_parents = tree_meta["node_parents"]
-    leaf_ids_raw = tree_meta["leaf_ids"]
-    leaf_to_centroid_idx_raw = tree_meta["leaf_to_centroid_idx"]
+#     # tree structure
+#     node_parents = tree_meta["node_parents"]
+#     leaf_ids_raw = tree_meta["leaf_ids"]
+#     leaf_to_centroid_idx_raw = tree_meta["leaf_to_centroid_idx"]
 
-    # gRPC 1-base: parents 0 → 1, others +1, root node added
-    shifted_nodes = [
-        {
-            "id": int(child) + 1,
-            "parent": 1 if int(parent) == 0 else int(parent) + 1,
-        }
-        for child, parent in sorted(node_parents.items())
-    ]
-    shifted_nodes.insert(0, {"id": 1, "parent": 0})  # Root node
-    nodes = shifted_nodes
+#     # gRPC 1-base: parents 0 → 1, others +1, root node added
+#     shifted_nodes = [
+#         {
+#             "id": int(child) + 1,
+#             "parent": 1 if int(parent) == 0 else int(parent) + 1,
+#         }
+#         for child, parent in sorted(node_parents.items())
+#     ]
+#     shifted_nodes.insert(0, {"id": 1, "parent": 0})  # Root node
+#     nodes = shifted_nodes
 
-    # leafs
-    leaf_ids = [int(leaf) + 1 for leaf in leaf_ids_raw]
-    leaf_to_centroid_idx = {int(leaf) + 1: int(c_idx) for leaf, c_idx in leaf_to_centroid_idx_raw.items()}
-    centroid_idx_to_leaf = {int(c_idx): int(leaf_id) for leaf_id, c_idx in leaf_to_centroid_idx.items()}
+#     # leafs
+#     leaf_ids = [int(leaf) + 1 for leaf in leaf_ids_raw]
+#     leaf_to_centroid_idx = {int(leaf) + 1: int(c_idx) for leaf, c_idx in leaf_to_centroid_idx_raw.items()}
+#     centroid_idx_to_leaf = {int(c_idx): int(leaf_id) for leaf_id, c_idx in leaf_to_centroid_idx.items()}
 
-    tree_info = {
-        "root_node_id": 1,
-        "leaf_start_node_id": min(leaf_ids),
-        "leaf_count": len(leaf_ids),
-        "total_nodes": max(node["id"] for node in nodes),
-    }
+#     tree_info = {
+#         "root_node_id": 1,
+#         "leaf_start_node_id": min(leaf_ids),
+#         "leaf_count": len(leaf_ids),
+#         "total_nodes": max(node["id"] for node in nodes),
+#     }
 
-    leaf_start_node_id = tree_info["leaf_start_node_id"]
-    leaf_count = tree_info["leaf_count"]
-    total_nodes = np.uint64(tree_info["total_nodes"])
-    if leaf_start_node_id < 1 or leaf_count < 1 or total_nodes < 1:
-        raise ValueError("Invalid tree structure information.")
+#     leaf_start_node_id = tree_info["leaf_start_node_id"]
+#     leaf_count = tree_info["leaf_count"]
+#     total_nodes = np.uint64(tree_info["total_nodes"])
+#     if leaf_start_node_id < 1 or leaf_count < 1 or total_nodes < 1:
+#         raise ValueError("Invalid tree structure information.")
 
-    return {
-        "total_nodes": total_nodes,
-        "node_batches": node_batches,
-        "nodes": nodes,
-        "centroid_idx_to_leaf": centroid_idx_to_leaf,
-    }
+#     return {
+#         "total_nodes": total_nodes,
+#         "node_batches": node_batches,
+#         "nodes": nodes,
+#         "centroid_idx_to_leaf": centroid_idx_to_leaf,
+#     }
