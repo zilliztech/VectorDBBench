@@ -3,8 +3,8 @@
 set -euo pipefail
 
 DATASET_DIR=/data/vectordb_bench/dataset/PUBMED768D400K
-CENTROID_PATH=/data/gas_centroids/embeddinggemma/centroids.npy
-VCT_PATH=/data/gas_centroids/embeddinggemma/tree_info.pkl
+CENTROID_PATH=/data/centroids/centroids.npy
+VCT_PATH=/data/centroids/tree_info.pkl
 ENVECTOR_URI="localhost:50050"
 REQUESTED_TYPE=""
 
