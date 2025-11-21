@@ -1,0 +1,4 @@
+ujson
+psycopg
+pgvector
+# es2==1.2.0a0

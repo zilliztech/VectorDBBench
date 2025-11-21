@@ -2,10 +2,11 @@
 
 set -euo pipefail
 
-DATASET_DIR=dataset/PUBMED768D400K
+export DATASET_LOCAL_DIR="./dataset"
+
 CENTROID_PATH=centroids/embeddinggemma-300m/centroids.npy
 VCT_PATH=centroids/embeddinggemma-300m/tree_info.pkl
-ENVECTOR_URI="localhost:50159"
+ENVECTOR_URI="localhost:50050"
 REQUESTED_TYPE=""
 
 while [[ $# -gt 0 ]]; do
@@ -38,11 +39,12 @@ COMMON_ARGS=(
     --case-type PerformanceCustomDataset
     --custom-case-name PUBMED768D400K
     --custom-dataset-name PUBMED768D400K
-    --custom-dataset-dir "$DATASET_DIR"
+    --custom-dataset-dir ""
     --custom-dataset-size 400335
     --custom-dataset-dim 768
     --custom-dataset-file-count 1
     --custom-dataset-with-gt
+    --skip-custom-dataset-use-shuffled
     --k 10
 )
 
