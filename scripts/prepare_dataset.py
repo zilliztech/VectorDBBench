@@ -19,6 +19,10 @@ def get_args():
         type=str,
         default="cryptolab-playground/pubmed-arxiv-abstract-embedding-gemma-300m",
         help="Huggingface dataset name to download.",
+        choices=[
+            "cryptolab-playground/pubmed-arxiv-abstract-embedding-gemma-300m",
+            "cryptolab-playground/Bloomberg-Financial-News-embedding-gemma-300m",
+        ],
     )
     parser.add_argument(
         "--dataset-dir",
