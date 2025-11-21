@@ -43,6 +43,7 @@ dependencies = [
     "ujson",
     "pgvector",
     "psycopg",
+    "psycopg[binary]",
     "datasets",
     "faiss-cpu"
 ]
