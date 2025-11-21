@@ -12,6 +12,11 @@ Basic usage of enVector with VectorDBBench follows the standard procedure for [V
 │   └── embeddinggemma-300m
 │       ├── centroids.npy             # centroids file for VCT
 │       └── tree_info.pkl             # tree metadata for VCT
+├── dataset
+│   └── pubmed768d400k
+│       ├── neighbors.parquet
+│       ├── test.npy
+│       └── train.pkl
 ├── README_ENVECTOR.md
 └── scripts
     ├── run_benchmark.sh              # benchmark script
@@ -75,7 +80,6 @@ cd envector-deployment/docker-compose
 # Set environment variables
 export DATASET_LOCAL_DIR="./dataset"
 export NUM_PER_BATCH=4096
-# export NUM_PER_BATCH=500000 # set as database size for efficiency when IVF_FLAT
 ```
 
 ## Run Benchmark
@@ -83,6 +87,7 @@ export NUM_PER_BATCH=4096
 See `./scripts/run_benchmark.sh` or `./scripts/envector_benchmark_config.yml` for an example of how to run benchmarks with enVector using VCT index, or use the following command:
 
 ```bash
+export NUM_PER_BATCH=500000 # set as database size for efficiency when IVF_FLAT
 python -m vectordb_bench.cli.vectordbbench envectorivfflat \
     --uri "localhost:50050" \
     --eval-mode mm \
