@@ -156,7 +156,6 @@ class EnVector(VectorDB):
                 is_vct = self.case_config.index_param().get("is_vct", False)
                 assert self.is_vct == is_vct, "is_vct mismatch"
                 vct_path = self.case_config.index_param().get("vct_path", None)
-                log.debug(f"VCT Path: {vct_path}")
                 self.col._load_virtual_cluster_from_pkl(vct_path)
             yield
         finally:

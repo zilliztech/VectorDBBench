@@ -40,6 +40,11 @@ dependencies = [
     "pydantic<v2",
     "scikit-learn",
     "pymilvus", # with pandas, numpy, ujson
+    "ujson",
+    "pgvector",
+    "psycopg",
+    "datasets",
+    "faiss-cpu"
 ]
 dynamic = ["version"]
 
@@ -74,11 +79,6 @@ all = [
     "pyvespa",
     "lancedb",
     "mysql-connector-python",
-    "ujson",
-    "pgvector",
-    "psycopg",
-    "datasets",
-    "faiss-cpu"
 ]
 
 qdrant          = [ "qdrant-client" ]

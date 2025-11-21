@@ -31,15 +31,15 @@ source .venv/bin/activate
 pip install -e .
 
 # 3. Install es2
-pip install es2==1.2.0a0
+pip install es2==1.2.0a1
 ```
 
 ### Prepare dataset
 
 Download dataset from huggingface and prepare ground truth neighbors.
-For ANN benchmark, we provide two datasets:
-- [PUBMED768D400K](https://huggingface.co/datasets/cryptolab-playground/pubmed-arxiv-abstract-embedding-gemma-300m)
-- [BLOOMBERG768D378K](https://huggingface.co/datasets/cryptolab-playground/Bloomberg-Financial-News-embedding-gemma-300m)
+For ANN benchmark, we provide two datasets via huggingface:
+- PUBMED768D400K: [cryptolab-playground/pubmed-arxiv-abstract-embedding-gemma-300m](https://huggingface.co/datasets/cryptolab-playground/pubmed-arxiv-abstract-embedding-gemma-300m)
+- BLOOMBERG768D378K: [cryptolab-playground/Bloomberg-Financial-News-embedding-gemma-300m](https://huggingface.co/datasets/cryptolab-playground/Bloomberg-Financial-News-embedding-gemma-300m)
 
 To prepare dataset, run the following command as example:
 
@@ -63,6 +63,7 @@ cd envector-deployment/docker-compose
 ### Set Environment Variables
 
 ```bash
+# Set environment variables
 export DATASET_LOCAL_DIR="./dataset"
 export NUM_PER_BATCH=500000  # set database size for efficiency
 ```
