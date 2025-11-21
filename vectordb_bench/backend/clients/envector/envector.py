@@ -6,6 +6,7 @@ import logging
 import os
 from collections.abc import Iterable
 from contextlib import contextmanager
+import pickle
 
 import numpy as np
 
@@ -83,7 +84,7 @@ class EnVector(VectorDB):
                 
                 centroid_path = self.case_config.index_param().get("centroids", None)
                 is_vct = self.case_config.index_param().get("is_vct", False)
-                log.debug(f"IS_VCT: {is_vct}, CENTROIDS: {centroid_path}") # for debug
+                log.debug(f"IS_VCT: {is_vct}")
                 
                 if centroid_path is not None:
                     if not os.path.exists(centroid_path):
@@ -95,8 +96,8 @@ class EnVector(VectorDB):
                         log.info(f"{self.name} loaded VCT centroids from {centroid_path} for IVF_FLAT index training.")
                         
                         self.vct_params = {
-                            "leaf_start_node_id": new_index_params.pop("leaf_start_node_id"),
                             "node_batches": new_index_params.pop("node_batches"),
+                            "centroid_idx_to_leaf": new_index_params.pop("centroid_idx_to_leaf"),
                         }
 
                         self.is_vct = True
@@ -244,6 +245,7 @@ class EnVector(VectorDB):
 
                 insert_count += len(vectors_list)
             
+            assert insert_count == len(embeddings)
             del node_batches
 
         except Exception as e:
@@ -302,9 +304,9 @@ class EnVector(VectorDB):
     ):
         """Perform a VCT search on a query embedding and return results."""
         # get params
-        leaf_start_node_id = self.vct_params.get("leaf_start_node_id")
-        if leaf_start_node_id is None:
-            raise ValueError("leaf_start_node_id is not set in VCT parameters.")
+        centroid_idx_to_leaf = self.vct_params.get("centroid_idx_to_leaf", {})
+        if not centroid_idx_to_leaf:
+            raise ValueError("centroid_idx_to_leaf mapping is not set in VCT parameters.")
         search_params = self.case_config.search_param().get("search_params", {})
         nprobe = search_params.get("nprobe", 6)
         centroids = self.col.index_config.index_params.get("centroids", [])
@@ -313,8 +315,15 @@ class EnVector(VectorDB):
         sims = centroids @ query
         nprobe = max(1, min(nprobe, len(sims)))
         top_indices = np.argpartition(sims, -nprobe)[-nprobe:]
-        # ordered_indices = top_indices[np.argsort(sims[top_indices])[::-1]]
-        centroid_list = [int(leaf_start_node_id + idx) for idx in top_indices]
+        ordered_indices = top_indices[np.argsort(sims[top_indices])[::-1]]
+
+        centroid_list = []
+        for idx in ordered_indices:
+            leaf_id = centroid_idx_to_leaf.get(int(idx))
+            if leaf_id is None:
+                raise ValueError(f"Fail to map centroid index {int(idx)} to leaf id")
+            centroid_list.append(int(leaf_id))
+        
         log.debug(f"VCT search {len(centroid_list)} centroids (nprobe={nprobe}): {centroid_list[:6]}")
 
         # search
@@ -343,42 +352,64 @@ def get_kmeans_centroids(n_lists: int):
 def get_vct_centroids(file_path: str) -> Dict[str, Any]:
     """Load VCT centroids and tree info from a given file."""
 
-    payload = np.load(file_path, allow_pickle=True).item()
-    
-    # centroids
-    centroids = payload.get("centroids")
-    if centroids is None:
-        raise ValueError("No centroids field found.")
-    centroids = np.asarray(centroids, dtype=np.float32)
-    
-    # tree info
-    tree_info = payload.get("tree")
-    if tree_info is None:
-        raise ValueError("No tree field found.")
-    leaf_start_node_id = int(tree_info.get("leaf_start_node_id", 0))
-    leaf_count = int(tree_info.get("leaf_count", 0))
-    total_nodes = int(tree_info.get("total_nodes", 0))
-
-    tree_nodes_payload = payload.get("tree_nodes")
-    nodes = [
-        {
-            "id": np.uint64(node["id"]),
-            "parent": np.uint64(node["parent"]),
-        }
-        for node in tree_nodes_payload
-    ]
+    node_path = file_path #"eliminated.npy"
+    tree_path = "251120_pca_tree_metadata_32768_128_1.pkl"
+    centroids_path = "251120_centroids_32768_128_1.npy"
 
     # nodes
-    node_batches = payload.get("nodes")
+    nodes_payload = np.load(node_path, allow_pickle=True).item()
+    
+    # nodes
+    node_batches = nodes_payload.get("nodes")
     if not node_batches:
         raise ValueError("No nodes field found.")
     node_batches = sorted(node_batches, key=lambda batch: int(batch["node_id"]))
 
+    # tree structure
+    with open(tree_path, "rb") as f:
+        tree_meta = pickle.load(f)
+
+    node_parents = tree_meta["node_parents"]
+    leaf_ids_raw = tree_meta["leaf_ids"]
+    leaf_to_centroid_idx_raw = tree_meta["leaf_to_centroid_idx"]
+
+    # gRPC 1-base: parents 0 → 1, others +1, root node added
+    shifted_nodes = [
+        {
+            "id": int(child) + 1,
+            "parent": 1 if int(parent) == 0 else int(parent) + 1,
+        }
+        for child, parent in sorted(node_parents.items())
+    ]
+    shifted_nodes.insert(0, {"id": 1, "parent": 0})  # Root node
+    nodes = shifted_nodes
+
+    leaf_ids = [int(leaf) + 1 for leaf in leaf_ids_raw]
+    leaf_to_centroid_idx = {int(leaf) + 1: int(c_idx) for leaf, c_idx in leaf_to_centroid_idx_raw.items()}
+    centroid_idx_to_leaf = {int(c_idx): int(leaf_id) for leaf_id, c_idx in leaf_to_centroid_idx.items()}
+
+    tree_info = {
+        "root_node_id": 1,
+        "leaf_start_node_id": min(leaf_ids),
+        "leaf_count": len(leaf_ids),
+        "total_nodes": max(node["id"] for node in nodes),
+    }
+
+    leaf_start_node_id = tree_info["leaf_start_node_id"]
+    leaf_count = tree_info["leaf_count"]
+    total_nodes = np.uint64(tree_info["total_nodes"])
+    if leaf_start_node_id < 1 or leaf_count < 1 or total_nodes < 1:
+        raise ValueError("Invalid tree structure information.")
+
+    # centroids
+    centroids_array = np.load(centroids_path, allow_pickle=False)
+    centroids_array = np.asarray(centroids_array, dtype=np.float32)
+    centroids_list = centroids_array.tolist()
+
     return {
-        "centroids": centroids,
-        "leaf_start_node_id": leaf_start_node_id,
-        "leaf_count": leaf_count,
+        "centroids": centroids_list,
         "total_nodes": total_nodes,
         "node_batches": node_batches,
         "nodes": nodes,
+        "centroid_idx_to_leaf": centroid_idx_to_leaf,
     }
