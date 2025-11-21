@@ -339,33 +339,13 @@ class EnVector(VectorDB):
         return result
 
 
-def get_kmeans_centroids(n_lists: int):
-    """Train centroids using KMeans clustering."""
-    # for IVF-FLAT centroid training
-    # from sklearn.cluster import KMeans
-    # or for GPU acceleration, we can use 
-    # from cuml.cluster import KMeans
-    # kmeans = KMeans(n_clusters=n_lists, n_init=1)
-    # kmeans.fit(vectors)
-    # centroids = kmeans.cluster_centers_.copy()
-    raise NotImplementedError("KMeans centroid training cannot be done without dataset.")
-
-
 def get_vct_centroids(file_path: str) -> Dict[str, Any]:
     """Load VCT centroids and tree info from a given file."""
 
-    # node_path = file_path
-    # tree_path = "251120_pca_tree_metadata_32768_128_1.pkl"
-    # tree_path = "251120_tree_info.pkl"
-    # centroids_path = "251120_centroids_32768_128_1.npy"
-
-    # tree structure
+    # get tree metadata
     with open(file_path, "rb") as f:
         tree_meta = pickle.load(f)
 
-    # # nodes
-    # nodes_payload = np.load(node_path, allow_pickle=True).item()
-    
     # nodes
     node_batches = tree_meta.get("node_batches")
     if not node_batches:
@@ -387,6 +367,7 @@ def get_vct_centroids(file_path: str) -> Dict[str, Any]:
     shifted_nodes.insert(0, {"id": 1, "parent": 0})  # Root node
     nodes = shifted_nodes
 
+    # leafs
     leaf_ids = [int(leaf) + 1 for leaf in leaf_ids_raw]
     leaf_to_centroid_idx = {int(leaf) + 1: int(c_idx) for leaf, c_idx in leaf_to_centroid_idx_raw.items()}
     centroid_idx_to_leaf = {int(c_idx): int(leaf_id) for leaf_id, c_idx in leaf_to_centroid_idx.items()}
@@ -404,13 +385,7 @@ def get_vct_centroids(file_path: str) -> Dict[str, Any]:
     if leaf_start_node_id < 1 or leaf_count < 1 or total_nodes < 1:
         raise ValueError("Invalid tree structure information.")
 
-    # # centroids
-    # centroids_array = np.load(centroids_path, allow_pickle=False)
-    # centroids_array = np.asarray(centroids_array, dtype=np.float32)
-    # centroids_list = centroids_array.tolist()
-
     return {
-        # "centroids": centroids_list,
         "total_nodes": total_nodes,
         "node_batches": node_batches,
         "nodes": nodes,
