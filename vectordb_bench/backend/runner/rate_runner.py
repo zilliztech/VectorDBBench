@@ -7,6 +7,7 @@ from copy import deepcopy
 
 from vectordb_bench import config
 from vectordb_bench.backend.clients import api
+from vectordb_bench.backend.clients.doris.doris import Doris
 from vectordb_bench.backend.dataset import DataSetIterator
 from vectordb_bench.backend.utils import time_it
 
@@ -51,6 +52,18 @@ class RatedMultiThreadingInsertRunner:
             # pgvector is not thread-safe for concurrent insert,
             #   so we need to copy the db object, make sure each thread has its own connection
             db_copy = deepcopy(db)
+            with db_copy.init():
+                _insert_embeddings(db_copy, emb, metadata, retry_idx=0)
+        elif isinstance(db, Doris):
+            # DorisVectorClient is not thread-safe. Similar to pgvector, create a per-thread client
+            # by deep-copying the wrapper and forcing lazy re-init inside the thread.
+            db_copy = deepcopy(db)
+            # Ensure a fresh client/table will be created in this thread
+            try:
+                db_copy.client = None
+                db_copy.table = None
+            except Exception:
+                log.debug("Failed to reset Doris client or table on thread-local copy", exc_info=True)
             with db_copy.init():
                 _insert_embeddings(db_copy, emb, metadata, retry_idx=0)
         else:
