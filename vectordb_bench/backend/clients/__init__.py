@@ -45,6 +45,7 @@ class DB(Enum):
     AliyunOpenSearch = "AliyunOpenSearch"
     MongoDB = "MongoDB"
     TiDB = "TiDB"
+    CockroachDB = "CockroachDB"
     Clickhouse = "Clickhouse"
     Vespa = "Vespa"
     LanceDB = "LanceDB"
@@ -178,6 +179,10 @@ class DB(Enum):
 
             return TiDB
 
+        if self == DB.CockroachDB:
+            from .cockroachdb.cockroachdb import CockroachDB
+
+            return CockroachDB
         if self == DB.Doris:
             from .doris.doris import Doris
 
@@ -344,6 +349,10 @@ class DB(Enum):
 
             return TiDBConfig
 
+        if self == DB.CockroachDB:
+            from .cockroachdb.config import CockroachDBConfig
+
+            return CockroachDBConfig
         if self == DB.Doris:
             from .doris.config import DorisConfig
 
@@ -490,6 +499,11 @@ class DB(Enum):
             from .tidb.config import TiDBIndexConfig
 
             return TiDBIndexConfig
+
+        if self == DB.CockroachDB:
+            from .cockroachdb.config import _cockroachdb_case_config
+
+            return _cockroachdb_case_config.get(index_type)
 
         if self == DB.Vespa:
             from .vespa.config import VespaHNSWConfig

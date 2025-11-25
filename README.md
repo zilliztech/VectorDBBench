@@ -52,6 +52,7 @@ All the database client supported
 | redis                    | `pip install vectordb-bench[redis]`         |
 | memorydb                 | `pip install vectordb-bench[memorydb]`      |
 | chromadb                 | `pip install vectordb-bench[chromadb]`      |
+| cockroachdb              | `pip install vectordb-bench[cockroachdb]`   |
 | awsopensearch            | `pip install vectordb-bench[opensearch]` |
 | aliyun_opensearch        | `pip install vectordb-bench[aliyun_opensearch]` |
 | mongodb                  | `pip install vectordb-bench[mongodb]`       |
@@ -520,7 +521,7 @@ Now we can only run one task at the same time.
 ### Code Structure
 ![image](https://github.com/zilliztech/VectorDBBench/assets/105927039/8c06512e-5419-4381-b084-9c93aed59639)
 ### Client
-Our client module is designed with flexibility and extensibility in mind, aiming to integrate APIs from different systems seamlessly. As of now, it supports Milvus, Zilliz Cloud, Elastic Search, Pinecone, Qdrant Cloud, Weaviate Cloud, PgVector, Redis, Chroma, etc. Stay tuned for more options, as we are consistently working on extending our reach to other systems.
+Our client module is designed with flexibility and extensibility in mind, aiming to integrate APIs from different systems seamlessly. As of now, it supports Milvus, Zilliz Cloud, Elastic Search, Pinecone, Qdrant Cloud, Weaviate Cloud, PgVector, Redis, Chroma, CockroachDB, etc. Stay tuned for more options, as we are consistently working on extending our reach to other systems.
 ### Benchmark Cases
 We've developed lots of comprehensive benchmark cases to test vector databases' various capabilities, each designed to give you a different piece of the puzzle. These cases are categorized into four main types:
 #### Capacity Case
