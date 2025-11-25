@@ -5,14 +5,18 @@ from pydantic import BaseModel, SecretStr
 from ..api import DBCaseConfig, DBConfig, IndexType, MetricType
 
 
-class ElasticCloudConfig(DBConfig, BaseModel):
-    cloud_id: SecretStr
+class TencentElasticsearchConfig(DBConfig, BaseModel):
+    #: Protocol in use to connect to the node
+    scheme: str = "http"
+    host: str = ""
+    port: int = 9200
+    user: str = "elastic"
     password: SecretStr
 
     def to_dict(self) -> dict:
         return {
-            "cloud_id": self.cloud_id.get_secret_value(),
-            "basic_auth": ("elastic", self.password.get_secret_value()),
+            "hosts": [{"scheme": self.scheme, "host": self.host, "port": self.port}],
+            "basic_auth": (self.user, self.password.get_secret_value()),
         }
 
 
@@ -21,12 +25,12 @@ class ESElementType(str, Enum):
     byte = "byte"  # 1 byte, -128 to 127
 
 
-class ElasticCloudIndexConfig(BaseModel, DBCaseConfig):
+class TencentElasticsearchIndexConfig(BaseModel, DBCaseConfig):
     element_type: ESElementType = ESElementType.float
-    index: IndexType = IndexType.ES_HNSW
+    index: IndexType = IndexType.TES_VSEARCH
     number_of_shards: int = 1
     number_of_replicas: int = 0
-    refresh_interval: str = "30s"
+    refresh_interval: str = "3s"
     merge_max_thread_count: int = 8
     use_rescore: bool = False
     oversample_ratio: float = 2.0
@@ -76,6 +80,7 @@ class ElasticCloudIndexConfig(BaseModel, DBCaseConfig):
             "similarity": self.parse_metric(),
             "index_options": {
                 "type": self.index.value,
+                "index": "hnsw",
                 "m": self.M,
                 "ef_construction": self.efConstruction,
             },
