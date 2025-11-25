@@ -2,6 +2,7 @@ from ..backend.clients.alisql.cli import AliSQLHNSW
 from ..backend.clients.alloydb.cli import AlloyDBScaNN
 from ..backend.clients.aws_opensearch.cli import AWSOpenSearch
 from ..backend.clients.clickhouse.cli import Clickhouse
+from ..backend.clients.doris.cli import Doris
 from ..backend.clients.hologres.cli import HologresHGraph
 from ..backend.clients.lancedb.cli import LanceDB
 from ..backend.clients.mariadb.cli import MariaDBHNSW
@@ -54,6 +55,7 @@ cli.add_command(BatchCli)
 cli.add_command(S3Vectors)
 cli.add_command(TencentElasticsearch)
 cli.add_command(AliSQLHNSW)
+cli.add_command(Doris)
 
 
 if __name__ == "__main__":
