@@ -60,6 +60,7 @@ All the database client supported
 | oceanbase                | `pip install vectordb-bench[oceanbase]`     |
 | hologres                 | `pip install vectordb-bench[hologres]`      |
 | tencent_es               | `pip install vectordb-bench[tencent_es]`    |
+| alisql                   | `pip install 'vectordb-bench[alisql]'`      |
 
 ### Run
 

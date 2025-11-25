@@ -52,6 +52,7 @@ class DB(Enum):
     S3Vectors = "S3Vectors"
     Hologres = "Alibaba Cloud Hologres"
     TencentElasticsearch = "TencentElasticsearch"
+    AliSQL = "AlibabaCloudRDSMySQL"
 
     @property
     def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901, PLR0915
@@ -205,6 +206,11 @@ class DB(Enum):
             from .tencent_elasticsearch.tencent_elasticsearch import TencentElasticsearch
 
             return TencentElasticsearch
+
+        if self == DB.AliSQL:
+            from .alisql.alisql import AliSQL
+
+            return AliSQL
 
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
@@ -362,10 +368,15 @@ class DB(Enum):
 
             return TencentElasticsearchConfig
 
+        if self == DB.AliSQL:
+            from .alisql.config import AliSQLConfig
+
+            return AliSQLConfig
+
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
 
-    def case_config_cls(  # noqa: C901, PLR0911, PLR0912
+    def case_config_cls(  # noqa: C901, PLR0911, PLR0912, PLR0915
         self,
         index_type: IndexType | None = None,
     ) -> type[DBCaseConfig]:
@@ -492,6 +503,11 @@ class DB(Enum):
             from .tencent_elasticsearch.config import TencentElasticsearchIndexConfig
 
             return TencentElasticsearchIndexConfig
+
+        if self == DB.AliSQL:
+            from .alisql.alisql import AliSQLIndexConfig
+
+            return AliSQLIndexConfig
 
         # DB.Pinecone, DB.Chroma, DB.Redis
         return EmptyDBCaseConfig
