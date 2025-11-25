@@ -270,6 +270,7 @@ class OSSOpenSearch(VectorDB):
         log.info(f"Creating index with ef_search: {ef_search_value}")
         log.info(f"Creating index with number_of_replicas: {self.case_config.number_of_replicas}")
         log.info(f"Creating index with replication_type: {self.case_config.replication_type}")
+        log.info(f"Creating index with knn_derived_source_enabled: {self.case_config.knn_derived_source_enabled}")
         log.info(f"Creating index with engine: {self.case_config.engine}")
         log.info(f"Creating index with metric type: {self.case_config.metric_type_name}")
         log.info(f"All case_config parameters: {self.case_config.__dict__}")
@@ -293,6 +294,12 @@ class OSSOpenSearch(VectorDB):
             },
             "refresh_interval": self.case_config.refresh_interval,
         }
+        # Only add knn.derived_source.enabled if explicitly set (None = skip for versions < 3.x compatibility)
+        if self.case_config.knn_derived_source_enabled and self.case_config.knn_derived_source_enabled != "None":
+            is_knn_derived_source_enabled = self.case_config.knn_derived_source_enabled == "True"
+            log.info(f"Adding knn.derived_source.enabled={is_knn_derived_source_enabled} to index settings")
+            settings["index"]["knn.derived_source.enabled"] = is_knn_derived_source_enabled
+
         settings["index"]["knn.algo_param.ef_search"] = ef_search_value
 
         version_specific_settings = self._get_version_specific_settings(self._get_cluster_version(client))
