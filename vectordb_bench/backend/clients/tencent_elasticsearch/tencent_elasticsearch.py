@@ -2,10 +2,9 @@ import logging
 import time
 from contextlib import contextmanager
 
-from vectordb_bench.backend.filter import Filter, FilterOp
+from vectordb_bench.backend.filter import FilterOp
 
 from ..elastic_cloud.elastic_cloud import ElasticCloud
-from .config import TencentElasticsearchIndexConfig
 
 for logger in ("elasticsearch", "elastic_transport"):
     logging.getLogger(logger).setLevel(logging.WARNING)
