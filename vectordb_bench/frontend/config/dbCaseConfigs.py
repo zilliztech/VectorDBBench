@@ -2075,13 +2075,11 @@ VespaPerformanceConfig = VespaLoadingConfig
 
 AliSQLLoadingConfig = [
     CaseConfigParamInput_IndexType_AliSQL,
-    CaseConfigParamInput_StorageEngine_AliSQL,
     CaseConfigParamInput_M_AliSQL,
     CaseConfigParamInput_CacheSize_AliSQL,
 ]
 AliSQLPerformanceConfig = [
     CaseConfigParamInput_IndexType_AliSQL,
-    CaseConfigParamInput_StorageEngine_AliSQL,
     CaseConfigParamInput_M_AliSQL,
     CaseConfigParamInput_CacheSize_AliSQL,
     CaseConfigParamInput_EFSearch_AliSQL,

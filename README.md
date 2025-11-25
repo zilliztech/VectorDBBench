@@ -62,6 +62,7 @@ All the database client supported
 | hologres                 | `pip install vectordb-bench[hologres]`      |
 | tencent_es               | `pip install vectordb-bench[tencent_es]`    |
 | alisql                   | `pip install 'vectordb-bench[alisql]'`      |
+| doris                    | `pip install vectordb-bench[doris]`         |
 
 ### Run
 
@@ -321,6 +322,42 @@ Options:
                                   HGraph [required]
   --help                          Show this message and exit.
   ```
+
+### Run Doris from command line
+
+Doris supports ann index with type hnsw from version 4.0.x
+
+```shell
+NUM_PER_BATCH=1000000 vectordbbench doris --http-port=8030 --port=9030 --db-name=vector_test --case-type=Performance768D1M --stream-load-rows-per-batch=500000
+```
+
+Using flag `--session-var`, if you want to test doris with some customized session variables. For example:
+```shell
+NUM_PER_BATCH=1000000 vectordbbench doris --http-port=8030 --port=9030 --db-name=vector_test --case-type=Performance768D1M --stream-load-rows-per-batch=500000 --session-var enable_profile=True
+```
+
+Mote options:
+
+```text
+--m INTEGER                     hnsw m
+--ef-construction INTEGER       hnsw ef-construction
+--username TEXT                 Username  [default: root; required]
+--password TEXT                 Password  [default: ""]
+--host TEXT                     Db host  [default: 127.0.0.1; required]
+--port INTEGER                  Query Port  [default: 9030; required]
+--http-port INTEGER             Http Port  [default: 8030; required]
+--db-name TEXT                  Db name  [default: test; required]
+--ssl / --no-ssl                Enable or disable SSL, for Doris Serverless
+                                SSL must be enabled  [default: no-ssl]
+--index-prop TEXT               Extra index PROPERTY as key=value
+                                (repeatable)
+--session-var TEXT              Session variable key=value applied to each
+                                SQL session (repeatable)
+--stream-load-rows-per-batch INTEGER
+                                Rows per single stream load request; default
+                                uses NUM_PER_BATCH
+--no-index                      Create table without ANN index
+```
 
 #### Using a configuration file.
 

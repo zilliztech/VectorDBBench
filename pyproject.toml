@@ -40,6 +40,7 @@ dependencies = [
     "pydantic<v2",
     "scikit-learn",
     "pymilvus", # with pandas, numpy, ujson
+    "ujson",
 ]
 dynamic = ["version"]
 
@@ -74,7 +75,6 @@ all = [
     "pyvespa",
     "lancedb",
     "mysql-connector-python",
-    "ujson",
 ]
 
 qdrant          = [ "qdrant-client" ]
@@ -101,6 +101,7 @@ vespa           = [ "pyvespa" ]
 lancedb         = [ "lancedb" ]
 oceanbase       = [ "mysql-connector-python" ]
 alisql          = [ "mysql-connector-python" ]
+doris           = [ "doris-vector-search" ]
 
 [project.urls]
 "repository" = "https://github.com/zilliztech/VectorDBBench"

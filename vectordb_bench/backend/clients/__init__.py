@@ -54,6 +54,7 @@ class DB(Enum):
     Hologres = "Alibaba Cloud Hologres"
     TencentElasticsearch = "TencentElasticsearch"
     AliSQL = "AlibabaCloudRDSMySQL"
+    Doris = "Doris"
 
     @property
     def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901, PLR0915
@@ -182,6 +183,10 @@ class DB(Enum):
             from .cockroachdb.cockroachdb import CockroachDB
 
             return CockroachDB
+        if self == DB.Doris:
+            from .doris.doris import Doris
+
+            return Doris
 
         if self == DB.Test:
             from .test.test import Test
@@ -348,6 +353,10 @@ class DB(Enum):
             from .cockroachdb.config import CockroachDBConfig
 
             return CockroachDBConfig
+        if self == DB.Doris:
+            from .doris.config import DorisConfig
+
+            return DorisConfig
 
         if self == DB.Test:
             from .test.config import TestConfig
@@ -524,6 +533,10 @@ class DB(Enum):
             from .alisql.alisql import AliSQLIndexConfig
 
             return AliSQLIndexConfig
+        if self == DB.Doris:
+            from .doris.config import DorisCaseConfig
+
+            return DorisCaseConfig
 
         # DB.Pinecone, DB.Chroma, DB.Redis
         return EmptyDBCaseConfig
