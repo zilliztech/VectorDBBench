@@ -1,3 +1,4 @@
+from ..backend.clients.alisql.cli import AliSQLHNSW
 from ..backend.clients.alloydb.cli import AlloyDBScaNN
 from ..backend.clients.aws_opensearch.cli import AWSOpenSearch
 from ..backend.clients.clickhouse.cli import Clickhouse
@@ -52,6 +53,7 @@ cli.add_command(QdrantLocal)
 cli.add_command(BatchCli)
 cli.add_command(S3Vectors)
 cli.add_command(TencentElasticsearch)
+cli.add_command(AliSQLHNSW)
 
 
 if __name__ == "__main__":

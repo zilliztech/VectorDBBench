@@ -1550,6 +1550,53 @@ CaseConfigParamInput_StorageEngine_MariaDB = CaseConfigInput(
     },
 )
 
+CaseConfigParamInput_M_AliSQL = CaseConfigInput(
+    label=CaseConfigParamType.M,
+    inputHelp="M parameter in HNSW vector indexing",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 3,
+        "max": 200,
+        "value": 6,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_EFSearch_AliSQL = CaseConfigInput(
+    label=CaseConfigParamType.ef_search,
+    inputHelp="vidx_hnsw_ef_search",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 10000,
+        "value": 20,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_CacheSize_AliSQL = CaseConfigInput(
+    label=CaseConfigParamType.cache_size,
+    inputHelp="vidx_hnsw_cache_size",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1048576,
+        "max": (1 << 53) - 1,
+        "value": 16 * 1024**3,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_IndexType_AliSQL = CaseConfigInput(
+    label=CaseConfigParamType.IndexType,
+    inputHelp="Select Index Type",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [
+            IndexType.HNSW.value,
+        ],
+    },
+)
+
 CaseConfigParamInput_M_MariaDB = CaseConfigInput(
     label=CaseConfigParamType.M,
     inputHelp="M parameter in MHNSW vector indexing",
@@ -2026,6 +2073,20 @@ VespaLoadingConfig = [
 ]
 VespaPerformanceConfig = VespaLoadingConfig
 
+AliSQLLoadingConfig = [
+    CaseConfigParamInput_IndexType_AliSQL,
+    CaseConfigParamInput_StorageEngine_AliSQL,
+    CaseConfigParamInput_M_AliSQL,
+    CaseConfigParamInput_CacheSize_AliSQL,
+]
+AliSQLPerformanceConfig = [
+    CaseConfigParamInput_IndexType_AliSQL,
+    CaseConfigParamInput_StorageEngine_AliSQL,
+    CaseConfigParamInput_M_AliSQL,
+    CaseConfigParamInput_CacheSize_AliSQL,
+    CaseConfigParamInput_EFSearch_AliSQL,
+]
+
 CaseConfigParamInput_IndexType_LanceDB = CaseConfigInput(
     label=CaseConfigParamType.IndexType,
     inputHelp="AUTOINDEX = IVFPQ with default parameters",
@@ -2249,6 +2310,10 @@ CASE_CONFIG_MAP = {
     DB.TencentElasticsearch: {
         CaseLabel.Load: TencentElasticsearchLoadingConfig,
         CaseLabel.Performance: TencentElasticsearchPerformanceConfig,
+    },
+    DB.AliSQL: {
+        CaseLabel.Load: AliSQLLoadingConfig,
+        CaseLabel.Performance: AliSQLPerformanceConfig,
     },
 }
 
