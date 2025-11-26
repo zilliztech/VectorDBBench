@@ -35,7 +35,7 @@ class CockroachDB(VectorDB):
         FilterOp.StrEqual,
     ]
 
-    def __init__(
+    def __init__(  # noqa: PLR0915
         self,
         dim: int,
         db_config: dict,
