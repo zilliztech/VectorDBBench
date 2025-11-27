@@ -180,48 +180,21 @@ class ElasticCloud(VectorDB):
         """
         assert self.client is not None, "should self.init() first"
 
+        knn = {
+            "field": self.vector_col_name,
+            "k": k,
+            "num_candidates": self.case_config.num_candidates,
+            "filter": self.filter,
+            "query_vector": query,
+        }
         if self.case_config.use_rescore:
-            oversample_k = int(k * self.case_config.oversample_ratio)
-            oversample_num_candidates = int(self.case_config.num_candidates * self.case_config.oversample_ratio)
-            knn = {
-                "field": self.vector_col_name,
-                "k": oversample_k,
-                "num_candidates": oversample_num_candidates,
-                "filter": self.filter,
-                "query_vector": query,
-            }
-            rescore = {
-                "window_size": oversample_k,
-                "query": {
-                    "rescore_query": {
-                        "script_score": {
-                            "query": {"match_all": {}},
-                            "script": {
-                                "source": f"cosineSimilarity(params.queryVector, '{self.vector_col_name}')",
-                                "params": {"queryVector": query},
-                            },
-                        }
-                    },
-                    "query_weight": 0,
-                    "rescore_query_weight": 1,
-                },
-            }
-        else:
-            knn = {
-                "field": self.vector_col_name,
-                "k": k,
-                "num_candidates": self.case_config.num_candidates,
-                "filter": self.filter,
-                "query_vector": query,
-            }
-            rescore = None
+            knn["rescore_vector"] = {"oversample": self.case_config.oversample_ratio}
         size = k
 
         res = self.client.search(
             index=self.indice,
             knn=knn,
             routing=self.routing_key,
-            rescore=rescore,
             size=size,
             _source=False,
             docvalue_fields=[self.id_col_name],
