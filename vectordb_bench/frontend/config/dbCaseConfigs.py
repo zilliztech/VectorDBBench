@@ -839,7 +839,7 @@ CaseConfigParamInput_EFConstruction_PgVector = CaseConfigInput(
 )
 
 CaseConfigParamInput_IndexType_ES = CaseConfigInput(
-    label=CaseConfigParamType.IndexType,
+    label=CaseConfigParamType.index,
     inputType=InputType.Option,
     inputConfig={
         "options": [
@@ -881,7 +881,8 @@ CaseConfigParamInput_UseRescore_ES = CaseConfigInput(
     label=CaseConfigParamType.use_rescore,
     inputType=InputType.Bool,
     inputConfig={"value": False},
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) != IndexType.ES_HNSW.value,
+    isDisplayed=lambda config: config.get(CaseConfigParamType.index, None) != IndexType.ES_HNSW.value,
+    inputHelp="Recalculating scores using the original (non-quantized) vectors.",
 )
 
 CaseConfigParamInput_OversampleRatio_ES = CaseConfigInput(
@@ -889,7 +890,7 @@ CaseConfigParamInput_OversampleRatio_ES = CaseConfigInput(
     inputType=InputType.Float,
     inputConfig={"min": 1.0, "max": 100.0, "value": 2.0},
     isDisplayed=lambda config: config.get(CaseConfigParamType.use_rescore, False),
-    inputHelp="num_oversample = oversample_ratio * top_k.",
+    inputHelp="Retrieving more candidates per shard for rescoring.",
 )
 
 CaseConfigParamInput_UseRouting_ES = CaseConfigInput(

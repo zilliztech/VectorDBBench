@@ -44,6 +44,7 @@ class CaseConfigParamType(Enum):
     """
 
     IndexType = "IndexType"
+    index = "index"
     M = "M"
     EFConstruction = "efConstruction"
     ef_construction = "ef_construction"
