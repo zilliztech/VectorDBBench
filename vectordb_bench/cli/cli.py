@@ -652,3 +652,6 @@ def run(
         time.sleep(5)
         if global_result_future:
             wait([global_result_future])
+
+        while benchmark_runner.has_running():
+            time.sleep(1)
