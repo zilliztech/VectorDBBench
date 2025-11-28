@@ -52,6 +52,7 @@ All the database client supported
 | redis                    | `pip install vectordb-bench[redis]`         |
 | memorydb                 | `pip install vectordb-bench[memorydb]`      |
 | chromadb                 | `pip install vectordb-bench[chromadb]`      |
+| cockroachdb              | `pip install vectordb-bench[cockroachdb]`   |
 | awsopensearch            | `pip install vectordb-bench[opensearch]` |
 | aliyun_opensearch        | `pip install vectordb-bench[aliyun_opensearch]` |
 | mongodb                  | `pip install vectordb-bench[mongodb]`       |
@@ -60,6 +61,8 @@ All the database client supported
 | oceanbase                | `pip install vectordb-bench[oceanbase]`     |
 | hologres                 | `pip install vectordb-bench[hologres]`      |
 | tencent_es               | `pip install vectordb-bench[tencent_es]`    |
+| alisql                   | `pip install 'vectordb-bench[alisql]'`      |
+| doris                    | `pip install vectordb-bench[doris]`         |
 
 ### Run
 
@@ -208,8 +211,12 @@ Options:
   # Memory Management
   --cb-threshold TEXT             k-NN Memory circuit breaker threshold
 
+  --ondisk                        Ondisk mode with binary quantization(32x compression)
+  --oversample-factor             Controls the degree of oversampling applied to minority classes in imbalanced datasets to improve model performance by balancing class distributions.(default 1.0)
+  
+
   # Quantization Type
-  --quantization-type TEXT        which type of quantization to use valid values [fp32, fp16]
+  --quantization-type TEXT        which type of quantization to use valid values [fp32, fp16, bq]
   --help                          Show this message and exit.
   ```
 ### Run OceanBase from command line
@@ -315,6 +322,42 @@ Options:
                                   HGraph [required]
   --help                          Show this message and exit.
   ```
+
+### Run Doris from command line
+
+Doris supports ann index with type hnsw from version 4.0.x
+
+```shell
+NUM_PER_BATCH=1000000 vectordbbench doris --http-port=8030 --port=9030 --db-name=vector_test --case-type=Performance768D1M --stream-load-rows-per-batch=500000
+```
+
+Using flag `--session-var`, if you want to test doris with some customized session variables. For example:
+```shell
+NUM_PER_BATCH=1000000 vectordbbench doris --http-port=8030 --port=9030 --db-name=vector_test --case-type=Performance768D1M --stream-load-rows-per-batch=500000 --session-var enable_profile=True
+```
+
+Mote options:
+
+```text
+--m INTEGER                     hnsw m
+--ef-construction INTEGER       hnsw ef-construction
+--username TEXT                 Username  [default: root; required]
+--password TEXT                 Password  [default: ""]
+--host TEXT                     Db host  [default: 127.0.0.1; required]
+--port INTEGER                  Query Port  [default: 9030; required]
+--http-port INTEGER             Http Port  [default: 8030; required]
+--db-name TEXT                  Db name  [default: test; required]
+--ssl / --no-ssl                Enable or disable SSL, for Doris Serverless
+                                SSL must be enabled  [default: no-ssl]
+--index-prop TEXT               Extra index PROPERTY as key=value
+                                (repeatable)
+--session-var TEXT              Session variable key=value applied to each
+                                SQL session (repeatable)
+--stream-load-rows-per-batch INTEGER
+                                Rows per single stream load request; default
+                                uses NUM_PER_BATCH
+--no-index                      Create table without ANN index
+```
 
 #### Using a configuration file.
 
@@ -478,7 +521,7 @@ Now we can only run one task at the same time.
 ### Code Structure
 ![image](https://github.com/zilliztech/VectorDBBench/assets/105927039/8c06512e-5419-4381-b084-9c93aed59639)
 ### Client
-Our client module is designed with flexibility and extensibility in mind, aiming to integrate APIs from different systems seamlessly. As of now, it supports Milvus, Zilliz Cloud, Elastic Search, Pinecone, Qdrant Cloud, Weaviate Cloud, PgVector, Redis, Chroma, etc. Stay tuned for more options, as we are consistently working on extending our reach to other systems.
+Our client module is designed with flexibility and extensibility in mind, aiming to integrate APIs from different systems seamlessly. As of now, it supports Milvus, Zilliz Cloud, Elastic Search, Pinecone, Qdrant Cloud, Weaviate Cloud, PgVector, Redis, Chroma, CockroachDB, etc. Stay tuned for more options, as we are consistently working on extending our reach to other systems.
 ### Benchmark Cases
 We've developed lots of comprehensive benchmark cases to test vector databases' various capabilities, each designed to give you a different piece of the puzzle. These cases are categorized into four main types:
 #### Capacity Case

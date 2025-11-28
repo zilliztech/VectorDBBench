@@ -40,6 +40,7 @@ dependencies = [
     "pydantic<v2",
     "scikit-learn",
     "pymilvus", # with pandas, numpy, ujson
+    "ujson",
 ]
 dynamic = ["version"]
 
@@ -94,10 +95,13 @@ aliyun_opensearch = [ "alibabacloud_ha3engine_vector" ]
 mongodb         = [ "pymongo" ]
 mariadb         = [ "mariadb" ]
 tidb            = [ "PyMySQL" ]
+cockroachdb     = [ "psycopg[binary,pool]", "pgvector" ]
 clickhouse      = [ "clickhouse-connect" ]
 vespa           = [ "pyvespa" ]
 lancedb         = [ "lancedb" ]
 oceanbase       = [ "mysql-connector-python" ]
+alisql          = [ "mysql-connector-python" ]
+doris           = [ "doris-vector-search" ]
 
 [project.urls]
 "repository" = "https://github.com/zilliztech/VectorDBBench"
