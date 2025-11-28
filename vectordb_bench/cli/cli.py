@@ -608,21 +608,23 @@ class OceanBaseIVFTypedDict(TypedDict):
 def cli(): ...
 
 
-def run(
+def build_task(
     db: DB,
     db_config: DBConfig,
     db_case_config: DBCaseConfig,
     **parameters: Unpack[CommonTypedDict],
-):
-    """Builds a single VectorDBBench Task and runs it, awaiting the task until finished.
+) -> TaskConfig:
+    """Builds a single VectorDBBench Task without running it.
 
     Args:
         db (DB)
         db_config (DBConfig)
         db_case_config (DBCaseConfig)
         **parameters: expects keys from CommonTypedDict
-    """
 
+    Returns:
+        TaskConfig: The created task configuration
+    """
     task = TaskConfig(
         db=db,
         db_config=db_config,
@@ -644,6 +646,25 @@ def run(
             parameters["search_concurrent"],
         ),
     )
+    return task
+
+
+def run(
+    db: DB,
+    db_config: DBConfig,
+    db_case_config: DBCaseConfig,
+    **parameters: Unpack[CommonTypedDict],
+):
+    """Builds a single VectorDBBench Task and runs it, awaiting the task until finished.
+
+    Args:
+        db (DB)
+        db_config (DBConfig)
+        db_case_config (DBCaseConfig)
+        **parameters: expects keys from CommonTypedDict
+    """
+
+    task = build_task(db, db_config, db_case_config, **parameters)
     task_label = parameters["task_label"]
 
     log.info(f"Task:\n{pformat(task)}\n")

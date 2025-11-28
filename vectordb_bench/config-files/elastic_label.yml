@@ -1,0 +1,207 @@
+elasticcloudhnsw:
+  # 标签过滤测试 - 多个过滤率使用相同的 task_label
+  # 所有结果将自动合并到 result_YYYYMMDD_label_filter_batch_elasticcloud.json
+  
+  # 过滤率 0.1% (0.001)
+  - db_label: ElasticCloud_LabelFilter
+    cloud_id: aaa:dXMtY2VudHJhbDEuZ2NwLmNsb3VkLmVzLmlvOjQ0MyRlMTEzZjNmNjRhNDA0ZmFmYmE5ZGFlN2EyMmVkM2Y5MiRjZmMzODgzMmM5MmU0MTViYmQyZjE4NWZkNzE5ZWNkZg==
+    password: saKBWnPMJh9cq4zmOKL6wrI0
+    task_label: label_filter_batch01  # 相同的 task_label，用于合并结果
+    
+    # HNSW 索引参数
+    m: 16
+    ef_construction: 128
+    num_candidates: 100
+    element_type: float
+    
+    # ElasticCloud 配置
+    number_of_shards: 1
+    number_of_replicas: 0
+    refresh_interval: 30s
+    merge_max_thread_count: 8
+    use_force_merge: True
+    use_routing: False
+    use_rescore: False
+    oversample_ratio: 2.0
+    
+    # 标签过滤性能测试
+    case_type: LabelFilterPerformanceCase
+    dataset_with_size_type: "Small Cohere (768dim, 100K)"
+    label_percentage: 0.001  # 0.1%
+ 
+    
+    # 串行和并发都测试
+    search_serial: True
+    search_concurrent: True
+    
+    # 并发搜索配置
+    num_concurrency: 5
+    concurrency_duration: 30
+    
+    # 第一个任务需要加载数据
+    drop_old: False
+    load: False
+  
+  # 过滤率 0.2% (0.002)
+  - db_label: ElasticCloud_LabelFilter
+    cloud_id: aaa:dXMtY2VudHJhbDEuZ2NwLmNsb3VkLmVzLmlvOjQ0MyRlMTEzZjNmNjRhNDA0ZmFmYmE5ZGFlN2EyMmVkM2Y5MiRjZmMzODgzMmM5MmU0MTViYmQyZjE4NWZkNzE5ZWNkZg==
+    password: saKBWnPMJh9cq4zmOKL6wrI0
+    task_label: label_filter_batch01  # 相同的 task_label
+    
+    m: 16
+    ef_construction: 128
+    num_candidates: 100
+    element_type: float
+    
+    number_of_shards: 1
+    number_of_replicas: 0
+    refresh_interval: 30s
+    merge_max_thread_count: 8
+    use_force_merge: True
+    use_routing: False
+    use_rescore: False
+    oversample_ratio: 2.0
+    
+    case_type: LabelFilterPerformanceCase
+    dataset_with_size_type: "Small Cohere (768dim, 100K)"
+    label_percentage: 0.002  # 0.2%
+    
+    search_serial: True
+    search_concurrent: True
+    num_concurrency: 5
+    concurrency_duration: 30
+    
+    # 复用之前的数据，不需要重新加载
+    drop_old: False
+    load: False
+  
+  # 过滤率 0.5% (0.005)
+  - db_label: ElasticCloud_LabelFilter
+    cloud_id: aaa:dXMtY2VudHJhbDEuZ2NwLmNsb3VkLmVzLmlvOjQ0MyRlMTEzZjNmNjRhNDA0ZmFmYmE5ZGFlN2EyMmVkM2Y5MiRjZmMzODgzMmM5MmU0MTViYmQyZjE4NWZkNzE5ZWNkZg==
+    password: saKBWnPMJh9cq4zmOKL6wrI0
+    task_label: label_filter_batch01  # 相同的 task_label
+    
+    m: 16
+    ef_construction: 128
+    num_candidates: 100
+    element_type: float
+    
+    number_of_shards: 1
+    number_of_replicas: 0
+    refresh_interval: 30s
+    merge_max_thread_count: 8
+    use_force_merge: True
+    use_routing: False
+    use_rescore: False
+    oversample_ratio: 2.0
+    
+    case_type: LabelFilterPerformanceCase
+    dataset_with_size_type: "Small Cohere (768dim, 100K)"
+    label_percentage: 0.005  # 0.5%
+    
+    search_serial: True
+    search_concurrent: True
+    num_concurrency: 5
+    concurrency_duration: 30
+    
+    drop_old: False
+    load: False
+  
+  # 过滤率 1% (0.01)
+  - db_label: ElasticCloud_LabelFilter
+    cloud_id: aaa:dXMtY2VudHJhbDEuZ2NwLmNsb3VkLmVzLmlvOjQ0MyRlMTEzZjNmNjRhNDA0ZmFmYmE5ZGFlN2EyMmVkM2Y5MiRjZmMzODgzMmM5MmU0MTViYmQyZjE4NWZkNzE5ZWNkZg==
+    password: saKBWnPMJh9cq4zmOKL6wrI0
+    task_label: label_filter_batch01  # 相同的 task_label
+    
+    m: 16
+    ef_construction: 128
+    num_candidates: 100
+    element_type: float
+    
+    number_of_shards: 1
+    number_of_replicas: 0
+    refresh_interval: 30s
+    merge_max_thread_count: 8
+    use_force_merge: True
+    use_routing: False
+    use_rescore: False
+    oversample_ratio: 2.0
+    
+    case_type: LabelFilterPerformanceCase
+    dataset_with_size_type: "Small Cohere (768dim, 100K)"
+    label_percentage: 0.01  # 1%
+    
+    search_serial: True
+    search_concurrent: True
+    num_concurrency: 5
+    concurrency_duration: 30
+    
+    drop_old: False
+    load: False
+  
+  # 过滤率 2% (0.02)
+  - db_label: ElasticCloud_LabelFilter
+    cloud_id: aaa:dXMtY2VudHJhbDEuZ2NwLmNsb3VkLmVzLmlvOjQ0MyRlMTEzZjNmNjRhNDA0ZmFmYmE5ZGFlN2EyMmVkM2Y5MiRjZmMzODgzMmM5MmU0MTViYmQyZjE4NWZkNzE5ZWNkZg==
+    password: saKBWnPMJh9cq4zmOKL6wrI0
+    task_label: label_filter_batch01  # 相同的 task_label
+    
+    m: 16
+    ef_construction: 128
+    num_candidates: 100
+    element_type: float
+    
+    number_of_shards: 1
+    number_of_replicas: 0
+    refresh_interval: 30s
+    merge_max_thread_count: 8
+    use_force_merge: True
+    use_routing: False
+    use_rescore: False
+    oversample_ratio: 2.0
+    
+    case_type: LabelFilterPerformanceCase
+    dataset_with_size_type: "Small Cohere (768dim, 100K)"
+    label_percentage: 0.02  # 2%
+    
+    search_serial: True
+    search_concurrent: True
+    num_concurrency: 5
+    concurrency_duration: 30
+    
+    drop_old: False
+    load: False
+  
+  # 过滤率 5% (0.05)
+  - db_label: ElasticCloud_LabelFilter
+    cloud_id: aaa:dXMtY2VudHJhbDEuZ2NwLmNsb3VkLmVzLmlvOjQ0MyRlMTEzZjNmNjRhNDA0ZmFmYmE5ZGFlN2EyMmVkM2Y5MiRjZmMzODgzMmM5MmU0MTViYmQyZjE4NWZkNzE5ZWNkZg==
+    password: saKBWnPMJh9cq4zmOKL6wrI0
+    task_label: label_filter_batch01  # 相同的 task_label
+    
+    m: 16
+    ef_construction: 128
+    num_candidates: 100
+    element_type: float
+    
+    number_of_shards: 1
+    number_of_replicas: 0
+    refresh_interval: 30s
+    merge_max_thread_count: 8
+    use_force_merge: True
+    use_routing: False
+    use_rescore: False
+    oversample_ratio: 2.0
+    
+    case_type: LabelFilterPerformanceCase
+    dataset_with_size_type: "Small Cohere (768dim, 100K)"
+    label_percentage: 0.05  # 5%
+    
+    search_serial: True
+    search_concurrent: True
+    num_concurrency: 5
+    concurrency_duration: 30
+    
+    drop_old: False
+    load: False
+  
+  # 过滤率 10% (0.1)
+

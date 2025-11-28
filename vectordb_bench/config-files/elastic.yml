@@ -1,0 +1,115 @@
+elasticcloudhnsw:
+  # 测试1：标准性能测试（串行 + 并发）
+  - db_label: ElasticCloud_50K
+    cloud_id: aaa:dXMtY2VudHJhbDEuZ2NwLmNsb3VkLmVzLmlvOjQ0MyRlMTEzZjNmNjRhNDA0ZmFmYmE5ZGFlN2EyMmVkM2Y5MiRjZmMzODgzMmM5MmU0MTViYmQyZjE4NWZkNzE5ZWNkZg==
+    password: saKBWnPMJh9cq4zmOKL6wrI0
+    task_label: test_50k
+    
+    # HNSW 索引参数
+    m: 16
+    ef_construction: 128
+    num_candidates: 100
+    element_type: float
+    
+    # ElasticCloud 配置
+    number_of_shards: 1
+    number_of_replicas: 0
+    refresh_interval: 30s
+    merge_max_thread_count: 8
+    use_force_merge: True
+    use_routing: False
+    use_rescore: False
+    oversample_ratio: 2.0
+    
+    # 标准性能测试（无过滤）
+    case_type: Performance1536D50K
+    
+    # 串行和并发都测试
+    search_serial: True
+    search_concurrent: True
+    
+    # 并发搜索配置（减少并发数，只测试 1, 5, 10 三个并发级别）
+    num_concurrency: 5
+    concurrency_duration: 30
+    
+    # 其他配置
+    drop_old: True
+    load: True
+  
+  # 测试2：整数过滤测试（NewIntFilter - 100K最小数据集）
+  - db_label: ElasticCloud_100K_IntFilter
+    cloud_id: aaa:dXMtY2VudHJhbDEuZ2NwLmNsb3VkLmVzLmlvOjQ0MyRlMTEzZjNmNjRhNDA0ZmFmYmE5ZGFlN2EyMmVkM2Y5MiRjZmMzODgzMmM5MmU0MTViYmQyZjE4NWZkNzE5ZWNkZg==
+    password: saKBWnPMJh9cq4zmOKL6wrI0
+    task_label: test_int_filter
+    
+    # HNSW 索引参数
+    m: 16
+    ef_construction: 128
+    num_candidates: 100
+    element_type: float
+    
+    # ElasticCloud 配置
+    number_of_shards: 1
+    number_of_replicas: 0
+    refresh_interval: 30s
+    merge_max_thread_count: 8
+    use_force_merge: True
+    use_routing: False
+    use_rescore: False
+    oversample_ratio: 2.0
+    
+    # 整数过滤性能测试（如 age >= 25）
+    case_type: NewIntFilterPerformanceCase
+    dataset_with_size_type: "Medium Cohere (768dim, 1M)"
+    filter_rate: 0.01  # 过滤率 1%
+    
+    # 串行和并发都测试
+    search_serial: True
+    search_concurrent: True
+    
+    # 并发搜索配置
+    num_concurrency: 5
+    concurrency_duration: 30
+    
+    # 需要加载带整数标签的数据
+    drop_old: True
+    load: True
+  
+  # 测试3：标签过滤测试（LabelFilter - 100K最小数据集）
+  - db_label: ElasticCloud_100K_LabelFilter
+    cloud_id: aaa:dXMtY2VudHJhbDEuZ2NwLmNsb3VkLmVzLmlvOjQ0MyRlMTEzZjNmNjRhNDA0ZmFmYmE5ZGFlN2EyMmVkM2Y5MiRjZmMzODgzMmM5MmU0MTViYmQyZjE4NWZkNzE5ZWNkZg==
+    password: saKBWnPMJh9cq4zmOKL6wrI0
+    task_label: test_label_filter
+    
+    # HNSW 索引参数
+    m: 16
+    ef_construction: 128
+    num_candidates: 100
+    element_type: float
+    
+    # ElasticCloud 配置
+    number_of_shards: 1
+    number_of_replicas: 0
+    refresh_interval: 30s
+    merge_max_thread_count: 8
+    use_force_merge: True
+    use_routing: False
+    use_rescore: False
+    oversample_ratio: 2.0
+    
+    # 标签过滤性能测试（如 color == "red"）
+    case_type: LabelFilterPerformanceCase
+    dataset_with_size_type: "Small Cohere (768dim, 100K)"
+    label_percentage: 0.01  
+    
+    # 串行和并发都测试
+    search_serial: True
+    search_concurrent: True
+    
+    # 并发搜索配置
+    num_concurrency: 5
+    concurrency_duration: 30
+    
+    # 需要加载带字符串标签的数据
+    drop_old: True
+    load: True

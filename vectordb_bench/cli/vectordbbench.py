@@ -4,6 +4,10 @@ from ..backend.clients.aws_opensearch.cli import AWSOpenSearch
 from ..backend.clients.clickhouse.cli import Clickhouse
 from ..backend.clients.cockroachdb.cli import CockroachDB as CockroachDBCli
 from ..backend.clients.doris.cli import Doris
+from ..backend.clients.elastic_cloud.cli import ElasticCloudHNSW
+from ..backend.clients.elastic_cloud.cli import ElasticCloudHNSWInt8
+from ..backend.clients.elastic_cloud.cli import ElasticCloudHNSWInt4
+from ..backend.clients.elastic_cloud.cli import ElasticCloudHNSWBBQ
 from ..backend.clients.hologres.cli import HologresHGraph
 from ..backend.clients.lancedb.cli import LanceDB
 from ..backend.clients.mariadb.cli import MariaDBHNSW
@@ -53,6 +57,10 @@ cli.add_command(LanceDB)
 cli.add_command(HologresHGraph)
 cli.add_command(QdrantCloud)
 cli.add_command(QdrantLocal)
+cli.add_command(ElasticCloudHNSW)
+cli.add_command(ElasticCloudHNSWInt8)
+cli.add_command(ElasticCloudHNSWInt4)
+cli.add_command(ElasticCloudHNSWBBQ)
 cli.add_command(BatchCli)
 cli.add_command(S3Vectors)
 cli.add_command(TencentElasticsearch)
