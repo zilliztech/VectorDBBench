@@ -36,5 +36,8 @@
   "OpenSearch": {
     "16c128g": 1.418,
     "16c128g-force_merge": 1.418
+  },
+  "TencentElasticsearch": {
+    "sa5-1node": 0.95
   }
 }
