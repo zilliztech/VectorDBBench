@@ -22,6 +22,7 @@ from ..backend.clients.s3_vectors.cli import S3Vectors
 from ..backend.clients.tencent_elasticsearch.cli import TencentElasticsearch
 from ..backend.clients.test.cli import Test
 from ..backend.clients.tidb.cli import TiDB
+from ..backend.clients.turbopuffer.cli import Turbopuffer
 from ..backend.clients.vespa.cli import Vespa
 from ..backend.clients.weaviate_cloud.cli import Weaviate
 from ..backend.clients.zilliz_cloud.cli import ZillizAutoIndex
@@ -58,6 +59,7 @@ cli.add_command(S3Vectors)
 cli.add_command(TencentElasticsearch)
 cli.add_command(AliSQLHNSW)
 cli.add_command(Doris)
+cli.add_command(Turbopuffer)
 
 
 if __name__ == "__main__":

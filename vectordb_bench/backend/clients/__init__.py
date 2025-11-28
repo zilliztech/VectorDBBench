@@ -55,6 +55,7 @@ class DB(Enum):
     TencentElasticsearch = "TencentElasticsearch"
     AliSQL = "AlibabaCloudRDSMySQL"
     Doris = "Doris"
+    Turbopuffer = "Turbopuffer"
 
     @property
     def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901, PLR0915
@@ -222,6 +223,11 @@ class DB(Enum):
             from .alisql.alisql import AliSQL
 
             return AliSQL
+
+        if self == DB.Turbopuffer:
+            from .turbopuffer.turbopuffer import Turbopuffer
+
+            return Turbopuffer
 
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
@@ -393,6 +399,11 @@ class DB(Enum):
 
             return AliSQLConfig
 
+        if self == DB.Turbopuffer:
+            from .turbopuffer.config import TurbopufferConfig
+
+            return TurbopufferConfig
+
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
 
@@ -537,6 +548,11 @@ class DB(Enum):
             from .doris.config import DorisCaseConfig
 
             return DorisCaseConfig
+
+        if self == DB.Turbopuffer:
+            from .turbopuffer.config import TurbopufferIndexConfig
+
+            return TurbopufferIndexConfig
 
         # DB.Pinecone, DB.Chroma, DB.Redis
         return EmptyDBCaseConfig
