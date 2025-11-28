@@ -39,6 +39,25 @@ class CockroachDBTypedDict(CommonTypedDict):
         str,
         click.option("--db-name", type=str, help="Database name", required=True),
     ]
+    sslmode: Annotated[
+        str,
+        click.option(
+            "--sslmode",
+            type=str,
+            help="SSL mode (disable, require, verify-ca, verify-full)",
+            default="disable",
+            show_default=True,
+        ),
+    ]
+    sslrootcert: Annotated[
+        str | None,
+        click.option(
+            "--sslrootcert",
+            type=str,
+            help="Path to SSL root certificate (required for verify-ca, verify-full)",
+            default=None,
+        ),
+    ]
     min_partition_size: Annotated[
         int | None,
         click.option(
@@ -99,6 +118,8 @@ def CockroachDB(
             host=parameters["host"],
             port=parameters["port"],
             db_name=parameters["db_name"],
+            sslmode=parameters.get("sslmode", "disable"),
+            sslrootcert=parameters.get("sslrootcert"),
         ),
         db_case_config=CockroachDBVectorIndexConfig(
             metric_type=metric_type,

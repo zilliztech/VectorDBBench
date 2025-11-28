@@ -70,6 +70,7 @@ DB_TO_ICON = {
     DB.Hologres: "https://img.alicdn.com/imgextra/i3/O1CN01d9qrry1i6lTNa2BRa_!!6000000004364-2-tps-218-200.png",
     DB.Doris: "https://doris.apache.org/images/logo.svg",
     DB.TurboPuffer: "https://turbopuffer.com/logo2.png",
+    DB.CockroachDB: "https://raw.githubusercontent.com/cockroachdb/cockroach/master/docs/media/cockroach_db.png",
 }
 
 # RedisCloud color: #0D6EFD

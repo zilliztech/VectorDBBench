@@ -34,20 +34,34 @@ class CockroachDBConfig(DBConfig):
     max_overflow: int = 100
     pool_recycle: int = 3600
     connect_timeout: int = 10
+    sslmode: str = "disable"  # Options: disable, require, verify-ca, verify-full
+    sslrootcert: str | None = None  # Path to CA cert (for verify-ca, verify-full)
+    sslcert: str | None = None  # Path to client cert (for mutual TLS)
+    sslkey: str | None = None  # Path to client key (for mutual TLS)
 
     def to_dict(self) -> CockroachDBConfigDict:
         user_str = self.user_name.get_secret_value() if isinstance(self.user_name, SecretStr) else self.user_name
         pwd_str = self.password.get_secret_value() if self.password else ""
 
+        connect_config = {
+            "host": self.host,
+            "port": self.port,
+            "dbname": self.db_name,
+            "user": user_str,
+            "password": pwd_str,
+            "sslmode": self.sslmode,
+        }
+
+        # Add SSL certificate paths if provided
+        if self.sslrootcert:
+            connect_config["sslrootcert"] = self.sslrootcert
+        if self.sslcert:
+            connect_config["sslcert"] = self.sslcert
+        if self.sslkey:
+            connect_config["sslkey"] = self.sslkey
+
         return {
-            "connect_config": {
-                "host": self.host,
-                "port": self.port,
-                "dbname": self.db_name,
-                "user": user_str,
-                "password": pwd_str,
-                "sslmode": "disable",  # Default for local dev; production should override
-            },
+            "connect_config": connect_config,
             "table_name": self.table_name,
             "pool_size": self.pool_size,
             "max_overflow": self.max_overflow,
