@@ -17,7 +17,7 @@ class config:
     LOG_LEVEL = env.str("LOG_LEVEL", "INFO")
 
     DEFAULT_DATASET_URL = env.str("DEFAULT_DATASET_URL", AWS_S3_URL)
-    DATASET_LOCAL_DIR = env.path("DATASET_LOCAL_DIR", f"/home/{os.getenv('USER')}/vectordb_bench/dataset")
+    DATASET_LOCAL_DIR = env.path("DATASET_LOCAL_DIR", pathlib.Path.home() / "vectordb_bench" / "dataset")
     NUM_PER_BATCH = env.int("NUM_PER_BATCH", 100)
 
     DROP_OLD = env.bool("DROP_OLD", True)
