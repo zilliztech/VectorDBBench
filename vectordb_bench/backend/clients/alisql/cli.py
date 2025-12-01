@@ -49,7 +49,7 @@ class AliSQLTypedDict(CommonTypedDict):
             "--port",
             type=int,
             default=3306,
-            help="DB Port",
+            help="Db Port",
         ),
     ]
 
@@ -75,16 +75,6 @@ class AliSQLHNSWTypedDict(AliSQLTypedDict):
         ),
     ]
 
-    cache_size: Annotated[
-        int | None,
-        click.option(
-            "--cache-size",
-            type=int,
-            help="AliSQL system variable vidx_hnsw_cache_size",
-            required=False,
-        ),
-    ]
-
 
 @cli.command()
 @click_parameter_decorators_from_typed_dict(AliSQLHNSWTypedDict)
@@ -105,7 +95,6 @@ def AliSQLHNSW(
         db_case_config=AliSQLHNSWConfig(
             M=parameters["m"],
             ef_search=parameters["ef_search"],
-            cache_size=parameters["cache_size"],
         ),
         **parameters,
     )

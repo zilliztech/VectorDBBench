@@ -1575,18 +1575,6 @@ CaseConfigParamInput_EFSearch_AliSQL = CaseConfigInput(
     isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
 )
 
-CaseConfigParamInput_CacheSize_AliSQL = CaseConfigInput(
-    label=CaseConfigParamType.cache_size,
-    inputHelp="vidx_hnsw_cache_size",
-    inputType=InputType.Number,
-    inputConfig={
-        "min": 1048576,
-        "max": (1 << 53) - 1,
-        "value": 16 * 1024**3,
-    },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
-)
-
 CaseConfigParamInput_IndexType_AliSQL = CaseConfigInput(
     label=CaseConfigParamType.IndexType,
     inputHelp="Select Index Type",
@@ -2077,12 +2065,10 @@ VespaPerformanceConfig = VespaLoadingConfig
 AliSQLLoadingConfig = [
     CaseConfigParamInput_IndexType_AliSQL,
     CaseConfigParamInput_M_AliSQL,
-    CaseConfigParamInput_CacheSize_AliSQL,
 ]
 AliSQLPerformanceConfig = [
     CaseConfigParamInput_IndexType_AliSQL,
     CaseConfigParamInput_M_AliSQL,
-    CaseConfigParamInput_CacheSize_AliSQL,
     CaseConfigParamInput_EFSearch_AliSQL,
 ]
 

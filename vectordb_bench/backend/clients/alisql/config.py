@@ -49,14 +49,12 @@ class AliSQLHNSWConfig(AliSQLIndexConfig, DBCaseConfig):
     M: int | None
     ef_search: int | None
     index: IndexType = IndexType.HNSW
-    cache_size: int | None
 
     def index_param(self) -> dict:
         return {
             "metric_type": self.parse_metric(),
             "index_type": self.index.value,
             "M": self.M,
-            "cache_size": self.cache_size,
         }
 
     def search_param(self) -> dict:

@@ -103,14 +103,11 @@ class AliSQL(VectorDB):
         index_param = self.case_config.index_param()
         search_param = self.case_config.search_param()
 
-        # maximize allowed package size
-        self.cursor.execute("SET GLOBAL max_allowed_packet = 1073741824")
+        self.cursor.execute("SET sql_mode = ''")
 
         if index_param["index_type"] == "HNSW":
-            if index_param["cache_size"] is not None:
-                self.cursor.execute(f"SET GLOBAL vidx_hnsw_cache_size = {index_param['cache_size']}")
             if search_param["ef_search"] is not None:
-                self.cursor.execute(f"SET GLOBAL vidx_hnsw_ef_search = {search_param['ef_search']}")
+                self.cursor.execute(f"SET SESSION vidx_hnsw_ef_search = {search_param['ef_search']}")
             self.cursor.execute("COMMIT")
 
         self.insert_sql = f"INSERT INTO {self.db_name}.{self.table_name} (id, v) VALUES (%s, %s)"  # noqa: S608
