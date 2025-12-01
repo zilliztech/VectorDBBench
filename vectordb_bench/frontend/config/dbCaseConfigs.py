@@ -161,6 +161,34 @@ def get_custom_case_cluter() -> UICaseItemCluster:
     return UICaseItemCluster(label="Custom Search Performance Test", uiCaseItems=get_custom_case_items())
 
 
+def get_custom_streaming_case_items() -> list[UICaseItem]:
+    from vectordb_bench.frontend.components.custom.getCustomConfig import get_custom_streaming_configs
+
+    custom_streaming_configs = get_custom_streaming_configs()
+    return [
+        UICaseItem(
+            label=f"{custom_config.dataset_config.name} - Streaming",
+            description=f"Streaming test with custom dataset: {custom_config.dataset_config.name}",
+            cases=[
+                CaseConfig(
+                    case_id=CaseType.StreamingCustomDataset,
+                    custom_case={
+                        "description": custom_config.description,
+                        "dataset_config": custom_config.dataset_config.dict(),
+                    },
+                )
+            ],
+            caseLabel=CaseLabel.Streaming,
+            extra_custom_case_config_inputs=custom_streaming_config_with_custom_dataset,
+        )
+        for custom_config in custom_streaming_configs
+    ]
+
+
+def get_custom_streaming_case_cluster() -> UICaseItemCluster:
+    return UICaseItemCluster(label="Custom Streaming Test", uiCaseItems=get_custom_streaming_case_items())
+
+
 def generate_custom_streaming_case() -> CaseConfig:
     return CaseConfig(
         case_id=CaseType.StreamingPerformanceCase,
@@ -205,6 +233,12 @@ custom_streaming_config: list[ConfigInput] = [
         inputConfig=dict(step=10, min=30, max=360_000, value=30),
         inputHelp="search test duration after inserting all data",
     ),
+]
+
+# Config for custom streaming tests (with custom dataset from JSON)
+# Filter out the dataset_with_size_type from the existing config
+custom_streaming_config_with_custom_dataset: list[ConfigInput] = [
+    config for config in custom_streaming_config if config.label != CaseConfigParamType.dataset_with_size_type
 ]
 
 

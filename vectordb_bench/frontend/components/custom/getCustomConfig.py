@@ -34,10 +34,30 @@ class CustomCaseConfig(BaseModel):
     dataset_config: CustomDatasetConfig = CustomDatasetConfig()
 
 
+class CustomStreamingCaseConfig(BaseModel):
+    case_type: str = "streaming"
+    description: str = ""
+    dataset_config: CustomDatasetConfig = CustomDatasetConfig()
+
+
 def get_custom_configs():
     with open(config.CUSTOM_CONFIG_DIR, "r") as f:
         custom_configs = json.load(f)
-        return [CustomCaseConfig(**custom_config) for custom_config in custom_configs]
+        return [
+            CustomCaseConfig(**custom_config)
+            for custom_config in custom_configs
+            if custom_config.get("case_type") != "streaming"
+        ]
+
+
+def get_custom_streaming_configs():
+    with open(config.CUSTOM_CONFIG_DIR, "r") as f:
+        custom_configs = json.load(f)
+        return [
+            CustomStreamingCaseConfig(**custom_config)
+            for custom_config in custom_configs
+            if custom_config.get("case_type") == "streaming"
+        ]
 
 
 def save_custom_configs(custom_configs: list[CustomDatasetConfig]):
@@ -45,5 +65,18 @@ def save_custom_configs(custom_configs: list[CustomDatasetConfig]):
         json.dump([custom_config.dict() for custom_config in custom_configs], f, indent=4)
 
 
+def save_all_custom_configs(
+    performance_configs: list[CustomCaseConfig], streaming_configs: list[CustomStreamingCaseConfig]
+):
+    """Save both performance and streaming configs to the same JSON file"""
+    all_configs = [config.dict() for config in performance_configs] + [config.dict() for config in streaming_configs]
+    with open(config.CUSTOM_CONFIG_DIR, "w") as f:
+        json.dump(all_configs, f, indent=4)
+
+
 def generate_custom_case():
     return CustomCaseConfig()
+
+
+def generate_custom_streaming_case():
+    return CustomStreamingCaseConfig()
