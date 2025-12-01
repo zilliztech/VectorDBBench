@@ -53,6 +53,16 @@ class AliSQLTypedDict(CommonTypedDict):
         ),
     ]
 
+    database: Annotated[
+        str,
+        click.option(
+            "--database",
+            type=str,
+            help="Database name",
+            default="vectordbbench",
+        ),
+    ]
+
 
 class AliSQLHNSWTypedDict(AliSQLTypedDict):
     m: Annotated[
@@ -91,6 +101,7 @@ def AliSQLHNSW(
             password=SecretStr(parameters["password"]),
             host=parameters["host"],
             port=parameters["port"],
+            database=parameters["database"],
         ),
         db_case_config=AliSQLHNSWConfig(
             M=parameters["m"],

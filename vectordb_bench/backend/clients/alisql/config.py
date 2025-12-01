@@ -13,6 +13,7 @@ class AliSQLConfigDict(TypedDict):
     password: str
     host: str
     port: int
+    database: str
 
 
 class AliSQLConfig(DBConfig):
@@ -20,6 +21,7 @@ class AliSQLConfig(DBConfig):
     password: SecretStr
     host: str = "127.0.0.1"
     port: int = 3306
+    database: str = "vectordbbench"
 
     def to_dict(self) -> AliSQLConfigDict:
         pwd_str = self.password.get_secret_value()
@@ -28,6 +30,7 @@ class AliSQLConfig(DBConfig):
             "port": self.port,
             "user": self.user_name,
             "password": pwd_str,
+            "database": self.database,
         }
 
 
