@@ -10,8 +10,10 @@ This repository provides a script (`run.py`) to execute the benchmark tests. The
 - Logs detailed benchmark execution progress
 - Generates metadata for each benchmark run
 
-### Database Requirements
+### Pre-requisites
 - PostgreSQL with `pgvector` and/or `pg_diskann` extensions enabled
+- Our script assumes the following additional extensions to be available: "pg_buffercache" and "pg_prewarm", these are used for additional logs that we emit
+- VectorDBBench should be installed with relevant dependencies
 
 ## Configuration
 The `config.json` file defines the benchmarking setup. Here is a breakdown of the structure:
