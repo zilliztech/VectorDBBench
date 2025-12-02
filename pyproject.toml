@@ -80,7 +80,7 @@ weaviate        = [ "weaviate-client" ]
 elastic         = [ "elasticsearch" ]
 # For elastic and aliyun_elasticsearch
 
-pgvector        = [ "psycopg", "psycopg-binary", "pgvector", "psycopg2" ]
+pgvector        = [ "psycopg", "psycopg-binary", "pgvector", "psycopg2-binary" ]
 # for pgvector, pgvectorscale, pgdiskann, and, alloydb
 
 pgvecto_rs      = [ "pgvecto_rs[psycopg3]>=0.2.2" ]
