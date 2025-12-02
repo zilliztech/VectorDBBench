@@ -24,6 +24,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
+    "ujson",
     "click",
     "pytz",
     "streamlit-autorefresh",
