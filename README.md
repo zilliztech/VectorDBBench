@@ -219,6 +219,96 @@ Options:
   --quantization-type TEXT        which type of quantization to use valid values [fp32, fp16, bq]
   --help                          Show this message and exit.
   ```
+### Run Elastic Cloud from command line
+
+Elastic Cloud supports multiple index types: HNSW, HNSW_INT8, HNSW_INT4, and HNSW_BBQ.
+
+**Example: Run HNSW index test**
+
+```shell
+vectordbbench elasticcloudhnsw --db-label elastic-cloud-test \
+--cloud-id <your-cloud-id> --password '<your-password>' \
+--m 16 --ef-construction 100 --num-candidates 100 \
+--case-type Performance768D1M --number-of-shards 1 \
+--number-of-replicas 0 --refresh-interval 30s
+```
+
+**Example: Run HNSW_INT8 index test**
+
+```shell
+vectordbbench elasticcloudhnswint8 --db-label elastic-cloud-int8 \
+--cloud-id <your-cloud-id> --password '<your-password>' \
+--m 16 --ef-construction 200 --num-candidates 200 \
+--case-type Performance1536D50K --element-type float
+```
+
+**Example: Run HNSW_INT4 index test**
+
+```shell
+vectordbbench elasticcloudhnswint4 --db-label elastic-cloud-int4 \
+--cloud-id <your-cloud-id> --password '<your-password>' \
+--m 16 --ef-construction 200 --num-candidates 200 \
+--case-type Performance768D10M --use-rescore --oversample-ratio 2.0
+```
+
+**Example: Run HNSW_BBQ index test**
+
+```shell
+vectordbbench elasticcloudhnswbbq --db-label elastic-cloud-bbq \
+--cloud-id <your-cloud-id> --password '<your-password>' \
+--m 16 --ef-construction 200 --num-candidates 200 \
+--case-type Performance1536D5M --use-routing --use-force-merge
+```
+
+**Example: Run Label Filter Performance test**
+
+```shell
+vectordbbench elasticcloudhnsw --db-label elastic-cloud-label-filter \
+--cloud-id <your-cloud-id> --password '<your-password>' \
+--case-type LabelFilterPerformanceCase \
+--dataset-with-size-type "Medium OpenAI (1536dim, 500K)" \
+--label-percentage 0.001 \
+--m 16 --ef-construction 128 --num-candidates 100 \
+--num-concurrency 1,5 --number-of-shards 1
+```
+
+To list all options for Elastic Cloud, execute `vectordbbench elasticcloudhnsw --help`. The following are Elastic Cloud-specific command-line options:
+
+```text
+$ vectordbbench elasticcloudhnsw --help
+Usage: vectordbbench elasticcloudhnsw [OPTIONS]
+
+Options:
+  # Connection
+  --cloud-id TEXT                 Elastic Cloud ID  [required]
+  --password TEXT                 Elastic Cloud password  [required]
+  
+  # HNSW Index Parameters
+  --m INTEGER                     HNSW M parameter  [default: 16]
+  --ef-construction INTEGER       HNSW efConstruction parameter  [default: 100]
+  --num-candidates INTEGER        Number of candidates for search  [default: 100]
+  --element-type [float|byte]     Element type for vectors (float: 4 bytes, byte: 1 byte)  [default: float]
+  
+  # Index Configuration
+  --number-of-shards INTEGER      Number of shards  [default: 1]
+  --number-of-replicas INTEGER    Number of replicas  [default: 0]
+  --refresh-interval TEXT         Index refresh interval  [default: 30s]
+  --merge-max-thread-count INTEGER
+                                  Maximum thread count for merge  [default: 8]
+  --use-force-merge BOOLEAN       Whether to use force merge  [default: True]
+  --use-routing BOOLEAN           Whether to use routing  [default: False]
+  --use-rescore BOOLEAN           Whether to use rescore  [default: False]
+  --oversample-ratio FLOAT        Oversample ratio for rescore  [default: 2.0]
+  
+  # Common Options
+  --case-type [CapacityDim128|CapacityDim960|Performance768D100M|...]
+                                  Case type
+  --db-label TEXT                 Db label, default: date in ISO format
+  --k INTEGER                     K value for number of nearest neighbors to search  [default: 100]
+  --num-concurrency TEXT          Comma-separated list of concurrency values  [default: 1,5,10,20,30,40,60,80]
+  --help                          Show this message and exit.
+```
+
 ### Run OceanBase from command line
 
 Execute tests for the index types: HNSW, HNSW_SQ, or HNSW_BQ.
@@ -392,10 +482,23 @@ milvushnsw:
   ef_search: 128
   drop_old: False
   load: False
+elasticcloudhnsw:
+  db_label: elastic-cloud-hnsw
+  cloud_id: <your-cloud-id>
+  password: <your-password>
+  case_type: Performance768D1M
+  m: 16
+  ef_construction: 100
+  num_candidates: 100
+  number_of_shards: 1
+  number_of_replicas: 0
+  refresh_interval: 30s
+  element_type: float
 ```
 > Notes:
 > - Options passed on the command line will override the configuration file*
 > - Parameter names use an _ not -
+> - For `LabelFilterPerformanceCase` and `NewIntFilterPerformanceCase`, you must specify `dataset_with_size_type` in addition to `case_type`
 
 #### Using a batch configuration file.
 
@@ -430,10 +533,29 @@ milvushnsw:
     ef_search: 128
     drop_old: False
     load: False
+elasticcloudhnsw:
+  - db_label: elastic-cloud-hnsw-test-1
+    cloud_id: <your-cloud-id>
+    password: <your-password>
+    case_type: Performance768D1M
+    m: 16
+    ef_construction: 100
+    num_candidates: 100
+  - db_label: elastic-cloud-label-filter-0.1
+    cloud_id: <your-cloud-id>
+    password: <your-password>
+    case_type: LabelFilterPerformanceCase
+    dataset_with_size_type: "Medium OpenAI (1536dim, 500K)"
+    label_percentage: 0.001
+    m: 16
+    ef_construction: 128
+    num_candidates: 100
+    num_concurrency: "1,5"
 ```
 > Notes:
 > - Options can only be passed through configuration files
 > - Parameter names use an _ not -
+> - For `LabelFilterPerformanceCase` and `NewIntFilterPerformanceCase`, you must specify `dataset_with_size_type` in addition to `case_type`
 
 How to use?
 ```shell
