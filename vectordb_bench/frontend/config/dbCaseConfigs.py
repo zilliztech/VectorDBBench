@@ -1531,6 +1531,64 @@ CaseConfigParamInput_NumCandidates_TES = CaseConfigInput(
     },
 )
 
+# CockroachDB configs
+CaseConfigParamInput_IndexType_CockroachDB = CaseConfigInput(
+    label=CaseConfigParamType.IndexType,
+    inputHelp="Select Index Type (all use C-SPANN vector index)",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [
+            IndexType.Flat.value,
+            IndexType.HNSW.value,
+            IndexType.IVFFlat.value,
+        ],
+    },
+)
+
+CaseConfigParamInput_MinPartitionSize_CockroachDB = CaseConfigInput(
+    label=CaseConfigParamType.min_partition_size,
+    inputHelp="Minimum partition size (1-1024)",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 1024,
+        "value": 16,
+    },
+)
+
+CaseConfigParamInput_MaxPartitionSize_CockroachDB = CaseConfigInput(
+    label=CaseConfigParamType.max_partition_size,
+    inputHelp="Maximum partition size",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 10000,
+        "value": 128,
+    },
+)
+
+CaseConfigParamInput_BuildBeamSize_CockroachDB = CaseConfigInput(
+    label=CaseConfigParamType.build_beam_size,
+    inputHelp="Build beam size for index creation",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 100,
+        "value": 8,
+    },
+)
+
+CaseConfigParamInput_VectorSearchBeamSize_CockroachDB = CaseConfigInput(
+    label=CaseConfigParamType.vector_search_beam_size,
+    inputHelp="Vector search beam size",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 1000,
+        "value": 32,
+    },
+)
+
 CaseConfigParamInput_IndexType_MariaDB = CaseConfigInput(
     label=CaseConfigParamType.IndexType,
     inputHelp="Select Index Type",
@@ -2039,6 +2097,21 @@ MongoDBPerformanceConfig = [
     CaseConfigParamInput_MongoDBNumCandidatesRatio,
 ]
 
+CockroachDBLoadingConfig = [
+    CaseConfigParamInput_IndexType_CockroachDB,
+    CaseConfigParamInput_MinPartitionSize_CockroachDB,
+    CaseConfigParamInput_MaxPartitionSize_CockroachDB,
+    CaseConfigParamInput_BuildBeamSize_CockroachDB,
+    CaseConfigParamInput_VectorSearchBeamSize_CockroachDB,
+]
+CockroachDBPerformanceConfig = [
+    CaseConfigParamInput_IndexType_CockroachDB,
+    CaseConfigParamInput_MinPartitionSize_CockroachDB,
+    CaseConfigParamInput_MaxPartitionSize_CockroachDB,
+    CaseConfigParamInput_BuildBeamSize_CockroachDB,
+    CaseConfigParamInput_VectorSearchBeamSize_CockroachDB,
+]
+
 MariaDBLoadingConfig = [
     CaseConfigParamInput_IndexType_MariaDB,
     CaseConfigParamInput_StorageEngine_MariaDB,
@@ -2299,6 +2372,10 @@ CASE_CONFIG_MAP = {
     DB.AliSQL: {
         CaseLabel.Load: AliSQLLoadingConfig,
         CaseLabel.Performance: AliSQLPerformanceConfig,
+    },
+    DB.CockroachDB: {
+        CaseLabel.Load: CockroachDBLoadingConfig,
+        CaseLabel.Performance: CockroachDBPerformanceConfig,
     },
 }
 

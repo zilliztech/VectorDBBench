@@ -128,6 +128,12 @@ class CaseConfigParamType(Enum):
     use_routing = "use_routing"
     replication_type = "replication_type"
 
+    # CockroachDB parameters
+    min_partition_size = "min_partition_size"
+    max_partition_size = "max_partition_size"
+    build_beam_size = "build_beam_size"
+    vector_search_beam_size = "vector_search_beam_size"
+
     dataset_with_size_type = "dataset_with_size_type"
     filter_rate = "filter_rate"
     insert_rate = "insert_rate"

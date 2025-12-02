@@ -39,6 +39,8 @@ TRANSIENT_ERROR_MESSAGES = (
     "no such host",
     "initial connection heartbeat failed",
     "sending to all replicas failed",
+    "transaction is aborted",
+    "commands ignored until end of transaction block",
     "40001",
     "40003",
 )
