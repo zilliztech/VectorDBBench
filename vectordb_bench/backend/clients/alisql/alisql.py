@@ -23,7 +23,6 @@ class AliSQL(VectorDB):
         self.name = "AliSQL"
         self.db_config = db_config
         self.case_config = db_case_config
-        self.db_name = "vectordbbench"
         self.table_name = collection_name
         self.dim = dim
 
@@ -57,11 +56,11 @@ class AliSQL(VectorDB):
     def _drop_db(self):
         assert self.conn is not None, "Connection is not initialized"
         assert self.cursor is not None, "Cursor is not initialized"
-        log.info(f"{self.name} client drop db : {self.db_name}")
+        log.info(f'{self.name} client drop db : {self.db_config["database"]}')
 
         # flush tables before dropping database to avoid some locking issue
         self.cursor.execute("FLUSH TABLES")
-        self.cursor.execute(f"DROP DATABASE IF EXISTS {self.db_name}")
+        self.cursor.execute(f'DROP DATABASE IF EXISTS {self.db_config["database"]}')
         self.cursor.execute("COMMIT")
         self.cursor.execute("FLUSH TABLES")
 
@@ -70,11 +69,11 @@ class AliSQL(VectorDB):
         assert self.cursor is not None, "Cursor is not initialized"
 
         try:
-            log.info(f"{self.name} client create database : {self.db_name}")
-            self.cursor.execute(f"CREATE DATABASE {self.db_name}")
+            log.info(f'{self.name} client create database : {self.db_config["database"]}')
+            self.cursor.execute(f'CREATE DATABASE {self.db_config["database"]}')
 
             log.info(f"{self.name} client create table : {self.table_name}")
-            self.cursor.execute(f"USE {self.db_name}")
+            self.cursor.execute(f'USE {self.db_config["database"]}')
 
             self.cursor.execute(
                 f"""
@@ -103,23 +102,22 @@ class AliSQL(VectorDB):
         index_param = self.case_config.index_param()
         search_param = self.case_config.search_param()
 
-        # maximize allowed package size
-        self.cursor.execute("SET GLOBAL max_allowed_packet = 1073741824")
+        self.cursor.execute("SET sql_mode = ''")
 
         if index_param["index_type"] == "HNSW":
-            if index_param["cache_size"] is not None:
-                self.cursor.execute(f"SET GLOBAL vidx_hnsw_cache_size = {index_param['cache_size']}")
             if search_param["ef_search"] is not None:
-                self.cursor.execute(f"SET GLOBAL vidx_hnsw_ef_search = {search_param['ef_search']}")
+                self.cursor.execute(f"SET SESSION vidx_hnsw_ef_search = {search_param['ef_search']}")
             self.cursor.execute("COMMIT")
 
-        self.insert_sql = f"INSERT INTO {self.db_name}.{self.table_name} (id, v) VALUES (%s, %s)"  # noqa: S608
+        self.insert_sql = (
+            f'INSERT INTO {self.db_config["database"]}.{self.table_name} (id, v) VALUES (%s, %s)'  # noqa: S608
+        )
         self.select_sql = (
-            f"SELECT id FROM {self.db_name}.{self.table_name} "  # noqa: S608
+            f'SELECT id FROM {self.db_config["database"]}.{self.table_name} '  # noqa: S608
             f"ORDER by vec_distance_{search_param['metric_type']}(v, %s) LIMIT %s"
         )
         self.select_sql_with_filter = (
-            f"SELECT id FROM {self.db_name}.{self.table_name} WHERE id >= %s "  # noqa: S608
+            f'SELECT id FROM {self.db_config["database"]}.{self.table_name} WHERE id >= %s '  # noqa: S608
             f"ORDER by vec_distance_{search_param['metric_type']}(v, %s) LIMIT %s"
         )
 
@@ -147,7 +145,7 @@ class AliSQL(VectorDB):
 
             self.cursor.execute(
                 f"""
-              ALTER TABLE {self.db_name}.{self.table_name}
+              ALTER TABLE {self.db_config["database"]}.{self.table_name}
               ADD VECTOR KEY v(v) {index_options}
             """
             )

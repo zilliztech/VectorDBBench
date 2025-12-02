@@ -127,7 +127,6 @@ class CaseConfigParamType(Enum):
     oversample_ratio = "oversample_ratio"
     use_routing = "use_routing"
     replication_type = "replication_type"
-    cache_size = "cache_size"
 
     dataset_with_size_type = "dataset_with_size_type"
     filter_rate = "filter_rate"
