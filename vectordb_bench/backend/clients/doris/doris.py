@@ -166,36 +166,26 @@ class Doris(VectorDB):
 
     def _build_index_options(self) -> IndexOptions | None:
         index_param = self.case_config.index_param()
-        metric_type = index_param.get("metric_fn", "l2_distance")
-        index_options = IndexOptions(
-            index_type="hnsw",
-            metric_type=metric_type,
-            dim=self.dim,
+        index_options = IndexOptions()
+
+        applied, not_applied = {}, {}
+        for key, value in index_param.items():
+            attr_name = key
+            if hasattr(index_options, attr_name):
+                try:
+                    setattr(index_options, attr_name, value)
+                    applied[key] = value
+                except Exception:
+                    not_applied[key] = value
+            else:
+                not_applied[key] = value
+
+        log.info(
+            "Index options prepared: applied_props=%s not_applied_props=%s",
+            applied,
+            not_applied,
         )
 
-        extra_props = {k: v for k, v in index_param.items() if k != "metric_fn"}
-        if extra_props:
-            applied, stored = {}, {}
-            for key, value in extra_props.items():
-                attr_name = key
-                if hasattr(index_options, attr_name):
-                    try:
-                        setattr(index_options, attr_name, value)
-                        applied[key] = value
-                    except Exception:
-                        stored[key] = value
-                else:
-                    stored[key] = value
-            if stored:
-                index_options.properties = {**getattr(index_options, "properties", {}), **stored}
-            log.info(
-                "Index options prepared: metric=%s applied_props=%s stored_props=%s",
-                metric_type,
-                applied,
-                stored,
-            )
-        else:
-            log.info("Index options prepared: metric=%s (no extra properties)", metric_type)
         log.info("Creating table %s with index %s", self.table_name, index_param)
         return index_options
 
