@@ -111,14 +111,14 @@ class AWSOpenSearch(VectorDB):
         if self.case_config.on_disk:
             space_type = self.case_config.parse_metric()
             vector_field_config = {
-                    "type": "knn_vector",
-                    "dimension": self.dim,
-                    "space_type": space_type,
-                    "data_type": "float",
-                    "mode": "on_disk",
-                    "compression_level": "32x",
-                    "method": method_config
-                }
+                "type": "knn_vector",
+                "dimension": self.dim,
+                "space_type": space_type,
+                "data_type": "float",
+                "mode": "on_disk",
+                "compression_level": "32x",
+                "method": method_config,
+            }
             log.info("Using on-disk vector configuration with compression_level: 32x")
         else:
             vector_field_config = {
@@ -287,7 +287,7 @@ class AWSOpenSearch(VectorDB):
             max_retries = 10
             for attempt in range(max_retries):
                 try:
-                    resp = client.bulk(body=insert_data)
+                    client.bulk(body=insert_data)
                     return len(chunk_embeddings), None
                 except Exception as e:
                     if "429" in str(e) and attempt < max_retries - 1:
