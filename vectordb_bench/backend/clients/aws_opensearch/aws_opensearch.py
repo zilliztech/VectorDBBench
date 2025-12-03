@@ -111,13 +111,14 @@ class AWSOpenSearch(VectorDB):
         if self.case_config.on_disk:
             space_type = self.case_config.parse_metric()
             vector_field_config = {
-                "type": "knn_vector",
-                "dimension": self.dim,
-                "space_type": space_type,
-                "data_type": "float",
-                "mode": "on_disk",
-                "compression_level": "32x",
-            }
+                    "type": "knn_vector",
+                    "dimension": self.dim,
+                    "space_type": space_type,
+                    "data_type": "float",
+                    "mode": "on_disk",
+                    "compression_level": "32x",
+                    "method": method_config
+                }
             log.info("Using on-disk vector configuration with compression_level: 32x")
         else:
             vector_field_config = {
@@ -283,13 +284,19 @@ class AWSOpenSearch(VectorDB):
                     other_data[self.label_col_name] = chunk_labels_data[i]
                 insert_data.append(other_data)
 
-            try:
-                resp = client.bulk(body=insert_data)
-                log.info(f"Client {client_idx} added {len(resp['items'])} documents")
-                return len(chunk_embeddings), None
-            except Exception as e:
-                log.warning(f"Client {client_idx} failed to insert data: {e!s}")
-                return 0, e
+            max_retries = 10
+            for attempt in range(max_retries):
+                try:
+                    resp = client.bulk(body=insert_data)
+                    return len(chunk_embeddings), None
+                except Exception as e:
+                    if "429" in str(e) and attempt < max_retries - 1:
+                        log.warning(f"Client {client_idx} got 429 error, retry {attempt + 1}/{max_retries} after 10s")
+                        time.sleep(10)
+                    else:
+                        log.warning(f"Client {client_idx} failed to insert data: {e!s}")
+                        return 0, e
+            return 0, Exception("Max retries exceeded")
 
         results = []
         with ThreadPoolExecutor(max_workers=len(clients)) as executor:
