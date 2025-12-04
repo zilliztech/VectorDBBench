@@ -27,6 +27,11 @@ VERSION_SPECIFIC_SETTING_RULES = [
         "applies": lambda version, _: version >= Version("3.0"),
         "value": lambda _: "-1",
     },
+    {
+        "name": "knn.derived_source.enabled",
+        "applies": lambda version, _: version >= Version("3.0"),
+        "value": lambda case_config: case_config.knn_derived_source_enabled,
+    },
 ]
 
 
@@ -270,6 +275,7 @@ class OSSOpenSearch(VectorDB):
         log.info(f"Creating index with ef_search: {ef_search_value}")
         log.info(f"Creating index with number_of_replicas: {self.case_config.number_of_replicas}")
         log.info(f"Creating index with replication_type: {self.case_config.replication_type}")
+        log.info(f"Creating index with knn_derived_source_enabled: {self.case_config.knn_derived_source_enabled}")
         log.info(f"Creating index with engine: {self.case_config.engine}")
         log.info(f"Creating index with metric type: {self.case_config.metric_type_name}")
         log.info(f"All case_config parameters: {self.case_config.__dict__}")
