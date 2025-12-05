@@ -1848,6 +1848,16 @@ CaseConfigParamInput_REPLICATION_TYPE_AWSOpensearch = CaseConfigInput(
     },
 )
 
+CaseConfigParamInput_KNN_DERIVED_SOURCE_ENABLED_AWSOpensearch = CaseConfigInput(
+    label=CaseConfigParamType.knn_derived_source_enabled,
+    displayLabel="KNN Derived Source Enabled",
+    inputHelp="Enable KNN derived source (OpenSearch 3.x+ only). Ignored for 2.x versions.",
+    inputType=InputType.Bool,
+    inputConfig={
+        "value": False,
+    },
+)
+
 MilvusLoadConfig = [
     CaseConfigParamInput_IndexType,
     CaseConfigParamInput_M,
@@ -1929,12 +1939,14 @@ AWSOpensearchLoadingConfig = [
     CaseConfigParamInput_EFConstruction_AWSOpensearch,
     CaseConfigParamInput_M_AWSOpensearch,
     CaseConfigParamInput_REPLICATION_TYPE_AWSOpensearch,
+    CaseConfigParamInput_KNN_DERIVED_SOURCE_ENABLED_AWSOpensearch,
 ]
 AWSOpenSearchPerformanceConfig = [
     CaseConfigParamInput_EFConstruction_AWSOpensearch,
     CaseConfigParamInput_M_AWSOpensearch,
     CaseConfigParamInput_EF_SEARCH_AWSOpensearch,
     CaseConfigParamInput_REPLICATION_TYPE_AWSOpensearch,
+    CaseConfigParamInput_KNN_DERIVED_SOURCE_ENABLED_AWSOpensearch,
 ]
 
 AliyunOpensearchLoadingConfig = []
@@ -2274,6 +2286,7 @@ AWSOpensearchLoadingConfig = [
     CaseConfigParamInput_EFConstruction_AWSOpensearch,
     CaseConfigParamInput_NUMBER_OF_SHARDS_AWSOpensearch,
     CaseConfigParamInput_NUMBER_OF_REPLICAS_AWSOpensearch,
+    CaseConfigParamInput_KNN_DERIVED_SOURCE_ENABLED_AWSOpensearch,
     CaseConfigParamInput_NUMBER_OF_INDEXING_CLIENTS_AWSOpensearch,
     CaseConfigParamInput_INDEX_THREAD_QTY_AWSOpensearch,
     CaseConfigParamInput_REPLICATION_TYPE_AWSOpensearch,
@@ -2289,6 +2302,7 @@ AWSOpenSearchPerformanceConfig = [
     CaseConfigParamInput_EFConstruction_AWSOpensearch,
     CaseConfigParamInput_NUMBER_OF_SHARDS_AWSOpensearch,
     CaseConfigParamInput_NUMBER_OF_REPLICAS_AWSOpensearch,
+    CaseConfigParamInput_KNN_DERIVED_SOURCE_ENABLED_AWSOpensearch,
     CaseConfigParamInput_NUMBER_OF_INDEXING_CLIENTS_AWSOpensearch,
     CaseConfigParamInput_INDEX_THREAD_QTY_AWSOpensearch,
     CaseConfigParamInput_REPLICATION_TYPE_AWSOpensearch,

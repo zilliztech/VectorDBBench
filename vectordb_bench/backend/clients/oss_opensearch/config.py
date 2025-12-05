@@ -77,6 +77,7 @@ class OSSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
     oversample_factor: float = 1.0
     quantization_type: OSSOpenSearchQuantization = OSSOpenSearchQuantization.fp32
     replication_type: str | None = "DOCUMENT"
+    knn_derived_source_enabled: bool = False
 
     @root_validator
     def validate_engine_name(cls, values: dict):
@@ -103,6 +104,7 @@ class OSSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
             and self.use_routing == obj.use_routing
             and self.quantization_type == obj.quantization_type
             and self.replication_type == obj.replication_type
+            and self.knn_derived_source_enabled == obj.knn_derived_source_enabled
         )
 
     def __hash__(self) -> int:
@@ -117,6 +119,7 @@ class OSSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
                 self.use_routing,
                 self.quantization_type,
                 self.replication_type,
+                self.knn_derived_source_enabled,
             )
         )
 
