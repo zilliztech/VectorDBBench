@@ -55,7 +55,7 @@ class DB(Enum):
     TencentElasticsearch = "TencentElasticsearch"
     AliSQL = "AlibabaCloudRDSMySQL"
     Doris = "Doris"
-    TurboPuffer = "TurpoBuffer"
+    TurboPuffer = "TurboPuffer"
 
     @property
     def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901, PLR0915
