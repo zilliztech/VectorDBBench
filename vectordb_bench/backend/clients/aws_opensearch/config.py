@@ -129,10 +129,6 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
         if self.engine == AWSOS_Engine.s3vector:
             return {"engine": "s3vector"}
 
-        # For on-disk mode, return empty dict as no method config is needed
-        if self.on_disk:
-            return {}
-
         parameters = {"ef_construction": self.efConstruction, "m": self.M}
 
         # Add encoder configuration based on quantization type
