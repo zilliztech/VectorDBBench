@@ -35,9 +35,11 @@ class DorisConfig(DBConfig):
 
 class DorisCaseConfig(BaseModel, DBCaseConfig):
     metric_type: MetricType | None = None
-    # Optional explicit HNSW params for convenience
+    # Optional explicit HNSW/IVF params for convenience
+    index_type: str | None = None
     m: int | None = None
     ef_construction: int | None = None
+    nlist: int | None = None
     # Arbitrary index properties and session variables
     index_properties: dict[str, str] | None = None
     session_vars: dict[str, str] | None = None
@@ -59,15 +61,30 @@ class DorisCaseConfig(BaseModel, DBCaseConfig):
 
     def index_param(self) -> dict:
         # Use exact metric function name for index creation by removing '_approximate' suffix
-        metric_fn = self.get_metric_fn()
-        if metric_fn.endswith("_approximate"):
-            metric_fn = metric_fn[: -len("_approximate")]
-        props = {"metric_fn": metric_fn}
+        metric_type = self.get_metric_fn()
+        if metric_type.endswith("_approximate"):
+            metric_type = metric_type[: -len("_approximate")]
+        props = {"metric_type": metric_type}
+
+        if self.index_type is not None:
+            props.setdefault("index_type", self.index_type)
+        else:
+            props.setdefault("index_type", "hnsw")
+
         # Merge optional HNSW params
-        if self.m is not None:
-            props.setdefault("max_degree", str(self.m))
-        if self.ef_construction is not None:
-            props.setdefault("ef_construction", str(self.ef_construction))
+        props["index_type"] = str.lower(props["index_type"])
+        if props["index_type"] == "hnsw":
+            if self.m is not None:
+                props.setdefault("max_degree", str(self.m))
+            if self.ef_construction is not None:
+                props.setdefault("ef_construction", str(self.ef_construction))
+        elif props["index_type"] == "ivf":
+            if self.nlist is not None:
+                props.setdefault("nlist", str(self.nlist))
+        else:
+            msg = f"Unsupported index type: {props['index_type']}"
+            raise ValueError(msg)
+
         # Merge user provided index_properties
         if self.index_properties:
             props.update(self.index_properties)
