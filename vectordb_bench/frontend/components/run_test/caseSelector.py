@@ -7,6 +7,7 @@ from vectordb_bench.frontend.config.dbCaseConfigs import (
     UICaseItemCluster,
     get_case_config_inputs,
     get_custom_case_cluter,
+    get_custom_streaming_case_cluster,
 )
 from vectordb_bench.frontend.config.styles import (
     CASE_CONFIG_SETTING_COLUMNS,
@@ -32,7 +33,7 @@ def caseSelector(st, activedDbList: list[DB]):
     activedCaseList: list[CaseConfig] = []
     dbToCaseClusterConfigs = defaultdict(lambda: defaultdict(dict))
     dbToCaseConfigs = defaultdict(lambda: defaultdict(dict))
-    caseClusters = UI_CASE_CLUSTERS + [get_custom_case_cluter()]
+    caseClusters = UI_CASE_CLUSTERS + [get_custom_case_cluter(), get_custom_streaming_case_cluster()]
     for caseCluster in caseClusters:
         activedCaseList += caseClusterExpander(st, caseCluster, dbToCaseClusterConfigs, activedDbList)
     for db in dbToCaseClusterConfigs:
