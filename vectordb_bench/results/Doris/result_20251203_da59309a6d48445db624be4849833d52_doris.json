@@ -1,0 +1,106 @@
+{
+  "run_id": "da59309a6d48445db624be4849833d52",
+  "task_label": "da59309a6d48445db624be4849833d52",
+  "results": [
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 0,
+        "optimize_duration": 0,
+        "load_duration": 0,
+        "qps": 165.0201,
+        "serial_latency_p99": 0.0732,
+        "serial_latency_p95": 0.0714,
+        "recall": 0.9852,
+        "ndcg": 0.9849,
+        "conc_num_list": [
+          10,
+          30,
+          60,
+          90
+        ],
+        "conc_qps_list": [
+          121.1831,
+          164.3104,
+          165.0201,
+          163.6581
+        ],
+        "conc_latency_p99_list": [
+          0.10872276791837068,
+          0.2703677583113309,
+          0.5044047101540495,
+          0.7147008198546245
+        ],
+        "conc_latency_p95_list": [
+          0.10195920799160375,
+          0.24466251232661307,
+          0.46539584645070137,
+          0.6646372095565312
+        ],
+        "conc_latency_avg_list": [
+          0.08241292234512995,
+          0.1821913545497714,
+          0.3621327245552503,
+          0.5454047027612101
+        ],
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": []
+      },
+      "task_config": {
+        "db": "Doris",
+        "db_config": {
+          "db_label": "2025-12-03T16:15:31.533527",
+          "version": "",
+          "note": "",
+          "user_name": "root",
+          "password": "",
+          "host": "172.20.50.130",
+          "port": 9030,
+          "http_port": 8030,
+          "db_name": "vdb",
+          "ssl": false
+        },
+        "db_case_config": {
+          "metric_type": "COSINE",
+          "m": null,
+          "ef_construction": null,
+          "index_properties": {},
+          "session_vars": {
+            "hnsw_ef_search": "200"
+          },
+          "stream_load_rows_per_batch": 500000,
+          "no_index": false
+        },
+        "case_config": {
+          "case_id": 4,
+          "custom_case": {},
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              10,
+              30,
+              60,
+              90
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_serial",
+          "search_concurrent"
+        ]
+      },
+      "label": ":)"
+    }
+  ],
+  "file_fmt": "result_{}_{}_{}.json",
+  "timestamp": 1764691200
+}
