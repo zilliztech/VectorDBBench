@@ -14,8 +14,7 @@ class config:
     AWS_S3_URL = "assets.zilliz.com/benchmark/"
 
     LOG_LEVEL = env.str("LOG_LEVEL", "INFO")
-    LOG_PATH = env.str("LOG_PATH", "logs")
-    LOG_NAME = env.str("LOG_NAME", "vectordb_bench.log")
+    LOG_FILE = env.str("LOG_FILE", "logs/vectordb_bench.log")
 
     DEFAULT_DATASET_URL = env.str("DEFAULT_DATASET_URL", AWS_S3_URL)
     DATASET_SOURCE = env.str("DATASET_SOURCE", "S3")  # Options "S3" or "AliyunOSS"
@@ -81,4 +80,4 @@ class config:
         ]
 
 
-log_util.init(config.LOG_LEVEL, pathlib.Path(config.LOG_PATH), config.LOG_NAME)
+log_util.init(config.LOG_LEVEL, pathlib.Path(config.LOG_FILE))

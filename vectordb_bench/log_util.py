@@ -3,10 +3,9 @@ from logging import config
 from pathlib import Path
 
 
-def init(log_level: str, log_dir: Path, log_name: str):
+def init(log_level: str, log_file: Path):
     # Create logs directory if it doesn't exist
-    log_dir.mkdir(exist_ok=True)
-    log_file = log_dir / log_name
+    log_file.parent.mkdir(exist_ok=True, parents=True)
 
     log_config = {
         "version": 1,
