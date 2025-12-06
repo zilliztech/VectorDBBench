@@ -3,10 +3,10 @@ from logging import config
 from pathlib import Path
 
 
-def init(log_level: str):
+def init(log_level: str, log_dir: Path, log_name: str):
     # Create logs directory if it doesn't exist
-    log_dir = Path("logs")
     log_dir.mkdir(exist_ok=True)
+    log_file = log_dir / log_name
 
     log_config = {
         "version": 1,
@@ -32,7 +32,7 @@ def init(log_level: str):
             "file": {
                 "class": "logging.handlers.RotatingFileHandler",
                 "formatter": "default",
-                "filename": "logs/vectordb_bench.log",
+                "filename": log_file,
                 "maxBytes": 10485760,  # 10MB
                 "backupCount": 5,
                 "encoding": "utf8",
