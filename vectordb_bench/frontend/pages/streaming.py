@@ -140,6 +140,14 @@ def main():
         line_chart_displayed_y_metrics=line_chart_displayed_y_metrics,
     )
 
+    # Concurrent performance detail section
+    from vectordb_bench.frontend.components.streaming.concurrent_detail import drawConcurrentPerformanceSection
+
+    for case_name in showCaseNames:
+        case_data_list = [d for d in shownData if d["case_name"] == case_name]
+        if case_data_list:
+            drawConcurrentPerformanceSection(st.container(), case_data_list[0], case_name)
+
     # footer
     footer(st.container())
 

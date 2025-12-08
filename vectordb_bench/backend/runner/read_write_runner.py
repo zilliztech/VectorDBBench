@@ -106,10 +106,33 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
         log.info(
             f"Search after wirte - Conc search start, dur for each conc={self.read_dur_after_write}",
         )
-        max_qps, conc_failed_rate = self.run_by_dur(self.read_dur_after_write)
+        result = self.run_by_dur(self.read_dur_after_write)
+        max_qps = result[0]
+        conc_failed_rate = result[1]
+        conc_num_list = result[2]
+        conc_qps_list = result[3]
+        conc_latency_p99_list = result[4]
+        conc_latency_p95_list = result[5]
+        conc_latency_avg_list = result[6]
         log.info(f"Search after wirte - Conc search finished, max_qps={max_qps}")
 
-        return [(perc, test_time, max_qps, recall, ndcg, p99_latency, p95_latency, conc_failed_rate)]
+        return [
+            (
+                perc,
+                test_time,
+                max_qps,
+                recall,
+                ndcg,
+                p99_latency,
+                p95_latency,
+                conc_failed_rate,
+                conc_num_list,
+                conc_qps_list,
+                conc_latency_p99_list,
+                conc_latency_p95_list,
+                conc_latency_avg_list,
+            )
+        ]
 
     def run_read_write(self) -> Metric:
         """
@@ -159,6 +182,13 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
                     m.st_serial_latency_p99_list = [d[5] for d in r]
                     m.st_serial_latency_p95_list = [d[6] for d in r]
                     m.st_conc_failed_rate_list = [d[7] for d in r]
+
+                    # Extract concurrent latency data
+                    m.st_conc_num_list_list = [d[8] for d in r]
+                    m.st_conc_qps_list_list = [d[9] for d in r]
+                    m.st_conc_latency_p99_list_list = [d[10] for d in r]
+                    m.st_conc_latency_p95_list_list = [d[11] for d in r]
+                    m.st_conc_latency_avg_list_list = [d[12] for d in r]
 
                 except Exception as e:
                     log.warning(f"Read and write error: {e}")
@@ -226,6 +256,8 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
             log.info(f"Insert {perc}% done, total batch={total_batch}")
             test_time = round(time.perf_counter(), 4)
             max_qps, recall, ndcg, p99_latency, p95_latency, conc_failed_rate = 0, 0, 0, 0, 0, 0
+            conc_num_list, conc_qps_list = [], []
+            conc_latency_p99_list, conc_latency_p95_list, conc_latency_avg_list = [], [], []
             try:
                 log.info(f"[{target_batch}/{total_batch}] Serial search - {perc}% start")
                 res, ssearch_dur = self.serial_search_runner.run()
@@ -246,12 +278,35 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
                         f"[{target_batch}/{total_batch}] Concurrent search - {perc}% start, "
                         f"dur={each_conc_search_dur:.4f}"
                     )
-                    max_qps, conc_failed_rate = self.run_by_dur(each_conc_search_dur)
+                    conc_result = self.run_by_dur(each_conc_search_dur)
+                    max_qps = conc_result[0]
+                    conc_failed_rate = conc_result[1]
+                    conc_num_list = conc_result[2]
+                    conc_qps_list = conc_result[3]
+                    conc_latency_p99_list = conc_result[4]
+                    conc_latency_p95_list = conc_result[5]
+                    conc_latency_avg_list = conc_result[6]
                 else:
                     log.warning(f"Skip concurrent tests, each_conc_search_dur={each_conc_search_dur} less than 10s.")
             except Exception as e:
                 log.warning(f"Streaming Search Failed at stage={stage}. Exception: {e}")
-            result.append((perc, test_time, max_qps, recall, ndcg, p99_latency, p95_latency, conc_failed_rate))
+            result.append(
+                (
+                    perc,
+                    test_time,
+                    max_qps,
+                    recall,
+                    ndcg,
+                    p99_latency,
+                    p95_latency,
+                    conc_failed_rate,
+                    conc_num_list,
+                    conc_qps_list,
+                    conc_latency_p99_list,
+                    conc_latency_p95_list,
+                    conc_latency_avg_list,
+                )
+            )
             start_batch = target_batch
 
         # Drain the queue
