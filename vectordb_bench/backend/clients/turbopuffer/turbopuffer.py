@@ -42,11 +42,13 @@ class TurboPuffer(VectorDB):
         self._scalar_label_field = "label"
 
         self.with_scalar_labels = with_scalar_labels
+
+        # Initialize client with new SDK pattern
+        self.client = tpuf.Turbopuffer(api_key=self.api_key, base_url=self.api_base_url)
+
         if drop_old:
             log.info(f"Drop old. delete the namespace: {self.namespace}")
-            tpuf.api_key = self.api_key
-            tpuf.api_base_url = self.api_base_url
-            ns = tpuf.Namespace(self.namespace)
+            ns = self.client.namespace(self.namespace)
             try:
                 ns.delete_all()
             except Exception as e:
@@ -54,9 +56,7 @@ class TurboPuffer(VectorDB):
 
     @contextmanager
     def init(self):
-        tpuf.api_key = self.api_key
-        tpuf.api_base_url = self.api_base_url
-        self.ns = tpuf.Namespace(self.namespace)
+        self.ns = self.client.namespace(self.namespace)
         yield
 
     def optimize(self, data_size: int | None = None):
@@ -78,7 +78,7 @@ class TurboPuffer(VectorDB):
         try:
             if self.with_scalar_labels:
                 self.ns.write(
-                    upsert_columns={
+                    columns={
                         self._scalar_id_field: metadata,
                         self._vector_field: embeddings,
                         self._scalar_label_field: labels_data,
@@ -87,7 +87,7 @@ class TurboPuffer(VectorDB):
                 )
             else:
                 self.ns.write(
-                    upsert_columns={
+                    columns={
                         self._scalar_id_field: metadata,
                         self._vector_field: embeddings,
                     },
@@ -104,19 +104,19 @@ class TurboPuffer(VectorDB):
         timeout: int | None = None,
     ) -> list[int]:
         res = self.ns.query(
-            rank_by=["vector", "ANN", query],
+            rank_by=("vector", "ANN", query),
             top_k=k,
             filters=self.expr,
         )
-        return [row.id for row in res.rows]
+        return [row.id for row in res.rows] if res.rows is not None else []
 
     def prepare_filter(self, filters: Filter):
         if filters.type == FilterOp.NonFilter:
             self.expr = None
         elif filters.type == FilterOp.NumGE:
-            self.expr = [self._scalar_id_field, "Gte", filters.int_value]
+            self.expr = (self._scalar_id_field, "Gte", filters.int_value)
         elif filters.type == FilterOp.StrEqual:
-            self.expr = [self._scalar_label_field, "Eq", filters.label_value]
+            self.expr = (self._scalar_label_field, "Eq", filters.label_value)
         else:
             msg = f"Not support Filter for TurboPuffer - {filters}"
             raise ValueError(msg)
