@@ -161,6 +161,34 @@ def get_custom_case_cluter() -> UICaseItemCluster:
     return UICaseItemCluster(label="Custom Search Performance Test", uiCaseItems=get_custom_case_items())
 
 
+def get_custom_streaming_case_items() -> list[UICaseItem]:
+    from vectordb_bench.frontend.components.custom.getCustomConfig import get_custom_streaming_configs
+
+    custom_streaming_configs = get_custom_streaming_configs()
+    return [
+        UICaseItem(
+            label=f"{custom_config.dataset_config.name} - Streaming",
+            description=f"Streaming test with custom dataset: {custom_config.dataset_config.name}",
+            cases=[
+                CaseConfig(
+                    case_id=CaseType.StreamingCustomDataset,
+                    custom_case={
+                        "description": custom_config.description,
+                        "dataset_config": custom_config.dataset_config.dict(),
+                    },
+                )
+            ],
+            caseLabel=CaseLabel.Streaming,
+            extra_custom_case_config_inputs=custom_streaming_config_with_custom_dataset,
+        )
+        for custom_config in custom_streaming_configs
+    ]
+
+
+def get_custom_streaming_case_cluster() -> UICaseItemCluster:
+    return UICaseItemCluster(label="Custom Streaming Test", uiCaseItems=get_custom_streaming_case_items())
+
+
 def generate_custom_streaming_case() -> CaseConfig:
     return CaseConfig(
         case_id=CaseType.StreamingPerformanceCase,
@@ -205,6 +233,12 @@ custom_streaming_config: list[ConfigInput] = [
         inputConfig=dict(step=10, min=30, max=360_000, value=30),
         inputHelp="search test duration after inserting all data",
     ),
+]
+
+# Config for custom streaming tests (with custom dataset from JSON)
+# Filter out the dataset_with_size_type from the existing config
+custom_streaming_config_with_custom_dataset: list[ConfigInput] = [
+    config for config in custom_streaming_config if config.label != CaseConfigParamType.dataset_with_size_type
 ]
 
 
@@ -839,7 +873,7 @@ CaseConfigParamInput_EFConstruction_PgVector = CaseConfigInput(
 )
 
 CaseConfigParamInput_IndexType_ES = CaseConfigInput(
-    label=CaseConfigParamType.IndexType,
+    label=CaseConfigParamType.index,
     inputType=InputType.Option,
     inputConfig={
         "options": [
@@ -881,7 +915,8 @@ CaseConfigParamInput_UseRescore_ES = CaseConfigInput(
     label=CaseConfigParamType.use_rescore,
     inputType=InputType.Bool,
     inputConfig={"value": False},
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) != IndexType.ES_HNSW.value,
+    isDisplayed=lambda config: config.get(CaseConfigParamType.index, None) != IndexType.ES_HNSW.value,
+    inputHelp="Recalculating scores using the original (non-quantized) vectors.",
 )
 
 CaseConfigParamInput_OversampleRatio_ES = CaseConfigInput(
@@ -889,7 +924,7 @@ CaseConfigParamInput_OversampleRatio_ES = CaseConfigInput(
     inputType=InputType.Float,
     inputConfig={"min": 1.0, "max": 100.0, "value": 2.0},
     isDisplayed=lambda config: config.get(CaseConfigParamType.use_rescore, False),
-    inputHelp="num_oversample = oversample_ratio * top_k.",
+    inputHelp="Retrieving more candidates per shard for rescoring.",
 )
 
 CaseConfigParamInput_UseRouting_ES = CaseConfigInput(
@@ -1492,6 +1527,102 @@ CaseConfigParamInput_NumCandidates_AliES = CaseConfigInput(
     },
 )
 
+CaseConfigParamInput_IndexType_TES = CaseConfigInput(
+    label=CaseConfigParamType.IndexType,
+    inputHelp="hnsw or vsearch",
+    inputType=InputType.Text,
+    inputConfig={
+        "value": "hnsw",
+    },
+)
+
+CaseConfigParamInput_EFConstruction_TES = CaseConfigInput(
+    label=CaseConfigParamType.EFConstruction,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 8,
+        "max": 512,
+        "value": 360,
+    },
+)
+
+CaseConfigParamInput_M_TES = CaseConfigInput(
+    label=CaseConfigParamType.M,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 4,
+        "max": 64,
+        "value": 30,
+    },
+)
+CaseConfigParamInput_NumCandidates_TES = CaseConfigInput(
+    label=CaseConfigParamType.numCandidates,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 10000,
+        "value": 100,
+    },
+)
+
+# CockroachDB configs
+CaseConfigParamInput_IndexType_CockroachDB = CaseConfigInput(
+    label=CaseConfigParamType.IndexType,
+    inputHelp="Select Index Type (all use C-SPANN vector index)",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [
+            IndexType.Flat.value,
+            IndexType.HNSW.value,
+            IndexType.IVFFlat.value,
+        ],
+    },
+)
+
+CaseConfigParamInput_MinPartitionSize_CockroachDB = CaseConfigInput(
+    label=CaseConfigParamType.min_partition_size,
+    inputHelp="Minimum partition size (1-1024)",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 1024,
+        "value": 16,
+    },
+)
+
+CaseConfigParamInput_MaxPartitionSize_CockroachDB = CaseConfigInput(
+    label=CaseConfigParamType.max_partition_size,
+    inputHelp="Maximum partition size",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 10000,
+        "value": 128,
+    },
+)
+
+CaseConfigParamInput_BuildBeamSize_CockroachDB = CaseConfigInput(
+    label=CaseConfigParamType.build_beam_size,
+    inputHelp="Build beam size for index creation",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 100,
+        "value": 8,
+    },
+)
+
+CaseConfigParamInput_VectorSearchBeamSize_CockroachDB = CaseConfigInput(
+    label=CaseConfigParamType.vector_search_beam_size,
+    inputHelp="Vector search beam size",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 1000,
+        "value": 32,
+    },
+)
+
 CaseConfigParamInput_IndexType_MariaDB = CaseConfigInput(
     label=CaseConfigParamType.IndexType,
     inputHelp="Select Index Type",
@@ -1509,6 +1640,41 @@ CaseConfigParamInput_StorageEngine_MariaDB = CaseConfigInput(
     inputType=InputType.Option,
     inputConfig={
         "options": ["InnoDB", "MyISAM"],
+    },
+)
+
+CaseConfigParamInput_M_AliSQL = CaseConfigInput(
+    label=CaseConfigParamType.M,
+    inputHelp="M parameter in HNSW vector indexing",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 3,
+        "max": 200,
+        "value": 6,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_EFSearch_AliSQL = CaseConfigInput(
+    label=CaseConfigParamType.ef_search,
+    inputHelp="vidx_hnsw_ef_search",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 10000,
+        "value": 20,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_IndexType_AliSQL = CaseConfigInput(
+    label=CaseConfigParamType.IndexType,
+    inputHelp="Select Index Type",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [
+            IndexType.HNSW.value,
+        ],
     },
 )
 
@@ -1716,6 +1882,16 @@ CaseConfigParamInput_REPLICATION_TYPE_AWSOpensearch = CaseConfigInput(
     },
 )
 
+CaseConfigParamInput_KNN_DERIVED_SOURCE_ENABLED_AWSOpensearch = CaseConfigInput(
+    label=CaseConfigParamType.knn_derived_source_enabled,
+    displayLabel="KNN Derived Source Enabled",
+    inputHelp="Enable KNN derived source (OpenSearch 3.x+ only). Ignored for 2.x versions.",
+    inputType=InputType.Bool,
+    inputConfig={
+        "value": False,
+    },
+)
+
 MilvusLoadConfig = [
     CaseConfigParamInput_IndexType,
     CaseConfigParamInput_M,
@@ -1797,12 +1973,14 @@ AWSOpensearchLoadingConfig = [
     CaseConfigParamInput_EFConstruction_AWSOpensearch,
     CaseConfigParamInput_M_AWSOpensearch,
     CaseConfigParamInput_REPLICATION_TYPE_AWSOpensearch,
+    CaseConfigParamInput_KNN_DERIVED_SOURCE_ENABLED_AWSOpensearch,
 ]
 AWSOpenSearchPerformanceConfig = [
     CaseConfigParamInput_EFConstruction_AWSOpensearch,
     CaseConfigParamInput_M_AWSOpensearch,
     CaseConfigParamInput_EF_SEARCH_AWSOpensearch,
     CaseConfigParamInput_REPLICATION_TYPE_AWSOpensearch,
+    CaseConfigParamInput_KNN_DERIVED_SOURCE_ENABLED_AWSOpensearch,
 ]
 
 AliyunOpensearchLoadingConfig = []
@@ -1946,12 +2124,38 @@ AliyunElasticsearchPerformanceConfig = [
     CaseConfigParamInput_UseRouting_ES,
 ]
 
+TencentElasticsearchLoadingConfig = [
+    CaseConfigParamInput_EFConstruction_TES,
+    CaseConfigParamInput_M_TES,
+    CaseConfigParamInput_IndexType_TES,
+]
+TencentElasticsearchPerformanceConfig = [
+    CaseConfigParamInput_EFConstruction_TES,
+    CaseConfigParamInput_M_TES,
+    CaseConfigParamInput_NumCandidates_TES,
+]
+
 MongoDBLoadingConfig = [
     CaseConfigParamInput_MongoDBQuantizationType,
 ]
 MongoDBPerformanceConfig = [
     CaseConfigParamInput_MongoDBQuantizationType,
     CaseConfigParamInput_MongoDBNumCandidatesRatio,
+]
+
+CockroachDBLoadingConfig = [
+    CaseConfigParamInput_IndexType_CockroachDB,
+    CaseConfigParamInput_MinPartitionSize_CockroachDB,
+    CaseConfigParamInput_MaxPartitionSize_CockroachDB,
+    CaseConfigParamInput_BuildBeamSize_CockroachDB,
+    CaseConfigParamInput_VectorSearchBeamSize_CockroachDB,
+]
+CockroachDBPerformanceConfig = [
+    CaseConfigParamInput_IndexType_CockroachDB,
+    CaseConfigParamInput_MinPartitionSize_CockroachDB,
+    CaseConfigParamInput_MaxPartitionSize_CockroachDB,
+    CaseConfigParamInput_BuildBeamSize_CockroachDB,
+    CaseConfigParamInput_VectorSearchBeamSize_CockroachDB,
 ]
 
 MariaDBLoadingConfig = [
@@ -1976,6 +2180,16 @@ VespaLoadingConfig = [
     CaseConfigParamInput_EFConstruction_Vespa,
 ]
 VespaPerformanceConfig = VespaLoadingConfig
+
+AliSQLLoadingConfig = [
+    CaseConfigParamInput_IndexType_AliSQL,
+    CaseConfigParamInput_M_AliSQL,
+]
+AliSQLPerformanceConfig = [
+    CaseConfigParamInput_IndexType_AliSQL,
+    CaseConfigParamInput_M_AliSQL,
+    CaseConfigParamInput_EFSearch_AliSQL,
+]
 
 CaseConfigParamInput_IndexType_LanceDB = CaseConfigInput(
     label=CaseConfigParamType.IndexType,
@@ -2106,6 +2320,7 @@ AWSOpensearchLoadingConfig = [
     CaseConfigParamInput_EFConstruction_AWSOpensearch,
     CaseConfigParamInput_NUMBER_OF_SHARDS_AWSOpensearch,
     CaseConfigParamInput_NUMBER_OF_REPLICAS_AWSOpensearch,
+    CaseConfigParamInput_KNN_DERIVED_SOURCE_ENABLED_AWSOpensearch,
     CaseConfigParamInput_NUMBER_OF_INDEXING_CLIENTS_AWSOpensearch,
     CaseConfigParamInput_INDEX_THREAD_QTY_AWSOpensearch,
     CaseConfigParamInput_REPLICATION_TYPE_AWSOpensearch,
@@ -2121,6 +2336,7 @@ AWSOpenSearchPerformanceConfig = [
     CaseConfigParamInput_EFConstruction_AWSOpensearch,
     CaseConfigParamInput_NUMBER_OF_SHARDS_AWSOpensearch,
     CaseConfigParamInput_NUMBER_OF_REPLICAS_AWSOpensearch,
+    CaseConfigParamInput_KNN_DERIVED_SOURCE_ENABLED_AWSOpensearch,
     CaseConfigParamInput_NUMBER_OF_INDEXING_CLIENTS_AWSOpensearch,
     CaseConfigParamInput_INDEX_THREAD_QTY_AWSOpensearch,
     CaseConfigParamInput_REPLICATION_TYPE_AWSOpensearch,
@@ -2382,6 +2598,18 @@ CASE_CONFIG_MAP = {
     DB.VexDB: {
         CaseLabel.Load: VexDBLoadingConfig,
         CaseLabel.Performance: VexDBPerformanceConfig,
+    },
+    DB.TencentElasticsearch: {
+        CaseLabel.Load: TencentElasticsearchLoadingConfig,
+        CaseLabel.Performance: TencentElasticsearchPerformanceConfig,
+    },
+    DB.AliSQL: {
+        CaseLabel.Load: AliSQLLoadingConfig,
+        CaseLabel.Performance: AliSQLPerformanceConfig,
+    },
+    DB.CockroachDB: {
+        CaseLabel.Load: CockroachDBLoadingConfig,
+        CaseLabel.Performance: CockroachDBPerformanceConfig,
     },
 }
 

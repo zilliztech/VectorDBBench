@@ -75,6 +75,7 @@ all = [
     "pyvespa",
     "lancedb",
     "mysql-connector-python",
+    "turbopuffer[fast]",
 ]
 
 qdrant          = [ "qdrant-client" ]
@@ -95,11 +96,15 @@ aliyun_opensearch = [ "alibabacloud_ha3engine_vector" ]
 mongodb         = [ "pymongo" ]
 mariadb         = [ "mariadb" ]
 tidb            = [ "PyMySQL" ]
+cockroachdb     = [ "psycopg[binary,pool]", "pgvector" ]
 clickhouse      = [ "clickhouse-connect" ]
 vespa           = [ "pyvespa" ]
 lancedb         = [ "lancedb" ]
 oceanbase       = [ "mysql-connector-python" ]
 vexdb           = [ "psycopg", "psycopg-binary", "pgvector" ]
+alisql          = [ "mysql-connector-python" ]
+doris           = [ "doris-vector-search" ]
+turbopuffer     = [ "turbopuffer" ]
 
 [project.urls]
 "repository" = "https://github.com/zilliztech/VectorDBBench"

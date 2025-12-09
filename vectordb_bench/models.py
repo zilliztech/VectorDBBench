@@ -44,6 +44,7 @@ class CaseConfigParamType(Enum):
     """
 
     IndexType = "IndexType"
+    index = "index"
     M = "M"
     EFConstruction = "efConstruction"
     ef_construction = "ef_construction"
@@ -127,6 +128,13 @@ class CaseConfigParamType(Enum):
     use_routing = "use_routing"
     create_index_before_load = "create_index_before_load"
     replication_type = "replication_type"
+    knn_derived_source_enabled = "knn_derived_source_enabled"
+
+    # CockroachDB parameters
+    min_partition_size = "min_partition_size"
+    max_partition_size = "max_partition_size"
+    build_beam_size = "build_beam_size"
+    vector_search_beam_size = "vector_search_beam_size"
 
     dataset_with_size_type = "dataset_with_size_type"
     filter_rate = "filter_rate"

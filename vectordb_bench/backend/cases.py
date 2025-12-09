@@ -51,6 +51,7 @@ class CaseType(Enum):
     PerformanceCustomDataset = 101
 
     StreamingPerformanceCase = 200
+    StreamingCustomDataset = 201
 
     LabelFilterPerformanceCase = 300
 
@@ -474,6 +475,85 @@ class StreamingPerformanceCase(Case):
         )
 
 
+class StreamingCustomDataset(Case):
+    case_id: CaseType = CaseType.StreamingCustomDataset
+    label: CaseLabel = CaseLabel.Streaming
+    name: str = "Streaming Performance With Custom Dataset"
+    description: str = ""
+    dataset: DatasetManager
+    insert_rate: int
+    search_stages: list[float]
+    concurrencies: list[int]
+    optimize_after_write: bool = True
+    read_dur_after_write: int = 30
+
+    def __init__(
+        self,
+        description: str,
+        dataset_config: dict,
+        insert_rate: int = 500,
+        search_stages: list[float] | str = (0.5, 0.8),
+        concurrencies: list[int] | str = (5, 10),
+        optimize_after_write: bool = True,
+        read_dur_after_write: int = 30,
+        **kwargs,
+    ):
+        num_per_batch = config.NUM_PER_BATCH
+        if insert_rate % config.NUM_PER_BATCH != 0:
+            _insert_rate = max(
+                num_per_batch,
+                insert_rate // num_per_batch * num_per_batch,
+            )
+            log.warning(
+                f"[streaming_case init] insert_rate(={insert_rate}) should be "
+                f"divisible by NUM_PER_BATCH={num_per_batch}), reset to {_insert_rate}",
+            )
+            insert_rate = _insert_rate
+
+        dataset_config = CustomDatasetConfig(**dataset_config)
+        dataset = CustomDataset(
+            name=dataset_config.name,
+            size=dataset_config.size,
+            dim=dataset_config.dim,
+            metric_type=metric_type_map(dataset_config.metric_type),
+            use_shuffled=dataset_config.use_shuffled,
+            with_gt=dataset_config.with_gt,
+            dir=dataset_config.dir,
+            file_num=dataset_config.file_count,
+            train_file=dataset_config.train_name,
+            test_file=f"{dataset_config.test_name}.parquet",
+            train_id_field=dataset_config.train_id_name,
+            train_vector_field=dataset_config.train_col_name,
+            test_vector_field=dataset_config.test_col_name,
+            gt_neighbors_field=dataset_config.gt_col_name,
+            scalar_labels_file=f"{dataset_config.scalar_labels_name}.parquet",
+        )
+        name = f"Streaming-Perf - Custom - {dataset_config.name}, {insert_rate} rows/s"
+        description = (
+            description
+            if description
+            else f"This case tests the search performance of vector database while maintaining "
+            f"a fixed insertion speed. (dataset: Custom - {dataset_config.name})"
+        )
+
+        if isinstance(search_stages, str):
+            search_stages = json.loads(search_stages)
+        if isinstance(concurrencies, str):
+            concurrencies = json.loads(concurrencies)
+
+        super().__init__(
+            name=name,
+            description=description,
+            dataset=DatasetManager(data=dataset),
+            insert_rate=insert_rate,
+            search_stages=search_stages,
+            concurrencies=concurrencies,
+            optimize_after_write=optimize_after_write,
+            read_dur_after_write=read_dur_after_write,
+            **kwargs,
+        )
+
+
 class NewIntFilterPerformanceCase(PerformanceCase):
     case_id: CaseType = CaseType.NewIntFilterPerformanceCase
     dataset_with_size_type: DatasetWithSizeType
@@ -572,6 +652,7 @@ type2case = {
     CaseType.Performance1536D50K: Performance1536D50K,
     CaseType.PerformanceCustomDataset: PerformanceCustomDataset,
     CaseType.StreamingPerformanceCase: StreamingPerformanceCase,
+    CaseType.StreamingCustomDataset: StreamingCustomDataset,
     CaseType.NewIntFilterPerformanceCase: NewIntFilterPerformanceCase,
     CaseType.LabelFilterPerformanceCase: LabelFilterPerformanceCase,
 }
