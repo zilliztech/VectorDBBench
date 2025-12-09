@@ -9,11 +9,9 @@ class VexDBConfigDict(TypedDict):
     """These keys will be directly used as kwargs in psycopg connection string,
     so the names must match exactly psycopg API"""
 
-    user: str
-    password: str
-    host: str
-    port: int
-    dbname: str
+    connect_config: dict
+    table_name: str
+    partitions: int
 
 
 class VexDBConfig(DBConfig):
@@ -23,6 +21,7 @@ class VexDBConfig(DBConfig):
     port: int = 5432
     db_name: str = "sc"
     table_name: str = "vdbbench_table_test"
+    partitions: int = 0
 
     def to_dict(self) -> VexDBConfigDict:
         user_str = self.user_name.get_secret_value() if isinstance(self.user_name, SecretStr) else self.user_name
@@ -36,6 +35,7 @@ class VexDBConfig(DBConfig):
                 "password": pwd_str,
             },
             "table_name": self.table_name,
+            "partitions": self.partitions,
         }
 
 
