@@ -1,0 +1,18 @@
+vexdbgraphindex:
+  skip_search_serial: True
+  db_label: vexdb
+  case_type: Performance1536D50K
+  user_name: test
+  password: Abc.1234
+  host: 127.0.0.1
+  port: 5432
+  db_name: test
+  table_name: vdbbench_mytest
+  partitions: 10
+  task_label: 16_128_128
+  m: 16
+  ef_construction: 128
+  ef_search: 128
+  drop_old: True
+  load: True
+

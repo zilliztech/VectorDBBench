@@ -68,6 +68,19 @@ class VexDBTypedDict(CommonTypedDict):
             required=False,
         ),
     ]
+    table_name: Annotated[str, click.option("--table-name", type=str, help="Table name", default='vdbbench_table_test',show_default=True,
+                                            required=False)]
+    partitions: Annotated[
+        int | None,
+        click.option(
+            "--partitions",
+            type=int,
+            help="Set whether to use hash partitioning. A value of 0 disables partitioning, while a value greater than 0 specifies the number of partitions to use.",
+            required=False,
+            default=0,
+            show_default=True,
+        ),
+    ]
     create_index_before_load: Annotated[
         bool | None,
         click.option(
@@ -100,6 +113,8 @@ def VexDBIVFFlat(
             host=parameters["host"],
             port=parameters["port"],
             db_name=parameters["db_name"],
+            partitions=parameters["partitions"],
+            table_name=parameters["table_name"],
         ),
         db_case_config=VexDBIVFFlatConfig(
             lists=parameters["lists"],
@@ -132,6 +147,8 @@ def VexDBGRAPHINDEX(
             host=parameters["host"],
             port=parameters["port"],
             db_name=parameters["db_name"],
+            partitions=parameters["partitions"],
+            table_name=parameters["table_name"],
         ),
         db_case_config=VexDBGRAPHINDEXConfig(
             m=parameters["m"],
@@ -181,6 +198,8 @@ def VexDBHybridANN(
             host=parameters["host"],
             port=parameters["port"],
             db_name=parameters["db_name"],
+            partitions=parameters["partitions"],
+            table_name=parameters["table_name"],
         ),
         db_case_config=VexDBHybridANNConfig(
             m=parameters["m"],

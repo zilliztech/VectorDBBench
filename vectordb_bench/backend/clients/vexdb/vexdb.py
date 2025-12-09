@@ -74,6 +74,7 @@ class VexDB(VectorDB):
         self.case_config = db_case_config
         self.table_name = db_config["table_name"]
         self.connect_config = db_config["connect_config"]
+        self.partitions = db_config["partitions"]
         self.dim = dim
         self.with_scalar_labels = with_scalar_labels
 
@@ -120,7 +121,7 @@ class VexDB(VectorDB):
             self.__class__,
             (
                 self.dim,
-                {"connect_config": self.connect_config, "table_name": self.table_name}, 
+                {"connect_config": self.connect_config, "table_name": self.table_name,"partitions":self.partitions},
                 self.case_config,
                 False,
                 self.with_scalar_labels,
@@ -320,23 +321,30 @@ class VexDB(VectorDB):
                 )
         with_clause = sql.SQL("WITH ({});").format(sql.SQL(", ").join(options)) if any(options) else sql.Composed(())
 
+        # if partitions or not
+        if self.partitions > 0:
+            local_string = " LOCAL "
+        else:
+            local_string = ""
+
         if not index_param.get("col_name_list"):
             index_create_sql = sql.SQL(
                 """
                 CREATE INDEX IF NOT EXISTS {index_name} ON public.{table_name}
-                USING {index_type} (embedding {embedding_metric})
+                USING {index_type} (embedding {embedding_metric}){local_string}
                 """,
             ).format(
                 index_name=sql.Identifier(self._index_name),
                 table_name=sql.Identifier(self.table_name),
                 index_type=sql.Identifier(index_param["index_type"]),
                 embedding_metric=sql.Identifier(index_param["metric"]),
+                local_string=sql.SQL(local_string),
             )
         else:
             index_create_sql = sql.SQL(
                 """
                 CREATE INDEX IF NOT EXISTS {index_name} ON public.{table_name}
-                USING {index_type} (embedding {embedding_metric}, {col_name_list})
+                USING {index_type} (embedding {embedding_metric}, {col_name_list}){local_string}
                 """,
             ).format(
                 index_name=sql.Identifier(self._index_name),
@@ -344,6 +352,7 @@ class VexDB(VectorDB):
                 index_type=sql.Identifier(index_param["index_type"]),
                 embedding_metric=sql.Identifier(index_param["metric"]),
                 col_name_list=sql.Identifier(index_param["col_name_list"]),
+                local_string=sql.SQL(local_string),
             )
 
         index_create_sql_with_with_clause = (index_create_sql + with_clause).join(" ")
@@ -361,33 +370,42 @@ class VexDB(VectorDB):
             log.info(f"{self.name} client create table : {self.table_name}")
 
             # create table
+            #if partitions or not
+            if self.partitions > 0:
+                partitions_string=f"partition by hash({self._primary_field}) ("+','.join([f"partition p{i}" for i in range(self.partitions)])+");"
+            else:
+                partitions_string=";"
             if self.with_scalar_labels:
                 self.cursor.execute(
                     sql.SQL(
                         """
                         CREATE TABLE IF NOT EXISTS public.{table_name}
-                        ({primary_field} BIGINT PRIMARY KEY, embedding floatvector({dim}), {label_field} VARCHAR(64));
-                        """,  # noqa: E501
+                        ({primary_field} BIGINT PRIMARY KEY, embedding floatvector({dim}), {label_field} VARCHAR(64)) {partitions_string}
+                        """  # noqa: E501
                     ).format(
                         table_name=sql.Identifier(self.table_name),
                         dim=dim,
                         primary_field=sql.Identifier(self._primary_field),
                         label_field=sql.Identifier(self._scalar_label_field),
+                        partitions_string=sql.SQL(partitions_string),
                     )
                 )
+
             else:
                 self.cursor.execute(
                     sql.SQL(
                         """
                         CREATE TABLE IF NOT EXISTS public.{table_name}
-                        ({primary_field} BIGINT PRIMARY KEY, embedding floatvector({dim}));
+                        ({primary_field} BIGINT PRIMARY KEY, embedding floatvector({dim}))  {partitions_string}
                         """
                     ).format(
                         table_name=sql.Identifier(self.table_name),
                         dim=dim,
                         primary_field=sql.Identifier(self._primary_field),
+                        partitions_string=sql.SQL(partitions_string),
                     )
                 )
+
 
             # PGVECTOR有，注释掉
             # self.cursor.execute(
