@@ -77,8 +77,7 @@ class VexDB(VectorDB):
         self.partitions = db_config["partitions"]
         self.dim = dim
         self.with_scalar_labels = with_scalar_labels
-
-        self._index_name = "vexdb_index"
+        self._index_name = self.table_name+"_embedding_index"
         self._primary_field = "id"
         self._vector_field = "embedding"
         self._scalar_label_field = "label"
