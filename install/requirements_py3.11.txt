@@ -26,3 +26,4 @@ clickhouse_connect
 pyvespa
 mysql-connector-python
 packaging
+hdrhistogram>=0.10.1
