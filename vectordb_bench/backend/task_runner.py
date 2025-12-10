@@ -117,9 +117,14 @@ class CaseRunner(BaseModel):
             # If anything goes wrong, fall back silently; Doris will use its default name logic
             collection_name = None
 
+        # Check if collection_name is in the db_config (e.g., for Zilliz, Milvus)
+        db_config_dict = self.config.db_config.to_dict()
+        if "collection_name" in db_config_dict and not collection_name:
+            collection_name = db_config_dict.pop("collection_name")
+
         self.db = db_cls(
             dim=self.ca.dataset.data.dim,
-            db_config=self.config.db_config.to_dict(),
+            db_config=db_config_dict,
             db_case_config=self.config.db_case_config,
             drop_old=drop_old,
             with_scalar_labels=self.ca.with_scalar_labels,
