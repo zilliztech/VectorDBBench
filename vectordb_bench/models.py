@@ -128,6 +128,7 @@ class CaseConfigParamType(Enum):
     use_routing = "use_routing"
     replication_type = "replication_type"
     knn_derived_source_enabled = "knn_derived_source_enabled"
+    memory_optimized_search = "memory_optimized_search"
 
     # CockroachDB parameters
     min_partition_size = "min_partition_size"
