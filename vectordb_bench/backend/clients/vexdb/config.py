@@ -91,6 +91,8 @@ class VexDBIndexConfig(BaseModel, DBCaseConfig):
         options = []
         for option_name, value in with_options.items():
             if value is not None:
+                if option_name == "quantizer" and value=='none':
+                    continue
                 options.append(
                     {
                         "option_name": option_name,

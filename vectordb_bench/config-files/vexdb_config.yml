@@ -12,6 +12,7 @@ vexdbgraphindex:
   task_label: 16_128_128
   m: 16
   ef_construction: 128
+  quantizer: none
   ef_search: 128
   drop_old: True
   load: True
