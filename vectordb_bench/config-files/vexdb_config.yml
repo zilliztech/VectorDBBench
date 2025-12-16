@@ -1,5 +1,5 @@
 vexdbgraphindex:
-  skip_search_serial: True
+  skip_search_serial: False
   db_label: vexdb
   case_type: Performance1536D50K
   user_name: test

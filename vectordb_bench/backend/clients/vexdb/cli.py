@@ -127,7 +127,11 @@ def VexDBIVFFlat(
     )
 
 
-class VexDBGRAPHINDEXTypedDict(VexDBTypedDict, HNSWFlavor1): ...
+class VexDBGRAPHINDEXTypedDict(VexDBTypedDict, HNSWFlavor1):
+    col_name_list: Annotated[
+        str | None,
+        click.option("--quantizer", type=str, help="Vector quantization method,selectable values ['none','pq','rabitq']", required=False,default='none',show_default=True),
+    ]
 
 
 @cli.command()
@@ -153,6 +157,7 @@ def VexDBGRAPHINDEX(
         db_case_config=VexDBGRAPHINDEXConfig(
             m=parameters["m"],
             ef_construction=parameters["ef_construction"],
+            quantizer=parameters["quantizer"],
             ef_search=parameters["ef_search"],
             maintenance_work_mem=parameters["maintenance_work_mem"],
             max_parallel_workers=parameters["max_parallel_workers"],

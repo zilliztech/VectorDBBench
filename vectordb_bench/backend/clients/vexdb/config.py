@@ -168,6 +168,7 @@ class VexDBGRAPHINDEXConfig(VexDBIndexConfig):
 
     m: int | None  # DETAIL:  Valid values are between "2" and "100".
     ef_construction: int | None  # ef_construction must be greater than or equal to 2 * m
+    quantizer: str | None
     ef_search: int | None
     index: IndexType = IndexType.GRAPH_INDEX
     maintenance_work_mem: str | None = None
@@ -176,7 +177,7 @@ class VexDBGRAPHINDEXConfig(VexDBIndexConfig):
 
 
     def index_param(self) -> VexDBIndexParam:
-        index_parameters = {"m": self.m, "ef_construction": self.ef_construction, "parallel_workers": self.max_parallel_workers}
+        index_parameters = {"m": self.m, "ef_construction": self.ef_construction, "quantizer": self.quantizer, "parallel_workers": self.max_parallel_workers}
         return {
             "metric": self.parse_metric(),
             "index_type": self.index.value,
