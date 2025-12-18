@@ -283,7 +283,8 @@ class TestResult(BaseModel):
 
         log.info(f"write results to disk {result_file}")
         with pathlib.Path(result_file).open("w") as f:
-            b = partial.json(exclude={"db_config": {"password", "api_key"}})
+            # Pydantic v2: use model_dump_json instead of deprecated .json()
+            b = partial.model_dump_json(exclude={"db_config": {"password", "api_key"}})
             f.write(b)
 
     def get_case_config(case_config: CaseConfig) -> dict[CaseConfig]:

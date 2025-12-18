@@ -1,6 +1,6 @@
 import logging
 
-from pydantic import BaseModel, SecretStr, validator
+from pydantic import BaseModel, SecretStr, field_validator
 
 from ..api import DBCaseConfig, DBConfig, MetricType
 
@@ -17,8 +17,8 @@ class DorisConfig(DBConfig):
     db_name: str = "test"
     ssl: bool = False
 
-    @validator("*")
-    def not_empty_field(cls, v: any, field: any):
+    @field_validator("*", mode="before")
+    def not_empty_field(cls, v: any):  # noqa: ANN001
         return v
 
     def to_dict(self) -> dict:

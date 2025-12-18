@@ -1,0 +1,61 @@
+weaviate:
+  - db_label: weaviate-local
+    url: http://localhost:8080
+    grpc_url: localhost:50051
+    no_auth: true
+    m: 16
+    ef_construction: 128
+    ef: 64
+    # stages
+    drop_old: true
+    load: true
+    search_serial: true
+    search_concurrent: true
+    # quick concurrent tuning (use CLI-compatible names)
+    num_concurrency: "1,10,20"
+    concurrency_duration: 15
+    case_type: Performance768D1M
+
+pgvectorhnsw:
+  - db_label: pgvector-local
+    user_name: postgres
+    password: postgres
+    db_name: vectordb
+    host: localhost
+    port: 5432
+    m: 16
+    ef_construction: 128
+    ef_search: 64
+    # stages
+    drop_old: true
+    load: true
+    search_serial: true
+    search_concurrent: true
+    # quick concurrent tuning (use CLI-compatible names)
+    num_concurrency: "1,10,20"
+    concurrency_duration: 15
+    case_type: Performance768D1M
+    create_index_before_load: false
+    create_index_after_load: true
+    maintenance_work_mem: "2GB"
+    max_parallel_workers: 12
+
+mariadbhnsw:
+  - db_label: mariadb-local
+    username: root        # use root for benchmark to avoid SUPER/RELOAD privilege issues
+    password: root        # root password from docker-compose
+    host: localhost
+    port: 3306
+    storage_engine: InnoDB
+    m: 16
+    ef_search: 96           # increased for better recall; adjust to trade latency/recall
+    max_cache_size: 536870912  # bytes (512MB). Use an integer; Click expects int, not a suffixed string
+    # stages
+    drop_old: true
+    load: true
+    search_serial: true
+    search_concurrent: true
+    # quick concurrent tuning (use CLI-compatible names)
+    num_concurrency: "1,10,20"
+    concurrency_duration: 15
+    case_type: Performance768D1M   # use a NonFilter case for MariaDB
