@@ -32,6 +32,15 @@ VERSION_SPECIFIC_SETTING_RULES = [
         "applies": lambda version, _: version >= Version("3.0"),
         "value": lambda case_config: case_config.knn_derived_source_enabled,
     },
+    {
+        "name": "knn.memory_optimized_search",
+        "applies": lambda version, case_config: (
+            version >= Version("3.1")
+            and case_config.engine == OSSOS_Engine.faiss
+            and case_config.memory_optimized_search
+        ),
+        "value": lambda case_config: case_config.memory_optimized_search,
+    },
 ]
 
 
@@ -278,6 +287,7 @@ class OSSOpenSearch(VectorDB):
         log.info(f"Creating index with knn_derived_source_enabled: {self.case_config.knn_derived_source_enabled}")
         log.info(f"Creating index with engine: {self.case_config.engine}")
         log.info(f"Creating index with metric type: {self.case_config.metric_type_name}")
+        log.info(f"Creating index with memory_optimized_search: {self.case_config.memory_optimized_search}")
         log.info(f"All case_config parameters: {self.case_config.__dict__}")
 
         settings_manager = self._get_settings_manager(client)

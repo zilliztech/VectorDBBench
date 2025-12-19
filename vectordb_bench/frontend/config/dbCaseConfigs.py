@@ -1892,6 +1892,17 @@ CaseConfigParamInput_KNN_DERIVED_SOURCE_ENABLED_AWSOpensearch = CaseConfigInput(
     },
 )
 
+CaseConfigParamInput_MEMORY_OPTIMIZED_SEARCH_AWSOpensearch = CaseConfigInput(
+    label=CaseConfigParamType.memory_optimized_search,
+    displayLabel="Memory Optimized Search",
+    inputHelp="Enable memory-optimized search (OpenSearch 3.1+ and FAISS engine only).",
+    inputType=InputType.Bool,
+    inputConfig={
+        "value": False,
+    },
+    isDisplayed=lambda config: (config.get(CaseConfigParamType.engine_name, "").lower() == "faiss"),
+)
+
 MilvusLoadConfig = [
     CaseConfigParamInput_IndexType,
     CaseConfigParamInput_M,
@@ -2324,6 +2335,7 @@ AWSOpensearchLoadingConfig = [
     CaseConfigParamInput_NUMBER_OF_INDEXING_CLIENTS_AWSOpensearch,
     CaseConfigParamInput_INDEX_THREAD_QTY_AWSOpensearch,
     CaseConfigParamInput_REPLICATION_TYPE_AWSOpensearch,
+    CaseConfigParamInput_MEMORY_OPTIMIZED_SEARCH_AWSOpensearch,
     CaseConfigParamInput_INDEX_THREAD_QTY_DURING_FORCE_MERGE_AWSOpensearch,
 ]
 
@@ -2340,6 +2352,7 @@ AWSOpenSearchPerformanceConfig = [
     CaseConfigParamInput_NUMBER_OF_INDEXING_CLIENTS_AWSOpensearch,
     CaseConfigParamInput_INDEX_THREAD_QTY_AWSOpensearch,
     CaseConfigParamInput_REPLICATION_TYPE_AWSOpensearch,
+    CaseConfigParamInput_MEMORY_OPTIMIZED_SEARCH_AWSOpensearch,
     CaseConfigParamInput_INDEX_THREAD_QTY_DURING_FORCE_MERGE_AWSOpensearch,
 ]
 
