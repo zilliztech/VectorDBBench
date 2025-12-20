@@ -317,7 +317,21 @@ class TestResult(BaseModel):
                 case_config = task_config.get("case_config")
                 db = DB(task_config.get("db"))
 
-                task_config["db_config"] = db.config_cls(**task_config["db_config"])
+                # Backward-compat patching for older result files missing required fields
+                raw_db_cfg = task_config.get("db_config", {})
+                if db == DB.WeaviateCloud:
+                    # Ensure minimal fields exist for Weaviate v4 config
+                    raw_db_cfg = dict(raw_db_cfg or {})
+                    raw_db_cfg.setdefault("url", "http://localhost:8080")
+                    raw_db_cfg.setdefault("api_key", "-")
+                    raw_db_cfg.setdefault("no_auth", True)
+                elif db == DB.MariaDB:
+                    raw_db_cfg = dict(raw_db_cfg or {})
+                    raw_db_cfg.setdefault("password", "-")
+                elif db == DB.PgVector:
+                    raw_db_cfg = dict(raw_db_cfg or {})
+                    raw_db_cfg.setdefault("password", "-")
+                task_config["db_config"] = db.config_cls(**raw_db_cfg)
 
                 # Safely instantiate DBCaseConfig (fallback to EmptyDBCaseConfig on None)
                 raw_case_cfg = task_config.get("db_case_config") or {}
