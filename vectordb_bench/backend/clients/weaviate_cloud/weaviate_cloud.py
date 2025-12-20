@@ -38,7 +38,7 @@ class WeaviateCloud(VectorDB):
         # Open a short-lived admin connection to ensure collection exists
         http_host, http_port = self.cfg.host_port()
         grpc_pair = getattr(self.cfg, "grpc_host_port", None)
-        grpc_host, grpc_port = (self.cfg.grpc_host_port() if grpc_pair else (None, None))
+        grpc_host, grpc_port = self.cfg.grpc_host_port() if grpc_pair else (None, None)
 
         client = weaviate.connect_to_custom(
             http_host=http_host,
@@ -66,7 +66,7 @@ class WeaviateCloud(VectorDB):
         """
         http_host, http_port = self.cfg.host_port()
         grpc_pair = getattr(self.cfg, "grpc_host_port", None)
-        grpc_host, grpc_port = (self.cfg.grpc_host_port() if grpc_pair else (None, None))
+        grpc_host, grpc_port = self.cfg.grpc_host_port() if grpc_pair else (None, None)
 
         self.client = weaviate.connect_to_custom(
             http_host=http_host,
@@ -123,7 +123,7 @@ class WeaviateCloud(VectorDB):
                 vector_config=Reconfigure.Vectors.update(
                     name="default",
                     vector_index_config=Reconfigure.VectorIndex.hnsw(
-                        ef=ef_val,  
+                        ef=ef_val,
                     ),
                 ),
             )
@@ -154,9 +154,7 @@ class WeaviateCloud(VectorDB):
             )
 
             # Build v4.18.3-compliant vector_config using helper for self-provided vectors
-            vector_config = Configure.Vectors.self_provided(
-                vector_index_config=vector_index_cfg
-            )
+            vector_config = Configure.Vectors.self_provided(vector_index_config=vector_index_cfg)
 
             client.collections.create(
                 name=self.collection_name,

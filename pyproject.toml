@@ -37,7 +37,7 @@ dependencies = [
     "polars",
     "plotly",
     "environs",
-    "pydantic<v2",
+    "pydantic",
     "scikit-learn",
     "pymilvus", # with pandas, numpy, ujson
     "ujson",
