@@ -71,6 +71,7 @@ class OSSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
     force_merge_enabled: bool | None = True
     flush_threshold_size: str | None = "5120mb"
     index_thread_qty_during_force_merge: int = 8
+    on_disk: bool = False
     cb_threshold: str | None = "50%"
     number_of_indexing_clients: int | None = 1
     use_routing: bool = False  # for label-filter cases
@@ -107,6 +108,7 @@ class OSSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
             and self.replication_type == obj.replication_type
             and self.knn_derived_source_enabled == obj.knn_derived_source_enabled
             and self.memory_optimized_search == obj.memory_optimized_search
+            and self.on_disk == obj.on_disk
         )
 
     def __hash__(self) -> int:
@@ -123,6 +125,7 @@ class OSSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
                 self.replication_type,
                 self.knn_derived_source_enabled,
                 self.memory_optimized_search,
+                self.on_disk,
             )
         )
 
