@@ -16,11 +16,11 @@ def dbSelector(st: st):
     )
 
     dbContainerColumns = st.columns(DB_SELECTOR_COLUMNS, gap="small")
-    dbIsActived = {db: False for db in DB_LIST}
+    dbIsActivated = {db: False for db in DB_LIST}
 
     for i, db in enumerate(DB_LIST):
         column = dbContainerColumns[i % DB_SELECTOR_COLUMNS]
-        dbIsActived[db] = column.checkbox(db.name)
+        dbIsActivated[db] = column.checkbox(db.name)
         image_src = DB_TO_ICON.get(db, None)
         if image_src:
             column.markdown(
@@ -29,6 +29,6 @@ def dbSelector(st: st):
             )
         else:
             column.warning(f"{db.name} image not available")
-    activedDbList = [db for db in DB_LIST if dbIsActived[db]]
+    activatedDbList = [db for db in DB_LIST if dbIsActivated[db]]
 
-    return activedDbList
+    return activatedDbList

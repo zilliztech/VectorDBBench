@@ -18,7 +18,7 @@ from vectordb_bench.frontend.components.check_results.filters import getshownDat
 from vectordb_bench.frontend.components.get_results.saveAsImage import getResults
 
 from vectordb_bench.interface import benchmark_runner
-from vectordb_bench.metric import QURIES_PER_DOLLAR_METRIC
+from vectordb_bench.metric import QUERIES_PER_DOLLAR_METRIC
 
 
 def main():
@@ -59,7 +59,7 @@ def main():
     for caseName in showCaseNames:
         data = [data for data in shownData if data["case_name"] == caseName]
         dataWithMetric = []
-        metric = QURIES_PER_DOLLAR_METRIC
+        metric = QUERIES_PER_DOLLAR_METRIC
         for d in data:
             qps = d.get("qps", 0)
             price = priceMap.get(d["db"], {}).get(d["db_label"], 0)

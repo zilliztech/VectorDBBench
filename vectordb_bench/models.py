@@ -104,7 +104,7 @@ class CaseConfigParamType(Enum):
     maxNumLevels = "max_num_levels"
     numLeavesToSearch = "num_leaves_to_search"
     maxTopNeighborsBufferSize = "max_top_neighbors_buffer_size"
-    preReorderingNumNeigbors = "pre_reordering_num_neighbors"
+    preReorderingNumNeighbors = "pre_reordering_num_neighbors"
     numSearchThreads = "num_search_threads"
     maxNumPrefetchDatasets = "max_num_prefetch_datasets"
     storage_engine = "storage_engine"

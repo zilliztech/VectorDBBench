@@ -31,6 +31,10 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[test]"
+          pip install codespell
+
+      - name: Run typo checks
+        uses: crate-ci/typos@v1.40.0
 
       - name: Run coding checks
         run: |

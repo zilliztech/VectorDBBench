@@ -1,0 +1,3 @@
+[default.extend-words]
+# Respect RaBit, RaBitQ as correct spelling.
+"rabit" = "rabit"

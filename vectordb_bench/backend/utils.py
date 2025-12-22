@@ -11,7 +11,7 @@ def numerize(n: int) -> str:
         >>> numerize(1_000_000_000)
         '1B'
     """
-    sufix2upbound = {
+    suffix2upbound = {
         "EMPTY": 1e3,
         "K": 1e6,
         "M": 1e9,
@@ -19,19 +19,19 @@ def numerize(n: int) -> str:
         "END": float("inf"),
     }
 
-    display_n, sufix = n, ""
-    for s, base in sufix2upbound.items():
-        # number >= 1000B will alway have sufix 'B'
+    display_n, suffix = n, ""
+    for s, base in suffix2upbound.items():
+        # number >= 1000B will always have suffix 'B'
         if s == "END":
             display_n = int(n / 1e9)
-            sufix = "B"
+            suffix = "B"
             break
 
         if n < base:
-            sufix = "" if s == "EMPTY" else s
+            suffix = "" if s == "EMPTY" else s
             display_n = int(n / (base / 1e3))
             break
-    return f"{display_n}{sufix}"
+    return f"{display_n}{suffix}"
 
 
 def time_it(func: any):

@@ -85,7 +85,7 @@ class PgVectoRSHNSWConfig(PgVectoRSIndexConfig):
         if self.quantization_type is None:
             quantization = None
         else:
-            quantization = Quantization(typ=self.quantization_type, ratio=self.quantization_ratio)
+            quantization = Quantization(type=self.quantization_type, ratio=self.quantization_ratio)
 
         option = IndexOption(
             index=Hnsw(
@@ -113,7 +113,7 @@ class PgVectoRSIVFFlatConfig(PgVectoRSIndexConfig):
         if self.quantization_type is None:
             quantization = None
         else:
-            quantization = Quantization(typ=self.quantization_type, ratio=self.quantization_ratio)
+            quantization = Quantization(type=self.quantization_type, ratio=self.quantization_ratio)
 
         option = IndexOption(
             index=Ivf(nlist=self.lists, quantization=quantization),
@@ -135,7 +135,7 @@ class PgVectoRSFLATConfig(PgVectoRSIndexConfig):
         if self.quantization_type is None:
             quantization = None
         else:
-            quantization = Quantization(typ=self.quantization_type, ratio=self.quantization_ratio)
+            quantization = Quantization(type=self.quantization_type, ratio=self.quantization_ratio)
 
         option = IndexOption(
             index=Flat(

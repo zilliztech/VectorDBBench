@@ -65,22 +65,21 @@ class colors:
     ENDC = "\033[0m"
 
 
-COLORS = {
+_BASE_LEVEL_COLORS = {
     "INFO": colors.INFO,
-    "INFOM": colors.INFO,
     "DEBUG": colors.DEBUG,
-    "DEBUGM": colors.DEBUG,
     "WARNING": colors.WARNING,
-    "WARNINGM": colors.WARNING,
-    "CRITICAL": colors.CRITICAL,
-    "CRITICALM": colors.CRITICAL,
     "ERROR": colors.ERROR,
-    "ERRORM": colors.ERROR,
+    "CRITICAL": colors.CRITICAL,
+}
+COLORS = {
+    **_BASE_LEVEL_COLORS,
+    **{f"{level}M": color for level, color in _BASE_LEVEL_COLORS.items()},
     "ENDC": colors.ENDC,
 }
 
 
-class ColorFulFormatColMixin:
+class ColorfulFormatColMixin:
     def format_col(self, message: str, level_name: str):
         if level_name in COLORS:
             message = COLORS[level_name] + message + COLORS["ENDC"]
@@ -103,7 +102,7 @@ class ColorfulLogRecordProxy(logging.LogRecord):
         return getattr(self, attr)
 
 
-class ColorfulFormatter(ColorFulFormatColMixin, logging.Formatter):
+class ColorfulFormatter(ColorfulFormatColMixin, logging.Formatter):
     def format(self, record: any):
         proxy = ColorfulLogRecordProxy(record)
         return super().format(proxy)
