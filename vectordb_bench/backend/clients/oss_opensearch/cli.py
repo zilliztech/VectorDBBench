@@ -123,8 +123,9 @@ class OSSOpenSearchTypedDict(TypedDict):
         click.option(
             "--on-disk",
             is_flag=True,
-            help="Enable on-disk vector storage mode",
+            help="Enable on-disk vector storage mode only for faiss engine (The on_disk mode only works with the float data type.)",
             default=False,
+            required=False,
         ),
     ]
 
@@ -160,6 +161,7 @@ def OSSOpenSearch(**parameters: Unpack[OSSOpenSearchHNSWTypedDict]):
             M=parameters["m"],
             engine=OSSOS_Engine(parameters["engine"]),
             quantization_type=OSSOpenSearchQuantization(parameters["quantization_type"]),
+            on_disk=parameters["on_disk"],
         ),
         **parameters,
     )

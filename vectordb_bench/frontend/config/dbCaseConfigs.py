@@ -1799,6 +1799,7 @@ CaseConfigParamInput_ON_DISK_AWSOpensearch = CaseConfigInput(
     inputHelp="Enable on-disk vector storage mode (The on_disk mode only works with the float data type.)",
     inputType=InputType.Bool,
     inputConfig={"value": False},
+    isDisplayed=lambda config: (config.get(CaseConfigParamType.engine_name, "").lower() == "faiss"),
 )
 
 CaseConfigParamInput_NUMBER_OF_INDEXING_CLIENTS_AWSOpensearch = CaseConfigInput(
