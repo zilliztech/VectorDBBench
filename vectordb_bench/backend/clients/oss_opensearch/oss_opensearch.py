@@ -43,6 +43,17 @@ VERSION_SPECIFIC_SETTING_RULES = [
     },
 ]
 
+VERSION_SPECIFIC_PROPERTIES_RULES = [
+    {
+        "name": "mode",
+        "applies": lambda version, case_config: (
+            version >= Version("2.17")
+            and case_config.engine == OSSOS_Engine.faiss
+        ),
+        "value": lambda case_config: "on_disk" if case_config.on_disk else "in_memory",
+    }
+]
+
 
 class OpenSearchError(Exception):
     """Custom exception for OpenSearch operations."""
@@ -274,6 +285,18 @@ class OSSOpenSearch(VectorDB):
                 value = setting["value"](self.case_config)
                 version_specific_settings[name] = value
         return version_specific_settings
+    
+    def _get_version_specific_properties(self, cluster_version: Version) -> dict:
+        """
+        Builds and returns a dictionary of applicable version-specific properties.
+        """
+        version_specific_properties = {}
+        for property in VERSION_SPECIFIC_PROPERTIES_RULES:
+            if property["applies"](cluster_version, self.case_config):
+                name = property["name"]
+                value = property["value"](self.case_config)
+                version_specific_properties[name] = value
+        return version_specific_properties
 
     def _get_bulk_manager(self, client: OpenSearch) -> BulkInsertManager:
         """Get bulk insert manager for the given client."""
@@ -291,6 +314,8 @@ class OSSOpenSearch(VectorDB):
         log.info(f"All case_config parameters: {self.case_config.__dict__}")
 
         settings_manager = self._get_settings_manager(client)
+        cluster_version = self._get_cluster_version(client)
+
         cluster_settings = {
             "knn.algo_param.index_thread_qty": self.case_config.index_thread_qty,
             "knn.memory.circuit_breaker.limit": self.case_config.cb_threshold,
@@ -311,13 +336,14 @@ class OSSOpenSearch(VectorDB):
         }
         settings["index"]["knn.algo_param.ef_search"] = ef_search_value
 
-        version_specific_settings = self._get_version_specific_settings(self._get_cluster_version(client))
+        version_specific_settings = self._get_version_specific_settings(cluster_version)
         if version_specific_settings:
             log.info(f"Applying version-dependent settings: {version_specific_settings}")
             settings["index"].update(version_specific_settings)
 
         # Build properties mapping, excluding _id which is automatically handled by OpenSearch
         properties = {}
+        version_specific_properties = self._get_version_specific_properties(cluster_version)
 
         # Only add id field to properties if it's not the special _id field
         if self.id_col_name != "_id":
@@ -330,8 +356,9 @@ class OSSOpenSearch(VectorDB):
             "method": self.case_config.index_param(),
         }
 
-        if self.case_config.on_disk:
-            properties[self.vector_col_name]["mode"] = "on_disk"
+        # mode if supported by the version else ignore
+        if("mode" in version_specific_properties):
+            properties[self.vector_col_name]["mode"] = version_specific_properties["mode"]
 
         mappings = {
             "properties": properties,

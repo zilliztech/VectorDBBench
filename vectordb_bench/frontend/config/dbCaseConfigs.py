@@ -1796,7 +1796,7 @@ CaseConfigParamInput_INDEX_THREAD_QTY_DURING_FORCE_MERGE_AWSOpensearch = CaseCon
 CaseConfigParamInput_ON_DISK_AWSOpensearch = CaseConfigInput(
     label=CaseConfigParamType.on_disk,
     displayLabel="On Disk",
-    inputHelp="Enable on-disk vector storage mode (The on_disk mode only works with the float data type.)",
+    inputHelp="Enable on-disk vector storage mode (The on_disk mode only works with the float data type.) Supported by OpenSearch >=2.17",
     inputType=InputType.Bool,
     inputConfig={"value": False},
     isDisplayed=lambda config: (config.get(CaseConfigParamType.engine_name, "").lower() == "faiss"),
