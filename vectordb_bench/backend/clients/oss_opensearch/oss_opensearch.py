@@ -330,6 +330,9 @@ class OSSOpenSearch(VectorDB):
             "method": self.case_config.index_param(),
         }
 
+        if self.case_config.on_disk:
+            properties[self.vector_col_name]["mode"] = "on_disk"
+
         mappings = {
             "properties": properties,
         }

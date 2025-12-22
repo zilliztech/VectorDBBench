@@ -113,6 +113,7 @@ class CaseConfigParamType(Enum):
     num_sub_vectors = "num_sub_vectors"
     sample_rate = "sample_rate"
     index_thread_qty_during_force_merge = "index_thread_qty_during_force_merge"
+    on_disk = "on_disk"
     number_of_indexing_clients = "number_of_indexing_clients"
     number_of_shards = "number_of_shards"
     number_of_replicas = "number_of_replicas"

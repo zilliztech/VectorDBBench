@@ -1793,6 +1793,14 @@ CaseConfigParamInput_INDEX_THREAD_QTY_DURING_FORCE_MERGE_AWSOpensearch = CaseCon
     },
 )
 
+CaseConfigParamInput_ON_DISK_AWSOpensearch = CaseConfigInput(
+    label=CaseConfigParamType.on_disk,
+    displayLabel="On Disk",
+    inputHelp="Enable on-disk vector storage mode (The on_disk mode only works with the float data type.)",
+    inputType=InputType.Bool,
+    inputConfig={"value": False},
+)
+
 CaseConfigParamInput_NUMBER_OF_INDEXING_CLIENTS_AWSOpensearch = CaseConfigInput(
     label=CaseConfigParamType.number_of_indexing_clients,
     displayLabel="Number of Indexing Clients",
@@ -2337,6 +2345,7 @@ AWSOpensearchLoadingConfig = [
     CaseConfigParamInput_REPLICATION_TYPE_AWSOpensearch,
     CaseConfigParamInput_MEMORY_OPTIMIZED_SEARCH_AWSOpensearch,
     CaseConfigParamInput_INDEX_THREAD_QTY_DURING_FORCE_MERGE_AWSOpensearch,
+    CaseConfigParamInput_ON_DISK_AWSOpensearch,
 ]
 
 AWSOpenSearchPerformanceConfig = [
@@ -2354,6 +2363,7 @@ AWSOpenSearchPerformanceConfig = [
     CaseConfigParamInput_REPLICATION_TYPE_AWSOpensearch,
     CaseConfigParamInput_MEMORY_OPTIMIZED_SEARCH_AWSOpensearch,
     CaseConfigParamInput_INDEX_THREAD_QTY_DURING_FORCE_MERGE_AWSOpensearch,
+    CaseConfigParamInput_ON_DISK_AWSOpensearch,
 ]
 
 # Map DB to config

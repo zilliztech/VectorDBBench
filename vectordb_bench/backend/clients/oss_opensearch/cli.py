@@ -118,6 +118,16 @@ class OSSOpenSearchTypedDict(TypedDict):
         ),
     ]
 
+    on_disk: Annotated[
+        bool,
+        click.option(
+            "--on-disk",
+            is_flag=True,
+            help="Enable on-disk vector storage mode",
+            default=False,
+        ),
+    ]
+
 
 class OSSOpenSearchHNSWTypedDict(CommonTypedDict, OSSOpenSearchTypedDict, HNSWFlavor1): ...
 
