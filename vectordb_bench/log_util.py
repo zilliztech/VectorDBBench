@@ -65,16 +65,17 @@ class colors:
     ENDC = "\033[0m"
 
 
-_BASE_LEVEL_COLORS = {
-    "INFO": colors.INFO,
-    "DEBUG": colors.DEBUG,
-    "WARNING": colors.WARNING,
-    "ERROR": colors.ERROR,
-    "CRITICAL": colors.CRITICAL,
-}
 COLORS = {
-    **_BASE_LEVEL_COLORS,
-    **{f"{level}M": color for level, color in _BASE_LEVEL_COLORS.items()},
+    "INFO": colors.INFO,
+    "INFOM": colors.INFO,
+    "DEBUG": colors.DEBUG,
+    "DEBUGM": colors.DEBUG,
+    "WARNING": colors.WARNING,
+    "WARNINGM": colors.WARNING,
+    "CRITICAL": colors.CRITICAL,
+    "CRITICALM": colors.CRITICAL,
+    "ERROR": colors.ERROR,
+    "ERRORM": colors.ERROR,
     "ENDC": colors.ENDC,
 }
 

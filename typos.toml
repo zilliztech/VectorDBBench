@@ -1,3 +1,5 @@
+# Respect these words as correct spelling.
 [default.extend-words]
-# Respect RaBit, RaBitQ as correct spelling.
 "rabit" = "rabit"
+"typ" = "typ"
+"infom" = "infom"
