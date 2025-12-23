@@ -129,6 +129,9 @@ class CaseConfigParamType(Enum):
     replication_type = "replication_type"
     knn_derived_source_enabled = "knn_derived_source_enabled"
     memory_optimized_search = "memory_optimized_search"
+    on_disk = "on_disk"
+    compression_level = "compression_level"
+    oversample_factor = "oversample_factor"
 
     # CockroachDB parameters
     min_partition_size = "min_partition_size"

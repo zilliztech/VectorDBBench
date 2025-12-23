@@ -1903,6 +1903,65 @@ CaseConfigParamInput_MEMORY_OPTIMIZED_SEARCH_AWSOpensearch = CaseConfigInput(
     isDisplayed=lambda config: (config.get(CaseConfigParamType.engine_name, "").lower() == "faiss"),
 )
 
+CaseConfigParamInput_ON_DISK_OSSOpensearch = CaseConfigInput(
+    label=CaseConfigParamType.on_disk,
+    displayLabel="Disk-based Search",
+    inputHelp="Enable disk-based storage with Binary Quantization",
+    inputType=InputType.Bool,
+    inputConfig={
+        "value": False,
+    },
+)
+
+CaseConfigParamInput_COMPRESSION_LEVEL_OSSOpensearch = CaseConfigInput(
+    label=CaseConfigParamType.compression_level,
+    displayLabel="Compression Level",
+    inputHelp="Binary quantization compression ratio for disk storage",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": ["32x", "16x", "8x", "4x", "2x", "1x"],
+        "default": "32x",
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.on_disk, False) == True,
+)
+
+CaseConfigParamInput_OVERSAMPLE_FACTOR_OSSOpensearch = CaseConfigInput(
+    label=CaseConfigParamType.oversample_factor,
+    displayLabel="Oversample Factor",
+    inputHelp="Rescoring oversample factor for two-phase search",
+    inputType=InputType.Float,
+    inputConfig={
+        "min": 1.0,
+        "max": 10.0,
+        "value": 3.0,
+        "step": 0.5,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.on_disk, False) == True,
+)
+
+CaseConfigParamInput_ENGINE_NAME_OSSOpensearch = CaseConfigInput(
+    label=CaseConfigParamType.engine_name,
+    displayLabel="Engine",
+    inputHelp="HNSW algorithm implementation to use",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": ["faiss", "lucene"],
+        "default": "faiss",
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.on_disk, False) == False,
+)
+
+CaseConfigParamInput_QUANTIZATION_TYPE_OSSOpensearch = CaseConfigInput(
+    label=CaseConfigParamType.quantizationType,
+    displayLabel="Quantization Type",
+    inputHelp="Scalar quantization type for in-memory vectors",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": ["fp32", "fp16"],
+        "default": "fp32",
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.on_disk, False) == False,
+)
 MilvusLoadConfig = [
     CaseConfigParamInput_IndexType,
     CaseConfigParamInput_M,
@@ -2356,6 +2415,45 @@ AWSOpenSearchPerformanceConfig = [
     CaseConfigParamInput_INDEX_THREAD_QTY_DURING_FORCE_MERGE_AWSOpensearch,
 ]
 
+
+OSSOpensearchLoadingConfig = [
+    CaseConfigParamInput_ON_DISK_OSSOpensearch,
+    CaseConfigParamInput_COMPRESSION_LEVEL_OSSOpensearch,
+    CaseConfigParamInput_ENGINE_NAME_OSSOpensearch,
+    CaseConfigParamInput_METRIC_TYPE_NAME_AWSOpensearch,
+    CaseConfigParamInput_M_AWSOpensearch,
+    CaseConfigParamInput_EFConstruction_AWSOpensearch,
+    CaseConfigParamInput_QUANTIZATION_TYPE_OSSOpensearch,
+    CaseConfigParamInput_REFRESH_INTERVAL_AWSOpensearch,
+    CaseConfigParamInput_NUMBER_OF_SHARDS_AWSOpensearch,
+    CaseConfigParamInput_NUMBER_OF_REPLICAS_AWSOpensearch,
+    CaseConfigParamInput_NUMBER_OF_INDEXING_CLIENTS_AWSOpensearch,
+    CaseConfigParamInput_INDEX_THREAD_QTY_AWSOpensearch,
+    CaseConfigParamInput_REPLICATION_TYPE_AWSOpensearch,
+    CaseConfigParamInput_KNN_DERIVED_SOURCE_ENABLED_AWSOpensearch,
+    CaseConfigParamInput_MEMORY_OPTIMIZED_SEARCH_AWSOpensearch,
+]
+
+OSSOpenSearchPerformanceConfig = [
+    CaseConfigParamInput_ON_DISK_OSSOpensearch,
+    CaseConfigParamInput_COMPRESSION_LEVEL_OSSOpensearch,
+    CaseConfigParamInput_OVERSAMPLE_FACTOR_OSSOpensearch,
+    CaseConfigParamInput_EF_SEARCH_AWSOpensearch,
+    CaseConfigParamInput_ENGINE_NAME_OSSOpensearch,
+    CaseConfigParamInput_METRIC_TYPE_NAME_AWSOpensearch,
+    CaseConfigParamInput_M_AWSOpensearch,
+    CaseConfigParamInput_EFConstruction_AWSOpensearch,
+    CaseConfigParamInput_QUANTIZATION_TYPE_OSSOpensearch,
+    CaseConfigParamInput_REFRESH_INTERVAL_AWSOpensearch,
+    CaseConfigParamInput_NUMBER_OF_SHARDS_AWSOpensearch,
+    CaseConfigParamInput_NUMBER_OF_REPLICAS_AWSOpensearch,
+    CaseConfigParamInput_NUMBER_OF_INDEXING_CLIENTS_AWSOpensearch,
+    CaseConfigParamInput_INDEX_THREAD_QTY_AWSOpensearch,
+    CaseConfigParamInput_REPLICATION_TYPE_AWSOpensearch,
+    CaseConfigParamInput_KNN_DERIVED_SOURCE_ENABLED_AWSOpensearch,
+    CaseConfigParamInput_MEMORY_OPTIMIZED_SEARCH_AWSOpensearch,
+]
+
 # Map DB to config
 CASE_CONFIG_MAP = {
     DB.Milvus: {
@@ -2379,8 +2477,8 @@ CASE_CONFIG_MAP = {
         CaseLabel.Performance: AWSOpenSearchPerformanceConfig,
     },
     DB.OSSOpenSearch: {
-        CaseLabel.Load: AWSOpensearchLoadingConfig,
-        CaseLabel.Performance: AWSOpenSearchPerformanceConfig,
+        CaseLabel.Load: OSSOpensearchLoadingConfig,
+        CaseLabel.Performance: OSSOpenSearchPerformanceConfig,
     },
     DB.PgVector: {
         CaseLabel.Load: PgVectorLoadingConfig,
