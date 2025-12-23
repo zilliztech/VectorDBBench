@@ -28,7 +28,7 @@ dependencies = [
     "click",
     "pytz",
     "streamlit-autorefresh",
-    "streamlit<1.44,!=1.34.0", # There is a breaking change in 1.44 related to get_page https://discuss.streamlit.io/t/from-streamlit-source-util-import-get-pages-gone-in-v-1-44-0-need-urgent-help/98399
+    "streamlit>=1.52.2", # There is a breaking change in 1.44 related to get_page https://discuss.streamlit.io/t/from-streamlit-source-util-import-get-pages-gone-in-v-1-44-0-need-urgent-help/98399
     "streamlit_extras",
     "tqdm",
     "s3fs",
@@ -37,7 +37,7 @@ dependencies = [
     "polars",
     "plotly",
     "environs",
-    "pydantic",
+    "pydantic>=2",
     "scikit-learn",
     "pymilvus", # with pandas, numpy, ujson
     "ujson",
