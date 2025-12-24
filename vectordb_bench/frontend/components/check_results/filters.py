@@ -98,7 +98,7 @@ def getShowDbsAndCases(st, result: list[CaseResult], filter_type: FilterOp) -> t
             "Case Filter",
             datasetWithSizeTypes,
             col=1,
-            optionLables=[v.value for v in datasetWithSizeTypes],
+            optionLabels=[v.value for v in datasetWithSizeTypes],
         )
         datasets = [dataset_with_size_type.get_manager() for dataset_with_size_type in showDatasetWithSizeTypes]
         showCaseNames = list(set([case.name for case in allCases if case.dataset in datasets]))
@@ -106,7 +106,7 @@ def getShowDbsAndCases(st, result: list[CaseResult], filter_type: FilterOp) -> t
     return showDBNames, showCaseNames
 
 
-def filterView(container, header, options, col, optionLables=None):
+def filterView(container, header, options, col, optionLabels=None):
     selectAllState = f"{header}-select-all-state"
     if selectAllState not in st.session_state:
         st.session_state[selectAllState] = True
@@ -137,14 +137,14 @@ def filterView(container, header, options, col, optionLables=None):
         col,
         gap="small",
     )
-    if optionLables is None:
-        optionLables = options
-    isActive = {option: st.session_state[selectAllState] for option in optionLables}
-    for i, option in enumerate(optionLables):
+    if optionLabels is None:
+        optionLabels = options
+    isActive = {option: st.session_state[selectAllState] for option in optionLabels}
+    for i, option in enumerate(optionLabels):
         isActive[option] = columns[i % col].checkbox(
-            optionLables[i],
+            optionLabels[i],
             value=isActive[option],
-            key=f"{optionLables[i]}-{st.session_state[countKeyState]}",
+            key=f"{optionLabels[i]}-{st.session_state[countKeyState]}",
         )
 
-    return [options[i] for i, option in enumerate(optionLables) if isActive[option]]
+    return [options[i] for i, option in enumerate(optionLabels) if isActive[option]]

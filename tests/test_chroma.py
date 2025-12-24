@@ -20,7 +20,7 @@ log = logging.getLogger(__name__)
 
 
 
-dict = {} #Assumes chroma is acception connections on localhost:8000
+dict = {}  # Assumes chroma is accepting connections on localhost:8000
 dict['name'] = "chroma"
 dict['host'] = "localhost"
 dict['port'] = 8000

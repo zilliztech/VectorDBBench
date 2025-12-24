@@ -80,7 +80,7 @@ COLORS = {
 }
 
 
-class ColorFulFormatColMixin:
+class ColorfulFormatColMixin:
     def format_col(self, message: str, level_name: str):
         if level_name in COLORS:
             message = COLORS[level_name] + message + COLORS["ENDC"]
@@ -103,7 +103,7 @@ class ColorfulLogRecordProxy(logging.LogRecord):
         return getattr(self, attr)
 
 
-class ColorfulFormatter(ColorFulFormatColMixin, logging.Formatter):
+class ColorfulFormatter(ColorfulFormatColMixin, logging.Formatter):
     def format(self, record: any):
         proxy = ColorfulLogRecordProxy(record)
         return super().format(proxy)

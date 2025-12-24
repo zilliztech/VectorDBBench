@@ -40,7 +40,7 @@ class ChromaClient(VectorDB):
 
     @contextmanager
     def init(self) -> None:
-        """create and destory connections to database.
+        """create and destroy connections to database.
 
         Examples:
             >>> with self.init():

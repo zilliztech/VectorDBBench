@@ -148,7 +148,7 @@ class MemoryDB(VectorDB):
 
     @contextmanager
     def init(self) -> Generator[None, None, None]:
-        """create and destory connections to database.
+        """create and destroy connections to database.
 
         Examples:
             >>> with self.init():

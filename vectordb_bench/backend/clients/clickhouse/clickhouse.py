@@ -91,7 +91,7 @@ class Clickhouse(VectorDB):
             log.warning(f"Failed to drop table {self.db_config['database']}.{self.table_name}: {e}")
             raise e from None
 
-    def _perfomance_tuning(self):
+    def _performance_tuning(self):
         self.conn.command("SET materialize_skip_indexes_on_insert = 1")
 
     def _create_index(self):
@@ -120,7 +120,7 @@ class Clickhouse(VectorDB):
                         """
                 self.conn.command(cmd=query)
             else:
-                log.warning("HNSW is only avaliable method in clickhouse now")
+                log.warning("HNSW is only available method in clickhouse now")
         except Exception as e:
             log.warning(f"Failed to create Clickhouse vector index on table: {self.table_name} error: {e}")
             raise e from None

@@ -1,0 +1,5 @@
+# Respect these words as correct spelling.
+[default.extend-words]
+"rabit" = "rabit"
+"typ" = "typ"
+"infom" = "infom"

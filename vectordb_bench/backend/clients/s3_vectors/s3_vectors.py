@@ -95,7 +95,7 @@ class S3Vectors(VectorDB):
         return
 
     def need_normalize_cosine(self) -> bool:
-        """Wheather this database need to normalize dataset to support COSINE"""
+        """Whether this database need to normalize dataset to support COSINE"""
         return False
 
     def insert_embeddings(

@@ -4,9 +4,9 @@ from vectordb_bench.backend.filter import FilterOp
 from vectordb_bench.frontend.components.check_results.footer import footer
 from vectordb_bench.frontend.components.check_results.headerIcon import drawHeaderIcon
 from vectordb_bench.frontend.components.check_results.nav import (
-    NavToQuriesPerDollar,
-    NavToRunTest,
     NavToPages,
+    NavToQueriesPerDollar,
+    NavToRunTest,
 )
 from vectordb_bench.frontend.components.qps_recall.charts import drawCharts
 from vectordb_bench.frontend.components.qps_recall.data import getshownData
@@ -56,7 +56,7 @@ def main():
     # nav
     navContainer = st.sidebar.container()
     NavToRunTest(navContainer)
-    NavToQuriesPerDollar(navContainer)
+    NavToQueriesPerDollar(navContainer)
 
     # save or share
     resultesContainer = st.sidebar.container()

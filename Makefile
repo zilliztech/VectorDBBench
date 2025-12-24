@@ -8,3 +8,6 @@ format:
 lint:
 	PYTHONPATH=`pwd` python3 -m black vectordb_bench --check
 	PYTHONPATH=`pwd` python3 -m ruff check vectordb_bench
+
+typos:
+	typos README.md install.py vectordb_bench tests

@@ -7,7 +7,7 @@ def displayCustomCase(customCase: CustomCaseConfig, st, key):
     customCase.dataset_config.name = columns[0].text_input(
         "Name", key=f"{key}_name", value=customCase.dataset_config.name
     )
-    customCase.name = f"{customCase.dataset_config.name} (Performace Case)"
+    customCase.name = f"{customCase.dataset_config.name} (Performance Case)"
     customCase.dataset_config.dir = columns[1].text_input(
         "Folder Path", key=f"{key}_dir", value=customCase.dataset_config.dir
     )
@@ -59,7 +59,7 @@ def displayCustomCase(customCase: CustomCaseConfig, st, key):
     default_label_percentages = ",".join(map(str, customCase.dataset_config.with_label_percentages))
     label_percentage_input = columns[1].text_input(
         "label percentages",
-        key=f"{key}_label_percantages",
+        key=f"{key}_label_percentages",
         value=default_label_percentages,
     )
     try:

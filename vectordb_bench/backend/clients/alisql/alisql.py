@@ -91,7 +91,7 @@ class AliSQL(VectorDB):
 
     @contextmanager
     def init(self):
-        """create and destory connections to database.
+        """create and destroy connections to database.
 
         Examples:
             >>> with self.init():

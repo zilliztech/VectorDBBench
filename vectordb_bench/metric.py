@@ -13,7 +13,7 @@ class Metric:
     # for load cases
     max_load_count: int = 0
 
-    # for both performace and streaming cases
+    # for both performance and streaming cases
     insert_duration: float = 0.0
     optimize_duration: float = 0.0
     load_duration: float = 0.0  # insert + optimize
@@ -49,7 +49,7 @@ class Metric:
     st_conc_latency_avg_list_list: list[list[float]] = field(default_factory=list)
 
 
-QURIES_PER_DOLLAR_METRIC = "QP$ (Quries per Dollar)"
+QUERIES_PER_DOLLAR_METRIC = "QP$ (Queries per Dollar)"
 LOAD_DURATION_METRIC = "load_duration"
 SERIAL_LATENCY_P99_METRIC = "serial_latency_p99"
 SERIAL_LATENCY_P95_METRIC = "serial_latency_p95"
@@ -62,7 +62,7 @@ metric_unit_map = {
     SERIAL_LATENCY_P99_METRIC: "ms",
     SERIAL_LATENCY_P95_METRIC: "ms",
     MAX_LOAD_COUNT_METRIC: "K",
-    QURIES_PER_DOLLAR_METRIC: "K",
+    QUERIES_PER_DOLLAR_METRIC: "K",
 }
 
 lower_is_better_metrics = [

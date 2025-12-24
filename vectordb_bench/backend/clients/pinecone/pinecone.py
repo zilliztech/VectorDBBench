@@ -76,7 +76,7 @@ class Pinecone(VectorDB):
         try:
             for batch_start_offset in range(0, len(embeddings), self.batch_size):
                 batch_end_offset = min(batch_start_offset + self.batch_size, len(embeddings))
-                insert_datas = []
+                insert_batch = []
                 for i in range(batch_start_offset, batch_end_offset):
                     metadata_dict = {self._scalar_id_field: metadata[i]}
                     if self.with_scalar_labels:
@@ -86,8 +86,8 @@ class Pinecone(VectorDB):
                         embeddings[i],
                         metadata_dict,
                     )
-                    insert_datas.append(insert_data)
-                self.index.upsert(insert_datas)
+                    insert_batch.append(insert_data)
+                self.index.upsert(insert_batch)
                 insert_count += batch_end_offset - batch_start_offset
         except Exception as e:
             return insert_count, e

@@ -1,6 +1,6 @@
 [
     {
-        "name": "My Dataset (Performace Case)",
+        "name": "My Dataset (Performance Case)",
         "description": "this is a customized dataset.",
         "load_timeout": 36000,
         "optimize_timeout": 36000,

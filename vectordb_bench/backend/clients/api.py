@@ -97,7 +97,7 @@ class DBConfig(ABC, BaseModel):
 
 
 class DBCaseConfig(ABC):
-    """Case specific vector database configs, usually uesed for index params like HNSW"""
+    """Case specific vector database configs, usually used for index params like HNSW"""
 
     @abstractmethod
     def index_param(self) -> dict:
@@ -176,7 +176,7 @@ class VectorDB(ABC):
     @abstractmethod
     @contextmanager
     def init(self) -> None:
-        """create and destory connections to database.
+        """create and destroy connections to database.
         Why contextmanager:
 
             In multiprocessing search tasks, vectordbbench might init
@@ -192,7 +192,7 @@ class VectorDB(ABC):
         raise NotImplementedError
 
     def need_normalize_cosine(self) -> bool:
-        """Wheather this database need to normalize dataset to support COSINE"""
+        """Whether this database need to normalize dataset to support COSINE"""
         return False
 
     @abstractmethod

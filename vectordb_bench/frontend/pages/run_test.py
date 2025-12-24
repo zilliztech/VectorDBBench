@@ -34,21 +34,21 @@ def main():
 
     # select db
     dbSelectorContainer = st.container()
-    activedDbList = dbSelector(dbSelectorContainer)
+    activeDbList = dbSelector(dbSelectorContainer)
 
     # db config setting
     dbConfigs = {}
     isAllValid = True
-    if len(activedDbList) > 0:
+    if len(activeDbList) > 0:
         dbConfigContainer = st.container()
-        dbConfigs, isAllValid = dbConfigSettings(dbConfigContainer, activedDbList)
+        dbConfigs, isAllValid = dbConfigSettings(dbConfigContainer, activeDbList)
 
     # select case and set db_case_config
     caseSelectorContainer = st.container()
-    activedCaseList, allCaseConfigs = caseSelector(caseSelectorContainer, activedDbList)
+    activeCaseList, allCaseConfigs = caseSelector(caseSelectorContainer, activeDbList)
 
     # generate tasks
-    tasks = generate_tasks(activedDbList, dbConfigs, activedCaseList, allCaseConfigs) if isAllValid else []
+    tasks = generate_tasks(activeDbList, dbConfigs, activeCaseList, allCaseConfigs) if isAllValid else []
 
     # submit
     submitContainer = st.container()

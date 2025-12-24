@@ -62,20 +62,20 @@ def welcomePrams(st):
             "link": "results",
         },
         {
-            "title": "Quries Per Dollar",
+            "title": "Queries Per Dollar",
             "description": (
                 "<span style='font-size: 17px;'>"
-                "To view the results of quries per dollar.<br> "
+                "To view the results of queries per dollar.<br> "
                 "(similar to qps in Results) "
                 "</span>"
             ),
             "image": "fig/homepage/qp$.png",
-            "link": "quries_per_dollar",
+            "link": "queries_per_dollar",
         },
         {
             "title": "Tables",
             "description": (
-                "<span style='font-size: 17px;'>" "To view the results of differnt datasets in tables." "</span>"
+                "<span style='font-size: 17px;'>" "To view the results of different datasets in tables." "</span>"
             ),
             "image": "fig/homepage/table.png",
             "link": "tables",
@@ -94,7 +94,7 @@ def welcomePrams(st):
             "title": "Label Filter Performance",
             "description": (
                 "<span style='font-size: 17px;'>"
-                "To view the perfomance of datasets under different label filter ratios "
+                "To view the performance of datasets under different label filter ratios "
                 "</span>"
             ),
             "image": "fig/homepage/label_filter.png",
@@ -104,7 +104,7 @@ def welcomePrams(st):
             "title": "Int Filter Performance",
             "description": (
                 "<span style='font-size: 17px;'>"
-                "To view the perfomance of datasets under different int filter ratios "
+                "To view the performance of datasets under different int filter ratios "
                 "</span>"
             ),
             "image": "fig/homepage/label_filter.png",
@@ -114,7 +114,7 @@ def welcomePrams(st):
             "title": "Streaming Performance",
             "description": (
                 "<span style='font-size: 17px;'>"
-                "To view the perfomance of datasets under different search stages and insertion rates. "
+                "To view the performance of datasets under different search stages and insertion rates. "
                 "</span>"
             ),
             "image": "fig/homepage/streaming.png",
