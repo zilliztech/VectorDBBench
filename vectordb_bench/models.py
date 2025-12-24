@@ -81,6 +81,8 @@ class CaseConfigParamType(Enum):
     refine_k = "refine_k"
     rbq_bits_query = "rbq_bits_query"
     sq_type = "sq_type"
+    with_raw_data = "with_raw_data"
+    reorder_k = "reorder_k"
     level = "level"
     maintenance_work_mem = "maintenance_work_mem"
     max_parallel_workers = "max_parallel_workers"

@@ -411,6 +411,7 @@ CaseConfigParamInput_IndexType = CaseConfigInput(
             IndexType.IVFPQ.value,
             IndexType.IVFSQ8.value,
             IndexType.IVF_RABITQ.value,
+            IndexType.SCANN_MILVUS.value,
             IndexType.DISKANN.value,
             IndexType.Flat.value,
             IndexType.AUTOINDEX.value,
@@ -1014,10 +1015,31 @@ CaseConfigParamInput_Nlist = CaseConfigInput(
         IndexType.IVFPQ.value,
         IndexType.IVFSQ8.value,
         IndexType.IVF_RABITQ.value,
+        IndexType.SCANN_MILVUS.value,
         IndexType.GPU_IVF_FLAT.value,
         IndexType.GPU_IVF_PQ.value,
         IndexType.GPU_BRUTE_FORCE.value,
     ],
+)
+
+CaseConfigParamInput_with_raw_data = CaseConfigInput(
+    label=CaseConfigParamType.with_raw_data,
+    inputType=InputType.Option,
+    inputHelp="Whether to include raw data in the index. Setting to True enables reordering with original vectors.",
+    inputConfig={"options": [False, True]},
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.SCANN_MILVUS.value,
+)
+
+CaseConfigParamInput_reorder_k = CaseConfigInput(
+    label=CaseConfigParamType.reorder_k,
+    inputType=InputType.Number,
+    inputHelp="Number of candidate vectors to reorder. Must be greater than or equal to k.",
+    inputConfig={
+        "min": 1,
+        "max": 65536,
+        "value": 100,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.SCANN_MILVUS.value,
 )
 
 CaseConfigParamInput_Nprobe = CaseConfigInput(
@@ -1967,6 +1989,7 @@ MilvusLoadConfig = [
     CaseConfigParamInput_M,
     CaseConfigParamInput_EFConstruction_Milvus,
     CaseConfigParamInput_Nlist,
+    CaseConfigParamInput_with_raw_data,
     CaseConfigParamInput_M_PQ,
     CaseConfigParamInput_Nbits_PQ,
     CaseConfigParamInput_intermediate_graph_degree,
@@ -1986,6 +2009,8 @@ MilvusPerformanceConfig = [
     CaseConfigParamInput_EF_Milvus,
     CaseConfigParamInput_SearchList,
     CaseConfigParamInput_Nlist,
+    CaseConfigParamInput_with_raw_data,
+    CaseConfigParamInput_reorder_k,
     CaseConfigParamInput_Nprobe,
     CaseConfigParamInput_M_PQ,
     CaseConfigParamInput_Nbits_PQ,
