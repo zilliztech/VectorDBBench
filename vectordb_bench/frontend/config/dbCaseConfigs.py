@@ -1056,6 +1056,7 @@ CaseConfigParamInput_Nprobe = CaseConfigInput(
         IndexType.IVFPQ.value,
         IndexType.IVFSQ8.value,
         IndexType.IVF_RABITQ.value,
+        IndexType.SCANN_MILVUS.value,
         IndexType.GPU_IVF_FLAT.value,
         IndexType.GPU_IVF_PQ.value,
         IndexType.GPU_BRUTE_FORCE.value,

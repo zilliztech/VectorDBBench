@@ -417,6 +417,7 @@ class GPUCAGRAConfig(MilvusIndexConfig, DBCaseConfig):
 class SCANNConfig(MilvusIndexConfig, DBCaseConfig):
     nlist: int = 1024
     with_raw_data: bool = False
+    nprobe: int = 64
     reorder_k: int | None = 100
     index: IndexType = IndexType.SCANN_MILVUS
 
@@ -433,7 +434,10 @@ class SCANNConfig(MilvusIndexConfig, DBCaseConfig):
     def search_param(self) -> dict:
         return {
             "metric_type": self.parse_metric(),
-            "params": {"reorder_k": self.reorder_k},
+            "params": {
+                "nprobe": self.nprobe,
+                "reorder_k": self.reorder_k,
+            },
         }
 
 
