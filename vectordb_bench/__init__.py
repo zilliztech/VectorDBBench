@@ -15,6 +15,7 @@ class config:
     USE_LOCAL_DATA = env.bool("USE_LOCAL_DATA", False)
 
     LOG_LEVEL = env.str("LOG_LEVEL", "INFO")
+    LOG_FILE = env.str("LOG_FILE", "logs/vectordb_bench.log")
 
     DEFAULT_DATASET_URL = env.str("DEFAULT_DATASET_URL", AWS_S3_URL)
     DATASET_SOURCE = env.str("DATASET_SOURCE", "S3")  # Options "S3" or "AliyunOSS"
@@ -80,4 +81,4 @@ class config:
         ]
 
 
-log_util.init(config.LOG_LEVEL)
+log_util.init(config.LOG_LEVEL, pathlib.Path(config.LOG_FILE))

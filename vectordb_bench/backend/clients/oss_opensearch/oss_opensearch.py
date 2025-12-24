@@ -32,6 +32,15 @@ VERSION_SPECIFIC_SETTING_RULES = [
         "applies": lambda version, _: version >= Version("3.0"),
         "value": lambda case_config: case_config.knn_derived_source_enabled,
     },
+    {
+        "name": "knn.memory_optimized_search",
+        "applies": lambda version, case_config: (
+            version >= Version("3.1")
+            and case_config.engine == OSSOS_Engine.faiss
+            and case_config.memory_optimized_search
+        ),
+        "value": lambda case_config: case_config.memory_optimized_search,
+    },
 ]
 
 
@@ -144,7 +153,8 @@ class SearchQueryBuilder:
         if filter_clause:
             knn_config["filter"] = filter_clause
 
-        if self.case_config.use_quant:
+        # Handle rescoring for both in-memory quantization and disk-based modes
+        if self.case_config.use_quant or self.case_config.on_disk:
             knn_config["rescore"] = {"oversample_factor": self.case_config.oversample_factor}
 
         return {"size": k, "query": {"knn": {self.vector_col_name: knn_config}}}
@@ -266,11 +276,44 @@ class OSSOpenSearch(VectorDB):
                 version_specific_settings[name] = value
         return version_specific_settings
 
+    def _build_vector_field_mapping(self) -> dict[str, Any]:
+        """Build vector field mapping configuration based on storage mode."""
+        vector_field = {
+            "type": "knn_vector",
+            "dimension": self.dim,
+            "method": self.case_config.index_param(),
+        }
+
+        if self.case_config.on_disk:
+            vector_field.update(
+                {
+                    "space_type": self.case_config.parse_metric(),
+                    "data_type": "float",
+                    "mode": "on_disk",
+                    "compression_level": self.case_config.compression_level,
+                }
+            )
+            log.info(
+                f"Creating disk-based index - "
+                f"compression_level: {self.case_config.compression_level}, "
+                f"resolved_engine: {self.case_config.resolved_engine.value}"
+            )
+        else:
+            log.info(f"Creating in-memory index with engine: {self.case_config.engine.value}")
+
+        return vector_field
+
     def _get_bulk_manager(self, client: OpenSearch) -> BulkInsertManager:
         """Get bulk insert manager for the given client."""
         return BulkInsertManager(client, self.index_name, self.case_config)
 
     def _create_index(self, client: OpenSearch) -> None:
+        cluster_version = self._get_cluster_version(client)
+
+        if self.case_config.on_disk and cluster_version < Version("2.17"):
+            error_msg = f"Disk-based vector search requires OpenSearch 2.17+, but cluster is running {cluster_version}"
+            raise OpenSearchError(error_msg)
+
         ef_search_value = self.case_config.efSearch
         log.info(f"Creating index with ef_search: {ef_search_value}")
         log.info(f"Creating index with number_of_replicas: {self.case_config.number_of_replicas}")
@@ -278,6 +321,7 @@ class OSSOpenSearch(VectorDB):
         log.info(f"Creating index with knn_derived_source_enabled: {self.case_config.knn_derived_source_enabled}")
         log.info(f"Creating index with engine: {self.case_config.engine}")
         log.info(f"Creating index with metric type: {self.case_config.metric_type_name}")
+        log.info(f"Creating index with memory_optimized_search: {self.case_config.memory_optimized_search}")
         log.info(f"All case_config parameters: {self.case_config.__dict__}")
 
         settings_manager = self._get_settings_manager(client)
@@ -314,11 +358,7 @@ class OSSOpenSearch(VectorDB):
             properties[self.id_col_name] = {"type": "integer", "store": True}
 
         properties[self.label_col_name] = {"type": "keyword"}
-        properties[self.vector_col_name] = {
-            "type": "knn_vector",
-            "dimension": self.dim,
-            "method": self.case_config.index_param(),
-        }
+        properties[self.vector_col_name] = self._build_vector_field_mapping()
 
         mappings = {
             "properties": properties,

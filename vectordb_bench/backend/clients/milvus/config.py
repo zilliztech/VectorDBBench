@@ -414,6 +414,29 @@ class GPUCAGRAConfig(MilvusIndexConfig, DBCaseConfig):
         }
 
 
+class SCANNConfig(MilvusIndexConfig, DBCaseConfig):
+    nlist: int = 1024
+    with_raw_data: bool = False
+    reorder_k: int | None = 100
+    index: IndexType = IndexType.SCANN_MILVUS
+
+    def index_param(self) -> dict:
+        return {
+            "metric_type": self.parse_metric(),
+            "index_type": "SCANN",
+            "params": {
+                "nlist": self.nlist,
+                "with_raw_data": self.with_raw_data,
+            },
+        }
+
+    def search_param(self) -> dict:
+        return {
+            "metric_type": self.parse_metric(),
+            "params": {"reorder_k": self.reorder_k},
+        }
+
+
 _milvus_case_config = {
     IndexType.AUTOINDEX: AutoIndexConfig,
     IndexType.HNSW: HNSWConfig,
@@ -430,4 +453,5 @@ _milvus_case_config = {
     IndexType.GPU_IVF_PQ: GPUIVFPQConfig,
     IndexType.GPU_CAGRA: GPUCAGRAConfig,
     IndexType.GPU_BRUTE_FORCE: GPUBruteForceConfig,
+    IndexType.SCANN_MILVUS: SCANNConfig,
 }
