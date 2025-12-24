@@ -134,6 +134,8 @@ class CaseConfigParamType(Enum):
     on_disk = "on_disk"
     compression_level = "compression_level"
     oversample_factor = "oversample_factor"
+    confidence_interval = "confidence_interval"
+    clip = "clip"
 
     # CockroachDB parameters
     min_partition_size = "min_partition_size"

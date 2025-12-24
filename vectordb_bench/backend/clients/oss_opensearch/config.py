@@ -51,8 +51,11 @@ class OSSOS_Engine(Enum):
 
 
 class OSSOpenSearchQuantization(Enum):
-    fp32 = "fp32"
-    fp16 = "fp16"
+    """In-memory scalar quantization types"""
+
+    NONE = "None"
+    LUCENE_SQ = "LuceneSQ"
+    FAISS_SQFP16 = "FaissSQfp16"
 
 
 # Compression level constants for disk-based mode
@@ -98,13 +101,32 @@ class OSSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
     cb_threshold: str | None = "50%"
     number_of_indexing_clients: int | None = 1
     use_routing: bool = False  # for label-filter cases
-    quantization_type: OSSOpenSearchQuantization = OSSOpenSearchQuantization.fp32
+    quantization_type: OSSOpenSearchQuantization = OSSOpenSearchQuantization.NONE
+    confidence_interval: float | None = None
+    clip: bool = False
     replication_type: str | None = "DOCUMENT"
     knn_derived_source_enabled: bool = False
     memory_optimized_search: bool = False
     on_disk: bool = False
     compression_level: str = CompressionLevel.LEVEL_32X
     oversample_factor: float = 1.0
+
+    @validator("quantization_type", pre=True, always=True)
+    def validate_quantization_type(cls, value: any):
+        """Convert string values to enum"""
+        if not value:
+            return OSSOpenSearchQuantization.NONE
+
+        if isinstance(value, OSSOpenSearchQuantization):
+            return value
+
+        mapping = {
+            "None": OSSOpenSearchQuantization.NONE,
+            "LuceneSQ": OSSOpenSearchQuantization.LUCENE_SQ,
+            "FaissSQfp16": OSSOpenSearchQuantization.FAISS_SQFP16,
+        }
+
+        return mapping.get(value, OSSOpenSearchQuantization.NONE)
 
     @root_validator
     def validate_engine_name(cls, values: dict):
@@ -130,6 +152,8 @@ class OSSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
             and self.number_of_segments == obj.number_of_segments
             and self.use_routing == obj.use_routing
             and self.quantization_type == obj.quantization_type
+            and self.confidence_interval == obj.confidence_interval
+            and self.clip == obj.clip
             and self.replication_type == obj.replication_type
             and self.knn_derived_source_enabled == obj.knn_derived_source_enabled
             and self.memory_optimized_search == obj.memory_optimized_search
@@ -149,6 +173,8 @@ class OSSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
                 self.number_of_segments,
                 self.use_routing,
                 self.quantization_type,
+                self.confidence_interval,
+                self.clip,
                 self.replication_type,
                 self.knn_derived_source_enabled,
                 self.memory_optimized_search,
@@ -173,7 +199,7 @@ class OSSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
     @property
     def use_quant(self) -> bool:
         """Only use in-memory quantization when NOT in disk mode"""
-        return not self.on_disk and self.quantization_type is not OSSOpenSearchQuantization.fp32
+        return not self.on_disk and self.quantization_type != OSSOpenSearchQuantization.NONE
 
     @property
     def resolved_engine(self) -> OSSOS_Engine:
@@ -207,11 +233,20 @@ class OSSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
             },
         }
 
+        # Add encoder for in-memory quantization
         if self.use_quant:
-            method_config["parameters"]["encoder"] = {
-                "name": "sq",
-                "parameters": {"type": self.quantization_type.value},
-            }
+            encoder_config = {"name": "sq"}
+
+            if self.quantization_type == OSSOpenSearchQuantization.LUCENE_SQ:
+                # Lucene SQ: optional confidence_interval
+                if self.confidence_interval is not None:
+                    encoder_config["parameters"] = {"confidence_interval": self.confidence_interval}
+
+            elif self.quantization_type == OSSOpenSearchQuantization.FAISS_SQFP16 and self.clip:
+                # FAISS SQfp16: optional clip parameter
+                encoder_config["parameters"] = {"type": "fp16", "clip": True}
+
+            method_config["parameters"]["encoder"] = encoder_config
 
         return method_config
 
