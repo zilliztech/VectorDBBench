@@ -1974,17 +1974,65 @@ CaseConfigParamInput_ENGINE_NAME_OSSOpensearch = CaseConfigInput(
     isDisplayed=lambda config: config.get(CaseConfigParamType.on_disk, False) == False,
 )
 
-CaseConfigParamInput_QUANTIZATION_TYPE_OSSOpensearch = CaseConfigInput(
+CaseConfigParamInput_QUANTIZATION_TYPE_LUCENE_OSSOpensearch = CaseConfigInput(
     label=CaseConfigParamType.quantizationType,
     displayLabel="Quantization Type",
-    inputHelp="Scalar quantization type for in-memory vectors",
+    inputHelp="Scalar quantization for Lucene engine",
     inputType=InputType.Option,
     inputConfig={
-        "options": ["fp32", "fp16"],
-        "default": "fp32",
+        "options": ["None", "LuceneSQ"],
+        "default": "None",
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.on_disk, False) == False,
+    isDisplayed=lambda config: (
+        not config.get(CaseConfigParamType.on_disk, False) and config.get(CaseConfigParamType.engine_name) == "lucene"
+    ),
 )
+
+CaseConfigParamInput_QUANTIZATION_TYPE_FAISS_OSSOpensearch = CaseConfigInput(
+    label=CaseConfigParamType.quantizationType,
+    displayLabel="Quantization Type",
+    inputHelp="Scalar quantization for FAISS engine",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": ["None", "FaissSQfp16"],
+        "default": "None",
+    },
+    isDisplayed=lambda config: (
+        not config.get(CaseConfigParamType.on_disk, False) and config.get(CaseConfigParamType.engine_name) == "faiss"
+    ),
+)
+
+CaseConfigParamInput_CONFIDENCE_INTERVAL_OSSOpensearch = CaseConfigInput(
+    label=CaseConfigParamType.confidence_interval,
+    displayLabel="Confidence Interval",
+    inputHelp="Quantile range for Lucene SQ (0.9-1.0, 0 for dynamic, or empty for auto)",
+    inputType=InputType.Float,
+    inputConfig={
+        "min": 0.0,
+        "max": 1.0,
+        "value": None,
+        "step": 0.1,
+    },
+    isDisplayed=lambda config: (
+        not config.get(CaseConfigParamType.on_disk, False)
+        and config.get(CaseConfigParamType.quantizationType) == "LuceneSQ"
+    ),
+)
+
+CaseConfigParamInput_CLIP_OSSOpensearch = CaseConfigInput(
+    label=CaseConfigParamType.clip,
+    displayLabel="Clip Vectors",
+    inputHelp="Clip out-of-range values to [-65504, 65504] for FP16",
+    inputType=InputType.Bool,
+    inputConfig={
+        "value": False,
+    },
+    isDisplayed=lambda config: (
+        not config.get(CaseConfigParamType.on_disk, False)
+        and config.get(CaseConfigParamType.quantizationType) == "FaissSQfp16"
+    ),
+)
+
 MilvusLoadConfig = [
     CaseConfigParamInput_IndexType,
     CaseConfigParamInput_M,
@@ -2449,7 +2497,10 @@ OSSOpensearchLoadingConfig = [
     CaseConfigParamInput_METRIC_TYPE_NAME_AWSOpensearch,
     CaseConfigParamInput_M_AWSOpensearch,
     CaseConfigParamInput_EFConstruction_AWSOpensearch,
-    CaseConfigParamInput_QUANTIZATION_TYPE_OSSOpensearch,
+    CaseConfigParamInput_QUANTIZATION_TYPE_LUCENE_OSSOpensearch,
+    CaseConfigParamInput_QUANTIZATION_TYPE_FAISS_OSSOpensearch,
+    CaseConfigParamInput_CONFIDENCE_INTERVAL_OSSOpensearch,
+    CaseConfigParamInput_CLIP_OSSOpensearch,
     CaseConfigParamInput_REFRESH_INTERVAL_AWSOpensearch,
     CaseConfigParamInput_NUMBER_OF_SHARDS_AWSOpensearch,
     CaseConfigParamInput_NUMBER_OF_REPLICAS_AWSOpensearch,
@@ -2469,7 +2520,10 @@ OSSOpenSearchPerformanceConfig = [
     CaseConfigParamInput_METRIC_TYPE_NAME_AWSOpensearch,
     CaseConfigParamInput_M_AWSOpensearch,
     CaseConfigParamInput_EFConstruction_AWSOpensearch,
-    CaseConfigParamInput_QUANTIZATION_TYPE_OSSOpensearch,
+    CaseConfigParamInput_QUANTIZATION_TYPE_LUCENE_OSSOpensearch,
+    CaseConfigParamInput_QUANTIZATION_TYPE_FAISS_OSSOpensearch,
+    CaseConfigParamInput_CONFIDENCE_INTERVAL_OSSOpensearch,
+    CaseConfigParamInput_CLIP_OSSOpensearch,
     CaseConfigParamInput_REFRESH_INTERVAL_AWSOpensearch,
     CaseConfigParamInput_NUMBER_OF_SHARDS_AWSOpensearch,
     CaseConfigParamInput_NUMBER_OF_REPLICAS_AWSOpensearch,
