@@ -332,7 +332,7 @@ class MilvusIVFRABITQTypedDict(CommonTypedDict, MilvusTypedDict, MilvusIVFFlatTy
         click.option(
             "--rbq-bits-query",
             type=int,
-            help="The magnification factor of refine compared to k.",
+            help="The level of quantization of a query vector. Use 1…8 for the SQ1…SQ8 and 0 to disable.",
             required=True,
         ),
     ]
