@@ -175,13 +175,13 @@ class PgVectorIVFFlatConfig(PgVectorIndexConfig):
     a good place to start is sqrt(lists)
     """
 
-    lists: int | None
-    probes: int | None
+    lists: int | None = None
+    probes: int | None = None
     index: IndexType = IndexType.ES_IVFFlat
     maintenance_work_mem: str | None = None
     max_parallel_workers: int | None = None
     quantization_type: str | None = None
-    table_quantization_type: str | None
+    table_quantization_type: str | None = None
     reranking: bool | None = None
     quantized_fetch_limit: int | None = None
     reranking_metric: str | None = None
@@ -224,14 +224,14 @@ class PgVectorHNSWConfig(PgVectorIndexConfig):
     created without any data in the table since there isn't a training step like IVFFlat.
     """
 
-    m: int | None  # DETAIL:  Valid values are between "2" and "100".
-    ef_construction: int | None  # ef_construction must be greater than or equal to 2 * m
-    ef_search: int | None
+    m: int | None = None  # DETAIL:  Valid values are between "2" and "100".
+    ef_construction: int | None = None  # ef_construction must be greater than or equal to 2 * m
+    ef_search: int | None = None
     index: IndexType = IndexType.ES_HNSW
     maintenance_work_mem: str | None = None
     max_parallel_workers: int | None = None
     quantization_type: str | None = None
-    table_quantization_type: str | None
+    table_quantization_type: str | None = None
     reranking: bool | None = None
     quantized_fetch_limit: int | None = None
     reranking_metric: str | None = None
