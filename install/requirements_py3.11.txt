@@ -28,3 +28,4 @@ mysql-connector-python
 packaging
 ujson
 numpy
+hdrhistogram>=0.10.1
