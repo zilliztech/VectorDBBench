@@ -22,8 +22,8 @@ class TestModels:
         result = CaseResult(
             task_config=TaskConfig(
                 db=DB.Milvus,
-                db_config=DB.Milvus.config(),
-                db_case_config=DB.Milvus.case_config_cls(index=IndexType.Flat)(),
+                db_config=DB.Milvus.config_cls(),
+                db_case_config=DB.Milvus.case_config_cls(index_type=IndexType.Flat)(),
                 case_config=CaseConfig(case_id=CaseType.Performance10M),
             ),
             metrics=Metric(),

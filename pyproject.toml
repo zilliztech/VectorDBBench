@@ -52,8 +52,8 @@ test = [
 ]
 
 all = [
-    "grpcio==1.53.0", # for qdrant-client and pymilvus
-    "grpcio-tools==1.53.0", # for qdrant-client and pymilvus
+    "grpcio>=1.53.0", # for qdrant-client, pymilvus and weaviate
+    "grpcio-tools>=1.53.0", # for qdrant-client, pymilvus and weaviate
     "qdrant-client",
     "pinecone-client",
     "weaviate-client>=4.18.3",

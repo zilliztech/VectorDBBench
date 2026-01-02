@@ -2,8 +2,9 @@ import time
 import logging
 from vectordb_bench.interface import BenchMarkRunner
 from vectordb_bench.models import (
-    DB, IndexType, CaseType, TaskConfig, CaseConfig,
+    DB, CaseType, TaskConfig, CaseConfig,
 )
+from vectordb_bench.backend.clients.api import IndexType
 
 log = logging.getLogger(__name__)
 
@@ -19,9 +20,9 @@ class TestBenchRunner:
 
         task_config=TaskConfig(
             db=DB.Milvus,
-            db_config=DB.Milvus.config(),
-            db_case_config=DB.Milvus.case_config_cls(index=IndexType.Flat)(),
-            case_config=CaseConfig(case_id=CaseType.PerformanceSZero),
+            db_config=DB.Milvus.config_cls(),
+            db_case_config=DB.Milvus.case_config_cls(index_type=IndexType.Flat)(),
+            case_config=CaseConfig(case_id=CaseType.Performance768D1M),
         )
 
         runner.run([task_config])
@@ -34,9 +35,9 @@ class TestBenchRunner:
 
         task_config=TaskConfig(
             db=DB.Milvus,
-            db_config=DB.Milvus.config(),
-            db_case_config=DB.Milvus.case_config_cls(index=IndexType.Flat)(),
-            case_config=CaseConfig(case_id=CaseType.PerformanceSZero),
+            db_config=DB.Milvus.config_cls(),
+            db_case_config=DB.Milvus.case_config_cls(index_type=IndexType.Flat)(),
+            case_config=CaseConfig(case_id=CaseType.Performance768D1M),
         )
 
         runner.run([task_config])
@@ -46,9 +47,9 @@ class TestBenchRunner:
     def test_performance_case_no_error(self):
         task_config=TaskConfig(
             db=DB.ZillizCloud,
-            db_config=DB.ZillizCloud.config(uri="xxx", user="abc", password="1234"),
+            db_config=DB.ZillizCloud.config_cls(uri="xxx", user="abc", password="1234"),
             db_case_config=DB.ZillizCloud.case_config_cls()(),
-            case_config=CaseConfig(case_id=CaseType.PerformanceSZero),
+            case_config=CaseConfig(case_id=CaseType.Performance768D1M),
         )
 
         t = task_config.copy()
