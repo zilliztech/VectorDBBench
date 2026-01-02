@@ -73,7 +73,7 @@ class CaseRunner(BaseModel):
         )
 
     def display(self) -> dict:
-        c_dict = self.ca.dict(
+        c_dict = self.ca.model_dump(
             include={
                 "label": True,
                 "name": True,
@@ -122,9 +122,13 @@ class CaseRunner(BaseModel):
         if "collection_name" in db_config_dict and not collection_name:
             collection_name = db_config_dict.pop("collection_name")
 
+        # Minimal fix for Weaviate v4 path: pass the Pydantic model instance directly,
+        # because the new client expects helper methods like host_port()/grpc_host_port().
+        db_init_cfg = self.config.db_config if self.config.db == DB.WeaviateCloud else db_config_dict
+
         self.db = db_cls(
             dim=self.ca.dataset.data.dim,
-            db_config=db_config_dict,
+            db_config=db_init_cfg,
             db_case_config=self.config.db_case_config,
             drop_old=drop_old,
             with_scalar_labels=self.ca.with_scalar_labels,
