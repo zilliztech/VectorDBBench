@@ -157,7 +157,7 @@ def generate_normal_cases(case_id: CaseType, custom_case: dict | None = None) ->
     return [CaseConfig(case_id=case_id, custom_case=custom_case)]
 
 
-def get_custom_case_cluter() -> UICaseItemCluster:
+def get_custom_case_cluster() -> UICaseItemCluster:
     return UICaseItemCluster(label="Custom Search Performance Test", uiCaseItems=get_custom_case_items())
 
 
@@ -1462,7 +1462,7 @@ CaseConfigParamInput_max_top_neighbors_buffer_size_AlloyDB = CaseConfigInput(
 )
 
 CaseConfigParamInput_pre_reordering_num_neighbors_AlloyDB = CaseConfigInput(
-    label=CaseConfigParamType.preReorderingNumNeigbors,
+    label=CaseConfigParamType.preReorderingNumNeighbors,
     displayLabel="Pre reordering num neighbors",
     inputHelp="Specifies the number of candidate neighbors to consider during the reordering \
         stages after initial search identifies a set of candidates",

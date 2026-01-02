@@ -32,7 +32,7 @@ class MultiProcessingSearchRunner:
     Args:
         k(int): search topk, default to 100
         concurrency(Iterable): concurrencies, default [1, 5, 10, 15, 20, 25, 30, 35]
-        duration(int): duration for each concurency, default to 30s
+        duration(int): duration for each concurrency, default to 30s
     """
 
     def __init__(

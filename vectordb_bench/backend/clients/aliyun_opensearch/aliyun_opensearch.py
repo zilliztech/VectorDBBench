@@ -310,7 +310,7 @@ class AliyunOpenSearch(VectorDB):
             return [one_res["id"] for one_res in res["result"]]
 
     def need_normalize_cosine(self) -> bool:
-        """Wheather this database need to normalize dataset to support COSINE"""
+        """Whether this database need to normalize dataset to support COSINE"""
         if self.case_config.metric_type == MetricType.COSINE:
             log.info("cosine dataset need normalize.")
             return True

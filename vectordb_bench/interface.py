@@ -108,7 +108,7 @@ class BenchMarkRunner:
     def _try_get_signal(self):
         while self.receive_conn and self.receive_conn.poll():
             sig, received = self.receive_conn.recv()
-            log.debug(f"Sigal received to process: {sig}, {received}")
+            log.debug(f"Signal received to process: {sig}, {received}")
             if sig == SIGNAL.ERROR:
                 self.latest_error = received
                 self._clear_running_task()
@@ -123,13 +123,13 @@ class BenchMarkRunner:
                 self._clear_running_task()
 
     def has_running(self) -> bool:
-        """check if there're running benchmarks"""
+        """check if there are running benchmarks"""
         if self.running_task:
             self._try_get_signal()
         return self.running_task is not None
 
     def stop_running(self):
-        """force stop if ther're running benchmarks"""
+        """force stop if there are running benchmarks"""
         self._clear_running_task()
 
     def get_tasks_count(self) -> int:

@@ -4,12 +4,12 @@ from vectordb_bench.frontend.config.styles import DB_CONFIG_SETTING_COLUMNS
 from vectordb_bench.frontend.utils import inputIsPassword
 
 
-def dbConfigSettings(st, activedDbList: list[DB]):
+def dbConfigSettings(st, activeDbList: list[DB]):
     expander = st.expander("Configurations for the selected databases", True)
 
     dbConfigs = {}
     isAllValid = True
-    for activeDb in activedDbList:
+    for activeDb in activeDbList:
         dbConfigSettingItemContainer = expander.container()
         dbConfig = dbConfigSettingItem(dbConfigSettingItemContainer, activeDb)
         try:

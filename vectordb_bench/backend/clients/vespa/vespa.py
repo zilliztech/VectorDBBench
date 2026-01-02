@@ -40,7 +40,7 @@ class Vespa(VectorDB):
 
     @contextmanager
     def init(self) -> Generator[None, None, None]:
-        """create and destory connections to database.
+        """create and destroy connections to database.
         Why contextmanager:
 
             In multiprocessing search tasks, vectordbbench might init
@@ -58,7 +58,7 @@ class Vespa(VectorDB):
         self.client = None
 
     def need_normalize_cosine(self) -> bool:
-        """Wheather this database need to normalize dataset to support COSINE"""
+        """Whether this database need to normalize dataset to support COSINE"""
         return False
 
     def insert_embeddings(

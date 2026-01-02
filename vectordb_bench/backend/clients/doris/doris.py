@@ -234,7 +234,7 @@ class Doris(VectorDB):
         log.info("Optimization completed using doris-vector-search library")
 
     def need_normalize_cosine(self) -> bool:
-        """Wheather this database need to normalize dataset to support COSINE"""
+        """Whether this database need to normalize dataset to support COSINE"""
         if self.case_config.metric_type == MetricType.COSINE:
             log.info("cosine dataset need normalize.")
             return True

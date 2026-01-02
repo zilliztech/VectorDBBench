@@ -27,7 +27,7 @@ class CustomDatasetConfig(BaseModel):
 
 
 class CustomCaseConfig(BaseModel):
-    name: str = "custom_dataset (Performace Case)"
+    name: str = "custom_dataset (Performance Case)"
     description: str = ""
     load_timeout: int = 36000
     optimize_timeout: int = 36000

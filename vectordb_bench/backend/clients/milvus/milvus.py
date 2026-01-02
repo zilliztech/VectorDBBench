@@ -135,7 +135,7 @@ class Milvus(VectorDB):
         self.col: Collection | None = None
 
         connections.connect(**self.db_config, timeout=60)
-        # Grab the existing colection with connections
+        # Grab the existing collection with connections
         self.col = Collection(self.collection_name)
 
         yield
@@ -174,7 +174,7 @@ class Milvus(VectorDB):
                 try:
                     self.col.compact()
                     self.col.wait_for_compaction_completed()
-                    log.info("compactation completed. waiting for the rest of index buliding.")
+                    log.info("compactation completed. waiting for the rest of index building.")
                 except Exception as e:
                     log.warning(f"{self.name} compact error: {e}")
                     if hasattr(e, "code"):
@@ -192,7 +192,7 @@ class Milvus(VectorDB):
         self._optimize()
 
     def need_normalize_cosine(self) -> bool:
-        """Wheather this database need to normalize dataset to support COSINE"""
+        """Whether this database need to normalize dataset to support COSINE"""
         if self.case_config.is_gpu_index:
             log.info("current gpu_index only supports IP / L2, cosine dataset need normalize.")
             return True
