@@ -423,6 +423,22 @@ CaseConfigParamInput_IndexType = CaseConfigInput(
     },
 )
 
+CaseConfigParamInput_IndexType_OceanBase = CaseConfigInput(
+    label=CaseConfigParamType.IndexType,
+    inputType=InputType.Option,
+    inputHelp="Select OceanBase index type",
+    inputConfig={
+        "options": [
+            IndexType.HNSW.value,
+            IndexType.HNSW_SQ.value,
+            IndexType.HNSW_BQ.value,
+            IndexType.IVFFlat.value,
+            IndexType.IVFSQ8.value,
+            IndexType.IVFPQ.value,
+        ],
+    },
+)
+
 CaseConfigParamInput_IndexType_PgDiskANN = CaseConfigInput(
     label=CaseConfigParamType.IndexType,
     inputHelp="Select Index Type",
@@ -685,6 +701,20 @@ CaseConfigParamInput_m = CaseConfigInput(
     isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
 )
 
+CaseConfigParamInput_m_OceanBase = CaseConfigInput(
+    label=CaseConfigParamType.m,
+    displayLabel="m",
+    inputHelp="HNSW graph degree (m) for OceanBase HNSW/HNSW_SQ/HNSW_BQ",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 4,
+        "max": 128,
+        "value": 16,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    in [IndexType.HNSW.value, IndexType.HNSW_SQ.value, IndexType.HNSW_BQ.value],
+)
+
 
 CaseConfigParamInput_EFConstruction_Milvus = CaseConfigInput(
     label=CaseConfigParamType.EFConstruction,
@@ -701,6 +731,20 @@ CaseConfigParamInput_EFConstruction_Milvus = CaseConfigInput(
         IndexType.HNSW_PQ.value,
         IndexType.HNSW_PRQ.value,
     ],
+)
+
+CaseConfigParamInput_EFConstruction_OceanBase = CaseConfigInput(
+    label=CaseConfigParamType.EFConstruction,
+    displayLabel="efConstruction",
+    inputHelp="HNSW efConstruction for OceanBase HNSW/HNSW_SQ/HNSW_BQ",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 8,
+        "max": 65535,
+        "value": 256,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    in [IndexType.HNSW.value, IndexType.HNSW_SQ.value, IndexType.HNSW_BQ.value],
 )
 
 CaseConfigParamInput_SQType = CaseConfigInput(
@@ -860,6 +904,48 @@ CaseConfigParamInput_EFSearch_PgVectoRS = CaseConfigInput(
         "value": 100,
     },
     isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_ef_search_OceanBase = CaseConfigInput(
+    label=CaseConfigParamType.ef_search,
+    displayLabel="ef_search",
+    inputHelp="HNSW ef_search (session var ob_hnsw_ef_search) for OceanBase",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 65535,
+        "value": 100,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    in [IndexType.HNSW.value, IndexType.HNSW_SQ.value, IndexType.HNSW_BQ.value],
+)
+
+CaseConfigParamInput_sample_per_nlist_OceanBase = CaseConfigInput(
+    label=CaseConfigParamType.sample_per_nlist,
+    displayLabel="sample_per_nlist",
+    inputHelp="OceanBase IVF training sample multiplier (total samples = sample_per_nlist * nlist)",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 1000000,
+        "value": 256,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    in [IndexType.IVFFlat.value, IndexType.IVFSQ8.value, IndexType.IVFPQ.value],
+)
+
+CaseConfigParamInput_ivf_nprobes_OceanBase = CaseConfigInput(
+    label=CaseConfigParamType.ivf_nprobes,
+    displayLabel="ivf_nprobes",
+    inputHelp="OceanBase IVF search probes (session var ob_ivf_nprobes)",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 65535,
+        "value": 10,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    in [IndexType.IVFFlat.value, IndexType.IVFSQ8.value, IndexType.IVFPQ.value],
 )
 
 CaseConfigParamInput_EFConstruction_PgVector = CaseConfigInput(
@@ -2302,6 +2388,19 @@ CockroachDBPerformanceConfig = [
     CaseConfigParamInput_VectorSearchBeamSize_CockroachDB,
 ]
 
+OceanBaseLoadConfig = [
+    CaseConfigParamInput_IndexType_OceanBase,
+    CaseConfigParamInput_m_OceanBase,
+    CaseConfigParamInput_EFConstruction_OceanBase,
+    CaseConfigParamInput_ef_search_OceanBase,
+    CaseConfigParamInput_Nlist,
+    CaseConfigParamInput_sample_per_nlist_OceanBase,
+    CaseConfigParamInput_Nbits_PQ,
+    CaseConfigParamInput_M_PQ,
+    CaseConfigParamInput_ivf_nprobes_OceanBase,
+]
+OceanBasePerformanceConfig = OceanBaseLoadConfig
+
 MariaDBLoadingConfig = [
     CaseConfigParamInput_IndexType_MariaDB,
     CaseConfigParamInput_StorageEngine_MariaDB,
@@ -2615,6 +2714,10 @@ CASE_CONFIG_MAP = {
     DB.CockroachDB: {
         CaseLabel.Load: CockroachDBLoadingConfig,
         CaseLabel.Performance: CockroachDBPerformanceConfig,
+    },
+    DB.OceanBase: {
+        CaseLabel.Load: OceanBaseLoadConfig,
+        CaseLabel.Performance: OceanBasePerformanceConfig,
     },
 }
 
