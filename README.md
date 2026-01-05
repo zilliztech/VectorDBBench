@@ -63,6 +63,7 @@ All the database client supported
 | tencent_es               | `pip install vectordb-bench[tencent_es]`    |
 | alisql                   | `pip install 'vectordb-bench[alisql]'`      |
 | doris                    | `pip install vectordb-bench[doris]`         |
+| zvec                     | `pip install vectordb-bench[zvec]`          |
 
 ### Run
 
@@ -412,6 +413,27 @@ Options:
                                   HGraph [required]
   --help                          Show this message and exit.
   ```
+
+### Run Zvec from command line
+
+```bash
+vectordbbench zvec --path Performance768D10M --db-label 16c64g-v0.1 \
+    --case-type Performance768D10M --num-concurrency 12,14,16,18,20 \
+    --quantize-type int8 --ef-search 118 --is-using-refiner
+```
+To list the options for zvec, execute vectordbbench zvec --help
+```
+  --path TEXT                     collection path  [required]
+  --m INTEGER                     HNSW index parameter m.
+  --ef-construction INTEGER       HNSW index parameter ef_construction
+  --ef-search INTEGER             HNSW index parameter ef for search
+  --quantize-type TEXT            HNSW index quantize type, fp16/int8
+                                  supported
+  --is-using-refiner              is using refiner, suitable for quantized
+                                  index, recall `ef-search` results then
+                                  refine with unquantized vector to `topk`
+                                  results
+```
 
 ### Run Doris from command line
 
