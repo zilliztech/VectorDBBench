@@ -51,6 +51,7 @@ test = [
     "ruff",
     "pytest",
 ]
+restful = [ "flask" ]
 
 all = [
     "grpcio>=1.53.0", # for qdrant-client, pymilvus and weaviate
@@ -111,6 +112,7 @@ turbopuffer     = [ "turbopuffer" ]
 
 [project.scripts]
 init_bench = "vectordb_bench.__main__:main"
+init_bench_rest = "vectordb_bench.restful.app:main"
 vectordbbench = "vectordb_bench.cli.vectordbbench:cli"
 
 [tool.setuptools_scm]

@@ -88,7 +88,7 @@ class OceanBaseHNSWConfig(OceanBaseIndexConfig, DBCaseConfig):
 
 
 class OceanBaseIVFConfig(OceanBaseIndexConfig, DBCaseConfig):
-    m: int
+    m: int | None = None
     sample_per_nlist: int
     nbits: int | None = None
     nlist: int
