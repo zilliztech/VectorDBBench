@@ -44,11 +44,14 @@ def getshownResults(
         st.write("There are no results to display. Please wait for the task to complete or run a new task.")
         return []
 
+    # Filter out default labels that are not in the options
+    filtered_defaults = [label for label in default_selected_task_labels if label in resultSelectOptions]
+    
     selectedResultSelectedOptions = st.multiselect(
         "Select the task results you need to analyze.",
         resultSelectOptions,
         # label_visibility="hidden",
-        default=default_selected_task_labels or resultSelectOptions,
+        default=filtered_defaults or resultSelectOptions,
     )
     selectedResult: list[CaseResult] = []
     for option in selectedResultSelectedOptions:

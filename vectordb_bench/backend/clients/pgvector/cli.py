@@ -164,7 +164,26 @@ def PgVectorIVFFlat(
     )
 
 
-class PgVectorHNSWTypedDict(PgVectorTypedDict, HNSWFlavor1): ...
+class PgVectorHNSWTypedDict(PgVectorTypedDict, HNSWFlavor1):
+    create_index_before_load: Annotated[
+        bool | None,
+        click.option(
+            "--create-index-before-load/--no-create-index-before-load",
+            type=bool,
+            help="Create HNSW index before loading data (overrides config.yml if provided)",
+            required=False,
+        ),
+    ]
+
+    create_index_after_load: Annotated[
+        bool | None,
+        click.option(
+            "--create-index-after-load/--no-create-index-after-load",
+            type=bool,
+            help="Create HNSW index after loading data (overrides config.yml if provided)",
+            required=False,
+        ),
+    ]
 
 
 @cli.command()
@@ -196,6 +215,8 @@ def PgVectorHNSW(
             reranking=parameters["reranking"],
             reranking_metric=parameters["reranking_metric"],
             quantized_fetch_limit=parameters["quantized_fetch_limit"],
+            create_index_before_load=parameters.get("create_index_before_load"),
+            create_index_after_load=parameters.get("create_index_after_load"),
         ),
         **parameters,
     )
