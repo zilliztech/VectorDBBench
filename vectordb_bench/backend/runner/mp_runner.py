@@ -1,4 +1,5 @@
 import concurrent
+import contextlib
 import logging
 import multiprocessing as mp
 import random
@@ -65,6 +66,11 @@ class MultiProcessingSearchRunner:
         q.put(1)
         with cond:
             cond.wait()
+
+        # NOTE: Zvec allows multiple read-only opens, or one read-write open.
+        # Use prepare_filter to switch to read-only mode.
+        with contextlib.suppress(Exception):
+            self.db.prepare_filter(self.filters)
 
         with self.db.init():
             self.db.prepare_filter(self.filters)
