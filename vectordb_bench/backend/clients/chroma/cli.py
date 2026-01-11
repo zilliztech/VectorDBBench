@@ -15,6 +15,14 @@ DBTYPE = DB.Chroma
 
 
 class ChromaTypeDict(CommonTypedDict):
+    user: Annotated[
+        str | None,
+        click.option("--user", type=str, help="Db username", required=False),
+    ]
+    password: Annotated[
+        str | None,
+        click.option("--password", type=str, help="Db password", required=False),
+    ]
     host: Annotated[
         str,
         click.option("--host", type=str, help="Chroma host", default="localhost"),
@@ -42,6 +50,8 @@ def Chroma(**parameters: Unpack[ChromaTypeDict]):
     run(
         db=DBTYPE,
         db_config=ChromaConfig(
+            user=parameters["user"],
+            password=SecretStr(parameters["password"]) if parameters["password"] else None,
             host=SecretStr(parameters["host"]),
             port=parameters["port"],
         ),

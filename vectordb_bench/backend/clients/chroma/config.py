@@ -1,14 +1,28 @@
+from chromadb.config import Settings
 from pydantic import SecretStr
 
 from ..api import DBCaseConfig, DBConfig, MetricType
 
 
 class ChromaConfig(DBConfig):
+    user: str | None = None
+    password: SecretStr | None
     host: SecretStr = "localhost"
     port: int = 8000
 
     def to_dict(self) -> dict:
-        return {"host": self.host.get_secret_value(), "port": self.port}
+        config = {
+            "host": self.host.get_secret_value(),
+            "port": self.port,
+        }
+        if self.password and self.user:
+            config["settings"] = Settings(
+                settings=Settings(
+                    chroma_client_auth_provider="chromadb.auth.token_authn.TokenAuthClientProvider",
+                    chroma_client_auth_credentials=f"{self.user}:{self.password}",
+                )
+            )
+        return config
 
 
 class ChromaIndexConfig(ChromaConfig, DBCaseConfig):
