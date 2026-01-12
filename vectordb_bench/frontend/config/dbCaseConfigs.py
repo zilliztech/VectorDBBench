@@ -423,6 +423,22 @@ CaseConfigParamInput_IndexType = CaseConfigInput(
     },
 )
 
+CaseConfigParamInput_IndexType_OceanBase = CaseConfigInput(
+    label=CaseConfigParamType.IndexType,
+    inputType=InputType.Option,
+    inputHelp="Select OceanBase index type",
+    inputConfig={
+        "options": [
+            IndexType.HNSW.value,
+            IndexType.HNSW_SQ.value,
+            IndexType.HNSW_BQ.value,
+            IndexType.IVFFlat.value,
+            IndexType.IVFSQ8.value,
+            IndexType.IVFPQ.value,
+        ],
+    },
+)
+
 CaseConfigParamInput_IndexType_PgDiskANN = CaseConfigInput(
     label=CaseConfigParamType.IndexType,
     inputHelp="Select Index Type",
@@ -685,6 +701,20 @@ CaseConfigParamInput_m = CaseConfigInput(
     isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
 )
 
+CaseConfigParamInput_m_OceanBase = CaseConfigInput(
+    label=CaseConfigParamType.m,
+    displayLabel="m",
+    inputHelp="HNSW graph degree (m) for OceanBase HNSW/HNSW_SQ/HNSW_BQ",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 4,
+        "max": 128,
+        "value": 16,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    in [IndexType.HNSW.value, IndexType.HNSW_SQ.value, IndexType.HNSW_BQ.value],
+)
+
 
 CaseConfigParamInput_EFConstruction_Milvus = CaseConfigInput(
     label=CaseConfigParamType.EFConstruction,
@@ -701,6 +731,20 @@ CaseConfigParamInput_EFConstruction_Milvus = CaseConfigInput(
         IndexType.HNSW_PQ.value,
         IndexType.HNSW_PRQ.value,
     ],
+)
+
+CaseConfigParamInput_EFConstruction_OceanBase = CaseConfigInput(
+    label=CaseConfigParamType.EFConstruction,
+    displayLabel="efConstruction",
+    inputHelp="HNSW efConstruction for OceanBase HNSW/HNSW_SQ/HNSW_BQ",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 8,
+        "max": 65535,
+        "value": 256,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    in [IndexType.HNSW.value, IndexType.HNSW_SQ.value, IndexType.HNSW_BQ.value],
 )
 
 CaseConfigParamInput_SQType = CaseConfigInput(
@@ -860,6 +904,48 @@ CaseConfigParamInput_EFSearch_PgVectoRS = CaseConfigInput(
         "value": 100,
     },
     isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_ef_search_OceanBase = CaseConfigInput(
+    label=CaseConfigParamType.ef_search,
+    displayLabel="ef_search",
+    inputHelp="HNSW ef_search (session var ob_hnsw_ef_search) for OceanBase",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 65535,
+        "value": 100,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    in [IndexType.HNSW.value, IndexType.HNSW_SQ.value, IndexType.HNSW_BQ.value],
+)
+
+CaseConfigParamInput_sample_per_nlist_OceanBase = CaseConfigInput(
+    label=CaseConfigParamType.sample_per_nlist,
+    displayLabel="sample_per_nlist",
+    inputHelp="OceanBase IVF training sample multiplier (total samples = sample_per_nlist * nlist)",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 1000000,
+        "value": 256,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    in [IndexType.IVFFlat.value, IndexType.IVFSQ8.value, IndexType.IVFPQ.value],
+)
+
+CaseConfigParamInput_ivf_nprobes_OceanBase = CaseConfigInput(
+    label=CaseConfigParamType.ivf_nprobes,
+    displayLabel="ivf_nprobes",
+    inputHelp="OceanBase IVF search probes (session var ob_ivf_nprobes)",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 65535,
+        "value": 10,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    in [IndexType.IVFFlat.value, IndexType.IVFSQ8.value, IndexType.IVFPQ.value],
 )
 
 CaseConfigParamInput_EFConstruction_PgVector = CaseConfigInput(
@@ -1056,6 +1142,7 @@ CaseConfigParamInput_Nprobe = CaseConfigInput(
         IndexType.IVFPQ.value,
         IndexType.IVFSQ8.value,
         IndexType.IVF_RABITQ.value,
+        IndexType.SCANN_MILVUS.value,
         IndexType.GPU_IVF_FLAT.value,
         IndexType.GPU_IVF_PQ.value,
         IndexType.GPU_BRUTE_FORCE.value,
@@ -1973,17 +2060,65 @@ CaseConfigParamInput_ENGINE_NAME_OSSOpensearch = CaseConfigInput(
     isDisplayed=lambda config: config.get(CaseConfigParamType.on_disk, False) == False,
 )
 
-CaseConfigParamInput_QUANTIZATION_TYPE_OSSOpensearch = CaseConfigInput(
+CaseConfigParamInput_QUANTIZATION_TYPE_LUCENE_OSSOpensearch = CaseConfigInput(
     label=CaseConfigParamType.quantizationType,
     displayLabel="Quantization Type",
-    inputHelp="Scalar quantization type for in-memory vectors",
+    inputHelp="Scalar quantization for Lucene engine",
     inputType=InputType.Option,
     inputConfig={
-        "options": ["fp32", "fp16"],
-        "default": "fp32",
+        "options": ["None", "LuceneSQ"],
+        "default": "None",
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.on_disk, False) == False,
+    isDisplayed=lambda config: (
+        not config.get(CaseConfigParamType.on_disk, False) and config.get(CaseConfigParamType.engine_name) == "lucene"
+    ),
 )
+
+CaseConfigParamInput_QUANTIZATION_TYPE_FAISS_OSSOpensearch = CaseConfigInput(
+    label=CaseConfigParamType.quantizationType,
+    displayLabel="Quantization Type",
+    inputHelp="Scalar quantization for FAISS engine",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": ["None", "FaissSQfp16"],
+        "default": "None",
+    },
+    isDisplayed=lambda config: (
+        not config.get(CaseConfigParamType.on_disk, False) and config.get(CaseConfigParamType.engine_name) == "faiss"
+    ),
+)
+
+CaseConfigParamInput_CONFIDENCE_INTERVAL_OSSOpensearch = CaseConfigInput(
+    label=CaseConfigParamType.confidence_interval,
+    displayLabel="Confidence Interval",
+    inputHelp="Quantile range for Lucene SQ (0.9-1.0, 0 for dynamic, or empty for auto)",
+    inputType=InputType.Float,
+    inputConfig={
+        "min": 0.0,
+        "max": 1.0,
+        "value": None,
+        "step": 0.1,
+    },
+    isDisplayed=lambda config: (
+        not config.get(CaseConfigParamType.on_disk, False)
+        and config.get(CaseConfigParamType.quantizationType) == "LuceneSQ"
+    ),
+)
+
+CaseConfigParamInput_CLIP_OSSOpensearch = CaseConfigInput(
+    label=CaseConfigParamType.clip,
+    displayLabel="Clip Vectors",
+    inputHelp="Clip out-of-range values to [-65504, 65504] for FP16",
+    inputType=InputType.Bool,
+    inputConfig={
+        "value": False,
+    },
+    isDisplayed=lambda config: (
+        not config.get(CaseConfigParamType.on_disk, False)
+        and config.get(CaseConfigParamType.quantizationType) == "FaissSQfp16"
+    ),
+)
+
 MilvusLoadConfig = [
     CaseConfigParamInput_IndexType,
     CaseConfigParamInput_M,
@@ -2252,6 +2387,19 @@ CockroachDBPerformanceConfig = [
     CaseConfigParamInput_BuildBeamSize_CockroachDB,
     CaseConfigParamInput_VectorSearchBeamSize_CockroachDB,
 ]
+
+OceanBaseLoadConfig = [
+    CaseConfigParamInput_IndexType_OceanBase,
+    CaseConfigParamInput_m_OceanBase,
+    CaseConfigParamInput_EFConstruction_OceanBase,
+    CaseConfigParamInput_ef_search_OceanBase,
+    CaseConfigParamInput_Nlist,
+    CaseConfigParamInput_sample_per_nlist_OceanBase,
+    CaseConfigParamInput_Nbits_PQ,
+    CaseConfigParamInput_M_PQ,
+    CaseConfigParamInput_ivf_nprobes_OceanBase,
+]
+OceanBasePerformanceConfig = OceanBaseLoadConfig
 
 MariaDBLoadingConfig = [
     CaseConfigParamInput_IndexType_MariaDB,
@@ -2629,7 +2777,10 @@ OSSOpensearchLoadingConfig = [
     CaseConfigParamInput_METRIC_TYPE_NAME_AWSOpensearch,
     CaseConfigParamInput_M_AWSOpensearch,
     CaseConfigParamInput_EFConstruction_AWSOpensearch,
-    CaseConfigParamInput_QUANTIZATION_TYPE_OSSOpensearch,
+    CaseConfigParamInput_QUANTIZATION_TYPE_LUCENE_OSSOpensearch,
+    CaseConfigParamInput_QUANTIZATION_TYPE_FAISS_OSSOpensearch,
+    CaseConfigParamInput_CONFIDENCE_INTERVAL_OSSOpensearch,
+    CaseConfigParamInput_CLIP_OSSOpensearch,
     CaseConfigParamInput_REFRESH_INTERVAL_AWSOpensearch,
     CaseConfigParamInput_NUMBER_OF_SHARDS_AWSOpensearch,
     CaseConfigParamInput_NUMBER_OF_REPLICAS_AWSOpensearch,
@@ -2649,7 +2800,10 @@ OSSOpenSearchPerformanceConfig = [
     CaseConfigParamInput_METRIC_TYPE_NAME_AWSOpensearch,
     CaseConfigParamInput_M_AWSOpensearch,
     CaseConfigParamInput_EFConstruction_AWSOpensearch,
-    CaseConfigParamInput_QUANTIZATION_TYPE_OSSOpensearch,
+    CaseConfigParamInput_QUANTIZATION_TYPE_LUCENE_OSSOpensearch,
+    CaseConfigParamInput_QUANTIZATION_TYPE_FAISS_OSSOpensearch,
+    CaseConfigParamInput_CONFIDENCE_INTERVAL_OSSOpensearch,
+    CaseConfigParamInput_CLIP_OSSOpensearch,
     CaseConfigParamInput_REFRESH_INTERVAL_AWSOpensearch,
     CaseConfigParamInput_NUMBER_OF_SHARDS_AWSOpensearch,
     CaseConfigParamInput_NUMBER_OF_REPLICAS_AWSOpensearch,
@@ -2745,6 +2899,10 @@ CASE_CONFIG_MAP = {
     DB.CockroachDB: {
         CaseLabel.Load: CockroachDBLoadingConfig,
         CaseLabel.Performance: CockroachDBPerformanceConfig,
+    },
+    DB.OceanBase: {
+        CaseLabel.Load: OceanBaseLoadConfig,
+        CaseLabel.Performance: OceanBasePerformanceConfig,
     },
 }
 

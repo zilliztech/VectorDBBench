@@ -135,6 +135,12 @@ class CaseConfigParamType(Enum):
     on_disk = "on_disk"
     compression_level = "compression_level"
     oversample_factor = "oversample_factor"
+    confidence_interval = "confidence_interval"
+    clip = "clip"
+
+    # OceanBase IVF parameters
+    sample_per_nlist = "sample_per_nlist"
+    ivf_nprobes = "ivf_nprobes"
 
     # CockroachDB parameters
     min_partition_size = "min_partition_size"
