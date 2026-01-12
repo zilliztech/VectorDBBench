@@ -57,6 +57,7 @@ class ElasticCloudIndexConfig(BaseModel, DBCaseConfig):
                 self.use_routing,
                 self.efConstruction,
                 self.M,
+                2,
             )
         )
 

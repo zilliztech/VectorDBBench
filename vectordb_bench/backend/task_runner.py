@@ -1,5 +1,7 @@
 import concurrent
+import hashlib
 import logging
+import re
 import traceback
 from enum import Enum, auto
 
@@ -11,7 +13,7 @@ from ..metric import Metric
 from ..models import PerformanceTimeoutError, TaskConfig, TaskStage
 from . import utils
 from .cases import Case, CaseLabel, StreamingPerformanceCase
-from .clients import MetricType, api
+from .clients import DB, MetricType, api
 from .data_source import DatasetSource
 from .runner import MultiProcessingSearchRunner, ReadWriteRunner, SerialInsertRunner, SerialSearchRunner
 
@@ -97,13 +99,36 @@ class CaseRunner(BaseModel):
 
     def init_db(self, drop_old: bool = True) -> None:
         db_cls = self.config.db.init_cls
+        # Compose a compact, case-unique collection/table name for Doris to avoid cross-case interference
+        collection_name = None
+        try:
+            if self.config.db == DB.Doris:
+                # Primary identifier = case-type enum name from CLI (e.g., Performance768D10M)
+                case_type_name = self.config.case_config.case_id.name
+                base = f"{case_type_name.lower()}"
+                # Sanitize to [a-z0-9_]
+                base = re.sub(r"[^a-z0-9_]+", "_", base).strip("_")
+                # Cap to 63 chars; add short hash if truncated
+                if len(base) > 63:
+                    h = hashlib.md5(base.encode(), usedforsecurity=False).hexdigest()[:6]
+                    base = f"{base[:(63-7)]}_{h}"
+                collection_name = base
+        except Exception:
+            # If anything goes wrong, fall back silently; Doris will use its default name logic
+            collection_name = None
+
+        # Check if collection_name is in the db_config (e.g., for Zilliz, Milvus)
+        db_config_dict = self.config.db_config.to_dict()
+        if "collection_name" in db_config_dict and not collection_name:
+            collection_name = db_config_dict.pop("collection_name")
 
         self.db = db_cls(
             dim=self.ca.dataset.data.dim,
-            db_config=self.config.db_config.to_dict(),
+            db_config=db_config_dict,
             db_case_config=self.config.db_case_config,
             drop_old=drop_old,
             with_scalar_labels=self.ca.with_scalar_labels,
+            **({"collection_name": collection_name} if collection_name else {}),
         )
 
     def _pre_run(self, drop_old: bool = True):

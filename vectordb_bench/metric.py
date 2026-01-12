@@ -41,6 +41,13 @@ class Metric:
     st_serial_latency_p95_list: list[float] = field(default_factory=list)
     st_conc_failed_rate_list: list[float] = field(default_factory=list)
 
+    # for streaming cases - concurrent latency data per stage
+    st_conc_num_list_list: list[list[int]] = field(default_factory=list)
+    st_conc_qps_list_list: list[list[float]] = field(default_factory=list)
+    st_conc_latency_p99_list_list: list[list[float]] = field(default_factory=list)
+    st_conc_latency_p95_list_list: list[list[float]] = field(default_factory=list)
+    st_conc_latency_avg_list_list: list[list[float]] = field(default_factory=list)
+
 
 QURIES_PER_DOLLAR_METRIC = "QP$ (Quries per Dollar)"
 LOAD_DURATION_METRIC = "load_duration"

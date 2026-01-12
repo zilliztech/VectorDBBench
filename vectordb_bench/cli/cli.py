@@ -188,6 +188,11 @@ def get_custom_case_config(parameters: dict) -> dict:
             "dataset_with_size_type": parameters["dataset_with_size_type"],
             "filter_rate": parameters["filter_rate"],
         }
+    elif parameters["case_type"] == "LabelFilterPerformanceCase":
+        custom_case_config = {
+            "dataset_with_size_type": parameters["dataset_with_size_type"],
+            "label_percentage": parameters["label_percentage"],
+        }
     return custom_case_config
 
 
@@ -425,9 +430,9 @@ class CommonTypedDict(TypedDict):
         str,
         click.option(
             "--dataset-with-size-type",
-            help="Dataset with size type for NewIntFilterPerformanceCase, you can use Medium Cohere (768dim, 1M)|"
-            "Large Cohere (768dim, 10M)|Medium Bioasq (1024dim, 1M)|Large Bioasq (1024dim, 10M)|"
-            "Large OpenAI (1536dim, 5M)|Medium OpenAI (1536dim, 500K)",
+            help="Dataset with size type for NewIntFilterPerformanceCase/LabelFilterPerformanceCase, you can use "
+            "Medium Cohere (768dim, 1M)|Large Cohere (768dim, 10M)|Medium Bioasq (1024dim, 1M)|"
+            "Large Bioasq (1024dim, 10M)|Large OpenAI (1536dim, 5M)|Medium OpenAI (1536dim, 500K)",
             default="Medium Cohere (768dim, 1M)",
             show_default=True,
         ),
@@ -437,6 +442,15 @@ class CommonTypedDict(TypedDict):
         click.option(
             "--filter-rate",
             help="Filter rate for NewIntFilterPerformanceCase",
+            default=0.01,
+            show_default=True,
+        ),
+    ]
+    label_percentage: Annotated[
+        float,
+        click.option(
+            "--label-percentage",
+            help="Filter rate for LabelFilterPerformanceCase",
             default=0.01,
             show_default=True,
         ),
@@ -638,3 +652,6 @@ def run(
         time.sleep(5)
         if global_result_future:
             wait([global_result_future])
+
+        while benchmark_runner.has_running():
+            time.sleep(1)

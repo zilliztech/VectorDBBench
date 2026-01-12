@@ -45,12 +45,17 @@ class DB(Enum):
     AliyunOpenSearch = "AliyunOpenSearch"
     MongoDB = "MongoDB"
     TiDB = "TiDB"
+    CockroachDB = "CockroachDB"
     Clickhouse = "Clickhouse"
     Vespa = "Vespa"
     LanceDB = "LanceDB"
     OceanBase = "OceanBase"
     S3Vectors = "S3Vectors"
     Hologres = "Alibaba Cloud Hologres"
+    TencentElasticsearch = "TencentElasticsearch"
+    AliSQL = "AlibabaCloudRDSMySQL"
+    Doris = "Doris"
+    TurboPuffer = "TurboPuffer"
 
     @property
     def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901, PLR0915
@@ -175,6 +180,19 @@ class DB(Enum):
 
             return TiDB
 
+        if self == DB.CockroachDB:
+            from .cockroachdb.cockroachdb import CockroachDB
+
+            return CockroachDB
+        if self == DB.Doris:
+            from .doris.doris import Doris
+
+            return Doris
+        if self == DB.TurboPuffer:
+            from .turbopuffer.turbopuffer import TurboPuffer
+
+            return TurboPuffer
+
         if self == DB.Test:
             from .test.test import Test
 
@@ -199,6 +217,16 @@ class DB(Enum):
             from .hologres.hologres import Hologres
 
             return Hologres
+
+        if self == DB.TencentElasticsearch:
+            from .tencent_elasticsearch.tencent_elasticsearch import TencentElasticsearch
+
+            return TencentElasticsearch
+
+        if self == DB.AliSQL:
+            from .alisql.alisql import AliSQL
+
+            return AliSQL
 
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
@@ -326,6 +354,19 @@ class DB(Enum):
 
             return TiDBConfig
 
+        if self == DB.CockroachDB:
+            from .cockroachdb.config import CockroachDBConfig
+
+            return CockroachDBConfig
+        if self == DB.Doris:
+            from .doris.config import DorisConfig
+
+            return DorisConfig
+        if self == DB.TurboPuffer:
+            from .turbopuffer.config import TurboPufferConfig
+
+            return TurboPufferConfig
+
         if self == DB.Test:
             from .test.config import TestConfig
 
@@ -351,10 +392,20 @@ class DB(Enum):
 
             return HologresConfig
 
+        if self == DB.TencentElasticsearch:
+            from .tencent_elasticsearch.config import TencentElasticsearchConfig
+
+            return TencentElasticsearchConfig
+
+        if self == DB.AliSQL:
+            from .alisql.config import AliSQLConfig
+
+            return AliSQLConfig
+
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
 
-    def case_config_cls(  # noqa: C901, PLR0911, PLR0912
+    def case_config_cls(  # noqa: C901, PLR0911, PLR0912, PLR0915
         self,
         index_type: IndexType | None = None,
     ) -> type[DBCaseConfig]:
@@ -458,6 +509,11 @@ class DB(Enum):
 
             return TiDBIndexConfig
 
+        if self == DB.CockroachDB:
+            from .cockroachdb.config import _cockroachdb_case_config
+
+            return _cockroachdb_case_config.get(index_type)
+
         if self == DB.Vespa:
             from .vespa.config import VespaHNSWConfig
 
@@ -476,6 +532,26 @@ class DB(Enum):
             from .hologres.config import HologresIndexConfig
 
             return HologresIndexConfig
+
+        if self == DB.TencentElasticsearch:
+            from .tencent_elasticsearch.config import TencentElasticsearchIndexConfig
+
+            return TencentElasticsearchIndexConfig
+
+        if self == DB.AliSQL:
+            from .alisql.alisql import AliSQLIndexConfig
+
+            return AliSQLIndexConfig
+
+        if self == DB.Doris:
+            from .doris.config import DorisCaseConfig
+
+            return DorisCaseConfig
+
+        if self == DB.TurboPuffer:
+            from .turbopuffer.config import TurboPufferIndexConfig
+
+            return TurboPufferIndexConfig
 
         if self == DB.Chroma:
             from .chroma.config import ChromaIndexConfig

@@ -40,6 +40,8 @@ dependencies = [
     "pydantic<v2",
     "scikit-learn",
     "pymilvus", # with pandas, numpy, ujson
+    "ujson",
+    "hdrhistogram>=0.10.1",
 ]
 dynamic = ["version"]
 
@@ -49,6 +51,7 @@ test = [
     "ruff",
     "pytest",
 ]
+restful = [ "flask" ]
 
 all = [
     "grpcio==1.53.0", # for qdrant-client and pymilvus
@@ -74,6 +77,7 @@ all = [
     "pyvespa",
     "lancedb",
     "mysql-connector-python",
+    "turbopuffer[fast]",
 ]
 
 qdrant          = [ "qdrant-client" ]
@@ -94,16 +98,21 @@ aliyun_opensearch = [ "alibabacloud_ha3engine_vector" ]
 mongodb         = [ "pymongo" ]
 mariadb         = [ "mariadb" ]
 tidb            = [ "PyMySQL" ]
+cockroachdb     = [ "psycopg[binary,pool]", "pgvector" ]
 clickhouse      = [ "clickhouse-connect" ]
 vespa           = [ "pyvespa" ]
 lancedb         = [ "lancedb" ]
 oceanbase       = [ "mysql-connector-python" ]
+alisql          = [ "mysql-connector-python" ]
+doris           = [ "doris-vector-search" ]
+turbopuffer     = [ "turbopuffer" ]
 
 [project.urls]
 "repository" = "https://github.com/zilliztech/VectorDBBench"
 
 [project.scripts]
 init_bench = "vectordb_bench.__main__:main"
+init_bench_rest = "vectordb_bench.restful.app:main"
 vectordbbench = "vectordb_bench.cli.vectordbbench:cli"
 
 [tool.setuptools_scm]

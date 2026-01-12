@@ -47,6 +47,17 @@ class ZillizTypedDict(CommonTypedDict):
             show_default=True,
         ),
     ]
+    collection_name: Annotated[
+        str,
+        click.option(
+            "--collection-name",
+            type=str,
+            help="Collection name for Zilliz",
+            required=False,
+            default="ZillizCloudVDBBench",
+            show_default=True,
+        ),
+    ]
 
 
 @cli.command()
@@ -62,6 +73,7 @@ def ZillizAutoIndex(**parameters: Unpack[ZillizTypedDict]):
             user=parameters["user_name"],
             password=SecretStr(parameters["password"]),
             num_shards=parameters["num_shards"],
+            collection_name=parameters["collection_name"],
         ),
         db_case_config=AutoIndexConfig(
             level=int(parameters["level"]) if parameters["level"] else 1,

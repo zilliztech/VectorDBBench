@@ -5,6 +5,8 @@ from contextlib import contextmanager, suppress
 from typing import Any, Final
 
 from opensearchpy import OpenSearch
+from packaging.version import Version
+from packaging.version import parse as parse_version
 
 from vectordb_bench.backend.filter import Filter, FilterOp
 
@@ -16,6 +18,30 @@ log = logging.getLogger(__name__)
 WAITING_FOR_REFRESH_SEC: Final[int] = 30
 WAITING_FOR_FORCE_MERGE_SEC: Final[int] = 30
 SECONDS_WAITING_FOR_REPLICAS_TO_BE_ENABLED_SEC: Final[int] = 30
+
+# Central registry for version-dependent OpenSearch index settings.
+# Add new rules here to automatically support future versions.
+VERSION_SPECIFIC_SETTING_RULES = [
+    {
+        "name": "knn.advanced.approximate_threshold",
+        "applies": lambda version, _: version >= Version("3.0"),
+        "value": lambda _: "-1",
+    },
+    {
+        "name": "knn.derived_source.enabled",
+        "applies": lambda version, _: version >= Version("3.0"),
+        "value": lambda case_config: case_config.knn_derived_source_enabled,
+    },
+    {
+        "name": "knn.memory_optimized_search",
+        "applies": lambda version, case_config: (
+            version >= Version("3.1")
+            and case_config.engine == OSSOS_Engine.faiss
+            and case_config.memory_optimized_search
+        ),
+        "value": lambda case_config: case_config.memory_optimized_search,
+    },
+]
 
 
 class OpenSearchError(Exception):
@@ -127,7 +153,8 @@ class SearchQueryBuilder:
         if filter_clause:
             knn_config["filter"] = filter_clause
 
-        if self.case_config.use_quant:
+        # Handle rescoring for both in-memory quantization and disk-based modes
+        if self.case_config.use_quant or self.case_config.on_disk:
             knn_config["rescore"] = {"oversample_factor": self.case_config.oversample_factor}
 
         return {"size": k, "query": {"knn": {self.vector_col_name: knn_config}}}
@@ -216,20 +243,85 @@ class OSSOpenSearch(VectorDB):
         """Whether this database needs to normalize dataset to support COSINE metric."""
         return True
 
+    def _get_cluster_version(self, client: OpenSearch) -> Version:
+        """
+        Return the OpenSearch cluster version as a comparable Version object.
+        Raises an exception if the version cannot be determined.
+        """
+        try:
+            info = client.info()
+            raw_version_str = info.get("version", {}).get("number", "")
+            if not raw_version_str:
+                raise ValueError("Received empty version string from OpenSearch")  # noqa: TRY301
+            cluster_version = parse_version(raw_version_str)
+            log.debug(f"Detected OpenSearch version: {cluster_version}")
+            return cluster_version  # noqa: TRY300
+        except Exception:
+            log.exception("Failed to determine OpenSearch version")
+            raise
+
     def _get_settings_manager(self, client: OpenSearch) -> OpenSearchSettingsManager:
         """Get settings manager for the given client."""
         return OpenSearchSettingsManager(client, self.index_name)
+
+    def _get_version_specific_settings(self, cluster_version: Version) -> dict:
+        """
+        Builds and returns a dictionary of applicable version-specific settings.
+        """
+        version_specific_settings = {}
+        for setting in VERSION_SPECIFIC_SETTING_RULES:
+            if setting["applies"](cluster_version, self.case_config):
+                name = setting["name"]
+                value = setting["value"](self.case_config)
+                version_specific_settings[name] = value
+        return version_specific_settings
+
+    def _build_vector_field_mapping(self) -> dict[str, Any]:
+        """Build vector field mapping configuration based on storage mode."""
+        vector_field = {
+            "type": "knn_vector",
+            "dimension": self.dim,
+            "method": self.case_config.index_param(),
+        }
+
+        if self.case_config.on_disk:
+            vector_field.update(
+                {
+                    "space_type": self.case_config.parse_metric(),
+                    "data_type": "float",
+                    "mode": "on_disk",
+                    "compression_level": self.case_config.compression_level,
+                }
+            )
+            log.info(
+                f"Creating disk-based index - "
+                f"compression_level: {self.case_config.compression_level}, "
+                f"resolved_engine: {self.case_config.resolved_engine.value}"
+            )
+        else:
+            log.info(f"Creating in-memory index with engine: {self.case_config.engine.value}")
+
+        return vector_field
 
     def _get_bulk_manager(self, client: OpenSearch) -> BulkInsertManager:
         """Get bulk insert manager for the given client."""
         return BulkInsertManager(client, self.index_name, self.case_config)
 
     def _create_index(self, client: OpenSearch) -> None:
+        cluster_version = self._get_cluster_version(client)
+
+        if self.case_config.on_disk and cluster_version < Version("2.17"):
+            error_msg = f"Disk-based vector search requires OpenSearch 2.17+, but cluster is running {cluster_version}"
+            raise OpenSearchError(error_msg)
+
         ef_search_value = self.case_config.efSearch
         log.info(f"Creating index with ef_search: {ef_search_value}")
         log.info(f"Creating index with number_of_replicas: {self.case_config.number_of_replicas}")
+        log.info(f"Creating index with replication_type: {self.case_config.replication_type}")
+        log.info(f"Creating index with knn_derived_source_enabled: {self.case_config.knn_derived_source_enabled}")
         log.info(f"Creating index with engine: {self.case_config.engine}")
         log.info(f"Creating index with metric type: {self.case_config.metric_type_name}")
+        log.info(f"Creating index with memory_optimized_search: {self.case_config.memory_optimized_search}")
         log.info(f"All case_config parameters: {self.case_config.__dict__}")
 
         settings_manager = self._get_settings_manager(client)
@@ -240,17 +332,24 @@ class OSSOpenSearch(VectorDB):
         settings_manager.apply_cluster_settings(
             cluster_settings, "Successfully updated cluster settings for index creation"
         )
+        # Base settings that are safe for all versions
         settings = {
             "index": {
                 "knn": True,
                 "number_of_shards": self.case_config.number_of_shards,
                 "number_of_replicas": self.case_config.number_of_replicas,
                 "translog.flush_threshold_size": self.case_config.flush_threshold_size,
-                "knn.advanced.approximate_threshold": "-1",
+                "replication.type": self.case_config.replication_type,
             },
             "refresh_interval": self.case_config.refresh_interval,
         }
         settings["index"]["knn.algo_param.ef_search"] = ef_search_value
+
+        version_specific_settings = self._get_version_specific_settings(self._get_cluster_version(client))
+        if version_specific_settings:
+            log.info(f"Applying version-dependent settings: {version_specific_settings}")
+            settings["index"].update(version_specific_settings)
+
         # Build properties mapping, excluding _id which is automatically handled by OpenSearch
         properties = {}
 
@@ -259,11 +358,7 @@ class OSSOpenSearch(VectorDB):
             properties[self.id_col_name] = {"type": "integer", "store": True}
 
         properties[self.label_col_name] = {"type": "keyword"}
-        properties[self.vector_col_name] = {
-            "type": "knn_vector",
-            "dimension": self.dim,
-            "method": self.case_config.index_param(),
-        }
+        properties[self.vector_col_name] = self._build_vector_field_mapping()
 
         mappings = {
             "properties": properties,
