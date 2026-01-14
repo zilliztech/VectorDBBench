@@ -71,6 +71,7 @@ DB_TO_ICON = {
     DB.Doris: "https://doris.apache.org/images/logo.svg",
     DB.TurboPuffer: "https://turbopuffer.com/logo2.png",
     DB.CockroachDB: "https://raw.githubusercontent.com/cockroachdb/cockroach/master/docs/media/cockroach_db.png",
+    DB.Cassandra: "https://upload.wikimedia.org/wikipedia/commons/1/1e/Apache-cassandra-icon.png",
 }
 
 # RedisCloud color: #0D6EFD

@@ -46,6 +46,7 @@ class DB(Enum):
     MongoDB = "MongoDB"
     TiDB = "TiDB"
     CockroachDB = "CockroachDB"
+    Cassandra = "Cassandra"
     Clickhouse = "Clickhouse"
     Vespa = "Vespa"
     LanceDB = "LanceDB"
@@ -184,6 +185,12 @@ class DB(Enum):
             from .cockroachdb.cockroachdb import CockroachDB
 
             return CockroachDB
+
+        if self == DB.Cassandra:
+            from .cassandra.cassandra import Cassandra
+
+            return Cassandra
+
         if self == DB.Doris:
             from .doris.doris import Doris
 
@@ -358,6 +365,12 @@ class DB(Enum):
             from .cockroachdb.config import CockroachDBConfig
 
             return CockroachDBConfig
+
+        if self == DB.Cassandra:
+            from .cassandra.config import CassandraConfig
+
+            return CassandraConfig
+
         if self == DB.Doris:
             from .doris.config import DorisConfig
 
@@ -513,6 +526,11 @@ class DB(Enum):
             from .cockroachdb.config import _cockroachdb_case_config
 
             return _cockroachdb_case_config.get(index_type)
+
+        if self == DB.Cassandra:
+            from .cassandra.config import CassandraIndexConfig
+
+            return CassandraIndexConfig
 
         if self == DB.Vespa:
             from .vespa.config import VespaHNSWConfig
