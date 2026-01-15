@@ -1,7 +1,7 @@
 import logging
 from enum import Enum
 
-from pydantic import BaseModel, SecretStr, root_validator, validator
+from pydantic import BaseModel, SecretStr, field_validator, model_validator
 
 from ..api import DBCaseConfig, DBConfig, MetricType
 
@@ -32,15 +32,20 @@ class OSSOpenSearchConfig(DBConfig, BaseModel):
             "timeout": 600,
         }
 
-    @validator("*")
-    def not_empty_field(cls, v: any, field: any):
+    @field_validator("*", mode="before")
+    def not_empty_field(cls, v: any, info):  # noqa: ANN001
+        field_name = getattr(info, "field_name", None)
         if (
-            field.name in cls.common_short_configs()
-            or field.name in cls.common_long_configs()
-            or field.name in ["user", "password", "host"]
+            field_name in cls.common_short_configs()
+            or field_name in cls.common_long_configs()
+            or field_name in ["user", "password", "host"]
         ):
             return v
-        if isinstance(v, str | SecretStr) and len(v) == 0:
+        if isinstance(v, SecretStr):
+            if v.get_secret_value() == "":
+                raise ValueError("Empty string!")
+            return v
+        if isinstance(v, str) and v == "":
             raise ValueError("Empty string!")
         return v
 
@@ -128,19 +133,19 @@ class OSSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
 
         return mapping.get(value, OSSOpenSearchQuantization.NONE)
 
-    @root_validator
-    def validate_engine_name(cls, values: dict):
+    @model_validator(mode="after")
+    def validate_engine_name(self):  # noqa: D401
         """Map engine_name string from UI to engine enum"""
-        if values.get("engine_name"):
-            engine_name = values["engine_name"].lower()
+        if self.engine_name:
+            engine_name = self.engine_name.lower()
             if engine_name == "faiss":
-                values["engine"] = OSSOS_Engine.faiss
+                self.engine = OSSOS_Engine.faiss
             elif engine_name == "lucene":
-                values["engine"] = OSSOS_Engine.lucene
+                self.engine = OSSOS_Engine.lucene
             else:
                 log.warning(f"Unknown engine_name: {engine_name}, defaulting to faiss")
-                values["engine"] = OSSOS_Engine.faiss
-        return values
+                self.engine = OSSOS_Engine.faiss
+        return self
 
     def __eq__(self, obj: any):
         return (

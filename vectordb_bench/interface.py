@@ -106,21 +106,31 @@ class BenchMarkRunner:
         return ResultCollector.collect(target_dir)
 
     def _try_get_signal(self):
-        while self.receive_conn and self.receive_conn.poll():
-            sig, received = self.receive_conn.recv()
-            log.debug(f"Sigal received to process: {sig}, {received}")
-            if sig == SIGNAL.ERROR:
-                self.latest_error = received
+        try:
+            while self.receive_conn and self.receive_conn.poll():
+                sig, received = self.receive_conn.recv()
+                log.debug(f"Sigal received to process: {sig}, {received}")
+                if sig == SIGNAL.ERROR:
+                    self.latest_error = received
+                    self._clear_running_task()
+                elif sig == SIGNAL.SUCCESS:
+                    global global_result_future
+                    global_result_future = None
+                    self.running_task = None
+                    self.receive_conn = None
+                elif sig == SIGNAL.WIP:
+                    self.running_task.set_finished(received)
+                else:
+                    self._clear_running_task()
+        except (BrokenPipeError, EOFError, OSError) as e:
+            # On Windows, the child process may terminate and close the pipe before
+            # the parent polls/receives. Treat this as end-of-run and clean up so
+            # the CLI can proceed instead of crashing with BrokenPipeError.
+            log.warning(f"Signal pipe broken while polling/receiving: {e}. Cleaning up current task.")
+            try:
                 self._clear_running_task()
-            elif sig == SIGNAL.SUCCESS:
-                global global_result_future
-                global_result_future = None
-                self.running_task = None
+            finally:
                 self.receive_conn = None
-            elif sig == SIGNAL.WIP:
-                self.running_task.set_finished(received)
-            else:
-                self._clear_running_task()
 
     def has_running(self) -> bool:
         """check if there're running benchmarks"""
