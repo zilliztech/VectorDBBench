@@ -2119,6 +2119,36 @@ CaseConfigParamInput_CLIP_OSSOpensearch = CaseConfigInput(
     ),
 )
 
+CaseConfigParamInput_l_search_Garnet = CaseConfigInput(
+    label=CaseConfigParamType.l_search,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 5,
+        "max": 1024,
+        "value": 128,
+    }
+)
+
+CaseConfigParamInput_l_build_Garnet = CaseConfigInput(
+    label=CaseConfigParamType.l_build,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 5,
+        "max": 1024,
+        "value": 128,
+    }
+)
+
+CaseConfigParamInput_max_neighbors_Garnet = CaseConfigInput(
+    label=CaseConfigParamType.max_degree,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 128,
+        "value": 16,
+    }
+)
+
 MilvusLoadConfig = [
     CaseConfigParamInput_IndexType,
     CaseConfigParamInput_M,
@@ -2970,6 +3000,18 @@ PolarDBConfig = [
     CaseConfigParamInput_SQType_PolarDB,
 ]
 
+GarnetLoadConfig = [
+    CaseConfigParamInput_l_build_Garnet,
+    CaseConfigParamInput_l_search_Garnet,
+    CaseConfigParamInput_max_neighbors_Garnet,
+]
+
+GarnetPerformanceConfig = [
+    CaseConfigParamInput_l_build_Garnet,
+    CaseConfigParamInput_l_search_Garnet,
+    CaseConfigParamInput_max_neighbors_Garnet,
+]
+
 # Map DB to config
 CASE_CONFIG_MAP = {
     DB.Milvus: {
@@ -3064,6 +3106,10 @@ CASE_CONFIG_MAP = {
         CaseLabel.Load: PolarDBConfig,
         CaseLabel.Performance: PolarDBConfig,
     },
+    DB.Garnet: {
+        CaseLabel.Load: GarnetLoadConfig,
+        CaseLabel.Performance: GarnetPerformanceConfig,
+    }
 }
 
 
