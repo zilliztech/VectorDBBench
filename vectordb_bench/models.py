@@ -173,6 +173,12 @@ class CaseConfigParamType(Enum):
     exbits = "exbits"
     number_of_regions = "number_of_regions"
 
+    # Garnet
+    max_degree = "max_degree"
+    l_build = "l_build"
+    l_search = "l_search"
+    filter_scale = "filter_scale"
+
 
 class CustomizedCase(BaseModel):
     pass
@@ -449,9 +455,12 @@ class TestResult(BaseModel):
             "label",
         )
         SPLIT = DATA_FORMAT % tuple(map(lambda x: "-" * x, LENGTH))  # noqa: C417, N806
-        SUMMARY_FORMAT = ("Task summary: run_id=%s, task_label=%s") % (  # noqa: N806
-            self.run_id[:5],
-            self.task_label,
+        SUMMARY_FORMAT = (
+            ("Task summary: run_id=%s, task_label=%s")
+            % (  # noqa: N806
+                self.run_id[:5],
+                self.task_label,
+            )
         )
         fmt = [SUMMARY_FORMAT, TITLE, SPLIT]
 
