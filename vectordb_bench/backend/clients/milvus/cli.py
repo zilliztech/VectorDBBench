@@ -1,3 +1,4 @@
+import logging
 from typing import Annotated, TypedDict, Unpack
 
 import click
@@ -12,6 +13,8 @@ from vectordb_bench.cli.cli import (
     click_parameter_decorators_from_typed_dict,
     run,
 )
+
+log = logging.getLogger(__name__)
 
 DBTYPE = DB.Milvus
 
@@ -562,6 +565,54 @@ def MilvusGPUCAGRA(**parameters: Unpack[MilvusGPUCAGRATypedDict]):
             build_algo=parameters["build_algo"],
             cache_dataset_on_device=parameters["cache_dataset_on_device"],
             refine_ratio=parameters["refine_ratio"],
+        ),
+        **parameters,
+    )
+
+
+class MilvusFTSTypedDict(CommonTypedDict, MilvusTypedDict):
+    """TypedDict for Milvus FTS command parameters."""
+
+    drop_ratio_search: Annotated[
+        float | None,
+        click.option(
+            "--drop-ratio-search",
+            type=float,
+            help="Drop ratio for search (optional, for performance tuning)",
+            required=False,
+            default=None,
+        ),
+    ]
+
+
+@cli.command()
+@click_parameter_decorators_from_typed_dict(MilvusFTSTypedDict)
+def MilvusFTS(**parameters: Unpack[MilvusFTSTypedDict]):
+    """Run FTS (Full-Text Search) benchmark on Milvus using BM25.
+
+    This command supports different FTS dataset sizes through the case_type parameter:
+    - FTSmsmarcoPerformance: Large dataset (8.8M documents)
+    - FTSmsmarcoPerformance5M: Medium dataset (5M documents)
+    - FTSmsmarcoPerformance100K: Small dataset (100K documents)
+    """
+    from .config import MilvusConfig, MilvusFtsConfig
+
+    # Set default case_type to large dataset if not specified
+    if parameters.get("case_type") == "Performance1536D50K":  # Default from CommonTypedDict
+        parameters["case_type"] = "FTSmsmarcoPerformance"
+
+    run(
+        db=DBTYPE,
+        db_config=MilvusConfig(
+            db_label=parameters["db_label"],
+            uri=SecretStr(parameters["uri"]),
+            user=parameters["user_name"],
+            password=SecretStr(parameters["password"]) if parameters["password"] else None,
+            num_shards=int(parameters["num_shards"]),
+            replica_number=int(parameters["replica_number"]),
+        ),
+        db_case_config=MilvusFtsConfig(
+            drop_ratio_search=parameters.get("drop_ratio_search"),
         ),
         **parameters,
     )

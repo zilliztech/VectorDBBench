@@ -17,7 +17,7 @@ class DorisConfig(DBConfig):
     db_name: str = "test"
     ssl: bool = False
 
-    @validator("*")
+    @validator("*", allow_reuse=True)
     def not_empty_field(cls, v: any, field: any):
         return v
 
