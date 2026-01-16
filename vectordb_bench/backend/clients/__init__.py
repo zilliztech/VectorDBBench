@@ -52,6 +52,7 @@ class DB(Enum):
     OceanBase = "OceanBase"
     S3Vectors = "S3Vectors"
     Hologres = "Alibaba Cloud Hologres"
+    VexDB = "VexDB"
     TencentElasticsearch = "TencentElasticsearch"
     AliSQL = "AlibabaCloudRDSMySQL"
     Doris = "Doris"
@@ -217,6 +218,11 @@ class DB(Enum):
             from .hologres.hologres import Hologres
 
             return Hologres
+
+        if self == DB.VexDB:
+            from .vexdb.vexdb import VexDB
+
+            return VexDB
 
         if self == DB.TencentElasticsearch:
             from .tencent_elasticsearch.tencent_elasticsearch import TencentElasticsearch
@@ -392,6 +398,11 @@ class DB(Enum):
 
             return HologresConfig
 
+        if self == DB.VexDB:
+            from .vexdb.config import VexDBConfig
+
+            return VexDBConfig
+
         if self == DB.TencentElasticsearch:
             from .tencent_elasticsearch.config import TencentElasticsearchConfig
 
@@ -532,6 +543,11 @@ class DB(Enum):
             from .hologres.config import HologresIndexConfig
 
             return HologresIndexConfig
+
+        if self == DB.VexDB:
+            from .vexdb.config import _vexdb_case_config
+
+            return _vexdb_case_config.get(index_type)
 
         if self == DB.TencentElasticsearch:
             from .tencent_elasticsearch.config import TencentElasticsearchIndexConfig

@@ -128,6 +128,7 @@ class CaseConfigParamType(Enum):
     use_rescore = "use_rescore"
     oversample_ratio = "oversample_ratio"
     use_routing = "use_routing"
+    create_index_before_load = "create_index_before_load"
     replication_type = "replication_type"
     knn_derived_source_enabled = "knn_derived_source_enabled"
     memory_optimized_search = "memory_optimized_search"
@@ -154,6 +155,10 @@ class CaseConfigParamType(Enum):
     concurrencies = "concurrencies"
     optimize_after_write = "optimize_after_write"
     read_dur_after_write = "read_dur_after_write"
+    graph_magnitude_threshold = "graph_magnitude_threshold"
+    vec_index_magnitudes = "vec_index_magnitudes"
+    hybrid_query_ivf_probes_factor = "hybrid_query_ivf_probes_factor"
+    col_name_list = "col_name_list"
 
 
 class CustomizedCase(BaseModel):
