@@ -13,7 +13,7 @@ include = ["vectordb_bench", "vectordb_bench.cli"]
 [project]
 name = "vectordb-bench"
 authors = [
-  {name="XuanYang-cn", email="xuan.yang@zilliz.com"},
+  {name="VDBBench teams", email="pymilvus@zilliz.com"},
 ]
 description = "VectorDBBench is not just an offering of benchmark results for mainstream vector databases and cloud services, it's your go-to tool for the ultimate performance and cost-effectiveness comparison. Designed with ease-of-use in mind, VectorDBBench is devised to help users, even non-professionals, reproduce results or test new systems, making the hunt for the optimal choice amongst a plethora of cloud services and open-source vector databases a breeze."
 
@@ -109,7 +109,8 @@ doris           = [ "doris-vector-search" ]
 turbopuffer     = [ "turbopuffer" ]
 
 [project.urls]
-"repository" = "https://github.com/zilliztech/VectorDBBench"
+Repository  = "https://github.com/zilliztech/VectorDBBench"
+Leaderborad = "https://zilliz.com/vdbbench-leaderboard"
 
 [project.scripts]
 init_bench = "vectordb_bench.__main__:main"
