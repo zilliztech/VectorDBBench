@@ -30,6 +30,7 @@ class IndexType(str, Enum):
     IVF_RABITQ = "IVF_RABITQ"
     Flat = "FLAT"
     AUTOINDEX = "AUTOINDEX"
+    FTS_AUTOINDEX = "FTS_AUTOINDEX"
     ES_HNSW = "hnsw"
     ES_HNSW_INT8 = "int8_hnsw"
     ES_HNSW_INT4 = "int4_hnsw"
@@ -88,7 +89,7 @@ class DBConfig(ABC, BaseModel):
     def to_dict(self) -> dict:
         raise NotImplementedError
 
-    @validator("*")
+    @validator("*", allow_reuse=True)
     def not_empty_field(cls, v: any, field: any):
         if field.name in cls.common_short_configs() or field.name in cls.common_long_configs():
             return v

@@ -38,12 +38,13 @@ class MultiProcessingSearchRunner:
     def __init__(
         self,
         db: api.VectorDB,
-        test_data: list[list[float]],
+        test_data: list,
         k: int = config.K_DEFAULT,
         filters: Filter = non_filter,
         concurrencies: Iterable[int] = config.NUM_CONCURRENCY,
         duration: int = config.CONCURRENCY_DURATION,
         concurrency_timeout: int = config.CONCURRENCY_TIMEOUT,
+        search_fulltext: bool = False,
     ):
         self.db = db
         self.k = k
@@ -51,13 +52,17 @@ class MultiProcessingSearchRunner:
         self.concurrencies = concurrencies
         self.duration = duration
         self.concurrency_timeout = concurrency_timeout
+        if search_fulltext:
+            self._search_func = self.db.search_fulltext
+        else:
+            self._search_func = self.db.search_embedding
 
         self.test_data = test_data
         log.debug(f"test dataset columns: {len(test_data)}")
 
     def search(
         self,
-        test_data: list[list[float]],
+        test_data: list,
         q: mp.Queue,
         cond: mp.Condition,
     ) -> tuple[int, float]:
@@ -76,7 +81,7 @@ class MultiProcessingSearchRunner:
             while time.perf_counter() < start_time + self.duration:
                 s = time.perf_counter()
                 try:
-                    self.db.search_embedding(test_data[idx], self.k)
+                    self._search_func(test_data[idx], self.k)
                     count += 1
                     latencies.append(time.perf_counter() - s)
                 except Exception as e:
@@ -308,9 +313,7 @@ class MultiProcessingSearchRunner:
             conc_latency_avg_list,
         )
 
-    def search_by_dur(
-        self, dur: int, test_data: list[list[float]], q: mp.Queue, cond: mp.Condition
-    ) -> tuple[int, int, dict]:
+    def search_by_dur(self, dur: int, test_data: list, q: mp.Queue, cond: mp.Condition) -> tuple[int, int]:
         """
         Returns:
             int: successful requests count
@@ -335,7 +338,7 @@ class MultiProcessingSearchRunner:
             while time.perf_counter() < start_time + dur:
                 s = time.perf_counter()
                 try:
-                    self.db.search_embedding(test_data[idx], self.k)
+                    self._search_func(test_data[idx], self.k)
                     success_count += 1
                     latency_us = int((time.perf_counter() - s) * US_TO_SECONDS)
                     histogram.record_value(min(latency_us, HDR_HISTOGRAM_MAX_US))

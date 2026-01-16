@@ -19,7 +19,7 @@ class MilvusConfig(DBConfig):
             "replica_number": self.replica_number,
         }
 
-    @validator("*")
+    @validator("*", allow_reuse=True)
     def not_empty_field(cls, v: any, field: any):
         if (
             field.name in cls.common_short_configs()
@@ -441,8 +441,99 @@ class SCANNConfig(MilvusIndexConfig, DBCaseConfig):
         }
 
 
+class MilvusFtsConfig(BaseModel, DBCaseConfig):
+    """
+    1. inverted_index_algo: 索引算法选择
+       - "DAAT_MAXSCORE" (默认): 适合高k值或包含大量术语的查询,性能均衡
+       - "DAAT_WAND": 适合k值较小的查询或较短的查询,更快
+       - "TAAT_NAIVE": 能动态适应Collections变化(如avgdl),但速度较慢
+    2. bm25_k1: BM25 词频饱和度控制 [1.2, 2.0],默认1.5
+       - 较高值:增加词频在文档排名中的重要性
+       - 建议范围:1.2-1.8,根据查询特点调整
+    3. bm25_b: BM25 文档长度归一化控制 [0.0, 1.0],默认0.75
+       - 1.0: 不进行长度归一化,长文档占优势
+       - 0.0: 完全归一化,短文档占优势
+       - 0.75: 平衡长度归一化,常用默认值
+    4. analyzer_tokenizer: 分词器类型,默认"standard"
+       - "standard": 标准分词器,适合英文
+       - "whitespace": 按空白字符分割
+       - "keyword": 不分词,保持原文本
+    5. analyzer_enable_lowercase: 启用小写转换,默认True
+       - True: 所有文本转为小写,提高匹配率
+       - False: 保持原始大小写
+    6. analyzer_max_token_length: 单个token最大长度,默认40
+       - 限制过长词汇的长度
+       - 设为None禁用此限制
+    7. analyzer_stop_words: 停用词列表,默认None
+       - 用逗号分隔的停用词,如"of,to,the,and,or"
+       - 这些词会被过滤掉,不参与索引和搜索
+    8. drop_ratio_search: 搜索时忽略最小值的比例 [0.0, 1.0],默认None
+       - 0.0: 保留所有值,最高召回率
+       - 0.1-0.3: 提升搜索速度10-20%,轻微影响召回率
+    """
+
+    index_type: str = "SPARSE_INVERTED_INDEX"
+    metric_type: str = "BM25"
+    inverted_index_algo: str = "DAAT_MAXSCORE"  # DAAT_MAXSCORE | DAAT_WAND | TAAT_NAIVE
+    bm25_k1: float = 1.5  # BM25 k1参数,控制词频饱和度 [1.2, 2.0]
+    bm25_b: float = 0.75  # BM25 b参数,控制文档长度归一化 [0.0, 1.0]
+    analyzer_tokenizer: str = "standard"  # 分词器类型,standard, whitespace, etc.
+    analyzer_enable_lowercase: bool = True
+    analyzer_max_token_length: int | None = 40
+    analyzer_stop_words: str | None = None  # 停用词列表,用逗号分隔
+    drop_ratio_search: float | None = None
+
+    def index_param(self) -> dict:
+        params = {
+            "inverted_index_algo": self.inverted_index_algo,
+        }
+        if hasattr(self, "bm25_k1") and self.bm25_k1 is not None:
+            params["bm25_k1"] = self.bm25_k1
+        if hasattr(self, "bm25_b") and self.bm25_b is not None:
+            params["bm25_b"] = self.bm25_b
+
+        # 构建分析器参数
+        analyzer_params = {"type": "english"}
+        # 设置分词器
+        if hasattr(self, "analyzer_tokenizer") and self.analyzer_tokenizer:
+            analyzer_params["tokenizer"] = self.analyzer_tokenizer
+        # 构建过滤器数组
+        filters = []
+        if hasattr(self, "analyzer_enable_lowercase") and self.analyzer_enable_lowercase:
+            filters.append("lowercase")
+
+        if hasattr(self, "analyzer_max_token_length") and self.analyzer_max_token_length:
+            filters.append({"type": "length", "max": self.analyzer_max_token_length})
+
+        if hasattr(self, "analyzer_stop_words") and self.analyzer_stop_words:
+            stop_words = [word.strip() for word in self.analyzer_stop_words.split(",") if word.strip()]
+            if stop_words:
+                filters.append({"type": "stop", "stop_words": stop_words})
+
+        if filters:
+            analyzer_params["filter"] = filters
+
+        return {
+            "index_type": self.index_type,
+            "metric_type": self.metric_type,
+            "params": params,
+            "analyzer_params": analyzer_params,
+        }
+
+    def search_param(self) -> dict:
+
+        params: dict = {}
+        if self.drop_ratio_search is not None:
+            params["drop_ratio_search"] = self.drop_ratio_search
+        return {
+            "metric_type": self.metric_type,
+            "params": params,
+        }
+
+
 _milvus_case_config = {
     IndexType.AUTOINDEX: AutoIndexConfig,
+    IndexType.FTS_AUTOINDEX: MilvusFtsConfig,
     IndexType.HNSW: HNSWConfig,
     IndexType.HNSW_SQ: HNSWSQConfig,
     IndexType.HNSW_PQ: HNSWPQConfig,
