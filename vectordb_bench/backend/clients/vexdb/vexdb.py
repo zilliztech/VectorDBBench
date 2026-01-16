@@ -20,28 +20,33 @@ from .config import VexDBConfigDict, VexDBIndexConfig
 
 log = logging.getLogger(__name__)
 
+
 class VectorDumper(Dumper):
     format = Format.TEXT
+
     def dump(self, obj):
-        return Vector._to_db(obj).encode('utf8')
+        return Vector._to_db(obj).encode("utf8")
 
 
 class VectorBinaryDumper(VectorDumper):
     format = Format.BINARY
+
     def dump(self, obj):
         return Vector._to_db_binary(obj)
 
 
 class VectorLoader(Loader):
     format = Format.TEXT
+
     def load(self, data):
         if isinstance(data, memoryview):
             data = bytes(data)
-        return Vector._from_db(data.decode('utf8'))
+        return Vector._from_db(data.decode("utf8"))
 
 
 class VectorBinaryLoader(VectorLoader):
     format = Format.BINARY
+
     def load(self, data):
         if isinstance(data, memoryview):
             data = bytes(data)
@@ -77,7 +82,7 @@ class VexDB(VectorDB):
         self.partitions = db_config["partitions"]
         self.dim = dim
         self.with_scalar_labels = with_scalar_labels
-        self._index_name = self.table_name+"_embedding_index"
+        self._index_name = self.table_name + "_embedding_index"
         self._primary_field = "id"
         self._vector_field = "embedding"
         self._scalar_label_field = "label"
@@ -114,13 +119,12 @@ class VexDB(VectorDB):
         self.cursor = None
         self.conn = None
 
-
     def __reduce__(self):
         return (
             self.__class__,
             (
                 self.dim,
-                {"connect_config": self.connect_config, "table_name": self.table_name,"partitions":self.partitions},
+                {"connect_config": self.connect_config, "table_name": self.table_name, "partitions": self.partitions},
                 self.case_config,
                 False,
                 self.with_scalar_labels,
@@ -132,18 +136,18 @@ class VexDB(VectorDB):
         conn = psycopg.connect(**kwargs)
 
         # register floatvector type
-        floatvector_info = TypeInfo.fetch(conn, 'floatvector')
+        floatvector_info = TypeInfo.fetch(conn, "floatvector")
         if floatvector_info is None:
-            raise psycopg.ProgrammingError('floatvector type not found in the database')
+            raise psycopg.ProgrammingError("floatvector type not found in the database")
         floatvector_info.register(conn)
 
         # add oid to anonymous class for set_types
-        text_dumper = type('', (VectorDumper,), {'oid': floatvector_info.oid})
-        binary_dumper = type('', (VectorBinaryDumper,), {'oid': floatvector_info.oid})
+        text_dumper = type("", (VectorDumper,), {"oid": floatvector_info.oid})
+        binary_dumper = type("", (VectorBinaryDumper,), {"oid": floatvector_info.oid})
 
         adapters = conn.adapters
-        adapters.register_dumper('numpy.ndarray', text_dumper)
-        adapters.register_dumper('numpy.ndarray', binary_dumper)
+        adapters.register_dumper("numpy.ndarray", text_dumper)
+        adapters.register_dumper("numpy.ndarray", binary_dumper)
         adapters.register_dumper(Vector, text_dumper)
         adapters.register_dumper(Vector, binary_dumper)
         adapters.register_loader(floatvector_info.oid, VectorLoader)
@@ -369,11 +373,15 @@ class VexDB(VectorDB):
             log.info(f"{self.name} client create table : {self.table_name}")
 
             # create table
-            #if partitions or not
+            # if partitions or not
             if self.partitions > 0:
-                partitions_string=f"partition by hash({self._primary_field}) ("+','.join([f"partition p{i}" for i in range(self.partitions)])+");"
+                partitions_string = (
+                    f"partition by hash({self._primary_field}) ("
+                    + ",".join([f"partition p{i}" for i in range(self.partitions)])
+                    + ");"
+                )
             else:
-                partitions_string=";"
+                partitions_string = ";"
             if self.with_scalar_labels:
                 self.cursor.execute(
                     sql.SQL(
@@ -404,7 +412,6 @@ class VexDB(VectorDB):
                         partitions_string=sql.SQL(partitions_string),
                     )
                 )
-
 
             # PGVECTOR有，注释掉
             # self.cursor.execute(

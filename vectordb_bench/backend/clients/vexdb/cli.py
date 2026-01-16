@@ -5,6 +5,7 @@ import click
 from pydantic import SecretStr
 
 from vectordb_bench.backend.clients import DB
+
 # from vectordb_bench.backend.clients.api import MetricType
 
 from ....cli.cli import (
@@ -68,8 +69,17 @@ class VexDBTypedDict(CommonTypedDict):
             required=False,
         ),
     ]
-    table_name: Annotated[str, click.option("--table-name", type=str, help="Table name", default='vdbbench_table_test',show_default=True,
-                                            required=False)]
+    table_name: Annotated[
+        str,
+        click.option(
+            "--table-name",
+            type=str,
+            help="Table name",
+            default="vdbbench_table_test",
+            show_default=True,
+            required=False,
+        ),
+    ]
     partitions: Annotated[
         int | None,
         click.option(
@@ -130,7 +140,14 @@ def VexDBIVFFlat(
 class VexDBGRAPHINDEXTypedDict(VexDBTypedDict, HNSWFlavor1):
     col_name_list: Annotated[
         str | None,
-        click.option("--quantizer", type=str, help="Vector quantization method,selectable values ['none','pq','rabitq']", required=False,default='none',show_default=True),
+        click.option(
+            "--quantizer",
+            type=str,
+            help="Vector quantization method,selectable values ['none','pq','rabitq']",
+            required=False,
+            default="none",
+            show_default=True,
+        ),
     ]
 
 
@@ -170,11 +187,18 @@ def VexDBGRAPHINDEX(
 class VexDBHybridANNTypedDict(VexDBTypedDict, HNSWFlavor1):
     col_name_list: Annotated[
         str | None,
-        click.option("--col-name-list", type=str, help="Which scalar fields will be created in hybridann index, for example: 'id'、'id, label'", required=True),
+        click.option(
+            "--col-name-list",
+            type=str,
+            help="Which scalar fields will be created in hybridann index, for example: 'id'、'id, label'",
+            required=True,
+        ),
     ]
     hybrid_query_ivf_probes_factor: Annotated[
         int | None,
-        click.option("--hybrid-query-ivf-probes-factor", type=int, help="Set hybrid_query_ivf_probes_factor before select"),
+        click.option(
+            "--hybrid-query-ivf-probes-factor", type=int, help="Set hybrid_query_ivf_probes_factor before select"
+        ),
     ]
     vec_index_magnitudes: Annotated[
         str | None,
@@ -182,7 +206,9 @@ class VexDBHybridANNTypedDict(VexDBTypedDict, HNSWFlavor1):
     ]
     graph_magnitude_threshold: Annotated[
         int | None,
-        click.option("--graph-magnitude-threshold", type=int, help="The parameter graph_magnitude_threshold in create index SQL"),
+        click.option(
+            "--graph-magnitude-threshold", type=int, help="The parameter graph_magnitude_threshold in create index SQL"
+        ),
     ]
 
 

@@ -62,9 +62,9 @@ class VexDBIndexConfig(BaseModel, DBCaseConfig):
 
     def parse_metric(self) -> str:
         d = {
-                MetricType.L2: "floatvector_l2_ops",
-                MetricType.IP: "floatvector_ip_ops",
-                MetricType.COSINE: "floatvector_cosine_ops",
+            MetricType.L2: "floatvector_l2_ops",
+            MetricType.IP: "floatvector_ip_ops",
+            MetricType.COSINE: "floatvector_cosine_ops",
         }
         return d.get(self.metric_type)
 
@@ -74,7 +74,6 @@ class VexDBIndexConfig(BaseModel, DBCaseConfig):
         if self.metric_type == MetricType.IP:
             return "<#>"
         return "<=>"
-
 
     @abstractmethod
     def index_param(self) -> VexDBIndexParam: ...
@@ -91,7 +90,7 @@ class VexDBIndexConfig(BaseModel, DBCaseConfig):
         options = []
         for option_name, value in with_options.items():
             if value is not None:
-                if option_name == "quantizer" and value=='none':
+                if option_name == "quantizer" and value == "none":
                     continue
                 options.append(
                     {
@@ -177,9 +176,13 @@ class VexDBGRAPHINDEXConfig(VexDBIndexConfig):
     max_parallel_workers: int | None = None
     create_index_before_load: bool = False
 
-
     def index_param(self) -> VexDBIndexParam:
-        index_parameters = {"m": self.m, "ef_construction": self.ef_construction, "quantizer": self.quantizer, "parallel_workers": self.max_parallel_workers}
+        index_parameters = {
+            "m": self.m,
+            "ef_construction": self.ef_construction,
+            "quantizer": self.quantizer,
+            "parallel_workers": self.max_parallel_workers,
+        }
         return {
             "metric": self.parse_metric(),
             "index_type": self.index.value,
@@ -198,6 +201,7 @@ class VexDBGRAPHINDEXConfig(VexDBIndexConfig):
         session_parameters = {"hnsw_ef_search": self.ef_search}
         return {"session_options": self._optionally_build_set_options(session_parameters)}
 
+
 class VexDBHybridANNConfig(VexDBIndexConfig):
     m: int | None  # DETAIL:  Valid values are between "2" and "100".
     ef_construction: int | None  # ef_construction must be greater than or equal to 2 * m
@@ -211,9 +215,14 @@ class VexDBHybridANNConfig(VexDBIndexConfig):
     hybrid_query_ivf_probes_factor: int | None = None
     col_name_list: str | None
 
-
     def index_param(self) -> VexDBIndexParam:
-        index_parameters = {"m": self.m, "ef_construction": self.ef_construction, "parallel_workers": self.max_parallel_workers, "graph_magnitude_threshold": self.graph_magnitude_threshold, "vec_index_magnitudes": self.vec_index_magnitudes}
+        index_parameters = {
+            "m": self.m,
+            "ef_construction": self.ef_construction,
+            "parallel_workers": self.max_parallel_workers,
+            "graph_magnitude_threshold": self.graph_magnitude_threshold,
+            "vec_index_magnitudes": self.vec_index_magnitudes,
+        }
         return {
             "metric": self.parse_metric(),
             "index_type": self.index.value,
@@ -230,9 +239,11 @@ class VexDBHybridANNConfig(VexDBIndexConfig):
         }
 
     def session_param(self) -> VexDBSessionCommands:
-        session_parameters = {"hnsw_ef_search": self.ef_search, "hybrid_query_ivf_probes_factor": self.hybrid_query_ivf_probes_factor}
+        session_parameters = {
+            "hnsw_ef_search": self.ef_search,
+            "hybrid_query_ivf_probes_factor": self.hybrid_query_ivf_probes_factor,
+        }
         return {"session_options": self._optionally_build_set_options(session_parameters)}
-
 
 
 _vexdb_case_config = {

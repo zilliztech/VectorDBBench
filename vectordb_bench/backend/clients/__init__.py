@@ -218,7 +218,7 @@ class DB(Enum):
             from .hologres.hologres import Hologres
 
             return Hologres
-        
+
         if self == DB.VexDB:
             from .vexdb.vexdb import VexDB
 
@@ -397,7 +397,7 @@ class DB(Enum):
             from .hologres.config import HologresConfig
 
             return HologresConfig
-        
+
         if self == DB.VexDB:
             from .vexdb.config import VexDBConfig
 
@@ -543,7 +543,7 @@ class DB(Enum):
             from .hologres.config import HologresIndexConfig
 
             return HologresIndexConfig
-        
+
         if self == DB.VexDB:
             from .vexdb.config import _vexdb_case_config
 

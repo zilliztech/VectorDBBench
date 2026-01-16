@@ -1,4 +1,4 @@
-js_content='''/*!
+js_content = """/*!
  * html2canvas 1.4.1 <https://html2canvas.hertzen.com>
  * Copyright (c) 2022 Niklas von Hertzen <https://hertzen.com>
  * Released under MIT License
@@ -7827,7 +7827,8 @@ js_content='''/*!
     return html2canvas;
 
 })));
-//# sourceMappingURL=html2canvas.js.map'''
+//# sourceMappingURL=html2canvas.js.map"""
+
 
 def return_js_content():
     return js_content

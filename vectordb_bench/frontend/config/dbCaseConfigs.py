@@ -337,8 +337,8 @@ UI_CASE_CLUSTERS: list[UICaseItemCluster] = [
     UICaseItemCluster(
         label="Capacity Test",
         uiCaseItems=[
-            UICaseItem(cases=generate_normal_cases(CaseType.CapacityDim960),caseLabel=CaseLabel.Load),
-            UICaseItem(cases=generate_normal_cases(CaseType.CapacityDim128),caseLabel=CaseLabel.Load),
+            UICaseItem(cases=generate_normal_cases(CaseType.CapacityDim960), caseLabel=CaseLabel.Load),
+            UICaseItem(cases=generate_normal_cases(CaseType.CapacityDim128), caseLabel=CaseLabel.Load),
         ],
     ),
     UICaseItemCluster(
@@ -2620,7 +2620,8 @@ CaseConfigParamInput_m_VexDB = CaseConfigInput(
         "max": 100,
         "value": 16,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) in [IndexType.HybridAnn.value,IndexType.GRAPH_INDEX.value],
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    in [IndexType.HybridAnn.value, IndexType.GRAPH_INDEX.value],
 )
 
 CaseConfigParamInput_EFConstruction_VexDB = CaseConfigInput(
@@ -2631,7 +2632,8 @@ CaseConfigParamInput_EFConstruction_VexDB = CaseConfigInput(
         "max": 1000,
         "value": 64,
     },
-    isDisplayed=lambda config: config[CaseConfigParamType.IndexType] in [IndexType.HybridAnn.value,IndexType.GRAPH_INDEX.value],
+    isDisplayed=lambda config: config[CaseConfigParamType.IndexType]
+    in [IndexType.HybridAnn.value, IndexType.GRAPH_INDEX.value],
 )
 
 CaseConfigParamInput_maintenance_work_mem_VexDB = CaseConfigInput(
@@ -2665,7 +2667,8 @@ CaseConfigParamInput_EFSearch_VexDB = CaseConfigInput(
         "max": 32767,
         "value": 100,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) in [IndexType.HybridAnn.value,IndexType.GRAPH_INDEX.value],
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    in [IndexType.HybridAnn.value, IndexType.GRAPH_INDEX.value],
 )
 
 CaseConfigParamInput_Probes_VexDB = CaseConfigInput(
@@ -2751,7 +2754,6 @@ VexDBLoadingConfig = [
     CaseConfigParamInput_max_parallel_workers_VexDB,
     CaseConfigParamInput_maintenance_work_mem_VexDB,
     CaseConfigParamInput_create_index_before_load_VexDB,
-
 ]
 VexDBPerformanceConfig = [
     CaseConfigParamInput_IndexType_VexDB,
