@@ -352,6 +352,12 @@ class TestResult(BaseModel):
                     except Exception:
                         log.exception(f"Couldn't get class for index '{index_value}' ({full_path})")
                         task_config["db_case_config"] = EmptyDBCaseConfig(**raw_case_cfg)
+                else:
+                    try:
+                        task_config["db_case_config"] = db.case_config_cls(index_type=index_value)(**raw_case_cfg)
+                    except Exception:
+                        log.exception(f"Couldn't get class for index '{index_value}' ({full_path})")
+                        task_config["db_case_config"] = EmptyDBCaseConfig(**raw_case_cfg)
 
                 task_config["case_config"] = cls.get_case_config(case_config=case_config)
                 case_result["task_config"] = task_config
