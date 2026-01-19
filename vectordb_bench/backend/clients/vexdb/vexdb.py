@@ -7,11 +7,11 @@ from typing import Any
 
 import numpy as np
 import psycopg
-from psycopg.types import TypeInfo
-from psycopg import Connection, Cursor, sql
-from psycopg.adapt import Loader, Dumper
-from psycopg.pq import Format
 from pgvector.psycopg import Vector
+from psycopg import Connection, Cursor, sql
+from psycopg.adapt import Dumper, Loader
+from psycopg.pq import Format
+from psycopg.types import TypeInfo
 
 from vectordb_bench.backend.filter import Filter, FilterOp
 
@@ -24,21 +24,21 @@ log = logging.getLogger(__name__)
 class VectorDumper(Dumper):
     format = Format.TEXT
 
-    def dump(self, obj):
+    def dump(self, obj: Any):
         return Vector._to_db(obj).encode("utf8")
 
 
 class VectorBinaryDumper(VectorDumper):
     format = Format.BINARY
 
-    def dump(self, obj):
+    def dump(self, obj: Any):
         return Vector._to_db_binary(obj)
 
 
 class VectorLoader(Loader):
     format = Format.TEXT
 
-    def load(self, data):
+    def load(self, data: Any):
         if isinstance(data, memoryview):
             data = bytes(data)
         return Vector._from_db(data.decode("utf8"))
@@ -47,7 +47,7 @@ class VectorLoader(Loader):
 class VectorBinaryLoader(VectorLoader):
     format = Format.BINARY
 
-    def load(self, data):
+    def load(self, data: Any):
         if isinstance(data, memoryview):
             data = bytes(data)
         return Vector._from_db_binary(data)
@@ -164,7 +164,7 @@ class VexDB(VectorDB):
     def _generate_search_query(self) -> sql.Composed:
         search_vector = sql.Placeholder()
 
-        search_query = sql.Composed(
+        return sql.Composed(
             [
                 sql.SQL(
                     "SELECT {primary_field} FROM public.{table_name} {where_clause} ORDER BY {vector_field}",
@@ -181,8 +181,6 @@ class VexDB(VectorDB):
                 ),
             ]
         )
-
-        return search_query
 
     @contextmanager
     def init(self) -> Generator[None, None, None]:
@@ -292,13 +290,6 @@ class VexDB(VectorDB):
                     index_param["max_parallel_workers"],
                 ),
             )
-            # VexDB索引创建并行度在索引语法中指定
-            # self.cursor.execute(
-            #     sql.SQL("ALTER TABLE {} SET (parallel_workers = {});").format(
-            #         sql.Identifier(self.table_name),
-            #         index_param["max_parallel_workers"],
-            #     ),
-            # )
             self.conn.commit()
 
         results = self.cursor.execute(sql.SQL("SHOW max_parallel_maintenance_workers;")).fetchall()
@@ -325,10 +316,7 @@ class VexDB(VectorDB):
         with_clause = sql.SQL("WITH ({});").format(sql.SQL(", ").join(options)) if any(options) else sql.Composed(())
 
         # if partitions or not
-        if self.partitions > 0:
-            local_string = " LOCAL "
-        else:
-            local_string = ""
+        local_string = " LOCAL " if self.partitions > 0 else ""
 
         if not index_param.get("col_name_list"):
             index_create_sql = sql.SQL(
@@ -366,8 +354,6 @@ class VexDB(VectorDB):
     def _create_table(self, dim: int):
         assert self.conn is not None, "Connection is not initialized"
         assert self.cursor is not None, "Cursor is not initialized"
-
-        index_param = self.case_config.index_param()
 
         try:
             log.info(f"{self.name} client create table : {self.table_name}")
@@ -413,12 +399,6 @@ class VexDB(VectorDB):
                     )
                 )
 
-            # PGVECTOR有，注释掉
-            # self.cursor.execute(
-            #     sql.SQL(
-            #         "ALTER TABLE public.{table_name} ALTER COLUMN embedding SET STORAGE PLAIN;",
-            #     ).format(table_name=sql.Identifier(self.table_name)),
-            # )
             self.conn.commit()
         except Exception as e:
             log.warning(f"Failed to create VexDB table: {self.table_name} error: {e}")

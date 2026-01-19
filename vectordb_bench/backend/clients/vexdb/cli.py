@@ -6,8 +6,6 @@ from pydantic import SecretStr
 
 from vectordb_bench.backend.clients import DB
 
-# from vectordb_bench.backend.clients.api import MetricType
-
 from ....cli.cli import (
     CommonTypedDict,
     HNSWFlavor1,
@@ -85,7 +83,7 @@ class VexDBTypedDict(CommonTypedDict):
         click.option(
             "--partitions",
             type=int,
-            help="Set whether to use hash partitioning. A value of 0 disables partitioning, while a value greater than 0 specifies the number of partitions to use.",
+            help="Set whether to use hash partitioning. A value of 0 disables partitioning.",
             required=False,
             default=0,
             show_default=True,
@@ -96,7 +94,7 @@ class VexDBTypedDict(CommonTypedDict):
         click.option(
             "--create-index-before-load",
             type=bool,
-            help="Whether create index before load,Streaming case recommended to be true，default is false",
+            help="Whether create index before load, Streaming case recommended to be true, default is false",
             required=False,
             default=False,
         ),

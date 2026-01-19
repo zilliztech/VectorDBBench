@@ -1,7 +1,9 @@
 from abc import abstractmethod
 from collections.abc import Mapping, Sequence
 from typing import Any, LiteralString, TypedDict
+
 from pydantic import BaseModel, SecretStr
+
 from ..api import DBCaseConfig, DBConfig, IndexType, MetricType
 
 
@@ -57,7 +59,6 @@ class VexDBSessionCommands(TypedDict):
 
 class VexDBIndexConfig(BaseModel, DBCaseConfig):
     metric_type: MetricType | None = None
-    # create_index_before_load: bool = False
     create_index_after_load: bool = True
 
     def parse_metric(self) -> str:
