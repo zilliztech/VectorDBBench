@@ -558,16 +558,23 @@ class DB(Enum):
             from .alisql.alisql import AliSQLIndexConfig
 
             return AliSQLIndexConfig
+
         if self == DB.Doris:
             from .doris.config import DorisCaseConfig
 
             return DorisCaseConfig
+
         if self == DB.TurboPuffer:
             from .turbopuffer.config import TurboPufferIndexConfig
 
             return TurboPufferIndexConfig
 
-        # DB.Pinecone, DB.Chroma, DB.Redis
+        if self == DB.Chroma:
+            from .chroma.config import ChromaIndexConfig
+
+            return ChromaIndexConfig
+
+        # DB.Pinecone, DB.Redis
         return EmptyDBCaseConfig
 
 
