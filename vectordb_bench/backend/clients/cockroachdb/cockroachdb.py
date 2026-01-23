@@ -315,14 +315,12 @@ class CockroachDB(VectorDB):
             )
         else:
             cursor.execute(
-                sql.SQL(
-                    """
+                sql.SQL("""
                     CREATE TABLE IF NOT EXISTS {table_name}
                     ({primary_field} UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                      {metadata_field} BIGINT NOT NULL,
                      {vector_field} VECTOR({dim}));
-                    """
-                ).format(
+                    """).format(
                     table_name=sql.Identifier(self.table_name),
                     primary_field=sql.Identifier(self._primary_field),
                     metadata_field=sql.Identifier(self._metadata_field),
