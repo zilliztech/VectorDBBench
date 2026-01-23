@@ -1,6 +1,6 @@
 from typing import TypedDict
 
-from pydantic import BaseModel, SecretStr
+from pydantic import BaseModel, SecretStr, validator
 
 from ..api import DBCaseConfig, DBConfig, IndexType, MetricType
 
@@ -30,6 +30,14 @@ class OceanBaseConfig(DBConfig):
             "password": pwd_str,
             "database": self.database,
         }
+
+    @validator("*", allow_reuse=True)
+    def not_empty_field(cls, v: any, field: any):
+        if field.name in ["password", "host", "db_label"]:
+            return v
+        if isinstance(v, str | SecretStr) and len(v) == 0:
+            raise ValueError("Empty string!")
+        return v
 
 
 class OceanBaseIndexConfig(BaseModel):
@@ -75,7 +83,7 @@ class OceanBaseHNSWConfig(OceanBaseIndexConfig, DBCaseConfig):
 
 
 class OceanBaseIVFConfig(OceanBaseIndexConfig, DBCaseConfig):
-    m: int | None = None
+    m: int
     sample_per_nlist: int
     nbits: int | None = None
     nlist: int

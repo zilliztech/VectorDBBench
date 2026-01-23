@@ -8,7 +8,7 @@ from vectordb_bench.backend.filter import Filter, FilterOp, IntFilter, LabelFilt
 from vectordb_bench.base import BaseModel
 from vectordb_bench.frontend.components.custom.getCustomConfig import CustomDatasetConfig
 
-from .dataset import CustomDataset, Dataset, DatasetManager, DatasetWithSizeType
+from .dataset import CustomDataset, Dataset, DatasetManager, DatasetWithSizeType, FtsDataset, FtsDatasetManager
 
 log = logging.getLogger(__name__)
 
@@ -57,6 +57,10 @@ class CaseType(Enum):
 
     NewIntFilterPerformanceCase = 400
 
+    FTSmsmarcoPerformance = 502
+    FTSmsmarcoPerformance100K = 503
+    FTSmsmarcoPerformance5M = 504
+
     def case_cls(self, custom_configs: dict | None = None) -> type["Case"]:
         if custom_configs is None:
             return type2case.get(self)()
@@ -79,6 +83,7 @@ class CaseLabel(Enum):
     Load = auto()
     Performance = auto()
     Streaming = auto()
+    FullTextSearchPerformance = auto()
 
 
 class Case(BaseModel):
@@ -631,6 +636,75 @@ class LabelFilterPerformanceCase(PerformanceCase):
         return LabelFilter(label_percentage=self.label_percentage)
 
 
+class FtsCase(Case):
+    """Base class for FTS test cases - independent from Case.
+
+    FTS cases test full-text search capabilities (BM25) rather than
+    vector similarity search.
+
+    Fields:
+        case_id: Unique case identifier from CaseType enum
+        label: Case category (Performance, Load, etc.)
+        name: Display name for the case
+        description: Detailed description of what this case tests
+        dataset: FtsDatasetManager for this case
+        load_timeout: Timeout for data loading phase
+        optimize_timeout: Timeout for index building phase
+    """
+
+    case_id: CaseType
+    label: CaseLabel
+    name: str
+    description: str
+    dataset: FtsDatasetManager
+    load_timeout: float | int | None = None
+    optimize_timeout: float | int | None = None
+
+
+class FtsPerformanceCase(FtsCase):
+    """Base class for FTS performance testing cases."""
+
+    label: CaseLabel = CaseLabel.FullTextSearchPerformance
+    load_timeout: float | int = config.LOAD_TIMEOUT_DEFAULT
+    optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_DEFAULT
+
+
+class FTSmsmarcoPerformance(FtsPerformanceCase):
+    """FTS Performance test with full 8.8M documents."""
+
+    case_id: CaseType = CaseType.FTSmsmarcoPerformance
+    name: str = "FTS Performance Test (Full 8.8M Documents)"
+    description: str = """This case tests full-text search performance using BM25 on the full MS MARCO dataset
+    with <b>8.8M documents</b>. It measures index building time, recall, MRR, and search QPS."""
+    dataset: FtsDatasetManager = FtsDataset.MSMARCO.manager(8_841_823)
+    load_timeout: float | int = config.LOAD_TIMEOUT_768D_10M
+    optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_768D_10M
+
+
+class FTSmsmarcoPerformance100K(FtsPerformanceCase):
+    case_id: CaseType = CaseType.FTSmsmarcoPerformance100K
+    name: str = "FTS Performance Test (100K Documents)"
+    description: str = (
+        "This case tests full-text search performance using BM25 on the MS MARCO dataset "
+        "with 100K documents. It measures index building time, recall, NDCG, MRR, and search QPS."
+    )
+    dataset: FtsDatasetManager = FtsDataset.MSMARCO.manager(100_000)
+    load_timeout: float | int = config.LOAD_TIMEOUT_768D_100K
+    optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_768D_100K
+
+
+class FTSmsmarcoPerformance5M(FtsPerformanceCase):
+    case_id: CaseType = CaseType.FTSmsmarcoPerformance5M
+    name: str = "FTS Performance Test (5M Documents)"
+    description: str = (
+        "This case tests full-text search performance using BM25 on the MS MARCO dataset "
+        "with 5M documents. It measures index building time, recall, NDCG, MRR, and search QPS."
+    )
+    dataset: FtsDatasetManager = FtsDataset.MSMARCO.manager(5_000_000)
+    load_timeout: float | int = config.LOAD_TIMEOUT_768D_10M
+    optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_768D_10M
+
+
 type2case = {
     CaseType.CapacityDim960: CapacityDim960,
     CaseType.CapacityDim128: CapacityDim128,
@@ -655,4 +729,7 @@ type2case = {
     CaseType.StreamingCustomDataset: StreamingCustomDataset,
     CaseType.NewIntFilterPerformanceCase: NewIntFilterPerformanceCase,
     CaseType.LabelFilterPerformanceCase: LabelFilterPerformanceCase,
+    CaseType.FTSmsmarcoPerformance: FTSmsmarcoPerformance,
+    CaseType.FTSmsmarcoPerformance100K: FTSmsmarcoPerformance100K,
+    CaseType.FTSmsmarcoPerformance5M: FTSmsmarcoPerformance5M,
 }
