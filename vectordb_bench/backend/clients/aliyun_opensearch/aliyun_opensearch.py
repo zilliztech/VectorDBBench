@@ -3,11 +3,9 @@ import logging
 import time
 from contextlib import contextmanager
 
-from alibabacloud_ha3engine_vector import client, models
+from alibabacloud_ha3engine_vector import models
+from alibabacloud_ha3engine_vector.client import Client
 from alibabacloud_ha3engine_vector.models import QueryRequest
-from alibabacloud_searchengine20211025 import models as searchengine_models
-from alibabacloud_searchengine20211025.client import Client as searchengineClient
-from alibabacloud_tea_openapi import models as open_api_models
 
 from ..api import MetricType, VectorDB
 from .config import AliyunOpenSearchIndexConfig
@@ -28,17 +26,24 @@ class AliyunOpenSearch(VectorDB):
         drop_old: bool = False,
         **kwargs,
     ):
-        self.control_client = None
         self.dim = dim
         self.db_config = db_config
         self.case_config = db_case_config
         self.collection_name = collection_name
         self.instance_id = db_config["host"].split(".")[0].replace("http://", "").replace("https://", "")
+        self.config = models.Config(
+            endpoint=self.db_config["host"],
+            protocol="http",
+            access_user_name=self.db_config["user"],
+            access_pass_word=self.db_config["password"],
+        )
 
         self._primary_field = "id"
         self._scalar_field = "int_id"
         self._vector_field = "vector"
         self._index_name = "vector_idx"
+
+        client = Client(self.config)
 
         self.batch_size = int(
             min(
@@ -48,22 +53,16 @@ class AliyunOpenSearch(VectorDB):
         )
 
         log.info(f"Aliyun_OpenSearch client config: {self.db_config}")
-        control_config = open_api_models.Config(
-            access_key_id=self.db_config["ak"],
-            access_key_secret=self.db_config["sk"],
-            endpoint=self.db_config["control_host"],
-        )
-        self.control_client = searchengineClient(control_config)
 
         if drop_old:
             log.info(f"aliyun_OpenSearch client drop old index: {self.collection_name}")
-            if self._index_exists(self.control_client):
-                self._modify_index(self.control_client)
+            if self._index_exists(client):
+                self._modify_index(client)
             else:
-                self._create_index(self.control_client)
+                self._create_index(client)
 
-    def _create_index(self, client: searchengineClient):
-        create_table_request = searchengine_models.CreateTableRequest()
+    def _create_index(self, client: Client):
+        create_table_request = models.CreateTableRequest()
         create_table_request.name = self.collection_name
         create_table_request.primary_key = self._primary_field
         create_table_request.partition_count = 1
@@ -72,14 +71,14 @@ class AliyunOpenSearch(VectorDB):
             self._vector_field: "MULTI_FLOAT",
             self._scalar_field: "INT64",
         }
-        vector_index = searchengine_models.ModifyTableRequestVectorIndex()
+        vector_index = models.ModifyTableRequestVectorIndex()
         vector_index.index_name = self._index_name
         vector_index.dimension = self.dim
         vector_index.distance_type = self.case_config.distance_type()
         vector_index.vector_field = self._vector_field
         vector_index.vector_index_type = "HNSW"
 
-        advance_params = searchengine_models.ModifyTableRequestVectorIndexAdvanceParams()
+        advance_params = models.ModifyTableRequestVectorIndexAdvanceParams()
         str_max_neighbor_count = f'"proxima.hnsw.builder.max_neighbor_count":{self.case_config.M}'
         str_efc = f'"proxima.hnsw.builder.efconstruction":{self.case_config.ef_construction}'
         str_enable_adsampling = '"proxima.hnsw.builder.enable_adsampling":true'
@@ -95,7 +94,7 @@ class AliyunOpenSearch(VectorDB):
                 str_thread_count,
             ],
         )
-        advance_params.build_index_params = params
+        advance_params.build_index_params = "{" + params + "}"
         advance_params.search_index_params = (
             '{"proxima.hnsw.searcher.ef":400,"proxima.hnsw.searcher.dynamic_termination.prob_threshold":0.7}'
         )
@@ -103,7 +102,7 @@ class AliyunOpenSearch(VectorDB):
         create_table_request.vector_index = [vector_index]
 
         try:
-            response = client.create_table(self.instance_id, create_table_request)
+            response = client.create_table(create_table_request)
             log.info(f"create table success: {response.body}")
         except Exception as error:
             log.info(error.message)
@@ -115,20 +114,20 @@ class AliyunOpenSearch(VectorDB):
         self._active_index(client)
 
     # check if index create success
-    def _active_index(self, client: searchengineClient) -> None:
+    def _active_index(self, client: Client) -> None:
         retry_times = 0
         while True:
             time.sleep(10)
             log.info(f"begin to {retry_times} times get table")
             retry_times += 1
-            response = client.get_table(self.instance_id, self.collection_name)
+            response = client.get_table(self.collection_name)
             if response.body.result.status == "IN_USE":
                 log.info(f"{self.collection_name} table begin to use.")
                 return
 
-    def _index_exists(self, client: searchengineClient) -> bool:
+    def _index_exists(self, client: Client) -> bool:
         try:
-            client.get_table(self.instance_id, self.collection_name)
+            client.get_table(self.collection_name)
         except Exception as err:
             log.warning(f"get table from searchengine error, err={err}")
             return False
@@ -136,7 +135,7 @@ class AliyunOpenSearch(VectorDB):
             return True
 
     # check if index build success, Insert the embeddings to the vector database after index build success
-    def _index_build_success(self, client: searchengineClient) -> None:
+    def _index_build_success(self, client: Client) -> None:
         log.info("begin to check if table build success.")
         time.sleep(50)
 
@@ -145,10 +144,10 @@ class AliyunOpenSearch(VectorDB):
             time.sleep(10)
             log.info(f"begin to {retry_times} times get table fsm")
             retry_times += 1
-            request = searchengine_models.ListTasksRequest()
-            request.start = (int(time.time()) - 3600) * 1000
-            request.end = int(time.time()) * 1000
-            response = client.list_tasks(self.instance_id, request)
+            request = models.ListTasksRequest()
+            request.start = int(time.time()) - 3600
+            request.end = int(time.time())
+            response = client.list_tasks(request)
             fsms = response.body.result
             cur_fsm = None
             for fsm in fsms:
@@ -164,11 +163,11 @@ class AliyunOpenSearch(VectorDB):
             if cur_fsm["status"] == "success":
                 return
 
-    def _modify_index(self, client: searchengineClient) -> None:
+    def _modify_index(self, client: Client) -> None:
         # check if index create success
         self._active_index(client)
 
-        modify_table_request = searchengine_models.ModifyTableRequest()
+        modify_table_request = models.ModifyTableRequest()
         modify_table_request.partition_count = 1
         modify_table_request.primary_key = self._primary_field
         modify_table_request.field_schema = {
@@ -176,13 +175,13 @@ class AliyunOpenSearch(VectorDB):
             self._vector_field: "MULTI_FLOAT",
             self._scalar_field: "INT64",
         }
-        vector_index = searchengine_models.ModifyTableRequestVectorIndex()
+        vector_index = models.ModifyTableRequestVectorIndex()
         vector_index.index_name = self._index_name
         vector_index.dimension = self.dim
         vector_index.distance_type = self.case_config.distance_type()
         vector_index.vector_field = self._vector_field
         vector_index.vector_index_type = "HNSW"
-        advance_params = searchengine_models.ModifyTableRequestVectorIndexAdvanceParams()
+        advance_params = models.ModifyTableRequestVectorIndexAdvanceParams()
 
         str_max_neighbor_count = f'"proxima.hnsw.builder.max_neighbor_count":{self.case_config.M}'
         str_efc = f'"proxima.hnsw.builder.efconstruction":{self.case_config.ef_construction}'
@@ -199,7 +198,7 @@ class AliyunOpenSearch(VectorDB):
                 str_thread_count,
             ],
         )
-        advance_params.build_index_params = params
+        advance_params.build_index_params = "{" + params + "}"
         advance_params.search_index_params = (
             '{"proxima.hnsw.searcher.ef":400,"proxima.hnsw.searcher.dynamic_termination.prob_threshold":0.7}'
         )
@@ -209,7 +208,6 @@ class AliyunOpenSearch(VectorDB):
 
         try:
             response = client.modify_table(
-                self.instance_id,
                 self.collection_name,
                 modify_table_request,
             )
@@ -240,14 +238,8 @@ class AliyunOpenSearch(VectorDB):
     @contextmanager
     def init(self) -> None:
         """connect to aliyun opensearch"""
-        config = models.Config(
-            endpoint=self.db_config["host"],
-            protocol="http",
-            access_user_name=self.db_config["user"],
-            access_pass_word=self.db_config["password"],
-        )
 
-        self.client = client.Client(config)
+        self.client = Client(self.config)
 
         yield
         self.client = None

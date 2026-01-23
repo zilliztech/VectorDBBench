@@ -51,6 +51,7 @@ def Clickhouse(**parameters: Unpack[ClickhouseHNSWTypedDict]):
         db=DB.Clickhouse,
         db_config=ClickhouseConfig(
             db_label=parameters["db_label"],
+            user=parameters["user"],
             password=SecretStr(parameters["password"]) if parameters["password"] else None,
             host=parameters["host"],
             port=parameters["port"],

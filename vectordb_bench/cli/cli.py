@@ -17,10 +17,9 @@ from typing import (
 import click
 from yaml import load
 
-from vectordb_bench.backend.clients.api import MetricType
-
 from .. import config
 from ..backend.clients import DB
+from ..backend.clients.api import MetricType
 from ..interface import benchmark_runner, global_result_future
 from ..models import (
     CaseConfig,
@@ -111,7 +110,7 @@ def click_parameter_decorators_from_typed_dict(
     return deco
 
 
-def click_arg_split(ctx: click.Context, param: click.core.Option, value):  # noqa: ANN001, ARG001
+def click_arg_split(ctx: click.Context, param: click.core.Option, value: any):  # noqa: ARG001
     """Will split a comma-separated list input into an actual list.
 
     Args:
@@ -183,6 +182,16 @@ def get_custom_case_config(parameters: dict) -> dict:
                 "use_shuffled": parameters["custom_dataset_use_shuffled"],
                 "with_gt": parameters["custom_dataset_with_gt"],
             },
+        }
+    elif parameters["case_type"] == "NewIntFilterPerformanceCase":
+        custom_case_config = {
+            "dataset_with_size_type": parameters["dataset_with_size_type"],
+            "filter_rate": parameters["filter_rate"],
+        }
+    elif parameters["case_type"] == "LabelFilterPerformanceCase":
+        custom_case_config = {
+            "dataset_with_size_type": parameters["dataset_with_size_type"],
+            "label_percentage": parameters["label_percentage"],
         }
     return custom_case_config
 
@@ -303,6 +312,17 @@ class CommonTypedDict(TypedDict):
             callback=lambda *args: list(map(int, click_arg_split(*args))),
         ),
     ]
+    concurrency_timeout: Annotated[
+        int,
+        click.option(
+            "--concurrency-timeout",
+            type=int,
+            default=config.CONCURRENCY_TIMEOUT,
+            show_default=True,
+            help="Timeout (in seconds) to wait for a concurrency slot before failing. "
+            "Set to a negative value to wait indefinitely.",
+        ),
+    ]
     custom_case_name: Annotated[
         str,
         click.option(
@@ -405,6 +425,36 @@ class CommonTypedDict(TypedDict):
             show_default=True,
         ),
     ]
+    task_label: Annotated[str, click.option("--task-label", help="Task label")]
+    dataset_with_size_type: Annotated[
+        str,
+        click.option(
+            "--dataset-with-size-type",
+            help="Dataset with size type for NewIntFilterPerformanceCase/LabelFilterPerformanceCase, you can use "
+            "Medium Cohere (768dim, 1M)|Large Cohere (768dim, 10M)|Medium Bioasq (1024dim, 1M)|"
+            "Large Bioasq (1024dim, 10M)|Large OpenAI (1536dim, 5M)|Medium OpenAI (1536dim, 500K)",
+            default="Medium Cohere (768dim, 1M)",
+            show_default=True,
+        ),
+    ]
+    filter_rate: Annotated[
+        float,
+        click.option(
+            "--filter-rate",
+            help="Filter rate for NewIntFilterPerformanceCase",
+            default=0.01,
+            show_default=True,
+        ),
+    ]
+    label_percentage: Annotated[
+        float,
+        click.option(
+            "--label-percentage",
+            help="Filter rate for LabelFilterPerformanceCase",
+            default=0.01,
+            show_default=True,
+        ),
+    ]
 
 
 class HNSWBaseTypedDict(TypedDict):
@@ -444,6 +494,49 @@ class HNSWFlavor3(HNSWBaseRequiredTypedDict):
     ]
 
 
+class HNSWFlavor4(HNSWBaseRequiredTypedDict):
+    ef_search: Annotated[
+        int | None,
+        click.option("--ef-search", type=int, help="hnsw ef-search", required=True),
+    ]
+    index_type: Annotated[
+        str | None,
+        click.option(
+            "--index-type",
+            type=click.Choice(["HNSW", "HNSW_SQ", "HNSW_BQ"], case_sensitive=False),
+            help="Type of index to use. Supported values: HNSW, HNSW_SQ, HNSW_BQ",
+            required=True,
+        ),
+    ]
+
+
+class HNSWFlavor5(HNSWBaseRequiredTypedDict):
+    ef_search: Annotated[
+        int | None,
+        click.option("--ef-search", type=int, help="hnsw ef-search", required=True),
+    ]
+    index_type: Annotated[
+        str | None,
+        click.option(
+            "--index-type",
+            type=click.Choice(["HGraph"], case_sensitive=True),
+            help="Type of index to use. Supported values: HGraph",
+            required=True,
+        ),
+    ]
+    use_reorder: Annotated[
+        bool,
+        click.option(
+            "--use-reorder/--no-use-reorder",
+            is_flag=True,
+            type=bool,
+            help="use reorder index",
+            default=True,
+            show_default=True,
+        ),
+    ]
+
+
 class IVFFlatTypedDict(TypedDict):
     lists: Annotated[int | None, click.option("--lists", type=int, help="ivfflat lists")]
     probes: Annotated[int | None, click.option("--probes", type=int, help="ivfflat probes")]
@@ -457,6 +550,57 @@ class IVFFlatTypedDictN(TypedDict):
     nprobe: Annotated[
         int | None,
         click.option("--probes", "nprobe", type=int, help="ivfflat probes", required=True),
+    ]
+
+
+class OceanBaseIVFTypedDict(TypedDict):
+    index_type: Annotated[
+        str | None,
+        click.option(
+            "--index-type",
+            type=click.Choice(["IVF_FLAT", "IVF_SQ8", "IVF_PQ"], case_sensitive=False),
+            help="Type of index to use. Supported values: IVF_FLAT, IVF_SQ8, IVF_PQ",
+            required=True,
+        ),
+    ]
+    nlist: Annotated[
+        int | None,
+        click.option("--nlist", "nlist", type=int, help="Number of cluster centers", required=True),
+    ]
+    nbits: Annotated[
+        int | None,
+        click.option(
+            "--nbits",
+            "nbits",
+            type=int,
+            help="Number of bits used to encode the index of a sub-vector's centroid in the compressed representation",
+        ),
+    ]
+    sample_per_nlist: Annotated[
+        int | None,
+        click.option(
+            "--sample_per_nlist",
+            "sample_per_nlist",
+            type=int,
+            help="The cluster centers are calculated by total sampling sample_per_nlist * nlist vectors",
+            required=True,
+        ),
+    ]
+    ivf_nprobes: Annotated[
+        int | None,
+        click.option(
+            "--ivf_nprobes",
+            "ivf_nprobes",
+            type=str,
+            help="How many clustering centers to search during the query",
+            required=True,
+        ),
+    ]
+    m: Annotated[
+        int | None,
+        click.option(
+            "--m", "m", type=int, help="The number of sub-vectors that each data vector is divided into during IVF-PQ"
+        ),
     ]
 
 
@@ -489,6 +633,7 @@ def run(
             concurrency_search_config=ConcurrencySearchConfig(
                 concurrency_duration=parameters["concurrency_duration"],
                 num_concurrency=[int(s) for s in parameters["num_concurrency"]],
+                concurrency_timeout=parameters["concurrency_timeout"],
             ),
             custom_case=get_custom_case_config(parameters),
         ),
@@ -499,10 +644,14 @@ def run(
             parameters["search_concurrent"],
         ),
     )
+    task_label = parameters["task_label"]
 
     log.info(f"Task:\n{pformat(task)}\n")
     if not parameters["dry_run"]:
-        benchmark_runner.run([task])
+        benchmark_runner.run([task], task_label)
         time.sleep(5)
         if global_result_future:
             wait([global_result_future])
+
+        while benchmark_runner.has_running():
+            time.sleep(1)

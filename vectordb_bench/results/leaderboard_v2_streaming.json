@@ -1,0 +1,128 @@
+[
+    {
+        "dataset": "Cohere (Large)",
+        "db": "ElasticCloud",
+        "label": "8c60g",
+        "db_name": "ElasticCloud-8c60g",
+        "insert_rate": 500,
+        "streaming_qps": 61.6708,
+        "streaming_latency": 0.0794
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "ElasticCloud",
+        "label": "8c60g",
+        "db_name": "ElasticCloud-8c60g",
+        "insert_rate": 1000,
+        "streaming_qps": 61.8172,
+        "streaming_latency": 0.2223
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "Milvus",
+        "label": "16c64g-sq8",
+        "db_name": "Milvus-16c64g-sq8",
+        "insert_rate": 500,
+        "streaming_qps": 305.9971,
+        "streaming_latency": 0.005
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "Milvus",
+        "label": "16c64g-sq8",
+        "db_name": "Milvus-16c64g-sq8",
+        "insert_rate": 1000,
+        "streaming_qps": 155.9613,
+        "streaming_latency": 0.0203
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "Pinecone",
+        "label": "p2.x8-1node",
+        "db_name": "Pinecone-p2.x8-1node",
+        "insert_rate": 500,
+        "streaming_qps": 367.4299,
+        "streaming_latency": 1.8286
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "Pinecone",
+        "label": "p2.x8-1node",
+        "db_name": "Pinecone-p2.x8-1node",
+        "insert_rate": 1000,
+        "streaming_qps": 369.6771,
+        "streaming_latency": 5.992
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "QdrantCloud",
+        "label": "16c64g",
+        "db_name": "QdrantCloud-16c64g",
+        "insert_rate": 500,
+        "streaming_qps": 393.753,
+        "streaming_latency": 0.0162
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "QdrantCloud",
+        "label": "16c64g",
+        "db_name": "QdrantCloud-16c64g",
+        "insert_rate": 1000,
+        "streaming_qps": 347.5774,
+        "streaming_latency": 0.0118
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "OpenSearch",
+        "label": "16c128g",
+        "db_name": "OpenSearch-16c128g",
+        "insert_rate": 1000,
+        "streaming_qps": 149.7168,
+        "streaming_latency": 0.098
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "OpenSearch",
+        "label": "16c128g",
+        "db_name": "OpenSearch-16c128g",
+        "insert_rate": 500,
+        "streaming_qps": 161.6694,
+        "streaming_latency": 0.052
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "ZillizCloud",
+        "label": "8cu-perf",
+        "db_name": "ZillizCloud-8cu-perf",
+        "insert_rate": 500,
+        "streaming_qps": 2118.7516,
+        "streaming_latency": 0.0068
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "ZillizCloud",
+        "label": "8cu-perf",
+        "db_name": "ZillizCloud-8cu-perf",
+        "insert_rate": 1000,
+        "streaming_qps": 1860.2575,
+        "streaming_latency": 0.0101
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "S3Vectors",
+        "label": "",
+        "db_name": "S3Vectors",
+        "insert_rate": 500,
+        "streaming_qps": 180.9549,
+        "streaming_latency": 0.4204
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "S3Vectors",
+        "label": "",
+        "db_name": "S3Vectors",
+        "insert_rate": 1000,
+        "streaming_qps": 167.2689,
+        "streaming_latency": 0.5048
+    }
+]

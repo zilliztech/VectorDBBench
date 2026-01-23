@@ -9,10 +9,10 @@ import redis
 from redis import Redis
 from redis.cluster import RedisCluster
 from redis.commands.search.field import NumericField, TagField, VectorField
-from redis.commands.search.indexDefinition import IndexDefinition
+from redis.commands.search.indexDefinition import IndexDefinition, IndexType
 from redis.commands.search.query import Query
 
-from ..api import IndexType, VectorDB
+from ..api import VectorDB
 from .config import MemoryDBIndexConfig
 
 log = logging.getLogger(__name__)

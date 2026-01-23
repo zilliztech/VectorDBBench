@@ -29,6 +29,28 @@ class MilvusTypedDict(TypedDict):
         str | None,
         click.option("--password", type=str, help="Db password", required=False),
     ]
+    num_shards: Annotated[
+        int,
+        click.option(
+            "--num-shards",
+            type=int,
+            help="Number of shards",
+            required=False,
+            default=1,
+            show_default=True,
+        ),
+    ]
+    replica_number: Annotated[
+        int,
+        click.option(
+            "--replica-number",
+            type=int,
+            help="Number of replicas",
+            required=False,
+            default=1,
+            show_default=True,
+        ),
+    ]
 
 
 class MilvusAutoIndexTypedDict(CommonTypedDict, MilvusTypedDict): ...
@@ -45,7 +67,9 @@ def MilvusAutoIndex(**parameters: Unpack[MilvusAutoIndexTypedDict]):
             db_label=parameters["db_label"],
             uri=SecretStr(parameters["uri"]),
             user=parameters["user_name"],
-            password=SecretStr(parameters["password"]),
+            password=SecretStr(parameters["password"]) if parameters["password"] else None,
+            num_shards=int(parameters["num_shards"]),
+            replica_number=int(parameters["replica_number"]),
         ),
         db_case_config=AutoIndexConfig(),
         **parameters,
@@ -63,7 +87,9 @@ def MilvusFlat(**parameters: Unpack[MilvusAutoIndexTypedDict]):
             db_label=parameters["db_label"],
             uri=SecretStr(parameters["uri"]),
             user=parameters["user_name"],
-            password=SecretStr(parameters["password"]),
+            password=SecretStr(parameters["password"]) if parameters["password"] else None,
+            num_shards=int(parameters["num_shards"]),
+            replica_number=int(parameters["replica_number"]),
         ),
         db_case_config=FLATConfig(),
         **parameters,
@@ -85,11 +111,167 @@ def MilvusHNSW(**parameters: Unpack[MilvusHNSWTypedDict]):
             uri=SecretStr(parameters["uri"]),
             user=parameters["user_name"],
             password=SecretStr(parameters["password"]) if parameters["password"] else None,
+            num_shards=int(parameters["num_shards"]),
+            replica_number=int(parameters["replica_number"]),
         ),
         db_case_config=HNSWConfig(
             M=parameters["m"],
             efConstruction=parameters["ef_construction"],
             ef=parameters["ef_search"],
+        ),
+        **parameters,
+    )
+
+
+class MilvusRefineTypedDict(TypedDict):
+    refine: Annotated[
+        bool,
+        click.option(
+            "--refine",
+            type=bool,
+            required=True,
+            help="Whether refined data is reserved during index building.",
+        ),
+    ]
+    refine_type: Annotated[
+        str | None,
+        click.option(
+            "--refine-type",
+            type=click.Choice(["SQ6", "SQ8", "BF16", "FP16", "FP32"], case_sensitive=False),
+            help="The data type of the refine index to use. Supported values: SQ6,SQ8,BF16,FP16,FP32",
+            required=True,
+        ),
+    ]
+    refine_k: Annotated[
+        float,
+        click.option(
+            "--refine-k",
+            type=float,
+            help="The magnification factor of refine compared to k.",
+            required=True,
+        ),
+    ]
+
+
+class MilvusHNSWPQTypedDict(CommonTypedDict, MilvusTypedDict, MilvusHNSWTypedDict, MilvusRefineTypedDict):
+    nbits: Annotated[
+        int,
+        click.option(
+            "--nbits",
+            type=int,
+            required=True,
+        ),
+    ]
+
+
+@cli.command()
+@click_parameter_decorators_from_typed_dict(MilvusHNSWPQTypedDict)
+def MilvusHNSWPQ(**parameters: Unpack[MilvusHNSWPQTypedDict]):
+    from .config import HNSWPQConfig, MilvusConfig
+
+    run(
+        db=DBTYPE,
+        db_config=MilvusConfig(
+            db_label=parameters["db_label"],
+            uri=SecretStr(parameters["uri"]),
+            user=parameters["user_name"],
+            password=SecretStr(parameters["password"]) if parameters["password"] else None,
+            num_shards=int(parameters["num_shards"]),
+            replica_number=int(parameters["replica_number"]),
+        ),
+        db_case_config=HNSWPQConfig(
+            M=parameters["m"],
+            efConstruction=parameters["ef_construction"],
+            ef=parameters["ef_search"],
+            nbits=parameters["nbits"],
+            refine=parameters["refine"],
+            refine_type=parameters["refine_type"],
+            refine_k=parameters["refine_k"],
+        ),
+        **parameters,
+    )
+
+
+class MilvusHNSWPRQTypedDict(
+    CommonTypedDict,
+    MilvusTypedDict,
+    MilvusHNSWPQTypedDict,
+):
+    nrq: Annotated[
+        int,
+        click.option(
+            "--nrq",
+            type=int,
+            help="The number of residual subquantizers.",
+            required=True,
+        ),
+    ]
+
+
+@cli.command()
+@click_parameter_decorators_from_typed_dict(MilvusHNSWPRQTypedDict)
+def MilvusHNSWPRQ(**parameters: Unpack[MilvusHNSWPRQTypedDict]):
+    from .config import HNSWPRQConfig, MilvusConfig
+
+    run(
+        db=DBTYPE,
+        db_config=MilvusConfig(
+            db_label=parameters["db_label"],
+            uri=SecretStr(parameters["uri"]),
+            user=parameters["user_name"],
+            password=SecretStr(parameters["password"]) if parameters["password"] else None,
+            num_shards=int(parameters["num_shards"]),
+            replica_number=int(parameters["replica_number"]),
+        ),
+        db_case_config=HNSWPRQConfig(
+            M=parameters["m"],
+            efConstruction=parameters["ef_construction"],
+            ef=parameters["ef_search"],
+            nbits=parameters["nbits"],
+            refine=parameters["refine"],
+            refine_type=parameters["refine_type"],
+            refine_k=parameters["refine_k"],
+            nrq=parameters["nrq"],
+        ),
+        **parameters,
+    )
+
+
+class MilvusHNSWSQTypedDict(CommonTypedDict, MilvusTypedDict, MilvusHNSWTypedDict, MilvusRefineTypedDict):
+    sq_type: Annotated[
+        str | None,
+        click.option(
+            "--sq-type",
+            type=click.Choice(["SQ6", "SQ8", "BF16", "FP16", "FP32"], case_sensitive=False),
+            help="Scalar quantizer type. Supported values: SQ6,SQ8,BF16,FP16,FP32",
+            required=True,
+        ),
+    ]
+
+
+@cli.command()
+@click_parameter_decorators_from_typed_dict(MilvusHNSWSQTypedDict)
+def MilvusHNSWSQ(**parameters: Unpack[MilvusHNSWSQTypedDict]):
+    from .config import HNSWSQConfig, MilvusConfig
+
+    run(
+        db=DBTYPE,
+        db_config=MilvusConfig(
+            db_label=parameters["db_label"],
+            uri=SecretStr(parameters["uri"]),
+            user=parameters["user_name"],
+            password=SecretStr(parameters["password"]) if parameters["password"] else None,
+            num_shards=int(parameters["num_shards"]),
+            replica_number=int(parameters["replica_number"]),
+        ),
+        db_case_config=HNSWSQConfig(
+            M=parameters["m"],
+            efConstruction=parameters["ef_construction"],
+            ef=parameters["ef_search"],
+            sq_type=parameters["sq_type"],
+            refine=parameters["refine"],
+            refine_type=parameters["refine_type"],
+            refine_k=parameters["refine_k"],
         ),
         **parameters,
     )
@@ -109,7 +291,9 @@ def MilvusIVFFlat(**parameters: Unpack[MilvusIVFFlatTypedDict]):
             db_label=parameters["db_label"],
             uri=SecretStr(parameters["uri"]),
             user=parameters["user_name"],
-            password=SecretStr(parameters["password"]),
+            password=SecretStr(parameters["password"]) if parameters["password"] else None,
+            num_shards=int(parameters["num_shards"]),
+            replica_number=int(parameters["replica_number"]),
         ),
         db_case_config=IVFFlatConfig(
             nlist=parameters["nlist"],
@@ -130,11 +314,79 @@ def MilvusIVFSQ8(**parameters: Unpack[MilvusIVFFlatTypedDict]):
             db_label=parameters["db_label"],
             uri=SecretStr(parameters["uri"]),
             user=parameters["user_name"],
-            password=SecretStr(parameters["password"]),
+            password=SecretStr(parameters["password"]) if parameters["password"] else None,
+            num_shards=int(parameters["num_shards"]),
+            replica_number=int(parameters["replica_number"]),
         ),
         db_case_config=IVFSQ8Config(
             nlist=parameters["nlist"],
             nprobe=parameters["nprobe"],
+        ),
+        **parameters,
+    )
+
+
+class MilvusIVFRABITQTypedDict(CommonTypedDict, MilvusTypedDict, MilvusIVFFlatTypedDict):
+    rbq_bits_query: Annotated[
+        int,
+        click.option(
+            "--rbq-bits-query",
+            type=int,
+            help="The level of quantization of a query vector. Use 1…8 for the SQ1…SQ8 and 0 to disable.",
+            required=True,
+        ),
+    ]
+    refine: Annotated[
+        bool,
+        click.option(
+            "--refine",
+            type=bool,
+            required=True,
+            help="Whether refined data is reserved during index building.",
+        ),
+    ]
+    refine_type: Annotated[
+        str | None,
+        click.option(
+            "--refine-type",
+            type=click.Choice(["SQ6", "SQ8", "BF16", "FP16", "FP32"], case_sensitive=False),
+            help="The data type of the refine index to use. Supported values: SQ6,SQ8,BF16,FP16,FP32",
+            required=True,
+        ),
+    ]
+    refine_k: Annotated[
+        float,
+        click.option(
+            "--refine-k",
+            type=float,
+            help="The magnification factor of refine compared to k.",
+            required=True,
+        ),
+    ]
+
+
+@cli.command()
+@click_parameter_decorators_from_typed_dict(MilvusIVFRABITQTypedDict)
+def MilvusIVFRabitQ(**parameters: Unpack[MilvusIVFRABITQTypedDict]):
+    from .config import IVFRABITQConfig, MilvusConfig
+
+    run(
+        db=DBTYPE,
+        db_config=MilvusConfig(
+            db_label=parameters["db_label"],
+            uri=SecretStr(parameters["uri"]),
+            user=parameters["user_name"],
+            password=SecretStr(parameters["password"]) if parameters["password"] else None,
+            num_shards=int(parameters["num_shards"]),
+            replica_number=int(parameters["replica_number"]),
+        ),
+        db_case_config=IVFRABITQConfig(
+            nlist=parameters["nlist"],
+            nprobe=parameters["nprobe"],
+            rbq_bits_query=parameters["rbq_bits_query"],
+            refine=parameters["refine"],
+            refine_type=parameters["refine_type"],
+            refine_k=parameters["refine_k"],
         ),
         **parameters,
     )
@@ -155,7 +407,9 @@ def MilvusDISKANN(**parameters: Unpack[MilvusDISKANNTypedDict]):
             db_label=parameters["db_label"],
             uri=SecretStr(parameters["uri"]),
             user=parameters["user_name"],
-            password=SecretStr(parameters["password"]),
+            password=SecretStr(parameters["password"]) if parameters["password"] else None,
+            num_shards=int(parameters["num_shards"]),
+            replica_number=int(parameters["replica_number"]),
         ),
         db_case_config=DISKANNConfig(
             search_list=parameters["search_list"],
@@ -183,7 +437,9 @@ def MilvusGPUIVFFlat(**parameters: Unpack[MilvusGPUIVFTypedDict]):
             db_label=parameters["db_label"],
             uri=SecretStr(parameters["uri"]),
             user=parameters["user_name"],
-            password=SecretStr(parameters["password"]),
+            password=SecretStr(parameters["password"]) if parameters["password"] else None,
+            num_shards=int(parameters["num_shards"]),
+            replica_number=int(parameters["replica_number"]),
         ),
         db_case_config=GPUIVFFlatConfig(
             nlist=parameters["nlist"],
@@ -217,7 +473,9 @@ def MilvusGPUBruteForce(**parameters: Unpack[MilvusGPUBruteForceTypedDict]):
             db_label=parameters["db_label"],
             uri=SecretStr(parameters["uri"]),
             user=parameters["user_name"],
-            password=SecretStr(parameters["password"]),
+            password=SecretStr(parameters["password"]) if parameters["password"] else None,
+            num_shards=int(parameters["num_shards"]),
+            replica_number=int(parameters["replica_number"]),
         ),
         db_case_config=GPUBruteForceConfig(
             metric_type=parameters["metric_type"],
@@ -248,7 +506,9 @@ def MilvusGPUIVFPQ(**parameters: Unpack[MilvusGPUIVFPQTypedDict]):
             db_label=parameters["db_label"],
             uri=SecretStr(parameters["uri"]),
             user=parameters["user_name"],
-            password=SecretStr(parameters["password"]),
+            password=SecretStr(parameters["password"]) if parameters["password"] else None,
+            num_shards=int(parameters["num_shards"]),
+            replica_number=int(parameters["replica_number"]),
         ),
         db_case_config=GPUIVFPQConfig(
             nlist=parameters["nlist"],
@@ -287,7 +547,9 @@ def MilvusGPUCAGRA(**parameters: Unpack[MilvusGPUCAGRATypedDict]):
             db_label=parameters["db_label"],
             uri=SecretStr(parameters["uri"]),
             user=parameters["user_name"],
-            password=SecretStr(parameters["password"]),
+            password=SecretStr(parameters["password"]) if parameters["password"] else None,
+            num_shards=int(parameters["num_shards"]),
+            replica_number=int(parameters["replica_number"]),
         ),
         db_case_config=GPUCAGRAConfig(
             intermediate_graph_degree=parameters["intermediate_graph_degree"],

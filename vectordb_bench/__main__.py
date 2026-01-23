@@ -17,7 +17,7 @@ def run_streamlit():
     cmd = [
         "streamlit",
         "run",
-        f"{pathlib.Path(__file__).parent}/frontend/vdb_benchmark.py",
+        f"{pathlib.Path(__file__).parent}/frontend/vdbbench.py",
         "--logger.level",
         "info",
         "--theme.base",

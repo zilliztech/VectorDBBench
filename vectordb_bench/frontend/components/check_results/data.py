@@ -1,6 +1,6 @@
 from collections import defaultdict
 from dataclasses import asdict
-from vectordb_bench.metric import isLowerIsBetterMetric
+from vectordb_bench.metric import QPS_METRIC, isLowerIsBetterMetric
 from vectordb_bench.models import CaseResult, ResultLabel
 
 
@@ -22,8 +22,7 @@ def getFilterTasks(
     filterTasks = [
         task
         for task in tasks
-        if task.task_config.db_name in dbNames
-        and task.task_config.case_config.case_id.case_cls(task.task_config.case_config.custom_case).name in caseNames
+        if task.task_config.db_name in dbNames and task.task_config.case_config.case_name in caseNames
     ]
     return filterTasks
 
@@ -35,17 +34,22 @@ def mergeTasks(tasks: list[CaseResult]):
         db = task.task_config.db.value
         db_label = task.task_config.db_config.db_label or ""
         version = task.task_config.db_config.version or ""
-        case = task.task_config.case_config.case_id.case_cls(task.task_config.case_config.custom_case)
+        case = task.task_config.case_config.case
+        case_name = case.name
+        dataset_name = case.dataset.data.full_name
+        filter_rate = case.filter_rate
         dbCaseMetricsMap[db_name][case.name] = {
             "db": db,
             "db_label": db_label,
             "version": version,
+            "dataset_name": dataset_name,
+            "filter_rate": filter_rate,
             "metrics": mergeMetrics(
-                dbCaseMetricsMap[db_name][case.name].get("metrics", {}),
+                dbCaseMetricsMap[db_name][case_name].get("metrics", {}),
                 asdict(task.metrics),
             ),
             "label": getBetterLabel(
-                dbCaseMetricsMap[db_name][case.name].get("label", ResultLabel.FAILED),
+                dbCaseMetricsMap[db_name][case_name].get("label", ResultLabel.FAILED),
                 task.label,
             ),
         }
@@ -59,12 +63,16 @@ def mergeTasks(tasks: list[CaseResult]):
             db_label = metricInfo["db_label"]
             version = metricInfo["version"]
             label = metricInfo["label"]
+            dataset_name = metricInfo["dataset_name"]
+            filter_rate = metricInfo["filter_rate"]
             if label == ResultLabel.NORMAL:
                 mergedTasks.append(
                     {
                         "db_name": db_name,
                         "db": db,
                         "db_label": db_label,
+                        "dataset_name": dataset_name,
+                        "filter_rate": filter_rate,
                         "version": version,
                         "case_name": case_name,
                         "metricsSet": set(metrics.keys()),
@@ -77,12 +85,9 @@ def mergeTasks(tasks: list[CaseResult]):
     return mergedTasks, failedTasks
 
 
+# for same db-label, we use the results with the highest qps
 def mergeMetrics(metrics_1: dict, metrics_2: dict) -> dict:
-    metrics = {**metrics_1}
-    for key, value in metrics_2.items():
-        metrics[key] = getBetterMetric(key, value, metrics[key]) if key in metrics else value
-
-    return metrics
+    return metrics_1 if metrics_1.get(QPS_METRIC, 0) > metrics_2.get(QPS_METRIC, 0) else metrics_2
 
 
 def getBetterMetric(metric, value_1, value_2):

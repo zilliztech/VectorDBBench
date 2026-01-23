@@ -1,3 +1,4 @@
+import logging
 from typing import Annotated, TypedDict, Unpack
 
 import click
@@ -5,18 +6,21 @@ from pydantic import SecretStr
 
 from ....cli.cli import (
     CommonTypedDict,
-    HNSWFlavor2,
+    HNSWFlavor1,
     cli,
     click_parameter_decorators_from_typed_dict,
     run,
 )
 from .. import DB
+from .config import AWSOS_Engine, AWSOSQuantization
+
+log = logging.getLogger(__name__)
 
 
 class AWSOpenSearchTypedDict(TypedDict):
     host: Annotated[str, click.option("--host", type=str, help="Db host", required=True)]
-    port: Annotated[int, click.option("--port", type=int, default=443, help="Db Port")]
-    user: Annotated[str, click.option("--user", type=str, default="admin", help="Db User")]
+    port: Annotated[int, click.option("--port", type=int, default=80, help="Db Port")]
+    user: Annotated[str, click.option("--user", type=str, help="Db User")]
     password: Annotated[str, click.option("--password", type=str, help="Db password")]
     number_of_shards: Annotated[
         int,
@@ -38,13 +42,67 @@ class AWSOpenSearchTypedDict(TypedDict):
         ),
     ]
 
+    engine: Annotated[
+        str,
+        click.option(
+            "--engine",
+            type=click.Choice(["faiss", "lucene", "s3vector"], case_sensitive=False),
+            help="HNSW algorithm implementation to use",
+            default="faiss",
+        ),
+    ]
+
+    metric_type: Annotated[
+        str,
+        click.option(
+            "--metric-type",
+            type=click.Choice(["l2", "cosine", "ip"], case_sensitive=False),
+            help="Distance metric type for vector similarity",
+            default="l2",
+        ),
+    ]
+
+    number_of_segments: Annotated[
+        int,
+        click.option("--number-of-segments", type=int, help="Target number of segments after merging", default=1),
+    ]
+
+    refresh_interval: Annotated[
+        str,
+        click.option(
+            "--refresh-interval", type=str, help="How often to make new data available for search", default="60s"
+        ),
+    ]
+
+    force_merge_enabled: Annotated[
+        bool,
+        click.option("--force-merge-enabled", type=bool, help="Whether to perform force merge operation", default=True),
+    ]
+
+    flush_threshold_size: Annotated[
+        str,
+        click.option(
+            "--flush-threshold-size", type=str, help="Size threshold for flushing the transaction log", default="5120mb"
+        ),
+    ]
+
+    cb_threshold: Annotated[
+        str,
+        click.option(
+            "--cb-threshold",
+            type=str,
+            help="k-NN Memory circuit breaker threshold",
+            default="50%",
+        ),
+    ]
+
     index_thread_qty_during_force_merge: Annotated[
         int,
         click.option(
             "--index-thread-qty-during-force-merge",
             type=int,
             help="Thread count during force merge operations",
-            default=4,
+            default=8,
         ),
     ]
 
@@ -58,48 +116,71 @@ class AWSOpenSearchTypedDict(TypedDict):
         ),
     ]
 
-    number_of_segments: Annotated[
-        int,
-        click.option("--number-of-segments", type=int, help="Target number of segments after merging", default=1),
-    ]
-
-    refresh_interval: Annotated[
-        int,
+    ef_construction: Annotated[
+        int | None,
         click.option(
-            "--refresh-interval", type=str, help="How often to make new data available for search", default="60s"
+            "--ef-construction",
+            type=int,
+            help="ef parameter for HNSW construction (not used for s3vector engine)",
+            default=None,
+            required=False,
         ),
     ]
 
-    force_merge_enabled: Annotated[
-        int,
-        click.option("--force-merge-enabled", type=bool, help="Whether to perform force merge operation", default=True),
-    ]
-
-    flush_threshold_size: Annotated[
-        int,
+    quantization_type: Annotated[
+        str | None,
         click.option(
-            "--flush-threshold-size", type=str, help="Size threshold for flushing the transaction log", default="5120mb"
+            "--quantization-type",
+            type=click.Choice(["fp32", "fp16", "bq"]),
+            help="quantization type for vectors (in index)",
+            default="fp32",
+            required=False,
         ),
     ]
 
-    cb_threshold: Annotated[
-        int,
+    oversample_factor: Annotated[
+        float,
         click.option(
-            "--cb-threshold",
-            type=str,
-            help="k-NN Memory circuit breaker threshold",
-            default="50%",
+            "--oversample-factor",
+            type=float,
+            help="Oversample factor for vector search",
+            default=1.0,
+        ),
+    ]
+
+    on_disk: Annotated[
+        bool,
+        click.option(
+            "--on-disk",
+            is_flag=True,
+            help="Enable on-disk vector storage mode",
+            default=False,
         ),
     ]
 
 
-class AWSOpenSearchHNSWTypedDict(CommonTypedDict, AWSOpenSearchTypedDict, HNSWFlavor2): ...
+class AWSOpenSearchHNSWTypedDict(CommonTypedDict, AWSOpenSearchTypedDict, HNSWFlavor1): ...
 
 
 @cli.command()
 @click_parameter_decorators_from_typed_dict(AWSOpenSearchHNSWTypedDict)
 def AWSOpenSearch(**parameters: Unpack[AWSOpenSearchHNSWTypedDict]):
     from .config import AWSOpenSearchConfig, AWSOpenSearchIndexConfig
+
+    # Set default values for HNSW parameters if not provided and not using s3vector
+    engine = AWSOS_Engine(parameters["engine"])
+    ef_construction = parameters.get("ef_construction")
+    ef_search = parameters.get("ef_search")
+    m = parameters.get("m")
+
+    # For non-s3vector engines, provide defaults if None
+    if engine != AWSOS_Engine.s3vector:
+        if ef_construction is None:
+            ef_construction = 200
+        if ef_search is None:
+            ef_search = 100
+        if m is None:
+            m = 16
 
     run(
         db=DB.AWSOpenSearch,
@@ -117,9 +198,17 @@ def AWSOpenSearch(**parameters: Unpack[AWSOpenSearchHNSWTypedDict]):
             refresh_interval=parameters["refresh_interval"],
             force_merge_enabled=parameters["force_merge_enabled"],
             flush_threshold_size=parameters["flush_threshold_size"],
-            number_of_indexing_clients=parameters["number_of_indexing_clients"],
             index_thread_qty_during_force_merge=parameters["index_thread_qty_during_force_merge"],
+            number_of_indexing_clients=parameters["number_of_indexing_clients"],
             cb_threshold=parameters["cb_threshold"],
+            efConstruction=ef_construction,
+            ef_search=ef_search,
+            M=m,
+            engine=engine,
+            quantization_type=AWSOSQuantization(parameters["quantization_type"]),
+            metric_type_name=parameters["metric_type"],
+            on_disk=parameters["on_disk"],
+            oversample_factor=parameters["oversample_factor"],
         ),
         **parameters,
     )

@@ -4,6 +4,8 @@ from enum import Enum
 
 from pydantic import BaseModel, SecretStr, validator
 
+from vectordb_bench.backend.filter import Filter, FilterOp
+
 
 class MetricType(str, Enum):
     L2 = "L2"
@@ -16,19 +18,41 @@ class MetricType(str, Enum):
 
 class IndexType(str, Enum):
     HNSW = "HNSW"
+    HNSW_SQ = "HNSW_SQ"
+    HNSW_BQ = "HNSW_BQ"
+    HNSW_PQ = "HNSW_PQ"
+    HNSW_PRQ = "HNSW_PRQ"
     DISKANN = "DISKANN"
     STREAMING_DISKANN = "DISKANN"
     IVFFlat = "IVF_FLAT"
+    IVFPQ = "IVF_PQ"
     IVFSQ8 = "IVF_SQ8"
+    IVF_RABITQ = "IVF_RABITQ"
     Flat = "FLAT"
     AUTOINDEX = "AUTOINDEX"
     ES_HNSW = "hnsw"
+    ES_HNSW_INT8 = "int8_hnsw"
+    ES_HNSW_INT4 = "int4_hnsw"
+    ES_HNSW_BBQ = "bbq_hnsw"
+    TES_VSEARCH = "vsearch"
     ES_IVFFlat = "ivfflat"
     GPU_IVF_FLAT = "GPU_IVF_FLAT"
     GPU_BRUTE_FORCE = "GPU_BRUTE_FORCE"
     GPU_IVF_PQ = "GPU_IVF_PQ"
     GPU_CAGRA = "GPU_CAGRA"
     SCANN = "scann"
+    SCANN_MILVUS = "SCANN_MILVUS"
+    Hologres_HGraph = "HGraph"
+    Hologres_Graph = "Graph"
+    NONE = "NONE"
+
+
+class SQType(str, Enum):
+    SQ6 = "SQ6"
+    SQ8 = "SQ8"
+    BF16 = "BF16"
+    FP16 = "FP16"
+    FP32 = "FP32"
 
 
 class DBConfig(ABC, BaseModel):
@@ -111,6 +135,22 @@ class VectorDB(ABC):
         >>>     milvus.search_embedding()
     """
 
+    "The filtering types supported by the VectorDB Client, default only non-filter"
+    supported_filter_types: list[FilterOp] = [FilterOp.NonFilter]
+    name: str = ""
+
+    @classmethod
+    def filter_supported(cls, filters: Filter) -> bool:
+        """Ensure that the filters are supported before testing filtering cases."""
+        return filters.type in cls.supported_filter_types
+
+    def prepare_filter(self, filters: Filter):
+        """The vector database is allowed to pre-prepare different filter conditions
+        to reduce redundancy during the testing process.
+
+        (All search tests in a case use consistent filtering conditions.)"""
+        return
+
     @abstractmethod
     def __init__(
         self,
@@ -161,6 +201,7 @@ class VectorDB(ABC):
         self,
         embeddings: list[list[float]],
         metadata: list[int],
+        labels_data: list[str] | None = None,
         **kwargs,
     ) -> tuple[int, Exception]:
         """Insert the embeddings to the vector database. The default number of embeddings for
@@ -181,7 +222,6 @@ class VectorDB(ABC):
         self,
         query: list[float],
         k: int = 100,
-        filters: dict | None = None,
     ) -> list[int]:
         """Get k most similar embeddings to query vector.
 

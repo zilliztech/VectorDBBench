@@ -1,17 +1,21 @@
 import logging
 import pathlib
 from datetime import date, datetime
-from enum import Enum, StrEnum, auto
+from enum import Enum, StrEnum
 from typing import Self
 
 import ujson
 
+from vectordb_bench.backend.cases import type2case
+from vectordb_bench.backend.dataset import DatasetWithSizeMap
+
 from . import config
-from .backend.cases import CaseType
+from .backend.cases import Case, CaseType
 from .backend.clients import (
     DB,
     DBCaseConfig,
     DBConfig,
+    EmptyDBCaseConfig,
 )
 from .base import BaseModel
 from .metric import Metric
@@ -29,12 +33,18 @@ class PerformanceTimeoutError(TimeoutError):
         super().__init__("Performance case optimize timeout")
 
 
+class ConcurrencySlotTimeoutError(TimeoutError):
+    def __init__(self):
+        super().__init__("Timeout while waiting for a concurrency slot to become available")
+
+
 class CaseConfigParamType(Enum):
     """
     Value will be the key of CaseConfig.params and displayed in UI
     """
 
     IndexType = "IndexType"
+    index = "index"
     M = "M"
     EFConstruction = "efConstruction"
     ef_construction = "ef_construction"
@@ -55,6 +65,7 @@ class CaseConfigParamType(Enum):
     quantizedFetchLimit = "quantized_fetch_limit"
     m = "m"
     nbits = "nbits"
+    nrq = "nrq"
     intermediate_graph_degree = "intermediate_graph_degree"
     graph_degree = "graph_degree"
     itopk_size = "itopk_size"
@@ -65,12 +76,22 @@ class CaseConfigParamType(Enum):
     build_algo = "build_algo"
     cache_dataset_on_device = "cache_dataset_on_device"
     refine_ratio = "refine_ratio"
+    refine = "refine"
+    refine_type = "refine_type"
+    refine_k = "refine_k"
+    rbq_bits_query = "rbq_bits_query"
+    sq_type = "sq_type"
+    with_raw_data = "with_raw_data"
+    reorder_k = "reorder_k"
     level = "level"
     maintenance_work_mem = "maintenance_work_mem"
     max_parallel_workers = "max_parallel_workers"
     storage_layout = "storage_layout"
     num_neighbors = "num_neighbors"
     max_neighbors = "max_neighbors"
+    quantized_fetch_limit = "quantized_fetch_limit"
+    pq_param_num_chunks = "pq_param_num_chunks"
+    reranking_metric = "reranking_metric"
     l_value_ib = "l_value_ib"
     l_value_is = "l_value_is"
     search_list_size = "search_list_size"
@@ -90,10 +111,49 @@ class CaseConfigParamType(Enum):
     maxNumPrefetchDatasets = "max_num_prefetch_datasets"
     storage_engine = "storage_engine"
     max_cache_size = "max_cache_size"
-
-    # mongodb params
+    num_partitions = "num_partitions"
+    num_sub_vectors = "num_sub_vectors"
+    sample_rate = "sample_rate"
+    index_thread_qty_during_force_merge = "index_thread_qty_during_force_merge"
+    number_of_indexing_clients = "number_of_indexing_clients"
+    number_of_shards = "number_of_shards"
+    number_of_replicas = "number_of_replicas"
+    index_thread_qty = "index_thread_qty"
+    engine_name = "engine_name"
+    metric_type_name = "metric_type_name"
     mongodb_quantization_type = "quantization"
     mongodb_num_candidates_ratio = "num_candidates_ratio"
+    use_partition_key = "use_partition_key"
+    refresh_interval = "refresh_interval"
+    use_rescore = "use_rescore"
+    oversample_ratio = "oversample_ratio"
+    use_routing = "use_routing"
+    replication_type = "replication_type"
+    knn_derived_source_enabled = "knn_derived_source_enabled"
+    memory_optimized_search = "memory_optimized_search"
+    on_disk = "on_disk"
+    compression_level = "compression_level"
+    oversample_factor = "oversample_factor"
+    confidence_interval = "confidence_interval"
+    clip = "clip"
+
+    # OceanBase IVF parameters
+    sample_per_nlist = "sample_per_nlist"
+    ivf_nprobes = "ivf_nprobes"
+
+    # CockroachDB parameters
+    min_partition_size = "min_partition_size"
+    max_partition_size = "max_partition_size"
+    build_beam_size = "build_beam_size"
+    vector_search_beam_size = "vector_search_beam_size"
+
+    dataset_with_size_type = "dataset_with_size_type"
+    filter_rate = "filter_rate"
+    insert_rate = "insert_rate"
+    search_stages = "search_stages"
+    concurrencies = "concurrencies"
+    optimize_after_write = "optimize_after_write"
+    read_dur_after_write = "read_dur_after_write"
 
 
 class CustomizedCase(BaseModel):
@@ -103,6 +163,7 @@ class CustomizedCase(BaseModel):
 class ConcurrencySearchConfig(BaseModel):
     num_concurrency: list[int] = config.NUM_CONCURRENCY
     concurrency_duration: int = config.CONCURRENCY_DURATION
+    concurrency_timeout: int = config.CONCURRENCY_TIMEOUT
 
 
 class CaseConfig(BaseModel):
@@ -128,14 +189,22 @@ class CaseConfig(BaseModel):
     def __hash__(self) -> int:
         return hash(self.json())
 
+    @property
+    def case(self) -> Case:
+        return self.case_id.case_cls(self.custom_case)
+
+    @property
+    def case_name(self) -> str:
+        return self.case.name
+
 
 class TaskStage(StrEnum):
     """Enumerations of various stages of the task"""
 
-    DROP_OLD = auto()
-    LOAD = auto()
-    SEARCH_SERIAL = auto()
-    SEARCH_CONCURRENT = auto()
+    DROP_OLD = "drop_old"
+    LOAD = "load"
+    SEARCH_SERIAL = "search_serial"
+    SEARCH_CONCURRENT = "search_concurrent"
 
     def __repr__(self) -> str:
         return str.__repr__(self.value)
@@ -230,6 +299,21 @@ class TestResult(BaseModel):
             b = partial.json(exclude={"db_config": {"password", "api_key"}})
             f.write(b)
 
+    def get_case_config(case_config: CaseConfig) -> dict[CaseConfig]:
+        if case_config["case_id"] in {6, 7, 8, 9, 12, 13, 14, 15}:
+            case_instance = type2case[CaseType(case_config["case_id"])]()
+            custom_case = case_config["custom_case"]
+            if custom_case is None:
+                custom_case = {}
+            custom_case["filter_rate"] = case_instance.filter_rate
+            for dataset, size_type in DatasetWithSizeMap.items():
+                if case_instance.dataset == size_type:
+                    custom_case["dataset_with_size_type"] = dataset
+                    break
+            case_config["case_id"] = CaseType.NewIntFilterPerformanceCase
+            case_config["custom_case"] = custom_case
+        return case_config
+
     @classmethod
     def read_file(cls, full_path: pathlib.Path, trans_unit: bool = False) -> Self:
         if not full_path.exists():
@@ -240,16 +324,23 @@ class TestResult(BaseModel):
             test_result = ujson.loads(f.read())
             if "task_label" not in test_result:
                 test_result["task_label"] = test_result["run_id"]
-
             for case_result in test_result["results"]:
                 task_config = case_result.get("task_config")
+                case_config = task_config.get("case_config")
                 db = DB(task_config.get("db"))
 
                 task_config["db_config"] = db.config_cls(**task_config["db_config"])
-                task_config["db_case_config"] = db.case_config_cls(
-                    index_type=task_config["db_case_config"].get("index", None),
-                )(**task_config["db_case_config"])
 
+                # Safely instantiate DBCaseConfig (fallback to EmptyDBCaseConfig on None)
+                raw_case_cfg = task_config.get("db_case_config") or {}
+                index_value = raw_case_cfg.get("index", None)
+                try:
+                    task_config["db_case_config"] = db.case_config_cls(index_type=index_value)(**raw_case_cfg)
+                except Exception:
+                    log.exception(f"Couldn't get class for index '{index_value}' ({full_path})")
+                    task_config["db_case_config"] = EmptyDBCaseConfig(**raw_case_cfg)
+
+                task_config["case_config"] = cls.get_case_config(case_config=case_config)
                 case_result["task_config"] = task_config
 
                 if trans_unit:
@@ -262,6 +353,16 @@ class TestResult(BaseModel):
                     case_result["metrics"]["serial_latency_p99"] = (
                         cur_latency * 1000 if cur_latency > 0 else cur_latency
                     )
+
+                    # Handle P95 latency for backward compatibility with existing result files
+                    if "serial_latency_p95" in case_result["metrics"]:
+                        cur_latency_p95 = case_result["metrics"]["serial_latency_p95"]
+                        case_result["metrics"]["serial_latency_p95"] = (
+                            cur_latency_p95 * 1000 if cur_latency_p95 > 0 else cur_latency_p95
+                        )
+                    else:
+                        # Default to 0 for older result files that don't have P95 data
+                        case_result["metrics"]["serial_latency_p95"] = 0.0
             return TestResult.validate(test_result)
 
     def display(self, dbs: list[DB] | None = None):
@@ -271,12 +372,14 @@ class TestResult(BaseModel):
             key=lambda x: (
                 x.task_config.db.name,
                 x.task_config.db_config.db_label,
-                x.task_config.case_config.case_id.name,
+                x.task_config.case_config.case_name,
             ),
             reverse=True,
         )
 
         filtered_results = [r for r in sorted_results if not filter_list or r.task_config.db not in filter_list]
+        if len(filtered_results) == 0:
+            return
 
         def append_return(x: any, y: any):
             x.append(y)
@@ -284,7 +387,7 @@ class TestResult(BaseModel):
 
         max_db = max(map(len, [f.task_config.db.name for f in filtered_results]))
         max_db_labels = max(map(len, [f.task_config.db_config.db_label for f in filtered_results])) + 3
-        max_case = max(map(len, [f.task_config.case_config.case_id.name for f in filtered_results]))
+        max_case = max(map(len, [f.task_config.case_config.case_name for f in filtered_results]))
         max_load_dur = max(map(len, [str(f.metrics.load_duration) for f in filtered_results])) + 3
         max_qps = max(map(len, [str(f.metrics.qps) for f in filtered_results])) + 3
         max_recall = max(map(len, [str(f.metrics.recall) for f in filtered_results])) + 3
@@ -302,6 +405,7 @@ class TestResult(BaseModel):
             max_load_dur,
             max_qps,
             15,
+            15,
             max_recall,
             14,
             5,
@@ -309,7 +413,7 @@ class TestResult(BaseModel):
 
         DATA_FORMAT = (  # noqa: N806
             f"%-{max_db}s | %-{max_db_labels}s %-{max_case}s %-{len(self.task_label)}s"
-            f" | %-{max_load_dur}s %-{max_qps}s %-15s %-{max_recall}s %-14s"
+            f" | %-{max_load_dur}s %-{max_qps}s %-15s %-15s %-{max_recall}s %-14s"
             f" | %-5s"
         )
 
@@ -321,6 +425,7 @@ class TestResult(BaseModel):
             "load_dur",
             "qps",
             "latency(p99)",
+            "latency(p95)",
             "recall",
             "max_load_count",
             "label",
@@ -338,11 +443,12 @@ class TestResult(BaseModel):
                 % (
                     f.task_config.db.name,
                     f.task_config.db_config.db_label,
-                    f.task_config.case_config.case_id.name,
+                    f.task_config.case_config.case_name,
                     self.task_label,
                     f.metrics.load_duration,
                     f.metrics.qps,
                     f.metrics.serial_latency_p99,
+                    f.metrics.serial_latency_p95,
                     f.metrics.recall,
                     f.metrics.max_load_count,
                     f.label.value,

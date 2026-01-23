@@ -5,6 +5,7 @@ import click
 from pydantic import SecretStr
 
 from vectordb_bench.backend.clients import DB
+from vectordb_bench.backend.clients.api import MetricType
 
 from ....cli.cli import (
     CommonTypedDict,
@@ -48,12 +49,52 @@ class PgDiskAnnTypedDict(CommonTypedDict):
             help="PgDiskAnn l_value_ib",
         ),
     ]
+    pq_param_num_chunks: Annotated[
+        int,
+        click.option(
+            "--pq-param-num-chunks",
+            type=int,
+            help="PgDiskAnn pq_param_num_chunks",
+            required=False,
+        ),
+    ]
     l_value_is: Annotated[
         float,
         click.option(
             "--l-value-is",
             type=float,
             help="PgDiskAnn l_value_is",
+        ),
+    ]
+    reranking: Annotated[
+        bool | None,
+        click.option(
+            "--reranking/--skip-reranking",
+            type=bool,
+            help="Enable reranking for PQ search",
+            default=False,
+        ),
+    ]
+    reranking_metric: Annotated[
+        str | None,
+        click.option(
+            "--reranking-metric",
+            type=click.Choice(
+                [metric.value for metric in MetricType if metric.value not in ["HAMMING", "JACCARD", "DP"]],
+            ),
+            help="Distance metric for reranking",
+            default="COSINE",
+            show_default=True,
+            required=False,
+        ),
+    ]
+    quantized_fetch_limit: Annotated[
+        int | None,
+        click.option(
+            "--quantized-fetch-limit",
+            type=int,
+            help="Limit of inner query in case of reranking",
+            required=False,
         ),
     ]
     maintenance_work_mem: Annotated[
@@ -98,7 +139,11 @@ def PgDiskAnn(
         db_case_config=PgDiskANNImplConfig(
             max_neighbors=parameters["max_neighbors"],
             l_value_ib=parameters["l_value_ib"],
+            pq_param_num_chunks=parameters["pq_param_num_chunks"],
             l_value_is=parameters["l_value_is"],
+            reranking=parameters["reranking"],
+            reranking_metric=parameters["reranking_metric"],
+            quantized_fetch_limit=parameters["quantized_fetch_limit"],
             max_parallel_workers=parameters["max_parallel_workers"],
             maintenance_work_mem=parameters["maintenance_work_mem"],
         ),

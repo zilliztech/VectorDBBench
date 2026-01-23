@@ -4,6 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.package-data]
 "vectordb_bench.results" = ["*.json"]
+"vectordb_bench.fig.homepage" = ["*.png"]
 
 [tool.setuptools.packages.find]
 where = ["."]
@@ -12,7 +13,7 @@ include = ["vectordb_bench", "vectordb_bench.cli"]
 [project]
 name = "vectordb-bench"
 authors = [
-  {name="XuanYang-cn", email="xuan.yang@zilliz.com"},
+  {name="VDBBench teams", email="pymilvus@zilliz.com"},
 ]
 description = "VectorDBBench is not just an offering of benchmark results for mainstream vector databases and cloud services, it's your go-to tool for the ultimate performance and cost-effectiveness comparison. Designed with ease-of-use in mind, VectorDBBench is devised to help users, even non-professionals, reproduce results or test new systems, making the hunt for the optimal choice amongst a plethora of cloud services and open-source vector databases a breeze."
 
@@ -36,10 +37,12 @@ dependencies = [
     "psutil",
     "polars",
     "plotly",
-    "environs<14.1.0",
+    "environs",
     "pydantic<v2",
     "scikit-learn",
     "pymilvus", # with pandas, numpy, ujson
+    "ujson",
+    "hdrhistogram>=0.10.1",
 ]
 dynamic = ["version"]
 
@@ -49,6 +52,7 @@ test = [
     "ruff",
     "pytest",
 ]
+restful = [ "flask" ]
 
 all = [
     "grpcio==1.53.0", # for qdrant-client and pymilvus
@@ -68,11 +72,13 @@ all = [
     "opensearch-py",
     "memorydb",
     "alibabacloud_ha3engine_vector",
-    "alibabacloud_searchengine20211025",
     "mariadb",
     "PyMySQL",
     "clickhouse-connect",
     "pyvespa",
+    "lancedb",
+    "mysql-connector-python",
+    "turbopuffer[fast]",
 ]
 
 qdrant          = [ "qdrant-client" ]
@@ -89,18 +95,26 @@ redis           = [ "redis" ]
 memorydb        = [ "memorydb" ]
 chromadb        = [ "chromadb" ]
 opensearch      = [ "opensearch-py" ]
-aliyun_opensearch = [ "alibabacloud_ha3engine_vector", "alibabacloud_searchengine20211025"]
+aliyun_opensearch = [ "alibabacloud_ha3engine_vector" ]
 mongodb         = [ "pymongo" ]
 mariadb         = [ "mariadb" ]
 tidb            = [ "PyMySQL" ]
+cockroachdb     = [ "psycopg[binary,pool]", "pgvector" ]
 clickhouse      = [ "clickhouse-connect" ]
 vespa           = [ "pyvespa" ]
+lancedb         = [ "lancedb" ]
+oceanbase       = [ "mysql-connector-python" ]
+alisql          = [ "mysql-connector-python" ]
+doris           = [ "doris-vector-search" ]
+turbopuffer     = [ "turbopuffer" ]
 
 [project.urls]
-"repository" = "https://github.com/zilliztech/VectorDBBench"
+Repository  = "https://github.com/zilliztech/VectorDBBench"
+Leaderborad = "https://zilliz.com/vdbbench-leaderboard"
 
 [project.scripts]
 init_bench = "vectordb_bench.__main__:main"
+init_bench_rest = "vectordb_bench.restful.app:main"
 vectordbbench = "vectordb_bench.cli.vectordbbench:cli"
 
 [tool.setuptools_scm]
@@ -217,3 +231,9 @@ builtins-ignorelist = [
     # "dict", # TODO
     # "filter",
 ]
+
+[tool.ruff.lint.per-file-ignores]
+"vectordb_bench/backend/clients/*" = ["PLC0415"]
+"vectordb_bench/cli/batch_cli.py" = ["PLC0415"]
+"vectordb_bench/backend/data_source.py" = ["PLC0415"]
+

@@ -12,7 +12,7 @@ from multiprocessing.connection import Connection
 import psutil
 
 from . import config
-from .backend.assembler import Assembler
+from .backend.assembler import Assembler, FilterNotSupportedError
 from .backend.data_source import DatasetSource
 from .backend.result_collector import ResultCollector
 from .backend.task_runner import TaskRunner
@@ -43,7 +43,11 @@ class BenchMarkRunner:
         self.running_task: TaskRunner | None = None
         self.latest_error: str | None = None
         self.drop_old: bool = True
-        self.dataset_source: DatasetSource = DatasetSource.S3
+        # set default data source by ENV
+        if config.DATASET_SOURCE.upper() == "ALIYUNOSS":
+            self.dataset_source: DatasetSource = DatasetSource.AliyunOSS
+        else:
+            self.dataset_source: DatasetSource = DatasetSource.S3
 
     def set_drop_old(self, drop_old: bool):
         self.drop_old = drop_old
@@ -88,16 +92,21 @@ class BenchMarkRunner:
             log.warning(msg)
             self.latest_error = msg
             return True
+        except FilterNotSupportedError as e:
+            log.warning(e.args[0])
+            self.latest_error = e.args[0]
+            return True
 
         return self._run_async(send_conn)
 
-    def get_results(self, result_dir: pathlib.Path | None = None) -> list[TestResult]:
+    @staticmethod
+    def get_results(result_dir: pathlib.Path | None = None) -> list[TestResult]:
         """results of all runs, each TestResult represents one run."""
         target_dir = result_dir if result_dir else config.RESULTS_LOCAL_DIR
         return ResultCollector.collect(target_dir)
 
     def _try_get_signal(self):
-        if self.receive_conn and self.receive_conn.poll():
+        while self.receive_conn and self.receive_conn.poll():
             sig, received = self.receive_conn.recv()
             log.debug(f"Sigal received to process: {sig}, {received}")
             if sig == SIGNAL.ERROR:
@@ -270,7 +279,7 @@ class BenchMarkRunner:
                 p.send_signal(sig)
             except psutil.NoSuchProcess:
                 pass
-        gone, alive = psutil.wait_procs(children, timeout=timeout, callback=on_terminate)
+        _, alive = psutil.wait_procs(children, timeout=timeout, callback=on_terminate)
 
         for p in alive:
             log.warning(f"force killing child process: {p}")

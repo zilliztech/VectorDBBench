@@ -55,11 +55,17 @@ def advancedSettings(st):
         "Concurrent Input", value=defaultconcurrentInput, label_visibility="collapsed"
     )
     container[1].caption("num of concurrencies for search tests to get max-qps")
-    return index_already_exists, use_aliyun, k, concurrentInput
+
+    container = st.columns([1, 2])
+    concurrency_duration = container[0].number_input(
+        "Concurrency Duration", value=config.CONCURRENCY_DURATION, label_visibility="collapsed"
+    )
+    container[1].caption("concurrency duration for each concurrency search test")
+    return index_already_exists, use_aliyun, k, concurrentInput, concurrency_duration
 
 
 def controlPanel(st, tasks: list[TaskConfig], taskLabel, isAllValid):
-    index_already_exists, use_aliyun, k, concurrentInput = advancedSettings(st)
+    index_already_exists, use_aliyun, k, concurrentInput, concurrency_duration = advancedSettings(st)
 
     def runHandler():
         benchmark_runner.set_drop_old(not index_already_exists)
@@ -73,7 +79,7 @@ def controlPanel(st, tasks: list[TaskConfig], taskLabel, isAllValid):
         for task in tasks:
             task.case_config.k = k
             task.case_config.concurrency_search_config.num_concurrency = concurrentInput_list
-
+            task.case_config.concurrency_search_config.concurrency_duration = concurrency_duration
         benchmark_runner.set_download_address(use_aliyun)
         benchmark_runner.run(tasks, taskLabel)
 
@@ -86,7 +92,9 @@ def controlPanel(st, tasks: list[TaskConfig], taskLabel, isAllValid):
         currentTaskId = benchmark_runner.get_current_task_id()
         tasksCount = benchmark_runner.get_tasks_count()
         text = f":running: Running Task {currentTaskId} / {tasksCount}"
-        st.progress(currentTaskId / tasksCount, text=text)
+
+        if tasksCount > 0:
+            st.progress(currentTaskId / tasksCount, text=text)
 
         columns = st.columns(6)
         columns[0].button(

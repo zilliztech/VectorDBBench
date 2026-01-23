@@ -9,13 +9,24 @@ from qdrant_client.http.models import (
     Batch,
     CollectionStatus,
     FieldCondition,
-    Filter,
+    HnswConfigDiff,
+    KeywordIndexParams,
+    OptimizersConfigDiff,
     PayloadSchemaType,
     Range,
+    ScalarQuantization,
+    ScalarQuantizationConfig,
+    ScalarType,
     VectorParams,
 )
+from qdrant_client.http.models import (
+    Filter as QdrantFilter,
+)
 
-from ..api import DBCaseConfig, VectorDB
+from vectordb_bench.backend.clients.qdrant_cloud.config import QdrantIndexConfig
+from vectordb_bench.backend.filter import Filter, FilterOp
+
+from ..api import VectorDB
 
 log = logging.getLogger(__name__)
 
@@ -25,24 +36,33 @@ QDRANT_BATCH_SIZE = 500
 
 
 class QdrantCloud(VectorDB):
+    supported_filter_types: list[FilterOp] = [
+        FilterOp.NonFilter,
+        FilterOp.NumGE,
+        FilterOp.StrEqual,
+    ]
+
     def __init__(
         self,
         dim: int,
         db_config: dict,
-        db_case_config: DBCaseConfig,
+        db_case_config: QdrantIndexConfig,
         collection_name: str = "QdrantCloudCollection",
         drop_old: bool = False,
+        with_scalar_labels: bool = False,
         **kwargs,
     ):
         """Initialize wrapper around the QdrantCloud vector database."""
         self.db_config = db_config
-        self.case_config = db_case_config
+        self.db_case_config = db_case_config
         self.collection_name = collection_name
 
         self._primary_field = "pk"
+        self._scalar_label_field = "label"
         self._vector_field = "vector"
 
         tmp_client = QdrantClient(**self.db_config)
+        self.with_scalar_labels = with_scalar_labels
         if drop_old:
             log.info(f"QdrantCloud client drop_old collection: {self.collection_name}")
             tmp_client.delete_collection(self.collection_name)
@@ -50,7 +70,7 @@ class QdrantCloud(VectorDB):
         tmp_client = None
 
     @contextmanager
-    def init(self) -> None:
+    def init(self):
         """
         Examples:
             >>> with self.init():
@@ -74,7 +94,7 @@ class QdrantCloud(VectorDB):
                 if info.status == CollectionStatus.GREEN:
                     msg = (
                         f"Stored vectors: {info.vectors_count}, Indexed vectors: {info.indexed_vectors_count}, "
-                        f"Collection status: {info.indexed_vectors_count}"
+                        f"Collection status: {info.status}, Segment counts: {info.segments_count}"
                     )
                     log.info(msg)
                     return
@@ -86,19 +106,48 @@ class QdrantCloud(VectorDB):
         log.info(f"Create collection: {self.collection_name}")
 
         try:
+            # whether to use quant (SQ8)
+            quantization_config = None
+            if self.db_case_config.use_scalar_quant:
+                quantization_config = ScalarQuantization(
+                    scalar=ScalarQuantizationConfig(
+                        type=ScalarType.INT8,
+                        quantile=self.db_case_config.sq_quantile,
+                        always_ram=True,
+                    )
+                )
+
+            # create collection
             qdrant_client.create_collection(
                 collection_name=self.collection_name,
                 vectors_config=VectorParams(
                     size=dim,
-                    distance=self.case_config.index_param()["distance"],
+                    distance=self.db_case_config.parse_metric(),
                 ),
+                hnsw_config=HnswConfigDiff(m=self.db_case_config.m, payload_m=self.db_case_config.payload_m),
+                optimizers_config=OptimizersConfigDiff(
+                    default_segment_number=self.db_case_config.default_segment_number
+                ),
+                quantization_config=quantization_config,
             )
 
-            qdrant_client.create_payload_index(
-                collection_name=self.collection_name,
-                field_name=self._primary_field,
-                field_schema=PayloadSchemaType.INTEGER,
-            )
+            # create payload_index for int-field
+            if self.db_case_config.create_payload_int_index:
+                qdrant_client.create_payload_index(
+                    collection_name=self.collection_name,
+                    field_name=self._primary_field,
+                    field_schema=PayloadSchemaType.INTEGER,
+                )
+
+            # create payload_index for str-field
+            if self.with_scalar_labels and self.db_case_config.create_payload_keyword_index:
+                qdrant_client.create_payload_index(
+                    collection_name=self.collection_name,
+                    field_name=self._scalar_label_field,
+                    field_schema=KeywordIndexParams(
+                        type=PayloadSchemaType.KEYWORD, is_tenant=self.db_case_config.is_tenant
+                    ),
+                )
 
         except Exception as e:
             if "already exists!" in str(e):
@@ -110,16 +159,22 @@ class QdrantCloud(VectorDB):
         self,
         embeddings: list[list[float]],
         metadata: list[int],
+        labels_data: list[str] | None = None,
         **kwargs,
     ) -> tuple[int, Exception]:
         """Insert embeddings into Milvus. should call self.init() first"""
         assert self.qdrant_client is not None
         try:
-            # TODO: counts
             for offset in range(0, len(embeddings), QDRANT_BATCH_SIZE):
                 vectors = embeddings[offset : offset + QDRANT_BATCH_SIZE]
                 ids = metadata[offset : offset + QDRANT_BATCH_SIZE]
-                payloads = [{self._primary_field: v} for v in ids]
+                if self.with_scalar_labels:
+                    labels = labels_data[offset : offset + QDRANT_BATCH_SIZE]
+                    payloads = [
+                        {self._primary_field: pk, self._scalar_label_field: labels[i]} for i, pk in enumerate(ids)
+                    ]
+                else:
+                    payloads = [{self._primary_field: pk} for i, pk in enumerate(ids)]
                 _ = self.qdrant_client.upsert(
                     collection_name=self.collection_name,
                     wait=True,
@@ -135,34 +190,46 @@ class QdrantCloud(VectorDB):
         self,
         query: list[float],
         k: int = 100,
-        filters: dict | None = None,
         timeout: int | None = None,
+        **kwargs,
     ) -> list[int]:
         """Perform a search on a query embedding and return results with score.
         Should call self.init() first.
         """
         assert self.qdrant_client is not None
 
-        f = None
-        if filters:
-            f = Filter(
+        res = self.qdrant_client.search(
+            collection_name=self.collection_name,
+            query_vector=query,
+            limit=k,
+            query_filter=self.query_filter,
+            search_params=self.db_case_config.search_param(),
+            with_payload=self.db_case_config.with_payload,
+        )
+
+        return [r.id for r in res]
+
+    def prepare_filter(self, filters: Filter):
+        if filters.type == FilterOp.NonFilter:
+            self.query_filter = None
+        elif filters.type == FilterOp.NumGE:
+            self.query_filter = QdrantFilter(
                 must=[
                     FieldCondition(
                         key=self._primary_field,
-                        range=Range(
-                            gt=filters.get("id"),
-                        ),
+                        range=Range(gte=filters.int_value),
                     ),
-                ],
+                ]
             )
-
-        res = (
-            self.qdrant_client.search(
-                collection_name=self.collection_name,
-                query_vector=query,
-                limit=k,
-                query_filter=f,
-            ),
-        )
-
-        return [result.id for result in res[0]]
+        elif filters.type == FilterOp.StrEqual:
+            self.query_filter = QdrantFilter(
+                must=[
+                    FieldCondition(
+                        key=self._scalar_label_field,
+                        match={"value": filters.label_value},
+                    ),
+                ]
+            )
+        else:
+            msg = f"Not support Filter for Qdrant - {filters}"
+            raise ValueError(msg)

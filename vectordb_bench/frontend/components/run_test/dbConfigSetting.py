@@ -36,21 +36,27 @@ def dbConfigSettingItem(st, activeDb: DB):
     columns = st.columns(DB_CONFIG_SETTING_COLUMNS)
 
     dbConfigClass = activeDb.config_cls
-    properties = dbConfigClass.schema().get("properties")
+    schema = dbConfigClass.schema()
+    property_items = schema.get("properties").items()
+    required_fields = set(schema.get("required", []))
     dbConfig = {}
     idx = 0
 
     # db config (unique)
-    for key, property in properties.items():
+    for key, property in property_items:
         if key not in dbConfigClass.common_short_configs() and key not in dbConfigClass.common_long_configs():
             column = columns[idx % DB_CONFIG_SETTING_COLUMNS]
             idx += 1
-            dbConfig[key] = column.text_input(
+            input_value = column.text_input(
                 key,
-                key="%s-%s" % (activeDb.name, key),
+                key=f"{activeDb.name}-{key}",
                 value=property.get("default", ""),
                 type="password" if inputIsPassword(key) else "default",
+                placeholder="optional" if key not in required_fields else None,
             )
+            if key in required_fields or input_value:
+                dbConfig[key] = input_value
+
     # db config (common short labels)
     for key in dbConfigClass.common_short_configs():
         column = columns[idx % DB_CONFIG_SETTING_COLUMNS]
