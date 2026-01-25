@@ -68,15 +68,13 @@ class TiDB(VectorDB):
         try:
             index_param = self.case_config.index_param()
             with self._get_connection() as (conn, cursor):
-                cursor.execute(
-                    f"""
+                cursor.execute(f"""
                     CREATE TABLE {self.table_name} (
                         id BIGINT PRIMARY KEY,
                         embedding VECTOR({self.dim}) NOT NULL,
                         VECTOR INDEX (({index_param["metric_fn"]}(embedding)))
                     );
-                    """
-                )
+                    """)
                 conn.commit()
         except Exception as e:
             log.warning("Failed to create table: %s error: %s", self.table_name, e)
@@ -118,12 +116,10 @@ class TiDB(VectorDB):
         try:
             database = self.db_config["database"]
             with self._get_connection() as (_, cursor):
-                cursor.execute(
-                    f"""
+                cursor.execute(f"""
                     SELECT PROGRESS FROM information_schema.tiflash_replica
                     WHERE TABLE_SCHEMA = "{database}" AND TABLE_NAME = "{self.table_name}"
-                    """  # noqa: S608
-                )
+                    """)  # noqa: S608
                 result = cursor.fetchone()
                 return result[0]
         except Exception as e:
@@ -155,13 +151,11 @@ class TiDB(VectorDB):
         try:
             database = self.db_config["database"]
             with self._get_connection() as (_, cursor):
-                cursor.execute(
-                    f"""
+                cursor.execute(f"""
                     SELECT SUM(ROWS_STABLE_NOT_INDEXED)
                     FROM information_schema.tiflash_indexes
                     WHERE TIDB_DATABASE = "{database}" AND TIDB_TABLE = "{self.table_name}"
-                    """  # noqa: S608
-                )
+                    """)  # noqa: S608
                 result = cursor.fetchone()
                 return result[0]
         except Exception as e:
@@ -223,11 +217,9 @@ class TiDB(VectorDB):
         timeout: int | None = None,
         **kwargs: Any,
     ) -> list[int]:
-        self.cursor.execute(
-            f"""
+        self.cursor.execute(f"""
             SELECT id FROM {self.table_name}
             ORDER BY {self.search_fn}(embedding, "{query!s}") LIMIT {k};
-            """  # noqa: S608
-        )
+            """)  # noqa: S608
         result = self.cursor.fetchall()
         return [int(i[0]) for i in result]
