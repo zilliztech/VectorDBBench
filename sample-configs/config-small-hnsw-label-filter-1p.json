@@ -1,0 +1,43 @@
+{
+  "database": {
+    "host": "localhost",
+    "username": "postgres",
+    "password": "password",
+    "db-name": "ann"
+  },
+  "benchmark-info": {
+    "name": "vectordbbench-label-filter-test",
+    "instance-size": "local-laptop",
+    "instance-service": "local",
+    "provider": "local",
+    "description": "Label filtering test with 1% filter on OpenAI 50K dataset"
+  },
+  "cases": [
+    {
+      "db-label": "test-label-filter-1p-test",
+      "vdb-command": "pgvectorhnsw",
+      "vector-ext": "vector",
+      "index-type": "hnsw-fv",
+      "case-type": "LabelFilterPerformanceCase",
+      "dataset-with-size-type": "Small OpenAI (1536dim, 50K)",
+      "label-percentage": 0.01,
+      "drop-old": true,
+      "load": true,
+      "search-serial": true,
+      "search-concurrent": true,
+      "index-params": {
+        "m": 16,
+        "ef-construction": 64,
+        "maintenance-work-mem": "4GB",
+        "max-parallel-workers": 3
+      },
+      "search-params": {
+        "ef-search": [40, 80]
+      },
+      "num-concurrency": "5,10",
+      "concurrency-duration": 15,
+      "k": 10,
+      "run-count": 1
+    }
+  ]
+}
