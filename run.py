@@ -88,6 +88,12 @@ def run_benchmark(case, db_config, benchmark_info, dry_run=False):
                             get_stats(db_config)
                             f.flush()
                         f.flush()
+
+                    # Print output directory at the end with clickable link
+                    logger.info(f"Results saved to:")
+                    logger.info(f"   file://{os.path.abspath(output_dir)}")
+                    logger.info("=" * 40)
+
                 except subprocess.CalledProcessError as e:
                     logger.error(f"Benchmark Failed: {e}")
                 logger.info("Sleeping for 1 min")
