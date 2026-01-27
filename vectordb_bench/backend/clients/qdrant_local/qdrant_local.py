@@ -139,14 +139,14 @@ class QdrantLocal(VectorDB):
                 if info.status == CollectionStatus.GREEN:
                     log.info(f"Finishing building index for collection: {self.collection_name}")
                     msg = (
-                        f"Stored vectors: {info.vectors_count}, Indexed vectors: {info.indexed_vectors_count}, "
-                        f"Collection status: {info.indexed_vectors_count}"
+                        f"Stored vectors: {info.points_count}, Indexed vectors: {info.indexed_vectors_count}, "
+                        f"Collection status: {info.status}"
                     )
                     log.info(msg)
                     return
 
         except Exception as e:
-            log.warning(f"QdrantCloud ready to search error: {e}")
+            log.warning(f"QdrantLocal ready to search error: {e}")
             raise e from None
 
     def insert_embeddings(
