@@ -21,7 +21,7 @@ class ZvecTypedDict(CommonTypedDict):
 class ZvecHNSWTypedDict(CommonTypedDict, ZvecTypedDict):
     m: Annotated[
         int,
-        click.option("--m", type=int, default=100, help="HNSW index parameter m."),
+        click.option("--m", type=int, default=50, help="HNSW index parameter m."),
     ]
     ef_construct: Annotated[
         int,

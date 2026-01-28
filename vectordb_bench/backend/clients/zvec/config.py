@@ -26,7 +26,7 @@ class ZvecIndexConfig(BaseModel, DBCaseConfig):
 
 
 class ZvecHNSWIndexConfig(ZvecIndexConfig):
-    M: int | None = 100
+    M: int | None = 50
     ef_construction: int | None = 500
 
     ef_search: int | None = 300
