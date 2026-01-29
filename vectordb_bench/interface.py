@@ -46,14 +46,18 @@ class BenchMarkRunner:
         # set default data source by ENV
         if config.DATASET_SOURCE.upper() == "ALIYUNOSS":
             self.dataset_source: DatasetSource = DatasetSource.AliyunOSS
+        elif config.DATASET_SOURCE.upper() == "IR_DATASETS":
+            self.dataset_source: DatasetSource = DatasetSource.IR_DATASETS
         else:
             self.dataset_source: DatasetSource = DatasetSource.S3
 
     def set_drop_old(self, drop_old: bool):
         self.drop_old = drop_old
 
-    def set_download_address(self, use_aliyun: bool):
-        if use_aliyun:
+    def set_download_address(self, use_aliyun: bool, use_ir_datasets: bool = False):
+        if use_ir_datasets:
+            self.dataset_source = DatasetSource.IR_DATASETS
+        elif use_aliyun:
             self.dataset_source = DatasetSource.AliyunOSS
         else:
             self.dataset_source = DatasetSource.S3
