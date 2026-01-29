@@ -76,6 +76,7 @@ cli.add_command(TurboPuffer)
 cli.add_command(Chroma)
 cli.add_command(Endee)
 cli.add_command(Zvec)
+cli.add_command(Endee)
 
 
 if __name__ == "__main__":

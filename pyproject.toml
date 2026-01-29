@@ -80,6 +80,7 @@ all = [
     "turbopuffer[fast]",
     "endee",
     'zvec',
+    "endee",
 ]
 
 qdrant          = [ "qdrant-client" ]
@@ -110,6 +111,7 @@ doris           = [ "doris-vector-search" ]
 turbopuffer     = [ "turbopuffer" ]
 endee           = [ "endee" ]
 zvec            = [ "zvec" ]
+endee           = [ "endee" ]
 
 [project.urls]
 Repository  = "https://github.com/zilliztech/VectorDBBench"

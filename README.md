@@ -65,6 +65,7 @@ All the database client supported
 | doris                    | `pip install vectordb-bench[doris]`         |
 | endee                    | `pip install vectordb-bench[endee]`         |
 | zvec                     | `pip install vectordb-bench[zvec]`          |
+| endee                    | `pip install vectordb-bench[endee]`         |
 
 ### Run
 
