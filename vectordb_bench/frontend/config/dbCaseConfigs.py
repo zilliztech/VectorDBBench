@@ -2373,6 +2373,9 @@ MongoDBPerformanceConfig = [
     CaseConfigParamInput_MongoDBNumCandidatesRatio,
 ]
 
+AstraDBLoadingConfig = []
+AstraDBPerformanceConfig = []
+
 CockroachDBLoadingConfig = [
     CaseConfigParamInput_IndexType_CockroachDB,
     CaseConfigParamInput_MinPartitionSize_CockroachDB,
@@ -2690,6 +2693,10 @@ CASE_CONFIG_MAP = {
     DB.MongoDB: {
         CaseLabel.Load: MongoDBLoadingConfig,
         CaseLabel.Performance: MongoDBPerformanceConfig,
+    },
+    DB.AstraDB: {
+        CaseLabel.Load: AstraDBLoadingConfig,
+        CaseLabel.Performance: AstraDBPerformanceConfig,
     },
     DB.MariaDB: {
         CaseLabel.Load: MariaDBLoadingConfig,
