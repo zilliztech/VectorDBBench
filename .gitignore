@@ -12,3 +12,7 @@ venv/
 .idea/
 results/
 logs/
+
+# AI rules
+CLAUDE.md
+AGENTS.md
