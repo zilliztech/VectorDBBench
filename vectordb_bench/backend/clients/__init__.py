@@ -57,6 +57,7 @@ class DB(Enum):
     Doris = "Doris"
     TurboPuffer = "TurboPuffer"
     Endee = "Endee"
+    Zvec = "Zvec"
 
     @property
     def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901, PLR0915
@@ -233,6 +234,11 @@ class DB(Enum):
             from .endee.endee import Endee
 
             return Endee
+
+        if self == DB.Zvec:
+            from .zvec.zvec import Zvec
+
+            return Zvec
 
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
@@ -413,6 +419,11 @@ class DB(Enum):
 
             return EndeeConfig
 
+        if self == DB.Zvec:
+            from .zvec.config import ZvecConfig
+
+            return ZvecConfig
+
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
 
@@ -543,6 +554,11 @@ class DB(Enum):
             from .hologres.config import HologresIndexConfig
 
             return HologresIndexConfig
+
+        if self == DB.Zvec:
+            from .zvec.config import ZvecHNSWIndexConfig
+
+            return ZvecHNSWIndexConfig
 
         if self == DB.TencentElasticsearch:
             from .tencent_elasticsearch.config import TencentElasticsearchIndexConfig
