@@ -1,13 +1,19 @@
 import requests
 import streamlit as st
 import streamlit.components.v1 as components
+from vectordb_bench import config
+from vectordb_bench.frontend.components.get_results import html2canvas
+
 
 HTML_2_CANVAS_URL = "https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.js"
 
 
 @st.cache_data
 def load_unpkg(src: str) -> str:
-    return requests.get(src).text
+    if not config.USE_LOCAL_DATA:
+        return requests.get(src).text
+    else:
+        return html2canvas.return_js_content()
 
 
 def getResults(container, pageName="vectordb_bench"):

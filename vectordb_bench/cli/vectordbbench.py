@@ -31,6 +31,7 @@ from ..backend.clients.test.cli import Test
 from ..backend.clients.tidb.cli import TiDB
 from ..backend.clients.turbopuffer.cli import TurboPuffer
 from ..backend.clients.vespa.cli import Vespa
+from ..backend.clients.vexdb.cli import VexDBGRAPHINDEX, VexDBHybridANN, VexDBIVFFlat
 from ..backend.clients.weaviate_cloud.cli import Weaviate
 from ..backend.clients.zilliz_cloud.cli import ZillizAutoIndex
 from ..backend.clients.zvec.cli import Zvec
@@ -68,6 +69,9 @@ cli.add_command(ElasticCloudHNSWInt4)
 cli.add_command(ElasticCloudHNSWBBQ)
 cli.add_command(BatchCli)
 cli.add_command(S3Vectors)
+cli.add_command(VexDBGRAPHINDEX)
+cli.add_command(VexDBIVFFlat)
+cli.add_command(VexDBHybridANN)
 cli.add_command(TencentElasticsearch)
 cli.add_command(AliSQLHNSW)
 cli.add_command(Doris)

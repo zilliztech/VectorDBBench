@@ -337,8 +337,8 @@ UI_CASE_CLUSTERS: list[UICaseItemCluster] = [
     UICaseItemCluster(
         label="Capacity Test",
         uiCaseItems=[
-            UICaseItem(cases=generate_normal_cases(CaseType.CapacityDim960)),
-            UICaseItem(cases=generate_normal_cases(CaseType.CapacityDim128)),
+            UICaseItem(cases=generate_normal_cases(CaseType.CapacityDim960), caseLabel=CaseLabel.Load),
+            UICaseItem(cases=generate_normal_cases(CaseType.CapacityDim128), caseLabel=CaseLabel.Load),
         ],
     ),
     UICaseItemCluster(
@@ -2588,6 +2588,189 @@ AWSOpenSearchPerformanceConfig = [
     CaseConfigParamInput_INDEX_THREAD_QTY_DURING_FORCE_MERGE_AWSOpensearch,
 ]
 
+CaseConfigParamInput_IndexType_VexDB = CaseConfigInput(
+    label=CaseConfigParamType.IndexType,
+    inputHelp="Select Index Type",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [
+            IndexType.GRAPH_INDEX.value,
+            IndexType.ES_IVFFlat.value,
+            IndexType.HybridAnn.value,
+        ],
+    },
+)
+
+CaseConfigParamInput_Lists_VexDB = CaseConfigInput(
+    label=CaseConfigParamType.lists,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 65535,
+        "value": 100,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) in [IndexType.ES_IVFFlat.value],
+)
+
+CaseConfigParamInput_m_VexDB = CaseConfigInput(
+    label=CaseConfigParamType.m,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 2,
+        "max": 100,
+        "value": 16,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    in [IndexType.HybridAnn.value, IndexType.GRAPH_INDEX.value],
+)
+
+CaseConfigParamInput_EFConstruction_VexDB = CaseConfigInput(
+    label=CaseConfigParamType.ef_construction,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 4,
+        "max": 1000,
+        "value": 64,
+    },
+    isDisplayed=lambda config: config[CaseConfigParamType.IndexType]
+    in [IndexType.HybridAnn.value, IndexType.GRAPH_INDEX.value],
+)
+
+CaseConfigParamInput_maintenance_work_mem_VexDB = CaseConfigInput(
+    label=CaseConfigParamType.maintenance_work_mem,
+    inputHelp="Recommended value: 1.33x the index size, not to exceed the available free memory."
+    "Specify in gigabytes. e.g. 8GB",
+    inputType=InputType.Text,
+    inputConfig={
+        "value": "8GB",
+    },
+)
+
+CaseConfigParamInput_max_parallel_workers_VexDB = CaseConfigInput(
+    label=CaseConfigParamType.max_parallel_workers,
+    displayLabel="Max parallel workers",
+    inputHelp="Recommended value: (cpu cores - 1). This will set the parameters: max_parallel_maintenance_workers,"
+    " max_parallel_workers and parallel_workers in create index SQL",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 0,
+        "max": 64,
+        "value": 4,
+    },
+)
+
+CaseConfigParamInput_EFSearch_VexDB = CaseConfigInput(
+    label=CaseConfigParamType.ef_search,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 32767,
+        "value": 100,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    in [IndexType.HybridAnn.value, IndexType.GRAPH_INDEX.value],
+)
+
+CaseConfigParamInput_Probes_VexDB = CaseConfigInput(
+    label=CaseConfigParamType.probes,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 65535,
+        "value": 1,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) in [IndexType.ES_IVFFlat.value],
+)
+
+CaseConfigParamInput_create_index_before_load_VexDB = CaseConfigInput(
+    label=CaseConfigParamType.create_index_before_load,
+    inputType=InputType.Bool,
+    displayLabel="create_index_before_load",
+    inputHelp="Whether create index before load,Streaming case recommended to be true",
+    inputConfig={
+        "value": False,
+    },
+)
+
+CaseConfigParamInput_graph_magnitude_threshold_VexDB = CaseConfigInput(
+    label=CaseConfigParamType.graph_magnitude_threshold,
+    inputType=InputType.Number,
+    displayLabel="graphMagnitude_threshold",
+    inputHelp="The parameter graph_magnitude_threshold in create index SQL",
+    inputConfig={
+        "min": 1,
+        "max": 10000000000,
+        "value": 20000,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) in [IndexType.HybridAnn.value],
+)
+
+CaseConfigParamInput_vec_index_magnitudes_VexDB = CaseConfigInput(
+    label=CaseConfigParamType.vec_index_magnitudes,
+    inputType=InputType.Text,
+    displayLabel="vec_index_magnitudes",
+    inputHelp="The parameter vec_index_magnitudes in create index SQL",
+    inputConfig={
+        "value": "20000:100000:500000:2500000:12500000",
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) in [IndexType.HybridAnn.value],
+)
+
+CaseConfigParamInput_hybrid_query_ivf_probes_factor_VexDB = CaseConfigInput(
+    label=CaseConfigParamType.hybrid_query_ivf_probes_factor,
+    inputType=InputType.Number,
+    displayLabel="hybrid_query_ivf_probes",
+    inputHelp="Set hybrid_query_ivf_probes_factor before select",
+    inputConfig={
+        "min": 1,
+        "max": 100,
+        "value": 3,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) in [IndexType.HybridAnn.value],
+)
+
+CaseConfigParamInput_col_name_list_VexDB = CaseConfigInput(
+    label=CaseConfigParamType.col_name_list,
+    inputType=InputType.Option,
+    displayLabel="col_name_list",
+    inputHelp="Which scalar fields will be created in hybridann index, for example: 'id'、'id, label'",
+    inputConfig={
+        "options": [
+            "id",
+            "label",
+        ],
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) in [IndexType.HybridAnn.value],
+)
+
+VexDBLoadingConfig = [
+    CaseConfigParamInput_IndexType_VexDB,
+    CaseConfigParamInput_Lists_VexDB,
+    CaseConfigParamInput_m_VexDB,
+    CaseConfigParamInput_EFConstruction_VexDB,
+    CaseConfigParamInput_graph_magnitude_threshold_VexDB,
+    CaseConfigParamInput_vec_index_magnitudes_VexDB,
+    CaseConfigParamInput_col_name_list_VexDB,
+    CaseConfigParamInput_max_parallel_workers_VexDB,
+    CaseConfigParamInput_maintenance_work_mem_VexDB,
+    CaseConfigParamInput_create_index_before_load_VexDB,
+]
+VexDBPerformanceConfig = [
+    CaseConfigParamInput_IndexType_VexDB,
+    CaseConfigParamInput_Lists_VexDB,
+    CaseConfigParamInput_m_VexDB,
+    CaseConfigParamInput_EFConstruction_VexDB,
+    CaseConfigParamInput_graph_magnitude_threshold_VexDB,
+    CaseConfigParamInput_vec_index_magnitudes_VexDB,
+    CaseConfigParamInput_col_name_list_VexDB,
+    CaseConfigParamInput_max_parallel_workers_VexDB,
+    CaseConfigParamInput_maintenance_work_mem_VexDB,
+    CaseConfigParamInput_create_index_before_load_VexDB,
+    CaseConfigParamInput_Probes_VexDB,
+    CaseConfigParamInput_EFSearch_VexDB,
+    CaseConfigParamInput_hybrid_query_ivf_probes_factor_VexDB,
+]
+
 
 OSSOpensearchLoadingConfig = [
     CaseConfigParamInput_ON_DISK_OSSOpensearch,
@@ -2702,6 +2885,10 @@ CASE_CONFIG_MAP = {
     DB.LanceDB: {
         CaseLabel.Load: LanceDBLoadConfig,
         CaseLabel.Performance: LanceDBPerformanceConfig,
+    },
+    DB.VexDB: {
+        CaseLabel.Load: VexDBLoadingConfig,
+        CaseLabel.Performance: VexDBPerformanceConfig,
     },
     DB.TencentElasticsearch: {
         CaseLabel.Load: TencentElasticsearchLoadingConfig,

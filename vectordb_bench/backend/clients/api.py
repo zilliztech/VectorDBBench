@@ -45,6 +45,8 @@ class IndexType(str, Enum):
     Hologres_HGraph = "HGraph"
     Hologres_Graph = "Graph"
     NONE = "NONE"
+    HybridAnn = "hybridann"
+    GRAPH_INDEX = "graph_index"
 
 
 class SQType(str, Enum):
