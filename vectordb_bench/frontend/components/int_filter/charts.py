@@ -57,4 +57,4 @@ def drawChart(st, data: list[object], metric):
         margin=dict(l=0, r=0, t=40, b=0, pad=8),
         legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="right", x=1, title=""),
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")

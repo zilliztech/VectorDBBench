@@ -1,9 +1,8 @@
+import pytest
 import logging
-from vectordb_bench.models import (
-    DB,
-    MetricType,
-    ElasticsearchConfig,
-)
+from vectordb_bench.models import DB
+from vectordb_bench.backend.clients.elastic_cloud.config import ElasticCloudConfig
+from vectordb_bench.backend.clients import MetricType
 import numpy as np
 
 
@@ -13,10 +12,11 @@ cloud_id = ""
 password = ""
 
 
-class TestModels:
+class TestElasticsearchCloud:
+    @pytest.mark.skip(reason="Needs elastic cloud credentials")
     def test_insert_and_search(self):
-        assert DB.ElasticCloud.value == "Elasticsearch"
-        assert DB.ElasticCloud.config == ElasticsearchConfig
+        assert DB.ElasticCloud.value == "ElasticCloud"
+        assert DB.ElasticCloud.config_cls == ElasticCloudConfig
 
         dbcls = DB.ElasticCloud.init_cls
         dbConfig = DB.ElasticCloud.config_cls(cloud_id=cloud_id, password=password)
