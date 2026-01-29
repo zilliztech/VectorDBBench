@@ -11,6 +11,7 @@ from ..backend.clients.elastic_cloud.cli import (
     ElasticCloudHNSWInt4,
     ElasticCloudHNSWInt8,
 )
+from ..backend.clients.endee.cli import Endee
 from ..backend.clients.hologres.cli import HologresHGraph
 from ..backend.clients.lancedb.cli import LanceDB
 from ..backend.clients.mariadb.cli import MariaDBHNSW
@@ -72,6 +73,7 @@ cli.add_command(AliSQLHNSW)
 cli.add_command(Doris)
 cli.add_command(TurboPuffer)
 cli.add_command(Chroma)
+cli.add_command(Endee)
 
 
 if __name__ == "__main__":

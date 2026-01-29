@@ -78,6 +78,7 @@ all = [
     "lancedb",
     "mysql-connector-python",
     "turbopuffer[fast]",
+    "endee",
 ]
 
 qdrant          = [ "qdrant-client" ]
@@ -106,6 +107,7 @@ oceanbase       = [ "mysql-connector-python" ]
 alisql          = [ "mysql-connector-python" ]
 doris           = [ "doris-vector-search" ]
 turbopuffer     = [ "turbopuffer" ]
+endee           = [ "endee" ]
 
 [project.urls]
 Repository  = "https://github.com/zilliztech/VectorDBBench"

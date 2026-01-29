@@ -56,6 +56,7 @@ class DB(Enum):
     AliSQL = "AlibabaCloudRDSMySQL"
     Doris = "Doris"
     TurboPuffer = "TurboPuffer"
+    Endee = "Endee"
 
     @property
     def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901, PLR0915
@@ -227,6 +228,11 @@ class DB(Enum):
             from .alisql.alisql import AliSQL
 
             return AliSQL
+        
+        if self == DB.Endee:
+            from .endee.endee import Endee
+
+            return Endee
 
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
@@ -401,6 +407,11 @@ class DB(Enum):
             from .alisql.config import AliSQLConfig
 
             return AliSQLConfig
+        
+        if self == DB.Endee:
+            from .endee.config import EndeeConfig
+
+            return EndeeConfig
 
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)

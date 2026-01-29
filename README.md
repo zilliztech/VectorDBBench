@@ -63,6 +63,7 @@ All the database client supported
 | tencent_es               | `pip install vectordb-bench[tencent_es]`    |
 | alisql                   | `pip install 'vectordb-bench[alisql]'`      |
 | doris                    | `pip install vectordb-bench[doris]`         |
+| endee                    | `pip install vectordb-bench[endee]`         |
 
 ### Run
 
