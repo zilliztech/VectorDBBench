@@ -1,0 +1,135 @@
+{
+  "run_id": "2b7731aedcf24574a76987efc93e01d5",
+  "task_label": "2025112810",
+  "results": [
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 0,
+        "optimize_duration": 0,
+        "load_duration": 0,
+        "qps": 328.772,
+        "serial_latency_p99": 0.0184,
+        "serial_latency_p95": 0.0169,
+        "recall": 0.9983,
+        "ndcg": 0.9984,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20,
+          30,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          74.0598,
+          247.3597,
+          323.0974,
+          326.6714,
+          325.9711,
+          326.109,
+          327.0808,
+          328.772
+        ],
+        "conc_latency_p99_list": [
+          0.017595845824107528,
+          0.028741827234625816,
+          0.04373327549546957,
+          0.08262120254337789,
+          0.11297819921746849,
+          0.14499322351068258,
+          0.22070514821447432,
+          0.323815074507147
+        ],
+        "conc_latency_p95_list": [
+          0.01655156835913658,
+          0.026233703596517444,
+          0.04003582429140806,
+          0.07535540163516997,
+          0.10579421008005738,
+          0.13709212997928263,
+          0.21008139979094267,
+          0.3113258379977196
+        ],
+        "conc_latency_avg_list": [
+          0.013500699638887824,
+          0.020207179967241768,
+          0.030934518305094215,
+          0.06117603413692736,
+          0.0919196840900463,
+          0.12243950031881758,
+          0.1829535317926977,
+          0.24257953358352213
+        ],
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": []
+      },
+      "task_config": {
+        "db": "TencentElasticsearch",
+        "db_config": {
+          "db_label": "sa5-1node",
+          "version": "",
+          "note": "",
+          "scheme": "http",
+          "host": "10.0.228.48",
+          "port": 9200,
+          "user": "elastic",
+          "password": "**********"
+        },
+        "db_case_config": {
+          "element_type": "float",
+          "index": "vsearch",
+          "number_of_shards": 1,
+          "number_of_replicas": 0,
+          "refresh_interval": "-1",
+          "merge_max_thread_count": 8,
+          "use_rescore": false,
+          "oversample_ratio": 2,
+          "use_routing": false,
+          "use_force_merge": true,
+          "metric_type": "COSINE",
+          "efConstruction": 200,
+          "M": 16,
+          "num_candidates": 4000
+        },
+        "case_config": {
+          "case_id": 11,
+          "custom_case": null,
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_serial",
+          "search_concurrent"
+        ]
+      },
+      "label": ":)"
+    }
+  ],
+  "file_fmt": "result_{}_{}_{}.json",
+  "timestamp": 1764259200
+}
