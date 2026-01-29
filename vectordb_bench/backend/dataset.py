@@ -6,8 +6,8 @@ Usage:
 
 import logging
 import pathlib
-import typing
 from enum import Enum
+from typing import Any, NamedTuple
 
 import pandas as pd
 import polars as pl
@@ -25,7 +25,7 @@ from .filter import Filter, FilterOp, non_filter
 log = logging.getLogger(__name__)
 
 
-class SizeLabel(typing.NamedTuple):
+class SizeLabel(NamedTuple):
     size: int
     label: str
     file_count: int
@@ -404,6 +404,17 @@ class DataSetIterator:
         self._idx = 0  # file number
         self._cur = None
         self._sub_idx = [0 for i in range(len(self._ds.train_files))]  # iter num for each file
+
+    def __getstate__(self):
+        """Custom pickle support to handle unpicklable generator."""
+        state = self.__dict__.copy()
+        # Remove the unpicklable generator from ParquetFile.iter_batches()
+        state["_cur"] = None
+        return state
+
+    def __setstate__(self, state: Any):
+        """Restore state after unpickling."""
+        self.__dict__.update(state)
 
     def __iter__(self):
         return self
