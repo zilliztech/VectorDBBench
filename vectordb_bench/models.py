@@ -17,6 +17,7 @@ from .backend.clients import (
     DBConfig,
     EmptyDBCaseConfig,
 )
+from .backend.clients.api import IndexType
 from .base import BaseModel
 from .metric import Metric
 
@@ -44,6 +45,15 @@ class CaseConfigParamType(Enum):
     """
 
     IndexType = "IndexType"
+    drop_ratio_search = "drop_ratio_search"
+    drop_ratio_build = "drop_ratio_build"
+    bm25_k1 = "bm25_k1"
+    bm25_b = "bm25_b"
+    inverted_index_algo = "inverted_index_algo"
+    analyzer_tokenizer = "analyzer_tokenizer"
+    analyzer_enable_lowercase = "analyzer_enable_lowercase"
+    analyzer_max_len = "analyzer_max_len"
+    analyzer_stop_words = "analyzer_stop_words"
     index = "index"
     M = "M"
     EFConstruction = "efConstruction"
@@ -333,6 +343,10 @@ class TestResult(BaseModel):
                 # Safely instantiate DBCaseConfig (fallback to EmptyDBCaseConfig on None)
                 raw_case_cfg = task_config.get("db_case_config") or {}
                 index_value = raw_case_cfg.get("index", None)
+
+                # Handle FTS cases
+                if case_config.get("case_id") == CaseType.FTSmsmarcoPerformance.value:
+                    index_value = IndexType.FTS_AUTOINDEX
                 try:
                     task_config["db_case_config"] = db.case_config_cls(index_type=index_value)(**raw_case_cfg)
                 except Exception:

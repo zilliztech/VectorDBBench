@@ -35,7 +35,7 @@ class TiDBConfig(DBConfig):
             "ssl_verify_identity": self.ssl,
         }
 
-    @validator("*")
+    @validator("*", allow_reuse=True)
     def not_empty_field(cls, v: any, field: any):
         if field.name in ["password", "db_label"]:
             return v

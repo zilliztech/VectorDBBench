@@ -32,7 +32,7 @@ class OSSOpenSearchConfig(DBConfig, BaseModel):
             "timeout": 600,
         }
 
-    @validator("*")
+    @validator("*", allow_reuse=True)
     def not_empty_field(cls, v: any, field: any):
         if (
             field.name in cls.common_short_configs()

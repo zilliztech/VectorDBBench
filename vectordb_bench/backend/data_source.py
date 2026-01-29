@@ -1,12 +1,22 @@
 import logging
+import os
 import pathlib
 import typing
 from abc import ABC, abstractmethod
 from enum import Enum
 
+import ir_datasets
 from tqdm import tqdm
 
 from vectordb_bench import config
+
+# Set ir_datasets to use tmp directory for both home and temp
+# This ensures all downloaded files and temporary data are stored in /tmp
+ir_datasets_home = pathlib.Path(config.DATASET_LOCAL_DIR) / "ir_datasets"
+ir_datasets_tmp = pathlib.Path(config.DATASET_LOCAL_DIR) / "ir_datasets_tmp"
+os.environ.setdefault("IR_DATASETS_HOME", str(ir_datasets_home))
+os.environ.setdefault("IR_DATASETS_TMP", str(ir_datasets_tmp))
+
 
 logging.getLogger("s3fs").setLevel(logging.CRITICAL)
 
@@ -18,6 +28,7 @@ DatasetReader = typing.TypeVar("DatasetReader")
 class DatasetSource(Enum):
     S3 = "S3"
     AliyunOSS = "AliyunOSS"
+    IR_DATASETS = "IR_DATASETS"
 
     def reader(self) -> DatasetReader:
         if self == DatasetSource.S3:
@@ -25,6 +36,9 @@ class DatasetSource(Enum):
 
         if self == DatasetSource.AliyunOSS:
             return AliyunOSSReader()
+
+        if self == DatasetSource.IR_DATASETS:
+            return IRDatasetsReader()
 
         return None
 
@@ -155,3 +169,95 @@ class AwsS3Reader(DatasetReader):
             return False
 
         return True
+
+
+class IRDatasetsReader(DatasetReader):
+    """Reader for ir_datasets based datasets"""
+
+    source: DatasetSource = DatasetSource.IR_DATASETS
+    remote_root: str = ""  # Not used for ir_datasets
+
+    def __init__(self):
+        self.ir_datasets = ir_datasets
+
+    def read(self, dataset: str, files: list[str], local_ds_root: pathlib.Path):
+        """
+        Download FTS dataset using ir_datasets API
+
+        Args:
+            dataset: ir_datasets dataset name
+            files: Expected output files (ignored, we generate them)
+            local_ds_root: Local directory to save converted TSV files
+        """
+        log.info(f"Downloading FTS dataset '{dataset}' using ir_datasets")
+
+        # Create output directory
+        local_ds_root.mkdir(parents=True, exist_ok=True)
+
+        try:
+            # Load dataset using ir_datasets
+            ds = self.ir_datasets.load(dataset)
+            log.info(f"Successfully loaded dataset: {dataset}")
+
+            # Convert and save each component
+            self._save_component(ds, "queries", local_ds_root, "queries.small.tsv")
+            self._save_component(ds, "qrels", local_ds_root, "qrels.small.tsv")
+            self._save_component(ds, "scoreddocs", local_ds_root, "scoreddocs.small.tsv")
+            self._save_component(ds, "docs", local_ds_root, "docs.small.tsv")
+
+            log.info(f"FTS dataset '{dataset}' downloaded and converted successfully")
+
+        except Exception:
+            log.exception(f"Failed to download FTS dataset '{dataset}'")
+            raise
+
+    def _save_component(self, dataset: typing.Any, component_name: str, output_dir: pathlib.Path, filename: str):
+        """Save a dataset component to TSV file"""
+        output_file = output_dir / filename
+
+        # Get the appropriate iterator
+        tab_char = "\t"
+        newline_char = "\n"
+
+        if component_name == "queries":
+            iterator = dataset.queries_iter()
+
+            def converter(x: typing.Any) -> str:
+                clean_text = x.text.replace("\t", " ").replace("\n", " ")
+                return f"{x.query_id}{tab_char}{clean_text}{newline_char}"
+
+        elif component_name == "qrels":
+            iterator = dataset.qrels_iter()
+
+            def converter(x: typing.Any) -> str:
+                return f"{x.query_id}{tab_char}{x.iteration}{tab_char}{x.doc_id}{tab_char}{x.relevance}{newline_char}"
+
+        elif component_name == "scoreddocs":
+            iterator = dataset.scoreddocs_iter()
+
+            def converter(x: typing.Any) -> str:
+                return f"{x.query_id}{tab_char}{x.doc_id}{tab_char}{x.score}{newline_char}"
+
+        elif component_name == "docs":
+            iterator = dataset.docs_iter()
+
+            def converter(x: typing.Any) -> str:
+                clean_text = x.text.replace("\t", " ").replace("\n", " ")
+                return f"{x.doc_id}{tab_char}{clean_text}{newline_char}"
+
+        else:
+            return
+
+        # Write to file
+        count = 0
+        with output_file.open("w", encoding="utf-8") as f:
+            for item in iterator:
+                f.write(converter(item))
+                count += 1
+
+        log.info(f"Saved {component_name}: {output_file} ({count} records)")
+
+    def validate_file(self, remote: pathlib.Path, local: pathlib.Path) -> bool:
+        """For ir_datasets, we don't validate against remote files"""
+        # ir_datasets handles its own caching and validation
+        return local.exists() and local.stat().st_size > 0
