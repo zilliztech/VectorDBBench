@@ -64,6 +64,7 @@ All the database client supported
 | alisql                   | `pip install 'vectordb-bench[alisql]'`      |
 | doris                    | `pip install vectordb-bench[doris]`         |
 | zvec                     | `pip install vectordb-bench[zvec]`          |
+| endee                    | `pip install vectordb-bench[endee]`         |
 
 ### Run
 
