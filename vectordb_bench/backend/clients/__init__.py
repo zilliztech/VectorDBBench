@@ -58,7 +58,7 @@ class DB(Enum):
     TurboPuffer = "TurboPuffer"
     Endee = "Endee"
     Zvec = "Zvec"
-    Endee = "Endee"
+
 
     @property
     def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901, PLR0915
@@ -245,6 +245,11 @@ class DB(Enum):
             from .endee.endee import Endee
 
             return Endee
+
+        if self == DB.Zvec:
+            from .zvec.zvec import Zvec
+
+            return Zvec
 
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
@@ -434,6 +439,11 @@ class DB(Enum):
             from .endee.config import EndeeConfig
 
             return EndeeConfig
+
+        if self == DB.Zvec:
+            from .zvec.config import ZvecConfig
+
+            return ZvecConfig
 
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
