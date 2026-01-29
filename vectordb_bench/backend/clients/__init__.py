@@ -57,6 +57,7 @@ class DB(Enum):
     AliSQL = "AlibabaCloudRDSMySQL"
     Doris = "Doris"
     TurboPuffer = "TurboPuffer"
+    Zvec = "Zvec"
 
     @property
     def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901, PLR0915
@@ -233,6 +234,11 @@ class DB(Enum):
             from .alisql.alisql import AliSQL
 
             return AliSQL
+
+        if self == DB.Zvec:
+            from .zvec.zvec import Zvec
+
+            return Zvec
 
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
@@ -413,6 +419,11 @@ class DB(Enum):
 
             return AliSQLConfig
 
+        if self == DB.Zvec:
+            from .zvec.config import ZvecConfig
+
+            return ZvecConfig
+
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
 
@@ -548,6 +559,11 @@ class DB(Enum):
             from .vexdb.config import _vexdb_case_config
 
             return _vexdb_case_config.get(index_type)
+
+        if self == DB.Zvec:
+            from .zvec.config import ZvecHNSWIndexConfig
+
+            return ZvecHNSWIndexConfig
 
         if self == DB.TencentElasticsearch:
             from .tencent_elasticsearch.config import TencentElasticsearchIndexConfig

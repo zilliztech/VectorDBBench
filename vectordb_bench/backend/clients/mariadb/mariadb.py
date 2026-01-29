@@ -73,14 +73,12 @@ class MariaDB(VectorDB):
             log.info(f"{self.name} client create table : {self.table_name}")
             self.cursor.execute(f"USE {self.db_name}")
 
-            self.cursor.execute(
-                f"""
+            self.cursor.execute(f"""
               CREATE TABLE {self.table_name} (
                 id INT PRIMARY KEY,
                 v VECTOR({self.dim}) NOT NULL
               ) ENGINE={index_param["storage_engine"]}
-            """
-            )
+            """)
             self.cursor.execute("COMMIT")
 
         except Exception as e:
@@ -142,12 +140,10 @@ class MariaDB(VectorDB):
             if index_param["index_type"] == "HNSW" and index_param["M"] is not None:
                 index_options += f" M={index_param['M']}"
 
-            self.cursor.execute(
-                f"""
+            self.cursor.execute(f"""
               ALTER TABLE {self.db_name}.{self.table_name}
               ADD VECTOR KEY v(v) {index_options}
-            """
-            )
+            """)
             self.cursor.execute("COMMIT")
 
         except Exception as e:

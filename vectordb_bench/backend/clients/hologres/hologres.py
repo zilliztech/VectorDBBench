@@ -170,11 +170,9 @@ class Hologres(VectorDB):
             self.conn.autocommit = True
             with self.conn.cursor() as cursor:
                 cursor.execute(
-                    sql.SQL(
-                        """
+                    sql.SQL("""
                         VACUUM {table_name};
-                        """
-                    ).format(
+                        """).format(
                         table_name=sql.Identifier(self.table_name),
                     )
                 )
@@ -193,14 +191,12 @@ class Hologres(VectorDB):
     def _full_compact(self):
         log.info(f"{self.name} client full compact table : {self.table_name}")
         self.cursor.execute(
-            sql.SQL(
-                """
+            sql.SQL("""
                 SELECT hologres.hg_full_compact_table(
                     '{table_name}',
                     'max_file_size_mb={full_compact_max_file_size_mb}'
                 );
-                """
-            ).format(
+                """).format(
                 table_name=sql.SQL(self.table_name),
                 full_compact_max_file_size_mb=sql.SQL(str(self.case_config.full_compact_max_file_size_mb)),
             )
@@ -211,8 +207,7 @@ class Hologres(VectorDB):
         assert self.conn is not None, "Connection is not initialized"
         assert self.cursor is not None, "Cursor is not initialized"
 
-        sql_index = sql.SQL(
-            """
+        sql_index = sql.SQL("""
             CALL set_table_property ('{table_name}', 'vectors', '{{
                 "embedding": {{
                     "algorithm": "{algorithm}",
@@ -220,8 +215,7 @@ class Hologres(VectorDB):
                     "builder_params": {builder_params}
                 }}
             }}');
-            """
-        ).format(
+            """).format(
             table_name=sql.Identifier(self.table_name),
             algorithm=sql.SQL(self.case_config.algorithm()),
             distance_method=sql.SQL(self.case_config.distance_method()),
@@ -256,15 +250,13 @@ class Hologres(VectorDB):
                 sql_get_warehouse_name = sql.SQL("select current_warehouse();")
                 log.info(f"get warehouse name with sql: {sql_get_warehouse_name}")
                 self.cursor.execute(sql_get_warehouse_name)
-                sql_tg_replica = sql.SQL(
-                    """
+                sql_tg_replica = sql.SQL("""
                     CALL hg_table_group_set_warehouse_replica_count (
                         '{dbname}.{tg_name}',
                         {replica_count},
                         '{warehouse_name}'
                     );
-                    """
-                ).format(
+                    """).format(
                     tg_name=sql.SQL(self._tg_name),
                     warehouse_name=sql.SQL(self.cursor.fetchone()[0]),
                     dbname=sql.SQL(self.db_config["dbname"]),
@@ -292,15 +284,13 @@ class Hologres(VectorDB):
 
         self._set_replica_count(replica_count=2)
 
-        sql_table = sql.SQL(
-            """
+        sql_table = sql.SQL("""
             CREATE TABLE IF NOT EXISTS {table_name} (
                 id BIGINT PRIMARY KEY,
                 embedding FLOAT4[] CHECK (array_ndims(embedding) = 1 AND array_length(embedding, 1) = {dim})
             )
             WITH (table_group = {tg_name});
-            """
-        ).format(
+            """).format(
             table_name=sql.Identifier(self.table_name),
             dim=dim,
             tg_name=sql.SQL(self._tg_name),
@@ -351,16 +341,14 @@ class Hologres(VectorDB):
         params.append(vec_float4)
         params.append(topk)
 
-        query = sql.SQL(
-            """
+        query = sql.SQL("""
             SELECT id
             FROM {table_name}
             {where_clause}
             ORDER BY {distance_function}(embedding, %b)
             {order_direction}
             LIMIT %s;
-            """
-        ).format(
+            """).format(
             table_name=sql.Identifier(self.table_name),
             distance_function=sql.SQL(self.case_config.distance_function()),
             where_clause=where_clause,

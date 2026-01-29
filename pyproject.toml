@@ -19,9 +19,9 @@ description = "VectorDBBench is not just an offering of benchmark results for ma
 
 readme = "README.md"
 requires-python = ">=3.11"
+license = "MIT"
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
 dependencies = [
@@ -78,6 +78,7 @@ all = [
     "lancedb",
     "mysql-connector-python",
     "turbopuffer[fast]",
+    'zvec',
 ]
 
 qdrant          = [ "qdrant-client" ]
@@ -107,6 +108,7 @@ vexdb           = [ "psycopg", "psycopg-binary", "pgvector" ]
 alisql          = [ "mysql-connector-python" ]
 doris           = [ "doris-vector-search" ]
 turbopuffer     = [ "turbopuffer" ]
+zvec            = [ "zvec" ]
 
 [project.urls]
 Repository  = "https://github.com/zilliztech/VectorDBBench"
