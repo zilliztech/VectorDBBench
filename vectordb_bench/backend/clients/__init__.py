@@ -229,7 +229,7 @@ class DB(Enum):
             from .alisql.alisql import AliSQL
 
             return AliSQL
-        
+
         if self == DB.Endee:
             from .endee.endee import Endee
 
@@ -413,7 +413,7 @@ class DB(Enum):
             from .alisql.config import AliSQLConfig
 
             return AliSQLConfig
-        
+
         if self == DB.Endee:
             from .endee.config import EndeeConfig
 

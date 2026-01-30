@@ -18,47 +18,52 @@ log = logging.getLogger(__name__)
 
 
 class EndeeTypedDict(CommonTypedDict):
-    token: Annotated[
-        str, 
-        click.option("--token", type=str, required=True, default=None, help="Endee API token")
-    ]
-    region: Annotated[
-        str, 
-        click.option("--region", type=str, default=None, help="Endee region", show_default=True)
-    ]
+    token: Annotated[str, click.option("--token", type=str, required=True, default=None, help="Endee API token")]
+    region: Annotated[str, click.option("--region", type=str, default=None, help="Endee region", show_default=True)]
     base_url: Annotated[
-        str, 
-        click.option("--base-url", type=str, default="http://127.0.0.1:8080/api/v1", help="API server URL", show_default=True)
+        str,
+        click.option(
+            "--base-url", type=str, default="http://127.0.0.1:8080/api/v1", help="API server URL", show_default=True
+        ),
     ]
     space_type: Annotated[
-        str, 
-        click.option("--space-type", type=click.Choice(["cosine", "l2", "dot_product"]), default="cosine", help="Distance metric", show_default=True)
+        str,
+        click.option(
+            "--space-type",
+            type=click.Choice(["cosine", "l2", "dot_product"]),
+            default="cosine",
+            help="Distance metric",
+            show_default=True,
+        ),
     ]
     precision: Annotated[
-        str, 
-        click.option("--precision", type=click.Choice(["binary", "int8d", "int16d", "float16", "float32"]), default="int8d", help="Quant Level", show_default=True)
+        str,
+        click.option(
+            "--precision",
+            type=click.Choice(["binary", "int8d", "int16d", "float16", "float32"]),
+            default="int8d",
+            help="Quant Level",
+            show_default=True,
+        ),
     ]
-    version: Annotated[
-        int, 
-        click.option("--version", type=int, default=None, help="Index version", show_default=True)
-    ]
-    m: Annotated[
-        int, 
-        click.option("--m", type=int, default=None, help="HNSW M parameter", show_default=True)
-    ]
+    version: Annotated[int, click.option("--version", type=int, default=None, help="Index version", show_default=True)]
+    m: Annotated[int, click.option("--m", type=int, default=None, help="HNSW M parameter", show_default=True)]
     ef_con: Annotated[
-        int, 
-        click.option("--ef-con", type=int, default=None, help="HNSW construction parameter", show_default=True)
+        int, click.option("--ef-con", type=int, default=None, help="HNSW construction parameter", show_default=True)
     ]
     ef_search: Annotated[
-        int, 
-        click.option("--ef-search", type=int, default=None, help="HNSW search parameter", show_default=True)
+        int, click.option("--ef-search", type=int, default=None, help="HNSW search parameter", show_default=True)
     ]
     index_name: Annotated[
-        str, 
-        click.option("--index-name", type=str, required=True, help="Endee index name (will use a random name if not provided)", show_default=True)
+        str,
+        click.option(
+            "--index-name",
+            type=str,
+            required=True,
+            help="Endee index name (will use a random name if not provided)",
+            show_default=True,
+        ),
     ]
-
 
 
 @click.command()
@@ -73,7 +78,7 @@ def Endee(**parameters):
         parameters["search_serial"],
         parameters["search_concurrent"],
     )
-    
+
     # Generate a random collection name if not provided
     collection_name = parameters["index_name"]
     if not collection_name:
@@ -87,9 +92,9 @@ def Endee(**parameters):
 
     # Create task config
     from vectordb_bench.models import TaskConfig, CaseConfig, CaseType, ConcurrencySearchConfig
-    
+
     db_case_config = EmptyDBCaseConfig()
-    
+
     task = TaskConfig(
         db=DB.Endee,
         db_config=db_config,
@@ -100,13 +105,13 @@ def Endee(**parameters):
             concurrency_search_config=ConcurrencySearchConfig(
                 concurrency_duration=parameters["concurrency_duration"],
                 num_concurrency=[int(s) for s in parameters["num_concurrency"]],
-                concurrency_timeout=parameters["concurrency_timeout"], # ========== Added this ==========
+                concurrency_timeout=parameters["concurrency_timeout"],  # ========== Added this ==========
             ),
             custom_case=custom_case_config,
         ),
         stages=stages,
     )
-    
+
     # Use the run method of the benchmark_runner object
     if not parameters["dry_run"]:
         # Generate task label
@@ -114,17 +119,17 @@ def Endee(**parameters):
         base_name = parameters.get("task_label")
         if not base_name:
             base_name = parameters.get("index_name", "endee")
-        
+
         final_label = f"{base_name}_{run_uuid}"
 
         # Run the benchmark
         benchmark_runner.run([task], final_label)
-        
+
         # Wait for task to complete
         import time
         from vectordb_bench.interface import global_result_future
         from concurrent.futures import wait
-        
+
         time.sleep(5)
         if global_result_future:
             wait([global_result_future])

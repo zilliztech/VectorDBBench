@@ -95,7 +95,7 @@ class Endee(VectorDB):
                 precision=self.precision,
                 version=self.version,
                 M=self.M,
-                ef_con=self.ef_con
+                ef_con=self.ef_con,
             )
             log.info(f"Created new Endee index: {resp}")
         except Exception as e:
@@ -131,7 +131,7 @@ class Endee(VectorDB):
             self.index = nd.get_index(name=self.collection_name)
             yield
         except Exception as e:
-            if hasattr(e, 'response') and e.response is not None:
+            if hasattr(e, "response") and e.response is not None:
                 log.error(f"HTTP Status: {e.response.status_code}, Body: {e.response.text}")
             log.error(f"Error initializing Endee client: {e}")
             raise
@@ -153,14 +153,10 @@ class Endee(VectorDB):
 
         elif filters.type == FilterOp.NumGE:
             # Endee supports $range, assuming upper bound of 1M for benchmark dataset
-            self.filter_expr = [
-                {self._scalar_id_field: {"$range": [filters.int_value, 1_000_000]}}
-            ]
+            self.filter_expr = [{self._scalar_id_field: {"$range": [filters.int_value, 1_000_000]}}]
 
         elif filters.type == FilterOp.StrEqual:
-            self.filter_expr = [
-                {self._scalar_label_field: {"$eq": filters.label_value}}
-            ]
+            self.filter_expr = [{self._scalar_label_field: {"$eq": filters.label_value}}]
 
         else:
             raise ValueError(f"Not support Filter for Endee - {filters}")
@@ -184,9 +180,7 @@ class Endee(VectorDB):
                     "id": str(metadata[i]),
                     "vector": embeddings[i],
                     "meta": {"id": metadata[i]},
-                    "filter": {
-                        self._scalar_id_field: metadata[i]
-                    }
+                    "filter": {self._scalar_id_field: metadata[i]},
                 }
 
                 if self.with_scalar_labels and labels_data is not None:
@@ -215,11 +209,7 @@ class Endee(VectorDB):
         """
         try:
             results = self.index.query(
-                vector=query,
-                top_k=k,
-                filter=self.filter_expr,
-                ef=self.ef_search,
-                include_vectors=False
+                vector=query, top_k=k, filter=self.filter_expr, ef=self.ef_search, include_vectors=False
             )
 
             return [int(result["id"]) for result in results]
