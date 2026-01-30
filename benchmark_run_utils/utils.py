@@ -195,6 +195,44 @@ def get_base_command(case: dict, db_config: dict) -> list:
         "--k", str(case["k"]),
     ]
 
+    # ========== LabelFilterPerformanceCase ==========
+    if case["case-type"] == "LabelFilterPerformanceCase":
+        if "dataset-with-size-type" in case:
+            base_command.extend(["--dataset-with-size-type", case["dataset-with-size-type"]])
+        else:
+            logger.warning("LabelFilterPerformanceCase requires 'dataset-with-size-type' in config.json")
+        
+        if "label-percentage" in case:
+            base_command.extend(["--label-percentage", str(case["label-percentage"])])
+        else:
+            logger.warning("LabelFilterPerformanceCase requires 'label-percentage' in config.json")
+    
+    # ========== NewIntFilterPerformanceCase ==========
+    elif case["case-type"] == "NewIntFilterPerformanceCase":
+        if "dataset-with-size-type" in case:
+            base_command.extend(["--dataset-with-size-type", case["dataset-with-size-type"]])
+        else:
+            logger.warning("NewIntFilterPerformanceCase requires 'dataset-with-size-type' in config.json")
+        
+        if "filter-rate" in case:
+            base_command.extend(["--filter-rate", str(case["filter-rate"])])
+        else:
+            logger.warning("NewIntFilterPerformanceCase requires 'filter-rate' in config.json")
+    
+    # ========== StreamingPerformanceCase ==========
+    elif case["case-type"] == "StreamingPerformanceCase":
+        if "dataset-with-size-type" in case:
+            base_command.extend(["--dataset-with-size-type", case["dataset-with-size-type"]])
+        
+        if "insert-rate" in case:
+            base_command.extend(["--insert-rate", str(case["insert-rate"])])
+        
+        if "search-stages" in case:
+            base_command.extend(["--search-stages", str(case["search-stages"])])
+        
+        if "concurrencies" in case:
+            base_command.extend(["--concurrencies", str(case["concurrencies"])])
+
     # Handle initial flags (no skip for the first ef_search)
     if case.get("drop-old", True):
         base_command.append("--drop-old")
