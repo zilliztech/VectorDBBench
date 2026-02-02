@@ -1,12 +1,13 @@
 import logging
-from contextlib import contextmanager
+import uuid
 from collections.abc import Iterable
+from contextlib import contextmanager
 
 from endee import endee
 
 from vectordb_bench.backend.filter import Filter, FilterOp
 
-from ..api import DBCaseConfig, EmptyDBCaseConfig, IndexType, VectorDB
+from ..api import DBCaseConfig, EmptyDBCaseConfig, VectorDB
 from .config import EndeeConfig
 
 log = logging.getLogger(__name__)
@@ -60,7 +61,9 @@ class Endee(VectorDB):
 
         try:
             index_name = self.collection_name
-            indices = self.nd.list_indexes().get("indices", [])
+            indices_resp = self.nd.list_indexes()
+            indices = indices_resp.get("indices", [])
+
             # Check if index exists by name
             _ = [index["name"] for index in indices] if indices else []
 
@@ -80,10 +83,10 @@ class Endee(VectorDB):
                         log.warning(f"Index '{index_name}' already exists despite previous error. Fetching it again.")
                         self.index = self.nd.get_index(name=index_name)
                     else:
-                        log.error(f"Failed to create Endee index: {create_error}")
+                        log.exception("Failed to create Endee index")
                         raise
-        except Exception as e:
-            log.error(f"Error accessing or creating Endee index '{self.collection_name}': {e}")
+        except Exception:
+            log.exception(f"Error accessing or creating Endee index '{self.collection_name}'")
             raise
 
     def _create_index(self, dim: int):
@@ -98,16 +101,16 @@ class Endee(VectorDB):
                 ef_con=self.ef_con,
             )
             log.info(f"Created new Endee index: {resp}")
-        except Exception as e:
-            log.error(f"Failed to create Endee index: {e}")
+        except Exception:
+            log.exception("Failed to create Endee index")
             raise
 
     def _drop_index(self, collection_name: str):
         try:
             res = self.nd.delete_index(collection_name)
             log.info(res)
-        except Exception as e:
-            log.error(f"Failed to drop Endee index: {e}")
+        except Exception:
+            log.exception("Failed to drop Endee index")
             raise
 
     @classmethod
@@ -131,18 +134,16 @@ class Endee(VectorDB):
             self.index = nd.get_index(name=self.collection_name)
             yield
         except Exception as e:
+            msg = "Error initializing Endee client"
             if hasattr(e, "response") and e.response is not None:
-                log.error(f"HTTP Status: {e.response.status_code}, Body: {e.response.text}")
-            log.error(f"Error initializing Endee client: {e}")
+                msg += f" (HTTP Status: {e.response.status_code}, Body: {e.response.text})"
+            log.exception(msg)
             raise
-        finally:
-            pass
 
     def optimize(self, data_size: int | None = None):
         """
         Optimization step after insertion.
         """
-        pass
 
     def prepare_filter(self, filters: Filter):
         """
@@ -159,7 +160,8 @@ class Endee(VectorDB):
             self.filter_expr = [{self._scalar_label_field: {"$eq": filters.label_value}}]
 
         else:
-            raise ValueError(f"Not support Filter for Endee - {filters}")
+            msg = f"Not support Filter for Endee - {filters}"
+            raise ValueError(msg)
 
     def insert_embeddings(
         self,
@@ -192,7 +194,7 @@ class Endee(VectorDB):
             insert_count = len(batch_vectors)
 
         except Exception as e:
-            log.error(f"Failed to insert data: {e}")
+            log.exception("Failed to insert data")
             return insert_count, e
 
         return (len(embeddings), None)
@@ -223,11 +225,13 @@ class Endee(VectorDB):
         Get information about the current index.
         """
         try:
-            all_indices = self.nd.list_indexes().get("indices", [])
-            for idx in all_indices:
-                if idx.get("name") == self.collection_name:
-                    return idx
-            return {}
+            indices_resp = self.nd.list_indexes()
         except Exception as e:
             log.warning(f"Error describing Endee index: {e}")
             return {}
+
+        all_indices = indices_resp.get("indices", [])
+        for idx in all_indices:
+            if idx.get("name") == self.collection_name:
+                return idx
+        return {}

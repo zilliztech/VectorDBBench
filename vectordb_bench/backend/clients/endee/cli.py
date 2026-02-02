@@ -1,7 +1,8 @@
-import click
 import logging
 import uuid
 from typing import Annotated
+
+import click
 
 from vectordb_bench.cli.cli import (
     CommonTypedDict,
@@ -10,9 +11,16 @@ from vectordb_bench.cli.cli import (
     get_custom_case_config,
     parse_task_stages,
 )
+from vectordb_bench.models import (
+    CaseConfig,
+    CaseType,
+    ConcurrencySearchConfig,
+    TaskConfig,
+)
+
 from .. import DB
-from .config import EndeeConfig
 from ..api import EmptyDBCaseConfig
+from .config import EndeeConfig
 
 log = logging.getLogger(__name__)
 
@@ -90,9 +98,6 @@ def Endee(**parameters):
 
     custom_case_config = get_custom_case_config(parameters)
 
-    # Create task config
-    from vectordb_bench.models import TaskConfig, CaseConfig, CaseType, ConcurrencySearchConfig
-
     db_case_config = EmptyDBCaseConfig()
 
     task = TaskConfig(
@@ -105,7 +110,7 @@ def Endee(**parameters):
             concurrency_search_config=ConcurrencySearchConfig(
                 concurrency_duration=parameters["concurrency_duration"],
                 num_concurrency=[int(s) for s in parameters["num_concurrency"]],
-                concurrency_timeout=parameters["concurrency_timeout"],  # ========== Added this ==========
+                concurrency_timeout=parameters["concurrency_timeout"],
             ),
             custom_case=custom_case_config,
         ),
@@ -127,8 +132,9 @@ def Endee(**parameters):
 
         # Wait for task to complete
         import time
-        from vectordb_bench.interface import global_result_future
         from concurrent.futures import wait
+
+        from vectordb_bench.interface import global_result_future
 
         time.sleep(5)
         if global_result_future:
