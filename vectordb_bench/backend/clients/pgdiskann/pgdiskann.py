@@ -10,6 +10,7 @@ import psycopg
 from pgvector.psycopg import register_vector
 from psycopg import Connection, Cursor, sql
 
+from vectordb_bench.backend.filter import Filter, FilterOp
 from ..api import VectorDB
 from .config import PgDiskANNConfigDict, PgDiskANNIndexConfig
 
@@ -19,8 +20,14 @@ log = logging.getLogger(__name__)
 class PgDiskANN(VectorDB):
     """Use psycopg instructions"""
 
+    supported_filter_types: list[FilterOp] = [
+            FilterOp.NonFilter,
+            FilterOp.NumGE,
+            FilterOp.StrEqual,  
+    ]
+
     conn: psycopg.Connection[Any] | None = None
-    coursor: psycopg.Cursor[Any] | None = None
+    cursor: psycopg.Cursor[Any] | None = None
 
     _filtered_search: sql.Composed
     _unfiltered_search: sql.Composed
@@ -32,6 +39,7 @@ class PgDiskANN(VectorDB):
         db_case_config: PgDiskANNIndexConfig,
         collection_name: str = "pg_diskann_collection",
         drop_old: bool = False,
+        with_scalar_labels: bool = False,
         **kwargs,
     ):
         self.name = "PgDiskANN"
@@ -39,6 +47,10 @@ class PgDiskANN(VectorDB):
         self.case_config = db_case_config
         self.table_name = collection_name
         self.dim = dim
+        self.with_scalar_labels = with_scalar_labels
+        self._scalar_label_field = "label"
+        self.filter_op = None
+        self.filter_value = None
 
         self._index_name = "pgdiskann_index"
         self._primary_field = "id"
@@ -304,11 +316,23 @@ class PgDiskANN(VectorDB):
         try:
             log.info(f"{self.name} client create table : {self.table_name}")
 
-            self.cursor.execute(
-                sql.SQL(
-                    "CREATE TABLE IF NOT EXISTS public.{table_name} (id BIGINT PRIMARY KEY, embedding vector({dim}));",
-                ).format(table_name=sql.Identifier(self.table_name), dim=dim),
-            )
+            if self.with_scalar_labels:
+                # Create table WITH label column
+                self.cursor.execute(
+                    sql.SQL(
+                        """
+                        CREATE TABLE IF NOT EXISTS public.{table_name} 
+                        (id BIGINT PRIMARY KEY, embedding vector({dim}), label VARCHAR(64));
+                        """,
+                    ).format(table_name=sql.Identifier(self.table_name), dim=dim),
+                )
+            else:
+                # Create table WITHOUT label column (existing behavior)
+                self.cursor.execute(
+                    sql.SQL(
+                        "CREATE TABLE IF NOT EXISTS public.{table_name} (id BIGINT PRIMARY KEY, embedding vector({dim}));",
+                    ).format(table_name=sql.Identifier(self.table_name), dim=dim),
+                )
             self.conn.commit()
         except Exception as e:
             log.warning(f"Failed to create pgdiskann table: {self.table_name} error: {e}")
@@ -318,10 +342,14 @@ class PgDiskANN(VectorDB):
         self,
         embeddings: list[list[float]],
         metadata: list[int],
+        labels_data: list[str] | None = None, 
         **kwargs: Any,
     ) -> tuple[int, Exception | None]:
         assert self.conn is not None, "Connection is not initialized"
         assert self.cursor is not None, "Cursor is not initialized"
+
+        if self.with_scalar_labels:
+            assert labels_data is not None, "labels_data should be provided if with_scalar_labels is set to True"
 
         try:
             metadata_arr = np.array(metadata)
@@ -332,9 +360,14 @@ class PgDiskANN(VectorDB):
                     table_name=sql.Identifier(self.table_name),
                 ),
             ) as copy:
-                copy.set_types(["bigint", "vector"])
-                for i, row in enumerate(metadata_arr):
-                    copy.write_row((row, embeddings_arr[i]))
+                if self.with_scalar_labels:
+                    copy.set_types(["bigint", "vector", "varchar"])
+                    for i, row in enumerate(metadata_arr):
+                        copy.write_row((row, embeddings_arr[i], labels_data[i]))
+                else:
+                    copy.set_types(["bigint", "vector"])
+                    for i, row in enumerate(metadata_arr):
+                        copy.write_row((row, embeddings_arr[i]))
             self.conn.commit()
 
             if kwargs.get("last_batch"):
@@ -345,49 +378,123 @@ class PgDiskANN(VectorDB):
             log.warning(f"Failed to insert data into table ({self.table_name}), error: {e}")
             return 0, e
 
+    def prepare_filter(self, filters: Filter):
+        """Prepare filter for label or integer-based filtering"""
+        from vectordb_bench.backend.filter import FilterOp
+        
+        if filters.type == FilterOp.NonFilter:
+            self.filter_op = FilterOp.NonFilter
+            self.filter_value = None
+            
+        elif filters.type == FilterOp.NumGE:
+            # Integer filtering: WHERE id >= X
+            self.filter_op = FilterOp.NumGE
+            self.filter_value = filters.int_value
+            
+        elif filters.type == FilterOp.StrEqual:
+            # Label filtering: WHERE label = 'label_1p'
+            self.filter_op = FilterOp.StrEqual
+            self.filter_value = filters.label_value
+        else:
+            msg = f"Not support Filter for PgDiskANN - {filters}"
+            raise ValueError(msg)
+
+
     def search_embedding(
         self,
         query: list[float],
         k: int = 100,
-        filters: dict | None = None,
+        filters: dict | None = None,  
         timeout: int | None = None,
     ) -> list[int]:
         assert self.conn is not None, "Connection is not initialized"
         assert self.cursor is not None, "Cursor is not initialized"
 
+        from vectordb_bench.backend.filter import FilterOp
+        
         search_params = self.case_config.search_param()
         is_reranking = search_params.get("reranking", False)
-
+        
         q = np.asarray(query)
-        if filters:
-            gt = filters.get("id")
+        
+        # Build the appropriate query based on filter_op
+        if self.filter_op == FilterOp.StrEqual:
+            # Label filtering: e.g. WHERE label = 'label_1p'
+            if is_reranking:
+                query_sql = sql.SQL("""
+                    SELECT i.id
+                    FROM (
+                        SELECT id, embedding
+                        FROM public.{table_name}
+                        WHERE {label_field} = %s
+                        ORDER BY embedding {metric_fun_op} %s::vector
+                        LIMIT {quantized_fetch_limit}::int
+                    ) i
+                    ORDER BY i.embedding {reranking_metric_fun_op} %s::vector
+                    LIMIT %s::int
+                """).format(
+                    table_name=sql.Identifier(self.table_name),
+                    label_field=sql.Identifier(self._scalar_label_field),
+                    metric_fun_op=sql.SQL(search_params["metric_fun_op"]),
+                    reranking_metric_fun_op=sql.SQL(search_params["reranking_metric_fun_op"]),
+                    quantized_fetch_limit=sql.Literal(search_params["quantized_fetch_limit"]),
+                )
+                result = self.cursor.execute(
+                    query_sql,
+                    (self.filter_value, q, q, k),
+                    prepare=True,
+                    binary=True,
+                )
+            else:
+                query_sql = sql.Composed([
+                    sql.SQL(
+                        "SELECT id FROM public.{table_name} WHERE {label_field} = %s ORDER BY embedding ",
+                    ).format(
+                        table_name=sql.Identifier(self.table_name),
+                        label_field=sql.Identifier(self._scalar_label_field),
+                    ),
+                    sql.SQL(search_params["metric_fun_op"]),
+                    sql.SQL(" %s::vector LIMIT %s::int"),
+                ])
+                result = self.cursor.execute(
+                    query_sql,
+                    (self.filter_value, q, k),
+                    prepare=True,
+                    binary=True,
+                )
+                
+        elif self.filter_op == FilterOp.NumGE:
+            # Integer filtering: WHERE id >= X (existing behavior)
             if is_reranking:
                 result = self.cursor.execute(
                     self._filtered_search,
-                    (gt, q, q, k),
+                    (self.filter_value, q, q, k),
                     prepare=True,
                     binary=True,
                 )
             else:
                 result = self.cursor.execute(
                     self._filtered_search,
-                    (gt, q, k),
+                    (self.filter_value, q, k),
                     prepare=True,
                     binary=True,
                 )
-        elif is_reranking:
-            result = self.cursor.execute(
-                self._unfiltered_search,
-                (q, q, k),
-                prepare=True,
-                binary=True,
-            )
+                
         else:
-            result = self.cursor.execute(
-                self._unfiltered_search,
-                (q, k),
-                prepare=True,
-                binary=True,
-            )
+            # No filtering (existing behavior)
+            if is_reranking:
+                result = self.cursor.execute(
+                    self._unfiltered_search,
+                    (q, q, k),
+                    prepare=True,
+                    binary=True,
+                )
+            else:
+                result = self.cursor.execute(
+                    self._unfiltered_search,
+                    (q, k),
+                    prepare=True,
+                    binary=True,
+                )
 
         return [int(i[0]) for i in result.fetchall()]
