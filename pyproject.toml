@@ -42,6 +42,7 @@ dependencies = [
     "pymilvus", # with pandas, numpy, ujson
     "ujson",
     "hdrhistogram>=0.10.1",
+    "ir_datasets",
 ]
 dynamic = ["version"]
 
@@ -103,8 +104,8 @@ cockroachdb     = [ "psycopg[binary,pool]", "pgvector" ]
 clickhouse      = [ "clickhouse-connect" ]
 vespa           = [ "pyvespa" ]
 lancedb         = [ "lancedb" ]
-oceanbase       = [ "mysql-connector-python" ]
-alisql          = [ "mysql-connector-python" ]
+oceanbase       = [ "PyMySQL" ]
+alisql          = [ "PyMySQL" ]
 doris           = [ "doris-vector-search" ]
 turbopuffer     = [ "turbopuffer" ]
 zvec            = [ "zvec" ]

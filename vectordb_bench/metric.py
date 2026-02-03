@@ -24,6 +24,7 @@ class Metric:
     serial_latency_p95: float = 0.0
     recall: float = 0.0
     ndcg: float = 0.0
+    mrr: float = 0.0
     conc_num_list: list[int] = field(default_factory=list)
     conc_qps_list: list[float] = field(default_factory=list)
     conc_latency_p99_list: list[float] = field(default_factory=list)
@@ -56,6 +57,8 @@ SERIAL_LATENCY_P95_METRIC = "serial_latency_p95"
 MAX_LOAD_COUNT_METRIC = "max_load_count"
 QPS_METRIC = "qps"
 RECALL_METRIC = "recall"
+NDCG_METRIC = "ndcg"
+MRR_METRIC = "mrr"
 
 metric_unit_map = {
     LOAD_DURATION_METRIC: "s",
@@ -63,6 +66,10 @@ metric_unit_map = {
     SERIAL_LATENCY_P95_METRIC: "ms",
     MAX_LOAD_COUNT_METRIC: "K",
     QURIES_PER_DOLLAR_METRIC: "K",
+    QPS_METRIC: "",
+    RECALL_METRIC: "",
+    NDCG_METRIC: "",
+    MRR_METRIC: "",
 }
 
 lower_is_better_metrics = [
@@ -74,6 +81,8 @@ lower_is_better_metrics = [
 metric_order = [
     QPS_METRIC,
     RECALL_METRIC,
+    NDCG_METRIC,
+    MRR_METRIC,
     LOAD_DURATION_METRIC,
     SERIAL_LATENCY_P99_METRIC,
     SERIAL_LATENCY_P95_METRIC,
@@ -110,3 +119,51 @@ def calc_ndcg(ground_truth: list[int], got: list[int], ideal_dcg: float) -> floa
             idx = ground_truth.index(got_id)
             dcg += 1 / np.log2(idx + 2)
     return dcg / ideal_dcg
+
+
+def calc_mrr(ground_truth: list[int], got: list[int]) -> float:
+    """Calculate Mean Reciprocal Rank (MRR).
+
+    MRR is the average of the reciprocal ranks of the first relevant result
+    for each query. If no relevant result is found, MRR is 0.
+
+    Args:
+        ground_truth: List of relevant document IDs
+        got: List of retrieved document IDs (in order)
+
+    Returns:
+        MRR score (0-1)
+    """
+    ground_truth_set = set(ground_truth)
+    for rank, doc_id in enumerate(got, start=1):
+        if doc_id in ground_truth_set:
+            return 1.0 / rank
+    return 0.0
+
+
+def calc_recall_fts(k: int, ground_truth: list[int], got: list[int]) -> float:
+    if not ground_truth or k == 0:
+        return 0.0
+    gt_set = set(ground_truth)
+    retrieved_top_k = set(got[:k])
+    if not gt_set:
+        return 0.0
+    return len(gt_set & retrieved_top_k) / len(gt_set)
+
+
+def calc_ndcg_fts(k: int, ground_truth: list[int], got: list[int]) -> float:
+    if not ground_truth or k == 0:
+        return 0.0
+    ground_truth_set = set(ground_truth)
+    dcg = 0.0
+    for position, doc_id in enumerate(got[:k]):
+        if doc_id in ground_truth_set:
+            dcg += 1.0 / np.log2(position + 2)
+    num_relevant = len(ground_truth_set)
+    idcg = 0.0
+    limit = min(k, num_relevant)
+    for i in range(limit):
+        idcg += 1.0 / np.log2(i + 2)
+    if idcg == 0.0:
+        return 0.0
+    return dcg / idcg

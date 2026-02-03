@@ -58,7 +58,7 @@ class TiDB(VectorDB):
     def _drop_table(self):
         try:
             with self._get_connection() as (conn, cursor):
-                cursor.execute(f"DROP TABLE IF EXISTS {self.table_name}")
+                cursor.execute(f"DROP TABLE IF EXISTS `{self.table_name}`")
                 conn.commit()
         except Exception as e:
             log.warning("Failed to drop table: %s error: %s", self.table_name, e)
@@ -68,13 +68,15 @@ class TiDB(VectorDB):
         try:
             index_param = self.case_config.index_param()
             with self._get_connection() as (conn, cursor):
-                cursor.execute(f"""
-                    CREATE TABLE {self.table_name} (
+                cursor.execute(
+                    f"""
+                    CREATE TABLE `{self.table_name}` (
                         id BIGINT PRIMARY KEY,
                         embedding VECTOR({self.dim}) NOT NULL,
                         VECTOR INDEX (({index_param["metric_fn"]}(embedding)))
                     );
-                    """)
+                    """
+                )
                 conn.commit()
         except Exception as e:
             log.warning("Failed to create table: %s error: %s", self.table_name, e)
@@ -116,10 +118,13 @@ class TiDB(VectorDB):
         try:
             database = self.db_config["database"]
             with self._get_connection() as (_, cursor):
-                cursor.execute(f"""
+                cursor.execute(
+                    """
                     SELECT PROGRESS FROM information_schema.tiflash_replica
-                    WHERE TABLE_SCHEMA = "{database}" AND TABLE_NAME = "{self.table_name}"
-                    """)  # noqa: S608
+                    WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s
+                    """,
+                    (database, self.table_name),
+                )
                 result = cursor.fetchone()
                 return result[0]
         except Exception as e:
@@ -131,7 +136,7 @@ class TiDB(VectorDB):
             with self._get_connection() as (conn, cursor):
                 cursor.execute('SET @@TIDB_ISOLATION_READ_ENGINES="tidb,tiflash"')
                 conn.commit()
-                cursor.execute(f"SELECT COUNT(*) FROM {self.table_name}")  # noqa: S608
+                cursor.execute(f"SELECT COUNT(*) FROM `{self.table_name}`")  # noqa: S608
                 result = cursor.fetchone()
                 return result[0]
         except Exception as e:
@@ -141,7 +146,7 @@ class TiDB(VectorDB):
     def _optimize_compact_tiflash(self):
         try:
             with self._get_connection() as (conn, cursor):
-                cursor.execute(f"ALTER TABLE {self.table_name} COMPACT")
+                cursor.execute(f"ALTER TABLE `{self.table_name}` COMPACT")
                 conn.commit()
         except Exception as e:
             log.warning("Failed to compact table: %s", e)
@@ -151,11 +156,14 @@ class TiDB(VectorDB):
         try:
             database = self.db_config["database"]
             with self._get_connection() as (_, cursor):
-                cursor.execute(f"""
+                cursor.execute(
+                    """
                     SELECT SUM(ROWS_STABLE_NOT_INDEXED)
                     FROM information_schema.tiflash_indexes
-                    WHERE TIDB_DATABASE = "{database}" AND TIDB_TABLE = "{self.table_name}"
-                    """)  # noqa: S608
+                    WHERE TIDB_DATABASE = %s AND TIDB_TABLE = %s
+                    """,
+                    (database, self.table_name),
+                )
                 result = cursor.fetchone()
                 return result[0]
         except Exception as e:
@@ -172,7 +180,7 @@ class TiDB(VectorDB):
         try:
             with self._get_connection() as (conn, cursor):
                 buf = io.StringIO()
-                buf.write(f"INSERT INTO {self.table_name} (id, embedding) VALUES ")  # noqa: S608
+                buf.write(f"INSERT INTO `{self.table_name}` (id, embedding) VALUES ")  # noqa: S608
                 for i in range(offset, offset + size):
                     if i > offset:
                         buf.write(",")
@@ -217,9 +225,15 @@ class TiDB(VectorDB):
         timeout: int | None = None,
         **kwargs: Any,
     ) -> list[int]:
-        self.cursor.execute(f"""
-            SELECT id FROM {self.table_name}
-            ORDER BY {self.search_fn}(embedding, "{query!s}") LIMIT {k};
-            """)  # noqa: S608
+        # Format vector as string for TiDB vector search
+        query_str = str(query)
+        # search_fn comes from config and is safe, table_name is validated
+        self.cursor.execute(
+            f"""
+            SELECT id FROM `{self.table_name}`
+            ORDER BY `{self.search_fn}`(embedding, %s) LIMIT %s
+            """,  # noqa: S608
+            (query_str, k),
+        )
         result = self.cursor.fetchall()
         return [int(i[0]) for i in result]

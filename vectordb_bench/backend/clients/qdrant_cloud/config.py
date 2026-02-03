@@ -25,7 +25,7 @@ class QdrantConfig(DBConfig):
             "url": self.url.get_secret_value(),
         }
 
-    @validator("*")
+    @validator("*", allow_reuse=True)
     def not_empty_field(cls, v: any, field: any):
         if field.name in ["api_key"]:
             return v

@@ -358,6 +358,21 @@ UI_CASE_CLUSTERS: list[UICaseItemCluster] = [
             )
         ],
     ),
+    UICaseItemCluster(
+        label="Full-Text Search (FTS) Test",
+        uiCaseItems=[
+            UICaseItem(
+                label="FTS Performance Test (MS MARCO Small)",
+                description=(
+                    "This case tests full-text search performance using BM25 on the MS MARCO dataset "
+                    "with 100K documents. It measures index building time, recall, NDCG, MRR, and search QPS. "
+                    "Currently supported for Milvus only."
+                ),
+                cases=[CaseConfig(case_id=CaseType.FTSmsmarcoPerformance)],
+                caseLabel=CaseLabel.FullTextSearchPerformance,
+            ),
+        ],
+    ),
 ]
 
 # DIVIDER = "DIVIDER"
@@ -372,20 +387,12 @@ DISPLAY_CASE_ORDER: list[CaseType] = [
     CaseType.Performance1024D10M,
     CaseType.CapacityDim960,
     CaseType.CapacityDim128,
+    CaseType.FTSmsmarcoPerformance,
 ]
 CASE_NAME_ORDER = [case.case_cls().name for case in DISPLAY_CASE_ORDER]
 
 # CASE_LIST = [
 #     item for item in CASE_LIST_WITH_DIVIDER if isinstance(item, CaseType)]
-
-
-class InputType(IntEnum):
-    Text = 20001
-    Number = 20002
-    Option = 20003
-    Float = 20004
-    Bool = 20005
-    Select = 20006
 
 
 class CaseConfigInput(BaseModel):
@@ -2119,6 +2126,113 @@ CaseConfigParamInput_CLIP_OSSOpensearch = CaseConfigInput(
     ),
 )
 
+CaseConfigParamInput_IndexType_FTS = CaseConfigInput(
+    label=CaseConfigParamType.IndexType,
+    inputHelp="FTS Index Type (currently only AUTOINDEX supported)",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [
+            IndexType.FTS_AUTOINDEX.value,
+        ],
+    },
+    isDisplayed=lambda config: False,  # Hidden since FTS only has one index type currently
+)
+
+CaseConfigParamInput_FTS_inverted_index_algo = CaseConfigInput(
+    label=CaseConfigParamType.inverted_index_algo,
+    displayLabel="Inverted Index Algorithm",
+    inputHelp="Algorithm for building and querying sparse inverted index.",
+    inputType=InputType.Option,
+    inputConfig={
+        "value": "DAAT_MAXSCORE",
+        "options": ["DAAT_MAXSCORE", "DAAT_WAND", "TAAT_NAIVE"],
+    },
+)
+
+CaseConfigParamInput_FTS_bm25_k1 = CaseConfigInput(
+    label=CaseConfigParamType.bm25_k1,
+    displayLabel="BM25 k1",
+    inputHelp="BM25 k1 parameter controls term frequency saturation [1.2, 2.0]. Higher values emphasize term frequency.",
+    inputType=InputType.Float,
+    inputConfig={
+        "value": 1.5,
+        "step": 0.1,
+        "min": 1.2,
+        "max": 2.0,
+    },
+)
+
+CaseConfigParamInput_FTS_bm25_b = CaseConfigInput(
+    label=CaseConfigParamType.bm25_b,
+    displayLabel="BM25 b",
+    inputHelp="BM25 b parameter controls document length normalization [0.0, 1.0]. 0.75 is commonly used.",
+    inputType=InputType.Float,
+    inputConfig={
+        "value": 0.75,
+        "step": 0.05,
+        "min": 0.0,
+        "max": 1.0,
+    },
+)
+
+CaseConfigParamInput_FTS_analyzer_tokenizer = CaseConfigInput(
+    label=CaseConfigParamType.analyzer_tokenizer,
+    displayLabel="Analyzer Tokenizer",
+    inputHelp="Text tokenizer type for BM25 analysis.",
+    inputType=InputType.Option,
+    inputConfig={
+        "value": "standard",
+        "options": ["standard", "whitespace", "keyword"],
+    },
+)
+
+CaseConfigParamInput_FTS_analyzer_enable_lowercase = CaseConfigInput(
+    label=CaseConfigParamType.analyzer_enable_lowercase,
+    displayLabel="Enable Lowercase Filter",
+    inputHelp="Convert text to lowercase during analysis.",
+    inputType=InputType.Bool,
+    inputConfig={
+        "value": True,
+    },
+)
+
+CaseConfigParamInput_FTS_analyzer_max_token_length = CaseConfigInput(
+    label=CaseConfigParamType.analyzer_max_len,
+    displayLabel="Max Token Length",
+    inputHelp="Maximum length of individual tokens (optional, leave empty to disable).",
+    inputType=InputType.Number,
+    inputConfig={
+        "value": 40,
+        "min": 1,
+        "max": 100,
+    },
+)
+
+CaseConfigParamInput_FTS_analyzer_stop_words = CaseConfigInput(
+    label=CaseConfigParamType.analyzer_stop_words,
+    displayLabel="Stop Words",
+    inputHelp="Comma-separated list of stop words to filter out.",
+    inputType=InputType.Text,
+    inputConfig={
+        "value": "",
+        "placeholder": "of,to,the,and,or",
+    },
+)
+
+CaseConfigParamInput_FTS_drop_ratio_search = CaseConfigInput(
+    label=CaseConfigParamType.drop_ratio_search,
+    displayLabel="Drop Ratio (search)",
+    inputHelp="Search-time sparsification ratio. 0.0 keeps best recall; larger is faster.",
+    inputType=InputType.Float,
+    inputConfig={
+        "value": 0.0,
+        "step": 0.1,
+        "min": 0.0,
+        "max": 0.99,
+    },
+)
+
+
 MilvusLoadConfig = [
     CaseConfigParamInput_IndexType,
     CaseConfigParamInput_M,
@@ -2166,6 +2280,19 @@ MilvusPerformanceConfig = [
     CaseConfigParamInput_RefineType,
     CaseConfigParamInput_RefineK,
     CaseConfigParamInput_Milvus_use_partition_key,
+]
+
+
+MilvusFtsConfig = [
+    CaseConfigParamInput_IndexType_FTS,
+    CaseConfigParamInput_FTS_inverted_index_algo,
+    CaseConfigParamInput_FTS_bm25_k1,
+    CaseConfigParamInput_FTS_bm25_b,
+    CaseConfigParamInput_FTS_analyzer_tokenizer,
+    CaseConfigParamInput_FTS_analyzer_enable_lowercase,
+    CaseConfigParamInput_FTS_analyzer_max_token_length,
+    CaseConfigParamInput_FTS_analyzer_stop_words,
+    CaseConfigParamInput_FTS_drop_ratio_search,
 ]
 
 WeaviateLoadConfig = [
@@ -2639,6 +2766,7 @@ CASE_CONFIG_MAP = {
         CaseLabel.Load: MilvusLoadConfig,
         CaseLabel.Performance: MilvusPerformanceConfig,
         CaseLabel.Streaming: MilvusPerformanceConfig,
+        CaseLabel.FullTextSearchPerformance: MilvusFtsConfig,
     },
     DB.ZillizCloud: {
         CaseLabel.Performance: ZillizCloudPerformanceConfig,
@@ -2727,6 +2855,8 @@ def get_case_config_inputs(db: DB, case_label: CaseLabel) -> list[CaseConfigInpu
         return []
     if case_label == CaseLabel.Load:
         return CASE_CONFIG_MAP[db][CaseLabel.Load]
-    elif case_label == CaseLabel.Performance or case_label == CaseLabel.Streaming:
+    if case_label == CaseLabel.Performance or case_label == CaseLabel.Streaming:
         return CASE_CONFIG_MAP[db][CaseLabel.Performance]
+    elif case_label == CaseLabel.FullTextSearchPerformance:
+        return CASE_CONFIG_MAP[db][CaseLabel.FullTextSearchPerformance]
     return []

@@ -1,12 +1,22 @@
 import logging
+import os
 import pathlib
 import typing
 from abc import ABC, abstractmethod
 from enum import Enum
 
+import ir_datasets
 from tqdm import tqdm
 
 from vectordb_bench import config
+
+# Set ir_datasets to use tmp directory for both home and temp
+# This ensures all downloaded files and temporary data are stored in /tmp
+ir_datasets_home = pathlib.Path(config.DATASET_LOCAL_DIR) / "ir_datasets"
+ir_datasets_tmp = pathlib.Path(config.DATASET_LOCAL_DIR) / "ir_datasets_tmp"
+os.environ.setdefault("IR_DATASETS_HOME", str(ir_datasets_home))
+os.environ.setdefault("IR_DATASETS_TMP", str(ir_datasets_tmp))
+
 
 logging.getLogger("s3fs").setLevel(logging.CRITICAL)
 
@@ -18,6 +28,7 @@ DatasetReader = typing.TypeVar("DatasetReader")
 class DatasetSource(Enum):
     S3 = "S3"
     AliyunOSS = "AliyunOSS"
+    IR_DATASETS = "IR_DATASETS"
 
     def reader(self) -> DatasetReader:
         if self == DatasetSource.S3:
@@ -25,6 +36,9 @@ class DatasetSource(Enum):
 
         if self == DatasetSource.AliyunOSS:
             return AliyunOSSReader()
+
+        if self == DatasetSource.IR_DATASETS:
+            return IRDatasetsReader()
 
         return None
 
@@ -155,3 +169,40 @@ class AwsS3Reader(DatasetReader):
             return False
 
         return True
+
+
+class IRDatasetsReader(DatasetReader):
+    """Reader for ir_datasets based datasets"""
+
+    source: DatasetSource = DatasetSource.IR_DATASETS
+    remote_root: str = ""  # Not used for ir_datasets
+
+    def __init__(self):
+        self.ir_datasets = ir_datasets
+
+    def read(self, dataset: str, files: list[str], local_ds_root: pathlib.Path):
+        """
+        Download FTS dataset using ir_datasets API
+
+        Args:
+            dataset: ir_datasets dataset name
+            files: Expected output files (ignored, not used)
+            local_ds_root: Local directory (not used, ir_datasets handles its own cache)
+        """
+        log.info(f"Downloading FTS dataset '{dataset}' using ir_datasets")
+
+        try:
+            # Load dataset using ir_datasets - this will download if needed
+            # ir_datasets handles caching automatically
+            # Actual data download happens lazily when iterating
+            self.ir_datasets.load(dataset)
+            log.info(f"Successfully loaded dataset: {dataset}")
+
+        except Exception:
+            log.exception(f"Failed to download FTS dataset '{dataset}'")
+            raise
+
+    def validate_file(self, remote: pathlib.Path, local: pathlib.Path) -> bool:
+        """For ir_datasets, we don't validate against remote files"""
+        # ir_datasets handles its own caching and validation
+        return local.exists() and local.stat().st_size > 0

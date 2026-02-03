@@ -41,7 +41,10 @@ def main():
 
     def case_results_filter(case_result: CaseResult) -> bool:
         case = case_result.task_config.case_config.case
-        return case.label == CaseLabel.Performance and case.filters.type == FilterOp.NonFilter
+        # Include both vector performance cases and FTS cases
+        return (
+            case.label == CaseLabel.Performance and case.filters.type == FilterOp.NonFilter
+        ) or case.label == CaseLabel.FullTextSearchPerformance
 
     default_selected_task_labels = ["standard_2025"]
     shownData, failedTasks, showCaseNames = getshownData(

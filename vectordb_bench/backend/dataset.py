@@ -6,9 +6,15 @@ Usage:
 
 import logging
 import pathlib
+import types
+import typing
+from abc import ABC, abstractmethod
+from collections.abc import Iterator
+from dataclasses import dataclass
 from enum import Enum
 from typing import Any, NamedTuple
 
+import ir_datasets
 import pandas as pd
 import polars as pl
 from pyarrow.parquet import ParquetFile
@@ -57,7 +63,7 @@ class BaseDataset(BaseModel):
     gt_id_field: str = "id"
     gt_neighbors_field: str = "neighbors_id"
 
-    @validator("size")
+    @validator("size", allow_reuse=True)
     def verify_size(cls, v: int):
         if v not in cls._size_label:
             msg = f"Size {v} not supported for the dataset, expected: {cls._size_label.keys()}"
@@ -102,7 +108,7 @@ class CustomDataset(BaseDataset):
     scalar_labels_file: str = "scalar_labels.parquet"
     label_percentages: list[float] = []
 
-    @validator("size")
+    @validator("size", allow_reuse=True)
     def verify_size(cls, v: int):
         return v
 
@@ -518,3 +524,393 @@ DatasetWithSizeMap = {
     DatasetWithSizeType.OpenAIMedium: Dataset.OPENAI.manager(500_000),
     DatasetWithSizeType.OpenAILarge: Dataset.OPENAI.manager(5_000_000),
 }
+
+
+# FTS Dataset Translator Pattern
+@dataclass
+class FtsQuery:
+    """Internal representation of an FTS query."""
+
+    query_id: int
+    text: str
+
+
+@dataclass
+class FtsDocument:
+    """Internal representation of an FTS document."""
+
+    doc_id: int
+    text: str
+
+
+FtsGroundTruth = dict[int, list[int]]  # query_id -> relevant doc_ids
+
+
+class FtsDatasetTranslator(ABC):
+    """Abstract base class for converting ir_datasets schema to internal format.
+
+    This translator pattern allows easy extension to support new datasets
+    (BEIR, TREC, etc.) without modifying core code.
+    """
+
+    @property
+    @abstractmethod
+    def ir_datasets_name(self) -> str:
+        """Return the ir_datasets dataset name.
+
+        Example: 'msmarco-passage/dev/small'
+        """
+
+    @abstractmethod
+    def translate_query(self, ir_query: typing.Any) -> FtsQuery:
+        """Convert ir_datasets query to internal FtsQuery format."""
+
+    @abstractmethod
+    def translate_document(self, ir_doc: typing.Any) -> FtsDocument:
+        """Convert ir_datasets document to internal FtsDocument format."""
+
+    @abstractmethod
+    def load_ground_truth(self, dataset: typing.Any) -> FtsGroundTruth:
+        """Load ground truth data from ir_datasets.
+
+        Returns:
+            dict mapping query_id to list of relevant doc_ids
+        """
+
+    def load(self) -> typing.Any:
+        """Load ir_datasets dataset."""
+        return ir_datasets.load(self.ir_datasets_name)
+
+    def iter_queries(self, dataset: typing.Any) -> Iterator[FtsQuery]:
+        """Iterate over queries in the dataset."""
+        for q in dataset.queries_iter():
+            yield self.translate_query(q)
+
+    def iter_documents(self, dataset: typing.Any) -> Iterator[FtsDocument]:
+        """Iterate over documents in the dataset."""
+        for doc in dataset.docs_iter():
+            yield self.translate_document(doc)
+
+
+class MSMarcoTranslator(FtsDatasetTranslator):
+    """Translator for MS MARCO passage retrieval dataset."""
+
+    @property
+    def ir_datasets_name(self) -> str:
+        return "msmarco-passage/dev/small"
+
+    def translate_query(self, ir_query: typing.Any) -> FtsQuery:
+        """Convert MS MARCO query to internal format."""
+        return FtsQuery(query_id=int(ir_query.query_id), text=ir_query.text)
+
+    def translate_document(self, ir_doc: typing.Any) -> FtsDocument:
+        """Convert MS MARCO document to internal format."""
+        # Clean text: replace tabs and newlines with spaces
+        clean_text = ir_doc.text.replace("\t", " ").replace("\n", " ")
+        return FtsDocument(doc_id=int(ir_doc.doc_id), text=clean_text)
+
+    def load_ground_truth(self, dataset: typing.Any) -> FtsGroundTruth:
+        """Load ground truth from MS MARCO scoreddocs."""
+        gt: FtsGroundTruth = {}
+        for scoreddoc in dataset.scoreddocs_iter():
+            query_id = int(scoreddoc.query_id)
+            doc_id = int(scoreddoc.doc_id)
+            if query_id not in gt:
+                gt[query_id] = []
+            gt[query_id].append(doc_id)
+        return gt
+
+
+class FtsBaseDataset(BaseModel):
+    """Base class for FTS datasets - completely independent from BaseDataset.
+
+    FTS datasets are text-based and use TSV files instead of parquet files.
+    They don't have vector dimensions or metric types.
+
+    """
+
+    name: str
+    size: int
+    with_gt: bool = True
+    with_remote_resource: bool = False
+
+    _size_label: dict[int, SizeLabel] = PrivateAttr()
+
+    @validator("size", allow_reuse=True)
+    def verify_size(cls, v: int):
+        if v not in cls._size_label:
+            msg = f"Size {v} not supported for the FTS dataset, expected: {cls._size_label.keys()}"
+            raise ValueError(msg)
+        return v
+
+    @property
+    def label(self) -> str:
+        """Get size label (SMALL, MEDIUM, LARGE, etc.)"""
+        return self._size_label.get(self.size).label
+
+    @property
+    def full_name(self) -> str:
+        return f"{self.name} FTS ({self.label})"
+
+    @property
+    def dir_name(self) -> str:
+        return f"{self.name}_{self.label}_{utils.numerize(self.size)}".lower()
+
+
+class MSMarcoFts(FtsBaseDataset):
+    """MS MARCO Passage Retrieval dataset for FTS testing.
+
+    MS MARCO is a large-scale dataset for information retrieval.
+
+    Standard evaluation metrics:
+    - MRR@10 (Mean Reciprocal Rank)
+    - Recall@K
+    - NDCG@K (Normalized Discounted Cumulative Gain)
+    """
+
+    name: str = "MSMarco"
+    with_gt: bool = True
+    with_remote_resource: bool = False
+
+    _size_label: dict = {
+        100_000: SizeLabel(100_000, "SMALL", 1),
+    }
+
+
+class FtsDatasetManager(BaseModel):
+    """Manager for FTS datasets - independent from DatasetManager.
+
+    Handles FTS dataset preparation using Translator pattern for extensibility.
+
+    Similar to DatasetManager, but for text-based FTS datasets:
+    - queries_data: loaded queries (similar to test_data in vectors)
+    - qrels_data: loaded ground truth (similar to gt_data in vectors)
+    - translator: dataset-specific translator for schema conversion
+    - _ir_dataset: ir_datasets dataset object for direct access
+    """
+
+    data: FtsBaseDataset
+    _translator: typing.Any = PrivateAttr()
+
+    queries_data: list[FtsQuery] | None = None
+    qrels_data: FtsGroundTruth | None = None
+    _ir_dataset: typing.Any = PrivateAttr(default=None)
+
+    def __init__(self, **data):
+        super().__init__(**data)
+        # Initialize translator based on dataset name
+        if self.data.name == "MSMarco":
+            self._translator = MSMarcoTranslator()
+        else:
+            msg = f"No translator available for dataset: {self.data.name}"
+            raise ValueError(msg)
+
+    def __eq__(self, obj: any):
+        if isinstance(obj, FtsDatasetManager):
+            return self.data.name == obj.data.name and self.data.size == obj.data.size
+        return False
+
+    def __hash__(self) -> int:
+        return hash((self.data.name, self.data.size))
+
+    @property
+    def data_dir(self) -> pathlib.Path:
+        """Get local data directory for this FTS dataset, following vector dataset structure"""
+        return pathlib.Path(
+            config.DATASET_LOCAL_DIR,
+            self.data.name.lower(),
+            self.data.dir_name,
+        )
+
+    def prepare(
+        self,
+        source: DatasetSource | None = None,
+        filters: Filter | None = None,
+    ) -> bool:
+        """Prepare FTS dataset for testing using Translator pattern.
+
+        Directly uses ir_datasets API without generating TSV files:
+        1. Downloads dataset using ir_datasets (if needed)
+        2. Loads dataset object using translator
+        3. Loads queries and qrels data into memory using translator
+
+        Args:
+            source: Data source to download from (should be IR_DATASETS for FTS)
+            filters: Optional filters (not used for FTS)
+
+        Returns:
+            bool: True if preparation successful, False otherwise
+        """
+        log.info(f"Preparing FTS dataset: {self.data.full_name}")
+
+        try:
+            # Download dataset if needed (ir_datasets handles caching)
+            if source is not None:
+                reader = source.reader()
+                if reader is not None:
+                    dataset_name = self._translator.ir_datasets_name
+                    # reader.read() will download the dataset if needed
+                    reader.read(dataset_name, [], self.data_dir)
+
+            # Load dataset using translator
+            self._ir_dataset = self._translator.load()
+            log.info(f"Successfully loaded ir_datasets dataset: {self._translator.ir_datasets_name}")
+
+            # Load queries and qrels using translator
+            if self.data.with_gt:
+                # Load queries using translator
+                self.queries_data = list(self._translator.iter_queries(self._ir_dataset))
+                log.info(f"Loaded {len(self.queries_data)} queries into memory")
+
+                # Load ground truth using translator
+                self.qrels_data = self._translator.load_ground_truth(self._ir_dataset)
+                log.info(f"Loaded ground truth for {len(self.qrels_data)} queries into memory")
+
+        except Exception:
+            log.exception("Failed to prepare FTS dataset")
+            return False
+        else:
+            log.debug(f"{self.data.name}: FTS dataset prepared")
+            log.info(f"FTS dataset preparation completed: {self.data.full_name}")
+            return True
+
+    def __iter__(self):
+        """Return iterator for streaming document batches.
+
+        Similar to DatasetManager.__iter__() which returns DataSetIterator.
+        This enables batch-by-batch processing of documents without loading
+        all documents into memory at once.
+
+        Example:
+            >>> manager = FtsDataset.MSMARCO.manager(100_000)
+            >>> for batch in manager:
+            >>>     print(f"Processing {len(batch)} documents")
+        """
+        return FtsDocumentIterator(self)
+
+
+class FtsDocumentIterator:
+    """Iterator for streaming FTS document batches using Translator pattern.
+
+    Similar to DataSetIterator for vector datasets, but reads directly from ir_datasets
+    using translator. Yields batches of FtsDocument objects for memory-efficient
+    processing of large datasets.
+    """
+
+    def __init__(self, dataset: FtsDatasetManager):
+        self._ds = dataset
+        self._batch_size = config.NUM_PER_BATCH
+        self._finished = False
+        self._doc_count = 0  # Track total documents processed
+        self._docs_iter = None
+
+    def __iter__(self):
+        return self
+
+    def __next__(self) -> list[FtsDocument]:
+        """Return the next batch of documents.
+
+        Returns:
+            list[FtsDocument]: List of FtsDocument objects
+
+        Raises:
+            StopIteration: When all documents have been read
+        """
+        if self._finished:
+            raise StopIteration
+
+        # Initialize iterator on first call
+        if self._docs_iter is None:
+            if self._ds._ir_dataset is None:
+                error_msg = "ir_datasets dataset not loaded. Call prepare() first."
+                log.error(error_msg)
+                raise RuntimeError(error_msg)
+
+            log.info("Starting to iterate documents using translator")
+            self._docs_iter = self._ds._translator.iter_documents(self._ds._ir_dataset)
+
+        # Read batch with proper error handling
+        try:
+            batch = []
+            for _ in range(self._batch_size):
+                try:
+                    doc = next(self._docs_iter)
+                    batch.append(doc)
+                    self._doc_count += 1
+                except StopIteration:
+                    self._finished = True
+                    if batch:
+                        return batch
+                    raise
+                except Exception as e:
+                    log.debug(f"Skipping malformed document: {e}")
+                    continue
+
+        except StopIteration:
+            self._finished = True
+            raise
+        except Exception:
+            log.exception("Error reading documents from translator")
+            raise
+        else:
+            return batch
+
+    def __enter__(self):
+        """Enter context manager."""
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: types.TracebackType | None,
+    ) -> None:
+        """Exit context manager."""
+
+    def __del__(self):
+        """Cleanup when iterator is destroyed."""
+
+
+class FtsDataset(Enum):
+    """Registry of available FTS datasets - independent from Dataset enum.
+
+    Example:
+        >>> dataset = FtsDataset.MSMARCO.get(100_000)
+        >>> manager = FtsDataset.MSMARCO.manager(100_000)
+        >>> manager.prepare()
+    """
+
+    MSMARCO = MSMarcoFts
+
+    def get(self, size: int) -> FtsBaseDataset:
+        """Get FTS dataset configuration for specified size."""
+        return self.value(size=size)
+
+    def manager(self, size: int) -> FtsDatasetManager:
+        """Get FTS dataset manager for specified size."""
+        return FtsDatasetManager(data=self.get(size))
+
+
+class FtsDatasetWithSizeType(Enum):
+    """FTS dataset configurations with specific sizes."""
+
+    MSMarcoSmall = "MS MARCO Small (100K documents)"
+
+    def get_manager(self) -> FtsDatasetManager:
+        """Get the FTS dataset manager for this size configuration."""
+        if self == FtsDatasetWithSizeType.MSMarcoSmall:
+            return FtsDataset.MSMARCO.manager(100_000)
+        error_msg = f"Unknown FTS dataset size: {self.name}"
+        raise ValueError(error_msg)
+
+    def get_load_timeout(self) -> float:
+        """Get load timeout for this dataset size."""
+        if self == FtsDatasetWithSizeType.MSMarcoSmall:
+            return config.LOAD_TIMEOUT_768D_100K
+        return config.LOAD_TIMEOUT_DEFAULT
+
+    def get_optimize_timeout(self) -> float:
+        """Get optimize timeout for this dataset size."""
+        if self == FtsDatasetWithSizeType.MSMarcoSmall:
+            return config.OPTIMIZE_TIMEOUT_768D_100K
+        return config.OPTIMIZE_TIMEOUT_DEFAULT
