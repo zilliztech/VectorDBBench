@@ -56,7 +56,7 @@ class MariaDB(VectorDB):
 
         # flush tables before dropping database to avoid some locking issue
         self.cursor.execute("FLUSH TABLES")
-        self.cursor.execute(f"DROP DATABASE IF EXISTS {self.db_name}")
+        self.cursor.execute(f"DROP DATABASE IF EXISTS `{self.db_name}`")
         self.cursor.execute("COMMIT")
         self.cursor.execute("FLUSH TABLES")
 
@@ -68,17 +68,19 @@ class MariaDB(VectorDB):
 
         try:
             log.info(f"{self.name} client create database : {self.db_name}")
-            self.cursor.execute(f"CREATE DATABASE {self.db_name}")
+            self.cursor.execute(f"CREATE DATABASE `{self.db_name}`")
 
             log.info(f"{self.name} client create table : {self.table_name}")
             self.cursor.execute(f"USE {self.db_name}")
 
-            self.cursor.execute(f"""
-              CREATE TABLE {self.table_name} (
+            self.cursor.execute(
+                f"""
+              CREATE TABLE `{self.table_name}` (
                 id INT PRIMARY KEY,
                 v VECTOR({self.dim}) NOT NULL
               ) ENGINE={index_param["storage_engine"]}
-            """)
+            """
+            )
             self.cursor.execute("COMMIT")
 
         except Exception as e:
@@ -108,13 +110,13 @@ class MariaDB(VectorDB):
                 self.cursor.execute(f"SET mhnsw_ef_search = {search_param['ef_search']}")
             self.cursor.execute("COMMIT")
 
-        self.insert_sql = f"INSERT INTO {self.db_name}.{self.table_name} (id, v) VALUES (%s, %s)"  # noqa: S608
+        self.insert_sql = f"INSERT INTO `{self.db_name}`.`{self.table_name}` (id, v) VALUES (%s, %s)"  # noqa: S608
         self.select_sql = (
-            f"SELECT id FROM {self.db_name}.{self.table_name}"  # noqa: S608
+            f"SELECT id FROM `{self.db_name}`.`{self.table_name}`"  # noqa: S608
             f"ORDER by vec_distance_{search_param['metric_type']}(v, %s) LIMIT %d"
         )
         self.select_sql_with_filter = (
-            f"SELECT id FROM {self.db_name}.{self.table_name} WHERE id >= %d "  # noqa: S608
+            f"SELECT id FROM `{self.db_name}`.`{self.table_name}` WHERE id >= %d "  # noqa: S608
             f"ORDER by vec_distance_{search_param['metric_type']}(v, %s) LIMIT %d"
         )
 
@@ -140,10 +142,12 @@ class MariaDB(VectorDB):
             if index_param["index_type"] == "HNSW" and index_param["M"] is not None:
                 index_options += f" M={index_param['M']}"
 
-            self.cursor.execute(f"""
-              ALTER TABLE {self.db_name}.{self.table_name}
+            self.cursor.execute(
+                f"""
+              ALTER TABLE `{self.db_name}`.`{self.table_name}`
               ADD VECTOR KEY v(v) {index_options}
-            """)
+            """
+            )
             self.cursor.execute("COMMIT")
 
         except Exception as e:

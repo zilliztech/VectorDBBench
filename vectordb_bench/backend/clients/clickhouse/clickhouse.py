@@ -76,7 +76,7 @@ class Clickhouse(VectorDB):
         assert self.conn is not None, "Connection is not initialized"
         try:
             self.conn.command(
-                f'ALTER TABLE {self.db_config["database"]}.{self.table_name} DROP INDEX {self._index_name}'
+                f'ALTER TABLE `{self.db_config["database"]}`.`{self.table_name}` DROP INDEX `{self._index_name}`'
             )
         except Exception as e:
             log.warning(f"Failed to drop index on table {self.db_config['database']}.{self.table_name}: {e}")
@@ -86,7 +86,7 @@ class Clickhouse(VectorDB):
         assert self.conn is not None, "Connection is not initialized"
 
         try:
-            self.conn.command(f'DROP TABLE IF EXISTS {self.db_config["database"]}.{self.table_name}')
+            self.conn.command(f'DROP TABLE IF EXISTS `{self.db_config["database"]}`.`{self.table_name}`')
         except Exception as e:
             log.warning(f"Failed to drop table {self.db_config['database']}.{self.table_name}: {e}")
             raise e from None
@@ -104,8 +104,8 @@ class Clickhouse(VectorDB):
                     and self.index_param["params"]["efConstruction"]
                 ):
                     query = f"""
-                        ALTER TABLE {self.db_config["database"]}.{self.table_name}
-                        ADD INDEX {self._index_name} {self._vector_field}
+                        ALTER TABLE `{self.db_config["database"]}`.`{self.table_name}`
+                        ADD INDEX `{self._index_name}` `{self._vector_field}`
                         TYPE vector_similarity('hnsw', '{self.index_param["metric_type"]}',{self.dim},
                         '{self.index_param["quantization"]}',
                         {self.index_param["params"]["M"]}, {self.index_param["params"]["efConstruction"]})
@@ -113,8 +113,8 @@ class Clickhouse(VectorDB):
                         """
                 else:
                     query = f"""
-                        ALTER TABLE {self.db_config["database"]}.{self.table_name}
-                        ADD INDEX {self._index_name} {self._vector_field}
+                        ALTER TABLE `{self.db_config["database"]}`.`{self.table_name}`
+                        ADD INDEX `{self._index_name}` `{self._vector_field}`
                         TYPE vector_similarity('hnsw', '{self.index_param["metric_type"]}', {self.dim})
                         GRANULARITY {self.index_param["granularity"]}
                         """
@@ -131,7 +131,7 @@ class Clickhouse(VectorDB):
         try:
             # create table
             self.conn.command(
-                f'CREATE TABLE IF NOT EXISTS {self.db_config["database"]}.{self.table_name} '
+                f'CREATE TABLE IF NOT EXISTS `{self.db_config["database"]}`.`{self.table_name}` '
                 f"({self._primary_field} UInt32, "
                 f'{self._vector_field} Array({self.index_param["vector_data_type"]}) CODEC(NONE), '
                 f"CONSTRAINT same_length CHECK length(embedding) = {dim}) "

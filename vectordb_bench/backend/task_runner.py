@@ -15,7 +15,13 @@ from . import utils
 from .cases import Case, CaseLabel, StreamingPerformanceCase
 from .clients import DB, MetricType, api
 from .data_source import DatasetSource
-from .runner import MultiProcessingSearchRunner, ReadWriteRunner, SerialInsertRunner, SerialSearchRunner
+from .runner import (
+    MultiProcessingSearchRunner,
+    ReadWriteRunner,
+    SerialFtsInsertRunner,
+    SerialInsertRunner,
+    SerialSearchRunner,
+)
 
 log = logging.getLogger(__name__)
 
@@ -46,6 +52,7 @@ class CaseRunner(BaseModel):
 
     db: api.VectorDB | None = None
     test_emb: list[list[float]] | None = None
+    test_texts: list[str] | None = None  # For FTS mode
     serial_search_runner: SerialSearchRunner | None = None
     search_runner: MultiProcessingSearchRunner | None = None
     final_search_runner: MultiProcessingSearchRunner | None = None
@@ -73,19 +80,24 @@ class CaseRunner(BaseModel):
         )
 
     def display(self) -> dict:
+        # Build include dict based on mode
+        dataset_include = {
+            "name": True,
+            "size": True,
+            "label": True,
+        }
+
+        if self.ca.label in [CaseLabel.Performance, CaseLabel.Load]:
+            dataset_include["dim"] = True
+            dataset_include["metric_type"] = True
+
         c_dict = self.ca.dict(
             include={
                 "label": True,
                 "name": True,
                 "filters": True,
                 "dataset": {
-                    "data": {
-                        "name": True,
-                        "size": True,
-                        "dim": True,
-                        "metric_type": True,
-                        "label": True,
-                    },
+                    "data": dataset_include,
                 },
             },
         )
@@ -122,8 +134,10 @@ class CaseRunner(BaseModel):
         if "collection_name" in db_config_dict and not collection_name:
             collection_name = db_config_dict.pop("collection_name")
 
+        # For FTS mode, dim is 0 (not used)
+        dim = 0 if self.ca.label == CaseLabel.FullTextSearchPerformance else self.ca.dataset.data.dim
         self.db = db_cls(
-            dim=self.ca.dataset.data.dim,
+            dim=dim,
             db_config=db_config_dict,
             db_case_config=self.config.db_case_config,
             drop_old=drop_old,
@@ -134,7 +148,10 @@ class CaseRunner(BaseModel):
     def _pre_run(self, drop_old: bool = True):
         try:
             self.init_db(drop_old)
-            self.ca.dataset.prepare(self.dataset_source, filters=self.ca.filters)
+            if self.ca.label == CaseLabel.FullTextSearchPerformance:
+                self.ca.dataset.prepare(self.dataset_source)
+            else:
+                self.ca.dataset.prepare(self.dataset_source, filters=self.ca.filters)
         except ModuleNotFoundError as e:
             log.warning(f"pre run case error: please install client for db: {self.config.db}, error={e}")
             raise e from None
@@ -150,6 +167,8 @@ class CaseRunner(BaseModel):
             return self._run_perf_case(drop_old)
         if self.ca.label == CaseLabel.Streaming:
             return self._run_streaming_case()
+        if self.ca.label == CaseLabel.FullTextSearchPerformance:
+            return self._run_fts_perf_case(drop_old)
         msg = f"unknown case type: {self.ca.label}"
         log.warning(msg)
         raise ValueError(msg)
@@ -216,7 +235,7 @@ class CaseRunner(BaseModel):
                     ) = search_results
                 if TaskStage.SEARCH_SERIAL in self.config.stages:
                     search_results = self._serial_search()
-                    m.recall, m.ndcg, m.serial_latency_p99, m.serial_latency_p95 = search_results
+                    m.recall, m.ndcg, m.mrr, m.serial_latency_p99, m.serial_latency_p95 = search_results
 
         except Exception as e:
             log.warning(f"Failed to run performance case, reason = {e}")
@@ -239,6 +258,53 @@ class CaseRunner(BaseModel):
             log.info(f"Streaming case got result: {m}")
             return m
 
+    def _run_fts_perf_case(self, drop_old: bool = True) -> Metric:
+        """run FTS performance cases
+
+        Returns:
+            Metric: load_duration, recall, serial_latency_p99, and, qps
+        """
+        log.info("Start FTS performance case")
+        try:
+            m = Metric()
+            if drop_old:
+                if TaskStage.LOAD in self.config.stages:
+                    _, load_dur = self._load_fts_data()
+                    build_dur = self._optimize()
+                    m.insert_duration = round(load_dur, 4)
+                    m.optimize_duration = round(build_dur, 4)
+                    m.load_duration = round(load_dur + build_dur, 4)
+                    log.info(
+                        f"Finish loading the entire FTS dataset into VectorDB,"
+                        f" insert_duration={load_dur}, optimize_duration={build_dur}"
+                        f" load_duration(insert + optimize) = {m.load_duration}"
+                    )
+                else:
+                    log.info("Data loading skipped")
+            if TaskStage.SEARCH_SERIAL in self.config.stages or TaskStage.SEARCH_CONCURRENT in self.config.stages:
+                self._init_fts_search_runner()
+                if TaskStage.SEARCH_CONCURRENT in self.config.stages:
+                    search_results = self._conc_search()
+                    (
+                        m.qps,
+                        m.conc_num_list,
+                        m.conc_qps_list,
+                        m.conc_latency_p99_list,
+                        m.conc_latency_p95_list,
+                        m.conc_latency_avg_list,
+                    ) = search_results
+                if TaskStage.SEARCH_SERIAL in self.config.stages:
+                    search_results = self._serial_search()
+                    m.recall, m.ndcg, m.mrr, m.serial_latency_p99, m.serial_latency_p95 = search_results
+
+        except Exception as e:
+            log.warning(f"Failed to run FTS performance case, reason = {e}")
+            traceback.print_exc()
+            raise e from None
+        else:
+            log.info(f"FTS performance case got result: {m}")
+            return m
+
     @utils.time_it
     def _load_train_data(self):
         """Insert train data and get the insert_duration"""
@@ -256,12 +322,27 @@ class CaseRunner(BaseModel):
         finally:
             runner = None
 
-    def _serial_search(self) -> tuple[float, float, float, float]:
+    @utils.time_it
+    def _load_fts_data(self):
+        """Insert FTS data and get the insert_duration"""
+        try:
+            runner = SerialFtsInsertRunner(
+                self.db,
+                self.ca.dataset,
+                self.ca.load_timeout,
+            )
+            runner.run()
+        except Exception as e:
+            raise e from None
+        finally:
+            runner = None
+
+    def _serial_search(self) -> tuple[float, float, float, float, float]:
         """Performance serial tests, search the entire test data once,
-        calculate the recall, serial_latency_p99, serial_latency_p95
+        calculate the recall, ndcg, mrr, serial_latency_p99, serial_latency_p95
 
         Returns:
-            tuple[float, float, float, float]: recall, ndcg, serial_latency_p99, serial_latency_p95
+            tuple[float, float, float, float, float]: recall, ndcg, mrr, serial_latency_p99, serial_latency_p95
         """
         try:
             results, _ = self.serial_search_runner.run()
@@ -293,6 +374,11 @@ class CaseRunner(BaseModel):
             self.db.optimize(data_size=self.ca.dataset.data.size)
 
     def _optimize(self) -> float:
+        # FTS mode: optimize is fast, run directly without process pool to avoid serialization issues
+        if self.ca.label == CaseLabel.FullTextSearchPerformance:
+            _, duration = self._optimize_task()
+            return duration
+        # Vector mode: use process pool for timeout protection
         with concurrent.futures.ProcessPoolExecutor(max_workers=1) as executor:
             future = executor.submit(self._optimize_task)
             try:
@@ -333,6 +419,44 @@ class CaseRunner(BaseModel):
                 duration=self.config.case_config.concurrency_search_config.concurrency_duration,
                 concurrency_timeout=self.config.case_config.concurrency_search_config.concurrency_timeout,
                 k=self.config.case_config.k,
+            )
+
+    def _init_fts_search_runner(self):
+        fts_dataset = self.ca.dataset
+
+        test_texts: list[str] = []
+        ground_truth: list[list[int]] = []
+
+        # Use all queries from the dataset
+        for q in fts_dataset.queries_data:
+            qid = q.query_id  # FtsQuery object, not dict
+            if qid not in fts_dataset.qrels_data:
+                continue
+            test_texts.append(q.text)  # FtsQuery object, not dict
+            ground_truth.append(fts_dataset.qrels_data[qid])
+
+        log.info(f"FTS test will use {len(test_texts)} queries for testing")
+        self.test_texts = test_texts
+
+        if TaskStage.SEARCH_SERIAL in self.config.stages:
+            self.serial_search_runner = SerialSearchRunner(
+                db=self.db,
+                test_data=test_texts,
+                ground_truth=ground_truth,
+                filters=self.ca.filters,
+                k=self.config.case_config.k,
+                search_fulltext=True,
+            )
+        if TaskStage.SEARCH_CONCURRENT in self.config.stages:
+            self.search_runner = MultiProcessingSearchRunner(
+                db=self.db,
+                test_data=test_texts,
+                filters=self.ca.filters,
+                concurrencies=self.config.case_config.concurrency_search_config.num_concurrency,
+                duration=self.config.case_config.concurrency_search_config.concurrency_duration,
+                concurrency_timeout=self.config.case_config.concurrency_search_config.concurrency_timeout,
+                k=self.config.case_config.k,
+                search_fulltext=True,
             )
 
     def _init_read_write_runner(self):

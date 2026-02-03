@@ -282,7 +282,9 @@ class CockroachDB(VectorDB):
         conn.autocommit = True
         try:
             cursor = conn.cursor()
-            cursor.execute(f"DROP INDEX IF EXISTS {self._index_name}")
+            cursor.execute(
+                sql.SQL("DROP INDEX IF EXISTS {index_name}").format(index_name=sql.Identifier(self._index_name))
+            )
             cursor.close()
         finally:
             conn.close()
@@ -315,12 +317,14 @@ class CockroachDB(VectorDB):
             )
         else:
             cursor.execute(
-                sql.SQL("""
+                sql.SQL(
+                    """
                     CREATE TABLE IF NOT EXISTS {table_name}
                     ({primary_field} UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                      {metadata_field} BIGINT NOT NULL,
                      {vector_field} VECTOR({dim}));
-                    """).format(
+                    """
+                ).format(
                     table_name=sql.Identifier(self.table_name),
                     primary_field=sql.Identifier(self._primary_field),
                     metadata_field=sql.Identifier(self._metadata_field),
@@ -347,17 +351,21 @@ class CockroachDB(VectorDB):
 
         with_clause = f" WITH ({', '.join(options_list)})" if options_list else ""
 
-        # Build SQL string (DDL - no need for parameterization)
-        sql_str = (
-            f"CREATE VECTOR INDEX IF NOT EXISTS {self._index_name} "
-            f"ON {self.table_name} ({self._vector_field} {index_param['metric']})"
-            f"{with_clause}"
+        # Build SQL using sql.SQL() for safe identifier handling
+        # metric is a SQL keyword (e.g., vector_cosine_ops) and must be used as-is
+        sql_str = sql.SQL(
+            "CREATE VECTOR INDEX IF NOT EXISTS {index_name} ON {table_name} ({vector_field} {metric}){with_clause}"
+        ).format(
+            index_name=sql.Identifier(self._index_name),
+            table_name=sql.Identifier(self.table_name),
+            vector_field=sql.Identifier(self._vector_field),
+            metric=sql.SQL(index_param["metric"]),  # SQL keyword, not a parameter
+            with_clause=sql.SQL(with_clause) if with_clause else sql.SQL(""),
         )
-
-        log.info(f"Creating index with SQL: {sql_str}")
 
         # Use autocommit for DDL
         conn = psycopg.connect(**self.connect_config)
+        log.info(f"Creating index with SQL: {sql_str.as_string(conn)}")
         conn.autocommit = True
         try:
             cursor = conn.cursor()
@@ -436,14 +444,18 @@ class CockroachDB(VectorDB):
                     options_list.append(f"{option['option_name']} = {option['val']}")
 
             with_clause = f" WITH ({', '.join(options_list)})" if options_list else ""
-            sql_str = (
-                f"CREATE VECTOR INDEX IF NOT EXISTS {self._index_name} "
-                f"ON {self.table_name} ({self._vector_field} {index_param['metric']})"
-                f"{with_clause}"
+            # Build SQL using sql.SQL() for safe identifier handling
+            sql_str = sql.SQL(
+                "CREATE VECTOR INDEX IF NOT EXISTS {index_name} ON {table_name} ({vector_field} {metric}){with_clause}"
+            ).format(
+                index_name=sql.Identifier(self._index_name),
+                table_name=sql.Identifier(self.table_name),
+                vector_field=sql.Identifier(self._vector_field),
+                metric=sql.SQL(index_param["metric"]),  # SQL keyword, not a parameter
+                with_clause=sql.SQL(with_clause) if with_clause else sql.SQL(""),
             )
 
             log.info(f"{self.name} creating vector index: {self._index_name}")
-            log.info(f"Index SQL: {sql_str}")
 
             start_time = time.time()
             connection_closed = False

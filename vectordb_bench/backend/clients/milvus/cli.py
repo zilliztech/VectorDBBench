@@ -565,3 +565,48 @@ def MilvusGPUCAGRA(**parameters: Unpack[MilvusGPUCAGRATypedDict]):
         ),
         **parameters,
     )
+
+
+class MilvusFTSTypedDict(CommonTypedDict, MilvusTypedDict):
+    """TypedDict for Milvus FTS command parameters."""
+
+    drop_ratio_search: Annotated[
+        float | None,
+        click.option(
+            "--drop-ratio-search",
+            type=float,
+            help="Drop ratio for search (optional, for performance tuning)",
+            required=False,
+            default=None,
+        ),
+    ]
+
+
+@cli.command()
+@click_parameter_decorators_from_typed_dict(MilvusFTSTypedDict)
+def MilvusFTS(**parameters: Unpack[MilvusFTSTypedDict]):
+    """Run FTS (Full-Text Search) benchmark on Milvus using BM25.
+
+    This command uses the MS MARCO dev/small dataset for FTS testing.
+    """
+    from .config import MilvusConfig, MilvusFtsConfig
+
+    # Set default case_type to large dataset if not specified
+    if parameters.get("case_type") == "Performance1536D50K":  # Default from CommonTypedDict
+        parameters["case_type"] = "FTSmsmarcoPerformance"
+
+    run(
+        db=DBTYPE,
+        db_config=MilvusConfig(
+            db_label=parameters["db_label"],
+            uri=SecretStr(parameters["uri"]),
+            user=parameters["user_name"],
+            password=SecretStr(parameters["password"]) if parameters["password"] else None,
+            num_shards=int(parameters["num_shards"]),
+            replica_number=int(parameters["replica_number"]),
+        ),
+        db_case_config=MilvusFtsConfig(
+            drop_ratio_search=parameters.get("drop_ratio_search"),
+        ),
+        **parameters,
+    )

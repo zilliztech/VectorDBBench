@@ -5,7 +5,7 @@ from collections.abc import Generator
 from contextlib import contextmanager
 from typing import Any
 
-import mysql.connector as mysql
+import pymysql as mysql
 
 from vectordb_bench.backend.filter import Filter, FilterOp
 
@@ -103,7 +103,7 @@ class OceanBase(VectorDB):
             raise ValueError("Cursor is not initialized")
 
         log.info(f"Dropping table {self.table_name}")
-        self._cursor.execute(f"DROP TABLE IF EXISTS {self.table_name}")
+        self._cursor.execute(f"DROP TABLE IF EXISTS `{self.table_name}`")
 
     def _create_table(self):
         if not self._cursor:
@@ -111,7 +111,7 @@ class OceanBase(VectorDB):
 
         log.info(f"Creating table {self.table_name}")
         create_table_query = f"""
-        CREATE TABLE {self.table_name} (
+        CREATE TABLE `{self.table_name}` (
             id INT PRIMARY KEY,
             embedding VECTOR({self.dim})
         );
@@ -123,7 +123,7 @@ class OceanBase(VectorDB):
         index_args = ", ".join(f"{k}={v}" for k, v in index_params["params"].items())
         index_query = (
             f"CREATE /*+ PARALLEL(18) */ VECTOR INDEX idx1 "
-            f"ON {self.table_name}(embedding) "
+            f"ON `{self.table_name}`(embedding) "
             f"WITH (distance={self.db_case_config.parse_metric()}, "
             f"type={index_params['index_type']}, lib={index_params['lib']}, {index_args}"
         )
@@ -186,7 +186,7 @@ class OceanBase(VectorDB):
                 batch = [(metadata[i], embeddings[i]) for i in range(batch_start, batch_end)]
                 values = ", ".join(f"({item_id}, '[{','.join(map(str, embedding))}]')" for item_id, embedding in batch)
                 self._cursor.execute(
-                    f"INSERT /*+ ENABLE_PARALLEL_DML PARALLEL(32) */ INTO {self.table_name} VALUES {values}"  # noqa: S608
+                    f"INSERT /*+ ENABLE_PARALLEL_DML PARALLEL(32) */ INTO `{self.table_name}` VALUES {values}"  # noqa: S608
                 )
                 insert_count += len(batch)
         except mysql.Error:
@@ -217,7 +217,7 @@ class OceanBase(VectorDB):
         packed = struct.pack(f"<{len(query)}f", *query)
         hex_vec = packed.hex()
         query_str = (
-            f"SELECT id FROM {self.table_name} "  # noqa: S608
+            f"SELECT id FROM `{self.table_name}` "  # noqa: S608
             f"{self.expr} ORDER BY "
             f"{self.db_case_config.parse_metric_func_str()}(embedding, X'{hex_vec}') "
             f"APPROXIMATE LIMIT {k}"

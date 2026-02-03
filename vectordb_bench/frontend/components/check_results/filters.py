@@ -1,4 +1,4 @@
-from vectordb_bench.backend.cases import Case
+from vectordb_bench.backend.cases import Case, CaseLabel
 from vectordb_bench.backend.dataset import DatasetWithSizeType
 from vectordb_bench.backend.filter import FilterOp
 from vectordb_bench.frontend.components.check_results.data import getChartData
@@ -75,6 +75,10 @@ def getShowDbsAndCases(st, result: list[CaseResult], filter_type: FilterOp) -> t
     )
     showCaseNames = []
 
+    # Handle FTS cases separately
+    fts_cases = [case for case in allCases if case.label == CaseLabel.FullTextSearchPerformance]
+    non_fts_cases = [case for case in allCases if case.label != CaseLabel.FullTextSearchPerformance]
+
     if filter_type == FilterOp.NonFilter:
         allCaseNameSet = set({case.name for case in allCases})
         allCaseNames = [case_name for case_name in CASE_NAME_ORDER if case_name in allCaseNameSet] + [
@@ -101,7 +105,10 @@ def getShowDbsAndCases(st, result: list[CaseResult], filter_type: FilterOp) -> t
             optionLables=[v.value for v in datasetWithSizeTypes],
         )
         datasets = [dataset_with_size_type.get_manager() for dataset_with_size_type in showDatasetWithSizeTypes]
-        showCaseNames = list(set([case.name for case in allCases if case.dataset in datasets]))
+        showCaseNames = list(set([case.name for case in non_fts_cases if case.dataset in datasets]))
+        # Add FTS cases
+        fts_case_names = [case.name for case in fts_cases]
+        showCaseNames.extend(fts_case_names)
 
     return showDBNames, showCaseNames
 
