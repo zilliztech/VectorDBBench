@@ -20,10 +20,12 @@ from .runner import (
     ConcurrentInsertRunner,
     MultiProcessingSearchRunner,
     ReadWriteRunner,
+    SerialFtsInsertRunner,
     SerialInsertRunner,
     SerialSearchRunner,
 )
 from .utils import kill_proc_tree
+from .workload import WorkloadKind
 
 log = logging.getLogger(__name__)
 
@@ -54,6 +56,7 @@ class CaseRunner(BaseModel):
 
     db: api.VectorDB | None = None
     test_emb: list[list[float]] | None = None
+    test_texts: list[str] | None = None
     serial_search_runner: SerialSearchRunner | None = None
     search_runner: MultiProcessingSearchRunner | None = None
     final_search_runner: MultiProcessingSearchRunner | None = None
@@ -139,19 +142,21 @@ class CaseRunner(BaseModel):
         return base
 
     def display(self) -> dict:
+        dataset_include = {
+            "name": True,
+            "size": True,
+            "label": True,
+        }
+        if self.ca.label != CaseLabel.FullTextSearchPerformance:
+            dataset_include["dim"] = True
+            dataset_include["metric_type"] = True
         c_dict = self.ca.dict(
             include={
                 "label": True,
                 "name": True,
                 "filters": True,
                 "dataset": {
-                    "data": {
-                        "name": True,
-                        "size": True,
-                        "dim": True,
-                        "metric_type": True,
-                        "label": True,
-                    },
+                    "data": dataset_include,
                 },
             },
         )
@@ -161,7 +166,19 @@ class CaseRunner(BaseModel):
     @property
     def normalize(self) -> bool:
         assert self.db
+        if self.is_fts:
+            return False
         return self.db.need_normalize_cosine() and self.ca.dataset.data.metric_type == MetricType.COSINE
+
+    @property
+    def workload_kind(self) -> WorkloadKind:
+        if self.ca.label == CaseLabel.FullTextSearchPerformance:
+            return WorkloadKind.FULL_TEXT_BM25
+        return WorkloadKind.VECTOR
+
+    @property
+    def is_fts(self) -> bool:
+        return self.workload_kind == WorkloadKind.FULL_TEXT_BM25
 
     def init_db(self, drop_old: bool = True) -> None:
         db_cls = self.config.db.init_cls
@@ -185,7 +202,7 @@ class CaseRunner(BaseModel):
             extra_db_kwargs["multitenant_tenant_labels"] = self.ca.tenant_labels()
 
         self.db = db_cls(
-            dim=self.ca.dataset.data.dim,
+            dim=getattr(self.ca.dataset.data, "dim", 0),
             db_config=db_config_dict,
             db_case_config=self.config.db_case_config,
             drop_old=drop_old,
@@ -215,12 +232,15 @@ class CaseRunner(BaseModel):
                 self.db.set_multitenant_context(self.ca.tenant_labels())
                 if self.config.db in {DB.Milvus, DB.ZillizCloud} and not creates_multitenant_collection:
                     self.db.validate_multitenant_schema()
-            self.ca.dataset.prepare(
-                self.dataset_source,
-                filters=self.ca.filters,
-                with_train_files=TaskStage.LOAD in self.config.stages,
-                with_scalar_labels=self.ca.with_scalar_labels,
-            )
+            if self.is_fts:
+                self.ca.dataset.prepare(self.dataset_source)
+            else:
+                self.ca.dataset.prepare(
+                    self.dataset_source,
+                    filters=self.ca.filters,
+                    with_train_files=TaskStage.LOAD in self.config.stages,
+                    with_scalar_labels=self.ca.with_scalar_labels,
+                )
         except ModuleNotFoundError as e:
             log.warning(f"pre run case error: please install client for db: {self.config.db}, error={e}")
             raise e from None
@@ -245,7 +265,7 @@ class CaseRunner(BaseModel):
 
         if self.ca.label == CaseLabel.Load:
             return self._run_capacity_case()
-        if self.ca.label == CaseLabel.Performance:
+        if self.ca.label in {CaseLabel.Performance, CaseLabel.FullTextSearchPerformance}:
             return self._run_perf_case(drop_old)
         if self.ca.label == CaseLabel.Streaming:
             return self._run_streaming_case()
@@ -293,7 +313,7 @@ class CaseRunner(BaseModel):
             m = Metric()
             if drop_old:
                 if TaskStage.LOAD in self.config.stages:
-                    _, load_dur = self._load_train_data()
+                    _, load_dur = self._load_data()
                     build_dur = self._optimize()
                     m.insert_duration = round(load_dur, 4)
                     m.optimize_duration = round(build_dur, 4)
@@ -306,7 +326,7 @@ class CaseRunner(BaseModel):
                 else:
                     log.info("Data loading skipped")
             if TaskStage.SEARCH_SERIAL in self.config.stages or TaskStage.SEARCH_CONCURRENT in self.config.stages:
-                self._init_search_runner()
+                self._init_search_runners()
                 if TaskStage.SEARCH_CONCURRENT in self.config.stages:
                     search_results = self._conc_search()
                     (
@@ -319,9 +339,17 @@ class CaseRunner(BaseModel):
                     ) = search_results
                 if TaskStage.SEARCH_SERIAL in self.config.stages:
                     search_results = self._serial_search()
-                    m.recall, m.ndcg, m.serial_latency_p99, m.serial_latency_p95 = search_results
-            m.payload_profile = self.ca.payload_profile.value
-            m.payload_estimated_bytes_per_query = self.ca.estimated_payload_bytes_per_query(self.config.case_config.k)
+                    if self.is_fts:
+                        m.recall, m.ndcg, m.mrr, m.serial_latency_p99, m.serial_latency_p95 = search_results
+                    elif len(search_results) > 4:
+                        m.recall, m.ndcg, m.mrr, m.serial_latency_p99, m.serial_latency_p95 = search_results
+                    else:
+                        m.recall, m.ndcg, m.serial_latency_p99, m.serial_latency_p95 = search_results
+            if hasattr(self.ca, "payload_profile"):
+                m.payload_profile = self.ca.payload_profile.value
+                m.payload_estimated_bytes_per_query = self.ca.estimated_payload_bytes_per_query(
+                    self.config.case_config.k
+                )
 
         except Exception as e:
             log.warning(f"Failed to run performance case, reason = {e}")
@@ -443,6 +471,25 @@ class CaseRunner(BaseModel):
             return m
 
     @utils.time_it
+    def _load_data(self):
+        if self.is_fts:
+            return self._load_fts_data()
+        return self._load_train_data()
+
+    def _load_fts_data(self):
+        """Insert FTS documents and get insert duration."""
+        try:
+            runner = SerialFtsInsertRunner(
+                self.db,
+                self.ca.dataset,
+                self.ca.load_timeout,
+            )
+            runner.run()
+        except Exception as e:
+            raise e from None
+        finally:
+            runner = None
+
     def _load_train_data(self):
         """Insert train data concurrently and get the insert_duration"""
         try:
@@ -502,6 +549,14 @@ class CaseRunner(BaseModel):
             self.db.optimize(data_size=self.ca.dataset.data.size)
 
     def _optimize(self) -> float:
+        if self.is_fts:
+            try:
+                with utils.timeout(self.ca.optimize_timeout, PerformanceTimeoutError):
+                    _, duration = self._optimize_task()
+                    return duration
+            except PerformanceTimeoutError:
+                log.warning(f"VectorDB optimize timeout in {self.ca.optimize_timeout}")
+                raise
         with concurrent.futures.ProcessPoolExecutor(max_workers=1) as executor:
             future = executor.submit(self._optimize_task)
             try:
@@ -513,6 +568,11 @@ class CaseRunner(BaseModel):
             except Exception as e:
                 log.warning(f"VectorDB optimize error: {e}")
                 raise e from None
+
+    def _init_search_runners(self):
+        if self.is_fts:
+            return self._init_fts_search_runner()
+        return self._init_search_runner()
 
     def _init_search_runner(self):
         if self.normalize:
@@ -536,6 +596,7 @@ class CaseRunner(BaseModel):
                 payload_profile=self.ca.payload_profile,
                 tenant_labels=tenant_labels,
                 measure_recall=measure_recall,
+                workload_kind=WorkloadKind.VECTOR,
             )
         if TaskStage.SEARCH_CONCURRENT in self.config.stages:
             self.search_runner = MultiProcessingSearchRunner(
@@ -548,6 +609,44 @@ class CaseRunner(BaseModel):
                 k=self.config.case_config.k,
                 payload_profile=self.ca.payload_profile,
                 tenant_labels=tenant_labels,
+                workload_kind=WorkloadKind.VECTOR,
+            )
+
+    def _init_fts_search_runner(self):
+        fts_dataset = self.ca.dataset
+
+        test_texts: list[str] = []
+        ground_truth: list[list[str]] = []
+
+        for q in fts_dataset.queries_data:
+            qid = q.query_id
+            if qid not in fts_dataset.qrels_data:
+                continue
+            test_texts.append(q.text)
+            ground_truth.append(fts_dataset.qrels_data[qid])
+
+        log.info(f"FTS test will use {len(test_texts)} queries for testing")
+        self.test_texts = test_texts
+
+        if TaskStage.SEARCH_SERIAL in self.config.stages:
+            self.serial_search_runner = SerialSearchRunner(
+                db=self.db,
+                test_data=test_texts,
+                ground_truth=ground_truth,
+                filters=self.ca.filters,
+                k=self.config.case_config.k,
+                workload_kind=WorkloadKind.FULL_TEXT_BM25,
+            )
+        if TaskStage.SEARCH_CONCURRENT in self.config.stages:
+            self.search_runner = MultiProcessingSearchRunner(
+                db=self.db,
+                test_data=test_texts,
+                filters=self.ca.filters,
+                concurrencies=self.config.case_config.concurrency_search_config.num_concurrency,
+                duration=self.config.case_config.concurrency_search_config.concurrency_duration,
+                concurrency_timeout=self.config.case_config.concurrency_search_config.concurrency_timeout,
+                k=self.config.case_config.k,
+                workload_kind=WorkloadKind.FULL_TEXT_BM25,
             )
 
     def _init_read_write_runner(self):

@@ -41,6 +41,7 @@ dependencies = [
     "pymilvus<3.0.0", # with pandas, numpy
     "hdrhistogram>=0.10.1",
     "ujson",
+    "ir_datasets",
 ]
 dynamic = ["version"]
 

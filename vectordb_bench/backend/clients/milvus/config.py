@@ -23,7 +23,6 @@ class MilvusConfig(DBConfig):
             "replica_number": self.replica_number,
         }
 
-
 class MilvusIndexConfig(BaseModel):
     """Base config for milvus"""
 
@@ -433,67 +432,99 @@ class SCANNConfig(MilvusIndexConfig, DBCaseConfig):
         }
 
 
-class SVSVamanaConfig(MilvusIndexConfig, DBCaseConfig):
-    svs_graph_max_degree: int
-    svs_construction_window_size: int = 40
-    svs_alpha: float | None = None
-    svs_storage_kind: str = "fp32"
-    svs_search_window_size: int | None = None
-    svs_search_buffer_capacity: int | None = None
-    index: IndexType = IndexType.SVS_VAMANA
+class MilvusFtsConfig(BaseModel, DBCaseConfig):
+    """
+    1. inverted_index_algo: Index algorithm selection
+       - "DAAT_MAXSCORE" (default): Suitable for high k values or queries with many terms, balanced performance
+       - "DAAT_WAND": Suitable for small k values or short queries, faster
+       - "TAAT_NAIVE": Dynamically adapts to collection changes (e.g., avgdl), but slower
+    2. bm25_k1: BM25 term frequency saturation control [1.2, 2.0], default 1.5
+       - Higher values: Increase importance of term frequency in document ranking
+       - Recommended range: 1.2-1.8, adjust based on query characteristics
+    3. bm25_b: BM25 document length normalization control [0.0, 1.0], default 0.75
+       - 1.0: No length normalization, longer documents have advantage
+       - 0.0: Full normalization, shorter documents have advantage
+       - 0.75: Balanced length normalization, commonly used default
+    4. analyzer_tokenizer: Tokenizer type, default "standard"
+       - "standard": Standard tokenizer, suitable for English text
+       - "whitespace": Split by whitespace characters
+       - "keyword": No tokenization, preserve original text
+    5. analyzer_enable_lowercase: Enable lowercase conversion, default True
+       - True: Convert all text to lowercase, improve matching rate
+       - False: Preserve original case
+    6. analyzer_max_token_length: Maximum length of individual tokens, default 40
+       - Limit length of overly long words
+       - Set to None to disable this limit
+    7. analyzer_stop_words: Stop words list, default None
+       - Comma-separated stop words, e.g., "of,to,the,and,or"
+       - These words will be filtered out and not participate in indexing/search
+    8. drop_ratio_search: Ratio of minimum values to ignore during search [0.0, 1.0], default None
+       - 0.0: Keep all values, highest recall
+       - 0.1-0.3: Improve search speed by 10-20%, slight impact on recall
+    """
+
+    index_type: str = "SPARSE_INVERTED_INDEX"
+    metric_type: str = "BM25"
+    inverted_index_algo: str = "DAAT_MAXSCORE"  # DAAT_MAXSCORE | DAAT_WAND | TAAT_NAIVE
+    bm25_k1: float = 1.5
+    bm25_b: float = 0.75
+    analyzer_tokenizer: str = "standard"
+    analyzer_enable_lowercase: bool = True
+    analyzer_max_token_length: int | None = 40
+    analyzer_stop_words: str | None = None
+    drop_ratio_search: float | None = None
 
     def index_param(self) -> dict:
         params = {
-            "svs_graph_max_degree": self.svs_graph_max_degree,
-            "svs_construction_window_size": self.svs_construction_window_size,
-            "svs_storage_kind": self.svs_storage_kind,
+            "inverted_index_algo": self.inverted_index_algo,
         }
-        if self.svs_alpha is not None:
-            params["svs_alpha"] = self.svs_alpha
+        if self.bm25_k1 is not None:
+            params["bm25_k1"] = self.bm25_k1
+        if self.bm25_b is not None:
+            params["bm25_b"] = self.bm25_b
+
+        # Build analyzer parameters
+        analyzer_params = {"type": "english"}
+        # Set tokenizer
+        if self.analyzer_tokenizer:
+            analyzer_params["tokenizer"] = self.analyzer_tokenizer
+        # Build filters array
+        filters = []
+        if self.analyzer_enable_lowercase:
+            filters.append("lowercase")
+
+        if self.analyzer_max_token_length:
+            filters.append({"type": "length", "max": self.analyzer_max_token_length})
+
+        if self.analyzer_stop_words:
+            stop_words = [word.strip() for word in self.analyzer_stop_words.split(",") if word.strip()]
+            if stop_words:
+                filters.append({"type": "stop", "stop_words": stop_words})
+
+        if filters:
+            analyzer_params["filter"] = filters
+
         return {
-            "metric_type": self.parse_metric(),
-            "index_type": self.index.value,
+            "index_type": self.index_type,
+            "metric_type": self.metric_type,
             "params": params,
+            "analyzer_params": analyzer_params,
         }
 
     def search_param(self) -> dict:
+
+        params: dict = {}
+        if self.drop_ratio_search is not None:
+            params["drop_ratio_search"] = self.drop_ratio_search
         return {
-            "metric_type": self.parse_metric(),
-            "params": {
-                "svs_search_window_size": self.svs_search_window_size,
-                "svs_search_buffer_capacity": self.svs_search_buffer_capacity,
-            },
-        }
-
-
-class SVSVamanaLVQConfig(SVSVamanaConfig):
-    svs_storage_kind: str = "lvq4x4"
-    index: IndexType = IndexType.SVS_VAMANA_LVQ
-
-
-class SVSVamanaLeanVecConfig(SVSVamanaConfig):
-    svs_storage_kind: str = "leanvec4x4"
-    svs_leanvec_dim: int = 0
-    index: IndexType = IndexType.SVS_VAMANA_LEANVEC
-
-    def index_param(self) -> dict:
-        params = {
-            "svs_graph_max_degree": self.svs_graph_max_degree,
-            "svs_construction_window_size": self.svs_construction_window_size,
-            "svs_storage_kind": self.svs_storage_kind,
-            "svs_leanvec_dim": self.svs_leanvec_dim,
-        }
-        if self.svs_alpha is not None:
-            params["svs_alpha"] = self.svs_alpha
-        return {
-            "metric_type": self.parse_metric(),
-            "index_type": self.index.value,
+            "metric_type": self.metric_type,
             "params": params,
         }
 
 
 _milvus_case_config = {
     IndexType.AUTOINDEX: AutoIndexConfig,
+    IndexType.FTS_AUTOINDEX: MilvusFtsConfig,
     IndexType.HNSW: HNSWConfig,
     IndexType.HNSW_SQ: HNSWSQConfig,
     IndexType.HNSW_PQ: HNSWPQConfig,
@@ -509,7 +540,4 @@ _milvus_case_config = {
     IndexType.GPU_CAGRA: GPUCAGRAConfig,
     IndexType.GPU_BRUTE_FORCE: GPUBruteForceConfig,
     IndexType.SCANN_MILVUS: SCANNConfig,
-    IndexType.SVS_VAMANA: SVSVamanaConfig,
-    IndexType.SVS_VAMANA_LVQ: SVSVamanaLVQConfig,
-    IndexType.SVS_VAMANA_LEANVEC: SVSVamanaLeanVecConfig,
 }

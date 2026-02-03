@@ -6,6 +6,7 @@ from vectordb_bench.backend.filter import FilterOp
 from vectordb_bench.models import TaskConfig
 
 from .cases import CaseLabel
+from .dataset import FtsDatasetManager
 from .task_runner import CaseRunner, RunningStatus, TaskRunner
 
 log = logging.getLogger(__name__)
@@ -24,7 +25,13 @@ class Assembler:
         c_cls = task.case_config.case_id.case_cls
 
         c = c_cls(task.case_config.custom_case)
-        if type(task.db_case_config) is not EmptyDBCaseConfig:
+        actual_source = DatasetSource.IR_DATASETS if isinstance(c.dataset, FtsDatasetManager) else source
+
+        if (
+            type(task.db_case_config) is not EmptyDBCaseConfig
+            and not isinstance(c.dataset, FtsDatasetManager)
+            and hasattr(c.dataset.data, "metric_type")
+        ):
             task.db_case_config.metric_type = c.dataset.data.metric_type
 
         return CaseRunner(
@@ -32,7 +39,7 @@ class Assembler:
             config=task,
             ca=c,
             status=RunningStatus.PENDING,
-            dataset_source=source,
+            dataset_source=actual_source,
         )
 
     @classmethod
@@ -50,6 +57,7 @@ class Assembler:
         streaming_runners = [r for r in runners if r.ca.label == CaseLabel.Streaming]
         cloud_insert_runners = [r for r in runners if r.ca.label == CaseLabel.CloudInsert]
         cloud_cold_latency_runners = [r for r in runners if r.ca.label == CaseLabel.CloudColdLatency]
+        fts_runners = [r for r in runners if r.ca.label == CaseLabel.FullTextSearchPerformance]
 
         search_filter_runners = [*perf_runners, *cloud_cold_latency_runners]
 
@@ -78,6 +86,7 @@ class Assembler:
         all_runners.extend(cloud_insert_runners)
         for v in db2runner.values():
             all_runners.extend(v)
+        all_runners.extend(fts_runners)
 
         return TaskRunner(
             run_id=run_id,

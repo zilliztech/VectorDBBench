@@ -9,7 +9,7 @@ from vectordb_bench.backend.payload import PayloadProfile
 from vectordb_bench.base import BaseModel
 from vectordb_bench.frontend.components.custom.getCustomConfig import CustomDatasetConfig
 
-from .dataset import CustomDataset, Dataset, DatasetManager, DatasetWithSizeType
+from .dataset import CustomDataset, Dataset, DatasetManager, DatasetWithSizeType, FtsDataset, FtsDatasetManager
 
 log = logging.getLogger(__name__)
 
@@ -58,6 +58,7 @@ class CaseType(Enum):
 
     NewIntFilterPerformanceCase = 400
     CloudPayloadSearchCase = 500
+    FTSmsmarcoPerformance = 503
     CloudInsertCase = 600
     CloudColdLatencyCase = 700
     CloudMultiTenantSearchCase = 800
@@ -86,6 +87,7 @@ class CaseLabel(Enum):
     Streaming = auto()
     CloudInsert = auto()
     CloudColdLatency = auto()
+    FullTextSearchPerformance = auto()
 
 
 class Case(BaseModel):
@@ -901,6 +903,31 @@ class LabelFilterPerformanceCase(PerformanceCase):
         return LabelFilter(label_percentage=self.label_percentage)
 
 
+class FtsPerformanceCase(Case):
+    """Base class for full-text search BM25 performance cases."""
+
+    label: CaseLabel = CaseLabel.FullTextSearchPerformance
+    dataset: FtsDatasetManager
+
+    filter_rate: float | None = None
+
+    @property
+    def filters(self) -> Filter:
+        return non_filter
+
+
+class FTSmsmarcoPerformance(FtsPerformanceCase):
+    case_id: CaseType = CaseType.FTSmsmarcoPerformance
+    name: str = "FTS Performance Test"
+    description: str = (
+        "This case tests full-text search performance using BM25 on the MS MARCO dataset. "
+        "It measures index building time, recall, NDCG, MRR, and search QPS."
+    )
+    dataset: FtsDatasetManager = FtsDataset.MSMARCO.manager(100_000)
+    load_timeout: float | int = config.LOAD_TIMEOUT_768D_100K
+    optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_768D_100K
+
+
 type2case = {
     CaseType.CapacityDim960: CapacityDim960,
     CaseType.CapacityDim128: CapacityDim128,
@@ -926,6 +953,7 @@ type2case = {
     CaseType.NewIntFilterPerformanceCase: NewIntFilterPerformanceCase,
     CaseType.LabelFilterPerformanceCase: LabelFilterPerformanceCase,
     CaseType.CloudPayloadSearchCase: CloudPayloadSearchCase,
+    CaseType.FTSmsmarcoPerformance: FTSmsmarcoPerformance,
     CaseType.CloudInsertCase: CloudInsertCase,
     CaseType.CloudColdLatencyCase: CloudColdLatencyCase,
     CaseType.CloudMultiTenantSearchCase: CloudMultiTenantSearchCase,

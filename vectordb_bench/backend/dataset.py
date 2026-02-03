@@ -6,13 +6,19 @@ Usage:
 
 import logging
 import pathlib
+import types
+import typing
+from abc import ABC, abstractmethod
+from collections.abc import Iterator
+from dataclasses import dataclass
 from enum import Enum
 from typing import Any, ClassVar, NamedTuple
 
+import ir_datasets
 import pandas as pd
 import polars as pl
 from pyarrow.parquet import ParquetFile
-from pydantic import field_validator
+from pydantic import PrivateAttr, field_validator
 
 from vectordb_bench import config
 from vectordb_bench.base import BaseModel
@@ -140,7 +146,7 @@ class LAION(BaseDataset):
     with_gt: bool = True
     with_scalar_labels: bool = True
     scalar_label_percentages: list[float] = [0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5]
-    _size_label: ClassVar[dict] = {
+    _size_label: ClassVar[dict[int, SizeLabel]] = {
         100_000_000: SizeLabel(100_000_000, "LARGE", 100),
     }
 
@@ -150,7 +156,7 @@ class GIST(BaseDataset):
     dim: int = 960
     metric_type: MetricType = MetricType.L2
     use_shuffled: bool = False
-    _size_label: ClassVar[dict] = {
+    _size_label: ClassVar[dict[int, SizeLabel]] = {
         100_000: SizeLabel(100_000, "SMALL", 1),
         1_000_000: SizeLabel(1_000_000, "MEDIUM", 1),
     }
@@ -162,7 +168,7 @@ class Cohere(BaseDataset):
     metric_type: MetricType = MetricType.COSINE
     use_shuffled: bool = config.USE_SHUFFLED_DATA
     with_gt: bool = True
-    _size_label: ClassVar[dict] = {
+    _size_label: ClassVar[dict[int, SizeLabel]] = {
         100_000: SizeLabel(100_000, "SMALL", 1),
         1_000_000: SizeLabel(1_000_000, "MEDIUM", 1),
         10_000_000: SizeLabel(10_000_000, "LARGE", 10),
@@ -200,7 +206,7 @@ class Bioasq(BaseDataset):
     metric_type: MetricType = MetricType.COSINE
     use_shuffled: bool = config.USE_SHUFFLED_DATA
     with_gt: bool = True
-    _size_label: ClassVar[dict] = {
+    _size_label: ClassVar[dict[int, SizeLabel]] = {
         1_000_000: SizeLabel(1_000_000, "MEDIUM", 1),
         10_000_000: SizeLabel(10_000_000, "LARGE", 10),
     }
@@ -236,7 +242,7 @@ class Glove(BaseDataset):
     dim: int = 200
     metric_type: MetricType = MetricType.COSINE
     use_shuffled: bool = False
-    _size_label: ClassVar[dict] = {1_000_000: SizeLabel(1_000_000, "MEDIUM", 1)}
+    _size_label: ClassVar[dict[int, SizeLabel]] = {1_000_000: SizeLabel(1_000_000, "MEDIUM", 1)}
 
 
 class SIFT(BaseDataset):
@@ -244,7 +250,7 @@ class SIFT(BaseDataset):
     dim: int = 128
     metric_type: MetricType = MetricType.L2
     use_shuffled: bool = False
-    _size_label: ClassVar[dict] = {
+    _size_label: ClassVar[dict[int, SizeLabel]] = {
         500_000: SizeLabel(
             500_000,
             "SMALL",
@@ -261,7 +267,7 @@ class OpenAI(BaseDataset):
     metric_type: MetricType = MetricType.COSINE
     use_shuffled: bool = config.USE_SHUFFLED_DATA
     with_gt: bool = True
-    _size_label: ClassVar[dict] = {
+    _size_label: ClassVar[dict[int, SizeLabel]] = {
         50_000: SizeLabel(50_000, "SMALL", 1),
         500_000: SizeLabel(500_000, "MEDIUM", 1),
         5_000_000: SizeLabel(5_000_000, "LARGE", 10),
@@ -532,3 +538,474 @@ DatasetWithSizeMap = {
     DatasetWithSizeType.OpenAIMedium: Dataset.OPENAI.manager(500_000),
     DatasetWithSizeType.OpenAILarge: Dataset.OPENAI.manager(5_000_000),
 }
+
+
+# FTS Dataset Translator Pattern
+@dataclass
+class FtsQuery:
+    """Internal representation of an FTS query."""
+
+    query_id: str
+    text: str
+
+
+@dataclass
+class FtsDocument:
+    """Internal representation of an FTS document."""
+
+    doc_id: str
+    text: str
+
+
+FtsGroundTruth = dict[str, list[str]]
+
+
+class FtsDatasetTranslator(ABC):
+    """Abstract base class for converting ir_datasets schema to internal format.
+
+    This translator pattern allows easy extension to support new datasets
+    (BEIR, TREC, etc.) without modifying core code.
+    """
+
+    @property
+    @abstractmethod
+    def ir_datasets_name(self) -> str:
+        """Return the ir_datasets dataset name.
+
+        Example: 'msmarco-passage/dev/small'
+        """
+
+    @abstractmethod
+    def translate_query(self, ir_query: typing.Any) -> FtsQuery:
+        """Convert ir_datasets query to internal FtsQuery format."""
+
+    @abstractmethod
+    def translate_document(self, ir_doc: typing.Any) -> FtsDocument:
+        """Convert ir_datasets document to internal FtsDocument format."""
+
+    @abstractmethod
+    def load_ground_truth(self, dataset: typing.Any) -> FtsGroundTruth:
+        """Load ground truth data from ir_datasets.
+
+        Returns:
+            dict mapping query_id to list of relevant doc_ids
+        """
+
+    def load(self) -> typing.Any:
+        """Load ir_datasets dataset."""
+        return ir_datasets.load(self.ir_datasets_name)
+
+    def iter_queries(self, dataset: typing.Any) -> Iterator[FtsQuery]:
+        """Iterate over queries in the dataset."""
+        for q in dataset.queries_iter():
+            yield self.translate_query(q)
+
+    def iter_documents(self, dataset: typing.Any) -> Iterator[FtsDocument]:
+        """Iterate over documents in the dataset."""
+        for doc in dataset.docs_iter():
+            yield self.translate_document(doc)
+
+
+def _load_positive_qrels(dataset: typing.Any) -> FtsGroundTruth:
+    gt: FtsGroundTruth = {}
+    for qrel in dataset.qrels_iter():
+        relevance = int(getattr(qrel, "relevance", 1))
+        if relevance <= 0:
+            continue
+        query_id = str(qrel.query_id)
+        doc_id = str(qrel.doc_id)
+        gt.setdefault(query_id, []).append(doc_id)
+    return gt
+
+
+class MSMarcoTranslator(FtsDatasetTranslator):
+    """Translator for MS MARCO passage retrieval dataset."""
+
+    @property
+    def ir_datasets_name(self) -> str:
+        return "msmarco-passage/dev/small"
+
+    def translate_query(self, ir_query: typing.Any) -> FtsQuery:
+        return FtsQuery(query_id=str(ir_query.query_id), text=ir_query.text)
+
+    def translate_document(self, ir_doc: typing.Any) -> FtsDocument:
+        clean_text = ir_doc.text.replace("\t", " ").replace("\n", " ")
+        return FtsDocument(doc_id=str(ir_doc.doc_id), text=clean_text)
+
+    def load_ground_truth(self, dataset: typing.Any) -> FtsGroundTruth:
+        return _load_positive_qrels(dataset)
+
+
+class HotpotQATranslator(FtsDatasetTranslator):
+    """Translator for BEIR HotpotQA."""
+
+    @property
+    def ir_datasets_name(self) -> str:
+        return "beir/hotpotqa/test"
+
+    def translate_query(self, ir_query: typing.Any) -> FtsQuery:
+        return FtsQuery(query_id=str(ir_query.query_id), text=ir_query.text)
+
+    def translate_document(self, ir_doc: typing.Any) -> FtsDocument:
+        title = getattr(ir_doc, "title", "") or ""
+        text = getattr(ir_doc, "text", "") or ""
+        clean_text = f"{title} {text}".replace("\t", " ").replace("\n", " ").strip()
+        return FtsDocument(doc_id=str(ir_doc.doc_id), text=clean_text)
+
+    def load_ground_truth(self, dataset: typing.Any) -> FtsGroundTruth:
+        return _load_positive_qrels(dataset)
+
+
+class FtsBaseDataset(BaseModel):
+    """Base class for FTS datasets - completely independent from BaseDataset.
+
+    FTS datasets are text-based and use TSV files instead of parquet files.
+    They don't have vector dimensions or metric types.
+
+    """
+
+    name: str
+    size: int
+    with_gt: bool = True
+    with_remote_resource: bool = False
+
+    _size_label: ClassVar[dict[int, SizeLabel]]
+
+    @field_validator("size")
+    @classmethod
+    def verify_size(cls, v: int):
+        if v not in cls._size_label:
+            msg = f"Size {v} not supported for the FTS dataset, expected: {cls._size_label.keys()}"
+            raise ValueError(msg)
+        return v
+
+    @property
+    def label(self) -> str:
+        """Get size label (SMALL, MEDIUM, LARGE, etc.)"""
+        return self._size_label.get(self.size).label
+
+    @property
+    def full_name(self) -> str:
+        return f"{self.name} FTS ({self.label})"
+
+    @property
+    def dir_name(self) -> str:
+        return f"{self.name}_{self.label}_{utils.numerize(self.size)}".lower()
+
+
+class MSMarcoFts(FtsBaseDataset):
+    name: str = "MS MARCO"
+    with_gt: bool = True
+    with_remote_resource: bool = False
+
+    _size_label: ClassVar[dict[int, SizeLabel]] = {
+        100_000: SizeLabel(100_000, "SMALL", 1),
+        1_000_000: SizeLabel(1_000_000, "MEDIUM", 1),
+        8_841_823: SizeLabel(8_841_823, "LARGE", 1),
+    }
+
+
+class HotpotQAFts(FtsBaseDataset):
+    name: str = "HotpotQA"
+    with_gt: bool = True
+    with_remote_resource: bool = False
+
+    _size_label: ClassVar[dict[int, SizeLabel]] = {
+        100_000: SizeLabel(100_000, "SMALL", 1),
+        1_000_000: SizeLabel(1_000_000, "MEDIUM", 1),
+        5_233_329: SizeLabel(5_233_329, "LARGE", 1),
+    }
+
+
+class FtsDatasetManager(BaseModel):
+    """Manager for FTS datasets - independent from DatasetManager.
+
+    Handles FTS dataset preparation using Translator pattern for extensibility.
+
+    Similar to DatasetManager, but for text-based FTS datasets:
+    - queries_data: loaded queries (similar to test_data in vectors)
+    - qrels_data: loaded ground truth (similar to gt_data in vectors)
+    - translator: dataset-specific translator for schema conversion
+    - _ir_dataset: ir_datasets dataset object for direct access
+    """
+
+    data: FtsBaseDataset
+    _translator: typing.Any = PrivateAttr()
+
+    queries_data: list[FtsQuery] | None = None
+    qrels_data: FtsGroundTruth | None = None
+    required_doc_ids: set[str] | None = None
+    selected_doc_ids: set[str] | None = None
+    _ir_dataset: typing.Any = PrivateAttr(default=None)
+
+    def __init__(self, **data):
+        super().__init__(**data)
+        # Initialize translator based on dataset name
+        if isinstance(self.data, MSMarcoFts):
+            self._translator = MSMarcoTranslator()
+        elif isinstance(self.data, HotpotQAFts):
+            self._translator = HotpotQATranslator()
+        else:
+            msg = f"No translator available for dataset: {self.data.name}"
+            raise ValueError(msg)
+
+    def __eq__(self, obj: any):
+        if isinstance(obj, FtsDatasetManager):
+            return self.data.name == obj.data.name and self.data.size == obj.data.size
+        return False
+
+    def __hash__(self) -> int:
+        return hash((self.data.name, self.data.size))
+
+    @property
+    def data_dir(self) -> pathlib.Path:
+        """Get local data directory for this FTS dataset, following vector dataset structure"""
+        return pathlib.Path(
+            config.DATASET_LOCAL_DIR,
+            self.data.name.lower(),
+            self.data.dir_name,
+        )
+
+    def _validate_cap(self, required_doc_ids: set[str], target_size: int) -> None:
+        if len(required_doc_ids) > target_size:
+            msg = f"{self.data.full_name} cap {target_size} requires {len(required_doc_ids)} qrel documents"
+            raise ValueError(msg)
+
+    def _build_required_doc_ids(self) -> set[str]:
+        if not self.qrels_data:
+            return set()
+        return {doc_id for doc_ids in self.qrels_data.values() for doc_id in doc_ids}
+
+    def _build_selected_doc_ids(self) -> set[str] | None:
+        if self._is_large():
+            return None
+        required_doc_ids = self.required_doc_ids or set()
+        self._validate_cap(required_doc_ids, self.data.size)
+        selected_doc_ids: set[str] = set(required_doc_ids)
+        found_required_doc_ids: set[str] = set()
+        for ir_doc in self._ir_dataset.docs_iter():
+            doc_id = str(ir_doc.doc_id)
+            if doc_id in required_doc_ids:
+                found_required_doc_ids.add(doc_id)
+            if len(selected_doc_ids) < self.data.size:
+                selected_doc_ids.add(doc_id)
+            if len(selected_doc_ids) >= self.data.size and found_required_doc_ids == required_doc_ids:
+                break
+        missing_required_doc_ids = required_doc_ids - found_required_doc_ids
+        if missing_required_doc_ids:
+            missing = ", ".join(sorted(missing_required_doc_ids)[:10])
+            msg = f"{self.data.full_name} required qrel documents are missing from corpus: {missing}"
+            raise ValueError(msg)
+        if len(selected_doc_ids) < self.data.size:
+            msg = f"{self.data.full_name} only selected {len(selected_doc_ids)} documents for cap {self.data.size}"
+            raise ValueError(msg)
+        return selected_doc_ids
+
+    def _is_large(self) -> bool:
+        return self.data.label == "LARGE"
+
+    def prepare(
+        self,
+        source: DatasetSource | None = None,
+        filters: Filter | None = None,
+    ) -> bool:
+        """Prepare FTS dataset for testing using Translator pattern.
+
+        Directly uses ir_datasets API without generating TSV files:
+        1. Downloads dataset using ir_datasets (if needed)
+        2. Loads dataset object using translator
+        3. Loads queries and qrels data into memory using translator
+
+        Args:
+            source: Data source to download from (should be IR_DATASETS for FTS)
+            filters: Optional filters (not used for FTS)
+
+        Returns:
+            bool: True if preparation successful, False otherwise
+        """
+        log.info(f"Preparing FTS dataset: {self.data.full_name}")
+
+        try:
+            # Download dataset if needed (ir_datasets handles caching)
+            if source is not None:
+                reader = source.reader()
+                if reader is not None:
+                    dataset_name = self._translator.ir_datasets_name
+                    # reader.read() will download the dataset if needed
+                    reader.read(dataset_name, [], self.data_dir)
+
+            # Load dataset using translator
+            self._ir_dataset = self._translator.load()
+            log.info(f"Successfully loaded ir_datasets dataset: {self._translator.ir_datasets_name}")
+
+            # Load queries and qrels using translator
+            if self.data.with_gt:
+                # Load queries using translator
+                self.queries_data = list(self._translator.iter_queries(self._ir_dataset))
+                log.info(f"Loaded {len(self.queries_data)} queries into memory")
+
+                # Load ground truth using translator
+                self.qrels_data = self._translator.load_ground_truth(self._ir_dataset)
+                log.info(f"Loaded ground truth for {len(self.qrels_data)} queries into memory")
+                self.required_doc_ids = self._build_required_doc_ids()
+                self.selected_doc_ids = self._build_selected_doc_ids()
+
+        except ValueError:
+            log.exception("Invalid FTS dataset configuration")
+            raise
+        except Exception:
+            log.exception("Failed to prepare FTS dataset")
+            return False
+        else:
+            log.debug(f"{self.data.name}: FTS dataset prepared")
+            log.info(f"FTS dataset preparation completed: {self.data.full_name}")
+            return True
+
+    def __iter__(self):
+        """Return iterator for streaming document batches.
+
+        Similar to DatasetManager.__iter__() which returns DataSetIterator.
+        This enables batch-by-batch processing of documents without loading
+        all documents into memory at once.
+
+        Example:
+            >>> manager = FtsDataset.MSMARCO.manager(100_000)
+            >>> for batch in manager:
+            >>>     print(f"Processing {len(batch)} documents")
+        """
+        return FtsDocumentIterator(self)
+
+
+class FtsDocumentIterator:
+    """Iterator for streaming FTS document batches using Translator pattern.
+
+    Similar to DataSetIterator for vector datasets, but reads directly from ir_datasets
+    using translator. Yields batches of FtsDocument objects for memory-efficient
+    processing of large datasets.
+    """
+
+    def __init__(self, dataset: FtsDatasetManager):
+        self._ds = dataset
+        self._batch_size = config.NUM_PER_BATCH
+        self._finished = False
+        self._doc_count = 0  # Track total documents processed
+        self._docs_iter = None
+
+    def __iter__(self):
+        return self
+
+    def __next__(self) -> list[FtsDocument]:
+        """Return the next batch of documents.
+
+        Returns:
+            list[FtsDocument]: List of FtsDocument objects
+
+        Raises:
+            StopIteration: When all documents have been read
+        """
+        if self._finished:
+            raise StopIteration
+
+        # Initialize iterator on first call
+        if self._docs_iter is None:
+            if self._ds._ir_dataset is None:
+                error_msg = "ir_datasets dataset not loaded. Call prepare() first."
+                log.error(error_msg)
+                raise RuntimeError(error_msg)
+
+            log.info("Starting to iterate documents using translator")
+            self._docs_iter = self._ds._translator.iter_documents(self._ds._ir_dataset)
+
+        # Read batch with proper error handling
+        try:
+            batch = []
+            for _ in range(self._batch_size):
+                if self._doc_count >= self._ds.data.size:
+                    self._finished = True
+                    if batch:
+                        return batch
+                    raise StopIteration
+                try:
+                    while True:
+                        doc = next(self._docs_iter)
+                        selected_doc_ids = self._ds.selected_doc_ids
+                        if selected_doc_ids is None or doc.doc_id in selected_doc_ids:
+                            break
+                    batch.append(doc)
+                    self._doc_count += 1
+                except StopIteration:
+                    self._finished = True
+                    if batch:
+                        return batch
+                    raise
+                except Exception as e:
+                    log.debug(f"Skipping malformed document: {e}")
+                    continue
+
+        except StopIteration:
+            self._finished = True
+            raise
+        except Exception:
+            log.exception("Error reading documents from translator")
+            raise
+        else:
+            return batch
+
+    def __enter__(self):
+        """Enter context manager."""
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: types.TracebackType | None,
+    ) -> None:
+        """Exit context manager."""
+
+    def __del__(self):
+        """Cleanup when iterator is destroyed."""
+
+
+class FtsDataset(Enum):
+    MSMARCO = MSMarcoFts
+    HOTPOTQA = HotpotQAFts
+
+    def get(self, size: int) -> FtsBaseDataset:
+        return self.value(size=size)
+
+    def manager(self, size: int) -> FtsDatasetManager:
+        return FtsDatasetManager(data=self.get(size))
+
+
+class FtsDatasetWithSizeType(Enum):
+    MSMarcoSmall = "MS MARCO Small (100K documents)"
+    MSMarcoMedium = "MS MARCO Medium (1M documents)"
+    MSMarcoLarge = "MS MARCO Large (8.8M documents)"
+    HotpotQASmall = "HotpotQA Small (100K documents)"
+    HotpotQAMedium = "HotpotQA Medium (1M documents)"
+    HotpotQALarge = "HotpotQA Large (5.2M documents)"
+
+    def get_manager(self) -> FtsDatasetManager:
+        return {
+            FtsDatasetWithSizeType.MSMarcoSmall: FtsDataset.MSMARCO.manager(100_000),
+            FtsDatasetWithSizeType.MSMarcoMedium: FtsDataset.MSMARCO.manager(1_000_000),
+            FtsDatasetWithSizeType.MSMarcoLarge: FtsDataset.MSMARCO.manager(8_841_823),
+            FtsDatasetWithSizeType.HotpotQASmall: FtsDataset.HOTPOTQA.manager(100_000),
+            FtsDatasetWithSizeType.HotpotQAMedium: FtsDataset.HOTPOTQA.manager(1_000_000),
+            FtsDatasetWithSizeType.HotpotQALarge: FtsDataset.HOTPOTQA.manager(5_233_329),
+        }[self]
+
+    def get_load_timeout(self) -> float:
+        if self in {FtsDatasetWithSizeType.MSMarcoSmall, FtsDatasetWithSizeType.HotpotQASmall}:
+            return config.LOAD_TIMEOUT_768D_100K
+        return config.LOAD_TIMEOUT_DEFAULT
+
+    def get_optimize_timeout(self) -> float:
+        if self in {FtsDatasetWithSizeType.MSMarcoSmall, FtsDatasetWithSizeType.HotpotQASmall}:
+            return config.OPTIMIZE_TIMEOUT_768D_100K
+        return config.OPTIMIZE_TIMEOUT_DEFAULT
+
+    @property
+    def is_advanced(self) -> bool:
+        return self in {FtsDatasetWithSizeType.MSMarcoLarge, FtsDatasetWithSizeType.HotpotQALarge}

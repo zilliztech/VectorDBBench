@@ -13,6 +13,7 @@ from hdrh.histogram import HdrHistogram
 
 from vectordb_bench.backend.filter import Filter, non_filter
 from vectordb_bench.backend.payload import PayloadProfile
+from vectordb_bench.backend.workload import WorkloadKind
 
 from ... import config
 from ...models import ConcurrencySlotTimeoutError
@@ -48,13 +49,22 @@ class MultiProcessingSearchRunner:
         concurrency_timeout: int = config.CONCURRENCY_TIMEOUT,
         payload_profile: PayloadProfile = PayloadProfile.IDS_ONLY,
         tenant_labels: list[str] | None = None,
+        workload_kind: WorkloadKind = WorkloadKind.VECTOR,
     ):
         self.db = db
         self.k = k
         self.filters = filters
+        self.workload_kind = workload_kind
         self.payload_profile = payload_profile
         self.tenant_labels = tenant_labels or []
-        if not self.db.supports_payload_profile(self.payload_profile):
+        if self.workload_kind == WorkloadKind.FULL_TEXT_BM25:
+            self._search_func = self.db.search_documents
+        elif self.workload_kind == WorkloadKind.VECTOR:
+            self._search_func = self._search_embedding
+        else:
+            msg = f"Unsupported search workload: {workload_kind}"
+            raise NotImplementedError(msg)
+        if self.workload_kind == WorkloadKind.VECTOR and not self.db.supports_payload_profile(self.payload_profile):
             msg = f"{self.db.name} does not support payload_profile={self.payload_profile.value}"
             raise NotImplementedError(msg)
         self.concurrencies = concurrencies
@@ -72,6 +82,16 @@ class MultiProcessingSearchRunner:
         if self.payload_profile == PayloadProfile.IDS_ONLY:
             return self.db.search_embedding(emb, self.k, tenant=tenant)
         return self.db.search_embedding(emb, self.k, payload_profile=self.payload_profile, tenant=tenant)
+
+    def _search_once(self, query: list[float] | str, tenant_rng: random.Random | None = None):
+        if self.workload_kind == WorkloadKind.FULL_TEXT_BM25:
+            return self._search_func(query, self.k)
+        tenant = (
+            self.tenant_labels[tenant_rng.randrange(len(self.tenant_labels))]
+            if tenant_rng is not None and self.tenant_labels
+            else None
+        )
+        return self._search_func(query, tenant=tenant)
 
     def search(
         self,
@@ -100,12 +120,7 @@ class MultiProcessingSearchRunner:
             while time.perf_counter() < start_time + self.duration:
                 s = time.perf_counter()
                 try:
-                    tenant = (
-                        self.tenant_labels[tenant_rng.randrange(len(self.tenant_labels))]
-                        if self.tenant_labels
-                        else None
-                    )
-                    self._search_embedding(test_data[idx], tenant=tenant)
+                    self._search_once(test_data[idx], tenant_rng=tenant_rng)
                     count += 1
                     latencies.append(time.perf_counter() - s)
                 except Exception as e:
@@ -364,7 +379,7 @@ class MultiProcessingSearchRunner:
             while time.perf_counter() < start_time + dur:
                 s = time.perf_counter()
                 try:
-                    self._search_embedding(test_data[idx])
+                    self._search_once(test_data[idx])
                     success_count += 1
                     latency_us = int((time.perf_counter() - s) * US_TO_SECONDS)
                     histogram.record_value(min(latency_us, HDR_HISTOGRAM_MAX_US))
