@@ -12,6 +12,7 @@ from ....cli.cli import (
     HNSWFlavor1,
     IVFFlatTypedDict,
     cli,
+    SVSBaseTypedDict,
     click_parameter_decorators_from_typed_dict,
     get_custom_case_config,
     run,
@@ -201,3 +202,32 @@ def PgVectorHNSW(
         ),
         **parameters,
     )
+
+class PgVectorSVSTypedDict(PgVectorTypedDict, SVSBaseTypedDict): ...
+
+@cli.command()
+@click_parameter_decorators_from_typed_dict(PgVectorSVSTypedDict)
+def PgVectorSVS(
+    **parameters: Unpack[PgVectorSVSTypedDict],
+):
+    from .config import PgVectorConfig, PgVectorSVSVamanaConfig
+
+    parameters["custom_case"] = get_custom_case_config(parameters)
+    run(
+        db=DB.PgVector,
+        db_config=PgVectorConfig(
+            db_label=parameters["db_label"],
+            user_name=SecretStr(parameters["user_name"]),
+            password=SecretStr(parameters["password"]),
+            host=parameters["host"],
+            port=parameters["port"],
+            db_name=parameters["db_name"],
+        ),
+        db_case_config=PgVectorSVSVamanaConfig(
+            graph_max_degree=parameters["graph_max_degree"],
+            construction_window_size=parameters["construction_window_size"],
+            compression=parameters["compression"],
+        ),
+        **parameters,
+    )
+

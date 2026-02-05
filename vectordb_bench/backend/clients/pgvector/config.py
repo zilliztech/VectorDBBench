@@ -4,7 +4,7 @@ from typing import Any, LiteralString, TypedDict
 
 from pydantic import BaseModel, SecretStr
 
-from ..api import DBCaseConfig, DBConfig, IndexType, MetricType
+from ..api import DBCaseConfig, DBConfig, IndexType, MetricType, CompressionType
 
 POSTGRE_URL_PLACEHOLDER = "postgresql://%s:%s@%s/%s"
 
@@ -266,9 +266,55 @@ class PgVectorHNSWConfig(PgVectorIndexConfig):
         session_parameters = {"hnsw.ef_search": self.ef_search, "hnsw.iterative_scan": self.iterative_scan}
         return {"session_options": self._optionally_build_set_options(session_parameters)}
 
+class PgVectorSVSVamanaConfig(PgVectorIndexConfig):
+    compression: CompressionType | None = None
+    construction_window_size: int | None = None
+    graph_max_degree: int | None = None
+    index: IndexType = IndexType.SVS_VAMANA
+    quantization_type: str | None = None
+    table_quantization_type: str | None
+    maintenance_work_mem: str | None = None
+    max_parallel_workers: int | None = None
+    reranking: bool | None = None
+    quantized_fetch_limit: int | None = None
+    reranking_metric: str | None = None
+
+    def index_param(self) -> PgVectorIndexParam:
+        "compression: self.compression.value,"
+        index_parameters = {
+                "construction_window_size": self.construction_window_size,
+                "graph_max_degree": self.graph_max_degree}
+        if self.quantization_type == "none" or self.quantization_type is None:
+            self.quantization_type = "vector"
+        if self.table_quantization_type == "none" or self.table_quantization_type is None:
+            self.table_quantization_type = "vector"
+        if self.table_quantization_type == "bit":
+            self.quantization_type = "bit"
+        return {
+            "metric": self.parse_metric(),
+            "index_type": self.index.value,
+            "index_creation_with_options": self._optionally_build_with_options(index_parameters),
+            "maintenance_work_mem": self.maintenance_work_mem,
+            "max_parallel_workers": self.max_parallel_workers,
+            "quantization_type": self.quantization_type,
+            "table_quantization_type": self.table_quantization_type,
+        }
+
+    def search_param(self) -> PgVectorSearchParam:
+        return {
+            "metric_fun_op": self.parse_metric_fun_op(),
+            "reranking": self.reranking,
+            "reranking_metric_fun_op": self.parse_reranking_metric_fun_op(),
+            "quantized_fetch_limit": self.quantized_fetch_limit,
+        }
+
+    def session_param(self) -> PgVectorSessionCommands:
+        session_parameters = {}
+        return {"session_options": self._optionally_build_set_options(session_parameters)}
 
 _pgvector_case_config = {
     IndexType.HNSW: PgVectorHNSWConfig,
     IndexType.ES_HNSW: PgVectorHNSWConfig,
     IndexType.IVFFlat: PgVectorIVFFlatConfig,
+    IndexType.SVS_VAMANA: PgVectorSVSVamanaConfig,
 }

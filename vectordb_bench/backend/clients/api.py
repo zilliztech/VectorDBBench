@@ -9,6 +9,15 @@ from pydantic import BaseModel, model_validator
 from vectordb_bench.backend.filter import Filter, FilterOp
 from vectordb_bench.backend.payload import PayloadProfile
 
+class CompressionType(Enum):
+    LVQ8 = "LVQ8"
+    LVQ4 = "LVQ4"
+    LVQ4X4 = "LVQ4x4"
+    LVQ4X8 = "LVQ4x8"
+    LEANVEC_4X8 = "LeanVec4x8"
+    LEANVEC_8X8 = "LeanVec8x8"
+    NONE = "none"
+
 
 class MetricType(StrEnum):
     L2 = "L2"
@@ -62,6 +71,7 @@ class IndexType(StrEnum):
     IVF_HNSW_PQ = "IVF_HNSW_PQ"
     BTREE = "BTREE"
     NONE = "NONE"
+    SVS_VAMANA = "vamana"
 
 
 class SQType(StrEnum):
