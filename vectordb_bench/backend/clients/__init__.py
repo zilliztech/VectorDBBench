@@ -58,6 +58,7 @@ class DB(Enum):
     TurboPuffer = "TurboPuffer"
     Zvec = "Zvec"
     Endee = "Endee"
+    RustVectorDB = "RustVectorDB"
 
     @property
     def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901, PLR0915
@@ -199,6 +200,11 @@ class DB(Enum):
             from .test.test import Test
 
             return Test
+
+        if self == DB.RustVectorDB:
+            from .rust_vectordb.rust_vectordb import RustVectorDB
+
+            return RustVectorDB
 
         if self == DB.Vespa:
             from .vespa.vespa import Vespa
@@ -383,6 +389,11 @@ class DB(Enum):
             from .test.config import TestConfig
 
             return TestConfig
+
+        if self == DB.RustVectorDB:
+            from .rust_vectordb.config import RustVectorDBConfig
+
+            return RustVectorDBConfig
 
         if self == DB.Vespa:
             from .vespa.config import VespaConfig
@@ -584,6 +595,11 @@ class DB(Enum):
             from .chroma.config import ChromaIndexConfig
 
             return ChromaIndexConfig
+
+        if self == DB.RustVectorDB:
+            from .rust_vectordb.config import RustVectorDBCaseConfig
+
+            return RustVectorDBCaseConfig
 
         # DB.Pinecone, DB.Redis
         return EmptyDBCaseConfig

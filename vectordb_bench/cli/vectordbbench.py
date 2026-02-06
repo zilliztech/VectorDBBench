@@ -26,6 +26,7 @@ from ..backend.clients.pgvectorscale.cli import PgVectorScaleDiskAnn
 from ..backend.clients.qdrant_cloud.cli import QdrantCloud
 from ..backend.clients.qdrant_local.cli import QdrantLocal
 from ..backend.clients.redis.cli import Redis
+from ..backend.clients.rust_vectordb.cli import rustvectordb
 from ..backend.clients.s3_vectors.cli import S3Vectors
 from ..backend.clients.tencent_elasticsearch.cli import TencentElasticsearch
 from ..backend.clients.test.cli import Test
@@ -76,6 +77,7 @@ cli.add_command(TurboPuffer)
 cli.add_command(Chroma)
 cli.add_command(Zvec)
 cli.add_command(Endee)
+cli.add_command(rustvectordb)
 
 
 if __name__ == "__main__":
