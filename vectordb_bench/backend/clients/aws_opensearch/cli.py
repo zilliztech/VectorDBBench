@@ -17,11 +17,16 @@ from .config import AWSOS_Engine, AWSOSQuantization
 log = logging.getLogger(__name__)
 
 
+def optional_secret_str(value: str | None) -> SecretStr | None:
+    """Convert string to SecretStr, handling None gracefully."""
+    return None if value is None else SecretStr(value)
+
+
 class AWSOpenSearchTypedDict(TypedDict):
     host: Annotated[str, click.option("--host", type=str, help="Db host", required=True)]
     port: Annotated[int, click.option("--port", type=int, default=80, help="Db Port")]
-    user: Annotated[str, click.option("--user", type=str, help="Db User")]
-    password: Annotated[str, click.option("--password", type=str, help="Db password")]
+    user: Annotated[str | None, click.option("--user", type=str, help="Db User")]
+    password: Annotated[str | None, click.option("--password", type=str, help="Db password")]
     number_of_shards: Annotated[
         int,
         click.option("--number-of-shards", type=int, help="Number of primary shards for the index", default=1),
@@ -188,7 +193,7 @@ def AWSOpenSearch(**parameters: Unpack[AWSOpenSearchHNSWTypedDict]):
             host=parameters["host"],
             port=parameters["port"],
             user=parameters["user"],
-            password=SecretStr(parameters["password"]),
+            password=optional_secret_str(parameters["password"]),
         ),
         db_case_config=AWSOpenSearchIndexConfig(
             number_of_shards=parameters["number_of_shards"],
