@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from enum import StrEnum
 
-from pydantic import BaseModel, SecretStr, validator
+from pydantic import BaseModel, SecretStr, field_validator
 
 from vectordb_bench.backend.filter import Filter, FilterOp
 
@@ -88,11 +88,24 @@ class DBConfig(ABC, BaseModel):
     def to_dict(self) -> dict:
         raise NotImplementedError
 
-    @validator("*")
-    def not_empty_field(cls, v: any, field: any):
-        if field.name in cls.common_short_configs() or field.name in cls.common_long_configs():
+    @field_validator("*", mode="before")
+    def not_empty_field(cls, v: any, info):  # noqa: ANN001
+        # Allow empty for known short/long config fields
+        field_name = getattr(info, "field_name", None)
+        if field_name in cls.common_short_configs() or field_name in cls.common_long_configs():
             return v
-        if not v and isinstance(v, str | SecretStr):
+
+        # For strings and SecretStr, reject empty values
+        try:
+            # If it's a SecretStr, check the underlying value
+            if isinstance(v, SecretStr):
+                if v.get_secret_value() == "":
+                    raise ValueError("Empty string!")
+                return v
+        except Exception:  # pragma: no cover - defensive
+            pass
+
+        if isinstance(v, str) and v == "":
             raise ValueError("Empty string!")
         return v
 

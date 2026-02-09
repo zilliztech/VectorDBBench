@@ -52,13 +52,10 @@ class MariaDB(VectorDB):
     def _drop_db(self):
         assert self.conn is not None, "Connection is not initialized"
         assert self.cursor is not None, "Cursor is not initialized"
-        log.info(f"{self.name} client drop db : {self.db_name}")
-
-        # flush tables before dropping database to avoid some locking issue
-        self.cursor.execute("FLUSH TABLES")
-        self.cursor.execute(f"DROP DATABASE IF EXISTS {self.db_name}")
+        log.info(f"{self.name} client drop table : {self.table_name}")
+        self.cursor.execute(f"USE {self.db_name}")
+        self.cursor.execute(f"DROP TABLE IF EXISTS {self.table_name}")
         self.cursor.execute("COMMIT")
-        self.cursor.execute("FLUSH TABLES")
 
     def _create_db_table(self, dim: int):
         assert self.conn is not None, "Connection is not initialized"
@@ -67,9 +64,6 @@ class MariaDB(VectorDB):
         index_param = self.case_config.index_param()
 
         try:
-            log.info(f"{self.name} client create database : {self.db_name}")
-            self.cursor.execute(f"CREATE DATABASE {self.db_name}")
-
             log.info(f"{self.name} client create table : {self.table_name}")
             self.cursor.execute(f"USE {self.db_name}")
 
@@ -110,7 +104,7 @@ class MariaDB(VectorDB):
 
         self.insert_sql = f"INSERT INTO {self.db_name}.{self.table_name} (id, v) VALUES (%s, %s)"  # noqa: S608
         self.select_sql = (
-            f"SELECT id FROM {self.db_name}.{self.table_name}"  # noqa: S608
+            f"SELECT id FROM {self.db_name}.{self.table_name} "  # noqa: S608
             f"ORDER by vec_distance_{search_param['metric_type']}(v, %s) LIMIT %d"
         )
         self.select_sql_with_filter = (
@@ -129,7 +123,7 @@ class MariaDB(VectorDB):
     def ready_to_load(self) -> bool:
         pass
 
-    def optimize(self) -> None:
+    def optimize(self, data_size: int | None = None) -> None:
         assert self.conn is not None, "Connection is not initialized"
         assert self.cursor is not None, "Cursor is not initialized"
 
@@ -176,7 +170,7 @@ class MariaDB(VectorDB):
 
             self.cursor.executemany(self.insert_sql, batch_data)
             self.cursor.execute("COMMIT")
-            self.cursor.execute("FLUSH TABLES")
+            # self.cursor.execute("FLUSH TABLES")
 
             return len(metadata), None
         except Exception as e:

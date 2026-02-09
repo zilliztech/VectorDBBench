@@ -653,5 +653,14 @@ def run(
         if global_result_future:
             wait([global_result_future])
 
-        while benchmark_runner.has_running():
-            time.sleep(1)
+        try:
+            while benchmark_runner.has_running():
+                time.sleep(1)
+        except Exception as e:
+            # Be resilient to IPC issues (e.g., BrokenPipe on Windows) so that
+            # batch runs can continue with subsequent subcommands.
+            log.warning(f"Encountered error while monitoring task progress: {e}")
+            try:
+                benchmark_runner.stop_running()
+            except Exception:  # noqa: BLE001
+                pass

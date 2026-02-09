@@ -46,11 +46,11 @@ class MariaDBIndexConfig(BaseModel):
 
 
 class MariaDBHNSWConfig(MariaDBIndexConfig, DBCaseConfig):
-    M: int | None
-    ef_search: int | None
+    M: int | None = None
+    ef_search: int | None = None
     index: IndexType = IndexType.HNSW
     storage_engine: str = "InnoDB"
-    max_cache_size: int | None
+    max_cache_size: int | None = None
 
     def index_param(self) -> dict:
         return {

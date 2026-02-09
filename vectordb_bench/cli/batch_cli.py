@@ -56,32 +56,67 @@ def build_sub_cmd_args(batch_config: MutableMapping[str, Any] | None):
         "dry_run": False,
         "custom_dataset_use_shuffled": True,
         "custom_dataset_with_gt": True,
+        # weaviate: --no-auth
+        "no_auth": False,
     }
 
     def format_option(key: str, value: Any):
         opt_name = key.replace("_", "-")
 
-        if key in bool_options:
-            return format_bool_option(opt_name, value, skip=False)
+        # Known boolean flags that have explicit negative counterparts
+        neg_flag_map: dict[str, tuple[str, str]] = {
+            # General stages
+            "drop_old": ("drop-old", "skip-drop-old"),
+            "load": ("load", "skip-load"),
+            "search_serial": ("search-serial", "skip-search-serial"),
+            "search_concurrent": ("search-concurrent", "skip-search-concurrent"),
+            # PgVector
+            "reranking": ("reranking", "skip-reranking"),
+            "create_index_before_load": ("create-index-before-load", "no-create-index-before-load"),
+            "create_index_after_load": ("create-index-after-load", "no-create-index-after-load"),
+        }
+
+        # Special-case: boolean flags
+        if isinstance(value, bool):
+            # weaviate no_auth behaves as a simple positive flag (no negative counterpart)
+            if key == "no_auth":
+                return [f"--{opt_name}"] if value else []
+
+            if key in neg_flag_map:
+                pos, neg = neg_flag_map[key]
+                return [f"--{pos}"] if value else [f"--{neg}"]
+
+            # Fallback: for known stage booleans handled above, or simple on/off flags without negative
+            if key in bool_options:
+                return format_bool_option(opt_name, value, skip=False)
+
+            # Default fallback: True -> --flag, False -> omit
+            return [f"--{opt_name}"] if value else []
 
         if key.startswith("skip_"):
             raw_key = key[5:]
             raw_opt = raw_key.replace("_", "-")
             return format_bool_option(raw_opt, value, skip=True, raw_key=raw_key)
 
+        # Non-boolean: pass as --key value
         return [f"--{opt_name}", str(value)]
 
     def format_bool_option(opt_name: str, value: Any, skip: bool = False, raw_key: str | None = None):
+        # Helper kept for backward compatibility with existing stage flags
         if isinstance(value, bool):
             if skip:
                 if bool_options.get(raw_key, False):
+                    # When skip_ is provided and the raw_key is a known stage flag,
+                    # emit the proper --skip-<flag> or its positive counterpart without values
                     return [f"--skip-{opt_name}"] if value else [f"--{opt_name}"]
-                return [f"--{opt_name}", str(value)]
+                # Unknown skip_ keys: do not append literal True/False
+                return [f"--skip-{opt_name}"] if value else []
             if value:
                 return [f"--{opt_name}"]
             if bool_options.get(opt_name.replace("-", "_"), False):
                 return [f"--skip-{opt_name}"]
             return []
+        # Non-boolean falls back to standard formatting elsewhere
         return [f"--{opt_name}", str(value)]
 
     args_arr = []

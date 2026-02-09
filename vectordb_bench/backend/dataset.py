@@ -12,7 +12,7 @@ from typing import Any, NamedTuple
 import pandas as pd
 import polars as pl
 from pyarrow.parquet import ParquetFile
-from pydantic import PrivateAttr, validator
+from pydantic import PrivateAttr, field_validator
 
 from vectordb_bench import config
 from vectordb_bench.base import BaseModel
@@ -57,10 +57,33 @@ class BaseDataset(BaseModel):
     gt_id_field: str = "id"
     gt_neighbors_field: str = "neighbors_id"
 
-    @validator("size")
+    @field_validator("size", mode="before")
     def verify_size(cls, v: int):
-        if v not in cls._size_label:
-            msg = f"Size {v} not supported for the dataset, expected: {cls._size_label.keys()}"
+        # In Pydantic v2, accessing a PrivateAttr on the class returns a ModelPrivateAttr,
+        # not the default dict. Resolve the actual mapping safely.
+        def _get_size_label_map() -> dict[int, SizeLabel]:
+            # If subclasses override `_size_label` with a dict directly, use it.
+            direct = getattr(cls, "_size_label", None)
+            if isinstance(direct, dict):
+                return direct
+
+            # Otherwise, fetch the PrivateAttr default/default_factory.
+            pa = getattr(cls, "__private_attributes__", {}).get("_size_label")
+            if pa is not None:
+                default = getattr(pa, "default", None)
+                if isinstance(default, dict):
+                    return default
+                default_factory = getattr(pa, "default_factory", None)
+                if callable(default_factory):
+                    try:
+                        return default_factory()
+                    except Exception:  # pragma: no cover — defensive
+                        return {}
+            return {}
+
+        size_map = _get_size_label_map()
+        if v not in size_map:
+            msg = f"Size {v} not supported for the dataset, expected: {list(size_map.keys())}"
             raise ValueError(msg)
         return v
 
@@ -102,7 +125,7 @@ class CustomDataset(BaseDataset):
     scalar_labels_file: str = "scalar_labels.parquet"
     label_percentages: list[float] = []
 
-    @validator("size")
+    @field_validator("size", mode="before")
     def verify_size(cls, v: int):
         return v
 
