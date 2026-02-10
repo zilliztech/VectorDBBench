@@ -79,7 +79,7 @@ all = [
     "mysql-connector-python",
     "turbopuffer[fast]",
     'zvec',
-    "endee",
+    "endee==0.1.10", # compatible with pydantic<2
 ]
 
 qdrant          = [ "qdrant-client" ]
@@ -109,7 +109,7 @@ alisql          = [ "mysql-connector-python" ]
 doris           = [ "doris-vector-search" ]
 turbopuffer     = [ "turbopuffer" ]
 zvec            = [ "zvec" ]
-endee           = [ "endee" ]
+endee           = [ "endee==0.1.10" ]
 
 [project.urls]
 Repository  = "https://github.com/zilliztech/VectorDBBench"
