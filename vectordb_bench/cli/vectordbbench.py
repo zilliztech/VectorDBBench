@@ -1,5 +1,6 @@
 from ..backend.clients.alisql.cli import AliSQLHNSW
 from ..backend.clients.alloydb.cli import AlloyDBScaNN
+from ..backend.clients.astradb.cli import AstraDB
 from ..backend.clients.aws_opensearch.cli import AWSOpenSearch
 from ..backend.clients.chroma.cli import Chroma
 from ..backend.clients.clickhouse.cli import Clickhouse
@@ -53,6 +54,7 @@ cli.add_command(OSSOpenSearch)
 cli.add_command(PgVectorScaleDiskAnn)
 cli.add_command(PgDiskAnn)
 cli.add_command(AlloyDBScaNN)
+cli.add_command(AstraDB)
 cli.add_command(OceanBaseHNSW)
 cli.add_command(OceanBaseIVF)
 cli.add_command(MariaDBHNSW)
