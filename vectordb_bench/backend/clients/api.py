@@ -1,13 +1,13 @@
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel, SecretStr, validator
 
 from vectordb_bench.backend.filter import Filter, FilterOp
 
 
-class MetricType(str, Enum):
+class MetricType(StrEnum):
     L2 = "L2"
     COSINE = "COSINE"
     IP = "IP"
@@ -16,7 +16,7 @@ class MetricType(str, Enum):
     JACCARD = "JACCARD"
 
 
-class IndexType(str, Enum):
+class IndexType(StrEnum):
     HNSW = "HNSW"
     HNSW_SQ = "HNSW_SQ"
     HNSW_BQ = "HNSW_BQ"
@@ -48,7 +48,7 @@ class IndexType(str, Enum):
     NONE = "NONE"
 
 
-class SQType(str, Enum):
+class SQType(StrEnum):
     SQ6 = "SQ6"
     SQ8 = "SQ8"
     BF16 = "BF16"

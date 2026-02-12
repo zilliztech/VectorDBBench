@@ -38,7 +38,7 @@ class EndeeTypedDict(CommonTypedDict):
         str,
         click.option(
             "--space-type",
-            type=click.Choice(["cosine", "l2", "dot_product"]),
+            type=click.Choice(["cosine", "l2", "ip"]),
             default="cosine",
             help="Distance metric",
             show_default=True,

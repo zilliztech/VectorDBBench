@@ -34,7 +34,7 @@ class Endee(VectorDB):
         **kwargs,
     ):
         self.token = db_config.get("token", "")
-        self.region = db_config.get("region", "as1")
+        self.region = db_config.get("region", "")
         self.base_url = db_config.get("base_url")
 
         self.collection_name = db_config.get("collection_name") or db_config.get("index_name")

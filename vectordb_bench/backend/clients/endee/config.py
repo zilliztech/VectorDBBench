@@ -5,7 +5,7 @@ from vectordb_bench.backend.clients.api import DBConfig
 
 class EndeeConfig(DBConfig):
     token: SecretStr | None = None
-    region: str | None = "as1"
+    region: str | None = ""
     base_url: str = "http://127.0.0.1:8080/api/v1"
     space_type: str = "cosine"
     precision: str = "int8d"
