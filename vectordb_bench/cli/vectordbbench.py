@@ -35,6 +35,7 @@ from ..backend.clients.vespa.cli import Vespa
 from ..backend.clients.weaviate_cloud.cli import Weaviate
 from ..backend.clients.zilliz_cloud.cli import ZillizAutoIndex
 from ..backend.clients.zvec.cli import Zvec
+from ..backend.clients.lindorm.cli import LindormHNSW, LindormIVFPQ, LindormIVFBQ
 from .batch_cli import BatchCli
 from .cli import cli
 
@@ -76,6 +77,9 @@ cli.add_command(TurboPuffer)
 cli.add_command(Chroma)
 cli.add_command(Zvec)
 cli.add_command(Endee)
+cli.add_command(LindormIVFPQ)
+cli.add_command(LindormHNSW)
+cli.add_command(LindormIVFBQ)
 
 
 if __name__ == "__main__":

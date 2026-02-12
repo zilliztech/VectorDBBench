@@ -58,6 +58,7 @@ class DB(Enum):
     TurboPuffer = "TurboPuffer"
     Zvec = "Zvec"
     Endee = "Endee"
+    Lindorm = "Lindorm"
 
     @property
     def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901, PLR0915
@@ -239,6 +240,11 @@ class DB(Enum):
             from .zvec.zvec import Zvec
 
             return Zvec
+
+        if self == DB.Lindorm:
+            from .lindorm.lindorm_search import LindormVector
+
+            return LindormVector
 
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
@@ -424,6 +430,11 @@ class DB(Enum):
 
             return ZvecConfig
 
+        if self == DB.Lindorm:
+            from .lindorm.config import LindormConfig
+
+            return LindormConfig
+
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
 
@@ -584,6 +595,10 @@ class DB(Enum):
             from .chroma.config import ChromaIndexConfig
 
             return ChromaIndexConfig
+
+        if self == DB.Lindorm:
+            from .lindorm.config import _lindorm_vector_case_config
+            return _lindorm_vector_case_config.get(index_type)
 
         # DB.Pinecone, DB.Redis
         return EmptyDBCaseConfig

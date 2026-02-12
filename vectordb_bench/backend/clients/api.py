@@ -26,6 +26,7 @@ class IndexType(StrEnum):
     STREAMING_DISKANN = "DISKANN"
     IVFFlat = "IVF_FLAT"
     IVFPQ = "IVF_PQ"
+    IVFBQ = "IVF_BQ"
     IVFSQ8 = "IVF_SQ8"
     IVF_RABITQ = "IVF_RABITQ"
     Flat = "FLAT"
