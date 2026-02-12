@@ -1,7 +1,7 @@
 import logging
 from enum import Enum
 
-from pydantic import BaseModel, SecretStr
+from pydantic import BaseModel, SecretStr, validator
 
 from ..api import DBCaseConfig, DBConfig, MetricType
 
@@ -11,13 +11,15 @@ log = logging.getLogger(__name__)
 class AWSOpenSearchConfig(DBConfig, BaseModel):
     host: str = ""
     port: int = 80
-    user: str = ""
-    password: SecretStr = ""
+    user: str | None = None
+    password: SecretStr | None = None
 
     def to_dict(self) -> dict:
         use_ssl = self.port == 443
         http_auth = (
-            (self.user, self.password.get_secret_value()) if len(self.user) != 0 and len(self.password) != 0 else ()
+            (self.user, self.password.get_secret_value())
+            if self.user is not None and self.password is not None and len(self.user) != 0 and len(self.password) != 0
+            else ()
         )
         return {
             "hosts": [{"host": self.host, "port": self.port}],
@@ -29,6 +31,18 @@ class AWSOpenSearchConfig(DBConfig, BaseModel):
             "ssl_show_warn": False,
             "timeout": 600,
         }
+
+    @validator("*")
+    def not_empty_field(cls, v: any, field: any):
+        if (
+            field.name in cls.common_short_configs()
+            or field.name in cls.common_long_configs()
+            or field.name in ["user", "password", "host"]
+        ):
+            return v
+        if isinstance(v, str | SecretStr) and len(v) == 0:
+            raise ValueError("Empty string!")
+        return v
 
 
 class AWSOS_Engine(Enum):
