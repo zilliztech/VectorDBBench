@@ -828,14 +828,26 @@ class CommonTypedDict(TypedDict):
     ]
 
 class SVSBaseTypedDict(TypedDict):
-    graph_max_degree: Annotated[int | None, click.option("--graph_max_degree", type=int, help="svs graph_max_degree")]
-    construction_window_size: Annotated[
-        int | None,
-        click.option("--construction_window_size", type=int, help="svs construction_window_size"),
+    graph_degree: Annotated[int | None, click.option("--graph_degree", type=int, help="svs graph_degree")]
+    alpha: Annotated[
+        float | None,
+        click.option("--alpha", type=float, help="svs alpha"),
     ]
-    compression: Annotated[
+    compression_type: Annotated[
         int | None,
-        click.option("--compression", type=str, help="svs compression"),
+        click.option("--compression_type", type=int, help="svs compression_type"),
+    ]
+    compression_primary: Annotated[
+        int | None,
+        click.option("--compression_primary", type=int, help="svs compression_primary"),
+    ]
+    compression_secondary: Annotated[
+        int | None,
+        click.option("--compression_secondary", type=int, help="svs compression_secondary"),
+    ]
+    search_list_size: Annotated[
+        int | None,
+        click.option("--search_list_size", type=int, help="svs search_list_size", is_eager=True),
     ]
 
 

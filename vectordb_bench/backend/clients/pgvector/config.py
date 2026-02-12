@@ -4,7 +4,7 @@ from typing import Any, LiteralString, TypedDict
 
 from pydantic import BaseModel, SecretStr
 
-from ..api import DBCaseConfig, DBConfig, IndexType, MetricType, CompressionType
+from ..api import DBCaseConfig, DBConfig, IndexType, MetricType
 
 POSTGRE_URL_PLACEHOLDER = "postgresql://%s:%s@%s/%s"
 
@@ -267,9 +267,12 @@ class PgVectorHNSWConfig(PgVectorIndexConfig):
         return {"session_options": self._optionally_build_set_options(session_parameters)}
 
 class PgVectorSVSVamanaConfig(PgVectorIndexConfig):
-    compression: CompressionType | None = None
-    construction_window_size: int | None = None
-    graph_max_degree: int | None = None
+    compression_type: int | None = None
+    compression_primary: int | None = None
+    compression_secondary: int | None = None
+    alpha: float | None = None
+    search_list_size: int | None
+    graph_degree: int | None = None
     index: IndexType = IndexType.SVS_VAMANA
     quantization_type: str | None = None
     table_quantization_type: str | None
@@ -280,10 +283,12 @@ class PgVectorSVSVamanaConfig(PgVectorIndexConfig):
     reranking_metric: str | None = None
 
     def index_param(self) -> PgVectorIndexParam:
-        "compression: self.compression.value,"
         index_parameters = {
-                "construction_window_size": self.construction_window_size,
-                "graph_max_degree": self.graph_max_degree}
+                "alpha": self.alpha,
+                "graph_degree": self.graph_degree,
+                "compression_type": self.compression_type,
+                "compression_primary": self.compression_primary,
+                "compression_secondary": self.compression_secondary}
         if self.quantization_type == "none" or self.quantization_type is None:
             self.quantization_type = "vector"
         if self.table_quantization_type == "none" or self.table_quantization_type is None:
@@ -309,7 +314,7 @@ class PgVectorSVSVamanaConfig(PgVectorIndexConfig):
         }
 
     def session_param(self) -> PgVectorSessionCommands:
-        session_parameters = {}
+        session_parameters = {"vamana.search_list_size": self.search_list_size}
         return {"session_options": self._optionally_build_set_options(session_parameters)}
 
 _pgvector_case_config = {
