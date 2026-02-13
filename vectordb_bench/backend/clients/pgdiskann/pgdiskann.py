@@ -82,35 +82,6 @@ class PgDiskANN(VectorDB):
         self.cursor = None
         self.conn = None
 
-    def get_size_info(self):
-        try:
-            assert self.conn is not None, "Connection is not initialized"
-            assert self.cursor is not None, "Cursor is not initialized"
-            log.info(f"{self.name} client get size info.")
-
-            size_sql = sql.SQL(
-                "SELECT pg_size_pretty(pg_table_size('{table_name}')) as table_size, pg_size_pretty(pg_table_size('{index_name}')) as index_size;"
-            ).format(
-                table_name=sql.Identifier(self.table_name),
-                index_name=sql.Identifier(self._index_name),
-            )
-            log.debug(size_sql.as_string(self.cursor))
-            self.cursor.execute(size_sql)
-            self.conn.commit()
-            result = self.cursor.fetchone()
-
-            if result:
-                table_size = result[0]
-                index_size = result[1]
-                log.info(f"Table Size: {table_size}, Index Size: {index_size}")
-                return (table_size, index_size)
-            else:
-                log.error("No results returned from the query.")
-                return (0, 0)
-        except Exception as e:
-            log.warning("Failed to fetch table and index information")
-            return (0, 0)
-
     @staticmethod
     def _create_connection(**kwargs) -> tuple[Connection, Cursor]:
         conn = psycopg.connect(**kwargs)
