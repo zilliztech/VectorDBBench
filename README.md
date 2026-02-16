@@ -150,6 +150,15 @@ Options:
                                   quantization type for vectors (in table). If
                                   equal to bit, the parameter
                                   quantization_type will be set to bit too.
+  --reranking / --skip-reranking  Enable reranking for HNSW search for binary
+                                  quantization
+  --reranking-metric [L2|COSINE|IP|DP]
+                                  Distance metric for reranking  [default:
+                                  COSINE]
+  --quantized-fetch-limit INTEGER
+                                  Limit of fetching quantized vector ranked by
+                                  distance for reranking                 --
+                                  bound by ef_search
   --custom-case-name TEXT         Custom case name i.e. PerformanceCase1536D50K
   --custom-case-description TEXT  Custom name description
   --custom-case-load-timeout INTEGER
