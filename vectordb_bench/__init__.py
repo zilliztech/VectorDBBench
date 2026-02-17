@@ -19,8 +19,8 @@ class config:
 
     DEFAULT_DATASET_URL = env.str("DEFAULT_DATASET_URL", AWS_S3_URL)
     DATASET_SOURCE = env.str("DATASET_SOURCE", "S3")  # Options "S3" or "AliyunOSS"
-    DATASET_LOCAL_DIR = env.path("DATASET_LOCAL_DIR", "/tmp/vectordb_bench/dataset")
-    NUM_PER_BATCH = env.int("NUM_PER_BATCH", 100)
+    DATASET_LOCAL_DIR = env.path("DATASET_LOCAL_DIR", f"/home/{os.getenv('USER')}/vectordb_bench/dataset")
+    NUM_PER_BATCH = env.int("NUM_PER_BATCH", 1000)
     TIME_PER_BATCH = 1  # 1s. for streaming insertion.
     MAX_INSERT_RETRY = 5
     MAX_SEARCH_RETRY = 5
@@ -28,7 +28,7 @@ class config:
     LOAD_MAX_TRY_COUNT = 10
 
     DROP_OLD = env.bool("DROP_OLD", True)
-    USE_SHUFFLED_DATA = env.bool("USE_SHUFFLED_DATA", True)
+    USE_SHUFFLED_DATA = env.bool("USE_SHUFFLED_DATA", False)
 
     NUM_CONCURRENCY = env.list("NUM_CONCURRENCY", [1, 5, 10, 20, 30, 40, 60, 80], subcast=int)
 
