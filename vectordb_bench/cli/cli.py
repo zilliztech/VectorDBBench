@@ -845,9 +845,34 @@ class SVSBaseTypedDict(TypedDict):
         int | None,
         click.option("--compression_secondary", type=int, help="svs compression_secondary"),
     ]
-    search_list_size: Annotated[
+    search_window_size: Annotated[
         int | None,
-        click.option("--search_list_size", type=int, help="svs search_list_size", is_eager=True),
+        click.option("--search_window_size", type=int, help="svs search_window_size", is_eager=True),
+    ]
+    leanvec_dims: Annotated[
+        int | None,
+        click.option("--leanvec_dims", type=int, help="svs leanvec_dims", is_eager=True),
+    ]
+    maintenance_work_mem: Annotated[
+        str | None,
+        click.option(
+            "--maintenance-work-mem",
+            type=str,
+            help="Sets the maximum memory to be used for maintenance operations (index creation). "
+            "Can be entered as string with unit like '64GB' or as an integer number of KB."
+            "This will set the parameters: max_parallel_maintenance_workers,"
+            " max_parallel_workers & table(parallel_workers)",
+            required=False,
+        ),
+    ]
+    max_parallel_workers: Annotated[
+        int | None,
+        click.option(
+            "--max-parallel-workers",
+            type=int,
+            help="Sets the maximum number of parallel processes per maintenance operation (index creation)",
+            required=False,
+        ),
     ]
 
 

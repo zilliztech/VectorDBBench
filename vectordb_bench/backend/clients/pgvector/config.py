@@ -271,8 +271,9 @@ class PgVectorSVSVamanaConfig(PgVectorIndexConfig):
     compression_primary: int | None = None
     compression_secondary: int | None = None
     alpha: float | None = None
-    search_list_size: int | None
+    search_window_size: int | None
     graph_degree: int | None = None
+    leanvec_dims: int | None = None
     index: IndexType = IndexType.SVS_VAMANA
     quantization_type: str | None = None
     table_quantization_type: str | None
@@ -286,6 +287,7 @@ class PgVectorSVSVamanaConfig(PgVectorIndexConfig):
         index_parameters = {
                 "alpha": self.alpha,
                 "graph_degree": self.graph_degree,
+                "leanvec_dims": self.leanvec_dims,
                 "compression_type": self.compression_type,
                 "compression_primary": self.compression_primary,
                 "compression_secondary": self.compression_secondary}
@@ -314,7 +316,7 @@ class PgVectorSVSVamanaConfig(PgVectorIndexConfig):
         }
 
     def session_param(self) -> PgVectorSessionCommands:
-        session_parameters = {"vamana.search_list_size": self.search_list_size}
+        session_parameters = {"vamana.search_window_size": self.search_window_size}
         return {"session_options": self._optionally_build_set_options(session_parameters)}
 
 _pgvector_case_config = {

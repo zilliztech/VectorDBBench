@@ -226,10 +226,13 @@ def PgVectorSVS(
         db_case_config=PgVectorSVSVamanaConfig(
             graph_degree=parameters["graph_degree"],
             alpha=parameters["alpha"],
-            search_list_size=parameters["search_list_size"],
+            search_window_size=parameters["search_window_size"],
+            leanvec_dims=parameters["leanvec_dims"],
             compression_type=parameters["compression_type"],
             compression_primary=parameters["compression_primary"],
             compression_secondary=parameters["compression_secondary"],
+            maintenance_work_mem=parameters["maintenance_work_mem"],
+            max_parallel_workers=parameters["max_parallel_workers"],
         ),
         **parameters,
     )
