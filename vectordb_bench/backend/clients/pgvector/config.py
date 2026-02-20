@@ -273,7 +273,7 @@ class PgVectorSVSVamanaConfig(PgVectorIndexConfig):
     compression_type: int | None = None
     compression_primary: int | None = None
     compression_secondary: int | None = None
-    alpha: float | None = None
+    alpha: int | None = None
     build_window_size: int | None
     search_window_size: int | None
     graph_degree: int | None = None
