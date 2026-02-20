@@ -68,7 +68,8 @@ class PgVectorIndexConfig(BaseModel, DBCaseConfig):
     # See: https://github.com/pgvector/pgvector?tab=readme-ov-file#iterative-index-scans
     iterative_scan: str = "relaxed_order"
 
-    def parse_metric(self) -> str:
+    def parse_metric(self, metric_type: MetricType | None = None) -> str:
+        effective_metric_type = self.metric_type if metric_type is None else metric_type
         d = {
             "halfvec": {
                 MetricType.L2: "halfvec_l2_ops",
@@ -87,29 +88,31 @@ class PgVectorIndexConfig(BaseModel, DBCaseConfig):
         }
 
         if d.get(self.quantization_type) is None:
-            return d.get("_fallback").get(self.metric_type)
-        metric = d.get(self.quantization_type).get(self.metric_type)
+            return d.get("_fallback").get(effective_metric_type)
+        metric = d.get(self.quantization_type).get(effective_metric_type)
         # If using binary quantization for the index, use a bit metric
         # no matter what metric was selected for vector or halfvec data
         if self.quantization_type == "bit" and metric is None:
             return "bit_hamming_ops"
         return metric
 
-    def parse_metric_fun_op(self) -> LiteralString:
+    def parse_metric_fun_op(self, metric_type: MetricType | None = None) -> LiteralString:
+        effective_metric_type = self.metric_type if metric_type is None else metric_type
         if self.quantization_type == "bit":
-            if self.metric_type == MetricType.JACCARD:
+            if effective_metric_type == MetricType.JACCARD:
                 return "<%>"
             return "<~>"
-        if self.metric_type == MetricType.L2:
+        if effective_metric_type == MetricType.L2:
             return "<->"
-        if self.metric_type == MetricType.IP:
+        if effective_metric_type == MetricType.IP:
             return "<#>"
         return "<=>"
 
-    def parse_metric_fun_str(self) -> str:
-        if self.metric_type == MetricType.L2:
+    def parse_metric_fun_str(self, metric_type: MetricType | None = None) -> str:
+        effective_metric_type = self.metric_type if metric_type is None else metric_type
+        if effective_metric_type == MetricType.L2:
             return "l2_distance"
-        if self.metric_type == MetricType.IP:
+        if effective_metric_type == MetricType.IP:
             return "max_inner_product"
         return "cosine_distance"
 
@@ -285,6 +288,11 @@ class PgVectorSVSVamanaConfig(PgVectorIndexConfig):
     reranking_metric: str | None = None
     normalize_cosine: bool = False
 
+    def _effective_metric_type(self) -> MetricType | None:
+        if self.normalize_cosine and self.metric_type == MetricType.COSINE:
+            return MetricType.L2
+        return self.metric_type
+
     def index_param(self) -> PgVectorIndexParam:
         index_parameters = {
             "alpha": self.alpha,
@@ -301,8 +309,9 @@ class PgVectorSVSVamanaConfig(PgVectorIndexConfig):
             self.table_quantization_type = "vector"
         if self.table_quantization_type == "bit":
             self.quantization_type = "bit"
+        effective_metric_type = self._effective_metric_type()
         return {
-            "metric": self.parse_metric(),
+            "metric": self.parse_metric(metric_type=effective_metric_type),
             "index_type": self.index.value,
             "index_creation_with_options": self._optionally_build_with_options(index_parameters),
             "maintenance_work_mem": self.maintenance_work_mem,
@@ -312,8 +321,9 @@ class PgVectorSVSVamanaConfig(PgVectorIndexConfig):
         }
 
     def search_param(self) -> PgVectorSearchParam:
+        effective_metric_type = self._effective_metric_type()
         return {
-            "metric_fun_op": self.parse_metric_fun_op(),
+            "metric_fun_op": self.parse_metric_fun_op(metric_type=effective_metric_type),
             "reranking": self.reranking,
             "reranking_metric_fun_op": self.parse_reranking_metric_fun_op(),
             "quantized_fetch_limit": self.quantized_fetch_limit,

@@ -830,8 +830,8 @@ class CommonTypedDict(TypedDict):
 class SVSBaseTypedDict(TypedDict):
     graph_degree: Annotated[int | None, click.option("--graph_degree", type=int, help="svs graph_degree")]
     alpha: Annotated[
-        float | None,
-        click.option("--alpha", type=float, help="svs alpha"),
+        int | None,
+        click.option("--alpha", type=int, help="svs alpha"),
     ]
     compression_type: Annotated[
         int | None,
