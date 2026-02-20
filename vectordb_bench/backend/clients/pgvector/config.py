@@ -271,6 +271,7 @@ class PgVectorSVSVamanaConfig(PgVectorIndexConfig):
     compression_primary: int | None = None
     compression_secondary: int | None = None
     alpha: float | None = None
+    build_window_size: int | None
     search_window_size: int | None
     graph_degree: int | None = None
     leanvec_dims: int | None = None
@@ -282,15 +283,18 @@ class PgVectorSVSVamanaConfig(PgVectorIndexConfig):
     reranking: bool | None = None
     quantized_fetch_limit: int | None = None
     reranking_metric: str | None = None
+    normalize_cosine: bool = False
 
     def index_param(self) -> PgVectorIndexParam:
         index_parameters = {
-                "alpha": self.alpha,
-                "graph_degree": self.graph_degree,
-                "leanvec_dims": self.leanvec_dims,
-                "compression_type": self.compression_type,
-                "compression_primary": self.compression_primary,
-                "compression_secondary": self.compression_secondary}
+            "alpha": self.alpha,
+            "graph_degree": self.graph_degree,
+            "leanvec_dims": self.leanvec_dims,
+            "build_window_size": self.build_window_size,
+            "compression_type": self.compression_type,
+            "compression_primary": self.compression_primary,
+            "compression_secondary": self.compression_secondary,
+        }
         if self.quantization_type == "none" or self.quantization_type is None:
             self.quantization_type = "vector"
         if self.table_quantization_type == "none" or self.table_quantization_type is None:
@@ -313,6 +317,7 @@ class PgVectorSVSVamanaConfig(PgVectorIndexConfig):
             "reranking": self.reranking,
             "reranking_metric_fun_op": self.parse_reranking_metric_fun_op(),
             "quantized_fetch_limit": self.quantized_fetch_limit,
+            "search_window_size": self.search_window_size,
         }
 
     def session_param(self) -> PgVectorSessionCommands:

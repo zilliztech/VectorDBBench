@@ -845,6 +845,10 @@ class SVSBaseTypedDict(TypedDict):
         int | None,
         click.option("--compression_secondary", type=int, help="svs compression_secondary"),
     ]
+    build_window_size: Annotated[
+        int | None,
+        click.option("--build_window_size", type=int, help="svs build_window_size"),
+    ]
     search_window_size: Annotated[
         int | None,
         click.option("--search_window_size", type=int, help="svs search_window_size", is_eager=True),
@@ -872,6 +876,16 @@ class SVSBaseTypedDict(TypedDict):
             type=int,
             help="Sets the maximum number of parallel processes per maintenance operation (index creation)",
             required=False,
+        ),
+    ]
+    normalize_cosine: Annotated[
+        bool,
+        click.option(
+            "--normalize-cosine/--skip-normalize-cosine",
+            type=bool,
+            default=False,
+            help="Normalize vectors before insert/search when dataset metric is COSINE",
+            show_default=True,
         ),
     ]
 
