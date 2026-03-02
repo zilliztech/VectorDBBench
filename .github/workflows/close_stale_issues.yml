@@ -1,0 +1,92 @@
+name: Close Stale Issues
+
+on:
+  schedule:
+    # Run every day at 02:00 UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch: {}
+
+jobs:
+  close-stale-issues:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const STALE_DAYS = 30;
+            const EXEMPT_LABEL = 'keep-open';
+            // MEMBER = org member, OWNER = org owner
+            const TEAM_ASSOCIATIONS = ['MEMBER', 'OWNER'];
+
+            const now = new Date();
+            const staleThreshold = new Date(now.getTime() - STALE_DAYS * 24 * 60 * 60 * 1000);
+
+            console.log(`Looking for issues with last team reply before ${staleThreshold.toISOString()}`);
+
+            const issues = await github.paginate(github.rest.issues.listForRepo, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              sort: 'updated',
+              direction: 'asc',
+              per_page: 100,
+            });
+
+            let closedCount = 0;
+
+            for (const issue of issues) {
+              // Skip pull requests (GitHub API returns PRs as issues too)
+              if (issue.pull_request) continue;
+
+              // Skip issues with the exempt label
+              if (issue.labels.some(l => l.name === EXEMPT_LABEL)) {
+                console.log(`Skipping #${issue.number} (has '${EXEMPT_LABEL}' label)`);
+                continue;
+              }
+
+              // Get all comments for this issue
+              const comments = await github.paginate(github.rest.issues.listComments, {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                per_page: 100,
+              });
+
+              // Skip issues with no comments
+              if (comments.length === 0) continue;
+
+              const lastComment = comments[comments.length - 1];
+              const lastCommentDate = new Date(lastComment.created_at);
+              const isFromTeam = TEAM_ASSOCIATIONS.includes(lastComment.author_association);
+              const isStale = lastCommentDate < staleThreshold;
+
+              if (isFromTeam && isStale) {
+                console.log(`Closing #${issue.number}: last team reply on ${lastCommentDate.toISOString()} by @${lastComment.user.login}`);
+
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  body: [
+                    'This issue has been automatically closed because it has not received a response for over 30 days since the last reply from a team member.',
+                    '',
+                    'If this issue is still relevant, feel free to reopen it or create a new issue.',
+                    'You can also add the `keep-open` label to prevent automatic closure.',
+                  ].join('\n'),
+                });
+
+                await github.rest.issues.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  state: 'closed',
+                  state_reason: 'not_planned',
+                });
+
+                closedCount++;
+              }
+            }
+
+            console.log(`Done. Closed ${closedCount} stale issue(s).`);
