@@ -124,7 +124,7 @@ class LindormVector(VectorDB):
                 "default_pipeline": pipeline_name,
                 "refresh_interval": "-1",
                 "number_of_shards": 4,
-                "knn.vector_number_of_regions": self.case_config.vector_number_of_regions or 1,
+                "knn.vector_number_of_regions": self.case_config.number_of_regions or 1,
             }
         }
 

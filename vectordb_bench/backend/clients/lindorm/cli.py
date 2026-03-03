@@ -17,11 +17,11 @@ from vectordb_bench.cli.cli import (
 class LindormTypedDict(CommonTypedDict):
     host: Annotated[str, click.option("--host", type=str, help="host connection string", required=True)]
 
-    port: Annotated[int, click.option("--port", type=int, default=30070, help="Db Port")]
+    port: Annotated[int, click.option("--port", type=int, default=30070, help="Db Port", required=True)]
 
     user: Annotated[str, click.option("--user", type=str, help="Db username", required=True)]
 
-    password: Annotated[str, click.option("--password", type=str, help="Db password")]
+    password: Annotated[str, click.option("--password", type=str, help="Db password", required=True)]
 
     index_name: Annotated[str, click.option("--index-name", type=str, help="Db index name", required=True)]
 
@@ -29,10 +29,10 @@ class LindormTypedDict(CommonTypedDict):
         str, click.option("--filter-type", type=str, help="post_filter|pre_filter|efficient_filter", required=False)
     ]
 
-    vector_number_of_regions: Annotated[
+    number_of_regions: Annotated[
         int,
         click.option(
-            "--vector-number-of-regions", type=int, default=1, help="Vector number of regions", required=False
+            "--number-of-regions", type=int, default=1, help="Vector number of regions", required=False
         ),
     ]
 
@@ -59,7 +59,7 @@ def LindormHNSW(**parameters: Unpack[LindormHNSWTypedDict]):
             efConstruction=parameters["ef_construction"],
             efSearch=parameters["ef_search"],
             filter_type=parameters["filter_type"],
-            vector_number_of_regions=parameters["vector_number_of_regions"],
+            number_of_regions=parameters["number_of_regions"],
         ),
         **parameters,
     )
@@ -103,7 +103,7 @@ def LindormIVFPQ(**parameters: Unpack[LindormIVFPQTypedDict]):
             reorder_factor=parameters["reorder_factor"],
             client_refactor=parameters["client_refactor"],
             k_expand_scope=parameters["k_expand_scope"],
-            vector_number_of_regions=parameters["vector_number_of_regions"],
+            number_of_regions=parameters["number_of_regions"],
         ),
         **parameters,
     )
@@ -144,7 +144,7 @@ def LindormIVFBQ(**parameters: Unpack[LindormIVFBQTypedDict]):
             reorder_factor=parameters["reorder_factor"],
             client_refactor=parameters["client_refactor"],
             k_expand_scope=parameters["k_expand_scope"],
-            vector_number_of_regions=parameters["vector_number_of_regions"],
+            number_of_regions=parameters["number_of_regions"],
         ),
         **parameters,
     )

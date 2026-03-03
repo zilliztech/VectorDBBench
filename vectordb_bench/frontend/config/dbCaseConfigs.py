@@ -2719,7 +2719,7 @@ CaseConfigParamInput_KExpandScope_Lindorm = CaseConfigInput(
 )
 
 CaseConfigParamInput_VectorNumberOfRegions_Lindorm = CaseConfigInput(
-    label=CaseConfigParamType.vector_number_of_regions,
+    label=CaseConfigParamType.number_of_regions,
     inputType=InputType.Number,
     inputConfig={
         "min": 1,
