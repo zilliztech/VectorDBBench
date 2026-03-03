@@ -2718,7 +2718,7 @@ CaseConfigParamInput_KExpandScope_Lindorm = CaseConfigInput(
     inputHelp="K expand scope",
 )
 
-CaseConfigParamInput_VectorNumberOfRegions_Lindorm = CaseConfigInput(
+CaseConfigParamInput_NumberOfRegions_Lindorm = CaseConfigInput(
     label=CaseConfigParamType.number_of_regions,
     inputType=InputType.Number,
     inputConfig={
@@ -2826,7 +2826,7 @@ LindormLoadConfig = [
     CaseConfigParamInput_EFConstruction_Lindorm,
     CaseConfigParamInput_Nlist_Lindorm,
     CaseConfigParamInput_Exbits_Lindorm,
-    CaseConfigParamInput_VectorNumberOfRegions_Lindorm,
+    CaseConfigParamInput_NumberOfRegions_Lindorm,
 ]
 
 LindormPerformanceConfig = [
@@ -2844,7 +2844,7 @@ LindormPerformanceConfig = [
     CaseConfigParamInput_Centroids_Hnsw_M_Lindorm,
     CaseConfigParamInput_Centroids_Hnsw_Ef_Construct,
     CaseConfigParamInput_Centroids_Hnsw_Ef_Search,
-    CaseConfigParamInput_VectorNumberOfRegions_Lindorm,
+    CaseConfigParamInput_NumberOfRegions_Lindorm,
 ]
 
 # Map DB to config

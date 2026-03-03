@@ -65,6 +65,7 @@ All the database client supported
 | doris                    | `pip install vectordb-bench[doris]`         |
 | zvec                     | `pip install vectordb-bench[zvec]`          |
 | endee                    | `pip install vectordb-bench[endee]`         |
+| lindorm                  | `pip install vectordb-bench[lindorm]`       |
 
 ### Run
 
@@ -479,6 +480,51 @@ Mote options:
                                 Rows per single stream load request; default
                                 uses NUM_PER_BATCH
 --no-index                      Create table without ANN index
+```
+
+### Run Lindorm from command line
+
+Lindorm supports index types: hnsw, ivfpq, or ivfbq.
+
+**Example: Run hnsw index test**
+
+```shell
+vectordbbench lindormhnsw --case-type Performance768D10M --index-name <index_name> --k 10 \
+--host <lindorm_host> --port <lindorm_port> --user <username> --password <password> --m 32 \
+--ef-construction 400 --ef-search 150
+```
+
+**Example: Run ivfpq index test**
+
+```shell
+vectordbbench lindormivfpq --case-type Performance768D10M \
+--index-name <index_name> --k 10 --host <lindorm_host> --port <lindorm_port> \
+--user <username> --password <password> --lists <nlist> --probes <nprobe> \
+--m 32 --ef-construction 500 --ef-search 200 --reorder-factor 2
+```
+
+**Example: Run ivfbq index test**
+
+```shell
+vectordbbench lindormivfbq --case-type Performance768D10M --index-name <index_name> \
+--k 10 --host <index_name> --port <lindorm_port> \
+--user <username> --password <password> --lists <nlist> --probes <nprobe> \
+--exbits 2 --m 32 --ef-construction 500 --ef-search 200 --reorder-factor 2
+```
+
+To list the options for Lindorm, execute `vectordbbench lindormhnsw --help`, The following are some Lindorm-specific command-line options.
+
+```text
+  --host TEXT                     host connection string  [required]
+  --port INTEGER                  Db Port  [required]
+  --user TEXT                     Db username  [required]
+  --password TEXT                 Db password  [required]
+  --index-name TEXT               Db index name  [required]
+  --filter-type TEXT              post_filter|pre_filter|efficient_filter
+  --number-of-regions INTEGER     Vector number of regions
+  --m INTEGER                     hnsw m  [required]
+  --ef-construction INTEGER       hnsw ef-construction  [required]
+  --ef-search INTEGER             hnsw ef-search  [required]
 ```
 
 #### Using a configuration file.

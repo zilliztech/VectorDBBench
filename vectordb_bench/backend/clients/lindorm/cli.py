@@ -30,10 +30,7 @@ class LindormTypedDict(CommonTypedDict):
     ]
 
     number_of_regions: Annotated[
-        int,
-        click.option(
-            "--number-of-regions", type=int, default=1, help="Vector number of regions", required=False
-        ),
+        int, click.option("--number-of-regions", type=int, default=1, help="Vector number of regions", required=False)
     ]
 
 
