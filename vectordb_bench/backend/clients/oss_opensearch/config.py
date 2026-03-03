@@ -13,9 +13,10 @@ class OSSOpenSearchConfig(DBConfig, BaseModel):
     port: int = 80
     user: str | None = None
     password: SecretStr | None = None
+    use_ssl: bool | None = None
 
     def to_dict(self) -> dict:
-        use_ssl = self.port == 443
+        use_ssl = self.use_ssl if self.use_ssl is not None else (self.port == 443)
         http_auth = (
             (self.user, self.password.get_secret_value())
             if self.user is not None and self.password is not None and len(self.user) != 0 and len(self.password) != 0
@@ -110,6 +111,7 @@ class OSSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
     on_disk: bool = False
     compression_level: str = CompressionLevel.LEVEL_32X
     oversample_factor: float = 1.0
+    use_local_preference: bool = True
 
     @validator("quantization_type", pre=True, always=True)
     def validate_quantization_type(cls, value: any):
@@ -160,6 +162,7 @@ class OSSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
             and self.on_disk == obj.on_disk
             and self.compression_level == obj.compression_level
             and self.oversample_factor == obj.oversample_factor
+            and self.use_local_preference == obj.use_local_preference
         )
 
     def __hash__(self) -> int:
@@ -181,12 +184,14 @@ class OSSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
                 self.on_disk,
                 self.compression_level,
                 self.oversample_factor,
+                self.use_local_preference,
             )
         )
 
     def parse_metric(self) -> str:
         log.info(f"User specified metric_type: {self.metric_type_name}")
-        self.metric_type = MetricType[self.metric_type_name.upper()]
+        if self.metric_type_name is not None:
+            self.metric_type = MetricType[self.metric_type_name.upper()]
         if self.metric_type == MetricType.IP:
             return "innerproduct"
         if self.metric_type == MetricType.COSINE:

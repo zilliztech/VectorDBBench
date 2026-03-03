@@ -122,6 +122,13 @@ class CaseRunner(BaseModel):
         if "collection_name" in db_config_dict and not collection_name:
             collection_name = db_config_dict.pop("collection_name")
 
+        # For OSSOpenSearch, use db_label as index_name if set
+        index_name = None
+        if self.config.db == DB.OSSOpenSearch:
+            db_label = self.config.db_config.db_label
+            if db_label:
+                index_name = re.sub(r"[^a-z0-9_\-]+", "_", db_label.lower()).strip("_-")
+
         self.db = db_cls(
             dim=self.ca.dataset.data.dim,
             db_config=db_config_dict,
@@ -129,6 +136,7 @@ class CaseRunner(BaseModel):
             drop_old=drop_old,
             with_scalar_labels=self.ca.with_scalar_labels,
             **({"collection_name": collection_name} if collection_name else {}),
+            **({"index_name": index_name} if index_name else {}),
         )
 
     def _pre_run(self, drop_old: bool = True):

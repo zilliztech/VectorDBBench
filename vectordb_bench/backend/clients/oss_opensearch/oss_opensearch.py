@@ -5,6 +5,7 @@ from contextlib import contextmanager, suppress
 from typing import Any, Final
 
 from opensearchpy import OpenSearch
+from opensearchpy.exceptions import TransportError
 from packaging.version import Version
 from packaging.version import parse as parse_version
 
@@ -168,7 +169,7 @@ class SearchQueryBuilder:
             "body": body,
             "size": k,
             "_source": False,
-            "preference": "_only_local" if self.case_config.number_of_shards == 1 else None,
+            "preference": "_only_local" if (self.case_config.number_of_shards == 1 and self.case_config.use_local_preference) else None,
             "routing": routing_key,
         }
 
@@ -448,7 +449,7 @@ class OSSOpenSearch(VectorDB):
 
         for i in range(0, len(embeddings_list), chunk_size):
             end = min(i + chunk_size, len(embeddings_list))
-            chunks.append((embeddings_list[i:end], metadata[i:end], labels_data[i:end]))
+            chunks.append((embeddings_list[i:end], metadata[i:end], labels_data[i:end] if labels_data is not None else None))
         clients = [OpenSearch(**self.db_config) for _ in range(min(num_clients, len(chunks)))]
         log.info(f"OSS_OpenSearch using {len(clients)} parallel clients for data insertion")
 
@@ -485,7 +486,7 @@ class OSSOpenSearch(VectorDB):
             time.sleep(10)
             return self._insert_with_single_client(embeddings, metadata, labels_data)
 
-        response = self.client.indices.stats(self.index_name)
+        response = self.client.indices.stats(index=self.index_name)
         log.info(
             f"""Total document count in index after parallel insertion:
                 {response['_all']['primaries']['indexing']['index_total']}""",
@@ -516,6 +517,25 @@ class OSSOpenSearch(VectorDB):
         except Exception as e:
             log.warning(f"Failed to update ef_search parameter before search: {e}")
 
+    def _build_curl_search(self, body: dict) -> str:
+        """Build a curl command to reproduce a search request."""
+        import json
+        host_entry = self.db_config.get("hosts", [{}])[0]
+        host = host_entry.get("host", "localhost")
+        port = host_entry.get("port", 9200)
+        use_ssl = self.db_config.get("use_ssl", False)
+        scheme = "https" if use_ssl else "http"
+        url = f"{scheme}://{host}:{port}/{self.index_name}/_search"
+
+        auth = self.db_config.get("http_auth", ())
+        auth_flag = f" -u '{auth[0]}:{auth[1]}'" if len(auth) == 2 else ""
+
+        body_json = json.dumps(body, indent=2)
+        return (
+            f"curl -s{auth_flag} -H 'Content-Type: application/json' "
+            f"'{url}' -d '\n{body_json}'"
+        )
+
     def search_embedding(
         self,
         query: list[float],
@@ -542,11 +562,15 @@ class OSSOpenSearch(VectorDB):
             search_kwargs = search_query_builder.build_search_kwargs(
                 self.index_name, body, k, self.id_col_name, self.routing_key
             )
+            if log.isEnabledFor(logging.DEBUG):
+                import copy
+                debug_kwargs = copy.deepcopy(search_kwargs)
+                with suppress(Exception):
+                    debug_kwargs["body"]["query"]["knn"][self.vector_col_name]["vector"] = "[...]"
+                log.debug(f"Search kwargs (index={self.index_name}, k={k}, id_col={self.id_col_name}, routing={self.routing_key}): {debug_kwargs}")
             response = self.client.search(**search_kwargs)
 
-            log.debug(f"Search took: {response['took']}")
-            log.debug(f"Search shards: {response['_shards']}")
-            log.debug(f"Search hits total: {response['hits']['total']}")
+            log.debug(f"Search response: {response}")
             try:
                 if self.id_col_name == "_id":
                     # Get _id directly from hit metadata
@@ -565,6 +589,26 @@ class OSSOpenSearch(VectorDB):
                 return []
             else:
                 return result_ids
+        except TransportError as e:
+            detail = e.info if isinstance(e.info, dict) else {}
+            root_causes = detail.get("error", {}).get("root_cause", [])
+            reason = detail.get("error", {}).get("reason") or e.error
+            log.error(
+                f"Failed to search: {self.index_name} "
+                f"status={e.status_code} error={reason!r} "
+                f"root_causes={root_causes!r}"
+            )
+            log.error(f"Failed search full response: {e.info!r}")
+            import copy
+            redacted_body = copy.deepcopy(body)
+            with suppress(Exception):
+                redacted_body["query"]["knn"][self.vector_col_name]["vector"] = "[...]"
+            log.error(f"Failed search body was: {redacted_body}")
+            log.error(f"Reproduce with (vector redacted):\n{self._build_curl_search(redacted_body)}")
+            log.error(f"Reproduce with (full vector):\n{self._build_curl_search(body)}")
+            raise OpenSearchError(
+                f"Search failed with status {e.status_code}: {reason}"
+            ) from e
         except Exception as e:
             log.warning(f"Failed to search: {self.index_name} error: {e!s}")
             raise e from None

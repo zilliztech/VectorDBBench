@@ -22,6 +22,10 @@ class OSSOpenSearchTypedDict(TypedDict):
     port: Annotated[int, click.option("--port", type=int, default=80, help="Db Port")]
     user: Annotated[str, click.option("--user", type=str, help="Db User")]
     password: Annotated[str, click.option("--password", type=str, help="Db password")]
+    use_ssl: Annotated[
+        bool | None,
+        click.option("--use-ssl", type=bool, default=None, help="Use SSL (defaults to True when port=443)", required=False),
+    ]
     number_of_shards: Annotated[
         int,
         click.option("--number-of-shards", type=int, help="Number of primary shards for the index", default=1),
@@ -140,6 +144,26 @@ class OSSOpenSearchTypedDict(TypedDict):
         ),
     ]
 
+    number_of_indexing_clients: Annotated[
+        int,
+        click.option(
+            "--number-of-indexing-clients",
+            type=int,
+            help="Number of concurrent clients for data insertion",
+            default=1,
+        ),
+    ]
+
+    use_local_preference: Annotated[
+        bool,
+        click.option(
+            "--use-local-preference",
+            type=bool,
+            help="Use _only_local search preference for single-shard indices (disable for managed/cloud deployments)",
+            default=True,
+        ),
+    ]
+
 
 class OSSOpenSearchHNSWTypedDict(CommonTypedDict, OSSOpenSearchTypedDict, HNSWFlavor1): ...
 
@@ -156,6 +180,8 @@ def OSSOpenSearch(**parameters: Unpack[OSSOpenSearchHNSWTypedDict]):
             port=parameters["port"],
             user=parameters["user"],
             password=SecretStr(parameters["password"]),
+            use_ssl=parameters.get("use_ssl"),
+            db_label=parameters["db_label"],
         ),
         db_case_config=OSSOpenSearchIndexConfig(
             number_of_shards=parameters["number_of_shards"],
@@ -174,6 +200,9 @@ def OSSOpenSearch(**parameters: Unpack[OSSOpenSearchHNSWTypedDict]):
             quantization_type=OSSOpenSearchQuantization(parameters["quantization_type"]),
             confidence_interval=parameters["confidence_interval"],
             clip=parameters["clip"],
+            metric_type_name=parameters["metric_type"],
+            number_of_indexing_clients=parameters["number_of_indexing_clients"],
+            use_local_preference=parameters["use_local_preference"],
         ),
         **parameters,
     )

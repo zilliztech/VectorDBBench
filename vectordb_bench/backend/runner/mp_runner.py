@@ -73,6 +73,7 @@ class MultiProcessingSearchRunner:
             start_time = time.perf_counter()
             count = 0
             latencies = []
+            first_error = None
             while time.perf_counter() < start_time + self.duration:
                 s = time.perf_counter()
                 try:
@@ -81,6 +82,8 @@ class MultiProcessingSearchRunner:
                     latencies.append(time.perf_counter() - s)
                 except Exception as e:
                     log.warning(f"VectorDB search_embedding error: {e}")
+                    if first_error is None:
+                        first_error = e
 
                 # loop through the test data
                 idx = idx + 1 if idx < num - 1 else 0
@@ -96,6 +99,9 @@ class MultiProcessingSearchRunner:
             f"{mp.current_process().name:16} search {self.duration}s: "
             f"actual_dur={total_dur}s, count={count}, qps in this process: {round(count / total_dur, 4):3}"
         )
+
+        if count == 0 and first_error is not None:
+            raise first_error
 
         return (count, total_dur, latencies)
 
@@ -132,6 +138,8 @@ class MultiProcessingSearchRunner:
                         start = time.perf_counter()
                         all_count = sum([r.result()[0] for r in future_iter])
                         latencies = sum([r.result()[2] for r in future_iter], start=[])
+                        if not latencies:
+                            raise RuntimeError(f"No successful searches at concurrency {conc}")
                         latency_p99 = np.percentile(latencies, 99)
                         latency_p95 = np.percentile(latencies, 95)
                         latency_avg = np.mean(latencies)
