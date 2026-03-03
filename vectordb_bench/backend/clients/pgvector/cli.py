@@ -237,6 +237,7 @@ def PgVectorSVS(
             graph_degree=parameters["graph_degree"],
             alpha=parameters["alpha"],
             search_window_size=parameters["search_window_size"],
+            use_search_history=parameters["use_search_history"],
             build_window_size=parameters["build_window_size"],
             leanvec_dims=parameters["leanvec_dims"],
             compression_type=parameters["compression_type"],

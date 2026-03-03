@@ -853,6 +853,16 @@ class SVSBaseTypedDict(TypedDict):
         int | None,
         click.option("--search_window_size", type=int, help="svs search_window_size", is_eager=True),
     ]
+    use_search_history: Annotated[
+        bool | None,
+        click.option(
+            "--use_search_history/--skip-use_search_history",
+            type=bool,
+            default=None,
+            help="svs use_search_history",
+            show_default=True,
+        ),
+    ]
     leanvec_dims: Annotated[
         int | None,
         click.option("--leanvec_dims", type=int, help="svs leanvec_dims", is_eager=True),

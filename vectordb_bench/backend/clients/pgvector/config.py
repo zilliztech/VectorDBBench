@@ -53,6 +53,7 @@ class PgVectorIndexParam(TypedDict):
 
 class PgVectorSearchParam(TypedDict):
     metric_fun_op: LiteralString
+    use_search_history: bool | None
 
 
 class PgVectorSessionCommands(TypedDict):
@@ -284,6 +285,7 @@ class PgVectorSVSVamanaConfig(PgVectorIndexConfig):
     alpha: int | None = None
     build_window_size: int | None
     search_window_size: int | None
+    use_search_history: bool | None = None
     graph_degree: int | None = None
     leanvec_dims: int | None = None
     index: IndexType = IndexType.SVS_VAMANA
@@ -336,11 +338,24 @@ class PgVectorSVSVamanaConfig(PgVectorIndexConfig):
             "reranking_metric_fun_op": self.parse_reranking_metric_fun_op(),
             "quantized_fetch_limit": self.quantized_fetch_limit,
             "search_window_size": self.search_window_size,
+            "use_search_history": self.use_search_history,
         }
 
     def session_param(self) -> PgVectorSessionCommands:
         session_parameters = {"vamana.search_window_size": self.search_window_size}
-        return {"session_options": self._optionally_build_set_options(session_parameters)}
+        session_options = self._optionally_build_set_options(session_parameters)
+
+        if self.use_search_history is not None:
+            session_options.append(
+                {
+                    "parameter": {
+                        "setting_name": "vamana.use_search_history",
+                        "val": str(self.use_search_history).lower(),
+                    },
+                },
+            )
+
+        return {"session_options": session_options}
 
 _pgvector_case_config = {
     IndexType.HNSW: PgVectorHNSWConfig,
