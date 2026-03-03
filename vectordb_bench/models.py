@@ -166,6 +166,7 @@ class CaseConfigParamType(Enum):
     client_refactor = "client_refactor"
     k_expand_scope = "k_expand_scope"
     exbits = "exbits"
+    vector_number_of_regions = "vector_number_of_regions"
 
 
 class CustomizedCase(BaseModel):

@@ -49,6 +49,7 @@ class LindormVector(VectorDB):
         self.category_col_names.append(self.metadata_col_name)
         self.vector_col_name = vector_col_name
         self.with_scalar_labels = with_scalar_labels
+        self._pending_post_optimize_sleep = False  # need sleep after optimize
         log.debug(f"Lindorm client config: {self.db_config}")
         log.debug(f"index name: {self.index_name}")
         log.debug(f"Lindorm index config: {self.case_config}")
@@ -91,7 +92,7 @@ class LindormVector(VectorDB):
         while True:
             max_retries -= 1
             if max_retries < 0:
-                raise RuntimeError("check ivfpq task terminated because of timeout!")
+                raise RuntimeError("check build task terminated because of timeout!")
             response = self.client.transport.perform_request(
                 method="GET",
                 url="/_plugins/_vector/index/tasks",
@@ -101,7 +102,7 @@ class LindormVector(VectorDB):
             if "stage: FINISH" in response.get("payload", [""])[0]:
                 break
             time.sleep(10)
-        log.info("finish check ivfpq task ...")
+        log.info("finish check build task ...")
         return response
 
     @classmethod
@@ -123,7 +124,7 @@ class LindormVector(VectorDB):
                 "default_pipeline": pipeline_name,
                 "refresh_interval": "-1",
                 "number_of_shards": 4,
-                "knn.vector_number_of_regions": 1,
+                "knn.vector_number_of_regions": self.case_config.vector_number_of_regions or 1,
             }
         }
 
@@ -143,7 +144,7 @@ class LindormVector(VectorDB):
             }
         }
 
-        lable_column = {
+        label_column = {
             self.label_col_name: {
                 "type": "keyword",
                 "meta": (
@@ -158,7 +159,7 @@ class LindormVector(VectorDB):
             "_source": {"excludes": [self.vector_col_name]},  # do not store vector in search index
             "properties": {
                 **scalar_column,
-                **lable_column,
+                **label_column,
                 "_searchindex_id": {
                     "type": "keyword",
                 },
@@ -180,6 +181,10 @@ class LindormVector(VectorDB):
     def init(self) -> None:
         self.client = OpenSearch(**self.db_config)
         yield
+        if self._pending_post_optimize_sleep:
+            log.info("Post-optimize sleep 180s (outside of optimize_duration measurement)...")
+            time.sleep(180)
+            self._pending_post_optimize_sleep = False
 
     def _prepare_bulk_data(
         self, batch_embeddings: list[list[float]], batch_metadata: list[int], batch_label: list[int] | None
@@ -199,22 +204,27 @@ class LindormVector(VectorDB):
     def _insert_batch_func(
         self, batch_embeddings: list[list[float]], batch_metadata: list[int], batch_label: list[int] | None
     ) -> (int, Exception):
-        try:
-            insert_data = self._prepare_bulk_data(batch_embeddings, batch_metadata, batch_label)
+        max_retries = 10
+        base_wait_seconds = 1
+        wait_increment = 5
 
-            self.client.bulk(body=insert_data)
-
-            return (len(batch_embeddings), None)
-        except Exception as e:
-            logging.warning(f"Failed to insert batch data: {self.index_name} error: {e!s}")
-            time.sleep(10)
-
+        for attempt in range(max_retries):
             try:
                 insert_data = self._prepare_bulk_data(batch_embeddings, batch_metadata, batch_label)
                 self.client.bulk(body=insert_data)
                 return (len(batch_embeddings), None)
-            except Exception as retry_e:
-                return (0, retry_e)
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    wait_time = base_wait_seconds + wait_increment * attempt
+                    logging.warning(
+                        f"Failed to insert batch data (attempt {attempt + 1}/{max_retries}): "
+                        f"{self.index_name} error: {e!s}. Retrying in {wait_time}s..."
+                    )
+                    time.sleep(wait_time)
+                else:
+                    logging.exception(f"Failed to insert batch data after {max_retries} attempts: {self.index_name}")
+                    return (0, e)
+        return (0, RuntimeError("Failed to insert batch data!"))
 
     def insert_embeddings(
         self, embeddings: list[list[float]], metadata: list[int], labels_data: list[str] | None = None, **kwargs
@@ -319,6 +329,8 @@ class LindormVector(VectorDB):
         if index_type in {IndexType.HNSW, IndexType.IVFPQ, IndexType.IVFBQ}:
             self.build_ivfvectorcode_index()
             self.wait_index_build_task_finish()
+            self._pending_post_optimize_sleep = True
+            log.info("Index build completed, will sleep 180s after optimize_duration measurement ends")
 
     def _refresh_index(self):
         log.debug(f"Starting refresh for index {self.index_name}")

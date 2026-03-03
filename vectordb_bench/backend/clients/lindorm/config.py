@@ -31,6 +31,7 @@ class LindormConfig(DBConfig):
 class LindormIndexConfig(BaseModel):
     index: IndexType
     metric_type: MetricType | None = MetricType.L2
+    vector_number_of_regions: int | None = 1
 
     def parse_metric(self) -> str:
         if self.metric_type == MetricType.IP:
