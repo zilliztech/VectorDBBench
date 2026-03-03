@@ -238,6 +238,12 @@ class PgVectorHNSWConfig(PgVectorIndexConfig):
     reranking: bool | None = None
     quantized_fetch_limit: int | None = None
     reranking_metric: str | None = None
+    normalize_cosine: bool = False
+
+    def _effective_metric_type(self) -> MetricType | None:
+        if self.normalize_cosine and self.metric_type == MetricType.COSINE:
+            return MetricType.L2
+        return self.metric_type
 
     def index_param(self) -> PgVectorIndexParam:
         index_parameters = {"m": self.m, "ef_construction": self.ef_construction}
@@ -247,8 +253,9 @@ class PgVectorHNSWConfig(PgVectorIndexConfig):
             self.table_quantization_type = "vector"
         if self.table_quantization_type == "bit":
             self.quantization_type = "bit"
+        effective_metric_type = self._effective_metric_type()
         return {
-            "metric": self.parse_metric(),
+            "metric": self.parse_metric(metric_type=effective_metric_type),
             "index_type": self.index.value,
             "index_creation_with_options": self._optionally_build_with_options(index_parameters),
             "maintenance_work_mem": self.maintenance_work_mem,
@@ -258,8 +265,9 @@ class PgVectorHNSWConfig(PgVectorIndexConfig):
         }
 
     def search_param(self) -> PgVectorSearchParam:
+        effective_metric_type = self._effective_metric_type()
         return {
-            "metric_fun_op": self.parse_metric_fun_op(),
+            "metric_fun_op": self.parse_metric_fun_op(metric_type=effective_metric_type),
             "reranking": self.reranking,
             "reranking_metric_fun_op": self.parse_reranking_metric_fun_op(),
             "quantized_fetch_limit": self.quantized_fetch_limit,

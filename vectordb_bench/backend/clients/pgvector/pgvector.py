@@ -14,7 +14,7 @@ from psycopg import Connection, Cursor, sql
 from vectordb_bench.backend.filter import Filter, FilterOp
 
 from ..api import MetricType, VectorDB
-from .config import PgVectorConfigDict, PgVectorIndexConfig, PgVectorSVSVamanaConfig
+from .config import PgVectorConfigDict, PgVectorHNSWConfig, PgVectorIndexConfig, PgVectorSVSVamanaConfig
 
 log = logging.getLogger(__name__)
 
@@ -458,11 +458,11 @@ class PgVector(VectorDB):
 
     def need_normalize_cosine(self) -> bool:
         if (
-            isinstance(self.case_config, PgVectorSVSVamanaConfig)
+            isinstance(self.case_config, (PgVectorSVSVamanaConfig, PgVectorHNSWConfig))
             and self.case_config.normalize_cosine
             and self.case_config.metric_type == MetricType.COSINE
         ):
-            log.info("current pgvector svs config enables normalization for cosine metric")
+            log.info("current pgvector config enables normalization for cosine metric")
             return True
         return False
 
