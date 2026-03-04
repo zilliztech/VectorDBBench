@@ -155,6 +155,19 @@ class CaseConfigParamType(Enum):
     optimize_after_write = "optimize_after_write"
     read_dur_after_write = "read_dur_after_write"
 
+    # Lindorm parameters
+    efSearch = "efSearch"
+    pq_m = "pq_m"
+    centroids_hnsw_M = "centroids_hnsw_M"
+    centroids_hnsw_efConstruction = "centroids_hnsw_efConstruction"
+    centroids_hnsw_efSearch = "centroids_hnsw_efSearch"
+    filter_type = "filter_type"
+    reorder_factor = "reorder_factor"
+    client_refactor = "client_refactor"
+    k_expand_scope = "k_expand_scope"
+    exbits = "exbits"
+    number_of_regions = "number_of_regions"
+
 
 class CustomizedCase(BaseModel):
     pass
