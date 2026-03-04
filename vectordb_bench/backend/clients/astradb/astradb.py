@@ -6,8 +6,11 @@ from astrapy import DataAPIClient
 from astrapy.constants import VectorMetric
 from astrapy.info import CollectionDefinition
 
+from astrapy.exceptions import CollectionInsertManyException
+
 from ..api import VectorDB
 from .config import AstraDBIndexConfig
+from vectordb_bench.backend.filter import FilterOp
 
 log = logging.getLogger(__name__)
 
@@ -17,6 +20,11 @@ class AstraDBError(Exception):
 
 
 class AstraDB(VectorDB):
+    supported_filter_types: list[FilterOp] = [
+        FilterOp.NonFilter,
+        FilterOp.NumGE,
+    ]
+
     def __init__(
         self,
         dim: int,
@@ -125,6 +133,21 @@ class AstraDB(VectorDB):
         try:
             result = self.collection.insert_many(documents, ordered=False)
             return len(result.inserted_ids), None
+        except CollectionInsertManyException as e:
+            # Check if all failures are due to already-existing documents
+            all_duplicate = all(
+                any(
+                    d.error_code == "DOCUMENT_ALREADY_EXISTS"
+                    for d in getattr(exc, "error_descriptors", [])
+                )
+                for exc in e.exceptions
+            )
+            if all_duplicate or not e.exceptions:
+                skipped = len(documents) - len(e.inserted_ids)
+                log.warning(f"Skipping {skipped} already-existing document(s), continuing load")
+                return len(documents), None
+            log.warning(f"InsertMany partial failure (non-duplicate errors): {e}")
+            return 0, e
         except Exception as e:
             log.exception("Error inserting embeddings")
             return 0, e
