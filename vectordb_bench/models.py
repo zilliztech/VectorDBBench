@@ -365,6 +365,11 @@ class TestResult(BaseModel):
                     case_result["metrics"]["serial_latency_p99"] = (
                         cur_latency * 1000 if cur_latency > 0 else cur_latency
                     )
+                    
+                    cur_latency = case_result["metrics"]["serial_latency_avg"]
+                    case_result["metrics"]["serial_latency_avg"] = (
+                        cur_latency * 1000 if cur_latency > 0 else cur_latency
+                    )
 
                     # Handle P95 latency for backward compatibility with existing result files
                     if "serial_latency_p95" in case_result["metrics"]:
@@ -438,6 +443,7 @@ class TestResult(BaseModel):
             "qps",
             "latency(p99)",
             "latency(p95)",
+            "latency(avg)",
             "recall",
             "max_load_count",
             "label",
@@ -461,6 +467,7 @@ class TestResult(BaseModel):
                     f.metrics.qps,
                     f.metrics.serial_latency_p99,
                     f.metrics.serial_latency_p95,
+                    f.metrics.serial_latency_avg,
                     f.metrics.recall,
                     f.metrics.max_load_count,
                     f.label.value,
