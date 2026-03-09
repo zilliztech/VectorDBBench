@@ -154,6 +154,8 @@ def PgVectorIVFFlat(
             metric_type=None,
             lists=parameters["lists"],
             probes=parameters["probes"],
+            maintenance_work_mem=parameters["maintenance_work_mem"],
+            max_parallel_workers=parameters["max_parallel_workers"],
             quantization_type=parameters["quantization_type"],
             table_quantization_type=parameters["table_quantization_type"],
             reranking=parameters["reranking"],
