@@ -98,10 +98,10 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
         log.info("Search after write - Serial search start")
         test_time = round(time.perf_counter(), 4)
         res, ssearch_dur = self.serial_search_runner.run()
-        recall, ndcg, p99_latency, p95_latency = res
+        recall, ndcg, p99_latency, p95_latency, avg_latency = res
         log.info(
             f"Search after write - Serial search - recall={recall}, ndcg={ndcg}, "
-            f"p99={p99_latency}, p95={p95_latency}, dur={ssearch_dur:.4f}",
+            f"p99={p99_latency}, p95={p95_latency}, avg={avg_latency}, dur={ssearch_dur:.4f}",
         )
         log.info(
             f"Search after wirte - Conc search start, dur for each conc={self.read_dur_after_write}",
@@ -125,6 +125,7 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
                 ndcg,
                 p99_latency,
                 p95_latency,
+                avg_latency,
                 conc_failed_rate,
                 conc_num_list,
                 conc_qps_list,
@@ -181,14 +182,15 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
                     m.st_ndcg_list = [d[4] for d in r]
                     m.st_serial_latency_p99_list = [d[5] for d in r]
                     m.st_serial_latency_p95_list = [d[6] for d in r]
-                    m.st_conc_failed_rate_list = [d[7] for d in r]
+                    m.st_serial_latency_avg_list = [d[7] for d in r]
+                    m.st_conc_failed_rate_list = [d[8] for d in r]
 
                     # Extract concurrent latency data
-                    m.st_conc_num_list_list = [d[8] for d in r]
-                    m.st_conc_qps_list_list = [d[9] for d in r]
-                    m.st_conc_latency_p99_list_list = [d[10] for d in r]
-                    m.st_conc_latency_p95_list_list = [d[11] for d in r]
-                    m.st_conc_latency_avg_list_list = [d[12] for d in r]
+                    m.st_conc_num_list_list = [d[9] for d in r]
+                    m.st_conc_qps_list_list = [d[10] for d in r]
+                    m.st_conc_latency_p99_list_list = [d[11] for d in r]
+                    m.st_conc_latency_p95_list_list = [d[12] for d in r]
+                    m.st_conc_latency_avg_list_list = [d[13] for d in r]
 
                 except Exception as e:
                     log.warning(f"Read and write error: {e}")
@@ -262,10 +264,10 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
                 log.info(f"[{target_batch}/{total_batch}] Serial search - {perc}% start")
                 res, ssearch_dur = self.serial_search_runner.run()
                 ssearch_dur = round(ssearch_dur, 4)
-                recall, ndcg, p99_latency, p95_latency = res
+                recall, ndcg, p99_latency, p95_latency, avg_latency = res
                 log.info(
                     f"[{target_batch}/{total_batch}] Serial search - {perc}% done, "
-                    f"recall={recall}, ndcg={ndcg}, p99={p99_latency}, p95={p95_latency}, dur={ssearch_dur}"
+                    f"recall={recall}, ndcg={ndcg}, p99={p99_latency}, p95={p95_latency}, avg={avg_latency}, dur={ssearch_dur}"
                 )
 
                 each_conc_search_dur = self.get_each_conc_search_dur(
@@ -299,6 +301,7 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
                     ndcg,
                     p99_latency,
                     p95_latency,
+                    avg_latency,
                     conc_failed_rate,
                     conc_num_list,
                     conc_qps_list,
