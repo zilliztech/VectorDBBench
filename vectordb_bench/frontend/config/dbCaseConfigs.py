@@ -2847,6 +2847,129 @@ LindormPerformanceConfig = [
     CaseConfigParamInput_NumberOfRegions_Lindorm,
 ]
 
+# PolarDB configs
+CaseConfigParamInput_IndexType_PolarDB = CaseConfigInput(
+    label=CaseConfigParamType.IndexType,
+    inputHelp="Select Index Type",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [
+            IndexType.HNSW.value,
+            IndexType.HNSW_PQ.value,
+            IndexType.HNSW_SQ.value,
+        ],
+    },
+)
+
+CaseConfigParamInput_M_PolarDB = CaseConfigInput(
+    label=CaseConfigParamType.M,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 2,
+        "max": 1024,
+        "value": 16,
+    },
+    inputHelp="HNSW M parameter",
+)
+
+CaseConfigParamInput_EFConstruction_PolarDB = CaseConfigInput(
+    label=CaseConfigParamType.ef_construction,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 8192,
+        "value": 200,
+    },
+    inputHelp="ef_construction",
+)
+
+CaseConfigParamInput_EFSearch_PolarDB = CaseConfigInput(
+    label=CaseConfigParamType.ef_search,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 8192,
+        "value": 200,
+    },
+    inputHelp="ef_search",
+)
+
+CaseConfigParamInput_InsertWorkers_PolarDB = CaseConfigInput(
+    label=CaseConfigParamType.insert_workers,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 1024,
+        "value": 10,
+    },
+    inputHelp="Number of insert workers",
+)
+
+CaseConfigParamInput_PostLoadIndex_PolarDB = CaseConfigInput(
+    label=CaseConfigParamType.post_load_index,
+    inputType=InputType.Bool,
+    inputConfig={
+        "value": True,
+    },
+    inputHelp="Create index after data load via ALTER TABLE",
+)
+
+CaseConfigParamInput_PQM_PolarDB = CaseConfigInput(
+    label=CaseConfigParamType.pq_m,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 16383,
+        "value": 1,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW_PQ.value,
+    inputHelp="PQ M parameter",
+)
+
+CaseConfigParamInput_PQNbits_PolarDB = CaseConfigInput(
+    label=CaseConfigParamType.pq_nbits,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 24,
+        "value": 8,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW_PQ.value,
+    inputHelp="PQ nbits parameter",
+)
+
+CaseConfigParamInput_SQType_PolarDB = CaseConfigInput(
+    label=CaseConfigParamType.sq_type,
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [
+            "8bit",
+            "4bit",
+            "8bit_uniform",
+            "4bit_uniform",
+            "8bit_direct",
+            "8bit_direct_signed",
+            "fp16",
+            "bf16",
+            "6bit",
+        ],
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW_SQ.value,
+    inputHelp="Scalar quantizer type",
+)
+
+PolarDBConfig = [
+    CaseConfigParamInput_IndexType_PolarDB,
+    CaseConfigParamInput_M_PolarDB,
+    CaseConfigParamInput_EFConstruction_PolarDB,
+    CaseConfigParamInput_EFSearch_PolarDB,
+    CaseConfigParamInput_InsertWorkers_PolarDB,
+    CaseConfigParamInput_PostLoadIndex_PolarDB,
+    CaseConfigParamInput_PQM_PolarDB,
+    CaseConfigParamInput_PQNbits_PolarDB,
+    CaseConfigParamInput_SQType_PolarDB,
+]
+
 # Map DB to config
 CASE_CONFIG_MAP = {
     DB.Milvus: {
@@ -2936,6 +3059,10 @@ CASE_CONFIG_MAP = {
     DB.Lindorm: {
         CaseLabel.Load: LindormLoadConfig,
         CaseLabel.Performance: LindormPerformanceConfig,
+    },
+    DB.PolarDB: {
+        CaseLabel.Load: PolarDBConfig,
+        CaseLabel.Performance: PolarDBConfig,
     },
 }
 
