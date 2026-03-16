@@ -25,6 +25,11 @@ from ..backend.clients.pgvecto_rs.cli import PgVectoRSHNSW, PgVectoRSIVFFlat
 from ..backend.clients.pgvector.cli import PgVectorHNSW
 from ..backend.clients.pgvectorscale.cli import PgVectorScaleDiskAnn
 from ..backend.clients.pinecone.cli import Pinecone
+from ..backend.clients.polardb.cli import (
+    PolarDBHNSWFlat,
+    PolarDBHNSWPQ,
+    PolarDBHNSWSQ,
+)
 from ..backend.clients.qdrant_cloud.cli import QdrantCloud
 from ..backend.clients.qdrant_local.cli import QdrantLocal
 from ..backend.clients.redis.cli import Redis
@@ -82,6 +87,9 @@ cli.add_command(LindormIVFPQ)
 cli.add_command(LindormHNSW)
 cli.add_command(LindormIVFBQ)
 cli.add_command(Pinecone)
+cli.add_command(PolarDBHNSWFlat)
+cli.add_command(PolarDBHNSWPQ)
+cli.add_command(PolarDBHNSWSQ)
 
 
 if __name__ == "__main__":
