@@ -40,7 +40,6 @@ dependencies = [
     "pydantic<v2",
     "scikit-learn",
     "pymilvus", # with pandas, numpy, ujson
-    "ujson",
     "hdrhistogram>=0.10.1",
 ]
 dynamic = ["version"]
@@ -51,37 +50,7 @@ test = [
     "ruff",
     "pytest",
 ]
-restful = [ "flask" ]
-
-all = [
-    "grpcio==1.53.0", # for qdrant-client and pymilvus
-    "grpcio-tools==1.53.0", # for qdrant-client and pymilvus
-    "qdrant-client",
-    "pinecone",
-    "weaviate-client",
-    "elasticsearch",
-    "sqlalchemy",
-    "redis",
-    "chromadb",
-    "pgvector",
-    "psycopg",
-    "psycopg-binary",
-    "pgvecto_rs[psycopg3]>=0.2.2",
-    "opensearch-dsl",
-    "opensearch-py",
-    "memorydb",
-    "alibabacloud_ha3engine_vector",
-    "mariadb",
-    "PyMySQL",
-    "clickhouse-connect",
-    "pyvespa",
-    "lancedb",
-    "mysql-connector-python",
-    "turbopuffer[fast]",
-    'zvec',
-    "endee==0.1.10", # compatible with pydantic<2
-]
-
+restful         = [ "flask" ]
 qdrant          = [ "qdrant-client" ]
 pinecone        = [ "pinecone" ]
 weaviate        = [ "weaviate-client" ]
