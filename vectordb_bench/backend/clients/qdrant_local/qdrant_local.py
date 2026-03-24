@@ -227,6 +227,7 @@ class QdrantLocal(VectorDB):
             limit=k,
             query_filter=f,
             search_params=SearchParams(**self.search_parameter),
+            timeout=timeout,
         ).points
 
         return [result.id for result in res]
