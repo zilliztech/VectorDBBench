@@ -140,6 +140,11 @@ class VectorDB(ABC):
     supported_filter_types: list[FilterOp] = [FilterOp.NonFilter]
     name: str = ""
 
+    # Whether the client can share a single connection across threads.
+    # If False, concurrent runners will deep-copy the instance and call
+    # init() per thread instead of sharing the parent connection.
+    thread_safe: bool = True
+
     @classmethod
     def filter_supported(cls, filters: Filter) -> bool:
         """Ensure that the filters are supported before testing filtering cases."""

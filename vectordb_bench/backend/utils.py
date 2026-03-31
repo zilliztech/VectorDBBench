@@ -1,5 +1,46 @@
+import contextlib
+import logging
+import signal
 import time
 from functools import wraps
+
+import psutil
+
+log = logging.getLogger(__name__)
+
+
+def kill_proc_tree(pids: list[int] | None = None, grace: float = 2, timeout: float = 3):
+    """Kill child processes with SIGTERM, then SIGKILL for survivors.
+
+    Args:
+        pids: Specific PIDs to kill. If None, kills all children of the
+              current process (recursive).
+        grace: Seconds to wait after SIGTERM before sending SIGKILL.
+        timeout: Seconds to wait for processes to fully exit after SIGKILL.
+    """
+    if pids is not None:
+        targets = []
+        for pid in pids:
+            with contextlib.suppress(psutil.NoSuchProcess):
+                targets.append(psutil.Process(pid))
+    else:
+        targets = psutil.Process().children(recursive=True)
+
+    for p in targets:
+        try:
+            log.warning(f"sending SIGTERM to child process: {p}")
+            p.send_signal(signal.SIGTERM)
+        except psutil.NoSuchProcess:
+            pass
+
+    _, alive = psutil.wait_procs(targets, timeout=grace)
+    for p in alive:
+        try:
+            log.warning(f"force killing child process: {p}")
+            p.kill()
+        except psutil.NoSuchProcess:
+            pass
+    psutil.wait_procs(alive, timeout=timeout)
 
 
 def numerize(n: int) -> str:

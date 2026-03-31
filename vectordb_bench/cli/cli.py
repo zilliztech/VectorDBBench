@@ -1,7 +1,6 @@
 import logging
 import time
 from collections.abc import Callable
-from concurrent.futures import wait
 from datetime import datetime
 from pathlib import Path
 from pprint import pformat
@@ -20,7 +19,7 @@ from yaml import load
 from .. import config
 from ..backend.clients import DB
 from ..backend.clients.api import MetricType
-from ..interface import benchmark_runner, global_result_future
+from ..interface import benchmark_runner
 from ..models import (
     CaseConfig,
     CaseType,
@@ -229,6 +228,16 @@ class CommonTypedDict(TypedDict):
             default=True,
             help="Load or skip",
             show_default=True,
+        ),
+    ]
+    load_concurrency: Annotated[
+        int,
+        click.option(
+            "--load-concurrency",
+            type=int,
+            default=config.LOAD_CONCURRENCY,
+            show_default=True,
+            help="Number of concurrent workers for data loading in performance cases (0 = cpu_count)",
         ),
     ]
     search_serial: Annotated[
@@ -643,15 +652,16 @@ def run(
             parameters["search_serial"],
             parameters["search_concurrent"],
         ),
+        load_concurrency=parameters["load_concurrency"],
     )
     task_label = parameters["task_label"]
 
     log.info(f"Task:\n{pformat(task)}\n")
     if not parameters["dry_run"]:
         benchmark_runner.run([task], task_label)
-        time.sleep(5)
-        if global_result_future:
-            wait([global_result_future])
-
-        while benchmark_runner.has_running():
-            time.sleep(1)
+        try:
+            while benchmark_runner.has_running():
+                time.sleep(1)
+        except KeyboardInterrupt:
+            log.warning("Ctrl+C received, stopping benchmark...")
+            benchmark_runner.stop_running()

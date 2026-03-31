@@ -13,6 +13,8 @@ log = logging.getLogger(__name__)
 
 
 class Doris(VectorDB):
+    thread_safe: bool = False
+
     def __init__(
         self,
         dim: int,

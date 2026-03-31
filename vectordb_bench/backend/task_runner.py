@@ -6,7 +6,6 @@ import traceback
 from enum import Enum, auto
 
 import numpy as np
-import psutil
 
 from ..base import BaseModel
 from ..metric import Metric
@@ -15,7 +14,14 @@ from . import utils
 from .cases import Case, CaseLabel, StreamingPerformanceCase
 from .clients import DB, MetricType, api
 from .data_source import DatasetSource
-from .runner import MultiProcessingSearchRunner, ReadWriteRunner, SerialInsertRunner, SerialSearchRunner
+from .runner import (
+    ConcurrentInsertRunner,
+    MultiProcessingSearchRunner,
+    ReadWriteRunner,
+    SerialInsertRunner,
+    SerialSearchRunner,
+)
+from .utils import kill_proc_tree
 
 log = logging.getLogger(__name__)
 
@@ -241,14 +247,15 @@ class CaseRunner(BaseModel):
 
     @utils.time_it
     def _load_train_data(self):
-        """Insert train data and get the insert_duration"""
+        """Insert train data concurrently and get the insert_duration"""
         try:
-            runner = SerialInsertRunner(
+            runner = ConcurrentInsertRunner(
                 self.db,
                 self.ca.dataset,
                 self.normalize,
                 self.ca.filters,
                 self.ca.load_timeout,
+                max_workers=self.config.load_concurrency or None,
             )
             runner.run()
         except Exception as e:
@@ -299,8 +306,7 @@ class CaseRunner(BaseModel):
                 return future.result(timeout=self.ca.optimize_timeout)[1]
             except TimeoutError as e:
                 log.warning(f"VectorDB optimize timeout in {self.ca.optimize_timeout}")
-                for pid, _ in executor._processes.items():
-                    psutil.Process(pid).kill()
+                kill_proc_tree(pids=list(executor._processes.keys()))
                 raise PerformanceTimeoutError from e
             except Exception as e:
                 log.warning(f"VectorDB optimize error: {e}")

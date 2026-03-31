@@ -107,15 +107,13 @@ class AliSQL(VectorDB):
                 self.cursor.execute(f"SET SESSION vidx_hnsw_ef_search = {search_param['ef_search']}")
             self.cursor.execute("COMMIT")
 
-        self.insert_sql = (
-            f'INSERT INTO {self.db_config["database"]}.{self.table_name} (id, v) VALUES (%s, %s)'  # noqa: S608
-        )
+        self.insert_sql = f'INSERT INTO {self.db_config["database"]}.{self.table_name} (id, v) VALUES (%s, %s)'
         self.select_sql = (
-            f'SELECT id FROM {self.db_config["database"]}.{self.table_name} '  # noqa: S608
+            f'SELECT id FROM {self.db_config["database"]}.{self.table_name} '
             f"ORDER by vec_distance_{search_param['metric_type']}(v, %s) LIMIT %s"
         )
         self.select_sql_with_filter = (
-            f'SELECT id FROM {self.db_config["database"]}.{self.table_name} WHERE id >= %s '  # noqa: S608
+            f'SELECT id FROM {self.db_config["database"]}.{self.table_name} WHERE id >= %s '
             f"ORDER by vec_distance_{search_param['metric_type']}(v, %s) LIMIT %s"
         )
 
