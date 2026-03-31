@@ -153,24 +153,28 @@ class Milvus(VectorDB):
 
     def _optimize(self):
         log.info(f"{self.name} optimizing before search")
-        self.client.flush(self.collection_name)
-        self._wait_for_index()
-        if self.case_config.is_gpu_index:
-            log.debug("skip force merge compaction for gpu index type.")
-        else:
-            try:
-                compaction_id = self.client.compact(self.collection_name, target_size=(2**63 - 1))
-                if compaction_id > 0:
-                    self._wait_for_compaction(compaction_id)
-                log.info(f"{self.name} force merge compaction completed.")
-                self._wait_for_index()
-            except Exception as e:
-                log.warning(f"{self.name} compact error: {e}")
-                if hasattr(e, "code") and e.code().name == "PERMISSION_DENIED":
-                    log.warning("Skip compact due to permission denied.")
-                else:
-                    raise e from None
-        self.client.refresh_load(self.collection_name)
+        try:
+            self.client.flush(self.collection_name)
+            self._wait_for_index()
+            if self.case_config.is_gpu_index:
+                log.debug("skip force merge compaction for gpu index type.")
+            else:
+                try:
+                    compaction_id = self.client.compact(self.collection_name, target_size=(2**63 - 1))
+                    if compaction_id > 0:
+                        self._wait_for_compaction(compaction_id)
+                    log.info(f"{self.name} force merge compaction completed.")
+                    self._wait_for_index()
+                except Exception as e:
+                    log.warning(f"{self.name} compact error: {e}")
+                    if hasattr(e, "code") and e.code().name == "PERMISSION_DENIED":
+                        log.warning("Skip compact due to permission denied.")
+                    else:
+                        raise e from None
+            self.client.refresh_load(self.collection_name)
+        except Exception as e:
+            log.warning(f"{self.name} optimize error: {e}")
+            raise e from None
 
     def optimize(self, data_size: int | None = None):
         assert self.client, "Please call self.init() before"

@@ -1,7 +1,6 @@
 """E2E test for Milvus client using MilvusClient API.
 
 Requires a running Milvus instance at localhost:19530.
-Run: conda activate vdbbench && pytest tests/test_milvus.py -svv
 """
 
 import logging
@@ -14,6 +13,7 @@ from vectordb_bench.backend.clients.milvus.config import MilvusConfig
 from vectordb_bench.backend.cases import CaseType
 from vectordb_bench.interface import BenchMarkRunner
 from vectordb_bench.models import CaseConfig, TaskConfig
+
 
 log = logging.getLogger(__name__)
 

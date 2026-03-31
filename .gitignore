@@ -13,6 +13,9 @@ venv/
 results/
 logs/
 
+# Worktrees
+.worktrees/
+
 # AI rules
 CLAUDE.md
 AGENTS.md
