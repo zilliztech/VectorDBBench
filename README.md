@@ -27,11 +27,6 @@ python >= 3.11
 pip install vectordb-bench
 ```
 
-**Install all database clients**
-
-``` shell
-pip install 'vectordb-bench[all]'
-```
 **Install the specific database client**
 
 ```shell
@@ -42,7 +37,6 @@ All the database client supported
 | Optional database client | install command                             |
 |--------------------------|---------------------------------------------|
 | pymilvus, zilliz_cloud (*default*)     | `pip install vectordb-bench`                |
-| all (*clients requirements might be conflict with each other*) | `pip install vectordb-bench[all]`           |
 | qdrant                   | `pip install vectordb-bench[qdrant]`        |
 | pinecone                 | `pip install vectordb-bench[pinecone]`      |
 | weaviate                 | `pip install vectordb-bench[weaviate]`      |
@@ -225,7 +219,6 @@ Options:
 
   --ondisk                        Ondisk mode with binary quantization(32x compression)
   --oversample-factor             Controls the degree of oversampling applied to minority classes in imbalanced datasets to improve model performance by balancing class distributions.(default 1.0)
-  
 
   # Quantization Type
   --quantization-type TEXT        which type of quantization to use valid values [fp32, fp16, bq]
@@ -294,13 +287,13 @@ Options:
   # Connection
   --cloud-id TEXT                 Elastic Cloud ID  [required]
   --password TEXT                 Elastic Cloud password  [required]
-  
+
   # HNSW Index Parameters
   --m INTEGER                     HNSW M parameter  [default: 16]
   --ef-construction INTEGER       HNSW efConstruction parameter  [default: 100]
   --num-candidates INTEGER        Number of candidates for search  [default: 100]
   --element-type [float|byte]     Element type for vectors (float: 4 bytes, byte: 1 byte)  [default: float]
-  
+
   # Index Configuration
   --number-of-shards INTEGER      Number of shards  [default: 1]
   --number-of-replicas INTEGER    Number of replicas  [default: 0]
@@ -311,7 +304,7 @@ Options:
   --use-routing BOOLEAN           Whether to use routing  [default: False]
   --use-rescore BOOLEAN           Whether to use rescore  [default: False]
   --oversample-ratio FLOAT        Oversample ratio for rescore  [default: 2.0]
-  
+
   # Common Options
   --case-type [CapacityDim128|CapacityDim960|Performance768D100M|...]
                                   Case type
