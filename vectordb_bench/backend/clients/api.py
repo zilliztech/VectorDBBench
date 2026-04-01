@@ -49,7 +49,6 @@ class IndexType(StrEnum):
 
 
 class SQType(StrEnum):
-    SQ4U = "SQ4U"
     SQ6 = "SQ6"
     SQ8 = "SQ8"
     BF16 = "BF16"
