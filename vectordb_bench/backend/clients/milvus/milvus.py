@@ -137,6 +137,16 @@ class Milvus(VectorDB):
         self.client.close()
         self.client = None
 
+    def _wait_for_segments_sorted(self):
+        while True:
+            segments = self.client.list_persistent_segments(self.collection_name)
+            unsorted = [s for s in segments if not s.is_sorted]
+            if not unsorted:
+                log.info(f"{self.name} all persistent segments are sorted.")
+                break
+            log.debug(f"{self.name} waiting for {len(unsorted)} segments to be sorted...")
+            time.sleep(5)
+
     def _wait_for_index(self):
         while True:
             info = self.client.describe_index(self.collection_name, self._vector_index_name)
@@ -155,6 +165,7 @@ class Milvus(VectorDB):
         log.info(f"{self.name} optimizing before search")
         try:
             self.client.flush(self.collection_name)
+            self._wait_for_segments_sorted()
             self._wait_for_index()
             if self.case_config.is_gpu_index:
                 log.debug("skip force merge compaction for gpu index type.")
