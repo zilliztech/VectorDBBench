@@ -43,21 +43,25 @@ class TurboPuffer(VectorDB):
 
         self.with_scalar_labels = with_scalar_labels
 
-        client_kwargs = {"api_key": self.api_key, "region": self.region}
-        if self.api_base_url:
-            client_kwargs["base_url"] = self.api_base_url
-        self.client = tpuf.Turbopuffer(**client_kwargs)
-
         if drop_old:
             log.info(f"Drop old. delete the namespace: {self.namespace}")
-            ns = self.client.namespace(self.namespace)
+            tmp_client = self._create_client()
+            ns = tmp_client.namespace(self.namespace)
             try:
                 ns.delete_all()
             except Exception as e:
                 log.warning(f"Failed to delete all. Error: {e}")
+            tmp_client = None
+
+    def _create_client(self) -> tpuf.Turbopuffer:
+        client_kwargs = {"api_key": self.api_key, "region": self.region}
+        if self.api_base_url:
+            client_kwargs["base_url"] = self.api_base_url
+        return tpuf.Turbopuffer(**client_kwargs)
 
     @contextmanager
     def init(self):
+        self.client = self._create_client()
         self.ns = self.client.namespace(self.namespace)
         yield
 
@@ -110,7 +114,7 @@ class TurboPuffer(VectorDB):
             top_k=k,
             filters=self.expr,
         )
-        return [row.id for row in res.rows] if res.rows is not None else []
+        return [int(row.id) for row in res.rows] if res.rows is not None else []
 
     def prepare_filter(self, filters: Filter):
         if filters.type == FilterOp.NonFilter:

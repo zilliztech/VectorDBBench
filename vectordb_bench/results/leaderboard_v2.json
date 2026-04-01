@@ -2858,5 +2858,205 @@
         "latency": 463.9,
         "recall": 0.8478,
         "filter_ratio": 0.5
+    },
+    {
+        "dataset": "Cohere (Medium)",
+        "db": "TurboPuffer",
+        "label": "2026-03-31T10:01:48.528365",
+        "db_name": "TurboPuffer-2026-03-31T10:01:48.528365",
+        "qps": 346.5847,
+        "latency": 42.7,
+        "recall": 0.9631,
+        "filter_ratio": 0.99
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "TurboPuffer",
+        "label": "2026-03-31T11:53:58.907951",
+        "db_name": "TurboPuffer-2026-03-31T11:53:58.907951",
+        "qps": 369.4921,
+        "latency": 41.6,
+        "recall": 0.779,
+        "filter_ratio": 0.9
+    },
+    {
+        "dataset": "Cohere (Medium)",
+        "db": "TurboPuffer",
+        "label": "2026-03-31T09:35:50.149485",
+        "db_name": "TurboPuffer-2026-03-31T09:35:50.149485",
+        "qps": 310.957,
+        "latency": 49.4,
+        "recall": 0.9698,
+        "filter_ratio": 0.8
+    },
+    {
+        "dataset": "Cohere (Medium)",
+        "db": "TurboPuffer",
+        "label": "2026-03-31T09:18:27.391390",
+        "db_name": "TurboPuffer-2026-03-31T09:18:27.391390",
+        "qps": 798.328,
+        "latency": 56.7,
+        "recall": 0.8993,
+        "filter_ratio": 0.0
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "TurboPuffer",
+        "label": "2026-03-31T10:33:52.971649",
+        "db_name": "TurboPuffer-2026-03-31T10:33:52.971649",
+        "qps": 649.8781,
+        "latency": 55.2,
+        "recall": 0.8352,
+        "filter_ratio": 0.0
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "TurboPuffer",
+        "label": "2026-03-31T12:00:07.738985",
+        "db_name": "TurboPuffer-2026-03-31T12:00:07.738985",
+        "qps": 370.7241,
+        "latency": 49.6,
+        "recall": 0.7177,
+        "filter_ratio": 0.95
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "TurboPuffer",
+        "label": "2026-03-31T12:33:40.019128",
+        "db_name": "TurboPuffer-2026-03-31T12:33:40.019128",
+        "qps": 100.0554,
+        "latency": 69.3,
+        "recall": 0.9638,
+        "filter_ratio": 0.999
+    },
+    {
+        "dataset": "Cohere (Medium)",
+        "db": "TurboPuffer",
+        "label": "2026-03-31T10:08:01.370057",
+        "db_name": "TurboPuffer-2026-03-31T10:08:01.370057",
+        "qps": 284.6367,
+        "latency": 47.6,
+        "recall": 0.9788,
+        "filter_ratio": 0.995
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "TurboPuffer",
+        "label": "2026-03-31T12:12:22.420710",
+        "db_name": "TurboPuffer-2026-03-31T12:12:22.420710",
+        "qps": 81.8678,
+        "latency": 105.6,
+        "recall": 0.8751,
+        "filter_ratio": 0.99
+    },
+    {
+        "dataset": "Cohere (Medium)",
+        "db": "TurboPuffer",
+        "label": "2026-03-31T09:42:19.988467",
+        "db_name": "TurboPuffer-2026-03-31T09:42:19.988467",
+        "qps": 260.4031,
+        "latency": 48.3,
+        "recall": 0.9828,
+        "filter_ratio": 0.9
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "TurboPuffer",
+        "label": "2026-03-31T11:47:52.080875",
+        "db_name": "TurboPuffer-2026-03-31T11:47:52.080875",
+        "qps": 365.2505,
+        "latency": 34.9,
+        "recall": 0.8251,
+        "filter_ratio": 0.8
+    },
+    {
+        "dataset": "Cohere (Medium)",
+        "db": "TurboPuffer",
+        "label": "2026-03-31T10:20:29.187645",
+        "db_name": "TurboPuffer-2026-03-31T10:20:29.187645",
+        "qps": 471.553,
+        "latency": 44.1,
+        "recall": 1.0,
+        "filter_ratio": 0.999
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "TurboPuffer",
+        "label": "2026-03-31T12:19:46.258746",
+        "db_name": "TurboPuffer-2026-03-31T12:19:46.258746",
+        "qps": 91.8612,
+        "latency": 85.7,
+        "recall": 0.8799,
+        "filter_ratio": 0.995
+    },
+    {
+        "dataset": "Cohere (Medium)",
+        "db": "TurboPuffer",
+        "label": "2026-03-31T09:48:48.830799",
+        "db_name": "TurboPuffer-2026-03-31T09:48:48.830799",
+        "qps": 206.0934,
+        "latency": 56.7,
+        "recall": 0.9795,
+        "filter_ratio": 0.95
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "TurboPuffer",
+        "label": "2026-03-31T11:41:42.263276",
+        "db_name": "TurboPuffer-2026-03-31T11:41:42.263276",
+        "qps": 351.7114,
+        "latency": 46.7,
+        "recall": 0.8735,
+        "filter_ratio": 0.5
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "TurboPuffer",
+        "label": "2026-03-31T12:26:48.189944",
+        "db_name": "TurboPuffer-2026-03-31T12:26:48.189944",
+        "qps": 96.592,
+        "latency": 76.9,
+        "recall": 0.9178,
+        "filter_ratio": 0.998
+    },
+    {
+        "dataset": "Cohere (Medium)",
+        "db": "TurboPuffer",
+        "label": "2026-03-31T09:29:40.287089",
+        "db_name": "TurboPuffer-2026-03-31T09:29:40.287089",
+        "qps": 802.6923,
+        "latency": 48.1,
+        "recall": 0.935,
+        "filter_ratio": 0.5
+    },
+    {
+        "dataset": "Cohere (Medium)",
+        "db": "TurboPuffer",
+        "label": "2026-03-31T09:55:20.689312",
+        "db_name": "TurboPuffer-2026-03-31T09:55:20.689312",
+        "qps": 184.5363,
+        "latency": 53.4,
+        "recall": 0.9681,
+        "filter_ratio": 0.98
+    },
+    {
+        "dataset": "Cohere (Medium)",
+        "db": "TurboPuffer",
+        "label": "2026-03-31T10:14:19.197970",
+        "db_name": "TurboPuffer-2026-03-31T10:14:19.197970",
+        "qps": 323.0238,
+        "latency": 50.4,
+        "recall": 1.0,
+        "filter_ratio": 0.998
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "TurboPuffer",
+        "label": "2026-03-31T12:06:15.579552",
+        "db_name": "TurboPuffer-2026-03-31T12:06:15.579552",
+        "qps": 382.5332,
+        "latency": 54.7,
+        "recall": 0.6135,
+        "filter_ratio": 0.98
     }
 ]
