@@ -1,4 +1,4 @@
-"""Wrapper around the Pinecone vector database over VectorDB"""
+"""Wrapper around the TurboPuffer vector database over VectorDB"""
 
 import logging
 import time
@@ -30,9 +30,9 @@ class TurboPuffer(VectorDB):
         with_scalar_labels: bool = False,
         **kwargs,
     ):
-        """Initialize wrapper around the milvus vector database."""
         self.api_key = db_config.get("api_key", "")
-        self.api_base_url = db_config.get("api_base_url", "")
+        self.region = db_config.get("region", "")
+        self.api_base_url = db_config.get("api_base_url")
         self.namespace = db_config.get("namespace", "")
         self.db_case_config = db_case_config
         self.metric = db_case_config.parse_metric()
@@ -43,8 +43,10 @@ class TurboPuffer(VectorDB):
 
         self.with_scalar_labels = with_scalar_labels
 
-        # Initialize client with new SDK pattern
-        self.client = tpuf.Turbopuffer(api_key=self.api_key, base_url=self.api_base_url)
+        client_kwargs = {"api_key": self.api_key, "region": self.region}
+        if self.api_base_url:
+            client_kwargs["base_url"] = self.api_base_url
+        self.client = tpuf.Turbopuffer(**client_kwargs)
 
         if drop_old:
             log.info(f"Drop old. delete the namespace: {self.namespace}")
@@ -78,7 +80,7 @@ class TurboPuffer(VectorDB):
         try:
             if self.with_scalar_labels:
                 self.ns.write(
-                    columns={
+                    upsert_columns={
                         self._scalar_id_field: metadata,
                         self._vector_field: embeddings,
                         self._scalar_label_field: labels_data,
@@ -87,7 +89,7 @@ class TurboPuffer(VectorDB):
                 )
             else:
                 self.ns.write(
-                    columns={
+                    upsert_columns={
                         self._scalar_id_field: metadata,
                         self._vector_field: embeddings,
                     },
