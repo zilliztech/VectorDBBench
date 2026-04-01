@@ -17,15 +17,24 @@ class TurboPufferTypedDict(TypedDict):
         str,
         click.option("--api-key", type=str, help="TurboPuffer API key", required=True),
     ]
+    region: Annotated[
+        str,
+        click.option(
+            "--region",
+            type=str,
+            help="TurboPuffer region (e.g. aws-us-east-1, gcp-us-central1)",
+            required=True,
+        ),
+    ]
     api_base_url: Annotated[
         str,
         click.option(
             "--api-base-url",
             type=str,
-            help="TurboPuffer API base URL",
+            help="Override the region-based API URL",
             required=False,
-            default="https://api.turbopuffer.com",
-            show_default=True,
+            default="",
+            show_default=False,
         ),
     ]
     namespace: Annotated[
@@ -54,7 +63,8 @@ def TurboPuffer(**parameters: Unpack[TurboPufferIndexTypedDict]):
         db_config=TurboPufferConfig(
             db_label=parameters["db_label"],
             api_key=SecretStr(parameters["api_key"]),
-            api_base_url=parameters["api_base_url"],
+            region=parameters["region"],
+            api_base_url=parameters["api_base_url"] or None,
             namespace=parameters["namespace"],
         ),
         db_case_config=TurboPufferIndexConfig(),
