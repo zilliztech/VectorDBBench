@@ -124,5 +124,23 @@
         "insert_rate": 1000,
         "streaming_qps": 167.2689,
         "streaming_latency": 0.5048
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "TurboPuffer",
+        "label": "2026-03-31",
+        "db_name": "TurboPuffer",
+        "insert_rate": 500,
+        "streaming_qps": 536.0198,
+        "streaming_latency": 0.3132
+    },
+    {
+        "dataset": "Cohere (Large)",
+        "db": "TurboPuffer",
+        "label": "2026-03-31",
+        "db_name": "TurboPuffer",
+        "insert_rate": 1000,
+        "streaming_qps": 442.5824,
+        "streaming_latency": 0.0724
     }
 ]
