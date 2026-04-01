@@ -56,6 +56,7 @@ All the database client supported
 | hologres                 | `pip install vectordb-bench[hologres]`      |
 | tencent_es               | `pip install vectordb-bench[tencent_es]`    |
 | alisql                   | `pip install 'vectordb-bench[alisql]'`      |
+| polardb                  | `pip install vectordb-bench[polardb]`       |
 | doris                    | `pip install vectordb-bench[doris]`         |
 | zvec                     | `pip install vectordb-bench[zvec]`          |
 | endee                    | `pip install vectordb-bench[endee]`         |
@@ -518,6 +519,47 @@ To list the options for Lindorm, execute `vectordbbench lindormhnsw --help`, The
   --m INTEGER                     hnsw m  [required]
   --ef-construction INTEGER       hnsw ef-construction  [required]
   --ef-search INTEGER             hnsw ef-search  [required]
+```
+
+### Run PolarDB from command line
+
+PolarDB supports index types: faiss_hnsw_flat, faiss_hnsw_pq, and faiss_hnsw_sq.
+
+**Example: Run faiss_hnsw_flat benchmark**
+
+```shell
+vectordbbench polardbhnswflat \
+  --case-type Performance768D1M \
+  --username <db_user> \
+  --password '<db_password>' \
+  --host <db_host> \
+  --port 3306 \
+  --m 16 \
+  --ef-construction 256 \
+  --ef-search 256 \
+  --insert-workers 64 \
+  --num-concurrency '10,20,40,60,80' \
+  --concurrency-duration 60 \
+  --task-label <task_label> \
+  --db-label <db_label> \
+  --skip-search-serial \
+  --post-load-index
+```
+
+To list the options for PolarDB, execute `vectordbbench polardbhnswflat --help`. The following are some PolarDB-specific command-line options.
+
+```text
+  --username TEXT                  Username  [required]
+  --password TEXT                  Password
+  --host TEXT                      Db host  [default: 127.0.0.1]
+  --port INTEGER                   Db Port  [default: 3306]
+  --database TEXT                  Database name  [default: vectordbbench]
+  --m INTEGER                      M parameter (max_degree) in HNSW
+  --ef-construction INTEGER        ef_construction parameter in HNSW
+  --ef-search INTEGER              polar_vector_index_hnsw_ef_search session variable
+  --insert-workers INTEGER         Number of concurrent threads for data insertion
+  --post-load-index / --inline-index
+                                   Create index after load or inline at table creation
 ```
 
 #### Using a configuration file.

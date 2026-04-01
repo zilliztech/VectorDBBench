@@ -155,6 +155,11 @@ class CaseConfigParamType(Enum):
     optimize_after_write = "optimize_after_write"
     read_dur_after_write = "read_dur_after_write"
 
+    # PolarDB parameters
+    insert_workers = "insert_workers"
+    post_load_index = "post_load_index"
+    pq_nbits = "pq_nbits"
+
     # Lindorm parameters
     efSearch = "efSearch"
     pq_m = "pq_m"
