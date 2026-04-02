@@ -242,8 +242,8 @@ class MilvusHNSWSQTypedDict(CommonTypedDict, MilvusTypedDict, MilvusHNSWTypedDic
         str | None,
         click.option(
             "--sq-type",
-            type=click.Choice(["SQ6", "SQ8", "BF16", "FP16", "FP32"], case_sensitive=False),
-            help="Scalar quantizer type. Supported values: SQ6,SQ8,BF16,FP16,FP32",
+            type=click.Choice(["SQ4U", "SQ6", "SQ8", "BF16", "FP16", "FP32"], case_sensitive=False),
+            help="Scalar quantizer type. Supported values: SQ4U,SQ6,SQ8,BF16,FP16,FP32",
             required=True,
         ),
     ]
