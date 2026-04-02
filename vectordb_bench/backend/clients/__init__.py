@@ -60,6 +60,7 @@ class DB(Enum):
     Endee = "Endee"
     Lindorm = "Lindorm"
     VectorChord = "VectorChord"
+    PolarDB = "PolarDB"
 
     @property
     def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901, PLR0915
@@ -251,6 +252,10 @@ class DB(Enum):
             from .vectorchord.vectorchord import VectorChord
 
             return VectorChord
+        if self == DB.PolarDB:
+            from .polardb.polardb import PolarDB
+
+            return PolarDB
 
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
@@ -445,6 +450,10 @@ class DB(Enum):
             from .vectorchord.config import VectorChordConfig
 
             return VectorChordConfig
+        if self == DB.PolarDB:
+            from .polardb.config import PolarDBConfig
+
+            return PolarDBConfig
 
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
@@ -591,6 +600,11 @@ class DB(Enum):
             from .alisql.alisql import AliSQLIndexConfig
 
             return AliSQLIndexConfig
+
+        if self == DB.PolarDB:
+            from .polardb.config import _polardb_case_config
+
+            return _polardb_case_config.get(index_type)
 
         if self == DB.Doris:
             from .doris.config import DorisCaseConfig

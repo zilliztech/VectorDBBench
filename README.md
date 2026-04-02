@@ -27,11 +27,6 @@ python >= 3.11
 pip install vectordb-bench
 ```
 
-**Install all database clients**
-
-``` shell
-pip install 'vectordb-bench[all]'
-```
 **Install the specific database client**
 
 ```shell
@@ -42,7 +37,6 @@ All the database client supported
 | Optional database client | install command                             |
 |--------------------------|---------------------------------------------|
 | pymilvus, zilliz_cloud (*default*)     | `pip install vectordb-bench`                |
-| all (*clients requirements might be conflict with each other*) | `pip install vectordb-bench[all]`           |
 | qdrant                   | `pip install vectordb-bench[qdrant]`        |
 | pinecone                 | `pip install vectordb-bench[pinecone]`      |
 | weaviate                 | `pip install vectordb-bench[weaviate]`      |
@@ -62,6 +56,7 @@ All the database client supported
 | hologres                 | `pip install vectordb-bench[hologres]`      |
 | tencent_es               | `pip install vectordb-bench[tencent_es]`    |
 | alisql                   | `pip install 'vectordb-bench[alisql]'`      |
+| polardb                  | `pip install vectordb-bench[polardb]`       |
 | doris                    | `pip install vectordb-bench[doris]`         |
 | zvec                     | `pip install vectordb-bench[zvec]`          |
 | endee                    | `pip install vectordb-bench[endee]`         |
@@ -225,7 +220,6 @@ Options:
 
   --ondisk                        Ondisk mode with binary quantization(32x compression)
   --oversample-factor             Controls the degree of oversampling applied to minority classes in imbalanced datasets to improve model performance by balancing class distributions.(default 1.0)
-  
 
   # Quantization Type
   --quantization-type TEXT        which type of quantization to use valid values [fp32, fp16, bq]
@@ -294,13 +288,13 @@ Options:
   # Connection
   --cloud-id TEXT                 Elastic Cloud ID  [required]
   --password TEXT                 Elastic Cloud password  [required]
-  
+
   # HNSW Index Parameters
   --m INTEGER                     HNSW M parameter  [default: 16]
   --ef-construction INTEGER       HNSW efConstruction parameter  [default: 100]
   --num-candidates INTEGER        Number of candidates for search  [default: 100]
   --element-type [float|byte]     Element type for vectors (float: 4 bytes, byte: 1 byte)  [default: float]
-  
+
   # Index Configuration
   --number-of-shards INTEGER      Number of shards  [default: 1]
   --number-of-replicas INTEGER    Number of replicas  [default: 0]
@@ -311,7 +305,7 @@ Options:
   --use-routing BOOLEAN           Whether to use routing  [default: False]
   --use-rescore BOOLEAN           Whether to use rescore  [default: False]
   --oversample-ratio FLOAT        Oversample ratio for rescore  [default: 2.0]
-  
+
   # Common Options
   --case-type [CapacityDim128|CapacityDim960|Performance768D100M|...]
                                   Case type
@@ -525,6 +519,47 @@ To list the options for Lindorm, execute `vectordbbench lindormhnsw --help`, The
   --m INTEGER                     hnsw m  [required]
   --ef-construction INTEGER       hnsw ef-construction  [required]
   --ef-search INTEGER             hnsw ef-search  [required]
+```
+
+### Run PolarDB from command line
+
+PolarDB supports index types: faiss_hnsw_flat, faiss_hnsw_pq, and faiss_hnsw_sq.
+
+**Example: Run faiss_hnsw_flat benchmark**
+
+```shell
+vectordbbench polardbhnswflat \
+  --case-type Performance768D1M \
+  --username <db_user> \
+  --password '<db_password>' \
+  --host <db_host> \
+  --port 3306 \
+  --m 16 \
+  --ef-construction 256 \
+  --ef-search 256 \
+  --insert-workers 64 \
+  --num-concurrency '10,20,40,60,80' \
+  --concurrency-duration 60 \
+  --task-label <task_label> \
+  --db-label <db_label> \
+  --skip-search-serial \
+  --post-load-index
+```
+
+To list the options for PolarDB, execute `vectordbbench polardbhnswflat --help`. The following are some PolarDB-specific command-line options.
+
+```text
+  --username TEXT                  Username  [required]
+  --password TEXT                  Password
+  --host TEXT                      Db host  [default: 127.0.0.1]
+  --port INTEGER                   Db Port  [default: 3306]
+  --database TEXT                  Database name  [default: vectordbbench]
+  --m INTEGER                      M parameter (max_degree) in HNSW
+  --ef-construction INTEGER        ef_construction parameter in HNSW
+  --ef-search INTEGER              polar_vector_index_hnsw_ef_search session variable
+  --insert-workers INTEGER         Number of concurrent threads for data insertion
+  --post-load-index / --inline-index
+                                   Create index after load or inline at table creation
 ```
 
 #### Using a configuration file.
