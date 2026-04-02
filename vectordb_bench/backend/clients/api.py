@@ -43,6 +43,7 @@ class IndexType(StrEnum):
     GPU_CAGRA = "GPU_CAGRA"
     SCANN = "scann"
     VCHORDRQ = "vchordrq"
+    VCHORDG = "vchordg"
     SCANN_MILVUS = "SCANN_MILVUS"
     Hologres_HGraph = "HGraph"
     Hologres_Graph = "Graph"

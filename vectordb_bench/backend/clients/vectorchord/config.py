@@ -36,17 +36,39 @@ class VectorChordConfig(DBConfig):
         }
 
 
+_METRIC_OPS = {
+    "vector": {
+        MetricType.L2: "vector_l2_ops",
+        MetricType.IP: "vector_ip_ops",
+        MetricType.COSINE: "vector_cosine_ops",
+    },
+    "halfvec": {
+        MetricType.L2: "halfvec_l2_ops",
+        MetricType.IP: "halfvec_ip_ops",
+        MetricType.COSINE: "halfvec_cosine_ops",
+    },
+    "rabitq8": {
+        MetricType.L2: "rabitq8_l2_ops",
+        MetricType.IP: "rabitq8_ip_ops",
+        MetricType.COSINE: "rabitq8_cosine_ops",
+    },
+    "rabitq4": {
+        MetricType.L2: "rabitq4_l2_ops",
+        MetricType.IP: "rabitq4_ip_ops",
+        MetricType.COSINE: "rabitq4_cosine_ops",
+    },
+}
+
+
 class VectorChordIndexConfig(BaseModel, DBCaseConfig):
     metric_type: MetricType | None = None
     create_index_before_load: bool = False
     create_index_after_load: bool = True
+    quantization_type: str = "vector"  # vector, halfvec, rabitq8, rabitq4
 
     def parse_metric(self) -> str:
-        if self.metric_type == MetricType.L2:
-            return "vector_l2_ops"
-        if self.metric_type == MetricType.IP:
-            return "vector_ip_ops"
-        return "vector_cosine_ops"
+        ops = _METRIC_OPS.get(self.quantization_type, _METRIC_OPS["vector"])
+        return ops.get(self.metric_type, ops[MetricType.COSINE])
 
     def parse_metric_fun_op(self) -> LiteralString:
         if self.metric_type == MetricType.L2:
@@ -69,6 +91,7 @@ class VectorChordRQConfig(VectorChordIndexConfig):
     index: IndexType = IndexType.VCHORDRQ
     # Build parameters (top-level options)
     residual_quantization: bool = False
+    rerank_in_table: bool = False
     degree_of_parallelism: int | None = None  # default 32, range [1, 256]
     # Build parameters ([build.internal] section)
     lists: int | None = None
@@ -83,6 +106,8 @@ class VectorChordRQConfig(VectorChordIndexConfig):
 
     def index_param(self) -> dict:
         options_parts = []
+        if self.rerank_in_table:
+            options_parts.append("rerank_in_table = true")
         if self.residual_quantization:
             options_parts.append("residual_quantization = true")
         if self.degree_of_parallelism is not None:
@@ -98,6 +123,7 @@ class VectorChordRQConfig(VectorChordIndexConfig):
         return {
             "metric": self.parse_metric(),
             "index_type": self.index.value,
+            "quantization_type": self.quantization_type,
             "options": "\n".join(options_parts),
             "max_parallel_workers": self.max_parallel_workers,
         }
@@ -118,6 +144,50 @@ class VectorChordRQConfig(VectorChordIndexConfig):
         return params
 
 
+class VectorChordGraphConfig(VectorChordIndexConfig):
+    index: IndexType = IndexType.VCHORDG
+    # Build parameters
+    m: int | None = None  # default 32, max neighbors per vertex
+    ef_construction: int | None = None  # default 64
+    bits: int | None = None  # default 2, quantization ratio (1 or 2)
+    # PostgreSQL tuning parameter
+    max_parallel_workers: int | None = None
+    # Search parameters (GUCs)
+    ef_search: int | None = 64  # range [1, 65535]
+    beam_search: int | None = None  # default 1
+
+    def index_param(self) -> dict:
+        options_parts = []
+        if self.m is not None:
+            options_parts.append(f"m = {self.m}")
+        if self.ef_construction is not None:
+            options_parts.append(f"ef_construction = {self.ef_construction}")
+        if self.bits is not None:
+            options_parts.append(f"bits = {self.bits}")
+
+        return {
+            "metric": self.parse_metric(),
+            "index_type": self.index.value,
+            "quantization_type": self.quantization_type,
+            "options": "\n".join(options_parts),
+            "max_parallel_workers": self.max_parallel_workers,
+        }
+
+    def search_param(self) -> dict:
+        return {
+            "metric_fun_op": self.parse_metric_fun_op(),
+        }
+
+    def session_param(self) -> dict:
+        params = {}
+        if self.ef_search is not None:
+            params["vchordg.ef_search"] = str(self.ef_search)
+        if self.beam_search is not None:
+            params["vchordg.beam_search"] = str(self.beam_search)
+        return params
+
+
 _vectorchord_case_config = {
     IndexType.VCHORDRQ: VectorChordRQConfig,
+    IndexType.VCHORDG: VectorChordGraphConfig,
 }

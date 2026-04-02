@@ -44,6 +44,10 @@ class VectorChord(VectorDB):
         self._primary_field = "id"
         self._vector_field = "embedding"
 
+        index_param = self.case_config.index_param()
+        self._quantization_type = index_param["quantization_type"]
+        self._index_method = index_param["index_type"]
+
         self.conn, self.cursor = self._create_connection(**self.db_config)
 
         log.info(f"{self.name} config values: {self.db_config}\n{self.case_config}")
@@ -103,13 +107,16 @@ class VectorChord(VectorDB):
                 self.cursor.execute(command)
             self.conn.commit()
 
+        # Search query cast type: rabitq8/rabitq4 queries still accept ::vector input
+        cast_type = "vector"
+
         self._filtered_search = sql.Composed(
             [
                 sql.SQL("SELECT id FROM public.{} WHERE id >= %s ORDER BY embedding ").format(
                     sql.Identifier(self.table_name),
                 ),
                 sql.SQL(self.case_config.search_param()["metric_fun_op"]),
-                sql.SQL(" %s::vector LIMIT %s::int"),
+                sql.SQL(f" %s::{cast_type} LIMIT %s::int"),
             ],
         )
 
@@ -119,7 +126,7 @@ class VectorChord(VectorDB):
                     sql.Identifier(self.table_name),
                 ),
                 sql.SQL(self.case_config.search_param()["metric_fun_op"]),
-                sql.SQL(" %s::vector LIMIT %s::int"),
+                sql.SQL(f" %s::{cast_type} LIMIT %s::int"),
             ],
         )
 
@@ -204,18 +211,19 @@ class VectorChord(VectorDB):
         index_create_sql = sql.SQL(
             """
             CREATE INDEX IF NOT EXISTS {index_name} ON public.{table_name}
-            USING vchordrq (embedding {embedding_metric})
+            USING {index_method} (embedding {embedding_metric})
             """,
         ).format(
             index_name=sql.Identifier(self._index_name),
             table_name=sql.Identifier(self.table_name),
+            index_method=sql.SQL(self._index_method),
             embedding_metric=sql.Identifier(index_param["metric"]),
         )
 
         options_str = index_param.get("options", "")
         if options_str:
             with_clause = sql.SQL(
-                "WITH (options = $vchordrq$\n{options}\n$vchordrq$);",
+                "WITH (options = $vchord$\n{options}\n$vchord$);",
             ).format(options=sql.SQL(options_str))
         else:
             with_clause = sql.SQL(";")
@@ -232,10 +240,20 @@ class VectorChord(VectorDB):
         try:
             log.info(f"{self.name} client create table : {self.table_name}")
 
+            col_type = self._quantization_type
+            if col_type in ("rabitq8", "rabitq4"):
+                # rabitq types need vector column + quantization during insert
+                col_type = "vector"
+
             self.cursor.execute(
                 sql.SQL(
-                    "CREATE TABLE IF NOT EXISTS public.{table_name} (id BIGINT PRIMARY KEY, embedding vector({dim}));",
-                ).format(table_name=sql.Identifier(self.table_name), dim=dim),
+                    "CREATE TABLE IF NOT EXISTS public.{table_name} "
+                    "(id BIGINT PRIMARY KEY, embedding {col_type}({dim}));",
+                ).format(
+                    table_name=sql.Identifier(self.table_name),
+                    col_type=sql.SQL(col_type),
+                    dim=dim,
+                ),
             )
             self.conn.commit()
         except Exception as e:
@@ -255,14 +273,25 @@ class VectorChord(VectorDB):
             metadata_arr = np.array(metadata)
             embeddings_arr = np.array(embeddings)
 
-            with self.cursor.copy(
-                sql.SQL("COPY public.{table_name} FROM STDIN (FORMAT BINARY)").format(
-                    table_name=sql.Identifier(self.table_name),
-                ),
-            ) as copy:
-                copy.set_types(["bigint", "vector"])
-                for i, row in enumerate(metadata_arr):
-                    copy.write_row((row, embeddings_arr[i]))
+            if self._quantization_type == "halfvec":
+                with self.cursor.copy(
+                    sql.SQL("COPY public.{table_name} FROM STDIN (FORMAT BINARY)").format(
+                        table_name=sql.Identifier(self.table_name),
+                    ),
+                ) as copy:
+                    copy.set_types(["bigint", "halfvec"])
+                    for i, row in enumerate(metadata_arr):
+                        copy.write_row((row, np.float16(embeddings_arr[i])))
+            else:
+                # vector, rabitq8, rabitq4 all store as vector column
+                with self.cursor.copy(
+                    sql.SQL("COPY public.{table_name} FROM STDIN (FORMAT BINARY)").format(
+                        table_name=sql.Identifier(self.table_name),
+                    ),
+                ) as copy:
+                    copy.set_types(["bigint", "vector"])
+                    for i, row in enumerate(metadata_arr):
+                        copy.write_row((row, embeddings_arr[i]))
             self.conn.commit()
 
             return len(metadata), None
