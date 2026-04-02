@@ -109,14 +109,14 @@ class PolarDB(VectorDB):
         db_name = self.db_config["database"]
         hint = "/*+ SET_VAR(imci_enable_fast_vector_search=on) */"
 
-        self.insert_sql = f"INSERT INTO {db_name}.{self.table_name} (id, v) VALUES (%s, _binary %s)"  # noqa: S608
+        self.insert_sql = f"INSERT INTO {db_name}.{self.table_name} (id, v) VALUES (%s, _binary %s)"
         self.select_sql = (
-            f"SELECT {hint} id FROM {db_name}.{self.table_name} "  # noqa: S608
+            f"SELECT {hint} id FROM {db_name}.{self.table_name} "
             f"ORDER BY DISTANCE(v, _binary %s, '{metric_type}') "
             f"LIMIT %s"
         )
         self.select_sql_with_filter = (
-            f"SELECT id FROM {db_name}.{self.table_name} "  # noqa: S608
+            f"SELECT id FROM {db_name}.{self.table_name} "
             f"WHERE id >= %s "
             f"ORDER BY DISTANCE(v, _binary %s, '{metric_type}') "
             f"LIMIT %s"
@@ -218,7 +218,7 @@ class PolarDB(VectorDB):
         conn, cursor = self._create_connection()
         try:
             db_name = self.db_config["database"]
-            insert_sql = f"INSERT INTO {db_name}.{self.table_name} (id, v) VALUES (%s, _binary %s)"  # noqa: S608
+            insert_sql = f"INSERT INTO {db_name}.{self.table_name} (id, v) VALUES (%s, _binary %s)"
             batch_data = []
             for i in range(offset, offset + size):
                 batch_data.append((int(metadata[i]), self.vector_to_hex(embeddings[i])))
