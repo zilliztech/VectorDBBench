@@ -59,6 +59,7 @@ class DB(Enum):
     Zvec = "Zvec"
     Endee = "Endee"
     Lindorm = "Lindorm"
+    VectorChord = "VectorChord"
 
     @property
     def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901, PLR0915
@@ -245,6 +246,11 @@ class DB(Enum):
             from .lindorm.lindorm_search import LindormVector
 
             return LindormVector
+
+        if self == DB.VectorChord:
+            from .vectorchord.vectorchord import VectorChord
+
+            return VectorChord
 
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
@@ -435,6 +441,11 @@ class DB(Enum):
 
             return LindormConfig
 
+        if self == DB.VectorChord:
+            from .vectorchord.config import VectorChordConfig
+
+            return VectorChordConfig
+
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
 
@@ -600,6 +611,11 @@ class DB(Enum):
             from .lindorm.config import _lindorm_vector_case_config
 
             return _lindorm_vector_case_config.get(index_type)
+
+        if self == DB.VectorChord:
+            from .vectorchord.config import _vectorchord_case_config
+
+            return _vectorchord_case_config.get(index_type)
 
         # DB.Pinecone, DB.Redis
         return EmptyDBCaseConfig
