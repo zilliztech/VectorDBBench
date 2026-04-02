@@ -39,8 +39,9 @@ dependencies = [
     "environs",
     "pydantic<v2",
     "scikit-learn",
-    "pymilvus", # with pandas, numpy, ujson
+    "pymilvus", # with pandas, numpy
     "hdrhistogram>=0.10.1",
+    "ujson",
 ]
 dynamic = ["version"]
 
