@@ -2,20 +2,17 @@ import concurrent.futures
 import logging
 import multiprocessing as mp
 import pathlib
-import signal
 import traceback
 import uuid
-from collections.abc import Callable
 from enum import Enum
 from multiprocessing.connection import Connection
-
-import psutil
 
 from . import config
 from .backend.assembler import Assembler, FilterNotSupportedError
 from .backend.data_source import DatasetSource
 from .backend.result_collector import ResultCollector
 from .backend.task_runner import TaskRunner
+from .backend.utils import kill_proc_tree
 from .metric import Metric
 from .models import (
     CaseResult,
@@ -240,7 +237,7 @@ class BenchMarkRunner:
             for r in self.running_task.case_runners:
                 r.stop()
 
-            self.kill_proc_tree(timeout=5)
+            kill_proc_tree()
             self.running_task = None
 
         if self.receive_conn:
@@ -260,30 +257,6 @@ class BenchMarkRunner:
         global_result_future = executor.submit(self._async_task_v2, self.running_task, conn)
 
         return True
-
-    def kill_proc_tree(
-        self,
-        sig: int = signal.SIGTERM,
-        timeout: float | None = None,
-        on_terminate: Callable | None = None,
-    ):
-        """Kill a process tree (including grandchildren) with signal
-        "sig" and return a (gone, still_alive) tuple.
-        "on_terminate", if specified, is a callback function which is
-        called as soon as a child terminates.
-        """
-        children = psutil.Process().children(recursive=True)
-        for p in children:
-            try:
-                log.warning(f"sending SIGTERM to child process: {p}")
-                p.send_signal(sig)
-            except psutil.NoSuchProcess:
-                pass
-        _, alive = psutil.wait_procs(children, timeout=timeout, callback=on_terminate)
-
-        for p in alive:
-            log.warning(f"force killing child process: {p}")
-            p.kill()
 
 
 benchmark_runner = BenchMarkRunner()

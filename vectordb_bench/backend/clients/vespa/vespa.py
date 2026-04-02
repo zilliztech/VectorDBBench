@@ -107,7 +107,7 @@ class Vespa(VectorDB):
         embedding_field = "embedding" if self.case_config.quantization_type == "none" else "embedding_binary"
 
         yql = (
-            f"select id from {self.schema_name} where "  # noqa: S608
+            f"select id from {self.schema_name} where "
             f"{{targetHits: {k}, hnsw.exploreAdditionalHits: {extra_ef}}}"
             f"nearestNeighbor({embedding_field}, query_embedding)"
         )

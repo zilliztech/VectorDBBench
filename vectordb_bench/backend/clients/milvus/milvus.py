@@ -5,7 +5,7 @@ import time
 from collections.abc import Iterable
 from contextlib import contextmanager
 
-from pymilvus import Collection, CollectionSchema, DataType, FieldSchema, MilvusException, utility
+from pymilvus import DataType, MilvusClient, MilvusException
 
 from vectordb_bench.backend.filter import Filter, FilterOp
 
@@ -51,76 +51,72 @@ class Milvus(VectorDB):
         self._scalar_id_index_name = "id_sort_idx"
         self._scalar_labels_index_name = "labels_idx"
 
-        from pymilvus import connections
-
-        connections.connect(
+        client = MilvusClient(
             uri=self.db_config.get("uri"),
             user=self.db_config.get("user"),
             password=self.db_config.get("password"),
             timeout=30,
         )
-        if drop_old and utility.has_collection(self.collection_name):
-            log.info(f"{self.name} client drop_old collection: {self.collection_name}")
-            utility.drop_collection(self.collection_name)
 
-        if not utility.has_collection(self.collection_name):
-            fields = [
-                FieldSchema(self._primary_field, DataType.INT64, is_primary=True),
-                FieldSchema(self._scalar_id_field, DataType.INT64),
-                FieldSchema(self._vector_field, DataType.FLOAT_VECTOR, dim=dim),
-            ]
+        if drop_old and client.has_collection(self.collection_name):
+            log.info(f"{self.name} client drop_old collection: {self.collection_name}")
+            client.drop_collection(self.collection_name)
+
+        if not client.has_collection(self.collection_name):
+            schema = MilvusClient.create_schema()
+            schema.add_field(self._primary_field, DataType.INT64, is_primary=True)
+            schema.add_field(self._scalar_id_field, DataType.INT64)
+            schema.add_field(self._vector_field, DataType.FLOAT_VECTOR, dim=dim)
+
             if self.with_scalar_labels:
                 is_partition_key = db_case_config.use_partition_key
                 log.info(f"with_scalar_labels, add a new varchar field, as partition_key: {is_partition_key}")
-                fields.append(
-                    FieldSchema(
-                        self._scalar_label_field,
-                        DataType.VARCHAR,
-                        max_length=256,
-                        is_partition_key=is_partition_key,
-                    )
+                schema.add_field(
+                    self._scalar_label_field,
+                    DataType.VARCHAR,
+                    max_length=256,
+                    is_partition_key=is_partition_key,
                 )
 
             log.info(f"{self.name} create collection: {self.collection_name}")
 
-            # Create the collection
-            col = Collection(
-                name=self.collection_name,
-                schema=CollectionSchema(fields),
-                consistency_level="Session",
+            index_params = self._build_index_params()
+            client.create_collection(
+                collection_name=self.collection_name,
+                schema=schema,
                 num_shards=self.db_config.get("num_shards", 1),
+                consistency_level="Session",
+            )
+            client.create_index(self.collection_name, index_params)
+            client.load_collection(
+                self.collection_name,
+                replica_number=self.db_config.get("replica_number", 1),
             )
 
-            self.create_index()
-            col.load(replica_number=self.db_config.get("replica_number", 1))
+        client.close()
 
-        connections.disconnect("default")
-
-    def create_index(self):
-        col = Collection(self.collection_name)
-        # vector index
-        col.create_index(
-            self._vector_field,
-            self.case_config.index_param(),
+    def _build_index_params(self):
+        index_params = MilvusClient.prepare_index_params()
+        vec_idx = self.case_config.index_param()
+        index_params.add_index(
+            field_name=self._vector_field,
             index_name=self._vector_index_name,
+            index_type=vec_idx.get("index_type", ""),
+            metric_type=vec_idx.get("metric_type", ""),
+            params=vec_idx.get("params", {}),
         )
-        # scalar index for range-expr (int-filter)
-        col.create_index(
-            self._scalar_id_field,
-            index_params={
-                "index_type": "STL_SORT",
-            },
+        index_params.add_index(
+            field_name=self._scalar_id_field,
             index_name=self._scalar_id_index_name,
+            index_type="STL_SORT",
         )
-        # scalar index for varchar (label-filter)
         if self.with_scalar_labels:
-            col.create_index(
-                self._scalar_label_field,
-                index_params={
-                    "index_type": "BITMAP",
-                },
+            index_params.add_index(
+                field_name=self._scalar_label_field,
                 index_name=self._scalar_labels_index_name,
+                index_type="BITMAP",
             )
+        return index_params
 
     @contextmanager
     def init(self):
@@ -130,65 +126,69 @@ class Milvus(VectorDB):
             >>>     self.insert_embeddings()
             >>>     self.search_embedding()
         """
-        from pymilvus import connections
-
-        self.col: Collection | None = None
-
-        connections.connect(**self.db_config, timeout=60)
-        # Grab the existing colection with connections
-        self.col = Collection(self.collection_name)
-
+        self.client: MilvusClient | None = None
+        self.client = MilvusClient(
+            uri=self.db_config.get("uri"),
+            user=self.db_config.get("user"),
+            password=self.db_config.get("password"),
+            timeout=60,
+        )
         yield
-        connections.disconnect("default")
+        self.client.close()
+        self.client = None
+
+    def _wait_for_segments_sorted(self):
+        while True:
+            segments = self.client.list_persistent_segments(self.collection_name)
+            unsorted = [s for s in segments if not s.is_sorted]
+            if not unsorted:
+                log.info(f"{self.name} all persistent segments are sorted.")
+                break
+            log.debug(f"{self.name} waiting for {len(unsorted)} segments to be sorted...")
+            time.sleep(5)
+
+    def _wait_for_index(self):
+        while True:
+            info = self.client.describe_index(self.collection_name, self._vector_index_name)
+            if info.get("pending_index_rows", -1) == 0:
+                break
+            time.sleep(5)
+
+    def _wait_for_compaction(self, compaction_id: int):
+        while True:
+            state = self.client.get_compaction_state(compaction_id)
+            if state == "Completed":
+                break
+            time.sleep(0.5)
 
     def _optimize(self):
         log.info(f"{self.name} optimizing before search")
-        self._post_insert()
         try:
-            self.col.load(refresh=True)
-        except Exception as e:
-            log.warning(f"{self.name} optimize error: {e}")
-            raise e from None
-
-    def _post_insert(self):
-        try:
-            self.col.flush()
-            # wait for index done and load refresh
-            self.create_index()
-
-            utility.wait_for_index_building_complete(self.collection_name, index_name=self._vector_index_name)
-
-            def wait_index():
-                while True:
-                    progress = utility.index_building_progress(self.collection_name, index_name=self._vector_index_name)
-                    if progress.get("pending_index_rows", -1) == 0:
-                        break
-                    time.sleep(5)
-
-            wait_index()
-
-            # Skip compaction if use GPU indexType
+            self.client.flush(self.collection_name)
+            self._wait_for_segments_sorted()
+            self._wait_for_index()
             if self.case_config.is_gpu_index:
-                log.debug("skip compaction for gpu index type.")
+                log.debug("skip force merge compaction for gpu index type.")
             else:
                 try:
-                    self.col.compact()
-                    self.col.wait_for_compaction_completed()
-                    log.info("compactation completed. waiting for the rest of index buliding.")
+                    compaction_id = self.client.compact(self.collection_name, target_size=(2**63 - 1))
+                    if compaction_id > 0:
+                        self._wait_for_compaction(compaction_id)
+                    log.info(f"{self.name} force merge compaction completed.")
+                    self._wait_for_index()
                 except Exception as e:
                     log.warning(f"{self.name} compact error: {e}")
-                    if hasattr(e, "code"):
-                        if e.code().name == "PERMISSION_DENIED":
-                            log.warning("Skip compact due to permission denied.")
+                    if hasattr(e, "code") and e.code().name == "PERMISSION_DENIED":
+                        log.warning("Skip compact due to permission denied.")
                     else:
-                        raise e from e
-                wait_index()
+                        raise e from None
+            self.client.refresh_load(self.collection_name)
         except Exception as e:
             log.warning(f"{self.name} optimize error: {e}")
             raise e from None
 
     def optimize(self, data_size: int | None = None):
-        assert self.col, "Please call self.init() before"
+        assert self.client, "Please call self.init() before"
         self._optimize()
 
     def need_normalize_cosine(self) -> bool:
@@ -207,22 +207,24 @@ class Milvus(VectorDB):
         **kwargs,
     ) -> tuple[int, Exception]:
         """Insert embeddings into Milvus. should call self.init() first"""
-        # use the first insert_embeddings to init collection
-        assert self.col is not None
+        assert self.client is not None
         assert len(embeddings) == len(metadata)
         insert_count = 0
         try:
             for batch_start_offset in range(0, len(embeddings), self.batch_size):
                 batch_end_offset = min(batch_start_offset + self.batch_size, len(embeddings))
-                insert_data = [
-                    metadata[batch_start_offset:batch_end_offset],
-                    metadata[batch_start_offset:batch_end_offset],
-                    embeddings[batch_start_offset:batch_end_offset],
-                ]
-                if self.with_scalar_labels:
-                    insert_data.append(labels_data[batch_start_offset:batch_end_offset])
-                res = self.col.insert(insert_data)
-                insert_count += len(res.primary_keys)
+                batch_data = []
+                for i in range(batch_start_offset, batch_end_offset):
+                    row = {
+                        self._primary_field: metadata[i],
+                        self._scalar_id_field: metadata[i],
+                        self._vector_field: embeddings[i],
+                    }
+                    if self.with_scalar_labels:
+                        row[self._scalar_label_field] = labels_data[i]
+                    batch_data.append(row)
+                res = self.client.insert(self.collection_name, batch_data)
+                insert_count += res["insert_count"]
         except MilvusException as e:
             log.info(f"Failed to insert data: {e}")
             return insert_count, e
@@ -246,16 +248,15 @@ class Milvus(VectorDB):
         timeout: int | None = None,
     ) -> list[int]:
         """Perform a search on a query embedding and return results."""
-        assert self.col is not None
+        assert self.client is not None
 
-        # Perform the search.
-        res = self.col.search(
+        res = self.client.search(
+            collection_name=self.collection_name,
             data=[query],
             anns_field=self._vector_field,
-            param=self.case_config.search_param(),
+            search_params=self.case_config.search_param(),
             limit=k,
-            expr=self.expr,
+            filter=self.expr,
         )
 
-        # Organize results.
-        return [result.id for result in res[0]]
+        return [result[self._primary_field] for result in res[0]]

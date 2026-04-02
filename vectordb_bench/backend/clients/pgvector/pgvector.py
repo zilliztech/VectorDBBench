@@ -21,6 +21,7 @@ log = logging.getLogger(__name__)
 class PgVector(VectorDB):
     """Use psycopg instructions"""
 
+    thread_safe: bool = False
     supported_filter_types: list[FilterOp] = [
         FilterOp.NonFilter,
         FilterOp.NumGE,
