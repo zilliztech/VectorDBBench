@@ -33,6 +33,7 @@ from ..backend.clients.tencent_elasticsearch.cli import TencentElasticsearch
 from ..backend.clients.test.cli import Test
 from ..backend.clients.tidb.cli import TiDB
 from ..backend.clients.turbopuffer.cli import TurboPuffer
+from ..backend.clients.vectorchord.cli import VectorChordRQ
 from ..backend.clients.vespa.cli import Vespa
 from ..backend.clients.weaviate_cloud.cli import Weaviate
 from ..backend.clients.zilliz_cloud.cli import ZillizAutoIndex
@@ -82,6 +83,7 @@ cli.add_command(LindormIVFPQ)
 cli.add_command(LindormHNSW)
 cli.add_command(LindormIVFBQ)
 cli.add_command(Pinecone)
+cli.add_command(VectorChordRQ)
 
 
 if __name__ == "__main__":
