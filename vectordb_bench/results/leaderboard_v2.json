@@ -1470,357 +1470,7 @@
     "filter_ratio": 0.98
   },
   {
-    "dataset": "Cohere (Medium)",
-    "db": "ElasticCloud",
-    "label": "8c60g-force_merge",
-    "db_name": "ElasticCloud-8c60g-force_merge",
-    "qps": 2030.4249,
-    "latency": 10.6,
-    "recall": 0.925,
-    "filter_ratio": 0.0
-  },
-  {
-    "dataset": "Cohere (Medium)",
-    "db": "ElasticCloud",
-    "label": "8c60g-force_merge",
-    "db_name": "ElasticCloud-8c60g-force_merge",
-    "qps": 1804.8996,
-    "latency": 12.3,
-    "recall": 0.9365,
-    "filter_ratio": 0.0
-  },
-  {
-    "dataset": "Cohere (Medium)",
-    "db": "ElasticCloud",
-    "label": "8c60g-force_merge",
-    "db_name": "ElasticCloud-8c60g-force_merge",
-    "qps": 2353.8935,
-    "latency": 17.1,
-    "recall": 0.9056,
-    "filter_ratio": 0.0
-  },
-  {
-    "dataset": "Cohere (Medium)",
-    "db": "ElasticCloud",
-    "label": "8c60g-force_merge",
-    "db_name": "ElasticCloud-8c60g-force_merge",
-    "qps": 1623.8421,
-    "latency": 11.8,
-    "recall": 0.945,
-    "filter_ratio": 0.0
-  },
-  {
-    "dataset": "Cohere (Medium)",
-    "db": "ElasticCloud",
-    "label": "8c60g-force_merge",
-    "db_name": "ElasticCloud-8c60g-force_merge",
-    "qps": 2808.2421,
-    "latency": 9.5,
-    "recall": 0.8674,
-    "filter_ratio": 0.0
-  },
-  {
-    "dataset": "Cohere (Medium)",
-    "db": "ElasticCloud",
-    "label": "8c60g-force_merge",
-    "db_name": "ElasticCloud-8c60g-force_merge",
-    "qps": 1482.3772,
-    "latency": 12.1,
-    "recall": 0.9523,
-    "filter_ratio": 0.0
-  },
-  {
-    "dataset": "Unknown",
-    "db": "ElasticCloud",
-    "label": "8c60g-force_merge",
-    "db_name": "ElasticCloud-8c60g-force_merge",
-    "qps": 1721.5416,
-    "latency": 9.6,
-    "recall": 0.876,
-    "filter_ratio": 0.0
-  },
-  {
-    "dataset": "Unknown",
-    "db": "ElasticCloud",
-    "label": "8c60g-force_merge",
-    "db_name": "ElasticCloud-8c60g-force_merge",
-    "qps": 1032.9696,
-    "latency": 14.8,
-    "recall": 0.9299,
-    "filter_ratio": 0.0
-  },
-  {
-    "dataset": "Unknown",
-    "db": "ElasticCloud",
-    "label": "8c60g-force_merge",
-    "db_name": "ElasticCloud-8c60g-force_merge",
-    "qps": 1150.4393,
-    "latency": 13.4,
-    "recall": 0.9225,
-    "filter_ratio": 0.0
-  },
-  {
-    "dataset": "Unknown",
-    "db": "ElasticCloud",
-    "label": "8c60g-force_merge",
-    "db_name": "ElasticCloud-8c60g-force_merge",
-    "qps": 1452.1536,
-    "latency": 10.8,
-    "recall": 0.8973,
-    "filter_ratio": 0.0
-  },
-  {
-    "dataset": "Unknown",
-    "db": "ElasticCloud",
-    "label": "8c60g-force_merge",
-    "db_name": "ElasticCloud-8c60g-force_merge",
-    "qps": 2181.3939,
-    "latency": 9.4,
-    "recall": 0.8353,
-    "filter_ratio": 0.0
-  },
-  {
-    "dataset": "Unknown",
-    "db": "ElasticCloud",
-    "label": "8c60g-force_merge",
-    "db_name": "ElasticCloud-8c60g-force_merge",
-    "qps": 1295.5543,
-    "latency": 11.2,
-    "recall": 0.9126,
-    "filter_ratio": 0.0
-  },
-  {
-    "dataset": "Cohere (Medium)",
-    "db": "ZillizCloud",
-    "label": "8cu-perf",
-    "db_name": "ZillizCloud-8cu-perf",
-    "qps": 9441.1235,
-    "latency": 5.2,
-    "recall": 0.9589,
-    "filter_ratio": 0.0
-  },
-  {
-    "dataset": "Cohere (Medium)",
-    "db": "ZillizCloud",
-    "label": "8cu-perf",
-    "db_name": "ZillizCloud-8cu-perf",
-    "qps": 6125.6146,
-    "latency": 4.9,
-    "recall": 0.9919,
-    "filter_ratio": 0.0
-  },
-  {
-    "dataset": "Unknown",
-    "db": "ZillizCloud",
-    "label": "8cu-perf-force_merge",
-    "db_name": "ZillizCloud-8cu-perf-force_merge",
-    "qps": 5502.1797,
-    "latency": 3.8,
-    "recall": 0.9452,
-    "filter_ratio": 0.0
-  },
-  {
-    "dataset": "Unknown",
-    "db": "ZillizCloud",
-    "label": "8cu-perf",
-    "db_name": "ZillizCloud-8cu-perf",
-    "qps": 1827.5849,
-    "latency": 5.4,
-    "recall": 0.9903,
-    "filter_ratio": 0.0
-  },
-  {
-    "dataset": "Unknown",
-    "db": "ZillizCloud",
-    "label": "8cu-perf",
-    "db_name": "ZillizCloud-8cu-perf",
-    "qps": 1938.1932,
-    "latency": 5.6,
-    "recall": 0.989,
-    "filter_ratio": 0.0
-  },
-  {
-    "dataset": "Unknown",
-    "db": "ZillizCloud",
-    "label": "8cu-perf-force_merge",
-    "db_name": "ZillizCloud-8cu-perf-force_merge",
-    "qps": 3778.8811,
-    "latency": 4.8,
-    "recall": 0.9828,
-    "filter_ratio": 0.0
-  },
-  {
-    "dataset": "Unknown",
-    "db": "ZillizCloud",
-    "label": "8cu-perf",
-    "db_name": "ZillizCloud-8cu-perf",
-    "qps": 3974.8218,
-    "latency": 4.8,
-    "recall": 0.9396,
-    "filter_ratio": 0.0
-  },
-  {
-    "dataset": "Unknown",
-    "db": "ZillizCloud",
-    "label": "8cu-perf",
-    "db_name": "ZillizCloud-8cu-perf",
-    "qps": 2971.1402,
-    "latency": 11.6,
-    "recall": 0.9729,
-    "filter_ratio": 0.0
-  },
-  {
-    "dataset": "Cohere (Medium)",
-    "db": "ZillizCloud",
-    "label": "8cu-perf",
-    "db_name": "ZillizCloud-8cu-perf",
-    "qps": 8441.533,
-    "latency": 6.9,
-    "recall": 0.9785,
-    "filter_ratio": 0.0
-  },
-  {
-    "dataset": "Unknown",
-    "db": "ZillizCloud",
-    "label": "8cu-perf-force_merge",
-    "db_name": "ZillizCloud-8cu-perf-force_merge",
-    "qps": 2703.5422,
-    "latency": 12.9,
-    "recall": 0.9903,
-    "filter_ratio": 0.0
-  },
-  {
-    "dataset": "Unknown",
-    "db": "ZillizCloud",
-    "label": "8cu-perf",
-    "db_name": "ZillizCloud-8cu-perf",
-    "qps": 1628.2736,
-    "latency": 5.6,
-    "recall": 0.9913,
-    "filter_ratio": 0.0
-  },
-  {
-    "dataset": "Cohere (Medium)",
-    "db": "ZillizCloud",
-    "label": "8cu-perf",
-    "db_name": "ZillizCloud-8cu-perf",
-    "qps": 5019.5973,
-    "latency": 5.7,
-    "recall": 0.994,
-    "filter_ratio": 0.0
-  },
-  {
-    "dataset": "Cohere (Medium)",
-    "db": "ZillizCloud",
-    "label": "8cu-perf",
-    "db_name": "ZillizCloud-8cu-perf",
-    "qps": 7364.0396,
-    "latency": 4.0,
-    "recall": 0.9893,
-    "filter_ratio": 0.0
-  },
-  {
-    "dataset": "Unknown",
-    "db": "ZillizCloud",
-    "label": "8cu-perf",
-    "db_name": "ZillizCloud-8cu-perf",
-    "qps": 2724.9239,
-    "latency": 12.4,
-    "recall": 0.9811,
-    "filter_ratio": 0.0
-  },
-  {
-    "dataset": "Unknown",
-    "db": "ZillizCloud",
-    "label": "8cu-perf-force_merge",
-    "db_name": "ZillizCloud-8cu-perf-force_merge",
-    "qps": 5514.815,
-    "latency": 4.2,
-    "recall": 0.9286,
-    "filter_ratio": 0.0
-  },
-  {
-    "dataset": "Cohere (Medium)",
-    "db": "ZillizCloud",
-    "label": "8cu-perf",
-    "db_name": "ZillizCloud-8cu-perf",
-    "qps": 9901.1114,
-    "latency": 3.9,
-    "recall": 0.9385,
-    "filter_ratio": 0.0
-  },
-  {
-    "dataset": "Unknown",
-    "db": "ZillizCloud",
-    "label": "8cu-perf-force_merge",
-    "db_name": "ZillizCloud-8cu-perf-force_merge",
-    "qps": 3258.8508,
-    "latency": 11.7,
-    "recall": 0.9888,
-    "filter_ratio": 0.0
-  },
-  {
-    "dataset": "Cohere (Medium)",
-    "db": "ZillizCloud",
-    "label": "8cu-perf",
-    "db_name": "ZillizCloud-8cu-perf",
-    "qps": 5907.441,
-    "latency": 5.7,
-    "recall": 0.9931,
-    "filter_ratio": 0.0
-  },
-  {
-    "dataset": "Unknown",
-    "db": "ZillizCloud",
-    "label": "8cu-perf-force_merge",
-    "db_name": "ZillizCloud-8cu-perf-force_merge",
-    "qps": 5064.6982,
-    "latency": 4.3,
-    "recall": 0.9558,
-    "filter_ratio": 0.0
-  },
-  {
-    "dataset": "Unknown",
-    "db": "ZillizCloud",
-    "label": "8cu-perf",
-    "db_name": "ZillizCloud-8cu-perf",
-    "qps": 3468.5933,
-    "latency": 4.5,
-    "recall": 0.9634,
-    "filter_ratio": 0.0
-  },
-  {
-    "dataset": "Unknown",
-    "db": "ZillizCloud",
-    "label": "8cu-perf",
-    "db_name": "ZillizCloud-8cu-perf",
-    "qps": 2401.3204,
-    "latency": 10.7,
-    "recall": 0.9866,
-    "filter_ratio": 0.0
-  },
-  {
-    "dataset": "Unknown",
-    "db": "ZillizCloud",
-    "label": "8cu-perf-force_merge",
-    "db_name": "ZillizCloud-8cu-perf-force_merge",
-    "qps": 3568.396,
-    "latency": 4.8,
-    "recall": 0.9863,
-    "filter_ratio": 0.0
-  },
-  {
-    "dataset": "Unknown",
-    "db": "ZillizCloud",
-    "label": "8cu-perf-force_merge",
-    "db_name": "ZillizCloud-8cu-perf-force_merge",
-    "qps": 4674.1861,
-    "latency": 4.5,
-    "recall": 0.967,
-    "filter_ratio": 0.0
-  },
-  {
-    "dataset": "Unknown",
+    "dataset": "Cohere (Large)",
     "db": "Milvus",
     "label": "16c64g-sq4u-fp16-force_merge",
     "db_name": "Milvus-16c64g-sq4u-fp16-force_merge",
@@ -1830,7 +1480,7 @@
     "filter_ratio": 0.0
   },
   {
-    "dataset": "Unknown",
+    "dataset": "Cohere (Large)",
     "db": "Milvus",
     "label": "16c64g-sq4u-fp16-force_merge",
     "db_name": "Milvus-16c64g-sq4u-fp16-force_merge",
@@ -1840,7 +1490,7 @@
     "filter_ratio": 0.0
   },
   {
-    "dataset": "Unknown",
+    "dataset": "Cohere (Large)",
     "db": "Milvus",
     "label": "16c64g-sq4u-fp16-force_merge",
     "db_name": "Milvus-16c64g-sq4u-fp16-force_merge",
@@ -1850,7 +1500,7 @@
     "filter_ratio": 0.0
   },
   {
-    "dataset": "Unknown",
+    "dataset": "Cohere (Large)",
     "db": "Milvus",
     "label": "16c64g-sq4u-fp16-force_merge",
     "db_name": "Milvus-16c64g-sq4u-fp16-force_merge",
@@ -1860,7 +1510,7 @@
     "filter_ratio": 0.0
   },
   {
-    "dataset": "Unknown",
+    "dataset": "Cohere (Large)",
     "db": "Milvus",
     "label": "16c64g-sq4u-fp16-force_merge",
     "db_name": "Milvus-16c64g-sq4u-fp16-force_merge",
@@ -1870,7 +1520,7 @@
     "filter_ratio": 0.0
   },
   {
-    "dataset": "Unknown",
+    "dataset": "Cohere (Large)",
     "db": "Milvus",
     "label": "16c64g-sq4u-fp16-force_merge",
     "db_name": "Milvus-16c64g-sq4u-fp16-force_merge",
@@ -1880,7 +1530,7 @@
     "filter_ratio": 0.0
   },
   {
-    "dataset": "Unknown",
+    "dataset": "Cohere (Large)",
     "db": "Milvus",
     "label": "16c64g-sq4u-fp16-force_merge",
     "db_name": "Milvus-16c64g-sq4u-fp16-force_merge",
@@ -1890,7 +1540,7 @@
     "filter_ratio": 0.0
   },
   {
-    "dataset": "Unknown",
+    "dataset": "Cohere (Large)",
     "db": "Milvus",
     "label": "16c64g-sq4u-fp16-force_merge",
     "db_name": "Milvus-16c64g-sq4u-fp16-force_merge",
@@ -1900,7 +1550,7 @@
     "filter_ratio": 0.0
   },
   {
-    "dataset": "Unknown",
+    "dataset": "Cohere (Large)",
     "db": "Milvus",
     "label": "16c64g-sq8-force_merge",
     "db_name": "Milvus-16c64g-sq8-force_merge",
@@ -1910,7 +1560,7 @@
     "filter_ratio": 0.0
   },
   {
-    "dataset": "Unknown",
+    "dataset": "Cohere (Large)",
     "db": "Milvus",
     "label": "16c64g-sq8-force_merge",
     "db_name": "Milvus-16c64g-sq8-force_merge",
@@ -1920,7 +1570,7 @@
     "filter_ratio": 0.0
   },
   {
-    "dataset": "Unknown",
+    "dataset": "Cohere (Large)",
     "db": "Milvus",
     "label": "16c64g-sq8-force_merge",
     "db_name": "Milvus-16c64g-sq8-force_merge",
@@ -1930,7 +1580,7 @@
     "filter_ratio": 0.0
   },
   {
-    "dataset": "Unknown",
+    "dataset": "Cohere (Large)",
     "db": "Milvus",
     "label": "16c64g-sq8-force_merge",
     "db_name": "Milvus-16c64g-sq8-force_merge",
@@ -1940,7 +1590,7 @@
     "filter_ratio": 0.0
   },
   {
-    "dataset": "Unknown",
+    "dataset": "Cohere (Large)",
     "db": "Milvus",
     "label": "16c64g-sq8-force_merge",
     "db_name": "Milvus-16c64g-sq8-force_merge",
@@ -1950,7 +1600,7 @@
     "filter_ratio": 0.0
   },
   {
-    "dataset": "Unknown",
+    "dataset": "Cohere (Large)",
     "db": "Milvus",
     "label": "16c64g-sq8-force_merge",
     "db_name": "Milvus-16c64g-sq8-force_merge",
@@ -1960,7 +1610,7 @@
     "filter_ratio": 0.0
   },
   {
-    "dataset": "Unknown",
+    "dataset": "Cohere (Large)",
     "db": "Milvus",
     "label": "16c64g-sq8-force_merge",
     "db_name": "Milvus-16c64g-sq8-force_merge",
@@ -1970,7 +1620,7 @@
     "filter_ratio": 0.0
   },
   {
-    "dataset": "Unknown",
+    "dataset": "Cohere (Large)",
     "db": "Milvus",
     "label": "16c64g-sq8-force_merge",
     "db_name": "Milvus-16c64g-sq8-force_merge",
@@ -2137,6 +1787,1166 @@
     "qps": 2084.6245,
     "latency": 5.0,
     "recall": 0.9819,
+    "filter_ratio": 0.0
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "Milvus",
+    "label": "16c64g-sq8-partition_key",
+    "db_name": "Milvus-16c64g-sq8-partition_key",
+    "qps": 11763.5538,
+    "latency": 1.5,
+    "recall": 1.0,
+    "filter_ratio": 0.999
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "Milvus",
+    "label": "16c64g-sq8-partition_key",
+    "db_name": "Milvus-16c64g-sq8-partition_key",
+    "qps": 11803.1944,
+    "latency": 1.5,
+    "recall": 0.9778,
+    "filter_ratio": 0.998
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "Milvus",
+    "label": "16c64g-sq8-partition_key",
+    "db_name": "Milvus-16c64g-sq8-partition_key",
+    "qps": 11520.9234,
+    "latency": 1.5,
+    "recall": 0.9634,
+    "filter_ratio": 0.995
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "Milvus",
+    "label": "16c64g-sq8-partition_key",
+    "db_name": "Milvus-16c64g-sq8-partition_key",
+    "qps": 11280.0849,
+    "latency": 1.6,
+    "recall": 0.9507,
+    "filter_ratio": 0.99
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "Milvus",
+    "label": "16c64g-sq8-partition_key",
+    "db_name": "Milvus-16c64g-sq8-partition_key",
+    "qps": 10671.8925,
+    "latency": 1.7,
+    "recall": 0.9339,
+    "filter_ratio": 0.98
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "Milvus",
+    "label": "16c64g-sq8-partition_key",
+    "db_name": "Milvus-16c64g-sq8-partition_key",
+    "qps": 10258.2661,
+    "latency": 1.7,
+    "recall": 0.9139,
+    "filter_ratio": 0.95
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "Milvus",
+    "label": "16c64g-sq8-partition_key",
+    "db_name": "Milvus-16c64g-sq8-partition_key",
+    "qps": 9681.5656,
+    "latency": 1.9,
+    "recall": 0.9008,
+    "filter_ratio": 0.9
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "Milvus",
+    "label": "16c64g-sq8-partition_key",
+    "db_name": "Milvus-16c64g-sq8-partition_key",
+    "qps": 8945.4041,
+    "latency": 1.9,
+    "recall": 0.8894,
+    "filter_ratio": 0.8
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "Milvus",
+    "label": "16c64g-sq8-partition_key",
+    "db_name": "Milvus-16c64g-sq8-partition_key",
+    "qps": 5436.8907,
+    "latency": 2.0,
+    "recall": 0.929,
+    "filter_ratio": 0.5
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "Milvus",
+    "label": "16c64g-sq8-partition_key",
+    "db_name": "Milvus-16c64g-sq8-partition_key",
+    "qps": 11397.7043,
+    "latency": 1.6,
+    "recall": 0.9597,
+    "filter_ratio": 0.999
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "Milvus",
+    "label": "16c64g-sq8-partition_key",
+    "db_name": "Milvus-16c64g-sq8-partition_key",
+    "qps": 10891.7531,
+    "latency": 1.7,
+    "recall": 0.9408,
+    "filter_ratio": 0.998
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "Milvus",
+    "label": "16c64g-sq8-partition_key",
+    "db_name": "Milvus-16c64g-sq8-partition_key",
+    "qps": 10276.7451,
+    "latency": 1.7,
+    "recall": 0.9159,
+    "filter_ratio": 0.995
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "Milvus",
+    "label": "16c64g-sq8-partition_key",
+    "db_name": "Milvus-16c64g-sq8-partition_key",
+    "qps": 9664.2855,
+    "latency": 1.8,
+    "recall": 0.899,
+    "filter_ratio": 0.99
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "Milvus",
+    "label": "16c64g-sq8-partition_key",
+    "db_name": "Milvus-16c64g-sq8-partition_key",
+    "qps": 8936.7962,
+    "latency": 2.0,
+    "recall": 0.8835,
+    "filter_ratio": 0.98
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "Milvus",
+    "label": "16c64g-sq8-partition_key",
+    "db_name": "Milvus-16c64g-sq8-partition_key",
+    "qps": 5671.2562,
+    "latency": 2.1,
+    "recall": 0.903,
+    "filter_ratio": 0.95
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "Milvus",
+    "label": "16c64g-sq8-partition_key",
+    "db_name": "Milvus-16c64g-sq8-partition_key",
+    "qps": 3157.707,
+    "latency": 2.3,
+    "recall": 0.9347,
+    "filter_ratio": 0.9
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "Milvus",
+    "label": "16c64g-sq8-partition_key",
+    "db_name": "Milvus-16c64g-sq8-partition_key",
+    "qps": 1985.8124,
+    "latency": 2.6,
+    "recall": 0.9407,
+    "filter_ratio": 0.8
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "Milvus",
+    "label": "16c64g-sq8-partition_key",
+    "db_name": "Milvus-16c64g-sq8-partition_key",
+    "qps": 920.9627,
+    "latency": 3.4,
+    "recall": 0.9488,
+    "filter_ratio": 0.5
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ElasticCloud",
+    "label": "8c60g-routing-64shard",
+    "db_name": "ElasticCloud-8c60g-routing-64shard",
+    "qps": 3033.786,
+    "latency": 8.7,
+    "recall": 0.9934,
+    "filter_ratio": 0.999
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ElasticCloud",
+    "label": "8c60g-routing-64shard",
+    "db_name": "ElasticCloud-8c60g-routing-64shard",
+    "qps": 3019.2416,
+    "latency": 9.5,
+    "recall": 0.9765,
+    "filter_ratio": 0.998
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ElasticCloud",
+    "label": "8c60g-routing-64shard",
+    "db_name": "ElasticCloud-8c60g-routing-64shard",
+    "qps": 2890.9523,
+    "latency": 9.4,
+    "recall": 0.9625,
+    "filter_ratio": 0.995
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ElasticCloud",
+    "label": "8c60g-routing-64shard",
+    "db_name": "ElasticCloud-8c60g-routing-64shard",
+    "qps": 2789.7212,
+    "latency": 8.2,
+    "recall": 0.9538,
+    "filter_ratio": 0.99
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ElasticCloud",
+    "label": "8c60g-routing-64shard",
+    "db_name": "ElasticCloud-8c60g-routing-64shard",
+    "qps": 2457.2628,
+    "latency": 9.0,
+    "recall": 0.9378,
+    "filter_ratio": 0.98
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ElasticCloud",
+    "label": "8c60g-routing-64shard",
+    "db_name": "ElasticCloud-8c60g-routing-64shard",
+    "qps": 2209.4973,
+    "latency": 13.7,
+    "recall": 0.9228,
+    "filter_ratio": 0.95
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ElasticCloud",
+    "label": "8c60g-routing-64shard",
+    "db_name": "ElasticCloud-8c60g-routing-64shard",
+    "qps": 1960.388,
+    "latency": 11.0,
+    "recall": 0.9076,
+    "filter_ratio": 0.9
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ElasticCloud",
+    "label": "8c60g-routing-64shard",
+    "db_name": "ElasticCloud-8c60g-routing-64shard",
+    "qps": 1725.092,
+    "latency": 11.7,
+    "recall": 0.8969,
+    "filter_ratio": 0.8
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ElasticCloud",
+    "label": "8c60g-routing-64shard",
+    "db_name": "ElasticCloud-8c60g-routing-64shard",
+    "qps": 1307.419,
+    "latency": 12.3,
+    "recall": 0.8925,
+    "filter_ratio": 0.5
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ElasticCloud",
+    "label": "8c60g-force_merge",
+    "db_name": "ElasticCloud-8c60g-force_merge",
+    "qps": 350.0132,
+    "latency": 29.7,
+    "recall": 1.0,
+    "filter_ratio": 0.999
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ElasticCloud",
+    "label": "8c60g-force_merge",
+    "db_name": "ElasticCloud-8c60g-force_merge",
+    "qps": 179.5204,
+    "latency": 51.4,
+    "recall": 1.0,
+    "filter_ratio": 0.998
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ElasticCloud",
+    "label": "8c60g-force_merge",
+    "db_name": "ElasticCloud-8c60g-force_merge",
+    "qps": 72.99,
+    "latency": 111.4,
+    "recall": 1.0,
+    "filter_ratio": 0.995
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ElasticCloud",
+    "label": "8c60g-force_merge",
+    "db_name": "ElasticCloud-8c60g-force_merge",
+    "qps": 42.9877,
+    "latency": 201.9,
+    "recall": 0.9912,
+    "filter_ratio": 0.99
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ElasticCloud",
+    "label": "8c60g-force_merge",
+    "db_name": "ElasticCloud-8c60g-force_merge",
+    "qps": 96.4987,
+    "latency": 113.1,
+    "recall": 0.9296,
+    "filter_ratio": 0.98
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ElasticCloud",
+    "label": "8c60g-force_merge",
+    "db_name": "ElasticCloud-8c60g-force_merge",
+    "qps": 189.3789,
+    "latency": 58.8,
+    "recall": 0.9149,
+    "filter_ratio": 0.95
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ElasticCloud",
+    "label": "8c60g-force_merge",
+    "db_name": "ElasticCloud-8c60g-force_merge",
+    "qps": 246.7071,
+    "latency": 45.1,
+    "recall": 0.9018,
+    "filter_ratio": 0.9
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ElasticCloud",
+    "label": "8c60g-force_merge",
+    "db_name": "ElasticCloud-8c60g-force_merge",
+    "qps": 229.0379,
+    "latency": 43.0,
+    "recall": 0.8908,
+    "filter_ratio": 0.8
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ElasticCloud",
+    "label": "8c60g-force_merge",
+    "db_name": "ElasticCloud-8c60g-force_merge",
+    "qps": 125.6164,
+    "latency": 69.8,
+    "recall": 0.8746,
+    "filter_ratio": 0.5
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ElasticCloud",
+    "label": "8c60g-force_merge",
+    "db_name": "ElasticCloud-8c60g-force_merge",
+    "qps": 2175.2694,
+    "latency": 9.8,
+    "recall": 1.0,
+    "filter_ratio": 0.999
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ElasticCloud",
+    "label": "8c60g-force_merge",
+    "db_name": "ElasticCloud-8c60g-force_merge",
+    "qps": 1430.0244,
+    "latency": 12.6,
+    "recall": 1.0,
+    "filter_ratio": 0.998
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ElasticCloud",
+    "label": "8c60g-force_merge",
+    "db_name": "ElasticCloud-8c60g-force_merge",
+    "qps": 692.5751,
+    "latency": 18.7,
+    "recall": 1.0,
+    "filter_ratio": 0.995
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ElasticCloud",
+    "label": "8c60g-force_merge",
+    "db_name": "ElasticCloud-8c60g-force_merge",
+    "qps": 364.3516,
+    "latency": 26.4,
+    "recall": 1.0,
+    "filter_ratio": 0.99
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ElasticCloud",
+    "label": "8c60g-force_merge",
+    "db_name": "ElasticCloud-8c60g-force_merge",
+    "qps": 190.3777,
+    "latency": 47.9,
+    "recall": 1.0,
+    "filter_ratio": 0.98
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ElasticCloud",
+    "label": "8c60g-force_merge",
+    "db_name": "ElasticCloud-8c60g-force_merge",
+    "qps": 249.3519,
+    "latency": 44.7,
+    "recall": 0.9446,
+    "filter_ratio": 0.95
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ElasticCloud",
+    "label": "8c60g-force_merge",
+    "db_name": "ElasticCloud-8c60g-force_merge",
+    "qps": 437.8735,
+    "latency": 27.1,
+    "recall": 0.9364,
+    "filter_ratio": 0.9
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ElasticCloud",
+    "label": "8c60g-force_merge",
+    "db_name": "ElasticCloud-8c60g-force_merge",
+    "qps": 669.9441,
+    "latency": 19.1,
+    "recall": 0.9227,
+    "filter_ratio": 0.8
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ElasticCloud",
+    "label": "8c60g-force_merge",
+    "db_name": "ElasticCloud-8c60g-force_merge",
+    "qps": 899.3114,
+    "latency": 14.9,
+    "recall": 0.9072,
+    "filter_ratio": 0.5
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ElasticCloud",
+    "label": "8c60g-force_merge",
+    "db_name": "ElasticCloud-8c60g-force_merge",
+    "qps": 2030.4249,
+    "latency": 10.6,
+    "recall": 0.9306,
+    "filter_ratio": 0.0
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ElasticCloud",
+    "label": "8c60g-force_merge",
+    "db_name": "ElasticCloud-8c60g-force_merge",
+    "qps": 1804.8996,
+    "latency": 12.3,
+    "recall": 0.9405,
+    "filter_ratio": 0.0
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ElasticCloud",
+    "label": "8c60g-force_merge",
+    "db_name": "ElasticCloud-8c60g-force_merge",
+    "qps": 2353.8935,
+    "latency": 17.1,
+    "recall": 0.9143,
+    "filter_ratio": 0.0
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ElasticCloud",
+    "label": "8c60g-force_merge",
+    "db_name": "ElasticCloud-8c60g-force_merge",
+    "qps": 1623.8421,
+    "latency": 11.8,
+    "recall": 0.9479,
+    "filter_ratio": 0.0
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ElasticCloud",
+    "label": "8c60g-force_merge",
+    "db_name": "ElasticCloud-8c60g-force_merge",
+    "qps": 2808.2421,
+    "latency": 9.5,
+    "recall": 0.8815,
+    "filter_ratio": 0.0
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ElasticCloud",
+    "label": "8c60g-force_merge",
+    "db_name": "ElasticCloud-8c60g-force_merge",
+    "qps": 1482.3772,
+    "latency": 12.1,
+    "recall": 0.9546,
+    "filter_ratio": 0.0
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ElasticCloud",
+    "label": "8c60g-force_merge",
+    "db_name": "ElasticCloud-8c60g-force_merge",
+    "qps": 1721.5416,
+    "latency": 9.6,
+    "recall": 0.8855,
+    "filter_ratio": 0.0
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ElasticCloud",
+    "label": "8c60g-force_merge",
+    "db_name": "ElasticCloud-8c60g-force_merge",
+    "qps": 1032.9696,
+    "latency": 14.8,
+    "recall": 0.933,
+    "filter_ratio": 0.0
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ElasticCloud",
+    "label": "8c60g-force_merge",
+    "db_name": "ElasticCloud-8c60g-force_merge",
+    "qps": 1150.4393,
+    "latency": 13.4,
+    "recall": 0.9265,
+    "filter_ratio": 0.0
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ElasticCloud",
+    "label": "8c60g-force_merge",
+    "db_name": "ElasticCloud-8c60g-force_merge",
+    "qps": 1452.1536,
+    "latency": 10.8,
+    "recall": 0.9042,
+    "filter_ratio": 0.0
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ElasticCloud",
+    "label": "8c60g-force_merge",
+    "db_name": "ElasticCloud-8c60g-force_merge",
+    "qps": 2181.3939,
+    "latency": 9.4,
+    "recall": 0.8501,
+    "filter_ratio": 0.0
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ElasticCloud",
+    "label": "8c60g-force_merge",
+    "db_name": "ElasticCloud-8c60g-force_merge",
+    "qps": 1295.5543,
+    "latency": 11.2,
+    "recall": 0.9176,
+    "filter_ratio": 0.0
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf",
+    "db_name": "ZillizCloud-8cu-perf",
+    "qps": 9773.6593,
+    "latency": 3.7,
+    "recall": 0.9955,
+    "filter_ratio": 0.999
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf",
+    "db_name": "ZillizCloud-8cu-perf",
+    "qps": 9081.1518,
+    "latency": 3.0,
+    "recall": 0.9943,
+    "filter_ratio": 0.998
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf",
+    "db_name": "ZillizCloud-8cu-perf",
+    "qps": 8455.2896,
+    "latency": 4.0,
+    "recall": 0.9921,
+    "filter_ratio": 0.995
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf",
+    "db_name": "ZillizCloud-8cu-perf",
+    "qps": 7610.0519,
+    "latency": 3.3,
+    "recall": 0.9903,
+    "filter_ratio": 0.99
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf",
+    "db_name": "ZillizCloud-8cu-perf",
+    "qps": 7589.664,
+    "latency": 3.8,
+    "recall": 0.9235,
+    "filter_ratio": 0.98
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf",
+    "db_name": "ZillizCloud-8cu-perf",
+    "qps": 6750.2495,
+    "latency": 4.4,
+    "recall": 0.9105,
+    "filter_ratio": 0.95
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf",
+    "db_name": "ZillizCloud-8cu-perf",
+    "qps": 5506.1808,
+    "latency": 5.5,
+    "recall": 0.9193,
+    "filter_ratio": 0.9
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf",
+    "db_name": "ZillizCloud-8cu-perf",
+    "qps": 6860.8577,
+    "latency": 4.7,
+    "recall": 0.9226,
+    "filter_ratio": 0.8
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf",
+    "db_name": "ZillizCloud-8cu-perf",
+    "qps": 8468.4611,
+    "latency": 3.1,
+    "recall": 0.8925,
+    "filter_ratio": 0.5
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf-partition_key",
+    "db_name": "ZillizCloud-8cu-perf-partition_key",
+    "qps": 10089.4308,
+    "latency": 2.6,
+    "recall": 0.9934,
+    "filter_ratio": 0.999
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf-partition_key",
+    "db_name": "ZillizCloud-8cu-perf-partition_key",
+    "qps": 10557.4373,
+    "latency": 2.7,
+    "recall": 0.9393,
+    "filter_ratio": 0.998
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf-partition_key",
+    "db_name": "ZillizCloud-8cu-perf-partition_key",
+    "qps": 9805.0401,
+    "latency": 2.6,
+    "recall": 0.9257,
+    "filter_ratio": 0.995
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf-partition_key",
+    "db_name": "ZillizCloud-8cu-perf-partition_key",
+    "qps": 10020.5299,
+    "latency": 2.6,
+    "recall": 0.9788,
+    "filter_ratio": 0.99
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf-partition_key",
+    "db_name": "ZillizCloud-8cu-perf-partition_key",
+    "qps": 10041.0338,
+    "latency": 2.7,
+    "recall": 0.9693,
+    "filter_ratio": 0.98
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf-partition_key",
+    "db_name": "ZillizCloud-8cu-perf-partition_key",
+    "qps": 9861.9686,
+    "latency": 2.6,
+    "recall": 0.955,
+    "filter_ratio": 0.95
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf-partition_key",
+    "db_name": "ZillizCloud-8cu-perf-partition_key",
+    "qps": 9507.9991,
+    "latency": 2.8,
+    "recall": 0.9453,
+    "filter_ratio": 0.9
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf-partition_key",
+    "db_name": "ZillizCloud-8cu-perf-partition_key",
+    "qps": 9428.4531,
+    "latency": 2.6,
+    "recall": 0.9331,
+    "filter_ratio": 0.8
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf-partition_key",
+    "db_name": "ZillizCloud-8cu-perf-partition_key",
+    "qps": 9048.6431,
+    "latency": 3.9,
+    "recall": 0.9216,
+    "filter_ratio": 0.5
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf-partition_key",
+    "db_name": "ZillizCloud-8cu-perf-partition_key",
+    "qps": 8695.2765,
+    "latency": 4.3,
+    "recall": 0.9603,
+    "filter_ratio": 0.999
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf-partition_key",
+    "db_name": "ZillizCloud-8cu-perf-partition_key",
+    "qps": 9244.1135,
+    "latency": 4.2,
+    "recall": 0.9724,
+    "filter_ratio": 0.998
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf-partition_key",
+    "db_name": "ZillizCloud-8cu-perf-partition_key",
+    "qps": 9289.0118,
+    "latency": 4.2,
+    "recall": 0.9574,
+    "filter_ratio": 0.995
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf-partition_key",
+    "db_name": "ZillizCloud-8cu-perf-partition_key",
+    "qps": 9374.8941,
+    "latency": 4.2,
+    "recall": 0.9425,
+    "filter_ratio": 0.99
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf-partition_key",
+    "db_name": "ZillizCloud-8cu-perf-partition_key",
+    "qps": 9368.1325,
+    "latency": 3.8,
+    "recall": 0.9292,
+    "filter_ratio": 0.98
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf-partition_key",
+    "db_name": "ZillizCloud-8cu-perf-partition_key",
+    "qps": 9220.3627,
+    "latency": 3.8,
+    "recall": 0.9081,
+    "filter_ratio": 0.95
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf-partition_key",
+    "db_name": "ZillizCloud-8cu-perf-partition_key",
+    "qps": 8633.8949,
+    "latency": 4.1,
+    "recall": 0.8928,
+    "filter_ratio": 0.9
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf-partition_key",
+    "db_name": "ZillizCloud-8cu-perf-partition_key",
+    "qps": 6820.6863,
+    "latency": 3.2,
+    "recall": 0.9159,
+    "filter_ratio": 0.8
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf-partition_key",
+    "db_name": "ZillizCloud-8cu-perf-partition_key",
+    "qps": 3938.6004,
+    "latency": 3.7,
+    "recall": 0.9196,
+    "filter_ratio": 0.5
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf",
+    "db_name": "ZillizCloud-8cu-perf",
+    "qps": 3411.0934,
+    "latency": 3.3,
+    "recall": 0.995,
+    "filter_ratio": 0.999
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf",
+    "db_name": "ZillizCloud-8cu-perf",
+    "qps": 2838.356,
+    "latency": 3.8,
+    "recall": 0.9946,
+    "filter_ratio": 0.998
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf",
+    "db_name": "ZillizCloud-8cu-perf",
+    "qps": 1826.0672,
+    "latency": 5.3,
+    "recall": 0.9938,
+    "filter_ratio": 0.995
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf",
+    "db_name": "ZillizCloud-8cu-perf",
+    "qps": 1234.6534,
+    "latency": 6.4,
+    "recall": 0.9942,
+    "filter_ratio": 0.99
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf",
+    "db_name": "ZillizCloud-8cu-perf",
+    "qps": 1773.0919,
+    "latency": 5.3,
+    "recall": 0.9699,
+    "filter_ratio": 0.98
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf",
+    "db_name": "ZillizCloud-8cu-perf",
+    "qps": 1454.8382,
+    "latency": 4.6,
+    "recall": 0.9659,
+    "filter_ratio": 0.95
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf",
+    "db_name": "ZillizCloud-8cu-perf",
+    "qps": 1373.0307,
+    "latency": 5.7,
+    "recall": 0.9716,
+    "filter_ratio": 0.9
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf",
+    "db_name": "ZillizCloud-8cu-perf",
+    "qps": 2039.8673,
+    "latency": 3.8,
+    "recall": 0.9559,
+    "filter_ratio": 0.8
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf",
+    "db_name": "ZillizCloud-8cu-perf",
+    "qps": 2950.8165,
+    "latency": 3.3,
+    "recall": 0.9147,
+    "filter_ratio": 0.5
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf",
+    "db_name": "ZillizCloud-8cu-perf",
+    "qps": 9441.1235,
+    "latency": 5.2,
+    "recall": 0.9658,
+    "filter_ratio": 0.0
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf",
+    "db_name": "ZillizCloud-8cu-perf",
+    "qps": 6125.6146,
+    "latency": 4.9,
+    "recall": 0.9936,
+    "filter_ratio": 0.0
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf-force_merge",
+    "db_name": "ZillizCloud-8cu-perf-force_merge",
+    "qps": 5502.1797,
+    "latency": 3.8,
+    "recall": 0.9509,
+    "filter_ratio": 0.0
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf",
+    "db_name": "ZillizCloud-8cu-perf",
+    "qps": 1827.5849,
+    "latency": 5.4,
+    "recall": 0.9918,
+    "filter_ratio": 0.0
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf",
+    "db_name": "ZillizCloud-8cu-perf",
+    "qps": 1938.1932,
+    "latency": 5.6,
+    "recall": 0.9906,
+    "filter_ratio": 0.0
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf-force_merge",
+    "db_name": "ZillizCloud-8cu-perf-force_merge",
+    "qps": 3778.8811,
+    "latency": 4.8,
+    "recall": 0.9851,
+    "filter_ratio": 0.0
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf",
+    "db_name": "ZillizCloud-8cu-perf",
+    "qps": 3974.8218,
+    "latency": 4.8,
+    "recall": 0.9428,
+    "filter_ratio": 0.0
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf",
+    "db_name": "ZillizCloud-8cu-perf",
+    "qps": 2971.1402,
+    "latency": 11.6,
+    "recall": 0.9752,
+    "filter_ratio": 0.0
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf",
+    "db_name": "ZillizCloud-8cu-perf",
+    "qps": 8441.533,
+    "latency": 6.9,
+    "recall": 0.9825,
+    "filter_ratio": 0.0
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf-force_merge",
+    "db_name": "ZillizCloud-8cu-perf-force_merge",
+    "qps": 2703.5422,
+    "latency": 12.9,
+    "recall": 0.992,
+    "filter_ratio": 0.0
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf",
+    "db_name": "ZillizCloud-8cu-perf",
+    "qps": 1628.2736,
+    "latency": 5.6,
+    "recall": 0.9928,
+    "filter_ratio": 0.0
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf",
+    "db_name": "ZillizCloud-8cu-perf",
+    "qps": 5019.5973,
+    "latency": 5.7,
+    "recall": 0.9954,
+    "filter_ratio": 0.0
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf",
+    "db_name": "ZillizCloud-8cu-perf",
+    "qps": 7364.0396,
+    "latency": 4.0,
+    "recall": 0.9915,
+    "filter_ratio": 0.0
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf",
+    "db_name": "ZillizCloud-8cu-perf",
+    "qps": 2724.9239,
+    "latency": 12.4,
+    "recall": 0.9832,
+    "filter_ratio": 0.0
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf-force_merge",
+    "db_name": "ZillizCloud-8cu-perf-force_merge",
+    "qps": 5514.815,
+    "latency": 4.2,
+    "recall": 0.9355,
+    "filter_ratio": 0.0
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf",
+    "db_name": "ZillizCloud-8cu-perf",
+    "qps": 9901.1114,
+    "latency": 3.9,
+    "recall": 0.9486,
+    "filter_ratio": 0.0
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf-force_merge",
+    "db_name": "ZillizCloud-8cu-perf-force_merge",
+    "qps": 3258.8508,
+    "latency": 11.7,
+    "recall": 0.9906,
+    "filter_ratio": 0.0
+  },
+  {
+    "dataset": "Cohere (Medium)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf",
+    "db_name": "ZillizCloud-8cu-perf",
+    "qps": 5907.441,
+    "latency": 5.7,
+    "recall": 0.9946,
+    "filter_ratio": 0.0
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf-force_merge",
+    "db_name": "ZillizCloud-8cu-perf-force_merge",
+    "qps": 5064.6982,
+    "latency": 4.3,
+    "recall": 0.9606,
+    "filter_ratio": 0.0
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf",
+    "db_name": "ZillizCloud-8cu-perf",
+    "qps": 3468.5933,
+    "latency": 4.5,
+    "recall": 0.9661,
+    "filter_ratio": 0.0
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf",
+    "db_name": "ZillizCloud-8cu-perf",
+    "qps": 2401.3204,
+    "latency": 10.7,
+    "recall": 0.9884,
+    "filter_ratio": 0.0
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf-force_merge",
+    "db_name": "ZillizCloud-8cu-perf-force_merge",
+    "qps": 3568.396,
+    "latency": 4.8,
+    "recall": 0.9883,
+    "filter_ratio": 0.0
+  },
+  {
+    "dataset": "Cohere (Large)",
+    "db": "ZillizCloud",
+    "label": "8cu-perf-force_merge",
+    "db_name": "ZillizCloud-8cu-perf-force_merge",
+    "qps": 4674.1861,
+    "latency": 4.5,
+    "recall": 0.9705,
     "filter_ratio": 0.0
   }
 ]
