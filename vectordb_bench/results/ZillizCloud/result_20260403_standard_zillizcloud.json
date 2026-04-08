@@ -5,14 +5,14 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 270.1267,
-        "optimize_duration": 437.4658,
-        "load_duration": 707.5925,
-        "qps": 9441.1235,
-        "serial_latency_p99": 0.0052,
-        "serial_latency_p95": 0.0039,
-        "recall": 0.9589,
-        "ndcg": 0.9658,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 13316.2336,
+        "serial_latency_p99": 0.002,
+        "serial_latency_p95": 0.0019,
+        "recall": 0.9383,
+        "ndcg": 0.9484,
         "conc_num_list": [
           1,
           5,
@@ -24,44 +24,44 @@
           80
         ],
         "conc_qps_list": [
-          306.3773,
-          1519.6034,
-          3129.1309,
-          5457.1507,
-          6585.7082,
-          7420.0391,
-          8468.6183,
-          9441.1235
+          557.5439,
+          2665.8166,
+          5047.6131,
+          8707.1886,
+          10381.4448,
+          11435.3821,
+          12833.6289,
+          13316.2336
         ],
         "conc_latency_p99_list": [
-          0.004086580532602967,
-          0.00566743115196005,
-          0.005243223664583638,
-          0.0099503791576717,
-          0.009588507658627355,
-          0.011322382240905426,
-          0.01665949933376398,
-          0.018269318575912616
+          0.001960459982510656,
+          0.002204382496420288,
+          0.0025926707847975195,
+          0.003785052003804594,
+          0.005270074445288626,
+          0.006814960413612425,
+          0.009530203816248103,
+          0.01240227443340701
         ],
         "conc_latency_p95_list": [
-          0.0036428007049835284,
-          0.003802539707976394,
-          0.003850769612472504,
-          0.004741756187286226,
-          0.006738374719861894,
-          0.00850677301059477,
-          0.01233988689491525,
-          0.01412305135163478
+          0.0018868701998144388,
+          0.0020324485929450018,
+          0.0021866516792215405,
+          0.002869376807939261,
+          0.004040546333999372,
+          0.0052645970426965505,
+          0.007324896720820107,
+          0.009507914245477877
         ],
         "conc_latency_avg_list": [
-          0.0032598009878015348,
-          0.003285434242748037,
-          0.0031902432390411135,
-          0.0036557288568108254,
-          0.004539560740384104,
-          0.005359882091644495,
-          0.007008278288237143,
-          0.008346175450269581
+          0.0017909009081054225,
+          0.0018719543108110278,
+          0.001976279835245286,
+          0.002288533358936022,
+          0.0028752306497382865,
+          0.0034729409658481964,
+          0.004612408416183334,
+          0.0058844483816759795
         ],
         "st_ideal_insert_duration": 0,
         "st_search_stage_list": [],
@@ -82,10 +82,129 @@
         "db": "ZillizCloud",
         "db_config": {
           "db_label": "8cu-perf",
-          "version": "v2026.1",
+          "version": "v2026.4",
           "note": "",
           "uri": "**********",
-          "user": "db_admin",
+          "user": "root",
+          "password": "**********",
+          "collection_name": "ZillizCloudVDBBench"
+        },
+        "db_case_config": {
+          "index": "AUTOINDEX",
+          "metric_type": "COSINE",
+          "use_partition_key": false,
+          "level": 1,
+          "num_shards": 1
+        },
+        "case_config": {
+          "case_id": 5,
+          "custom_case": {},
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_serial",
+          "search_concurrent"
+        ]
+      }
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 12837.5287,
+        "serial_latency_p99": 0.0021,
+        "serial_latency_p95": 0.002,
+        "recall": 0.9588,
+        "ndcg": 0.9657,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20,
+          30,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          539.7039,
+          2582.4122,
+          4917.6589,
+          8479.8846,
+          10116.1707,
+          11068.2155,
+          12229.2208,
+          12837.5287
+        ],
+        "conc_latency_p99_list": [
+          0.0020551326422719287,
+          0.002271793531253935,
+          0.0026150090881856096,
+          0.00380311052547768,
+          0.005449252330581657,
+          0.0069998929975554295,
+          0.010041847208049142,
+          0.012852289543952794
+        ],
+        "conc_latency_p95_list": [
+          0.0019641239661723374,
+          0.0021013408317230643,
+          0.002235009270953014,
+          0.002924549448653124,
+          0.004163405022700318,
+          0.0054554910166189075,
+          0.007754770980682224,
+          0.009949398809112607
+        ],
+        "conc_latency_avg_list": [
+          0.0018501577211713547,
+          0.001932346768512776,
+          0.0020285184508130197,
+          0.0023497830070767353,
+          0.002947098563192882,
+          0.003586949439268913,
+          0.0048461200425519,
+          0.006100907381850077
+        ],
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "8cu-perf",
+          "version": "v2026.4",
+          "note": "",
+          "uri": "**********",
+          "user": "root",
           "password": "**********",
           "collection_name": "ZillizCloudVDBBench"
         },
@@ -116,23 +235,496 @@
           }
         },
         "stages": [
-          "drop_old",
-          "load",
           "search_serial",
           "search_concurrent"
         ]
-      },
-      "label": ":)"
+      }
     },
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 270.1267,
-        "optimize_duration": 437.4658,
-        "load_duration": 707.5925,
-        "qps": 6125.6146,
-        "serial_latency_p99": 0.0049,
-        "serial_latency_p95": 0.0047,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 12248.9154,
+        "serial_latency_p99": 0.0022,
+        "serial_latency_p95": 0.0021,
+        "recall": 0.9687,
+        "ndcg": 0.9742,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20,
+          30,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          526.2995,
+          2512.1902,
+          4765.4856,
+          8188.3548,
+          9485.6147,
+          10432.6026,
+          11820.0344,
+          12248.9154
+        ],
+        "conc_latency_p99_list": [
+          0.0021030055452138188,
+          0.0023121346672996877,
+          0.0026887326262658466,
+          0.003929865991231055,
+          0.005846867947839196,
+          0.007567329368903298,
+          0.01027507190126926,
+          0.013403068128973255
+        ],
+        "conc_latency_p95_list": [
+          0.002018616924760863,
+          0.00216002133092843,
+          0.0023071649571647867,
+          0.003043863424682058,
+          0.004536616246332414,
+          0.005861608259147033,
+          0.008004442710080184,
+          0.010495775798335672
+        ],
+        "conc_latency_avg_list": [
+          0.0018973754593796914,
+          0.001986612150848518,
+          0.0020934129605979786,
+          0.0024318237152467248,
+          0.0031476610878461374,
+          0.00380841888066139,
+          0.005011055927151683,
+          0.006389479412319173
+        ],
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "8cu-perf",
+          "version": "v2026.4",
+          "note": "",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********",
+          "collection_name": "ZillizCloudVDBBench"
+        },
+        "db_case_config": {
+          "index": "AUTOINDEX",
+          "metric_type": "COSINE",
+          "use_partition_key": false,
+          "level": 3,
+          "num_shards": 1
+        },
+        "case_config": {
+          "case_id": 5,
+          "custom_case": {},
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_serial",
+          "search_concurrent"
+        ]
+      }
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 11501.6652,
+        "serial_latency_p99": 0.0022,
+        "serial_latency_p95": 0.0022,
+        "recall": 0.9785,
+        "ndcg": 0.9825,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20,
+          30,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          498.953,
+          2391.8074,
+          4531.3051,
+          7692.4049,
+          8962.935,
+          9790.7556,
+          10733.1679,
+          11501.6652
+        ],
+        "conc_latency_p99_list": [
+          0.002246916518197395,
+          0.002433281935518607,
+          0.0027782795106759276,
+          0.004184300593915395,
+          0.006221411311416887,
+          0.007918057614006104,
+          0.011295880685211153,
+          0.013962703556753681
+        ],
+        "conc_latency_p95_list": [
+          0.002148064094944857,
+          0.002272934094071388,
+          0.00242809351766482,
+          0.0032858662889339025,
+          0.0048346503434004255,
+          0.006268709182040765,
+          0.008884398700320158,
+          0.011115554475691165
+        ],
+        "conc_latency_avg_list": [
+          0.0020014255442295315,
+          0.002086812448327015,
+          0.0022017174912128874,
+          0.0025910515942768643,
+          0.0033292378315385594,
+          0.0040559394841899535,
+          0.005528263390600377,
+          0.006816899394463919
+        ],
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "8cu-perf",
+          "version": "v2026.4",
+          "note": "",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********",
+          "collection_name": "ZillizCloudVDBBench"
+        },
+        "db_case_config": {
+          "index": "AUTOINDEX",
+          "metric_type": "COSINE",
+          "use_partition_key": false,
+          "level": 4,
+          "num_shards": 1
+        },
+        "case_config": {
+          "case_id": 5,
+          "custom_case": {},
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_serial",
+          "search_concurrent"
+        ]
+      }
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 10566.6823,
+        "serial_latency_p99": 0.0024,
+        "serial_latency_p95": 0.0023,
+        "recall": 0.9838,
+        "ndcg": 0.9868,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20,
+          30,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          473.2503,
+          2266.5174,
+          4325.3899,
+          7263.7246,
+          8352.1369,
+          9198.3778,
+          10210.3429,
+          10566.6823
+        ],
+        "conc_latency_p99_list": [
+          0.0023700519639533015,
+          0.0025644300674321128,
+          0.0029225554369622857,
+          0.0044386597932316255,
+          0.00657977487426251,
+          0.008452395589556558,
+          0.011632206621579828,
+          0.015279923828202287
+        ],
+        "conc_latency_p95_list": [
+          0.0022803591098636386,
+          0.002403592297923751,
+          0.002544367348309606,
+          0.0034909876121673724,
+          0.005244998395210129,
+          0.0067171422066167,
+          0.009315501491073517,
+          0.01212728061946109
+        ],
+        "conc_latency_avg_list": [
+          0.0021102672976180386,
+          0.0022023083714165855,
+          0.0023067257051930207,
+          0.0027442442136128803,
+          0.003573842319898506,
+          0.004316896363141895,
+          0.005797124719790328,
+          0.007427947098361652
+        ],
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "8cu-perf",
+          "version": "v2026.4",
+          "note": "",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********",
+          "collection_name": "ZillizCloudVDBBench"
+        },
+        "db_case_config": {
+          "index": "AUTOINDEX",
+          "metric_type": "COSINE",
+          "use_partition_key": false,
+          "level": 5,
+          "num_shards": 1
+        },
+        "case_config": {
+          "case_id": 5,
+          "custom_case": {},
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_serial",
+          "search_concurrent"
+        ]
+      }
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 9227.318,
+        "serial_latency_p99": 0.0027,
+        "serial_latency_p95": 0.0026,
+        "recall": 0.9893,
+        "ndcg": 0.9915,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20,
+          30,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          427.7206,
+          2082.4408,
+          3978.3343,
+          6561.5406,
+          7528.8901,
+          8016.929,
+          8877.3559,
+          9227.318
+        ],
+        "conc_latency_p99_list": [
+          0.002635034592822194,
+          0.002782075599534437,
+          0.003112639953033066,
+          0.0048944263125304125,
+          0.00728108051931485,
+          0.009557482128147962,
+          0.013117193853249772,
+          0.017160092100966726
+        ],
+        "conc_latency_p95_list": [
+          0.0025485639926046133,
+          0.0026276092685293406,
+          0.002766418919782154,
+          0.003919153648894278,
+          0.005883905396331093,
+          0.007771545994910409,
+          0.010690590104786672,
+          0.013842354586813595
+        ],
+        "conc_latency_avg_list": [
+          0.002334789800170702,
+          0.0023967380922842478,
+          0.002508067757169752,
+          0.0030384944076291527,
+          0.003962180586705604,
+          0.004954530890871444,
+          0.006679939886193658,
+          0.00850275890671233
+        ],
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "8cu-perf",
+          "version": "v2026.4",
+          "note": "",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********",
+          "collection_name": "ZillizCloudVDBBench"
+        },
+        "db_case_config": {
+          "index": "AUTOINDEX",
+          "metric_type": "COSINE",
+          "use_partition_key": false,
+          "level": 6,
+          "num_shards": 1
+        },
+        "case_config": {
+          "case_id": 5,
+          "custom_case": {},
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_serial",
+          "search_concurrent"
+        ]
+      }
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 8320.4606,
+        "serial_latency_p99": 0.0029,
+        "serial_latency_p95": 0.0028,
         "recall": 0.9919,
         "ndcg": 0.9936,
         "conc_num_list": [
@@ -146,44 +738,44 @@
           80
         ],
         "conc_qps_list": [
-          238.8712,
-          1196.2193,
-          2440.8391,
-          4133.8486,
-          4858.2331,
-          5446.0047,
-          6000.1652,
-          6125.6146
+          396.8576,
+          1911.4443,
+          3643.8766,
+          5864.3359,
+          6725.025,
+          7313.0633,
+          7887.1755,
+          8320.4606
         ],
         "conc_latency_p99_list": [
-          0.004919703922932965,
-          0.010525701696751709,
-          0.006511175064661075,
-          0.011745981796411804,
-          0.01397663167037535,
-          0.014958455199375772,
-          0.02016973898542343,
-          0.026595940839324612
+          0.002857399091590195,
+          0.0030318665952654557,
+          0.003405487750424072,
+          0.00554735084413551,
+          0.00816060005221516,
+          0.010382328977575536,
+          0.014569980294909328,
+          0.019027257570996884
         ],
         "conc_latency_p95_list": [
-          0.0046619078202638775,
-          0.004602618556236848,
-          0.004652375826844946,
-          0.006574279977940023,
-          0.009700259550299961,
-          0.011811009392840788,
-          0.016332678495382422,
-          0.02156840759853367
+          0.002767942799255252,
+          0.0028832201816840096,
+          0.0030418253620155154,
+          0.004497910931240768,
+          0.006637068011332303,
+          0.008489592577097936,
+          0.011977570212911815,
+          0.015408052015118301
         ],
         "conc_latency_avg_list": [
-          0.004181373075740294,
-          0.004174027799032302,
-          0.004089987135078621,
-          0.004828215031413884,
-          0.006158122789762511,
-          0.007310655337680553,
-          0.009892293927032914,
-          0.012884722355037423
+          0.0025167798504936094,
+          0.0026116185368739234,
+          0.0027388090118584786,
+          0.003400314036561817,
+          0.0044390573829028,
+          0.005437121205254614,
+          0.0075142181236358555,
+          0.009432022524963333
         ],
         "st_ideal_insert_duration": 0,
         "st_search_stage_list": [],
@@ -204,10 +796,10 @@
         "db": "ZillizCloud",
         "db_config": {
           "db_label": "8cu-perf",
-          "version": "v2026.1",
+          "version": "v2026.4",
           "note": "",
           "uri": "**********",
-          "user": "db_admin",
+          "user": "root",
           "password": "**********",
           "collection_name": "ZillizCloudVDBBench"
         },
@@ -238,25 +830,22 @@
           }
         },
         "stages": [
-          "drop_old",
-          "load",
           "search_serial",
           "search_concurrent"
         ]
-      },
-      "label": ":)"
+      }
     },
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 2923.0628,
-        "optimize_duration": 2272.8723,
-        "load_duration": 5195.935,
-        "qps": 5502.1797,
-        "serial_latency_p99": 0.0038,
-        "serial_latency_p95": 0.0035,
-        "recall": 0.9452,
-        "ndcg": 0.9509,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 7524.9879,
+        "serial_latency_p99": 0.0032,
+        "serial_latency_p95": 0.0031,
+        "recall": 0.9931,
+        "ndcg": 0.9946,
         "conc_num_list": [
           1,
           5,
@@ -268,166 +857,44 @@
           80
         ],
         "conc_qps_list": [
-          309.5267,
-          1357.6945,
-          2213.2564,
-          3349.9157,
-          3910.9875,
-          4385.5899,
-          5039.0299,
-          5502.1797
+          363.7387,
+          1761.1002,
+          3372.7075,
+          5421.2445,
+          6091.3075,
+          6579.0629,
+          7061.7035,
+          7524.9879
         ],
         "conc_latency_p99_list": [
-          0.004089714956353409,
-          0.0056684831657912264,
-          0.012667869632714424,
-          0.01000201591959918,
-          0.015246839204337462,
-          0.01789945445081684,
-          0.02318606456159614,
-          0.02852195684099569
+          0.0031524766457732764,
+          0.0032982631359482185,
+          0.0036804132821271207,
+          0.006010826830170116,
+          0.008973520016297695,
+          0.011436859995592378,
+          0.016333586145192387,
+          0.020569344094838005
         ],
         "conc_latency_p95_list": [
-          0.003446204590727575,
-          0.00420360880671069,
-          0.0055909310030983735,
-          0.008043184356938578,
-          0.011835442011943087,
-          0.014750372216803953,
-          0.01907540229440201,
-          0.023490797984413794
+          0.0030544937413651495,
+          0.0031513541325693946,
+          0.0033083077374612907,
+          0.004909411718836053,
+          0.007369707978796214,
+          0.009455612045712769,
+          0.013346620369702576,
+          0.01678576849226374
         ],
         "conc_latency_avg_list": [
-          0.0032266616589272513,
-          0.0036776357130507064,
-          0.004511172191326527,
-          0.0059575964382477965,
-          0.007649578970207299,
-          0.009076414605964197,
-          0.011790618147195132,
-          0.01435249249351469
-        ],
-        "st_ideal_insert_duration": 0,
-        "st_search_stage_list": [],
-        "st_search_time_list": [],
-        "st_max_qps_list_list": [],
-        "st_recall_list": [],
-        "st_ndcg_list": [],
-        "st_serial_latency_p99_list": [],
-        "st_serial_latency_p95_list": [],
-        "st_conc_failed_rate_list": [],
-        "st_conc_num_list_list": [],
-        "st_conc_qps_list_list": [],
-        "st_conc_latency_p99_list_list": [],
-        "st_conc_latency_p95_list_list": [],
-        "st_conc_latency_avg_list_list": []
-      },
-      "task_config": {
-        "db": "ZillizCloud",
-        "db_config": {
-          "db_label": "8cu-perf-force_merge",
-          "version": "v2026.1",
-          "note": "",
-          "uri": "**********",
-          "user": "db_admin",
-          "password": "**********",
-          "collection_name": "ZillizCloudVDBBench"
-        },
-        "db_case_config": {
-          "index": "AUTOINDEX",
-          "metric_type": "COSINE",
-          "use_partition_key": false,
-          "level": 2,
-          "num_shards": 1
-        },
-        "case_config": {
-          "case_id": 4,
-          "custom_case": {},
-          "k": 100,
-          "concurrency_search_config": {
-            "num_concurrency": [
-              1,
-              5,
-              10,
-              20,
-              30,
-              40,
-              60,
-              80
-            ],
-            "concurrency_duration": 30,
-            "concurrency_timeout": 3600
-          }
-        },
-        "stages": [
-          "drop_old",
-          "load",
-          "search_serial",
-          "search_concurrent"
-        ]
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "insert_duration": 3205.4829,
-        "optimize_duration": 1275.7844,
-        "load_duration": 4481.2673,
-        "qps": 1827.5849,
-        "serial_latency_p99": 0.0054,
-        "serial_latency_p95": 0.0052,
-        "recall": 0.9903,
-        "ndcg": 0.9918,
-        "conc_num_list": [
-          1,
-          5,
-          10,
-          20,
-          30,
-          40,
-          60,
-          80
-        ],
-        "conc_qps_list": [
-          218.8679,
-          861.6609,
-          1195.6337,
-          1339.6438,
-          1475.742,
-          1546.5953,
-          1747.9077,
-          1827.5849
-        ],
-        "conc_latency_p99_list": [
-          0.006139998821017798,
-          0.008449624522763766,
-          0.014799785086070211,
-          0.02650444130937102,
-          0.03739181953598747,
-          0.04722500271425814,
-          0.05959104605717584,
-          0.0715404962032335
-        ],
-        "conc_latency_p95_list": [
-          0.005324425446451642,
-          0.006872303040290717,
-          0.011261535996163731,
-          0.021800653115496966,
-          0.03018094879225827,
-          0.038646315991354645,
-          0.04888677580165675,
-          0.06127824939903802
-        ],
-        "conc_latency_avg_list": [
-          0.004563713319136163,
-          0.0057948937011398916,
-          0.00835191496328548,
-          0.014905808578982384,
-          0.020272801297484298,
-          0.025762202275047597,
-          0.034040973878552726,
-          0.043269632825280596
+          0.0027460860977463145,
+          0.0028345832649254296,
+          0.0029595516874138823,
+          0.003678043908615719,
+          0.004902225199747265,
+          0.006042755015168581,
+          0.008396028243715591,
+          0.010450248464720832
         ],
         "st_ideal_insert_duration": 0,
         "st_search_stage_list": [],
@@ -448,10 +915,10 @@
         "db": "ZillizCloud",
         "db_config": {
           "db_label": "8cu-perf",
-          "version": "v2026.1",
+          "version": "v2026.4",
           "note": "",
           "uri": "**********",
-          "user": "db_admin",
+          "user": "root",
           "password": "**********",
           "collection_name": "ZillizCloudVDBBench"
         },
@@ -463,7 +930,7 @@
           "num_shards": 1
         },
         "case_config": {
-          "case_id": 4,
+          "case_id": 5,
           "custom_case": {},
           "k": 100,
           "concurrency_search_config": {
@@ -482,25 +949,22 @@
           }
         },
         "stages": [
-          "drop_old",
-          "load",
           "search_serial",
           "search_concurrent"
         ]
-      },
-      "label": ":)"
+      }
     },
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 3205.4829,
-        "optimize_duration": 1275.7844,
-        "load_duration": 4481.2673,
-        "qps": 1938.1932,
-        "serial_latency_p99": 0.0056,
-        "serial_latency_p95": 0.0053,
-        "recall": 0.989,
-        "ndcg": 0.9906,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 6813.2439,
+        "serial_latency_p99": 0.0035,
+        "serial_latency_p95": 0.0034,
+        "recall": 0.9939,
+        "ndcg": 0.9953,
         "conc_num_list": [
           1,
           5,
@@ -512,44 +976,44 @@
           80
         ],
         "conc_qps_list": [
-          252.1234,
-          954.3561,
-          1355.554,
-          1490.2007,
-          1619.1811,
-          1720.5715,
-          1860.9305,
-          1938.1932
+          336.5978,
+          1642.6462,
+          3138.7921,
+          4969.8163,
+          5673.7771,
+          6090.0396,
+          6493.0362,
+          6813.2439
         ],
         "conc_latency_p99_list": [
-          0.0050690684028086245,
-          0.008166075175395238,
-          0.011429371475242079,
-          0.024431421170011097,
-          0.03405256026599093,
-          0.043166847461543534,
-          0.05706310785026292,
-          0.07251818811346307
+          0.003431524743209593,
+          0.003548497949959711,
+          0.0039453561976552,
+          0.006659876625053583,
+          0.009535451157134956,
+          0.012163680926314556,
+          0.017726751818554484,
+          0.022734694816172126
         ],
         "conc_latency_p95_list": [
-          0.004786731592321303,
-          0.006139315699692815,
-          0.009358109103050082,
-          0.019912595101050083,
-          0.028057811519829556,
-          0.035778356752416585,
-          0.04874245898681693,
-          0.061324251000769436
+          0.0033281981566688048,
+          0.0034026612091111017,
+          0.0035765988053753973,
+          0.005437539250124246,
+          0.007899306231411173,
+          0.0101619676919654,
+          0.014541133219609037,
+          0.01846120802219957
         ],
         "conc_latency_avg_list": [
-          0.003961802805693023,
-          0.005232545384579334,
-          0.007366828470110833,
-          0.01339630708221878,
-          0.018484241519041742,
-          0.023149088452180534,
-          0.03196686416892556,
-          0.04073973314917765
+          0.0029676403704890024,
+          0.0030391423281907995,
+          0.003179950204961118,
+          0.0040130850174019085,
+          0.005263782041679775,
+          0.006520409861910488,
+          0.009132446429719516,
+          0.011525998827399965
         ],
         "st_ideal_insert_duration": 0,
         "st_search_stage_list": [],
@@ -570,10 +1034,10 @@
         "db": "ZillizCloud",
         "db_config": {
           "db_label": "8cu-perf",
-          "version": "v2026.1",
+          "version": "v2026.4",
           "note": "",
           "uri": "**********",
-          "user": "db_admin",
+          "user": "root",
           "password": "**********",
           "collection_name": "ZillizCloudVDBBench"
         },
@@ -581,11 +1045,11 @@
           "index": "AUTOINDEX",
           "metric_type": "COSINE",
           "use_partition_key": false,
-          "level": 7,
+          "level": 9,
           "num_shards": 1
         },
         "case_config": {
-          "case_id": 4,
+          "case_id": 5,
           "custom_case": {},
           "k": 100,
           "concurrency_search_config": {
@@ -604,25 +1068,22 @@
           }
         },
         "stages": [
-          "drop_old",
-          "load",
           "search_serial",
           "search_concurrent"
         ]
-      },
-      "label": ":)"
+      }
     },
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 2923.0628,
-        "optimize_duration": 2272.8723,
-        "load_duration": 5195.935,
-        "qps": 3778.8811,
-        "serial_latency_p99": 0.0048,
-        "serial_latency_p95": 0.0042,
-        "recall": 0.9828,
-        "ndcg": 0.9851,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 7385.2066,
+        "serial_latency_p99": 0.0021,
+        "serial_latency_p95": 0.002,
+        "recall": 0.9384,
+        "ndcg": 0.9441,
         "conc_num_list": [
           1,
           5,
@@ -634,166 +1095,44 @@
           80
         ],
         "conc_qps_list": [
-          275.1343,
-          1220.1869,
-          2080.6024,
-          2544.5946,
-          2934.4403,
-          3222.4756,
-          3520.6342,
-          3778.8811
+          505.8686,
+          2189.7181,
+          3241.0071,
+          4661.5936,
+          5380.3716,
+          5932.9765,
+          6767.3029,
+          7385.2066
         ],
         "conc_latency_p99_list": [
-          0.004224385871784762,
-          0.006377705505292314,
-          0.006628996630315663,
-          0.01544506659847684,
-          0.02085710293264129,
-          0.02495263563963816,
-          0.03397362035117112,
-          0.0415226237432216
+          0.0022006261744536458,
+          0.002760201054625213,
+          0.0037472858920227733,
+          0.0067906589363701635,
+          0.010014167174231262,
+          0.012363597416551783,
+          0.016403084830380974,
+          0.01993567283730954
         ],
         "conc_latency_p95_list": [
-          0.003899741142231505,
-          0.004650917260732967,
-          0.005831561920058448,
-          0.011755315004847944,
-          0.016476290803984734,
-          0.020251012463995716,
-          0.027687024004990225,
-          0.03372844383848132
+          0.002098581724567339,
+          0.002593909669667482,
+          0.0035126500617479904,
+          0.005520994003745727,
+          0.008371637808158994,
+          0.010467902664095164,
+          0.01375423202989623,
+          0.016782393981702625
         ],
         "conc_latency_avg_list": [
-          0.0036302553438832055,
-          0.004091130600148307,
-          0.0047987246661642296,
-          0.007844535865702365,
-          0.010192746767866709,
-          0.012344825366337173,
-          0.016888610032228992,
-          0.020908843243531986
-        ],
-        "st_ideal_insert_duration": 0,
-        "st_search_stage_list": [],
-        "st_search_time_list": [],
-        "st_max_qps_list_list": [],
-        "st_recall_list": [],
-        "st_ndcg_list": [],
-        "st_serial_latency_p99_list": [],
-        "st_serial_latency_p95_list": [],
-        "st_conc_failed_rate_list": [],
-        "st_conc_num_list_list": [],
-        "st_conc_qps_list_list": [],
-        "st_conc_latency_p99_list_list": [],
-        "st_conc_latency_p95_list_list": [],
-        "st_conc_latency_avg_list_list": []
-      },
-      "task_config": {
-        "db": "ZillizCloud",
-        "db_config": {
-          "db_label": "8cu-perf-force_merge",
-          "version": "v2026.1",
-          "note": "",
-          "uri": "**********",
-          "user": "db_admin",
-          "password": "**********",
-          "collection_name": "ZillizCloudVDBBench"
-        },
-        "db_case_config": {
-          "index": "AUTOINDEX",
-          "metric_type": "COSINE",
-          "use_partition_key": false,
-          "level": 6,
-          "num_shards": 1
-        },
-        "case_config": {
-          "case_id": 4,
-          "custom_case": {},
-          "k": 100,
-          "concurrency_search_config": {
-            "num_concurrency": [
-              1,
-              5,
-              10,
-              20,
-              30,
-              40,
-              60,
-              80
-            ],
-            "concurrency_duration": 30,
-            "concurrency_timeout": 3600
-          }
-        },
-        "stages": [
-          "drop_old",
-          "load",
-          "search_serial",
-          "search_concurrent"
-        ]
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "insert_duration": 3205.4829,
-        "optimize_duration": 1275.7844,
-        "load_duration": 4481.2673,
-        "qps": 3974.8218,
-        "serial_latency_p99": 0.0048,
-        "serial_latency_p95": 0.0043,
-        "recall": 0.9396,
-        "ndcg": 0.9428,
-        "conc_num_list": [
-          1,
-          5,
-          10,
-          20,
-          30,
-          40,
-          60,
-          80
-        ],
-        "conc_qps_list": [
-          295.7118,
-          1186.5002,
-          1797.187,
-          2449.5408,
-          2857.3282,
-          3164.2684,
-          3660.3166,
-          3974.8218
-        ],
-        "conc_latency_p99_list": [
-          0.004793434205930709,
-          0.005700148111791336,
-          0.007426547166251105,
-          0.014722349808434964,
-          0.019732102921698247,
-          0.02347602234221995,
-          0.03035390855744481,
-          0.03731970520602769
-        ],
-        "conc_latency_p95_list": [
-          0.004169186984654516,
-          0.004717364211683161,
-          0.006335475675587076,
-          0.01105007229198236,
-          0.01624748620088212,
-          0.019896189187420532,
-          0.025662759994156657,
-          0.031171760102733943
-        ],
-        "conc_latency_avg_list": [
-          0.003377046875928882,
-          0.004208154278338283,
-          0.005554828192323107,
-          0.00814848752272782,
-          0.010461408703728187,
-          0.012581798692238582,
-          0.016239422653327416,
-          0.019879490524355867
+          0.001973905573358728,
+          0.0022795015833306665,
+          0.0030794282993742857,
+          0.004278176924915009,
+          0.005550848216261312,
+          0.0066920424895898075,
+          0.008768764746552707,
+          0.010642102641863554
         ],
         "st_ideal_insert_duration": 0,
         "st_search_stage_list": [],
@@ -814,10 +1153,10 @@
         "db": "ZillizCloud",
         "db_config": {
           "db_label": "8cu-perf",
-          "version": "v2026.1",
+          "version": "v2026.4",
           "note": "",
           "uri": "**********",
-          "user": "db_admin",
+          "user": "root",
           "password": "**********",
           "collection_name": "ZillizCloudVDBBench"
         },
@@ -848,25 +1187,22 @@
           }
         },
         "stages": [
-          "drop_old",
-          "load",
           "search_serial",
           "search_concurrent"
         ]
-      },
-      "label": ":)"
+      }
     },
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 3205.4829,
-        "optimize_duration": 1275.7844,
-        "load_duration": 4481.2673,
-        "qps": 2971.1402,
-        "serial_latency_p99": 0.0116,
-        "serial_latency_p95": 0.0045,
-        "recall": 0.9729,
-        "ndcg": 0.9752,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 6793.8443,
+        "serial_latency_p99": 0.0022,
+        "serial_latency_p95": 0.0021,
+        "recall": 0.9522,
+        "ndcg": 0.9568,
         "conc_num_list": [
           1,
           5,
@@ -878,44 +1214,44 @@
           80
         ],
         "conc_qps_list": [
-          278.0971,
-          1117.1061,
-          1626.1624,
-          2126.1398,
-          2425.3155,
-          2521.9392,
-          2793.1709,
-          2971.1402
+          503.9478,
+          2114.1911,
+          3099.2869,
+          4416.7094,
+          5150.037,
+          5691.2226,
+          6289.7121,
+          6793.8443
         ],
         "conc_latency_p99_list": [
-          0.004647255002055317,
-          0.00566180575755425,
-          0.011257058603223423,
-          0.015976536156085786,
-          0.023499950004043067,
-          0.03039303767494857,
-          0.04078626602888109,
-          0.04914582587312907
+          0.00215859985910356,
+          0.002847761964658275,
+          0.003923368623363787,
+          0.007356263077235778,
+          0.010528954989276825,
+          0.01292447085143066,
+          0.01769668879453093,
+          0.021927826073952026
         ],
         "conc_latency_p95_list": [
-          0.004429338514455594,
-          0.005089565094385761,
-          0.007136018975870684,
-          0.01292410076566739,
-          0.019488130600075235,
-          0.025593487400328737,
-          0.03410469329974147,
-          0.04188467259518802
+          0.002082229100051336,
+          0.0026818424608791246,
+          0.0036669230728875847,
+          0.005921932504861616,
+          0.00885509350337088,
+          0.010938107722904525,
+          0.014863643678836526,
+          0.018132617010269306
         ],
         "conc_latency_avg_list": [
-          0.003591256380123583,
-          0.004470003286850064,
-          0.00613923671987789,
-          0.009389019339411041,
-          0.012338699755027977,
-          0.015788074921940728,
-          0.02128022645956974,
-          0.026573440291179154
+          0.001981333490019148,
+          0.002360769086835183,
+          0.003220095266754697,
+          0.004516460962995695,
+          0.005803644141310085,
+          0.006980248662568344,
+          0.009430996778203294,
+          0.011560318047614999
         ],
         "st_ideal_insert_duration": 0,
         "st_search_stage_list": [],
@@ -936,10 +1272,248 @@
         "db": "ZillizCloud",
         "db_config": {
           "db_label": "8cu-perf",
-          "version": "v2026.1",
+          "version": "v2026.4",
           "note": "",
           "uri": "**********",
-          "user": "db_admin",
+          "user": "root",
+          "password": "**********",
+          "collection_name": "ZillizCloudVDBBench"
+        },
+        "db_case_config": {
+          "index": "AUTOINDEX",
+          "metric_type": "COSINE",
+          "use_partition_key": false,
+          "level": 2,
+          "num_shards": 1
+        },
+        "case_config": {
+          "case_id": 4,
+          "custom_case": {},
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_serial",
+          "search_concurrent"
+        ]
+      }
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 6242.5346,
+        "serial_latency_p99": 0.0023,
+        "serial_latency_p95": 0.0022,
+        "recall": 0.961,
+        "ndcg": 0.965,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20,
+          30,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          446.4866,
+          2002.9326,
+          2953.3925,
+          4164.4285,
+          4805.5397,
+          5240.789,
+          5870.8363,
+          6242.5346
+        ],
+        "conc_latency_p99_list": [
+          0.002856350458459926,
+          0.0029789366439217715,
+          0.004114359063096344,
+          0.007887981488602236,
+          0.011494717993773522,
+          0.014308837521821265,
+          0.019093695696210486,
+          0.023705490870634095
+        ],
+        "conc_latency_p95_list": [
+          0.0025365250825416293,
+          0.0028055029979441315,
+          0.0038476928253658115,
+          0.0064046091894852,
+          0.009612656582612544,
+          0.012057665473548695,
+          0.01607741924817674,
+          0.019808521203231066
+        ],
+        "conc_latency_avg_list": [
+          0.0022367817378751067,
+          0.0024923140599496687,
+          0.003379658321121232,
+          0.0047897960603506306,
+          0.0062167658101995584,
+          0.007583969576561268,
+          0.010102243992110408,
+          0.012617357519441232
+        ],
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "8cu-perf",
+          "version": "v2026.4",
+          "note": "",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********",
+          "collection_name": "ZillizCloudVDBBench"
+        },
+        "db_case_config": {
+          "index": "AUTOINDEX",
+          "metric_type": "COSINE",
+          "use_partition_key": false,
+          "level": 3,
+          "num_shards": 1
+        },
+        "case_config": {
+          "case_id": 4,
+          "custom_case": {},
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_serial",
+          "search_concurrent"
+        ]
+      }
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 5779.119,
+        "serial_latency_p99": 0.0023,
+        "serial_latency_p95": 0.0023,
+        "recall": 0.971,
+        "ndcg": 0.9742,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20,
+          30,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          476.6126,
+          1920.6379,
+          2828.6202,
+          3905.7911,
+          4495.2986,
+          4903.9634,
+          5352.3634,
+          5779.119
+        ],
+        "conc_latency_p99_list": [
+          0.002284108918393031,
+          0.003114189200568944,
+          0.004329544047359377,
+          0.008613102727103977,
+          0.012333529423922296,
+          0.015281949284835726,
+          0.020651346329832433,
+          0.025012934936676175
+        ],
+        "conc_latency_p95_list": [
+          0.0022121331770904363,
+          0.0029337720014154913,
+          0.004045496415346861,
+          0.007010379375424236,
+          0.010350381198804826,
+          0.012867126709898001,
+          0.01739263068011496,
+          0.021097359794657676
+        ],
+        "conc_latency_avg_list": [
+          0.002095217670483641,
+          0.0025990775656036295,
+          0.003529053754031682,
+          0.005105319901460065,
+          0.006648317818211828,
+          0.008106390568584667,
+          0.011082872888195554,
+          0.01359851345251022
+        ],
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "8cu-perf",
+          "version": "v2026.4",
+          "note": "",
+          "uri": "**********",
+          "user": "root",
           "password": "**********",
           "collection_name": "ZillizCloudVDBBench"
         },
@@ -970,25 +1544,22 @@
           }
         },
         "stages": [
-          "drop_old",
-          "load",
           "search_serial",
           "search_concurrent"
         ]
-      },
-      "label": ":)"
+      }
     },
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 270.1267,
-        "optimize_duration": 437.4658,
-        "load_duration": 707.5925,
-        "qps": 8441.533,
-        "serial_latency_p99": 0.0069,
-        "serial_latency_p95": 0.0035,
-        "recall": 0.9785,
-        "ndcg": 0.9825,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 5183.5843,
+        "serial_latency_p99": 0.0024,
+        "serial_latency_p95": 0.0023,
+        "recall": 0.9784,
+        "ndcg": 0.981,
         "conc_num_list": [
           1,
           5,
@@ -1000,44 +1571,44 @@
           80
         ],
         "conc_qps_list": [
-          314.6659,
-          1556.8466,
-          3026.0164,
-          4952.5941,
-          6059.6492,
-          6948.3916,
-          7709.5146,
-          8441.533
+          456.5329,
+          1821.263,
+          2677.2938,
+          3617.961,
+          4097.4679,
+          4447.7515,
+          4863.2316,
+          5183.5843
         ],
         "conc_latency_p99_list": [
-          0.003662585185375065,
-          0.003881094480166214,
-          0.005496532852703231,
-          0.012801527802657801,
-          0.01098183460126168,
-          0.011906764237210155,
-          0.017680786546843585,
-          0.02030978908645921
+          0.002395828692242503,
+          0.0033142844232497736,
+          0.004636971018044278,
+          0.009431733234669086,
+          0.013644934630719942,
+          0.01654091664124283,
+          0.022408935175044466,
+          0.027210572804324325
         ],
         "conc_latency_p95_list": [
-          0.0033931825950276107,
-          0.0034469130958314055,
-          0.003594076508306898,
-          0.00537703381414758,
-          0.00756983550672885,
-          0.009184699498291593,
-          0.013430504295683926,
-          0.015904919797321764
+          0.00232212619157508,
+          0.0031105756846955047,
+          0.0043217132915742695,
+          0.007749295464600434,
+          0.011374025803525001,
+          0.01404695180244743,
+          0.01901522108237258,
+          0.022979849949479103
         ],
         "conc_latency_avg_list": [
-          0.003173945048460723,
-          0.003206842876612295,
-          0.003299035623981205,
-          0.004028295482036381,
-          0.004934835427053102,
-          0.005724545223453835,
-          0.007703497705718975,
-          0.009334748886407937
+          0.0021874608272499383,
+          0.0027410038616561545,
+          0.003728350102575746,
+          0.005515110815448404,
+          0.0072920914670729624,
+          0.008931282929280606,
+          0.012187039287903855,
+          0.015173242426486785
         ],
         "st_ideal_insert_duration": 0,
         "st_search_stage_list": [],
@@ -1058,620 +1629,10 @@
         "db": "ZillizCloud",
         "db_config": {
           "db_label": "8cu-perf",
-          "version": "v2026.1",
+          "version": "v2026.4",
           "note": "",
           "uri": "**********",
-          "user": "db_admin",
-          "password": "**********",
-          "collection_name": "ZillizCloudVDBBench"
-        },
-        "db_case_config": {
-          "index": "AUTOINDEX",
-          "metric_type": "COSINE",
-          "use_partition_key": false,
-          "level": 4,
-          "num_shards": 1
-        },
-        "case_config": {
-          "case_id": 5,
-          "custom_case": {},
-          "k": 100,
-          "concurrency_search_config": {
-            "num_concurrency": [
-              1,
-              5,
-              10,
-              20,
-              30,
-              40,
-              60,
-              80
-            ],
-            "concurrency_duration": 30,
-            "concurrency_timeout": 3600
-          }
-        },
-        "stages": [
-          "drop_old",
-          "load",
-          "search_serial",
-          "search_concurrent"
-        ]
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "insert_duration": 2923.0628,
-        "optimize_duration": 2272.8723,
-        "load_duration": 5195.935,
-        "qps": 2703.5422,
-        "serial_latency_p99": 0.0129,
-        "serial_latency_p95": 0.0049,
-        "recall": 0.9903,
-        "ndcg": 0.992,
-        "conc_num_list": [
-          1,
-          5,
-          10,
-          20,
-          30,
-          40,
-          60,
-          80
-        ],
-        "conc_qps_list": [
-          230.8474,
-          1033.6996,
-          1653.7251,
-          2021.6415,
-          2247.5951,
-          2433.7674,
-          2579.1371,
-          2703.5422
-        ],
-        "conc_latency_p99_list": [
-          0.005364620329928583,
-          0.008247331644815845,
-          0.009261744469986306,
-          0.019847353509976556,
-          0.027152295518899337,
-          0.0318573336204281,
-          0.04668155071558431,
-          0.053025491506559774
-        ],
-        "conc_latency_p95_list": [
-          0.004779104294721037,
-          0.005717401996662375,
-          0.007679672696394844,
-          0.015277760991011746,
-          0.021049827802926295,
-          0.025551227995310906,
-          0.03599990590882953,
-          0.045174946513725445
-        ],
-        "conc_latency_avg_list": [
-          0.004327150692358546,
-          0.004830543605956322,
-          0.006038381999227765,
-          0.009872808423519352,
-          0.013310825758863387,
-          0.016344593851929733,
-          0.023038225918050447,
-          0.02921974749485067
-        ],
-        "st_ideal_insert_duration": 0,
-        "st_search_stage_list": [],
-        "st_search_time_list": [],
-        "st_max_qps_list_list": [],
-        "st_recall_list": [],
-        "st_ndcg_list": [],
-        "st_serial_latency_p99_list": [],
-        "st_serial_latency_p95_list": [],
-        "st_conc_failed_rate_list": [],
-        "st_conc_num_list_list": [],
-        "st_conc_qps_list_list": [],
-        "st_conc_latency_p99_list_list": [],
-        "st_conc_latency_p95_list_list": [],
-        "st_conc_latency_avg_list_list": []
-      },
-      "task_config": {
-        "db": "ZillizCloud",
-        "db_config": {
-          "db_label": "8cu-perf-force_merge",
-          "version": "v2026.1",
-          "note": "",
-          "uri": "**********",
-          "user": "db_admin",
-          "password": "**********",
-          "collection_name": "ZillizCloudVDBBench"
-        },
-        "db_case_config": {
-          "index": "AUTOINDEX",
-          "metric_type": "COSINE",
-          "use_partition_key": false,
-          "level": 9,
-          "num_shards": 1
-        },
-        "case_config": {
-          "case_id": 4,
-          "custom_case": {},
-          "k": 100,
-          "concurrency_search_config": {
-            "num_concurrency": [
-              1,
-              5,
-              10,
-              20,
-              30,
-              40,
-              60,
-              80
-            ],
-            "concurrency_duration": 30,
-            "concurrency_timeout": 3600
-          }
-        },
-        "stages": [
-          "drop_old",
-          "load",
-          "search_serial",
-          "search_concurrent"
-        ]
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "insert_duration": 3205.4829,
-        "optimize_duration": 1275.7844,
-        "load_duration": 4481.2673,
-        "qps": 1628.2736,
-        "serial_latency_p99": 0.0056,
-        "serial_latency_p95": 0.0051,
-        "recall": 0.9913,
-        "ndcg": 0.9928,
-        "conc_num_list": [
-          1,
-          5,
-          10,
-          20,
-          30,
-          40,
-          60,
-          80
-        ],
-        "conc_qps_list": [
-          224.1263,
-          854.2908,
-          1191.923,
-          1306.8314,
-          1408.4071,
-          1492.5651,
-          1572.8756,
-          1628.2736
-        ],
-        "conc_latency_p99_list": [
-          0.005614027456322219,
-          0.01122624498093481,
-          0.013540994446957512,
-          0.026513429321930727,
-          0.0360522977943765,
-          0.04583110647072318,
-          0.06417124239553232,
-          0.08320635374402624
-        ],
-        "conc_latency_p95_list": [
-          0.0053050212460220795,
-          0.006976215375470927,
-          0.011254654199001379,
-          0.022096098412293937,
-          0.03048573801643215,
-          0.037569552293280135,
-          0.05408634888590313,
-          0.06856599940219893
-        ],
-        "conc_latency_avg_list": [
-          0.004456437869882418,
-          0.005844962813409522,
-          0.008378709673770517,
-          0.01528081619265322,
-          0.021239153420731547,
-          0.026694518371955574,
-          0.03784726188423443,
-          0.04857833790231276
-        ],
-        "st_ideal_insert_duration": 0,
-        "st_search_stage_list": [],
-        "st_search_time_list": [],
-        "st_max_qps_list_list": [],
-        "st_recall_list": [],
-        "st_ndcg_list": [],
-        "st_serial_latency_p99_list": [],
-        "st_serial_latency_p95_list": [],
-        "st_conc_failed_rate_list": [],
-        "st_conc_num_list_list": [],
-        "st_conc_qps_list_list": [],
-        "st_conc_latency_p99_list_list": [],
-        "st_conc_latency_p95_list_list": [],
-        "st_conc_latency_avg_list_list": []
-      },
-      "task_config": {
-        "db": "ZillizCloud",
-        "db_config": {
-          "db_label": "8cu-perf",
-          "version": "v2026.1",
-          "note": "",
-          "uri": "**********",
-          "user": "db_admin",
-          "password": "**********",
-          "collection_name": "ZillizCloudVDBBench"
-        },
-        "db_case_config": {
-          "index": "AUTOINDEX",
-          "metric_type": "COSINE",
-          "use_partition_key": false,
-          "level": 9,
-          "num_shards": 1
-        },
-        "case_config": {
-          "case_id": 4,
-          "custom_case": {},
-          "k": 100,
-          "concurrency_search_config": {
-            "num_concurrency": [
-              1,
-              5,
-              10,
-              20,
-              30,
-              40,
-              60,
-              80
-            ],
-            "concurrency_duration": 30,
-            "concurrency_timeout": 3600
-          }
-        },
-        "stages": [
-          "drop_old",
-          "load",
-          "search_serial",
-          "search_concurrent"
-        ]
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "insert_duration": 270.1267,
-        "optimize_duration": 437.4658,
-        "load_duration": 707.5925,
-        "qps": 5019.5973,
-        "serial_latency_p99": 0.0057,
-        "serial_latency_p95": 0.0054,
-        "recall": 0.994,
-        "ndcg": 0.9954,
-        "conc_num_list": [
-          1,
-          5,
-          10,
-          20,
-          30,
-          40,
-          60,
-          80
-        ],
-        "conc_qps_list": [
-          222.5871,
-          1150.5338,
-          2195.8726,
-          3676.709,
-          4412.1372,
-          4833.1625,
-          5019.5973,
-          5015.8037
-        ],
-        "conc_latency_p99_list": [
-          0.005366289358644281,
-          0.006616018440399769,
-          0.0064373466832330474,
-          0.010222766738734191,
-          0.013315525980142408,
-          0.016972876400686822,
-          0.024728685971349477,
-          0.031319626237964276
-        ],
-        "conc_latency_p95_list": [
-          0.00513816498714732,
-          0.004792370549694169,
-          0.005205206610844471,
-          0.007212611548311542,
-          0.010267410500091497,
-          0.013238379993708808,
-          0.01984079669928178,
-          0.02578976150834933
-        ],
-        "conc_latency_avg_list": [
-          0.00448758533933214,
-          0.0043394632993677415,
-          0.0045465428246546005,
-          0.0054275771136581205,
-          0.006782299052349466,
-          0.008242341170482134,
-          0.011840508222988514,
-          0.015742522812380217
-        ],
-        "st_ideal_insert_duration": 0,
-        "st_search_stage_list": [],
-        "st_search_time_list": [],
-        "st_max_qps_list_list": [],
-        "st_recall_list": [],
-        "st_ndcg_list": [],
-        "st_serial_latency_p99_list": [],
-        "st_serial_latency_p95_list": [],
-        "st_conc_failed_rate_list": [],
-        "st_conc_num_list_list": [],
-        "st_conc_qps_list_list": [],
-        "st_conc_latency_p99_list_list": [],
-        "st_conc_latency_p95_list_list": [],
-        "st_conc_latency_avg_list_list": []
-      },
-      "task_config": {
-        "db": "ZillizCloud",
-        "db_config": {
-          "db_label": "8cu-perf",
-          "version": "v2026.1",
-          "note": "",
-          "uri": "**********",
-          "user": "db_admin",
-          "password": "**********",
-          "collection_name": "ZillizCloudVDBBench"
-        },
-        "db_case_config": {
-          "index": "AUTOINDEX",
-          "metric_type": "COSINE",
-          "use_partition_key": false,
-          "level": 9,
-          "num_shards": 1
-        },
-        "case_config": {
-          "case_id": 5,
-          "custom_case": {},
-          "k": 100,
-          "concurrency_search_config": {
-            "num_concurrency": [
-              1,
-              5,
-              10,
-              20,
-              30,
-              40,
-              60,
-              80
-            ],
-            "concurrency_duration": 30,
-            "concurrency_timeout": 3600
-          }
-        },
-        "stages": [
-          "drop_old",
-          "load",
-          "search_serial",
-          "search_concurrent"
-        ]
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "insert_duration": 270.1267,
-        "optimize_duration": 437.4658,
-        "load_duration": 707.5925,
-        "qps": 7364.0396,
-        "serial_latency_p99": 0.004,
-        "serial_latency_p95": 0.0037,
-        "recall": 0.9893,
-        "ndcg": 0.9915,
-        "conc_num_list": [
-          1,
-          5,
-          10,
-          20,
-          30,
-          40,
-          60,
-          80
-        ],
-        "conc_qps_list": [
-          287.8688,
-          1384.2897,
-          2700.4491,
-          4735.4478,
-          5614.1579,
-          6134.6648,
-          6819.5071,
-          7364.0396
-        ],
-        "conc_latency_p99_list": [
-          0.00390698241040809,
-          0.00731195724976711,
-          0.00495785990206058,
-          0.00734390948899089,
-          0.012288954856630872,
-          0.014986682942835616,
-          0.01849594444676764,
-          0.022832338945008815
-        ],
-        "conc_latency_p95_list": [
-          0.0037214207914075814,
-          0.003863213058502879,
-          0.004057778001879342,
-          0.005324349994771183,
-          0.008072146945050915,
-          0.010810172616038463,
-          0.01463127658644225,
-          0.01830196708324365
-        ],
-        "conc_latency_avg_list": [
-          0.0034694395949774774,
-          0.003606888217707231,
-          0.003696606332343799,
-          0.004213763141467857,
-          0.0053274846319189195,
-          0.006490250213165499,
-          0.008702013864526974,
-          0.010708946041863319
-        ],
-        "st_ideal_insert_duration": 0,
-        "st_search_stage_list": [],
-        "st_search_time_list": [],
-        "st_max_qps_list_list": [],
-        "st_recall_list": [],
-        "st_ndcg_list": [],
-        "st_serial_latency_p99_list": [],
-        "st_serial_latency_p95_list": [],
-        "st_conc_failed_rate_list": [],
-        "st_conc_num_list_list": [],
-        "st_conc_qps_list_list": [],
-        "st_conc_latency_p99_list_list": [],
-        "st_conc_latency_p95_list_list": [],
-        "st_conc_latency_avg_list_list": []
-      },
-      "task_config": {
-        "db": "ZillizCloud",
-        "db_config": {
-          "db_label": "8cu-perf",
-          "version": "v2026.1",
-          "note": "",
-          "uri": "**********",
-          "user": "db_admin",
-          "password": "**********",
-          "collection_name": "ZillizCloudVDBBench"
-        },
-        "db_case_config": {
-          "index": "AUTOINDEX",
-          "metric_type": "COSINE",
-          "use_partition_key": false,
-          "level": 6,
-          "num_shards": 1
-        },
-        "case_config": {
-          "case_id": 5,
-          "custom_case": {},
-          "k": 100,
-          "concurrency_search_config": {
-            "num_concurrency": [
-              1,
-              5,
-              10,
-              20,
-              30,
-              40,
-              60,
-              80
-            ],
-            "concurrency_duration": 30,
-            "concurrency_timeout": 3600
-          }
-        },
-        "stages": [
-          "drop_old",
-          "load",
-          "search_serial",
-          "search_concurrent"
-        ]
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "insert_duration": 3205.4829,
-        "optimize_duration": 1275.7844,
-        "load_duration": 4481.2673,
-        "qps": 2724.9239,
-        "serial_latency_p99": 0.0124,
-        "serial_latency_p95": 0.0048,
-        "recall": 0.9811,
-        "ndcg": 0.9832,
-        "conc_num_list": [
-          1,
-          5,
-          10,
-          20,
-          30,
-          40,
-          60,
-          80
-        ],
-        "conc_qps_list": [
-          269.3651,
-          1047.0123,
-          1498.6024,
-          1847.6803,
-          2114.199,
-          2284.3302,
-          2537.2552,
-          2724.9239
-        ],
-        "conc_latency_p99_list": [
-          0.004742077292175964,
-          0.00691745357704349,
-          0.010720830453210511,
-          0.01960868470487181,
-          0.026337993171764537,
-          0.032754160480981225,
-          0.04255042473436333,
-          0.05312397440138735
-        ],
-        "conc_latency_p95_list": [
-          0.004494865804736036,
-          0.0055081502971006556,
-          0.007977579892030908,
-          0.015719183007604443,
-          0.022288659910555,
-          0.02759612778027076,
-          0.03666536140372045,
-          0.04536134131485597
-        ],
-        "conc_latency_avg_list": [
-          0.0037082374061278584,
-          0.004769060159688272,
-          0.0066635344327552045,
-          0.010804306792214618,
-          0.014153154028666374,
-          0.017440448752945776,
-          0.02343149585687298,
-          0.029001097442020812
-        ],
-        "st_ideal_insert_duration": 0,
-        "st_search_stage_list": [],
-        "st_search_time_list": [],
-        "st_max_qps_list_list": [],
-        "st_recall_list": [],
-        "st_ndcg_list": [],
-        "st_serial_latency_p99_list": [],
-        "st_serial_latency_p95_list": [],
-        "st_conc_failed_rate_list": [],
-        "st_conc_num_list_list": [],
-        "st_conc_qps_list_list": [],
-        "st_conc_latency_p99_list_list": [],
-        "st_conc_latency_p95_list_list": [],
-        "st_conc_latency_avg_list_list": []
-      },
-      "task_config": {
-        "db": "ZillizCloud",
-        "db_config": {
-          "db_label": "8cu-perf",
-          "version": "v2026.1",
-          "note": "",
-          "uri": "**********",
-          "user": "db_admin",
+          "user": "root",
           "password": "**********",
           "collection_name": "ZillizCloudVDBBench"
         },
@@ -1702,25 +1663,22 @@
           }
         },
         "stages": [
-          "drop_old",
-          "load",
           "search_serial",
           "search_concurrent"
         ]
-      },
-      "label": ":)"
+      }
     },
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 2923.0628,
-        "optimize_duration": 2272.8723,
-        "load_duration": 5195.935,
-        "qps": 5514.815,
-        "serial_latency_p99": 0.0042,
-        "serial_latency_p95": 0.0036,
-        "recall": 0.9286,
-        "ndcg": 0.9355,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 4259.5572,
+        "serial_latency_p99": 0.0026,
+        "serial_latency_p95": 0.0026,
+        "recall": 0.9845,
+        "ndcg": 0.9866,
         "conc_num_list": [
           1,
           5,
@@ -1732,166 +1690,44 @@
           80
         ],
         "conc_qps_list": [
-          313.799,
-          1354.9874,
-          2301.8011,
-          3314.3036,
-          3843.1259,
-          4355.6117,
-          5048.842,
-          5514.815
+          424.077,
+          1676.9478,
+          2434.6516,
+          3184.2011,
+          3571.9199,
+          3767.5544,
+          4061.1698,
+          4259.5572
         ],
         "conc_latency_p99_list": [
-          0.0038773450409644284,
-          0.008138228004099801,
-          0.010878445263078868,
-          0.011540972657094244,
-          0.016388589342823227,
-          0.01858296279708156,
-          0.023569957185536613,
-          0.02886486930365208
+          0.002595295326318592,
+          0.003621646617539228,
+          0.005367588647641237,
+          0.011171487247338519,
+          0.0155316284415312,
+          0.019644083841703817,
+          0.02703630503267048,
+          0.03310978163208347
         ],
         "conc_latency_p95_list": [
-          0.003412947052856907,
-          0.004246345022693276,
-          0.005220197608286979,
-          0.008349375608668195,
-          0.012340355810010787,
-          0.0147909961087862,
-          0.019336943980306387,
-          0.023638575003133155
+          0.002518506458727643,
+          0.0034135113819502294,
+          0.004873151995707303,
+          0.009142277223872952,
+          0.013012332818470895,
+          0.016382047021761527,
+          0.022542749025160444,
+          0.027544378107995725
         ],
         "conc_latency_avg_list": [
-          0.003182328343818464,
-          0.003684439145729171,
-          0.004337632718561462,
-          0.006021014814140765,
-          0.007777482876747058,
-          0.009140085848755274,
-          0.011767476800046897,
-          0.014305157378590626
-        ],
-        "st_ideal_insert_duration": 0,
-        "st_search_stage_list": [],
-        "st_search_time_list": [],
-        "st_max_qps_list_list": [],
-        "st_recall_list": [],
-        "st_ndcg_list": [],
-        "st_serial_latency_p99_list": [],
-        "st_serial_latency_p95_list": [],
-        "st_conc_failed_rate_list": [],
-        "st_conc_num_list_list": [],
-        "st_conc_qps_list_list": [],
-        "st_conc_latency_p99_list_list": [],
-        "st_conc_latency_p95_list_list": [],
-        "st_conc_latency_avg_list_list": []
-      },
-      "task_config": {
-        "db": "ZillizCloud",
-        "db_config": {
-          "db_label": "8cu-perf-force_merge",
-          "version": "v2026.1",
-          "note": "",
-          "uri": "**********",
-          "user": "db_admin",
-          "password": "**********",
-          "collection_name": "ZillizCloudVDBBench"
-        },
-        "db_case_config": {
-          "index": "AUTOINDEX",
-          "metric_type": "COSINE",
-          "use_partition_key": false,
-          "level": 1,
-          "num_shards": 1
-        },
-        "case_config": {
-          "case_id": 4,
-          "custom_case": {},
-          "k": 100,
-          "concurrency_search_config": {
-            "num_concurrency": [
-              1,
-              5,
-              10,
-              20,
-              30,
-              40,
-              60,
-              80
-            ],
-            "concurrency_duration": 30,
-            "concurrency_timeout": 3600
-          }
-        },
-        "stages": [
-          "drop_old",
-          "load",
-          "search_serial",
-          "search_concurrent"
-        ]
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "insert_duration": 270.1267,
-        "optimize_duration": 437.4658,
-        "load_duration": 707.5925,
-        "qps": 9901.1114,
-        "serial_latency_p99": 0.0039,
-        "serial_latency_p95": 0.0037,
-        "recall": 0.9385,
-        "ndcg": 0.9486,
-        "conc_num_list": [
-          1,
-          5,
-          10,
-          20,
-          30,
-          40,
-          60,
-          80
-        ],
-        "conc_qps_list": [
-          321.3357,
-          1639.9924,
-          3195.3018,
-          5673.0951,
-          6808.8856,
-          7560.1348,
-          9087.2499,
-          9901.1114
-        ],
-        "conc_latency_p99_list": [
-          0.00394074416602971,
-          0.0041782407171558535,
-          0.004392879804945551,
-          0.010109323544893349,
-          0.008123845955124116,
-          0.014126944777672188,
-          0.014278251143987291,
-          0.01781155434960963
-        ],
-        "conc_latency_p95_list": [
-          0.0034882987965829666,
-          0.0035166182147804642,
-          0.0035458351092529476,
-          0.004310413988423532,
-          0.006210639532946515,
-          0.008767930739850271,
-          0.010931958199944346,
-          0.013749658003507645
-        ],
-        "conc_latency_avg_list": [
-          0.0031001682930926035,
-          0.0030430930397005885,
-          0.0031233191875315565,
-          0.0035155999207049896,
-          0.004389041533959679,
-          0.005263586471416786,
-          0.006530556363972054,
-          0.007958968690030266
+          0.00235500177392571,
+          0.0029770619258879757,
+          0.00410082317131261,
+          0.006266042699984648,
+          0.008367804647869575,
+          0.010561791085210772,
+          0.01460435324245386,
+          0.018471206884305532
         ],
         "st_ideal_insert_duration": 0,
         "st_search_stage_list": [],
@@ -1912,620 +1748,10 @@
         "db": "ZillizCloud",
         "db_config": {
           "db_label": "8cu-perf",
-          "version": "v2026.1",
+          "version": "v2026.4",
           "note": "",
           "uri": "**********",
-          "user": "db_admin",
-          "password": "**********",
-          "collection_name": "ZillizCloudVDBBench"
-        },
-        "db_case_config": {
-          "index": "AUTOINDEX",
-          "metric_type": "COSINE",
-          "use_partition_key": false,
-          "level": 1,
-          "num_shards": 1
-        },
-        "case_config": {
-          "case_id": 5,
-          "custom_case": {},
-          "k": 100,
-          "concurrency_search_config": {
-            "num_concurrency": [
-              1,
-              5,
-              10,
-              20,
-              30,
-              40,
-              60,
-              80
-            ],
-            "concurrency_duration": 30,
-            "concurrency_timeout": 3600
-          }
-        },
-        "stages": [
-          "drop_old",
-          "load",
-          "search_serial",
-          "search_concurrent"
-        ]
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "insert_duration": 2923.0628,
-        "optimize_duration": 2272.8723,
-        "load_duration": 5195.935,
-        "qps": 3258.8508,
-        "serial_latency_p99": 0.0117,
-        "serial_latency_p95": 0.0045,
-        "recall": 0.9888,
-        "ndcg": 0.9906,
-        "conc_num_list": [
-          1,
-          5,
-          10,
-          20,
-          30,
-          40,
-          60,
-          80
-        ],
-        "conc_qps_list": [
-          244.7738,
-          1130.2346,
-          1809.9431,
-          2312.2265,
-          2588.2339,
-          2788.0239,
-          3069.518,
-          3258.8508
-        ],
-        "conc_latency_p99_list": [
-          0.005137932703364641,
-          0.00555925140972249,
-          0.008915685693500566,
-          0.016561121140257453,
-          0.022867804747074828,
-          0.02806737951235845,
-          0.036439670615363844,
-          0.04337102690333264
-        ],
-        "conc_latency_p95_list": [
-          0.004440846845682244,
-          0.005053811200195923,
-          0.0068235130165703595,
-          0.01288393942813854,
-          0.018162307806778695,
-          0.02236156941507943,
-          0.0296233788743848,
-          0.03584610429388702
-        ],
-        "conc_latency_avg_list": [
-          0.004080840300378187,
-          0.004417934321996714,
-          0.005516924373879563,
-          0.008634555842136784,
-          0.011560621919641356,
-          0.014278915373578093,
-          0.019378262406752788,
-          0.024243179517198447
-        ],
-        "st_ideal_insert_duration": 0,
-        "st_search_stage_list": [],
-        "st_search_time_list": [],
-        "st_max_qps_list_list": [],
-        "st_recall_list": [],
-        "st_ndcg_list": [],
-        "st_serial_latency_p99_list": [],
-        "st_serial_latency_p95_list": [],
-        "st_conc_failed_rate_list": [],
-        "st_conc_num_list_list": [],
-        "st_conc_qps_list_list": [],
-        "st_conc_latency_p99_list_list": [],
-        "st_conc_latency_p95_list_list": [],
-        "st_conc_latency_avg_list_list": []
-      },
-      "task_config": {
-        "db": "ZillizCloud",
-        "db_config": {
-          "db_label": "8cu-perf-force_merge",
-          "version": "v2026.1",
-          "note": "",
-          "uri": "**********",
-          "user": "db_admin",
-          "password": "**********",
-          "collection_name": "ZillizCloudVDBBench"
-        },
-        "db_case_config": {
-          "index": "AUTOINDEX",
-          "metric_type": "COSINE",
-          "use_partition_key": false,
-          "level": 8,
-          "num_shards": 1
-        },
-        "case_config": {
-          "case_id": 4,
-          "custom_case": {},
-          "k": 100,
-          "concurrency_search_config": {
-            "num_concurrency": [
-              1,
-              5,
-              10,
-              20,
-              30,
-              40,
-              60,
-              80
-            ],
-            "concurrency_duration": 30,
-            "concurrency_timeout": 3600
-          }
-        },
-        "stages": [
-          "drop_old",
-          "load",
-          "search_serial",
-          "search_concurrent"
-        ]
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "insert_duration": 270.1267,
-        "optimize_duration": 437.4658,
-        "load_duration": 707.5925,
-        "qps": 5907.441,
-        "serial_latency_p99": 0.0057,
-        "serial_latency_p95": 0.0054,
-        "recall": 0.9931,
-        "ndcg": 0.9946,
-        "conc_num_list": [
-          1,
-          5,
-          10,
-          20,
-          30,
-          40,
-          60,
-          80
-        ],
-        "conc_qps_list": [
-          214.7436,
-          1124.1591,
-          2263.1224,
-          3695.1435,
-          4635.8817,
-          5035.3873,
-          5614.0659,
-          5907.441
-        ],
-        "conc_latency_p99_list": [
-          0.005838954218779679,
-          0.009590839385055032,
-          0.0072934928326867585,
-          0.009990225688670754,
-          0.013466239573317574,
-          0.01589230435347418,
-          0.021308113009436094,
-          0.026848825681372538
-        ],
-        "conc_latency_p95_list": [
-          0.005094571305380669,
-          0.0048950490017887205,
-          0.00495702201151289,
-          0.007446101757523138,
-          0.009852354813483545,
-          0.01273485799174523,
-          0.017310541804181415,
-          0.021899056984693743
-        ],
-        "conc_latency_avg_list": [
-          0.004651503297485146,
-          0.004441934131452666,
-          0.004411218431154767,
-          0.005397841813638808,
-          0.00645052096323231,
-          0.007903104976167643,
-          0.010583279479885773,
-          0.013354355155792764
-        ],
-        "st_ideal_insert_duration": 0,
-        "st_search_stage_list": [],
-        "st_search_time_list": [],
-        "st_max_qps_list_list": [],
-        "st_recall_list": [],
-        "st_ndcg_list": [],
-        "st_serial_latency_p99_list": [],
-        "st_serial_latency_p95_list": [],
-        "st_conc_failed_rate_list": [],
-        "st_conc_num_list_list": [],
-        "st_conc_qps_list_list": [],
-        "st_conc_latency_p99_list_list": [],
-        "st_conc_latency_p95_list_list": [],
-        "st_conc_latency_avg_list_list": []
-      },
-      "task_config": {
-        "db": "ZillizCloud",
-        "db_config": {
-          "db_label": "8cu-perf",
-          "version": "v2026.1",
-          "note": "",
-          "uri": "**********",
-          "user": "db_admin",
-          "password": "**********",
-          "collection_name": "ZillizCloudVDBBench"
-        },
-        "db_case_config": {
-          "index": "AUTOINDEX",
-          "metric_type": "COSINE",
-          "use_partition_key": false,
-          "level": 8,
-          "num_shards": 1
-        },
-        "case_config": {
-          "case_id": 5,
-          "custom_case": {},
-          "k": 100,
-          "concurrency_search_config": {
-            "num_concurrency": [
-              1,
-              5,
-              10,
-              20,
-              30,
-              40,
-              60,
-              80
-            ],
-            "concurrency_duration": 30,
-            "concurrency_timeout": 3600
-          }
-        },
-        "stages": [
-          "drop_old",
-          "load",
-          "search_serial",
-          "search_concurrent"
-        ]
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "insert_duration": 2923.0628,
-        "optimize_duration": 2272.8723,
-        "load_duration": 5195.935,
-        "qps": 5064.6982,
-        "serial_latency_p99": 0.0043,
-        "serial_latency_p95": 0.0036,
-        "recall": 0.9558,
-        "ndcg": 0.9606,
-        "conc_num_list": [
-          1,
-          5,
-          10,
-          20,
-          30,
-          40,
-          60,
-          80
-        ],
-        "conc_qps_list": [
-          306.5362,
-          1368.7188,
-          2310.9627,
-          3255.5776,
-          3791.6067,
-          4073.62,
-          4572.4511,
-          5064.6982
-        ],
-        "conc_latency_p99_list": [
-          0.0042355662427144124,
-          0.0046483404963510114,
-          0.009778717628214485,
-          0.010217842382844546,
-          0.015881566194002526,
-          0.01989235390967224,
-          0.025938013812992735,
-          0.031185232510324568
-        ],
-        "conc_latency_p95_list": [
-          0.0034556519065517934,
-          0.004072950512636453,
-          0.005186801168019884,
-          0.008326760004274545,
-          0.01228064175666077,
-          0.016202768517541696,
-          0.021469047002028674,
-          0.025539752503391355
-        ],
-        "conc_latency_avg_list": [
-          0.003258234978368169,
-          0.0036474964905585366,
-          0.004320538177772956,
-          0.006130977769455615,
-          0.007887396918013946,
-          0.009779561744223083,
-          0.013001510996033932,
-          0.015590046073741476
-        ],
-        "st_ideal_insert_duration": 0,
-        "st_search_stage_list": [],
-        "st_search_time_list": [],
-        "st_max_qps_list_list": [],
-        "st_recall_list": [],
-        "st_ndcg_list": [],
-        "st_serial_latency_p99_list": [],
-        "st_serial_latency_p95_list": [],
-        "st_conc_failed_rate_list": [],
-        "st_conc_num_list_list": [],
-        "st_conc_qps_list_list": [],
-        "st_conc_latency_p99_list_list": [],
-        "st_conc_latency_p95_list_list": [],
-        "st_conc_latency_avg_list_list": []
-      },
-      "task_config": {
-        "db": "ZillizCloud",
-        "db_config": {
-          "db_label": "8cu-perf-force_merge",
-          "version": "v2026.1",
-          "note": "",
-          "uri": "**********",
-          "user": "db_admin",
-          "password": "**********",
-          "collection_name": "ZillizCloudVDBBench"
-        },
-        "db_case_config": {
-          "index": "AUTOINDEX",
-          "metric_type": "COSINE",
-          "use_partition_key": false,
-          "level": 3,
-          "num_shards": 1
-        },
-        "case_config": {
-          "case_id": 4,
-          "custom_case": {},
-          "k": 100,
-          "concurrency_search_config": {
-            "num_concurrency": [
-              1,
-              5,
-              10,
-              20,
-              30,
-              40,
-              60,
-              80
-            ],
-            "concurrency_duration": 30,
-            "concurrency_timeout": 3600
-          }
-        },
-        "stages": [
-          "drop_old",
-          "load",
-          "search_serial",
-          "search_concurrent"
-        ]
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "insert_duration": 3205.4829,
-        "optimize_duration": 1275.7844,
-        "load_duration": 4481.2673,
-        "qps": 3468.5933,
-        "serial_latency_p99": 0.0045,
-        "serial_latency_p95": 0.0043,
-        "recall": 0.9634,
-        "ndcg": 0.9661,
-        "conc_num_list": [
-          1,
-          5,
-          10,
-          20,
-          30,
-          40,
-          60,
-          80
-        ],
-        "conc_qps_list": [
-          274.7753,
-          1086.6444,
-          1657.8469,
-          2230.3556,
-          2576.5151,
-          2840.9102,
-          3207.9495,
-          3468.5933
-        ],
-        "conc_latency_p99_list": [
-          0.007525063498178497,
-          0.00871218444284751,
-          0.009115133894665613,
-          0.01669143169856398,
-          0.021790961647639086,
-          0.026465490460395806,
-          0.03498110753978835,
-          0.042080024706956466
-        ],
-        "conc_latency_p95_list": [
-          0.004381819497211836,
-          0.00529403816035483,
-          0.007012556104746182,
-          0.01246311155118746,
-          0.018361228803405537,
-          0.022542869101744148,
-          0.029249506900669076,
-          0.03583758800959913
-        ],
-        "conc_latency_avg_list": [
-          0.003635002963577244,
-          0.0045950829257419635,
-          0.006023093199217258,
-          0.008949508158072033,
-          0.011605007790743322,
-          0.014003128689967868,
-          0.018541925579661857,
-          0.02278122412115334
-        ],
-        "st_ideal_insert_duration": 0,
-        "st_search_stage_list": [],
-        "st_search_time_list": [],
-        "st_max_qps_list_list": [],
-        "st_recall_list": [],
-        "st_ndcg_list": [],
-        "st_serial_latency_p99_list": [],
-        "st_serial_latency_p95_list": [],
-        "st_conc_failed_rate_list": [],
-        "st_conc_num_list_list": [],
-        "st_conc_qps_list_list": [],
-        "st_conc_latency_p99_list_list": [],
-        "st_conc_latency_p95_list_list": [],
-        "st_conc_latency_avg_list_list": []
-      },
-      "task_config": {
-        "db": "ZillizCloud",
-        "db_config": {
-          "db_label": "8cu-perf",
-          "version": "v2026.1",
-          "note": "",
-          "uri": "**********",
-          "user": "db_admin",
-          "password": "**********",
-          "collection_name": "ZillizCloudVDBBench"
-        },
-        "db_case_config": {
-          "index": "AUTOINDEX",
-          "metric_type": "COSINE",
-          "use_partition_key": false,
-          "level": 3,
-          "num_shards": 1
-        },
-        "case_config": {
-          "case_id": 4,
-          "custom_case": {},
-          "k": 100,
-          "concurrency_search_config": {
-            "num_concurrency": [
-              1,
-              5,
-              10,
-              20,
-              30,
-              40,
-              60,
-              80
-            ],
-            "concurrency_duration": 30,
-            "concurrency_timeout": 3600
-          }
-        },
-        "stages": [
-          "drop_old",
-          "load",
-          "search_serial",
-          "search_concurrent"
-        ]
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "insert_duration": 3205.4829,
-        "optimize_duration": 1275.7844,
-        "load_duration": 4481.2673,
-        "qps": 2401.3204,
-        "serial_latency_p99": 0.0107,
-        "serial_latency_p95": 0.0047,
-        "recall": 0.9866,
-        "ndcg": 0.9884,
-        "conc_num_list": [
-          1,
-          5,
-          10,
-          20,
-          30,
-          40,
-          60,
-          80
-        ],
-        "conc_qps_list": [
-          261.8215,
-          985.1764,
-          1468.0087,
-          1749.415,
-          1931.5307,
-          2090.0742,
-          2278.9704,
-          2401.3204
-        ],
-        "conc_latency_p99_list": [
-          0.004836413672601339,
-          0.009077261193306102,
-          0.010354967679304536,
-          0.02026946535654133,
-          0.029030042108206543,
-          0.03499512374750339,
-          0.046797644338803394,
-          0.057348916197370266
-        ],
-        "conc_latency_p95_list": [
-          0.004629465389007237,
-          0.0058674284955486655,
-          0.0082442566199461,
-          0.01657543244800763,
-          0.02401039500546176,
-          0.029254749882966277,
-          0.03907370918313973,
-          0.04936321394779952
-        ],
-        "conc_latency_avg_list": [
-          0.0038149669483554033,
-          0.00506845096702024,
-          0.006802651714890116,
-          0.01140782706843602,
-          0.015489598411640663,
-          0.019035290587860968,
-          0.02608886756739919,
-          0.03292382999700411
-        ],
-        "st_ideal_insert_duration": 0,
-        "st_search_stage_list": [],
-        "st_search_time_list": [],
-        "st_max_qps_list_list": [],
-        "st_recall_list": [],
-        "st_ndcg_list": [],
-        "st_serial_latency_p99_list": [],
-        "st_serial_latency_p95_list": [],
-        "st_conc_failed_rate_list": [],
-        "st_conc_num_list_list": [],
-        "st_conc_qps_list_list": [],
-        "st_conc_latency_p99_list_list": [],
-        "st_conc_latency_p95_list_list": [],
-        "st_conc_latency_avg_list_list": []
-      },
-      "task_config": {
-        "db": "ZillizCloud",
-        "db_config": {
-          "db_label": "8cu-perf",
-          "version": "v2026.1",
-          "note": "",
-          "uri": "**********",
-          "user": "db_admin",
+          "user": "root",
           "password": "**********",
           "collection_name": "ZillizCloudVDBBench"
         },
@@ -2556,25 +1782,22 @@
           }
         },
         "stages": [
-          "drop_old",
-          "load",
           "search_serial",
           "search_concurrent"
         ]
-      },
-      "label": ":)"
+      }
     },
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 2923.0628,
-        "optimize_duration": 2272.8723,
-        "load_duration": 5195.935,
-        "qps": 3568.396,
-        "serial_latency_p99": 0.0048,
-        "serial_latency_p95": 0.0043,
-        "recall": 0.9863,
-        "ndcg": 0.9883,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 3614.3118,
+        "serial_latency_p99": 0.0029,
+        "serial_latency_p95": 0.0028,
+        "recall": 0.9877,
+        "ndcg": 0.9894,
         "conc_num_list": [
           1,
           5,
@@ -2586,44 +1809,44 @@
           80
         ],
         "conc_qps_list": [
-          249.5646,
-          1116.5066,
-          1828.4446,
-          2389.4823,
-          2645.8957,
-          2879.4104,
-          3356.3991,
-          3568.396
+          397.2298,
+          1557.1023,
+          2236.3239,
+          2845.1058,
+          3146.0016,
+          3289.0762,
+          3520.8116,
+          3614.3118
         ],
         "conc_latency_p99_list": [
-          0.004949838446336795,
-          0.010793446648749472,
-          0.011542035994352773,
-          0.015714827887131834,
-          0.023098365282639866,
-          0.028270509486901574,
-          0.03385155899741221,
-          0.0405952908913605
+          0.0027946092444472016,
+          0.003967489110655152,
+          0.00615017178060953,
+          0.0128463427053066,
+          0.017453623053152116,
+          0.022870610732934445,
+          0.029518100013956432,
+          0.03869990034552756
         ],
         "conc_latency_p95_list": [
-          0.004326387906621675,
-          0.005205007104086689,
-          0.0069263952391338535,
-          0.012388522701803593,
-          0.01838434826204321,
-          0.022779258753871545,
-          0.02818173549894709,
-          0.034205201656732236
+          0.0027128490241011606,
+          0.003724151346250437,
+          0.0054281810007523745,
+          0.01044328572170343,
+          0.01436160156154074,
+          0.01821845376980491,
+          0.024413908016867936,
+          0.031903167749987915
         ],
         "conc_latency_avg_list": [
-          0.004002170059550175,
-          0.0044719544014582705,
-          0.005461118931996274,
-          0.008354930265743018,
-          0.011307457646718058,
-          0.013821107916470069,
-          0.01770926681597559,
-          0.022161158532467397
+          0.0025143936207342324,
+          0.003206745084255346,
+          0.004464954355791834,
+          0.007013879446545796,
+          0.009503234791544602,
+          0.012096279585844553,
+          0.01685092675726034,
+          0.021781507836163158
         ],
         "st_ideal_insert_duration": 0,
         "st_search_stage_list": [],
@@ -2643,11 +1866,11 @@
       "task_config": {
         "db": "ZillizCloud",
         "db_config": {
-          "db_label": "8cu-perf-force_merge",
-          "version": "v2026.1",
+          "db_label": "8cu-perf",
+          "version": "v2026.4",
           "note": "",
           "uri": "**********",
-          "user": "db_admin",
+          "user": "root",
           "password": "**********",
           "collection_name": "ZillizCloudVDBBench"
         },
@@ -2678,25 +1901,22 @@
           }
         },
         "stages": [
-          "drop_old",
-          "load",
           "search_serial",
           "search_concurrent"
         ]
-      },
-      "label": ":)"
+      }
     },
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 2923.0628,
-        "optimize_duration": 2272.8723,
-        "load_duration": 5195.935,
-        "qps": 4674.1861,
-        "serial_latency_p99": 0.0045,
-        "serial_latency_p95": 0.0038,
-        "recall": 0.967,
-        "ndcg": 0.9705,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 3181.0537,
+        "serial_latency_p99": 0.003,
+        "serial_latency_p95": 0.0029,
+        "recall": 0.9892,
+        "ndcg": 0.9908,
         "conc_num_list": [
           1,
           5,
@@ -2708,44 +1928,44 @@
           80
         ],
         "conc_qps_list": [
-          299.441,
-          1293.8246,
-          2204.8398,
-          2998.8928,
-          3416.6029,
-          3814.1905,
-          4403.9058,
-          4674.1861
+          373.2168,
+          1461.7612,
+          2063.4765,
+          2583.7979,
+          2781.1167,
+          2908.4205,
+          3073.9858,
+          3181.0537
         ],
         "conc_latency_p99_list": [
-          0.00402290889178403,
-          0.007907517027342683,
-          0.006291847964457707,
-          0.013353673194069417,
-          0.017164103323593728,
-          0.021020031592343,
-          0.027193114216788664,
-          0.033575675918255006
+          0.003002641891944222,
+          0.004314229479641651,
+          0.007060362810152582,
+          0.01453221907839178,
+          0.01971446685201954,
+          0.024677592392545203,
+          0.032532848112750784,
+          0.04069755139702464
         ],
         "conc_latency_p95_list": [
-          0.00356991050648503,
-          0.004438751634734216,
-          0.005453104941989295,
-          0.00961559300776571,
-          0.013857692398596555,
-          0.017230113997356966,
-          0.02220476679212879,
-          0.02798210658947937
+          0.0029138700163457544,
+          0.00403262600011658,
+          0.0060169674427015705,
+          0.011576333804987366,
+          0.01587381720310077,
+          0.019931912398897106,
+          0.027404746599495412,
+          0.03406435703218449
         ],
         "conc_latency_avg_list": [
-          0.003335578729612294,
-          0.0038557001362392825,
-          0.0045284253144977004,
-          0.006655331635103421,
-          0.008756953741340391,
-          0.010436090944337196,
-          0.013487455343736422,
-          0.016883584811310505
+          0.002676176823972926,
+          0.0034160777606854604,
+          0.004838368703871575,
+          0.0077237947842559935,
+          0.010749740541723023,
+          0.013688260722494459,
+          0.01930447747175536,
+          0.024747977200758154
         ],
         "st_ideal_insert_duration": 0,
         "st_search_stage_list": [],
@@ -2765,11 +1985,11 @@
       "task_config": {
         "db": "ZillizCloud",
         "db_config": {
-          "db_label": "8cu-perf-force_merge",
-          "version": "v2026.1",
+          "db_label": "8cu-perf",
+          "version": "v2026.4",
           "note": "",
           "uri": "**********",
-          "user": "db_admin",
+          "user": "root",
           "password": "**********",
           "collection_name": "ZillizCloudVDBBench"
         },
@@ -2777,7 +1997,7 @@
           "index": "AUTOINDEX",
           "metric_type": "COSINE",
           "use_partition_key": false,
-          "level": 4,
+          "level": 8,
           "num_shards": 1
         },
         "case_config": {
@@ -2800,13 +2020,129 @@
           }
         },
         "stages": [
-          "drop_old",
-          "load",
           "search_serial",
           "search_concurrent"
         ]
+      }
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 2804.8357,
+        "serial_latency_p99": 0.0033,
+        "serial_latency_p95": 0.0032,
+        "recall": 0.9903,
+        "ndcg": 0.9918,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20,
+          30,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          352.7729,
+          1367.945,
+          1917.0391,
+          2338.0313,
+          2510.7421,
+          2617.9646,
+          2727.8716,
+          2804.8357
+        ],
+        "conc_latency_p99_list": [
+          0.00323100520123262,
+          0.004680905669229106,
+          0.00799012375646271,
+          0.01590309410821647,
+          0.021047461275593433,
+          0.025625948917586353,
+          0.036803203278686886,
+          0.0467973963287659
+        ],
+        "conc_latency_p95_list": [
+          0.0031083543435670435,
+          0.0043611170200165365,
+          0.0067188970482675355,
+          0.0125031745119486,
+          0.017026124306721607,
+          0.021185590000823137,
+          0.03006786260521039,
+          0.03819325279910117
+        ],
+        "conc_latency_avg_list": [
+          0.002831514758067566,
+          0.003649909442997153,
+          0.00520858526610239,
+          0.00853725560951756,
+          0.011906267087115343,
+          0.015190065559178532,
+          0.021789805178996344,
+          0.0280490530042168
+        ],
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
       },
-      "label": ":)"
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "8cu-perf",
+          "version": "v2026.4",
+          "note": "",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********",
+          "collection_name": "ZillizCloudVDBBench"
+        },
+        "db_case_config": {
+          "index": "AUTOINDEX",
+          "metric_type": "COSINE",
+          "use_partition_key": false,
+          "level": 9,
+          "num_shards": 1
+        },
+        "case_config": {
+          "case_id": 4,
+          "custom_case": {},
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_serial",
+          "search_concurrent"
+        ]
+      }
     }
   ],
   "file_fmt": "result_{}_{}_{}.json",
