@@ -37,7 +37,7 @@ dependencies = [
     "polars",
     "plotly",
     "environs",
-    "pydantic<v2",
+    "pydantic>=2.0,<3",
     "scikit-learn",
     "pymilvus", # with pandas, numpy
     "hdrhistogram>=0.10.1",
