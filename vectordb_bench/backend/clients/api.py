@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from enum import StrEnum
 
-from pydantic import BaseModel, SecretStr, validator
+from pydantic import BaseModel, model_validator
 
 from vectordb_bench.backend.filter import Filter, FilterOp
 
@@ -51,6 +51,7 @@ class IndexType(StrEnum):
 
 
 class SQType(StrEnum):
+    SQ4U = "SQ4U"
     SQ6 = "SQ6"
     SQ8 = "SQ8"
     BF16 = "BF16"
@@ -91,13 +92,18 @@ class DBConfig(ABC, BaseModel):
     def to_dict(self) -> dict:
         raise NotImplementedError
 
-    @validator("*")
-    def not_empty_field(cls, v: any, field: any):
-        if field.name in cls.common_short_configs() or field.name in cls.common_long_configs():
-            return v
-        if not v and isinstance(v, str | SecretStr):
-            raise ValueError("Empty string!")
-        return v
+    @model_validator(mode="before")
+    @classmethod
+    def not_empty_field(cls, data: any) -> any:
+        if not isinstance(data, dict):
+            return data
+        skip = set(cls.common_short_configs()) | set(cls.common_long_configs())
+        for field_name, v in data.items():
+            if field_name in skip:
+                continue
+            if isinstance(v, str) and not v:
+                raise ValueError("Empty string!")
+        return data
 
 
 class DBCaseConfig(ABC):

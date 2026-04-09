@@ -20,7 +20,7 @@ psutil
 polars
 plotly
 environs
-pydantic<v2
+pydantic>=2.0,<3
 scikit-learn
 pymilvus
 clickhouse_connect
