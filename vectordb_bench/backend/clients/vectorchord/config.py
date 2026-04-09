@@ -155,7 +155,7 @@ class VectorChordGraphConfig(VectorChordIndexConfig):
     # Search parameters (GUCs)
     ef_search: int | None = 64  # range [1, 65535]
     beam_search: int | None = None  # default 1
-    max_scan_tuples: int | None = None # default -1, range [-1, 2147483647]
+    max_scan_tuples: int | None = None  # default -1, range [-1, 2147483647]
 
     def index_param(self) -> dict:
         options_parts = []
