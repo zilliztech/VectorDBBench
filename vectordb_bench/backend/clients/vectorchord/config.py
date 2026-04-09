@@ -155,6 +155,7 @@ class VectorChordGraphConfig(VectorChordIndexConfig):
     # Search parameters (GUCs)
     ef_search: int | None = 64  # range [1, 65535]
     beam_search: int | None = None  # default 1
+    max_scan_tuples: int | None = None # default -1, range [-1, 2147483647]
 
     def index_param(self) -> dict:
         options_parts = []
@@ -184,6 +185,8 @@ class VectorChordGraphConfig(VectorChordIndexConfig):
             params["vchordg.ef_search"] = str(self.ef_search)
         if self.beam_search is not None:
             params["vchordg.beam_search"] = str(self.beam_search)
+        if self.max_scan_tuples is not None:
+            params["vchordg.max_scan_tuples"] = str(self.max_scan_tuples)
         return params
 
 

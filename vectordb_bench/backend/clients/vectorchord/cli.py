@@ -226,6 +226,14 @@ class VectorChordGraphTypedDict(VectorChordTypedDict):
             help="Batch vertex access width during search (default: 1)",
         ),
     ]
+    max_scan_tuples: Annotated[
+        int | None,
+        click.option(
+            "--max-scan-tuples",
+            type=int,
+            help="Max tuples to scan before stopping (-1 for unlimited)",
+        ),
+    ]
 
 
 @cli.command()
@@ -253,6 +261,7 @@ def VectorChordGraph(
             ef_search=parameters["ef_search"],
             beam_search=parameters["beam_search"],
             max_parallel_workers=parameters["max_parallel_workers"],
+            max_scan_tuples=parameters["max_scan_tuples"],
         ),
         **parameters,
     )
