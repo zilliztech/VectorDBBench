@@ -78,7 +78,7 @@ class PgVectoRSIndexConfig(BaseModel, DBCaseConfig):
 class PgVectoRSHNSWConfig(PgVectoRSIndexConfig):
     index: IndexType = IndexType.HNSW
     m: int | None = None
-    ef_search: int | None
+    ef_search: int | None = None
     ef_construction: int | None = None
 
     def index_param(self) -> dict[str, str]:
@@ -106,8 +106,8 @@ class PgVectoRSHNSWConfig(PgVectoRSIndexConfig):
 
 class PgVectoRSIVFFlatConfig(PgVectoRSIndexConfig):
     index: IndexType = IndexType.IVFFlat
-    probes: int | None
-    lists: int | None
+    probes: int | None = None
+    lists: int | None = None
 
     def index_param(self) -> dict[str, str]:
         if self.quantization_type is None:

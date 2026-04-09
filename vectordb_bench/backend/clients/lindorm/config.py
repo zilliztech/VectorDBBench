@@ -43,9 +43,9 @@ class LindormIndexConfig(BaseModel):
 
 class HNSWConfig(LindormIndexConfig, DBCaseConfig):
     index: IndexType = IndexType.HNSW
-    M: int | None
-    efConstruction: int | None
-    efSearch: int | None
+    M: int | None = None
+    efConstruction: int | None = None
+    efSearch: int | None = None
     filter_type: str | None = "efficient_filter"
     k_expand_scope: int | None = 1000
 
@@ -72,12 +72,12 @@ class HNSWConfig(LindormIndexConfig, DBCaseConfig):
 # first layer searching for cluster centroids is hnsw
 class IVFPQConfig(LindormIndexConfig, DBCaseConfig):
     index: IndexType = IndexType.IVFPQ
-    nlist: int | None
-    nprobe: int | None
+    nlist: int | None = None
+    nprobe: int | None = None
     # search parameters
-    centroids_hnsw_M: int | None
-    centroids_hnsw_efConstruction: int | None
-    centroids_hnsw_efSearch: int | None
+    centroids_hnsw_M: int | None = None
+    centroids_hnsw_efConstruction: int | None = None
+    centroids_hnsw_efSearch: int | None = None
     filter_type: str | None = "efficient_filter"
 
     reorder_factor: int | None = 10
@@ -116,13 +116,13 @@ class IVFPQConfig(LindormIndexConfig, DBCaseConfig):
 
 class IVFBQConfig(LindormIndexConfig, DBCaseConfig):
     index: IndexType = IndexType.IVFBQ
-    nlist: int | None
-    exbits: int | None
-    nprobe: int | None
+    nlist: int | None = None
+    exbits: int | None = None
+    nprobe: int | None = None
     # search parameters
-    centroids_hnsw_M: int | None
-    centroids_hnsw_efConstruction: int | None
-    centroids_hnsw_efSearch: int | None
+    centroids_hnsw_M: int | None = None
+    centroids_hnsw_efConstruction: int | None = None
+    centroids_hnsw_efSearch: int | None = None
     filter_type: str | None = "efficient_filter"
 
     reorder_factor: int | None = 10

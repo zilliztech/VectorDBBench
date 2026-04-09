@@ -11,7 +11,7 @@ class PolarDBConfigDict(TypedDict):
     host: str
     port: int
     database: str
-    unix_socket: str | None
+    unix_socket: str | None = None
 
 
 class PolarDBConfig(DBConfig):

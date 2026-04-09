@@ -1,6 +1,6 @@
 from typing import TypeVar
 
-from pydantic import BaseModel, SecretStr, validator
+from pydantic import BaseModel, SecretStr, model_validator
 
 from ..api import DBCaseConfig, DBConfig, MetricType
 
@@ -25,11 +25,18 @@ class QdrantConfig(DBConfig):
             "url": self.url.get_secret_value(),
         }
 
-    @validator("*")
-    def not_empty_field(cls, v: any, field: any):
-        if field.name in ["api_key"]:
-            return v
-        return super().not_empty_field(v, field)
+    @model_validator(mode="before")
+    @classmethod
+    def not_empty_field(cls, data: any) -> any:
+        if not isinstance(data, dict):
+            return data
+        skip = set(cls.common_short_configs()) | set(cls.common_long_configs()) | {"api_key"}
+        for field_name, v in data.items():
+            if field_name in skip:
+                continue
+            if isinstance(v, str) and not v:
+                raise ValueError("Empty string!")
+        return data
 
 
 class QdrantIndexConfig(BaseModel, DBCaseConfig):

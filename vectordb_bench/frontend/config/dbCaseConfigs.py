@@ -119,7 +119,7 @@ def get_custom_case_items() -> list[UICaseItem]:
                 CaseConfig(
                     case_id=CaseType.PerformanceCustomDataset,
                     custom_case={
-                        **custom_config.dict(),
+                        **custom_config.model_dump(),
                         "use_filter": False,
                     },
                 )
@@ -140,7 +140,7 @@ def get_custom_case_items() -> list[UICaseItem]:
                 CaseConfig(
                     case_id=CaseType.PerformanceCustomDataset,
                     custom_case={
-                        **custom_config.dict(),
+                        **custom_config.model_dump(),
                         "use_filter": True,
                         "label_percentage": label_percentage,
                     },
@@ -174,7 +174,7 @@ def get_custom_streaming_case_items() -> list[UICaseItem]:
                     case_id=CaseType.StreamingCustomDataset,
                     custom_case={
                         "description": custom_config.description,
-                        "dataset_config": custom_config.dataset_config.dict(),
+                        "dataset_config": custom_config.dataset_config.model_dump(),
                     },
                 )
             ],

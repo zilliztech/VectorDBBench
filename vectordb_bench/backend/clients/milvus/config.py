@@ -1,4 +1,4 @@
-from pydantic import BaseModel, SecretStr, validator
+from pydantic import BaseModel, SecretStr, model_validator
 
 from ..api import DBCaseConfig, DBConfig, IndexType, MetricType, SQType
 
@@ -19,17 +19,18 @@ class MilvusConfig(DBConfig):
             "replica_number": self.replica_number,
         }
 
-    @validator("*")
-    def not_empty_field(cls, v: any, field: any):
-        if (
-            field.name in cls.common_short_configs()
-            or field.name in cls.common_long_configs()
-            or field.name in ["user", "password"]
-        ):
-            return v
-        if isinstance(v, str | SecretStr) and len(v) == 0:
-            raise ValueError("Empty string!")
-        return v
+    @model_validator(mode="before")
+    @classmethod
+    def not_empty_field(cls, data: any) -> any:
+        if not isinstance(data, dict):
+            return data
+        skip = set(cls.common_short_configs()) | set(cls.common_long_configs()) | {"user", "password"}
+        for field_name, v in data.items():
+            if field_name in skip:
+                continue
+            if isinstance(v, str) and not v:
+                raise ValueError("Empty string!")
+        return data
 
 
 class MilvusIndexConfig(BaseModel):
