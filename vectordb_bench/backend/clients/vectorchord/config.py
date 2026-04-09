@@ -18,7 +18,7 @@ class VectorChordConfigDict(TypedDict):
 
 
 class VectorChordConfig(DBConfig):
-    user_name: SecretStr = SecretStr("postgres")
+    user_name: SecretStr = "postgres"
     password: SecretStr
     host: str = "localhost"
     port: int = 5432
