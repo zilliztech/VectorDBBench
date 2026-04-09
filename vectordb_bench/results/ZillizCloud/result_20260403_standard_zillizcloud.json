@@ -5,9 +5,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 0.0,
-        "optimize_duration": 0.0,
-        "load_duration": 0.0,
+        "insert_duration": 246.6523,
+        "optimize_duration": 101.2089,
+        "load_duration": 347.8612,
         "qps": 13316.2336,
         "serial_latency_p99": 0.002,
         "serial_latency_p95": 0.0019,
@@ -124,9 +124,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 0.0,
-        "optimize_duration": 0.0,
-        "load_duration": 0.0,
+        "insert_duration": 246.6523,
+        "optimize_duration": 101.2089,
+        "load_duration": 347.8612,
         "qps": 12837.5287,
         "serial_latency_p99": 0.0021,
         "serial_latency_p95": 0.002,
@@ -243,9 +243,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 0.0,
-        "optimize_duration": 0.0,
-        "load_duration": 0.0,
+        "insert_duration": 246.6523,
+        "optimize_duration": 101.2089,
+        "load_duration": 347.8612,
         "qps": 12248.9154,
         "serial_latency_p99": 0.0022,
         "serial_latency_p95": 0.0021,
@@ -362,9 +362,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 0.0,
-        "optimize_duration": 0.0,
-        "load_duration": 0.0,
+        "insert_duration": 246.6523,
+        "optimize_duration": 101.2089,
+        "load_duration": 347.8612,
         "qps": 11501.6652,
         "serial_latency_p99": 0.0022,
         "serial_latency_p95": 0.0022,
@@ -481,9 +481,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 0.0,
-        "optimize_duration": 0.0,
-        "load_duration": 0.0,
+        "insert_duration": 246.6523,
+        "optimize_duration": 101.2089,
+        "load_duration": 347.8612,
         "qps": 10566.6823,
         "serial_latency_p99": 0.0024,
         "serial_latency_p95": 0.0023,
@@ -600,9 +600,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 0.0,
-        "optimize_duration": 0.0,
-        "load_duration": 0.0,
+        "insert_duration": 246.6523,
+        "optimize_duration": 101.2089,
+        "load_duration": 347.8612,
         "qps": 9227.318,
         "serial_latency_p99": 0.0027,
         "serial_latency_p95": 0.0026,
@@ -719,9 +719,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 0.0,
-        "optimize_duration": 0.0,
-        "load_duration": 0.0,
+        "insert_duration": 246.6523,
+        "optimize_duration": 101.2089,
+        "load_duration": 347.8612,
         "qps": 8320.4606,
         "serial_latency_p99": 0.0029,
         "serial_latency_p95": 0.0028,
@@ -838,9 +838,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 0.0,
-        "optimize_duration": 0.0,
-        "load_duration": 0.0,
+        "insert_duration": 246.6523,
+        "optimize_duration": 101.2089,
+        "load_duration": 347.8612,
         "qps": 7524.9879,
         "serial_latency_p99": 0.0032,
         "serial_latency_p95": 0.0031,
@@ -957,9 +957,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 0.0,
-        "optimize_duration": 0.0,
-        "load_duration": 0.0,
+        "insert_duration": 246.6523,
+        "optimize_duration": 101.2089,
+        "load_duration": 347.8612,
         "qps": 6813.2439,
         "serial_latency_p99": 0.0035,
         "serial_latency_p95": 0.0034,
@@ -1076,9 +1076,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 0.0,
-        "optimize_duration": 0.0,
-        "load_duration": 0.0,
+        "insert_duration": 2450.8286,
+        "optimize_duration": 136.9261,
+        "load_duration": 2587.7547,
         "qps": 7385.2066,
         "serial_latency_p99": 0.0021,
         "serial_latency_p95": 0.002,
@@ -1195,9 +1195,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 0.0,
-        "optimize_duration": 0.0,
-        "load_duration": 0.0,
+        "insert_duration": 2450.8286,
+        "optimize_duration": 136.9261,
+        "load_duration": 2587.7547,
         "qps": 6793.8443,
         "serial_latency_p99": 0.0022,
         "serial_latency_p95": 0.0021,
@@ -1314,9 +1314,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 0.0,
-        "optimize_duration": 0.0,
-        "load_duration": 0.0,
+        "insert_duration": 2450.8286,
+        "optimize_duration": 136.9261,
+        "load_duration": 2587.7547,
         "qps": 6242.5346,
         "serial_latency_p99": 0.0023,
         "serial_latency_p95": 0.0022,
@@ -1433,9 +1433,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 0.0,
-        "optimize_duration": 0.0,
-        "load_duration": 0.0,
+        "insert_duration": 2450.8286,
+        "optimize_duration": 136.9261,
+        "load_duration": 2587.7547,
         "qps": 5779.119,
         "serial_latency_p99": 0.0023,
         "serial_latency_p95": 0.0023,
@@ -1552,9 +1552,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 0.0,
-        "optimize_duration": 0.0,
-        "load_duration": 0.0,
+        "insert_duration": 2450.8286,
+        "optimize_duration": 136.9261,
+        "load_duration": 2587.7547,
         "qps": 5183.5843,
         "serial_latency_p99": 0.0024,
         "serial_latency_p95": 0.0023,
@@ -1671,9 +1671,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 0.0,
-        "optimize_duration": 0.0,
-        "load_duration": 0.0,
+        "insert_duration": 2450.8286,
+        "optimize_duration": 136.9261,
+        "load_duration": 2587.7547,
         "qps": 4259.5572,
         "serial_latency_p99": 0.0026,
         "serial_latency_p95": 0.0026,
@@ -1790,9 +1790,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 0.0,
-        "optimize_duration": 0.0,
-        "load_duration": 0.0,
+        "insert_duration": 2450.8286,
+        "optimize_duration": 136.9261,
+        "load_duration": 2587.7547,
         "qps": 3614.3118,
         "serial_latency_p99": 0.0029,
         "serial_latency_p95": 0.0028,
@@ -1909,9 +1909,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 0.0,
-        "optimize_duration": 0.0,
-        "load_duration": 0.0,
+        "insert_duration": 2450.8286,
+        "optimize_duration": 136.9261,
+        "load_duration": 2587.7547,
         "qps": 3181.0537,
         "serial_latency_p99": 0.003,
         "serial_latency_p95": 0.0029,
@@ -2028,9 +2028,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 0.0,
-        "optimize_duration": 0.0,
-        "load_duration": 0.0,
+        "insert_duration": 2450.8286,
+        "optimize_duration": 136.9261,
+        "load_duration": 2587.7547,
         "qps": 2804.8357,
         "serial_latency_p99": 0.0033,
         "serial_latency_p95": 0.0032,
