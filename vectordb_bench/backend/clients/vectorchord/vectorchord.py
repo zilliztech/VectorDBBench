@@ -93,7 +93,7 @@ class VectorChord(VectorDB):
         register_vector(conn)
         conn.autocommit = False
         cursor = conn.cursor()
-        
+
         assert conn is not None, "Connection is not initialized"
         assert cursor is not None, "Cursor is not initialized"
 
