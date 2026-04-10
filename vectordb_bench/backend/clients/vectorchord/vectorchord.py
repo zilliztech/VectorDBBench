@@ -57,6 +57,10 @@ class VectorChord(VectorDB):
 
         self.conn, self.cursor = self._create_connection(**self.db_config)
 
+        # create vectorchord extension if not exists
+        self.cursor.execute("CREATE EXTENSION IF NOT EXISTS vchord CASCADE")
+        self.conn.commit()
+
         log.info(f"{self.name} config values: {self.db_config}\n{self.case_config}")
         if not any(
             (
@@ -86,12 +90,10 @@ class VectorChord(VectorDB):
     @staticmethod
     def _create_connection(**kwargs) -> tuple[Connection, Cursor]:
         conn = psycopg.connect(**kwargs)
-        cursor = conn.cursor()
-        cursor.execute("CREATE EXTENSION IF NOT EXISTS vchord CASCADE")
-        conn.commit()
         register_vector(conn)
         conn.autocommit = False
-
+        cursor = conn.cursor()
+        
         assert conn is not None, "Connection is not initialized"
         assert cursor is not None, "Cursor is not initialized"
 
