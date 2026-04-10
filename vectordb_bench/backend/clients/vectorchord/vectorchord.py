@@ -10,6 +10,7 @@ import psycopg
 from pgvector.psycopg import register_vector
 from psycopg import Connection, Cursor, sql
 
+from ...filter import Filter, FilterOp
 from ..api import VectorDB
 from .config import VectorChordConfigDict, VectorChordIndexConfig
 
@@ -19,11 +20,17 @@ log = logging.getLogger(__name__)
 class VectorChord(VectorDB):
     """Use psycopg instructions"""
 
+    thread_safe: bool = False
+    supported_filter_types: list[FilterOp] = [
+        FilterOp.NonFilter,
+        FilterOp.NumGE,
+    ]
+
     conn: psycopg.Connection[Any] | None = None
     cursor: psycopg.Cursor[Any] | None = None
 
-    _unfiltered_search: sql.Composed
-    _filtered_search: sql.Composed
+    _search: sql.Composed
+    where_clause: str = ""
 
     def __init__(
         self,
@@ -79,11 +86,11 @@ class VectorChord(VectorDB):
     @staticmethod
     def _create_connection(**kwargs) -> tuple[Connection, Cursor]:
         conn = psycopg.connect(**kwargs)
-        conn.cursor().execute("CREATE EXTENSION IF NOT EXISTS vchord CASCADE")
+        cursor = conn.cursor()
+        cursor.execute("CREATE EXTENSION IF NOT EXISTS vchord CASCADE")
         conn.commit()
         register_vector(conn)
         conn.autocommit = False
-        cursor = conn.cursor()
 
         assert conn is not None, "Connection is not initialized"
         assert cursor is not None, "Cursor is not initialized"
@@ -101,34 +108,11 @@ class VectorChord(VectorDB):
             for setting_name, setting_val in session_options.items():
                 command = sql.SQL("SET {setting_name} " + "= {setting_val};").format(
                     setting_name=sql.Identifier(setting_name),
-                    setting_val=sql.Identifier(str(setting_val)),
+                    setting_val=sql.Literal(str(setting_val)),
                 )
                 log.debug(command.as_string(self.cursor))
                 self.cursor.execute(command)
             self.conn.commit()
-
-        # Search query cast type: rabitq8/rabitq4 queries still accept ::vector input
-        cast_type = "vector"
-
-        self._filtered_search = sql.Composed(
-            [
-                sql.SQL("SELECT id FROM public.{} WHERE id >= %s ORDER BY embedding ").format(
-                    sql.Identifier(self.table_name),
-                ),
-                sql.SQL(self.case_config.search_param()["metric_fun_op"]),
-                sql.SQL(f" %s::{cast_type} LIMIT %s::int"),
-            ],
-        )
-
-        self._unfiltered_search = sql.Composed(
-            [
-                sql.SQL("SELECT id FROM public.{} ORDER BY embedding ").format(
-                    sql.Identifier(self.table_name),
-                ),
-                sql.SQL(self.case_config.search_param()["metric_fun_op"]),
-                sql.SQL(f" %s::{cast_type} LIMIT %s::int"),
-            ],
-        )
 
         try:
             yield
@@ -228,7 +212,7 @@ class VectorChord(VectorDB):
         else:
             with_clause = sql.SQL(";")
 
-        full_sql = (index_create_sql + with_clause).join(" ")
+        full_sql = index_create_sql + sql.SQL(" ") + with_clause
         log.debug(full_sql.as_string(self.cursor))
         self.cursor.execute(full_sql)
         self.conn.commit()
@@ -299,26 +283,41 @@ class VectorChord(VectorDB):
             log.warning(f"Failed to insert data into vectorchord table ({self.table_name}), error: {e}")
             return 0, e
 
+    def _generate_search_query(self) -> sql.Composed:
+        # Search query cast type: rabitq8/rabitq4 queries still accept ::vector input
+        cast_type = "vector"
+        return sql.Composed(
+            [
+                sql.SQL("SELECT id FROM public.{table_name} {where_clause} ORDER BY embedding ").format(
+                    table_name=sql.Identifier(self.table_name),
+                    where_clause=sql.SQL(self.where_clause),
+                ),
+                sql.SQL(self.case_config.search_param()["metric_fun_op"]),
+                sql.SQL(f" %s::{cast_type} LIMIT %s::int"),
+            ],
+        )
+
+    def prepare_filter(self, filters: Filter):
+        if filters.type == FilterOp.NonFilter:
+            self.where_clause = ""
+        elif filters.type == FilterOp.NumGE:
+            self.where_clause = f"WHERE {self._primary_field} >= {filters.int_value}"
+        else:
+            msg = f"Not support Filter for VectorChord - {filters}"
+            raise ValueError(msg)
+
+        self._search = self._generate_search_query()
+
     def search_embedding(
         self,
         query: list[float],
         k: int = 100,
-        filters: dict | None = None,
         timeout: int | None = None,
+        **kwargs: Any,
     ) -> list[int]:
         assert self.conn is not None, "Connection is not initialized"
         assert self.cursor is not None, "Cursor is not initialized"
 
         q = np.asarray(query)
-        if filters:
-            gt = filters.get("id")
-            result = self.cursor.execute(
-                self._filtered_search,
-                (gt, q, k),
-                prepare=True,
-                binary=True,
-            )
-        else:
-            result = self.cursor.execute(self._unfiltered_search, (q, k), prepare=True, binary=True)
-
+        result = self.cursor.execute(self._search, (q, k), prepare=True, binary=True)
         return [int(i[0]) for i in result.fetchall()]

@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import LiteralString, TypedDict
+from typing import Literal, LiteralString, TypedDict
 
 from pydantic import BaseModel, SecretStr
 
@@ -64,7 +64,7 @@ class VectorChordIndexConfig(BaseModel, DBCaseConfig):
     metric_type: MetricType | None = None
     create_index_before_load: bool = False
     create_index_after_load: bool = True
-    quantization_type: str = "vector"  # vector, halfvec, rabitq8, rabitq4
+    quantization_type: Literal["vector", "halfvec", "rabitq8", "rabitq4"] = "vector"
 
     def parse_metric(self) -> str:
         ops = _METRIC_OPS.get(self.quantization_type, _METRIC_OPS["vector"])
