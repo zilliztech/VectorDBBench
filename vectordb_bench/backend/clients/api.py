@@ -50,6 +50,8 @@ class IndexType(StrEnum):
     SVS_VAMANA_LEANVEC = "SVS_VAMANA_LEANVEC"
     Hologres_HGraph = "HGraph"
     Hologres_Graph = "Graph"
+    IVF_HNSW_SQ = "IVF_HNSW_SQ"
+    IVF_HNSW_PQ = "IVF_HNSW_PQ"
     NONE = "NONE"
 
 
