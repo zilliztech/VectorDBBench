@@ -41,7 +41,7 @@ All the database client supported
 | pinecone                 | `pip install vectordb-bench[pinecone]`      |
 | weaviate                 | `pip install vectordb-bench[weaviate]`      |
 | elastic, aliyun_elasticsearch| `pip install vectordb-bench[elastic]`       |
-| pgvector, pgvectorscale, pgdiskann, alloydb | `pip install vectordb-bench[pgvector]`      |
+| pgvector, pgvectorscale, pgdiskann, alloydb, vectorchord | `pip install vectordb-bench[pgvector]`      |
 | pgvecto.rs               | `pip install vectordb-bench[pgvecto_rs]`    |
 | redis                    | `pip install vectordb-bench[redis]`         |
 | memorydb                 | `pip install vectordb-bench[memorydb]`      |
@@ -86,6 +86,7 @@ Options:
 Commands:
   pgvectorhnsw
   pgvectorivfflat
+  vectorchordrq
   test
   weaviate
 ```
@@ -178,6 +179,34 @@ Options:
                                   with-gt]
   --help                          Show this message and exit.
 ```
+
+### Run VectorChord (vchordrq) from command line
+
+VectorChord is a PostgreSQL extension for scalable vector similarity search using IVF + RaBitQ indexing.
+It is fully compatible with pgvector data types and provides faster queries and index builds.
+
+```shell
+vectordbbench vectorchordrq \
+  --user-name postgres --password '<password>' \
+  --host localhost --port 5432 --db-name vectordb \
+  --case-type Performance1536D50K \
+  --lists 1000 --probes 10 --epsilon 1.9 \
+  --spherical-centroids --build-threads 8 \
+  --max-parallel-workers 15
+```
+
+Key VectorChord-specific options:
+| Option | Description |
+|--------|-------------|
+| `--lists` | Number of IVF lists for vchordrq index |
+| `--probes` | Number of probes during search (default: 10) |
+| `--epsilon` | Reranking precision factor, 0.0-4.0 (default: 1.9) |
+| `--residual-quantization` | Enable residual quantization |
+| `--spherical-centroids` | L2-normalize centroids (recommended for cosine/IP) |
+| `--build-threads` | Number of threads for index building (1-255) |
+| `--degree-of-parallelism` | Degree of parallelism for index build (1-256) |
+| `--max-parallel-workers` | Sets max_parallel_workers & max_parallel_maintenance_workers |
+| `--max-scan-tuples` | Max tuples to scan before stopping (-1 for unlimited) |
 
 ### Run awsopensearch from command line
 
@@ -756,7 +785,7 @@ Now we can only run one task at the same time.
 ### Code Structure
 ![image](https://github.com/zilliztech/VectorDBBench/assets/105927039/8c06512e-5419-4381-b084-9c93aed59639)
 ### Client
-Our client module is designed with flexibility and extensibility in mind, aiming to integrate APIs from different systems seamlessly. As of now, it supports Milvus, Zilliz Cloud, Elastic Search, Pinecone, Qdrant Cloud, Weaviate Cloud, PgVector, Redis, Chroma, CockroachDB, etc. Stay tuned for more options, as we are consistently working on extending our reach to other systems.
+Our client module is designed with flexibility and extensibility in mind, aiming to integrate APIs from different systems seamlessly. As of now, it supports Milvus, Zilliz Cloud, Elastic Search, Pinecone, Qdrant Cloud, Weaviate Cloud, PgVector, VectorChord, Redis, Chroma, CockroachDB, etc. Stay tuned for more options, as we are consistently working on extending our reach to other systems.
 ### Benchmark Cases
 We've developed lots of comprehensive benchmark cases to test vector databases' various capabilities, each designed to give you a different piece of the puzzle. These cases are categorized into four main types:
 #### Capacity Case

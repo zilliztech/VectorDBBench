@@ -42,6 +42,8 @@ class IndexType(StrEnum):
     GPU_IVF_PQ = "GPU_IVF_PQ"
     GPU_CAGRA = "GPU_CAGRA"
     SCANN = "scann"
+    VCHORDRQ = "vchordrq"
+    VCHORDG = "vchordg"
     SCANN_MILVUS = "SCANN_MILVUS"
     SVS_VAMANA = "SVS_VAMANA"
     SVS_VAMANA_LVQ = "SVS_VAMANA_LVQ"

@@ -59,6 +59,7 @@ class DB(Enum):
     Zvec = "Zvec"
     Endee = "Endee"
     Lindorm = "Lindorm"
+    VectorChord = "VectorChord"
     PolarDB = "PolarDB"
 
     @property
@@ -247,6 +248,10 @@ class DB(Enum):
 
             return LindormVector
 
+        if self == DB.VectorChord:
+            from .vectorchord.vectorchord import VectorChord
+
+            return VectorChord
         if self == DB.PolarDB:
             from .polardb.polardb import PolarDB
 
@@ -441,6 +446,10 @@ class DB(Enum):
 
             return LindormConfig
 
+        if self == DB.VectorChord:
+            from .vectorchord.config import VectorChordConfig
+
+            return VectorChordConfig
         if self == DB.PolarDB:
             from .polardb.config import PolarDBConfig
 
@@ -616,6 +625,11 @@ class DB(Enum):
             from .lindorm.config import _lindorm_vector_case_config
 
             return _lindorm_vector_case_config.get(index_type)
+
+        if self == DB.VectorChord:
+            from .vectorchord.config import _vectorchord_case_config
+
+            return _vectorchord_case_config.get(index_type)
 
         # DB.Pinecone, DB.Redis
         return EmptyDBCaseConfig
