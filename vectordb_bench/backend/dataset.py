@@ -6,13 +6,13 @@ Usage:
 
 import logging
 import pathlib
-import typing
 from enum import Enum
+from typing import Any, ClassVar, NamedTuple
 
 import pandas as pd
 import polars as pl
 from pyarrow.parquet import ParquetFile
-from pydantic import PrivateAttr, validator
+from pydantic import field_validator
 
 from vectordb_bench import config
 from vectordb_bench.base import BaseModel
@@ -25,7 +25,7 @@ from .filter import Filter, FilterOp, non_filter
 log = logging.getLogger(__name__)
 
 
-class SizeLabel(typing.NamedTuple):
+class SizeLabel(NamedTuple):
     size: int
     label: str
     file_count: int
@@ -38,7 +38,7 @@ class BaseDataset(BaseModel):
     metric_type: MetricType
     use_shuffled: bool
     with_gt: bool = False
-    _size_label: dict[int, SizeLabel] = PrivateAttr()
+    _size_label: ClassVar[dict[int, SizeLabel]]
     is_custom: bool = False
     with_remote_resource: bool = True
     # for label filter cases
@@ -57,7 +57,8 @@ class BaseDataset(BaseModel):
     gt_id_field: str = "id"
     gt_neighbors_field: str = "neighbors_id"
 
-    @validator("size")
+    @field_validator("size")
+    @classmethod
     def verify_size(cls, v: int):
         if v not in cls._size_label:
             msg = f"Size {v} not supported for the dataset, expected: {cls._size_label.keys()}"
@@ -102,7 +103,8 @@ class CustomDataset(BaseDataset):
     scalar_labels_file: str = "scalar_labels.parquet"
     label_percentages: list[float] = []
 
-    @validator("size")
+    @field_validator("size")
+    @classmethod
     def verify_size(cls, v: int):
         return v
 
@@ -136,7 +138,7 @@ class LAION(BaseDataset):
     metric_type: MetricType = MetricType.L2
     use_shuffled: bool = False
     with_gt: bool = True
-    _size_label: dict = {
+    _size_label: ClassVar[dict] = {
         100_000_000: SizeLabel(100_000_000, "LARGE", 100),
     }
 
@@ -146,7 +148,7 @@ class GIST(BaseDataset):
     dim: int = 960
     metric_type: MetricType = MetricType.L2
     use_shuffled: bool = False
-    _size_label: dict = {
+    _size_label: ClassVar[dict] = {
         100_000: SizeLabel(100_000, "SMALL", 1),
         1_000_000: SizeLabel(1_000_000, "MEDIUM", 1),
     }
@@ -158,7 +160,7 @@ class Cohere(BaseDataset):
     metric_type: MetricType = MetricType.COSINE
     use_shuffled: bool = config.USE_SHUFFLED_DATA
     with_gt: bool = True
-    _size_label: dict = {
+    _size_label: ClassVar[dict] = {
         100_000: SizeLabel(100_000, "SMALL", 1),
         1_000_000: SizeLabel(1_000_000, "MEDIUM", 1),
         10_000_000: SizeLabel(10_000_000, "LARGE", 10),
@@ -196,7 +198,7 @@ class Bioasq(BaseDataset):
     metric_type: MetricType = MetricType.COSINE
     use_shuffled: bool = config.USE_SHUFFLED_DATA
     with_gt: bool = True
-    _size_label: dict = {
+    _size_label: ClassVar[dict] = {
         1_000_000: SizeLabel(1_000_000, "MEDIUM", 1),
         10_000_000: SizeLabel(10_000_000, "LARGE", 10),
     }
@@ -232,7 +234,7 @@ class Glove(BaseDataset):
     dim: int = 200
     metric_type: MetricType = MetricType.COSINE
     use_shuffled: bool = False
-    _size_label: dict = {1_000_000: SizeLabel(1_000_000, "MEDIUM", 1)}
+    _size_label: ClassVar[dict] = {1_000_000: SizeLabel(1_000_000, "MEDIUM", 1)}
 
 
 class SIFT(BaseDataset):
@@ -240,7 +242,7 @@ class SIFT(BaseDataset):
     dim: int = 128
     metric_type: MetricType = MetricType.L2
     use_shuffled: bool = False
-    _size_label: dict = {
+    _size_label: ClassVar[dict] = {
         500_000: SizeLabel(
             500_000,
             "SMALL",
@@ -257,7 +259,7 @@ class OpenAI(BaseDataset):
     metric_type: MetricType = MetricType.COSINE
     use_shuffled: bool = config.USE_SHUFFLED_DATA
     with_gt: bool = True
-    _size_label: dict = {
+    _size_label: ClassVar[dict] = {
         50_000: SizeLabel(50_000, "SMALL", 1),
         500_000: SizeLabel(500_000, "MEDIUM", 1),
         5_000_000: SizeLabel(5_000_000, "LARGE", 10),
@@ -404,6 +406,17 @@ class DataSetIterator:
         self._idx = 0  # file number
         self._cur = None
         self._sub_idx = [0 for i in range(len(self._ds.train_files))]  # iter num for each file
+
+    def __getstate__(self):
+        """Custom pickle support to handle unpicklable generator."""
+        state = self.__dict__.copy()
+        # Remove the unpicklable generator from ParquetFile.iter_batches()
+        state["_cur"] = None
+        return state
+
+    def __setstate__(self, state: Any):
+        """Restore state after unpickling."""
+        self.__dict__.update(state)
 
     def __iter__(self):
         return self

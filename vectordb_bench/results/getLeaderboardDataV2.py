@@ -1,16 +1,13 @@
 import json
 import logging
+import pathlib
 
-
-from vectordb_bench.backend.cases import CaseType, StreamingPerformanceCase
-from vectordb_bench.backend.clients import DB
-from vectordb_bench.models import CaseResult
 from vectordb_bench import config
-import numpy as np
+from vectordb_bench.backend.cases import CaseType, StreamingPerformanceCase
+from vectordb_bench.interface import BenchMarkRunner
+from vectordb_bench.models import CaseResult
 
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
-
-from vectordb_bench.interface import BenchMarkRunner
 
 
 def get_standard_2025_results() -> list[CaseResult]:
@@ -23,7 +20,7 @@ def get_standard_2025_results() -> list[CaseResult]:
 
 
 def save_to_json(data: list[dict], file_name: str):
-    with open(file_name, "w") as f:
+    with pathlib.Path(file_name).open("w") as f:
         json.dump(data, f, indent=4)
 
 
@@ -56,11 +53,11 @@ def main():
                 }
             )
         else:
-            case: StreamingPerformanceCase = case
+            streaming_case: StreamingPerformanceCase = case
             # use 90p search stage results to represent streaming performance
             qps_90p = metrics.st_max_qps_list_list[metrics.st_search_stage_list.index(90)]
             latency_90p = metrics.st_serial_latency_p99_list[metrics.st_search_stage_list.index(90)]
-            insert_rate = case.insert_rate
+            insert_rate = streaming_case.insert_rate
             streaming_data.append(
                 {
                     "dataset": dataset,

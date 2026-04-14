@@ -1,7 +1,7 @@
 import logging
 from enum import Enum
 
-from pydantic import BaseModel, SecretStr
+from pydantic import BaseModel, SecretStr, model_validator
 
 from ..api import DBCaseConfig, DBConfig, MetricType
 
@@ -11,13 +11,15 @@ log = logging.getLogger(__name__)
 class AWSOpenSearchConfig(DBConfig, BaseModel):
     host: str = ""
     port: int = 80
-    user: str = ""
-    password: SecretStr = ""
+    user: str | None = None
+    password: SecretStr | None = None
 
     def to_dict(self) -> dict:
         use_ssl = self.port == 443
         http_auth = (
-            (self.user, self.password.get_secret_value()) if len(self.user) != 0 and len(self.password) != 0 else ()
+            (self.user, self.password.get_secret_value())
+            if self.user is not None and self.password is not None and len(self.user) != 0 and len(self.password) != 0
+            else ()
         )
         return {
             "hosts": [{"host": self.host, "port": self.port}],
@@ -30,6 +32,19 @@ class AWSOpenSearchConfig(DBConfig, BaseModel):
             "timeout": 600,
         }
 
+    @model_validator(mode="before")
+    @classmethod
+    def not_empty_field(cls, data: any) -> any:
+        if not isinstance(data, dict):
+            return data
+        skip = set(cls.common_short_configs()) | set(cls.common_long_configs()) | {"user", "password", "host"}
+        for field_name, v in data.items():
+            if field_name in skip:
+                continue
+            if isinstance(v, str) and not v:
+                raise ValueError("Empty string!")
+        return data
+
 
 class AWSOS_Engine(Enum):
     faiss = "faiss"
@@ -40,6 +55,7 @@ class AWSOS_Engine(Enum):
 class AWSOSQuantization(Enum):
     fp32 = "fp32"
     fp16 = "fp16"
+    bq = "bq"
 
 
 class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
@@ -63,6 +79,7 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
     use_routing: bool = False  # for label-filter cases
     oversample_factor: float = 1.0
     quantization_type: AWSOSQuantization = AWSOSQuantization.fp32
+    on_disk: bool = False
 
     def __eq__(self, obj: any):
         return (
@@ -74,6 +91,7 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
             and self.number_of_segments == obj.number_of_segments
             and self.use_routing == obj.use_routing
             and self.quantization_type == obj.quantization_type
+            and self.on_disk == obj.on_disk
         )
 
     def __hash__(self) -> int:
@@ -87,6 +105,7 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
                 self.number_of_segments,
                 self.use_routing,
                 self.quantization_type,
+                self.on_disk,
             )
         )
 
@@ -116,6 +135,7 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
     def index_param(self) -> dict:
         log.info(f"Using engine: {self.engine} for index creation")
         log.info(f"Using metric_type: {self.metric_type_name} for index creation")
+        log.info(f"Using on_disk mode: {self.on_disk} for index creation")
         space_type = self.parse_metric()
         log.info(f"Resulting space_type: {space_type} for index creation")
 
@@ -126,24 +146,19 @@ class AWSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
 
         parameters = {"ef_construction": self.efConstruction, "m": self.M}
 
-        if self.engine == AWSOS_Engine.faiss and self.quantization_type == AWSOSQuantization.fp16:
-            parameters["encoder"] = {"name": "sq", "parameters": {"type": "fp16"}}
+        # Add encoder configuration based on quantization type
+        if self.engine == AWSOS_Engine.faiss and self.use_quant:
+            if self.quantization_type == AWSOSQuantization.fp16:
+                parameters["encoder"] = {"name": "sq", "parameters": {"type": "fp16"}}
+            elif self.quantization_type == AWSOSQuantization.bq:
+                parameters["encoder"] = {"name": "binary", "parameters": {"bits": 1}}
 
         # For other engines (faiss, lucene), space_type is set at method level
         return {
             "name": "hnsw",
             "engine": self.engine.value,
             "space_type": space_type,
-            "parameters": {
-                "ef_construction": self.efConstruction,
-                "m": self.M,
-                "ef_search": self.ef_search,
-                **(
-                    {"encoder": {"name": "sq", "parameters": {"type": self.quantization_type.fp16.value}}}
-                    if self.use_quant
-                    else {}
-                ),
-            },
+            "parameters": parameters,
         }
 
     def search_param(self) -> dict:

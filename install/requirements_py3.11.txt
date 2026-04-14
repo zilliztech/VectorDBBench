@@ -1,9 +1,10 @@
 grpcio==1.53.2
 grpcio-tools==1.53.0
 qdrant-client
-pinecone-client
+pinecone
 weaviate-client
-elasticsearch
+elasticsearch==8.16.0
+opensearch-py
 pgvector
 pgvecto_rs[psycopg3]>=0.2.1
 sqlalchemy
@@ -19,10 +20,13 @@ psutil
 polars
 plotly
 environs
-pydantic<v2
+pydantic>=2.0,<3
 scikit-learn
 pymilvus
 clickhouse_connect
 pyvespa
 mysql-connector-python
+PyMySQL
+packaging
+hdrhistogram>=0.10.1
 databend-driver

@@ -61,11 +61,17 @@ def advancedSettings(st):
         "Concurrency Duration", value=config.CONCURRENCY_DURATION, label_visibility="collapsed"
     )
     container[1].caption("concurrency duration for each concurrency search test")
-    return index_already_exists, use_aliyun, k, concurrentInput, concurrency_duration
+
+    container = st.columns([1, 2])
+    load_concurrency = container[0].number_input(
+        "Load Concurrency", min_value=0, value=config.LOAD_CONCURRENCY, label_visibility="collapsed"
+    )
+    container[1].caption("number of concurrent workers for data loading in performance cases (0 = cpu_count)")
+    return index_already_exists, use_aliyun, k, concurrentInput, concurrency_duration, load_concurrency
 
 
 def controlPanel(st, tasks: list[TaskConfig], taskLabel, isAllValid):
-    index_already_exists, use_aliyun, k, concurrentInput, concurrency_duration = advancedSettings(st)
+    index_already_exists, use_aliyun, k, concurrentInput, concurrency_duration, load_concurrency = advancedSettings(st)
 
     def runHandler():
         benchmark_runner.set_drop_old(not index_already_exists)
@@ -80,6 +86,7 @@ def controlPanel(st, tasks: list[TaskConfig], taskLabel, isAllValid):
             task.case_config.k = k
             task.case_config.concurrency_search_config.num_concurrency = concurrentInput_list
             task.case_config.concurrency_search_config.concurrency_duration = concurrency_duration
+            task.load_concurrency = load_concurrency
         benchmark_runner.set_download_address(use_aliyun)
         benchmark_runner.run(tasks, taskLabel)
 

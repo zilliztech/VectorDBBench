@@ -45,12 +45,21 @@ class DB(Enum):
     AliyunOpenSearch = "AliyunOpenSearch"
     MongoDB = "MongoDB"
     TiDB = "TiDB"
+    CockroachDB = "CockroachDB"
     Clickhouse = "Clickhouse"
     Vespa = "Vespa"
     LanceDB = "LanceDB"
     OceanBase = "OceanBase"
     S3Vectors = "S3Vectors"
     Hologres = "Alibaba Cloud Hologres"
+    TencentElasticsearch = "TencentElasticsearch"
+    AliSQL = "AlibabaCloudRDSMySQL"
+    Doris = "Doris"
+    TurboPuffer = "TurboPuffer"
+    Zvec = "Zvec"
+    Endee = "Endee"
+    Lindorm = "Lindorm"
+    PolarDB = "PolarDB"
     Databend = "Databend"
 
     @property
@@ -176,6 +185,19 @@ class DB(Enum):
 
             return TiDB
 
+        if self == DB.CockroachDB:
+            from .cockroachdb.cockroachdb import CockroachDB
+
+            return CockroachDB
+        if self == DB.Doris:
+            from .doris.doris import Doris
+
+            return Doris
+        if self == DB.TurboPuffer:
+            from .turbopuffer.turbopuffer import TurboPuffer
+
+            return TurboPuffer
+
         if self == DB.Test:
             from .test.test import Test
 
@@ -201,10 +223,42 @@ class DB(Enum):
 
             return Hologres
 
+<<<<<<< HEAD
         if self == DB.Databend:
             from .databend.databend import Databend
 
             return Databend
+=======
+        if self == DB.TencentElasticsearch:
+            from .tencent_elasticsearch.tencent_elasticsearch import TencentElasticsearch
+
+            return TencentElasticsearch
+
+        if self == DB.AliSQL:
+            from .alisql.alisql import AliSQL
+
+            return AliSQL
+
+        if self == DB.Endee:
+            from .endee.endee import Endee
+
+            return Endee
+
+        if self == DB.Zvec:
+            from .zvec.zvec import Zvec
+
+            return Zvec
+
+        if self == DB.Lindorm:
+            from .lindorm.lindorm_search import LindormVector
+
+            return LindormVector
+
+        if self == DB.PolarDB:
+            from .polardb.polardb import PolarDB
+
+            return PolarDB
+>>>>>>> main
 
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
@@ -332,6 +386,19 @@ class DB(Enum):
 
             return TiDBConfig
 
+        if self == DB.CockroachDB:
+            from .cockroachdb.config import CockroachDBConfig
+
+            return CockroachDBConfig
+        if self == DB.Doris:
+            from .doris.config import DorisConfig
+
+            return DorisConfig
+        if self == DB.TurboPuffer:
+            from .turbopuffer.config import TurboPufferConfig
+
+            return TurboPufferConfig
+
         if self == DB.Test:
             from .test.config import TestConfig
 
@@ -357,15 +424,47 @@ class DB(Enum):
 
             return HologresConfig
 
+<<<<<<< HEAD
         if self == DB.Databend:
             from .databend.config import DatabendConfig
 
             return DatabendConfig
+=======
+        if self == DB.TencentElasticsearch:
+            from .tencent_elasticsearch.config import TencentElasticsearchConfig
+
+            return TencentElasticsearchConfig
+
+        if self == DB.AliSQL:
+            from .alisql.config import AliSQLConfig
+
+            return AliSQLConfig
+
+        if self == DB.Endee:
+            from .endee.config import EndeeConfig
+
+            return EndeeConfig
+
+        if self == DB.Zvec:
+            from .zvec.config import ZvecConfig
+
+            return ZvecConfig
+
+        if self == DB.Lindorm:
+            from .lindorm.config import LindormConfig
+
+            return LindormConfig
+
+        if self == DB.PolarDB:
+            from .polardb.config import PolarDBConfig
+
+            return PolarDBConfig
+>>>>>>> main
 
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
 
-    def case_config_cls(  # noqa: C901, PLR0911, PLR0912
+    def case_config_cls(  # noqa: C901, PLR0911, PLR0912, PLR0915
         self,
         index_type: IndexType | None = None,
     ) -> type[DBCaseConfig]:
@@ -469,6 +568,11 @@ class DB(Enum):
 
             return TiDBIndexConfig
 
+        if self == DB.CockroachDB:
+            from .cockroachdb.config import _cockroachdb_case_config
+
+            return _cockroachdb_case_config.get(index_type)
+
         if self == DB.Vespa:
             from .vespa.config import VespaHNSWConfig
 
@@ -491,7 +595,47 @@ class DB(Enum):
 
             return DatabendIndexConfig
 
-        # DB.Pinecone, DB.Chroma, DB.Redis
+        if self == DB.Zvec:
+            from .zvec.config import ZvecHNSWIndexConfig
+
+            return ZvecHNSWIndexConfig
+
+        if self == DB.TencentElasticsearch:
+            from .tencent_elasticsearch.config import TencentElasticsearchIndexConfig
+
+            return TencentElasticsearchIndexConfig
+
+        if self == DB.AliSQL:
+            from .alisql.alisql import AliSQLIndexConfig
+
+            return AliSQLIndexConfig
+
+        if self == DB.PolarDB:
+            from .polardb.config import _polardb_case_config
+
+            return _polardb_case_config.get(index_type)
+
+        if self == DB.Doris:
+            from .doris.config import DorisCaseConfig
+
+            return DorisCaseConfig
+
+        if self == DB.TurboPuffer:
+            from .turbopuffer.config import TurboPufferIndexConfig
+
+            return TurboPufferIndexConfig
+
+        if self == DB.Chroma:
+            from .chroma.config import ChromaIndexConfig
+
+            return ChromaIndexConfig
+
+        if self == DB.Lindorm:
+            from .lindorm.config import _lindorm_vector_case_config
+
+            return _lindorm_vector_case_config.get(index_type)
+
+        # DB.Pinecone, DB.Redis
         return EmptyDBCaseConfig
 
 

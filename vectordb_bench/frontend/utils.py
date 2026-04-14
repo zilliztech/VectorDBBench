@@ -1,7 +1,6 @@
 import random
 import string
 
-
 passwordKeys = ["password", "api_key"]
 
 

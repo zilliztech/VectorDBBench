@@ -27,11 +27,6 @@ python >= 3.11
 pip install vectordb-bench
 ```
 
-**Install all database clients**
-
-``` shell
-pip install 'vectordb-bench[all]'
-```
 **Install the specific database client**
 
 ```shell
@@ -42,24 +37,31 @@ All the database client supported
 | Optional database client | install command                             |
 |--------------------------|---------------------------------------------|
 | pymilvus, zilliz_cloud (*default*)     | `pip install vectordb-bench`                |
-| all (*clients requirements might be conflict with each other*) | `pip install 'vectordb-bench[all]'`           |
-| qdrant                   | `pip install 'vectordb-bench[qdrant]'`        |
-| pinecone                 | `pip install 'vectordb-bench[pinecone]'`      |
-| weaviate                 | `pip install 'vectordb-bench[weaviate]'`      |
-| elastic, aliyun_elasticsearch| `pip install 'vectordb-bench[elastic]'`       |
-| pgvector, pgvectorscale, pgdiskann, alloydb | `pip install 'vectordb-bench[pgvector]'`      |
-| pgvecto.rs               | `pip install 'vectordb-bench[pgvecto_rs]'`    |
-| redis                    | `pip install 'vectordb-bench[redis]'`         |
-| memorydb                 | `pip install 'vectordb-bench[memorydb]'`      |
-| chromadb                 | `pip install 'vectordb-bench[chromadb]'`      |
-| awsopensearch            | `pip install 'vectordb-bench[opensearch]'` |
-| aliyun_opensearch        | `pip install 'vectordb-bench[aliyun_opensearch]'` |
-| mongodb                  | `pip install 'vectordb-bench[mongodb]'`       |
-| tidb                     | `pip install 'vectordb-bench[tidb]'`          |
-| vespa                    | `pip install 'vectordb-bench[vespa]'`         |
-| oceanbase                | `pip install 'vectordb-bench[oceanbase]'`     |
-| hologres                 | `pip install 'vectordb-bench[hologres]'`      |
-| databend                 | `pip install 'vectordb-bench[databend]'`      |
+| qdrant                   | `pip install vectordb-bench[qdrant]`        |
+| pinecone                 | `pip install vectordb-bench[pinecone]`      |
+| weaviate                 | `pip install vectordb-bench[weaviate]`      |
+| elastic, aliyun_elasticsearch| `pip install vectordb-bench[elastic]`       |
+| pgvector, pgvectorscale, pgdiskann, alloydb | `pip install vectordb-bench[pgvector]`      |
+| pgvecto.rs               | `pip install vectordb-bench[pgvecto_rs]`    |
+| redis                    | `pip install vectordb-bench[redis]`         |
+| memorydb                 | `pip install vectordb-bench[memorydb]`      |
+| chromadb                 | `pip install vectordb-bench[chromadb]`      |
+| cockroachdb              | `pip install vectordb-bench[cockroachdb]`   |
+| awsopensearch            | `pip install vectordb-bench[opensearch]` |
+| aliyun_opensearch        | `pip install vectordb-bench[aliyun_opensearch]` |
+| mongodb                  | `pip install vectordb-bench[mongodb]`       |
+| tidb                     | `pip install vectordb-bench[tidb]`          |
+| vespa                    | `pip install vectordb-bench[vespa]`         |
+| oceanbase                | `pip install vectordb-bench[oceanbase]`     |
+| hologres                 | `pip install vectordb-bench[hologres]`      |
+| tencent_es               | `pip install vectordb-bench[tencent_es]`    |
+| alisql                   | `pip install 'vectordb-bench[alisql]'`      |
+| polardb                  | `pip install vectordb-bench[polardb]`       |
+| doris                    | `pip install vectordb-bench[doris]`         |
+| zvec                     | `pip install vectordb-bench[zvec]`          |
+| endee                    | `pip install vectordb-bench[endee]`         |
+| lindorm                  | `pip install vectordb-bench[lindorm]`       |
+| databend                 | `pip install vectordb-bench[databend]`      |
 
 ### Run
 
@@ -145,6 +147,15 @@ Options:
                                   quantization type for vectors (in table). If
                                   equal to bit, the parameter
                                   quantization_type will be set to bit too.
+  --reranking / --skip-reranking  Enable reranking for HNSW search for binary
+                                  quantization
+  --reranking-metric [L2|COSINE|IP|DP]
+                                  Distance metric for reranking  [default:
+                                  COSINE]
+  --quantized-fetch-limit INTEGER
+                                  Limit of fetching quantized vector ranked by
+                                  distance for reranking                 --
+                                  bound by ef_search
   --custom-case-name TEXT         Custom case name i.e. PerformanceCase1536D50K
   --custom-case-description TEXT  Custom name description
   --custom-case-load-timeout INTEGER
@@ -208,10 +219,103 @@ Options:
   # Memory Management
   --cb-threshold TEXT             k-NN Memory circuit breaker threshold
 
+  --ondisk                        Ondisk mode with binary quantization(32x compression)
+  --oversample-factor             Controls the degree of oversampling applied to minority classes in imbalanced datasets to improve model performance by balancing class distributions.(default 1.0)
+
   # Quantization Type
-  --quantization-type TEXT        which type of quantization to use valid values [fp32, fp16]
+  --quantization-type TEXT        which type of quantization to use valid values [fp32, fp16, bq]
   --help                          Show this message and exit.
   ```
+### Run Elastic Cloud from command line
+
+Elastic Cloud supports multiple index types: HNSW, HNSW_INT8, HNSW_INT4, and HNSW_BBQ.
+
+**Example: Run HNSW index test**
+
+```shell
+vectordbbench elasticcloudhnsw --db-label elastic-cloud-test \
+--cloud-id <your-cloud-id> --password '<your-password>' \
+--m 16 --ef-construction 100 --num-candidates 100 \
+--case-type Performance768D1M --number-of-shards 1 \
+--number-of-replicas 0 --refresh-interval 30s
+```
+
+**Example: Run HNSW_INT8 index test**
+
+```shell
+vectordbbench elasticcloudhnswint8 --db-label elastic-cloud-int8 \
+--cloud-id <your-cloud-id> --password '<your-password>' \
+--m 16 --ef-construction 200 --num-candidates 200 \
+--case-type Performance1536D50K --element-type float
+```
+
+**Example: Run HNSW_INT4 index test**
+
+```shell
+vectordbbench elasticcloudhnswint4 --db-label elastic-cloud-int4 \
+--cloud-id <your-cloud-id> --password '<your-password>' \
+--m 16 --ef-construction 200 --num-candidates 200 \
+--case-type Performance768D10M --use-rescore --oversample-ratio 2.0
+```
+
+**Example: Run HNSW_BBQ index test**
+
+```shell
+vectordbbench elasticcloudhnswbbq --db-label elastic-cloud-bbq \
+--cloud-id <your-cloud-id> --password '<your-password>' \
+--m 16 --ef-construction 200 --num-candidates 200 \
+--case-type Performance1536D5M --use-routing --use-force-merge
+```
+
+**Example: Run Label Filter Performance test**
+
+```shell
+vectordbbench elasticcloudhnsw --db-label elastic-cloud-label-filter \
+--cloud-id <your-cloud-id> --password '<your-password>' \
+--case-type LabelFilterPerformanceCase \
+--dataset-with-size-type "Medium OpenAI (1536dim, 500K)" \
+--label-percentage 0.001 \
+--m 16 --ef-construction 128 --num-candidates 100 \
+--num-concurrency 1,5 --number-of-shards 1
+```
+
+To list all options for Elastic Cloud, execute `vectordbbench elasticcloudhnsw --help`. The following are Elastic Cloud-specific command-line options:
+
+```text
+$ vectordbbench elasticcloudhnsw --help
+Usage: vectordbbench elasticcloudhnsw [OPTIONS]
+
+Options:
+  # Connection
+  --cloud-id TEXT                 Elastic Cloud ID  [required]
+  --password TEXT                 Elastic Cloud password  [required]
+
+  # HNSW Index Parameters
+  --m INTEGER                     HNSW M parameter  [default: 16]
+  --ef-construction INTEGER       HNSW efConstruction parameter  [default: 100]
+  --num-candidates INTEGER        Number of candidates for search  [default: 100]
+  --element-type [float|byte]     Element type for vectors (float: 4 bytes, byte: 1 byte)  [default: float]
+
+  # Index Configuration
+  --number-of-shards INTEGER      Number of shards  [default: 1]
+  --number-of-replicas INTEGER    Number of replicas  [default: 0]
+  --refresh-interval TEXT         Index refresh interval  [default: 30s]
+  --merge-max-thread-count INTEGER
+                                  Maximum thread count for merge  [default: 8]
+  --use-force-merge BOOLEAN       Whether to use force merge  [default: True]
+  --use-routing BOOLEAN           Whether to use routing  [default: False]
+  --use-rescore BOOLEAN           Whether to use rescore  [default: False]
+  --oversample-ratio FLOAT        Oversample ratio for rescore  [default: 2.0]
+
+  # Common Options
+  --case-type [CapacityDim128|CapacityDim960|Performance768D100M|...]
+                                  Case type
+  --db-label TEXT                 Db label, default: date in ISO format
+  --k INTEGER                     K value for number of nearest neighbors to search  [default: 100]
+  --num-concurrency TEXT          Comma-separated list of concurrency values  [default: 1,5,10,20,30,40,60,80]
+  --help                          Show this message and exit.
+```
+
 ### Run OceanBase from command line
 
 Execute tests for the index types: HNSW, HNSW_SQ, or HNSW_BQ.
@@ -316,6 +420,149 @@ Options:
   --help                          Show this message and exit.
   ```
 
+### Run Zvec from command line
+
+```bash
+vectordbbench zvec --path Performance768D10M --db-label 16c64g-v0.1 \
+    --case-type Performance768D10M --num-concurrency 12,14,16,18,20 \
+    --quantize-type int8 --ef-search 118 --is-using-refiner
+```
+To list the options for zvec, execute vectordbbench zvec --help
+```
+  --path TEXT                     collection path  [required]
+  --m INTEGER                     HNSW index parameter m.
+  --ef-construction INTEGER       HNSW index parameter ef_construction
+  --ef-search INTEGER             HNSW index parameter ef for search
+  --quantize-type TEXT            HNSW index quantize type, fp16/int8
+                                  supported
+  --is-using-refiner              is using refiner, suitable for quantized
+                                  index, recall `ef-search` results then
+                                  refine with unquantized vector to `topk`
+                                  results
+```
+
+### Run Doris from command line
+
+Doris supports ann index with type hnsw from version 4.0.x
+
+```shell
+NUM_PER_BATCH=1000000 vectordbbench doris --http-port=8030 --port=9030 --db-name=vector_test --case-type=Performance768D1M --stream-load-rows-per-batch=500000
+```
+
+Using flag `--session-var`, if you want to test doris with some customized session variables. For example:
+```shell
+NUM_PER_BATCH=1000000 vectordbbench doris --http-port=8030 --port=9030 --db-name=vector_test --case-type=Performance768D1M --stream-load-rows-per-batch=500000 --session-var enable_profile=True
+```
+
+Mote options:
+
+```text
+--m INTEGER                     hnsw m
+--ef-construction INTEGER       hnsw ef-construction
+--username TEXT                 Username  [default: root; required]
+--password TEXT                 Password  [default: ""]
+--host TEXT                     Db host  [default: 127.0.0.1; required]
+--port INTEGER                  Query Port  [default: 9030; required]
+--http-port INTEGER             Http Port  [default: 8030; required]
+--db-name TEXT                  Db name  [default: test; required]
+--ssl / --no-ssl                Enable or disable SSL, for Doris Serverless
+                                SSL must be enabled  [default: no-ssl]
+--index-prop TEXT               Extra index PROPERTY as key=value
+                                (repeatable)
+--session-var TEXT              Session variable key=value applied to each
+                                SQL session (repeatable)
+--stream-load-rows-per-batch INTEGER
+                                Rows per single stream load request; default
+                                uses NUM_PER_BATCH
+--no-index                      Create table without ANN index
+```
+
+### Run Lindorm from command line
+
+Lindorm supports index types: hnsw, ivfpq, or ivfbq.
+
+**Example: Run hnsw index test**
+
+```shell
+vectordbbench lindormhnsw --case-type Performance768D10M --index-name <index_name> --k 10 \
+--host <lindorm_host> --port <lindorm_port> --user <username> --password <password> --m 32 \
+--ef-construction 400 --ef-search 150
+```
+
+**Example: Run ivfpq index test**
+
+```shell
+vectordbbench lindormivfpq --case-type Performance768D10M \
+--index-name <index_name> --k 10 --host <lindorm_host> --port <lindorm_port> \
+--user <username> --password <password> --lists <nlist> --probes <nprobe> \
+--m 32 --ef-construction 500 --ef-search 200 --reorder-factor 2
+```
+
+**Example: Run ivfbq index test**
+
+```shell
+vectordbbench lindormivfbq --case-type Performance768D10M --index-name <index_name> \
+--k 10 --host <index_name> --port <lindorm_port> \
+--user <username> --password <password> --lists <nlist> --probes <nprobe> \
+--exbits 2 --m 32 --ef-construction 500 --ef-search 200 --reorder-factor 2
+```
+
+To list the options for Lindorm, execute `vectordbbench lindormhnsw --help`, The following are some Lindorm-specific command-line options.
+
+```text
+  --host TEXT                     host connection string  [required]
+  --port INTEGER                  Db Port  [required]
+  --user TEXT                     Db username  [required]
+  --password TEXT                 Db password  [required]
+  --index-name TEXT               Db index name  [required]
+  --filter-type TEXT              post_filter|pre_filter|efficient_filter
+  --number-of-regions INTEGER     Vector number of regions
+  --m INTEGER                     hnsw m  [required]
+  --ef-construction INTEGER       hnsw ef-construction  [required]
+  --ef-search INTEGER             hnsw ef-search  [required]
+```
+
+### Run PolarDB from command line
+
+PolarDB supports index types: faiss_hnsw_flat, faiss_hnsw_pq, and faiss_hnsw_sq.
+
+**Example: Run faiss_hnsw_flat benchmark**
+
+```shell
+vectordbbench polardbhnswflat \
+  --case-type Performance768D1M \
+  --username <db_user> \
+  --password '<db_password>' \
+  --host <db_host> \
+  --port 3306 \
+  --m 16 \
+  --ef-construction 256 \
+  --ef-search 256 \
+  --insert-workers 64 \
+  --num-concurrency '10,20,40,60,80' \
+  --concurrency-duration 60 \
+  --task-label <task_label> \
+  --db-label <db_label> \
+  --skip-search-serial \
+  --post-load-index
+```
+
+To list the options for PolarDB, execute `vectordbbench polardbhnswflat --help`. The following are some PolarDB-specific command-line options.
+
+```text
+  --username TEXT                  Username  [required]
+  --password TEXT                  Password
+  --host TEXT                      Db host  [default: 127.0.0.1]
+  --port INTEGER                   Db Port  [default: 3306]
+  --database TEXT                  Database name  [default: vectordbbench]
+  --m INTEGER                      M parameter (max_degree) in HNSW
+  --ef-construction INTEGER        ef_construction parameter in HNSW
+  --ef-search INTEGER              polar_vector_index_hnsw_ef_search session variable
+  --insert-workers INTEGER         Number of concurrent threads for data insertion
+  --post-load-index / --inline-index
+                                   Create index after load or inline at table creation
+```
+
 #### Using a configuration file.
 
 The vectordbbench command can optionally read some or all the options from a yaml formatted configuration file.
@@ -349,10 +596,23 @@ milvushnsw:
   ef_search: 128
   drop_old: False
   load: False
+elasticcloudhnsw:
+  db_label: elastic-cloud-hnsw
+  cloud_id: <your-cloud-id>
+  password: <your-password>
+  case_type: Performance768D1M
+  m: 16
+  ef_construction: 100
+  num_candidates: 100
+  number_of_shards: 1
+  number_of_replicas: 0
+  refresh_interval: 30s
+  element_type: float
 ```
 > Notes:
 > - Options passed on the command line will override the configuration file*
 > - Parameter names use an _ not -
+> - For `LabelFilterPerformanceCase` and `NewIntFilterPerformanceCase`, you must specify `dataset_with_size_type` in addition to `case_type`
 
 #### Using a batch configuration file.
 
@@ -387,10 +647,29 @@ milvushnsw:
     ef_search: 128
     drop_old: False
     load: False
+elasticcloudhnsw:
+  - db_label: elastic-cloud-hnsw-test-1
+    cloud_id: <your-cloud-id>
+    password: <your-password>
+    case_type: Performance768D1M
+    m: 16
+    ef_construction: 100
+    num_candidates: 100
+  - db_label: elastic-cloud-label-filter-0.1
+    cloud_id: <your-cloud-id>
+    password: <your-password>
+    case_type: LabelFilterPerformanceCase
+    dataset_with_size_type: "Medium OpenAI (1536dim, 500K)"
+    label_percentage: 0.001
+    m: 16
+    ef_construction: 128
+    num_candidates: 100
+    num_concurrency: "1,5"
 ```
 > Notes:
 > - Options can only be passed through configuration files
 > - Parameter names use an _ not -
+> - For `LabelFilterPerformanceCase` and `NewIntFilterPerformanceCase`, you must specify `dataset_with_size_type` in addition to `case_type`
 
 How to use?
 ```shell
@@ -478,7 +757,7 @@ Now we can only run one task at the same time.
 ### Code Structure
 ![image](https://github.com/zilliztech/VectorDBBench/assets/105927039/8c06512e-5419-4381-b084-9c93aed59639)
 ### Client
-Our client module is designed with flexibility and extensibility in mind, aiming to integrate APIs from different systems seamlessly. As of now, it supports Milvus, Zilliz Cloud, Elastic Search, Pinecone, Qdrant Cloud, Weaviate Cloud, PgVector, Redis, Chroma, etc. Stay tuned for more options, as we are consistently working on extending our reach to other systems.
+Our client module is designed with flexibility and extensibility in mind, aiming to integrate APIs from different systems seamlessly. As of now, it supports Milvus, Zilliz Cloud, Elastic Search, Pinecone, Qdrant Cloud, Weaviate Cloud, PgVector, Redis, Chroma, CockroachDB, etc. Stay tuned for more options, as we are consistently working on extending our reach to other systems.
 ### Benchmark Cases
 We've developed lots of comprehensive benchmark cases to test vector databases' various capabilities, each designed to give you a different piece of the puzzle. These cases are categorized into four main types:
 #### Capacity Case

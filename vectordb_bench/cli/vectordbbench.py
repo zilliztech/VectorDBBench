@@ -1,8 +1,20 @@
+from ..backend.clients.alisql.cli import AliSQLHNSW
 from ..backend.clients.alloydb.cli import AlloyDBScaNN
 from ..backend.clients.aws_opensearch.cli import AWSOpenSearch
+from ..backend.clients.chroma.cli import Chroma
 from ..backend.clients.clickhouse.cli import Clickhouse
+from ..backend.clients.cockroachdb.cli import CockroachDB as CockroachDBCli
+from ..backend.clients.doris.cli import Doris
+from ..backend.clients.elastic_cloud.cli import (
+    ElasticCloudHNSW,
+    ElasticCloudHNSWBBQ,
+    ElasticCloudHNSWInt4,
+    ElasticCloudHNSWInt8,
+)
+from ..backend.clients.endee.cli import Endee
 from ..backend.clients.hologres.cli import HologresHGraph
 from ..backend.clients.lancedb.cli import LanceDB
+from ..backend.clients.lindorm.cli import LindormHNSW, LindormIVFBQ, LindormIVFPQ
 from ..backend.clients.mariadb.cli import MariaDBHNSW
 from ..backend.clients.memorydb.cli import MemoryDB
 from ..backend.clients.milvus.cli import MilvusAutoIndex
@@ -12,15 +24,24 @@ from ..backend.clients.pgdiskann.cli import PgDiskAnn
 from ..backend.clients.pgvecto_rs.cli import PgVectoRSHNSW, PgVectoRSIVFFlat
 from ..backend.clients.pgvector.cli import PgVectorHNSW
 from ..backend.clients.pgvectorscale.cli import PgVectorScaleDiskAnn
+from ..backend.clients.pinecone.cli import Pinecone
+from ..backend.clients.polardb.cli import (
+    PolarDBHNSWFlat,
+    PolarDBHNSWPQ,
+    PolarDBHNSWSQ,
+)
 from ..backend.clients.qdrant_cloud.cli import QdrantCloud
 from ..backend.clients.qdrant_local.cli import QdrantLocal
 from ..backend.clients.redis.cli import Redis
 from ..backend.clients.s3_vectors.cli import S3Vectors
+from ..backend.clients.tencent_elasticsearch.cli import TencentElasticsearch
 from ..backend.clients.test.cli import Test
 from ..backend.clients.tidb.cli import TiDB
+from ..backend.clients.turbopuffer.cli import TurboPuffer
 from ..backend.clients.vespa.cli import Vespa
 from ..backend.clients.weaviate_cloud.cli import Weaviate
 from ..backend.clients.zilliz_cloud.cli import ZillizAutoIndex
+from ..backend.clients.zvec.cli import Zvec
 from ..backend.clients.databend.cli import Databend
 from .batch_cli import BatchCli
 from .cli import cli
@@ -43,14 +64,33 @@ cli.add_command(OceanBaseHNSW)
 cli.add_command(OceanBaseIVF)
 cli.add_command(MariaDBHNSW)
 cli.add_command(TiDB)
+cli.add_command(CockroachDBCli)
 cli.add_command(Clickhouse)
 cli.add_command(Vespa)
 cli.add_command(LanceDB)
 cli.add_command(HologresHGraph)
 cli.add_command(QdrantCloud)
 cli.add_command(QdrantLocal)
+cli.add_command(ElasticCloudHNSW)
+cli.add_command(ElasticCloudHNSWInt8)
+cli.add_command(ElasticCloudHNSWInt4)
+cli.add_command(ElasticCloudHNSWBBQ)
 cli.add_command(BatchCli)
 cli.add_command(S3Vectors)
+cli.add_command(TencentElasticsearch)
+cli.add_command(AliSQLHNSW)
+cli.add_command(Doris)
+cli.add_command(TurboPuffer)
+cli.add_command(Chroma)
+cli.add_command(Zvec)
+cli.add_command(Endee)
+cli.add_command(LindormIVFPQ)
+cli.add_command(LindormHNSW)
+cli.add_command(LindormIVFBQ)
+cli.add_command(Pinecone)
+cli.add_command(PolarDBHNSWFlat)
+cli.add_command(PolarDBHNSWPQ)
+cli.add_command(PolarDBHNSWSQ)
 cli.add_command(Databend)
 
 

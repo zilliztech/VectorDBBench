@@ -14,5 +14,18 @@
             "use_shuffled": false,
             "with_gt": true
         }
+    },
+    {
+        "case_type": "streaming",
+        "description": "This is a custom streaming dataset.",
+        "dataset_config": {
+            "name": "My Streaming Dataset",
+            "dir": "/my_dataset_path",
+            "size": 1000000,
+            "dim": 1024,
+            "file_count": 1,
+            "train_name": "shuffle_train",
+            "with_gt": true
+        }
     }
 ]

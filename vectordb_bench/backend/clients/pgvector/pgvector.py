@@ -21,6 +21,7 @@ log = logging.getLogger(__name__)
 class PgVector(VectorDB):
     """Use psycopg instructions"""
 
+    thread_safe: bool = False
     supported_filter_types: list[FilterOp] = [
         FilterOp.NonFilter,
         FilterOp.NumGE,
@@ -410,12 +411,10 @@ class PgVector(VectorDB):
                 )
             else:
                 self.cursor.execute(
-                    sql.SQL(
-                        """
+                    sql.SQL("""
                         CREATE TABLE IF NOT EXISTS public.{table_name}
                         ({primary_field} BIGINT PRIMARY KEY, embedding {table_quantization_type}({dim}));
-                        """
-                    ).format(
+                        """).format(
                         table_name=sql.Identifier(self.table_name),
                         table_quantization_type=sql.SQL(index_param["table_quantization_type"]),
                         dim=dim,

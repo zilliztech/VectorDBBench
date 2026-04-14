@@ -105,8 +105,7 @@ class PgDiskANN(VectorDB):
 
         if search_params.get("reranking"):
             # Reranking-enabled queries
-            self._filtered_search = sql.SQL(
-                """
+            self._filtered_search = sql.SQL("""
                 SELECT i.id
                 FROM (
                     SELECT id, embedding
@@ -117,16 +116,14 @@ class PgDiskANN(VectorDB):
                 ) i
                 ORDER BY i.embedding {reranking_metric_fun_op} %s::vector
                 LIMIT %s::int
-            """
-            ).format(
+            """).format(
                 table_name=sql.Identifier(self.table_name),
                 metric_fun_op=sql.SQL(search_params["metric_fun_op"]),
                 reranking_metric_fun_op=sql.SQL(search_params["reranking_metric_fun_op"]),
                 quantized_fetch_limit=sql.Literal(search_params["quantized_fetch_limit"]),
             )
 
-            self._unfiltered_search = sql.SQL(
-                """
+            self._unfiltered_search = sql.SQL("""
                 SELECT i.id
                 FROM (
                     SELECT id, embedding
@@ -136,8 +133,7 @@ class PgDiskANN(VectorDB):
                 ) i
                 ORDER BY i.embedding {reranking_metric_fun_op} %s::vector
                 LIMIT %s::int
-            """
-            ).format(
+            """).format(
                 table_name=sql.Identifier(self.table_name),
                 metric_fun_op=sql.SQL(search_params["metric_fun_op"]),
                 reranking_metric_fun_op=sql.SQL(search_params["reranking_metric_fun_op"]),

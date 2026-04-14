@@ -17,11 +17,16 @@ from .config import AWSOS_Engine, AWSOSQuantization
 log = logging.getLogger(__name__)
 
 
+def optional_secret_str(value: str | None) -> SecretStr | None:
+    """Convert string to SecretStr, handling None gracefully."""
+    return None if value is None else SecretStr(value)
+
+
 class AWSOpenSearchTypedDict(TypedDict):
     host: Annotated[str, click.option("--host", type=str, help="Db host", required=True)]
     port: Annotated[int, click.option("--port", type=int, default=80, help="Db Port")]
-    user: Annotated[str, click.option("--user", type=str, help="Db User")]
-    password: Annotated[str, click.option("--password", type=str, help="Db password")]
+    user: Annotated[str | None, click.option("--user", type=str, help="Db User")]
+    password: Annotated[str | None, click.option("--password", type=str, help="Db password")]
     number_of_shards: Annotated[
         int,
         click.option("--number-of-shards", type=int, help="Number of primary shards for the index", default=1),
@@ -131,10 +136,30 @@ class AWSOpenSearchTypedDict(TypedDict):
         str | None,
         click.option(
             "--quantization-type",
-            type=click.Choice(["fp32", "fp16"]),
+            type=click.Choice(["fp32", "fp16", "bq"]),
             help="quantization type for vectors (in index)",
             default="fp32",
             required=False,
+        ),
+    ]
+
+    oversample_factor: Annotated[
+        float,
+        click.option(
+            "--oversample-factor",
+            type=float,
+            help="Oversample factor for vector search",
+            default=1.0,
+        ),
+    ]
+
+    on_disk: Annotated[
+        bool,
+        click.option(
+            "--on-disk",
+            is_flag=True,
+            help="Enable on-disk vector storage mode",
+            default=False,
         ),
     ]
 
@@ -168,7 +193,7 @@ def AWSOpenSearch(**parameters: Unpack[AWSOpenSearchHNSWTypedDict]):
             host=parameters["host"],
             port=parameters["port"],
             user=parameters["user"],
-            password=SecretStr(parameters["password"]),
+            password=optional_secret_str(parameters["password"]),
         ),
         db_case_config=AWSOpenSearchIndexConfig(
             number_of_shards=parameters["number_of_shards"],
@@ -187,6 +212,8 @@ def AWSOpenSearch(**parameters: Unpack[AWSOpenSearchHNSWTypedDict]):
             engine=engine,
             quantization_type=AWSOSQuantization(parameters["quantization_type"]),
             metric_type_name=parameters["metric_type"],
+            on_disk=parameters["on_disk"],
+            oversample_factor=parameters["oversample_factor"],
         ),
         **parameters,
     )

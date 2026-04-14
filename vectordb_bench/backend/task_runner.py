@@ -1,19 +1,27 @@
 import concurrent
+import hashlib
 import logging
+import re
 import traceback
 from enum import Enum, auto
 
 import numpy as np
-import psutil
 
 from ..base import BaseModel
 from ..metric import Metric
 from ..models import PerformanceTimeoutError, TaskConfig, TaskStage
 from . import utils
 from .cases import Case, CaseLabel, StreamingPerformanceCase
-from .clients import MetricType, api
+from .clients import DB, MetricType, api
 from .data_source import DatasetSource
-from .runner import MultiProcessingSearchRunner, ReadWriteRunner, SerialInsertRunner, SerialSearchRunner
+from .runner import (
+    ConcurrentInsertRunner,
+    MultiProcessingSearchRunner,
+    ReadWriteRunner,
+    SerialInsertRunner,
+    SerialSearchRunner,
+)
+from .utils import kill_proc_tree
 
 log = logging.getLogger(__name__)
 
@@ -97,13 +105,36 @@ class CaseRunner(BaseModel):
 
     def init_db(self, drop_old: bool = True) -> None:
         db_cls = self.config.db.init_cls
+        # Compose a compact, case-unique collection/table name for Doris to avoid cross-case interference
+        collection_name = None
+        try:
+            if self.config.db == DB.Doris:
+                # Primary identifier = case-type enum name from CLI (e.g., Performance768D10M)
+                case_type_name = self.config.case_config.case_id.name
+                base = f"{case_type_name.lower()}"
+                # Sanitize to [a-z0-9_]
+                base = re.sub(r"[^a-z0-9_]+", "_", base).strip("_")
+                # Cap to 63 chars; add short hash if truncated
+                if len(base) > 63:
+                    h = hashlib.md5(base.encode(), usedforsecurity=False).hexdigest()[:6]
+                    base = f"{base[:(63-7)]}_{h}"
+                collection_name = base
+        except Exception:
+            # If anything goes wrong, fall back silently; Doris will use its default name logic
+            collection_name = None
+
+        # Check if collection_name is in the db_config (e.g., for Zilliz, Milvus)
+        db_config_dict = self.config.db_config.to_dict()
+        if "collection_name" in db_config_dict and not collection_name:
+            collection_name = db_config_dict.pop("collection_name")
 
         self.db = db_cls(
             dim=self.ca.dataset.data.dim,
-            db_config=self.config.db_config.to_dict(),
+            db_config=db_config_dict,
             db_case_config=self.config.db_case_config,
             drop_old=drop_old,
             with_scalar_labels=self.ca.with_scalar_labels,
+            **({"collection_name": collection_name} if collection_name else {}),
         )
 
     def _pre_run(self, drop_old: bool = True):
@@ -216,14 +247,15 @@ class CaseRunner(BaseModel):
 
     @utils.time_it
     def _load_train_data(self):
-        """Insert train data and get the insert_duration"""
+        """Insert train data concurrently and get the insert_duration"""
         try:
-            runner = SerialInsertRunner(
+            runner = ConcurrentInsertRunner(
                 self.db,
                 self.ca.dataset,
                 self.normalize,
                 self.ca.filters,
                 self.ca.load_timeout,
+                max_workers=self.config.load_concurrency or None,
             )
             runner.run()
         except Exception as e:
@@ -274,8 +306,7 @@ class CaseRunner(BaseModel):
                 return future.result(timeout=self.ca.optimize_timeout)[1]
             except TimeoutError as e:
                 log.warning(f"VectorDB optimize timeout in {self.ca.optimize_timeout}")
-                for pid, _ in executor._processes.items():
-                    psutil.Process(pid).kill()
+                kill_proc_tree(pids=list(executor._processes.keys()))
                 raise PerformanceTimeoutError from e
             except Exception as e:
                 log.warning(f"VectorDB optimize error: {e}")

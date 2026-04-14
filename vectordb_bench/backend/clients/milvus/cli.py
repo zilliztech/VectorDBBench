@@ -242,8 +242,8 @@ class MilvusHNSWSQTypedDict(CommonTypedDict, MilvusTypedDict, MilvusHNSWTypedDic
         str | None,
         click.option(
             "--sq-type",
-            type=click.Choice(["SQ6", "SQ8", "BF16", "FP16", "FP32"], case_sensitive=False),
-            help="Scalar quantizer type. Supported values: SQ6,SQ8,BF16,FP16,FP32",
+            type=click.Choice(["SQ4U", "SQ6", "SQ8", "BF16", "FP16", "FP32"], case_sensitive=False),
+            help="Scalar quantizer type. Supported values: SQ4U,SQ6,SQ8,BF16,FP16,FP32",
             required=True,
         ),
     ]
@@ -332,7 +332,7 @@ class MilvusIVFRABITQTypedDict(CommonTypedDict, MilvusTypedDict, MilvusIVFFlatTy
         click.option(
             "--rbq-bits-query",
             type=int,
-            help="The magnification factor of refine compared to k.",
+            help="The level of quantization of a query vector. Use 1…8 for the SQ1…SQ8 and 0 to disable.",
             required=True,
         ),
     ]
@@ -480,6 +480,169 @@ def MilvusGPUBruteForce(**parameters: Unpack[MilvusGPUBruteForceTypedDict]):
         db_case_config=GPUBruteForceConfig(
             metric_type=parameters["metric_type"],
             limit=parameters["limit"],  # top-k for search
+        ),
+        **parameters,
+    )
+
+
+class MilvusSVSVamanaTypedDict(CommonTypedDict, MilvusTypedDict):
+    svs_graph_max_degree: Annotated[
+        int,
+        click.option(
+            "--svs-graph-max-degree",
+            type=int,
+            help="Maximum degree of the Vamana graph (4-256).",
+            required=True,
+        ),
+    ]
+    svs_construction_window_size: Annotated[
+        int,
+        click.option(
+            "--svs-construction-window-size",
+            type=int,
+            help="Window size for graph construction.",
+            required=False,
+            default=40,
+            show_default=True,
+        ),
+    ]
+    svs_alpha: Annotated[
+        float | None,
+        click.option(
+            "--svs-alpha",
+            type=float,
+            help="Pruning parameter (default: 1.2 for L2, 0.95 for IP/COSINE).",
+            required=False,
+            default=None,
+        ),
+    ]
+    svs_storage_kind: Annotated[
+        str,
+        click.option(
+            "--svs-storage-kind",
+            type=click.Choice(
+                ["fp32", "fp16", "sqi8", "lvq4x0", "lvq4x4", "lvq4x8", "leanvec4x4", "leanvec4x8", "leanvec8x8"],
+                case_sensitive=False,
+            ),
+            help="Data storage format.",
+            required=False,
+            default="fp32",
+            show_default=True,
+        ),
+    ]
+    svs_search_window_size: Annotated[
+        int | None,
+        click.option(
+            "--svs-search-window-size",
+            type=int,
+            help="Window size for search (1-10000).",
+            required=False,
+            default=None,
+        ),
+    ]
+    svs_search_buffer_capacity: Annotated[
+        int | None,
+        click.option(
+            "--svs-search-buffer-capacity",
+            type=int,
+            help="Buffer capacity for search priority queue (1-10000).",
+            required=False,
+            default=None,
+        ),
+    ]
+
+
+@cli.command()
+@click_parameter_decorators_from_typed_dict(MilvusSVSVamanaTypedDict)
+def MilvusSVSVamana(**parameters: Unpack[MilvusSVSVamanaTypedDict]):
+    from .config import MilvusConfig, SVSVamanaConfig
+
+    run(
+        db=DBTYPE,
+        db_config=MilvusConfig(
+            db_label=parameters["db_label"],
+            uri=SecretStr(parameters["uri"]),
+            user=parameters["user_name"],
+            password=SecretStr(parameters["password"]) if parameters["password"] else None,
+            num_shards=int(parameters["num_shards"]),
+            replica_number=int(parameters["replica_number"]),
+        ),
+        db_case_config=SVSVamanaConfig(
+            svs_graph_max_degree=parameters["svs_graph_max_degree"],
+            svs_construction_window_size=parameters["svs_construction_window_size"],
+            svs_alpha=parameters["svs_alpha"],
+            svs_storage_kind=parameters["svs_storage_kind"],
+            svs_search_window_size=parameters["svs_search_window_size"],
+            svs_search_buffer_capacity=parameters["svs_search_buffer_capacity"],
+        ),
+        **parameters,
+    )
+
+
+@cli.command()
+@click_parameter_decorators_from_typed_dict(MilvusSVSVamanaTypedDict)
+def MilvusSVSVamanaLVQ(**parameters: Unpack[MilvusSVSVamanaTypedDict]):
+    from .config import MilvusConfig, SVSVamanaLVQConfig
+
+    run(
+        db=DBTYPE,
+        db_config=MilvusConfig(
+            db_label=parameters["db_label"],
+            uri=SecretStr(parameters["uri"]),
+            user=parameters["user_name"],
+            password=SecretStr(parameters["password"]) if parameters["password"] else None,
+            num_shards=int(parameters["num_shards"]),
+            replica_number=int(parameters["replica_number"]),
+        ),
+        db_case_config=SVSVamanaLVQConfig(
+            svs_graph_max_degree=parameters["svs_graph_max_degree"],
+            svs_construction_window_size=parameters["svs_construction_window_size"],
+            svs_alpha=parameters["svs_alpha"],
+            svs_storage_kind=parameters["svs_storage_kind"],
+            svs_search_window_size=parameters["svs_search_window_size"],
+            svs_search_buffer_capacity=parameters["svs_search_buffer_capacity"],
+        ),
+        **parameters,
+    )
+
+
+class MilvusSVSVamanaLeanVecTypedDict(MilvusSVSVamanaTypedDict):
+    svs_leanvec_dim: Annotated[
+        int,
+        click.option(
+            "--svs-leanvec-dim",
+            type=int,
+            help="Dimensionality for LeanVec compression (0 = d/2).",
+            required=False,
+            default=0,
+            show_default=True,
+        ),
+    ]
+
+
+@cli.command()
+@click_parameter_decorators_from_typed_dict(MilvusSVSVamanaLeanVecTypedDict)
+def MilvusSVSVamanaLeanVec(**parameters: Unpack[MilvusSVSVamanaLeanVecTypedDict]):
+    from .config import MilvusConfig, SVSVamanaLeanVecConfig
+
+    run(
+        db=DBTYPE,
+        db_config=MilvusConfig(
+            db_label=parameters["db_label"],
+            uri=SecretStr(parameters["uri"]),
+            user=parameters["user_name"],
+            password=SecretStr(parameters["password"]) if parameters["password"] else None,
+            num_shards=int(parameters["num_shards"]),
+            replica_number=int(parameters["replica_number"]),
+        ),
+        db_case_config=SVSVamanaLeanVecConfig(
+            svs_graph_max_degree=parameters["svs_graph_max_degree"],
+            svs_construction_window_size=parameters["svs_construction_window_size"],
+            svs_alpha=parameters["svs_alpha"],
+            svs_storage_kind=parameters["svs_storage_kind"],
+            svs_search_window_size=parameters["svs_search_window_size"],
+            svs_search_buffer_capacity=parameters["svs_search_buffer_capacity"],
+            svs_leanvec_dim=parameters["svs_leanvec_dim"],
         ),
         **parameters,
     )

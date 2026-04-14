@@ -93,7 +93,7 @@ class QdrantCloud(VectorDB):
                     continue
                 if info.status == CollectionStatus.GREEN:
                     msg = (
-                        f"Stored vectors: {info.vectors_count}, Indexed vectors: {info.indexed_vectors_count}, "
+                        f"Stored vectors: {info.points_count}, Indexed vectors: {info.indexed_vectors_count}, "
                         f"Collection status: {info.status}, Segment counts: {info.segments_count}"
                     )
                     log.info(msg)
@@ -198,14 +198,17 @@ class QdrantCloud(VectorDB):
         """
         assert self.qdrant_client is not None
 
-        res = self.qdrant_client.search(
+        points_res = self.qdrant_client.query_points(
             collection_name=self.collection_name,
-            query_vector=query,
+            query=query,
             limit=k,
             query_filter=self.query_filter,
             search_params=self.db_case_config.search_param(),
             with_payload=self.db_case_config.with_payload,
+            timeout=timeout,
         )
+
+        res = points_res.points
 
         return [r.id for r in res]
 

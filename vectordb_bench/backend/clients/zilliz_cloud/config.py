@@ -9,6 +9,7 @@ class ZillizCloudConfig(DBConfig):
     user: str
     password: SecretStr
     num_shards: int = 1
+    collection_name: str = "ZillizCloudVDBBench"
 
     def to_dict(self) -> dict:
         return {
@@ -16,6 +17,7 @@ class ZillizCloudConfig(DBConfig):
             "user": self.user,
             "password": self.password.get_secret_value(),
             "num_shards": self.num_shards,
+            "collection_name": self.collection_name,
         }
 
 

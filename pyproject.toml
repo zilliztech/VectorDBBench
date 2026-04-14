@@ -13,15 +13,15 @@ include = ["vectordb_bench", "vectordb_bench.cli"]
 [project]
 name = "vectordb-bench"
 authors = [
-  {name="XuanYang-cn", email="xuan.yang@zilliz.com"},
+  {name="VDBBench teams", email="pymilvus@zilliz.com"},
 ]
 description = "VectorDBBench is not just an offering of benchmark results for mainstream vector databases and cloud services, it's your go-to tool for the ultimate performance and cost-effectiveness comparison. Designed with ease-of-use in mind, VectorDBBench is devised to help users, even non-professionals, reproduce results or test new systems, making the hunt for the optimal choice amongst a plethora of cloud services and open-source vector databases a breeze."
 
 readme = "README.md"
 requires-python = ">=3.11"
+license = "MIT"
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
 dependencies = [
@@ -37,9 +37,11 @@ dependencies = [
     "polars",
     "plotly",
     "environs",
-    "pydantic<v2",
+    "pydantic>=2.0,<3",
     "scikit-learn",
-    "pymilvus", # with pandas, numpy, ujson
+    "pymilvus", # with pandas, numpy
+    "hdrhistogram>=0.10.1",
+    "ujson",
 ]
 dynamic = ["version"]
 
@@ -50,35 +52,9 @@ test = [
     "pytest",
 ]
 
-all = [
-    "grpcio==1.53.0", # for qdrant-client and pymilvus
-    "grpcio-tools==1.53.0", # for qdrant-client and pymilvus
-    "qdrant-client",
-    "pinecone-client",
-    "weaviate-client",
-    "elasticsearch",
-    "sqlalchemy",
-    "redis",
-    "chromadb",
-    "pgvector",
-    "psycopg",
-    "psycopg-binary",
-    "pgvecto_rs[psycopg3]>=0.2.2",
-    "opensearch-dsl",
-    "opensearch-py",
-    "memorydb",
-    "alibabacloud_ha3engine_vector",
-    "mariadb",
-    "PyMySQL",
-    "clickhouse-connect",
-    "pyvespa",
-    "lancedb",
-    "mysql-connector-python",
-    "databend-driver",
-]
-
+restful         = [ "flask" ]
 qdrant          = [ "qdrant-client" ]
-pinecone        = [ "pinecone-client" ]
+pinecone        = [ "pinecone" ]
 weaviate        = [ "weaviate-client" ]
 elastic         = [ "elasticsearch" ]
 # For elastic and aliyun_elasticsearch
@@ -95,17 +71,27 @@ aliyun_opensearch = [ "alibabacloud_ha3engine_vector" ]
 mongodb         = [ "pymongo" ]
 mariadb         = [ "mariadb" ]
 tidb            = [ "PyMySQL" ]
+cockroachdb     = [ "psycopg[binary,pool]", "pgvector" ]
 clickhouse      = [ "clickhouse-connect" ]
 vespa           = [ "pyvespa" ]
 lancedb         = [ "lancedb" ]
 oceanbase       = [ "mysql-connector-python" ]
+alisql          = [ "mysql-connector-python" ]
+polardb         = [ "PyMySQL" ]
+doris           = [ "doris-vector-search" ]
+turbopuffer     = [ "turbopuffer" ]
+zvec            = [ "zvec" ]
+endee           = [ "endee==0.1.10" ]
+lindorm         = [ "opensearch-py" ]
 databend        = [ "databend-driver" ]
 
 [project.urls]
-"repository" = "https://github.com/zilliztech/VectorDBBench"
+Repository  = "https://github.com/zilliztech/VectorDBBench"
+Leaderborad = "https://zilliz.com/vdbbench-leaderboard"
 
 [project.scripts]
 init_bench = "vectordb_bench.__main__:main"
+init_bench_rest = "vectordb_bench.restful.app:main"
 vectordbbench = "vectordb_bench.cli.vectordbbench:cli"
 
 [tool.setuptools_scm]
@@ -143,7 +129,7 @@ lint.ignore = [
     "INP001", # TODO
     "TID252", # TODO
     "N801", "N802", "N815",
-    "S101", "S108", "S603", "S311",
+    "S101", "S108", "S603", "S311", "S608",
     "PLR2004",
     "RUF017",
     "C416",

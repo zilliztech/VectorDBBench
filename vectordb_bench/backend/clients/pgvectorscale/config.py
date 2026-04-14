@@ -70,14 +70,14 @@ class PgVectorScaleIndexConfig(BaseModel, DBCaseConfig):
 
 class PgVectorScaleStreamingDiskANNConfig(PgVectorScaleIndexConfig):
     index: IndexType = IndexType.STREAMING_DISKANN
-    storage_layout: str | None
-    num_neighbors: int | None
-    search_list_size: int | None
-    max_alpha: float | None
-    num_dimensions: int | None
-    num_bits_per_dimension: int | None
-    query_search_list_size: int | None
-    query_rescore: int | None
+    storage_layout: str | None = None
+    num_neighbors: int | None = None
+    search_list_size: int | None = None
+    max_alpha: float | None = None
+    num_dimensions: int | None = None
+    num_bits_per_dimension: int | None = None
+    query_search_list_size: int | None = None
+    query_rescore: int | None = None
 
     def index_param(self) -> dict:
         return {

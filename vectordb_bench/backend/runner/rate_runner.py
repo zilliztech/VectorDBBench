@@ -53,6 +53,18 @@ class RatedMultiThreadingInsertRunner:
             db_copy = deepcopy(db)
             with db_copy.init():
                 _insert_embeddings(db_copy, emb, metadata, retry_idx=0)
+        elif db.name == "Doris":
+            # DorisVectorClient is not thread-safe. Similar to pgvector, create a per-thread client
+            # by deep-copying the wrapper and forcing lazy re-init inside the thread.
+            db_copy = deepcopy(db)
+            # Ensure a fresh client/table will be created in this thread
+            try:
+                db_copy.client = None
+                db_copy.table = None
+            except Exception:
+                log.debug("Failed to reset Doris client or table on thread-local copy", exc_info=True)
+            with db_copy.init():
+                _insert_embeddings(db_copy, emb, metadata, retry_idx=0)
         else:
             _insert_embeddings(db, emb, metadata, retry_idx=0)
 

@@ -1,4 +1,5 @@
 import concurrent
+import contextlib
 import logging
 import multiprocessing as mp
 import random
@@ -8,6 +9,7 @@ from collections.abc import Iterable
 from multiprocessing.queues import Queue
 
 import numpy as np
+from hdrh.histogram import HdrHistogram
 
 from vectordb_bench.backend.filter import Filter, non_filter
 
@@ -17,6 +19,12 @@ from ..clients import api
 
 NUM_PER_BATCH = config.NUM_PER_BATCH
 log = logging.getLogger(__name__)
+
+# HDR Histogram constants
+HDR_HISTOGRAM_MIN_US = 1
+HDR_HISTOGRAM_MAX_US = 60_000_000  # 60 seconds
+HDR_HISTOGRAM_SIGNIFICANT_DIGITS = 3  # ±0.1% accuracy
+US_TO_SECONDS = 1_000_000
 
 
 class MultiProcessingSearchRunner:
@@ -58,6 +66,11 @@ class MultiProcessingSearchRunner:
         q.put(1)
         with cond:
             cond.wait()
+
+        # NOTE: Zvec allows multiple read-only opens, or one read-write open.
+        # Use prepare_filter to switch to read-only mode.
+        with contextlib.suppress(Exception):
+            self.db.prepare_filter(self.filters)
 
         with self.db.init():
             self.db.prepare_filter(self.filters)
@@ -182,6 +195,31 @@ class MultiProcessingSearchRunner:
     def stop(self) -> None:
         pass
 
+    def _aggregate_latency_stats(self, res: list) -> tuple[float, float, float]:
+        """Aggregate latency stats from worker processes.
+
+        Returns:
+            tuple: (p99, p95, avg) latencies in seconds
+        """
+        latency_stats_list = [r[2] for r in res if r[2] and r[2].get("count", 0) > 0]
+
+        if not latency_stats_list:
+            return 0, 0, 0
+
+        total_query_count = sum(stats["count"] for stats in latency_stats_list)
+
+        if total_query_count == 0:
+            return 0, 0, 0
+
+        # Use max for conservative percentile estimate
+        latency_p99 = max(stats["p99"] for stats in latency_stats_list)
+        latency_p95 = max(stats["p95"] for stats in latency_stats_list)
+
+        # Weighted average
+        latency_avg = sum(stats["avg"] * stats["count"] for stats in latency_stats_list) / total_query_count
+
+        return latency_p99, latency_p95, latency_avg
+
     def run_by_dur(self, duration: int) -> tuple[float, float]:
         """
         Returns:
@@ -190,13 +228,23 @@ class MultiProcessingSearchRunner:
         """
         return self._run_by_dur(duration)
 
-    def _run_by_dur(self, duration: int) -> tuple[float, float]:
+    def _run_by_dur(self, duration: int) -> tuple[float, float, list, list, list, list, list]:
         """
         Returns:
             float: largest qps
             float: failed rate
+            list: concurrency numbers
+            list: qps values at each concurrency
+            list: p99 latencies at each concurrency
+            list: p95 latencies at each concurrency
+            list: avg latencies at each concurrency
         """
         max_qps = 0
+        conc_num_list = []
+        conc_qps_list = []
+        conc_latency_p99_list = []
+        conc_latency_p95_list = []
+        conc_latency_avg_list = []
         try:
             for conc in self.concurrencies:
                 with mp.Manager() as m:
@@ -226,9 +274,19 @@ class MultiProcessingSearchRunner:
                         cost = time.perf_counter() - start
 
                         qps = round(all_success_count / cost, 4)
+
+                        latency_p99, latency_p95, latency_avg = self._aggregate_latency_stats(res)
+
+                        conc_num_list.append(conc)
+                        conc_qps_list.append(qps)
+                        conc_latency_p99_list.append(latency_p99)
+                        conc_latency_p95_list.append(latency_p95)
+                        conc_latency_avg_list.append(latency_avg)
+
                         log.info(
                             f"End search in concurrency {conc}: dur={cost}s, failed_rate={failed_rate}, "
-                            f"all_success_count={all_success_count}, all_failed_count={all_failed_count}, qps={qps}",
+                            f"all_success_count={all_success_count}, all_failed_count={all_failed_count}, qps={qps}, "
+                            f"p99={latency_p99:.4f}s, p95={latency_p95:.4f}s, avg={latency_avg:.4f}s",
                         )
                 if qps > max_qps:
                     max_qps = qps
@@ -246,13 +304,24 @@ class MultiProcessingSearchRunner:
         finally:
             self.stop()
 
-        return max_qps, failed_rate
+        return (
+            max_qps,
+            failed_rate,
+            conc_num_list,
+            conc_qps_list,
+            conc_latency_p99_list,
+            conc_latency_p95_list,
+            conc_latency_avg_list,
+        )
 
-    def search_by_dur(self, dur: int, test_data: list[list[float]], q: mp.Queue, cond: mp.Condition) -> tuple[int, int]:
+    def search_by_dur(
+        self, dur: int, test_data: list[list[float]], q: mp.Queue, cond: mp.Condition
+    ) -> tuple[int, int, dict]:
         """
         Returns:
             int: successful requests count
             int: failed requests count
+            dict: latency statistics with p99, p95, avg, count (computed via HDR Histogram)
         """
         # sync all process
         q.put(1)
@@ -263,6 +332,9 @@ class MultiProcessingSearchRunner:
             self.db.prepare_filter(self.filters)
             num, idx = len(test_data), random.randint(0, len(test_data) - 1)
 
+            # Memory-efficient latency tracking
+            histogram = HdrHistogram(HDR_HISTOGRAM_MIN_US, HDR_HISTOGRAM_MAX_US, HDR_HISTOGRAM_SIGNIFICANT_DIGITS)
+
             start_time = time.perf_counter()
             success_count = 0
             failed_cnt = 0
@@ -271,6 +343,8 @@ class MultiProcessingSearchRunner:
                 try:
                     self.db.search_embedding(test_data[idx], self.k)
                     success_count += 1
+                    latency_us = int((time.perf_counter() - s) * US_TO_SECONDS)
+                    histogram.record_value(min(latency_us, HDR_HISTOGRAM_MAX_US))
                 except Exception as e:
                     failed_cnt += 1
                     # reduce log
@@ -284,8 +358,7 @@ class MultiProcessingSearchRunner:
 
                 if success_count % 500 == 0:
                     log.debug(
-                        f"({mp.current_process().name:16}) search_count: {success_count}, "
-                        f"latest_latency={time.perf_counter()-s}",
+                        f"({mp.current_process().name:16}) search_count: {success_count}",
                     )
 
         total_dur = round(time.perf_counter() - start_time, 4)
@@ -295,4 +368,12 @@ class MultiProcessingSearchRunner:
             f"qps (successful) in this process: {round(success_count / total_dur, 4):3}",
         )
 
-        return success_count, failed_cnt
+        # Pre-computed stats to avoid large data transfer
+        latency_stats = {
+            "p99": histogram.get_value_at_percentile(99) / US_TO_SECONDS,
+            "p95": histogram.get_value_at_percentile(95) / US_TO_SECONDS,
+            "avg": histogram.get_mean_value() / US_TO_SECONDS,
+            "count": histogram.get_total_count(),
+        }
+
+        return success_count, failed_cnt, latency_stats

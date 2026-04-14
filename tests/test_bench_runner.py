@@ -1,5 +1,7 @@
 import time
 import logging
+
+import ujson
 from vectordb_bench.interface import BenchMarkRunner
 from vectordb_bench.models import (
     DB, IndexType, CaseType, TaskConfig, CaseConfig,
@@ -55,6 +57,5 @@ class TestBenchRunner:
         d = t.json(exclude={'db_config': {'password', 'api_key'}})
         log.info(f"{d}")
 
-        import ujson
         loads = ujson.loads(d)
         log.info(f"{loads}")

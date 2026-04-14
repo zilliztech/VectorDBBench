@@ -100,9 +100,31 @@ class OSSOpenSearchTypedDict(TypedDict):
         str | None,
         click.option(
             "--quantization-type",
-            type=click.Choice(["fp32", "fp16"]),
+            type=click.Choice(["None", "LuceneSQ", "FaissSQfp16"]),
             help="quantization type for vectors (in index)",
-            default="fp32",
+            default="None",
+            required=False,
+        ),
+    ]
+
+    confidence_interval: Annotated[
+        float | None,
+        click.option(
+            "--confidence-interval",
+            type=float,
+            help="Confidence interval for Lucene SQ (0.0-1.0, optional)",
+            default=None,
+            required=False,
+        ),
+    ]
+
+    clip: Annotated[
+        bool,
+        click.option(
+            "--clip",
+            type=bool,
+            help="Clip vectors to [-65504, 65504] for FAISS FP16",
+            default=False,
             required=False,
         ),
     ]
@@ -150,6 +172,8 @@ def OSSOpenSearch(**parameters: Unpack[OSSOpenSearchHNSWTypedDict]):
             M=parameters["m"],
             engine=OSSOS_Engine(parameters["engine"]),
             quantization_type=OSSOpenSearchQuantization(parameters["quantization_type"]),
+            confidence_interval=parameters["confidence_interval"],
+            clip=parameters["clip"],
         ),
         **parameters,
     )
