@@ -51,6 +51,7 @@ test = [
     "ruff",
     "pytest",
 ]
+
 restful         = [ "flask" ]
 qdrant          = [ "qdrant-client" ]
 pinecone        = [ "pinecone" ]
@@ -82,6 +83,7 @@ turbopuffer     = [ "turbopuffer" ]
 zvec            = [ "zvec" ]
 endee           = [ "endee==0.1.10" ]
 lindorm         = [ "opensearch-py" ]
+databend        = [ "databend-driver" ]
 
 [project.urls]
 Repository  = "https://github.com/zilliztech/VectorDBBench"

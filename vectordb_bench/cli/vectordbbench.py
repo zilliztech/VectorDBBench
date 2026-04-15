@@ -43,6 +43,7 @@ from ..backend.clients.vespa.cli import Vespa
 from ..backend.clients.weaviate_cloud.cli import Weaviate
 from ..backend.clients.zilliz_cloud.cli import ZillizAutoIndex
 from ..backend.clients.zvec.cli import Zvec
+from ..backend.clients.databend.cli import Databend
 from .batch_cli import BatchCli
 from .cli import cli
 
@@ -93,6 +94,7 @@ cli.add_command(VectorChordGraph)
 cli.add_command(PolarDBHNSWFlat)
 cli.add_command(PolarDBHNSWPQ)
 cli.add_command(PolarDBHNSWSQ)
+cli.add_command(Databend)
 
 
 if __name__ == "__main__":

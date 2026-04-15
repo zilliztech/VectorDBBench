@@ -61,6 +61,7 @@ class DB(Enum):
     Lindorm = "Lindorm"
     VectorChord = "VectorChord"
     PolarDB = "PolarDB"
+    Databend = "Databend"
 
     @property
     def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901, PLR0915
@@ -223,6 +224,12 @@ class DB(Enum):
 
             return Hologres
 
+<<<<<<< HEAD
+        if self == DB.Databend:
+            from .databend.databend import Databend
+
+            return Databend
+=======
         if self == DB.TencentElasticsearch:
             from .tencent_elasticsearch.tencent_elasticsearch import TencentElasticsearch
 
@@ -256,6 +263,7 @@ class DB(Enum):
             from .polardb.polardb import PolarDB
 
             return PolarDB
+>>>>>>> main
 
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
@@ -421,6 +429,12 @@ class DB(Enum):
 
             return HologresConfig
 
+<<<<<<< HEAD
+        if self == DB.Databend:
+            from .databend.config import DatabendConfig
+
+            return DatabendConfig
+=======
         if self == DB.TencentElasticsearch:
             from .tencent_elasticsearch.config import TencentElasticsearchConfig
 
@@ -454,6 +468,7 @@ class DB(Enum):
             from .polardb.config import PolarDBConfig
 
             return PolarDBConfig
+>>>>>>> main
 
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
@@ -584,7 +599,10 @@ class DB(Enum):
         if self == DB.Hologres:
             from .hologres.config import HologresIndexConfig
 
-            return HologresIndexConfig
+        if self == DB.Databend:
+            from .databend.config import DatabendIndexConfig
+
+            return DatabendIndexConfig
 
         if self == DB.Zvec:
             from .zvec.config import ZvecHNSWIndexConfig

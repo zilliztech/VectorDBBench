@@ -29,3 +29,4 @@ mysql-connector-python
 PyMySQL
 packaging
 hdrhistogram>=0.10.1
+databend-driver

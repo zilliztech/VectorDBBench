@@ -61,6 +61,7 @@ All the database client supported
 | zvec                     | `pip install vectordb-bench[zvec]`          |
 | endee                    | `pip install vectordb-bench[endee]`         |
 | lindorm                  | `pip install vectordb-bench[lindorm]`       |
+| databend                 | `pip install vectordb-bench[databend]`      |
 
 ### Run
 
