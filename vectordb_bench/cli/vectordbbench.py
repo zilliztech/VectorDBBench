@@ -25,6 +25,7 @@ from ..backend.clients.pgvecto_rs.cli import PgVectoRSHNSW, PgVectoRSIVFFlat
 from ..backend.clients.pgvector.cli import PgVectorHNSW
 from ..backend.clients.pgvectorscale.cli import PgVectorScaleDiskAnn
 from ..backend.clients.pinecone.cli import Pinecone
+from ..backend.clients.pinot.cli import Pinot
 from ..backend.clients.polardb.cli import (
     PolarDBHNSWFlat,
     PolarDBHNSWPQ,
@@ -90,6 +91,7 @@ cli.add_command(LindormIVFBQ)
 cli.add_command(Pinecone)
 cli.add_command(VectorChordRQ)
 cli.add_command(VectorChordGraph)
+cli.add_command(Pinot)
 cli.add_command(PolarDBHNSWFlat)
 cli.add_command(PolarDBHNSWPQ)
 cli.add_command(PolarDBHNSWSQ)
