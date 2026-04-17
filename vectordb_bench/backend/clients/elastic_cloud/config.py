@@ -20,11 +20,7 @@ class ElasticCloudConfig(DBConfig, BaseModel):
     def not_empty_field(cls, data: any) -> any:
         if not isinstance(data, dict):
             return data
-        skip = (
-            set(cls.common_short_configs())
-            | set(cls.common_long_configs())
-            | {"cloud_id", "host"}
-        )
+        skip = set(cls.common_short_configs()) | set(cls.common_long_configs()) | {"cloud_id", "host"}
         for field_name, v in data.items():
             if field_name in skip:
                 continue
