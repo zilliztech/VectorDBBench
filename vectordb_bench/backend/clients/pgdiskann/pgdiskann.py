@@ -11,6 +11,7 @@ from pgvector.psycopg import register_vector
 from psycopg import Connection, Cursor, sql
 
 from vectordb_bench.backend.filter import Filter, FilterOp
+
 from ..api import VectorDB
 from .config import PgDiskANNConfigDict, PgDiskANNIndexConfig
 
@@ -290,7 +291,7 @@ class PgDiskANN(VectorDB):
             if self.with_scalar_labels:
                 self.cursor.execute(
                     sql.SQL("""
-                        CREATE TABLE IF NOT EXISTS public.{table_name} 
+                        CREATE TABLE IF NOT EXISTS public.{table_name}
                         ({primary_field} BIGINT PRIMARY KEY, embedding vector({dim}), {label_field} VARCHAR(64));
                         """).format(
                         table_name=sql.Identifier(self.table_name),
@@ -302,7 +303,7 @@ class PgDiskANN(VectorDB):
             else:
                 self.cursor.execute(
                     sql.SQL("""
-                        CREATE TABLE IF NOT EXISTS public.{table_name} 
+                        CREATE TABLE IF NOT EXISTS public.{table_name}
                         ({primary_field} BIGINT PRIMARY KEY, embedding vector({dim}));
                         """).format(
                         table_name=sql.Identifier(self.table_name),
