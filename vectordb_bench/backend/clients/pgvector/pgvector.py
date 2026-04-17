@@ -383,8 +383,8 @@ class PgVector(VectorDB):
             ).format(
                 index_name=sql.Identifier(self._index_name),
                 table_name=sql.Identifier(self.table_name),
+                # [FIX] Use lowercase index_type_lower instead of original index_param["index_type"]
                 index_type=sql.Identifier(index_type_lower),
-                [FIX] Use lowercase index_type_lower instead of original index_param["index_type"]
                 # index_type=sql.Identifier(index_param["index_type"]),
                 embedding_metric=sql.Identifier(index_param["metric"]),
             )
