@@ -29,7 +29,7 @@ class PgDiskANN(VectorDB):
     conn: psycopg.Connection[Any] | None = None
     cursor: psycopg.Cursor[Any] | None = None
 
-    _search: sql.Composed  
+    _search: sql.Composed
 
     def __init__(
         self,
@@ -48,7 +48,7 @@ class PgDiskANN(VectorDB):
         self.dim = dim
         self.with_scalar_labels = with_scalar_labels
         self._scalar_label_field = "label"
-        self.where_clause = "" 
+        self.where_clause = ""
 
         self._index_name = "pgdiskann_index"
         self._primary_field = "id"
@@ -101,8 +101,7 @@ class PgDiskANN(VectorDB):
         search_params = self.case_config.search_param()
 
         if search_params.get("reranking"):
-            search_query = sql.SQL(
-                """
+            search_query = sql.SQL("""
                 SELECT i.id
                 FROM (
                     SELECT id, embedding
@@ -113,8 +112,7 @@ class PgDiskANN(VectorDB):
                 ) i
                 ORDER BY i.embedding {reranking_metric_fun_op} %s::vector
                 LIMIT %s::int
-                """
-            ).format(
+                """).format(
                 table_name=sql.Identifier(self.table_name),
                 where_clause=sql.SQL(self.where_clause),
                 metric_fun_op=sql.SQL(search_params["metric_fun_op"]),
@@ -124,9 +122,7 @@ class PgDiskANN(VectorDB):
         else:
             search_query = sql.Composed(
                 [
-                    sql.SQL(
-                        "SELECT id FROM public.{table_name} {where_clause} ORDER BY embedding "
-                    ).format(
+                    sql.SQL("SELECT id FROM public.{table_name} {where_clause} ORDER BY embedding ").format(
                         table_name=sql.Identifier(self.table_name),
                         where_clause=sql.SQL(self.where_clause),
                     ),
@@ -268,18 +264,12 @@ class PgDiskANN(VectorDB):
                     ),
                 )
 
-        with_clause = (
-            sql.SQL("WITH ({});").format(sql.SQL(", ").join(options))
-            if any(options)
-            else sql.Composed(())
-        )
+        with_clause = sql.SQL("WITH ({});").format(sql.SQL(", ").join(options)) if any(options) else sql.Composed(())
 
-        index_create_sql = sql.SQL(
-            """
+        index_create_sql = sql.SQL("""
             CREATE INDEX IF NOT EXISTS {index_name} ON public.{table_name}
             USING {index_type} (embedding {embedding_metric})
-            """
-        ).format(
+            """).format(
             index_name=sql.Identifier(self._index_name),
             table_name=sql.Identifier(self.table_name),
             index_type=sql.Identifier(index_param["index_type"].lower()),
@@ -299,12 +289,10 @@ class PgDiskANN(VectorDB):
 
             if self.with_scalar_labels:
                 self.cursor.execute(
-                    sql.SQL(
-                        """
+                    sql.SQL("""
                         CREATE TABLE IF NOT EXISTS public.{table_name} 
                         ({primary_field} BIGINT PRIMARY KEY, embedding vector({dim}), {label_field} VARCHAR(64));
-                        """
-                    ).format(
+                        """).format(
                         table_name=sql.Identifier(self.table_name),
                         dim=dim,
                         primary_field=sql.Identifier(self._primary_field),
@@ -313,12 +301,10 @@ class PgDiskANN(VectorDB):
                 )
             else:
                 self.cursor.execute(
-                    sql.SQL(
-                        """
+                    sql.SQL("""
                         CREATE TABLE IF NOT EXISTS public.{table_name} 
                         ({primary_field} BIGINT PRIMARY KEY, embedding vector({dim}));
-                        """
-                    ).format(
+                        """).format(
                         table_name=sql.Identifier(self.table_name),
                         dim=dim,
                         primary_field=sql.Identifier(self._primary_field),
@@ -326,11 +312,11 @@ class PgDiskANN(VectorDB):
                 )
 
             self.cursor.execute(
-                sql.SQL(
-                    "ALTER TABLE public.{table_name} ALTER COLUMN embedding SET STORAGE PLAIN;"
-                ).format(table_name=sql.Identifier(self.table_name)),
+                sql.SQL("ALTER TABLE public.{table_name} ALTER COLUMN embedding SET STORAGE PLAIN;").format(
+                    table_name=sql.Identifier(self.table_name)
+                ),
             )
-            
+
             self.conn.commit()
         except Exception as e:
             log.warning(f"Failed to create pgdiskann table: {self.table_name} error: {e}")
@@ -347,9 +333,7 @@ class PgDiskANN(VectorDB):
         assert self.cursor is not None, "Cursor is not initialized"
 
         if self.with_scalar_labels:
-            assert (
-                labels_data is not None
-            ), "labels_data should be provided if with_scalar_labels is set to True"
+            assert labels_data is not None, "labels_data should be provided if with_scalar_labels is set to True"
 
         try:
             metadata_arr = np.array(metadata)
@@ -405,13 +389,12 @@ class PgDiskANN(VectorDB):
 
         search_params = self.case_config.search_param()
         q = np.asarray(query)
-        
+
         result = self.cursor.execute(
             self._search,
             (q, q, k) if search_params.get("reranking", False) else (q, k),
             prepare=True,
             binary=True,
         )
-        
-        return [int(i[0]) for i in result.fetchall()]
 
+        return [int(i[0]) for i in result.fetchall()]
