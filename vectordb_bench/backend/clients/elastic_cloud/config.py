@@ -1,18 +1,56 @@
 from enum import StrEnum
 
-from pydantic import BaseModel, SecretStr
+from pydantic import BaseModel, SecretStr, model_validator
 
 from ..api import DBCaseConfig, DBConfig, IndexType, MetricType
 
 
 class ElasticCloudConfig(DBConfig, BaseModel):
-    cloud_id: SecretStr
+    # Elastic Cloud connection. Takes precedence when set.
+    cloud_id: SecretStr | None = None
+    # Self-hosted / host-based connection (used when cloud_id is not provided).
+    scheme: str = "https"
+    host: str = ""
+    port: int = 9200
+    user: str = "elastic"
     password: SecretStr
 
+    @model_validator(mode="before")
+    @classmethod
+    def not_empty_field(cls, data: any) -> any:
+        if not isinstance(data, dict):
+            return data
+        skip = (
+            set(cls.common_short_configs())
+            | set(cls.common_long_configs())
+            | {"cloud_id", "host"}
+        )
+        for field_name, v in data.items():
+            if field_name in skip:
+                continue
+            if isinstance(v, str) and not v:
+                msg = "Empty string!"
+                raise ValueError(msg)
+        return data
+
+    @model_validator(mode="after")
+    def _check_connection_target(self) -> "ElasticCloudConfig":
+        has_cloud_id = bool(self.cloud_id and self.cloud_id.get_secret_value())
+        if not has_cloud_id and not self.host:
+            msg = "ElasticCloudConfig requires either cloud_id or host to be set."
+            raise ValueError(msg)
+        return self
+
     def to_dict(self) -> dict:
+        auth = (self.user, self.password.get_secret_value())
+        if self.cloud_id and self.cloud_id.get_secret_value():
+            return {
+                "cloud_id": self.cloud_id.get_secret_value(),
+                "basic_auth": auth,
+            }
         return {
-            "cloud_id": self.cloud_id.get_secret_value(),
-            "basic_auth": ("elastic", self.password.get_secret_value()),
+            "hosts": [{"scheme": self.scheme, "host": self.host, "port": self.port}],
+            "basic_auth": auth,
         }
 
 
