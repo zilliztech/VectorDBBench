@@ -360,7 +360,7 @@ class PgVector(VectorDB):
                     if index_param["quantization_type"] == "bit"
                     else sql.Identifier("embedding")
                 ),
-                index_type=sql.Identifier(index_param["index_type"]),
+                index_type=sql.SQL(index_param["index_type"]),
                 # This assumes that the quantization_type value matches the quantization function name
                 quantization_type=sql.SQL(index_param["quantization_type"]),
                 dim=self.dim,
@@ -375,7 +375,7 @@ class PgVector(VectorDB):
             ).format(
                 index_name=sql.Identifier(self._index_name),
                 table_name=sql.Identifier(self.table_name),
-                index_type=sql.Identifier(index_param["index_type"]),
+                index_type=sql.SQL(index_param["index_type"]),
                 embedding_metric=sql.Identifier(index_param["metric"]),
             )
 
