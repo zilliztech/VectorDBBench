@@ -366,7 +366,7 @@ class PgVector(VectorDB):
                     if index_param["quantization_type"] == "bit"
                     else sql.Identifier("embedding")
                 ),
-                [FIX] Use lowercase index_type_lower instead of original index_param["index_type"]
+                # [FIX] Use lowercase index_type_lower instead of original index_param["index_type"]
                 index_type=sql.Identifier(index_type_lower),
                 # index_type=sql.Identifier(index_param["index_type"]),
                 # This assumes that the quantization_type value matches the quantization function name
