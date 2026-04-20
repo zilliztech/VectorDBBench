@@ -48,6 +48,8 @@ class PgDiskANN(VectorDB):
         self.table_name = collection_name
         self.dim = dim
         self.with_scalar_labels = with_scalar_labels
+        # Table column for scalar labels (standard naming convention across all database clients).
+        # Note: Dataset uses "labels" (plural), table uses "label" (singular).
         self._scalar_label_field = "label"
         self.where_clause = ""
 
@@ -312,6 +314,7 @@ class PgDiskANN(VectorDB):
                     ),
                 )
 
+            # Disable TOAST compression on the vector column to improve query performance.
             self.cursor.execute(
                 sql.SQL("ALTER TABLE public.{table_name} ALTER COLUMN embedding SET STORAGE PLAIN;").format(
                     table_name=sql.Identifier(self.table_name)
