@@ -61,6 +61,7 @@ class DB(Enum):
     Lindorm = "Lindorm"
     VectorChord = "VectorChord"
     PolarDB = "PolarDB"
+    Pinot = "Pinot"
 
     @property
     def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901, PLR0915
@@ -256,6 +257,11 @@ class DB(Enum):
             from .polardb.polardb import PolarDB
 
             return PolarDB
+
+        if self == DB.Pinot:
+            from .pinot.pinot import Pinot
+
+            return Pinot
 
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
@@ -455,6 +461,11 @@ class DB(Enum):
 
             return PolarDBConfig
 
+        if self == DB.Pinot:
+            from .pinot.config import PinotConfig
+
+            return PinotConfig
+
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
 
@@ -630,6 +641,15 @@ class DB(Enum):
             from .vectorchord.config import _vectorchord_case_config
 
             return _vectorchord_case_config.get(index_type)
+
+        if self == DB.Pinot:
+            from .pinot.config import PinotHNSWConfig, PinotIVFFlatConfig, PinotIVFPQConfig
+
+            return {
+                IndexType.HNSW: PinotHNSWConfig,
+                IndexType.IVFFlat: PinotIVFFlatConfig,
+                IndexType.IVFPQ: PinotIVFPQConfig,
+            }.get(index_type, PinotHNSWConfig)
 
         # DB.Pinecone, DB.Redis
         return EmptyDBCaseConfig
