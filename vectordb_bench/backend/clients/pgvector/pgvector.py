@@ -339,6 +339,12 @@ class PgVector(VectorDB):
         # but the index type passed from the frontend UI is uppercase "HNSW" via IndexType.HNSW.value, causing SQL syntax "USING 'HNSW'"
         # to fail with error "access method HNSW does not exist". Here we uniformly convert it to lowercase to match PostgreSQL's access method name.
         index_type_lower = index_param["index_type"].lower()
+        # [FIX] The pgvector access method name is "ivfflat" (no underscore), but IndexType.IVFFlat.value
+        # produces "IVF_FLAT" which becomes "ivf_flat" after lowercase conversion, causing SQL syntax
+        # "USING 'ivf_flat'" to fail with error "access method 'ivf_flat' does not exist".
+        # Here we map "ivf_flat" → "ivfflat" to match PostgreSQL pgvector's registered access method name.
+        if index_type_lower == "ivf_flat":
+            index_type_lower = "ivfflat"
         log.info(f"index_type (original={index_param['index_type']}, normalized={index_type_lower})")
         
         options = []
