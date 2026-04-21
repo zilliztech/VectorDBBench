@@ -335,16 +335,9 @@ class PgVector(VectorDB):
 
         index_param = self.case_config.index_param()
         self._set_parallel_index_build_param()
-        # [FIX] The index access method name registered by the PostgreSQL pgvector extension is in
-        # lowercase (e.g., "hnsw", "ivfflat"), but the index type passed from the frontend UI is
-        # uppercase "HNSW" via IndexType.HNSW.value, causing SQL syntax "USING 'HNSW'" to fail
-        # with error "access method HNSW does not exist". Here we uniformly convert it to lowercase
-        # to match PostgreSQL's access method name.
+        # pgvector registers access methods in lowercase ("hnsw", "ivfflat") but
+        # IndexType enum values are uppercase; also IVFFlat maps to "ivfflat" (no underscore).
         index_type_lower = index_param["index_type"].lower()
-        # [FIX] The pgvector access method name is "ivfflat" (no underscore), but IndexType.IVFFlat.value
-        # produces "IVF_FLAT" which becomes "ivf_flat" after lowercase conversion, causing SQL syntax
-        # "USING 'ivf_flat'" to fail with error "access method 'ivf_flat' does not exist".
-        # Here we map "ivf_flat" → "ivfflat" to match PostgreSQL pgvector's registered access method name.
         if index_type_lower == "ivf_flat":
             index_type_lower = "ivfflat"
         log.info(f"index_type (original={index_param['index_type']}, normalized={index_type_lower})")
@@ -374,9 +367,8 @@ class PgVector(VectorDB):
                     if index_param["quantization_type"] == "bit"
                     else sql.Identifier("embedding")
                 ),
-                # [FIX] Use lowercase index_type_lower instead of original index_param["index_type"]
                 index_type=sql.Identifier(index_type_lower),
-                # This assumes that the quantization_type value matches the quantization function name
+                # quantization_type value matches the quantization function name
                 quantization_type=sql.SQL(index_param["quantization_type"]),
                 dim=self.dim,
                 embedding_metric=sql.Identifier(index_param["metric"]),
@@ -390,7 +382,6 @@ class PgVector(VectorDB):
             ).format(
                 index_name=sql.Identifier(self._index_name),
                 table_name=sql.Identifier(self.table_name),
-                # [FIX] Use lowercase index_type_lower instead of original index_param["index_type"]
                 index_type=sql.Identifier(index_type_lower),
                 embedding_metric=sql.Identifier(index_param["metric"]),
             )
