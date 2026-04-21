@@ -13,7 +13,6 @@ import logging
 import multiprocessing as mp
 import threading
 import time
-from copy import deepcopy
 from enum import StrEnum
 from typing import TYPE_CHECKING
 
@@ -44,7 +43,7 @@ class ConcurrentInsertRunner:
     """Concurrent insert runner with pluggable executor backend.
 
     Thread-safety: If db.thread_safe is False, max_workers is clamped to 1
-    and each worker thread gets a deep-copied DB instance with its own connection.
+    so the single worker thread uses self.db directly (no deepcopy needed).
 
     Args:
         db: VectorDB instance.
@@ -78,22 +77,17 @@ class ConcurrentInsertRunner:
             log.info(f"DB {db.name} is not thread-safe, falling back to max_workers=1")
             effective_workers = 1
         self.max_workers = effective_workers
+        assert db.thread_safe or self.max_workers == 1, (
+            "Non-thread-safe DBs must use max_workers=1 — "
+            "_get_thread_db() relies on this to avoid concurrent access to self.db"
+        )
 
     def __getstate__(self):
         """Exclude unpicklable thread-local state for ProcessPoolExecutor(spawn)."""
         state = self.__dict__.copy()
-        state.pop("_local", None)
-        state.pop("_ctx_lock", None)
-        state.pop("_thread_contexts", None)
         state.pop("_iter_lock", None)
         state.pop("_dataset_iter", None)
         return state
-
-    def __setstate__(self, state: dict):
-        self.__dict__.update(state)
-        self._local = threading.local()
-        self._ctx_lock = threading.Lock()
-        self._thread_contexts = []
 
     def _create_executor(self) -> TaskExecutor:
         if self.backend == ExecutorBackend.ASYNC:
@@ -101,34 +95,13 @@ class ConcurrentInsertRunner:
         return ThreadExecutor(max_workers=self.max_workers)
 
     def _get_thread_db(self) -> api.VectorDB:
-        """Get or create a per-thread DB instance.
+        """Return self.db.
 
-        Thread-safe DBs reuse self.db (connection opened in task()).
-        Non-thread-safe DBs get a deep-copied instance with its own connection,
-        cached in thread-local storage so it is created once per thread.
+        All workers share the connection opened by task()'s `with self.db.init()`.
+        Thread-safe DBs share it across multiple workers. Non-thread-safe DBs are
+        clamped to max_workers=1, so there is never concurrent access.
         """
-        if not hasattr(self._local, "db"):
-            if self.db.thread_safe:
-                self._local.db = self.db
-            else:
-                db = deepcopy(self.db)
-                # Manual __enter__/__exit__ because enter and exit happen in
-                # different scopes (here vs _cleanup_thread_contexts).
-                ctx = db.init()
-                ctx.__enter__()
-                self._local.db = db
-                with self._ctx_lock:
-                    self._thread_contexts.append(ctx)
-        return self._local.db
-
-    def _cleanup_thread_contexts(self) -> None:
-        """Close per-thread DB connections opened for non-thread-safe clients."""
-        for ctx in self._thread_contexts:
-            try:
-                ctx.__exit__(None, None, None)
-            except Exception:
-                log.warning("Failed to close per-thread DB connection", exc_info=True)
-        self._thread_contexts.clear()
+        return self.db
 
     def _insert_batch_with_retry(
         self,
@@ -160,14 +133,7 @@ class ConcurrentInsertRunner:
         metadata: list[int],
         labels_data: list[str] | None = None,
     ) -> int:
-        """Worker function: insert a batch with retry.
-
-        Thread-safe DBs: reuse self.db whose connection is already open
-        via task()'s `with self.db.init()` — all threads share it safely.
-
-        Non-thread-safe DBs: use a per-thread deep-copied instance with
-        its own connection, cached via threading.local.
-        """
+        """Worker function: insert a batch with retry."""
         db = self._get_thread_db()
         return self._insert_batch_with_retry(db, embeddings, metadata, labels_data)
 
@@ -214,9 +180,6 @@ class ConcurrentInsertRunner:
     def task(self) -> int:
         """Insert entire dataset using concurrent executor. Runs in subprocess."""
         count = 0
-        self._local = threading.local()
-        self._ctx_lock = threading.Lock()
-        self._thread_contexts = []
         self._iter_lock = threading.Lock()
         self._dataset_iter = iter(self.dataset)
 
@@ -227,23 +190,20 @@ class ConcurrentInsertRunner:
             )
             start = time.perf_counter()
 
-            try:
-                with self._create_executor() as executor:
-                    for _ in range(self.max_workers):
-                        executor.submit(self._worker_loop)
+            with self._create_executor() as executor:
+                for _ in range(self.max_workers):
+                    executor.submit(self._worker_loop)
 
-                    batch_results = executor.wait_all()
+                batch_results = executor.wait_all()
 
-                # Log all errors, then raise the first one
-                errors = [r.error for r in batch_results if r.error is not None]
-                if errors:
-                    for err in errors:
-                        log.warning(f"Batch insert error: {err}")
-                    raise errors[0]
+            # Log all errors, then raise the first one
+            errors = [r.error for r in batch_results if r.error is not None]
+            if errors:
+                for err in errors:
+                    log.warning(f"Batch insert error: {err}")
+                raise errors[0]
 
-                count = sum(r.value for r in batch_results)
-            finally:
-                self._cleanup_thread_contexts()
+            count = sum(r.value for r in batch_results)
 
             log.info(
                 f"({mp.current_process().name:16}) Finish concurrent insert, "
