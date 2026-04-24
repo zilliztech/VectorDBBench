@@ -51,7 +51,7 @@ class ConcurrentInsertRunner:
         normalize: Whether to L2-normalize embeddings.
         filters: Filter configuration.
         timeout: Timeout in seconds for the overall operation.
-        max_workers: Number of concurrent workers (default: cpu_count).
+        max_workers: Number of concurrent workers (default: min(cpu_count, 4)).
         backend: Executor backend to use ('threading' or 'async').
     """
 
@@ -72,7 +72,7 @@ class ConcurrentInsertRunner:
         self.filters = filters
         self.backend = backend
 
-        effective_workers = max_workers or mp.cpu_count()
+        effective_workers = max_workers or min(mp.cpu_count(), 4)
         if not db.thread_safe:
             log.info(f"DB {db.name} is not thread-safe, falling back to max_workers=1")
             effective_workers = 1
