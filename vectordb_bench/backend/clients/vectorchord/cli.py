@@ -14,13 +14,14 @@ from ....cli.cli import (
 )
 
 
-def _parse_int_list(ctx: click.Context, param: click.Parameter, value: str | None) -> list[int] | None:
+def _parse_int_list(_ctx: click.Context, _param: click.Parameter, value: str | None) -> list[int] | None:
     if value is None or value == "":
         return None
     try:
         return [int(v.strip()) for v in value.split(",") if v.strip()]
     except ValueError as e:
-        raise click.BadParameter(f"expected comma-separated integers, got {value!r}") from e
+        msg = f"expected comma-separated integers, got {value!r}"
+        raise click.BadParameter(msg) from e
 
 
 class VectorChordTypedDict(CommonTypedDict):
