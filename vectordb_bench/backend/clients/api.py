@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from enum import StrEnum
+from typing import ClassVar
 
 from pydantic import BaseModel, model_validator
 
@@ -77,6 +78,9 @@ class DBConfig(ABC, BaseModel):
     version: str = ""
     note: str = ""
 
+    # Field names subclasses allow to be empty (optional creds, alt-route fields).
+    _extra_empty_skip: ClassVar[frozenset[str]] = frozenset()
+
     @staticmethod
     def common_short_configs() -> list[str]:
         """
@@ -100,12 +104,11 @@ class DBConfig(ABC, BaseModel):
     def not_empty_field(cls, data: any) -> any:
         if not isinstance(data, dict):
             return data
-        skip = set(cls.common_short_configs()) | set(cls.common_long_configs())
-        for field_name, v in data.items():
-            if field_name in skip:
-                continue
-            if isinstance(v, str) and not v:
-                raise ValueError("Empty string!")
+        skip = set(cls.common_short_configs()) | set(cls.common_long_configs()) | cls._extra_empty_skip
+        empty = [k for k, v in data.items() if k not in skip and isinstance(v, str) and not v]
+        if empty:
+            msg = f"Empty field(s): {', '.join(empty)}"
+            raise ValueError(msg)
         return data
 
 

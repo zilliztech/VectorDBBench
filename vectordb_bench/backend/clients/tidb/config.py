@@ -1,6 +1,6 @@
-from typing import TypedDict
+from typing import ClassVar, TypedDict
 
-from pydantic import BaseModel, SecretStr, model_validator
+from pydantic import BaseModel, SecretStr
 
 from ..api import DBCaseConfig, DBConfig, MetricType
 
@@ -16,6 +16,8 @@ class TiDBConfigDict(TypedDict):
 
 
 class TiDBConfig(DBConfig):
+    _extra_empty_skip: ClassVar[frozenset[str]] = frozenset({"password"})
+
     user_name: str = "root"
     password: SecretStr
     host: str = "127.0.0.1"
@@ -34,19 +36,6 @@ class TiDBConfig(DBConfig):
             "ssl_verify_cert": self.ssl,
             "ssl_verify_identity": self.ssl,
         }
-
-    @model_validator(mode="before")
-    @classmethod
-    def not_empty_field(cls, data: any) -> any:
-        if not isinstance(data, dict):
-            return data
-        skip = set(cls.common_short_configs()) | set(cls.common_long_configs()) | {"password"}
-        for field_name, v in data.items():
-            if field_name in skip:
-                continue
-            if isinstance(v, str) and not v:
-                raise ValueError("Empty string!")
-        return data
 
 
 class TiDBIndexConfig(BaseModel, DBCaseConfig):
