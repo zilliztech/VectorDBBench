@@ -124,7 +124,7 @@ def drawQPSLatencyChart(container, qps_values, latencies_ms, stage, metric_name,
         showlegend=False,
     )
 
-    container.plotly_chart(fig, use_container_width=True, key=f"{case_name}-chart-{stage}")
+    container.plotly_chart(fig, width="stretch", key=f"{case_name}-chart-{stage}")
 
 
 def drawMetricsTable(container, qps_values, conc_nums, p99_list, p95_list, avg_list, stage):
@@ -267,7 +267,7 @@ def drawComparisonChart(container, case_data, selected_stages, metric_name, case
         legend=dict(yanchor="top", y=0.99, xanchor="right", x=0.99),
     )
 
-    container.plotly_chart(fig, use_container_width=True, key=f"{case_name}-compare-chart")
+    container.plotly_chart(fig, width="stretch", key=f"{case_name}-compare-chart")
 
     # Add insight
     container.info("**Insight:** Compare curves across stages to understand how performance scales with data growth.")

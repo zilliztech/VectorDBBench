@@ -1,4 +1,5 @@
 from enum import StrEnum
+from typing import ClassVar
 
 from pydantic import BaseModel, SecretStr, model_validator
 
@@ -6,6 +7,8 @@ from ..api import DBCaseConfig, DBConfig, IndexType, MetricType
 
 
 class ElasticCloudConfig(DBConfig, BaseModel):
+    _extra_empty_skip: ClassVar[frozenset[str]] = frozenset({"cloud_id", "host"})
+
     # Elastic Cloud connection. Takes precedence when set.
     cloud_id: SecretStr | None = None
     # Self-hosted / host-based connection (used when cloud_id is not provided).
@@ -14,20 +17,6 @@ class ElasticCloudConfig(DBConfig, BaseModel):
     port: int = 9200
     user: str = "elastic"
     password: SecretStr
-
-    @model_validator(mode="before")
-    @classmethod
-    def not_empty_field(cls, data: any) -> any:
-        if not isinstance(data, dict):
-            return data
-        skip = set(cls.common_short_configs()) | set(cls.common_long_configs()) | {"cloud_id", "host"}
-        for field_name, v in data.items():
-            if field_name in skip:
-                continue
-            if isinstance(v, str) and not v:
-                msg = "Empty string!"
-                raise ValueError(msg)
-        return data
 
     @model_validator(mode="after")
     def _check_connection_target(self) -> "ElasticCloudConfig":

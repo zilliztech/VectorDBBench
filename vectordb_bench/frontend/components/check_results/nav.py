@@ -1,25 +1,22 @@
-from streamlit_extras.switch_page_button import switch_page
-
-
 def NavToRunTest(st):
     st.subheader("Run your test")
     st.write("You can set the configs and run your own test.")
     navClick = st.button("Run Your Test &nbsp;&nbsp;>")
     if navClick:
-        switch_page("run test")
+        st.switch_page("pages/run_test.py")
 
 
 def NavToQuriesPerDollar(st):
     st.subheader("Compare qps with price.")
     navClick = st.button("QP$ (Quries per Dollar) &nbsp;&nbsp;>")
     if navClick:
-        switch_page("quries_per_dollar")
+        st.switch_page("pages/quries_per_dollar.py")
 
 
 def NavToResults(st, key="nav-to-results"):
     navClick = st.button("< &nbsp;&nbsp;Back to Results", key=key)
     if navClick:
-        switch_page("results")
+        st.switch_page("pages/results.py")
 
 
 def NavToPages(st):

@@ -1,5 +1,4 @@
 import streamlit as st
-from vectordb_bench.frontend.components.run_test.autoRefresh import autoRefresh
 from vectordb_bench.frontend.components.run_test.caseSelector import caseSelector
 from vectordb_bench.frontend.components.run_test.dbConfigSetting import dbConfigSettings
 from vectordb_bench.frontend.components.run_test.dbSelector import dbSelector
@@ -56,9 +55,6 @@ def main():
 
     # nav to results
     NavToResults(st, key="footer-nav-to-results")
-
-    # autofresh
-    autoRefresh()
 
 
 if __name__ == "__main__":
