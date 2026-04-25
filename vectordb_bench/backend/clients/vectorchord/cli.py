@@ -14,6 +14,16 @@ from ....cli.cli import (
 )
 
 
+def _parse_int_list(_ctx: click.Context, _param: click.Parameter, value: str | None) -> list[int] | None:
+    if value is None or value == "":
+        return None
+    try:
+        return [int(v.strip()) for v in value.split(",") if v.strip()]
+    except ValueError as e:
+        msg = f"expected comma-separated integers, got {value!r}"
+        raise click.BadParameter(msg) from e
+
+
 class VectorChordTypedDict(CommonTypedDict):
     user_name: Annotated[
         str,
@@ -66,20 +76,25 @@ class VectorChordTypedDict(CommonTypedDict):
 
 class VectorChordRQTypedDict(VectorChordTypedDict):
     lists: Annotated[
-        int | None,
+        list[int] | None,
         click.option(
             "--lists",
-            type=int,
-            help="Number of IVF lists for vchordrq index",
+            type=str,
+            callback=_parse_int_list,
+            help=(
+                "Comma-separated IVF list sizes for vchordrq index. "
+                "Single value for single-level (e.g. '1000') or multiple for multi-level IVF (e.g. '4096,128')"
+            ),
         ),
     ]
     probes: Annotated[
-        int | None,
+        list[int] | None,
         click.option(
             "--probes",
-            type=int,
-            help="Number of probes during search",
-            default=10,
+            type=str,
+            callback=_parse_int_list,
+            help="Comma-separated probes per IVF level during search (e.g. '10' or '10,1')",
+            default="10",
             show_default=True,
         ),
     ]
