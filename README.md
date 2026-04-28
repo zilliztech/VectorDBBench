@@ -471,7 +471,13 @@ To list the options for zvec, execute vectordbbench zvec --help
 
 ### Run Doris from command line
 
-Doris supports ann index with type hnsw from version 4.0.x
+Doris supports ANN indexes from version 4.0.x. VectorDBBench passes Doris index properties through with `--index-prop key=value`, so newly added Doris index properties normally do not require a VectorDBBench code change.
+
+By default, VectorDBBench creates an HNSW index. Use `--index-prop index_type=<type>` to select another Doris ANN index type, and pass index-specific properties with additional `--index-prop` options. For example, IVF and IVF on disk indexes require `nlist`:
+
+```shell
+NUM_PER_BATCH=1000000 vectordbbench doris --http-port=8030 --port=9030 --db-name=vector_test --case-type=Performance768D1M --stream-load-rows-per-batch=500000 --index-prop index_type=ivf_on_disk --index-prop nlist=1024
+```
 
 ```shell
 NUM_PER_BATCH=1000000 vectordbbench doris --http-port=8030 --port=9030 --db-name=vector_test --case-type=Performance768D1M --stream-load-rows-per-batch=500000
@@ -482,11 +488,9 @@ Using flag `--session-var`, if you want to test doris with some customized sessi
 NUM_PER_BATCH=1000000 vectordbbench doris --http-port=8030 --port=9030 --db-name=vector_test --case-type=Performance768D1M --stream-load-rows-per-batch=500000 --session-var enable_profile=True
 ```
 
-Mote options:
+More options:
 
 ```text
---m INTEGER                     hnsw m
---ef-construction INTEGER       hnsw ef-construction
 --username TEXT                 Username  [default: root; required]
 --password TEXT                 Password  [default: ""]
 --host TEXT                     Db host  [default: 127.0.0.1; required]
@@ -496,9 +500,10 @@ Mote options:
 --ssl / --no-ssl                Enable or disable SSL, for Doris Serverless
                                 SSL must be enabled  [default: no-ssl]
 --index-prop TEXT               Extra index PROPERTY as key=value
-                                (repeatable)
+                                (repeatable or comma-separated, for example
+                                index_type=ivf_on_disk,nlist=1024)
 --session-var TEXT              Session variable key=value applied to each
-                                SQL session (repeatable)
+                                SQL session (repeatable or comma-separated)
 --stream-load-rows-per-batch INTEGER
                                 Rows per single stream load request; default
                                 uses NUM_PER_BATCH
