@@ -31,9 +31,40 @@ class OceanBaseTypedDict(CommonTypedDict):
     ]
     database: Annotated[str, click.option("--database", type=str, help="DataBase name", required=True)]
     port: Annotated[int, click.option("--port", type=int, help="OceanBase port", required=True)]
+    create_index_parallel: Annotated[
+        int,
+        click.option(
+            "--create-index-parallel",
+            type=int,
+            default=16,
+            show_default=True,
+            help="PARALLEL hint degree for CREATE VECTOR INDEX",
+        ),
+    ]
+    partitions: Annotated[
+        int,
+        click.option(
+            "--partitions",
+            type=int,
+            default=0,
+            show_default=True,
+            help="Number of KEY partitions for the table. 0 or 1 means no partitioning.",
+        ),
+    ]
 
 
-class OceanBaseHNSWTypedDict(CommonTypedDict, OceanBaseTypedDict, HNSWFlavor4): ...
+class OceanBaseHNSWTypedDict(CommonTypedDict, OceanBaseTypedDict, HNSWFlavor4):
+    extra_info_max_size: Annotated[
+        int | None,
+        click.option(
+            "--extra-info-max-size",
+            type=int,
+            default=32,
+            show_default=True,
+            help="extra_info_max_size for HNSW index. Set to 0 to omit.",
+            required=False,
+        ),
+    ]
 
 
 @cli.command()
@@ -55,6 +86,9 @@ def OceanBaseHNSW(**parameters: Unpack[OceanBaseHNSWTypedDict]):
             m=parameters["m"],
             efConstruction=parameters["ef_construction"],
             ef_search=parameters["ef_search"],
+            extra_info_max_size=parameters["extra_info_max_size"] or None,
+            create_index_parallel=parameters["create_index_parallel"],
+            partitions=parameters["partitions"],
             index=parameters["index_type"],
         ),
         **parameters,
@@ -94,6 +128,8 @@ def OceanBaseIVF(**parameters: Unpack[OceanBaseIVFTypedDict]):
             nlist=parameters["nlist"],
             sample_per_nlist=parameters["sample_per_nlist"],
             nbits=parameters["nbits"],
+            create_index_parallel=parameters["create_index_parallel"],
+            partitions=parameters["partitions"],
             index=input_index_type,
             ivf_nprobes=parameters["ivf_nprobes"],
         ),

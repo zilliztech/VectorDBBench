@@ -74,7 +74,7 @@ class ConcurrentInsertRunner:
 
         effective_workers = max_workers or min(mp.cpu_count(), 4)
         if not db.thread_safe:
-            log.info(f"DB {db.name} is not thread-safe, falling back to max_workers=1")
+            log.info(f"DB {db.name} declared thread_safe=False, falling back to max_workers=1 (use --load-processes for parallel loading)")
             effective_workers = 1
         self.max_workers = effective_workers
         assert db.thread_safe or self.max_workers == 1, (
