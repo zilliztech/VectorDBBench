@@ -17,6 +17,7 @@ from .data_source import DatasetSource
 from .runner import (
     ConcurrentInsertRunner,
     MultiProcessingSearchRunner,
+    MultiprocessInsertRunner,
     ReadWriteRunner,
     SerialInsertRunner,
     SerialSearchRunner,
@@ -249,19 +250,46 @@ class CaseRunner(BaseModel):
     def _load_train_data(self):
         """Insert train data concurrently and get the insert_duration"""
         try:
-            runner = ConcurrentInsertRunner(
-                self.db,
-                self.ca.dataset,
-                self.normalize,
-                self.ca.filters,
-                self.ca.load_timeout,
-                max_workers=self.config.load_concurrency or None,
-            )
+            workers = self._pick_load_processes()
+            if workers > 0:
+                log.info(f"Using MultiprocessInsertRunner (workers={workers})")
+                runner = MultiprocessInsertRunner(
+                    db=self.db,
+                    dataset=self.ca.dataset,
+                    normalize=self.normalize,
+                    workers=workers,
+                    filters=self.ca.filters,
+                    timeout=self.ca.load_timeout,
+                )
+            else:
+                runner = ConcurrentInsertRunner(
+                    self.db,
+                    self.ca.dataset,
+                    self.normalize,
+                    self.ca.filters,
+                    self.ca.load_timeout,
+                    max_workers=self.config.load_concurrency or None,
+                )
             runner.run()
         except Exception as e:
             raise e from None
         finally:
             runner = None
+
+    def _pick_load_processes(self) -> int:
+        """Return worker count for multi-process loader, or 0 to use threaded loader."""
+        if self.config.load_processes > 0:
+            return self.config.load_processes
+
+        if not getattr(self.db, "thread_safe", True) and self.config.load_concurrency > 1:
+            log.info(
+                f"{self.db.name} declares thread_safe=False; auto-switching to "
+                f"multi-process loader with {self.config.load_concurrency} workers "
+                f"(set --load-processes to override)",
+            )
+            return self.config.load_concurrency
+
+        return 0
 
     def _serial_search(self) -> tuple[float, float, float, float]:
         """Performance serial tests, search the entire test data once,

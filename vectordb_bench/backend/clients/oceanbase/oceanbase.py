@@ -23,6 +23,8 @@ class OceanBase(VectorDB):
         FilterOp.NumGE,
         FilterOp.StrEqual,
     ]
+    # insert path is GIL-bound; multi-threading cannot improve load throughput
+    thread_safe: bool = False
 
     def __init__(
         self,
@@ -57,6 +59,15 @@ class OceanBase(VectorDB):
                 self._create_table()
         finally:
             self._disconnect()
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state["_conn"] = None
+        state["_cursor"] = None
+        return state
+
+    def __setstate__(self, state: dict) -> None:
+        self.__dict__.update(state)
 
     def _connect(self):
         try:
@@ -109,27 +120,28 @@ class OceanBase(VectorDB):
         if not self._cursor:
             raise ValueError("Cursor is not initialized")
 
-        log.info(f"Creating table {self.table_name}")
-        create_table_query = f"""
-        CREATE TABLE {self.table_name} (
-            id INT PRIMARY KEY,
-            embedding VECTOR({self.dim})
-        );
-        """
+        partitions = getattr(self.db_case_config, "partitions", 0)
+        log.info(f"Creating table {self.table_name} (partitions={partitions})")
+
+        create_table_query = f"CREATE TABLE {self.table_name} (id INT PRIMARY KEY, embedding VECTOR({self.dim}))"
+        if partitions > 1:
+            create_table_query += f" PARTITION BY KEY(id) PARTITIONS {partitions}"
+        create_table_query += ";"
         self._cursor.execute(create_table_query)
 
     def optimize(self, data_size: int):
         index_params = self.db_case_config.index_param()
         index_args = ", ".join(f"{k}={v}" for k, v in index_params["params"].items())
         index_query = (
-            f"CREATE /*+ PARALLEL(18) */ VECTOR INDEX idx1 "
+            f"CREATE /*+ PARALLEL({self.db_case_config.create_index_parallel}) */ VECTOR INDEX idx1 "
             f"ON {self.table_name}(embedding) "
             f"WITH (distance={self.db_case_config.parse_metric()}, "
             f"type={index_params['index_type']}, lib={index_params['lib']}, {index_args}"
         )
 
-        if self.db_case_config.index in {IndexType.HNSW, IndexType.HNSW_SQ, IndexType.HNSW_BQ}:
-            index_query += ", extra_info_max_size=32"
+        extra_info = getattr(self.db_case_config, "extra_info_max_size", None)
+        if extra_info is not None:
+            index_query += f", extra_info_max_size={extra_info}"
 
         index_query += ")"
 
@@ -153,10 +165,6 @@ class OceanBase(VectorDB):
             raise
 
     def need_normalize_cosine(self) -> bool:
-        if self.db_case_config.index == IndexType.HNSW_BQ:
-            log.info("current HNSW_BQ only supports L2, cosine dataset need normalize.")
-            return True
-
         return False
 
     def _wait_for_major_compaction(self):
@@ -185,9 +193,7 @@ class OceanBase(VectorDB):
                 batch_end = min(batch_start + self.load_batch_size, len(embeddings))
                 batch = [(metadata[i], embeddings[i]) for i in range(batch_start, batch_end)]
                 values = ", ".join(f"({item_id}, '[{','.join(map(str, embedding))}]')" for item_id, embedding in batch)
-                self._cursor.execute(
-                    f"INSERT /*+ ENABLE_PARALLEL_DML PARALLEL(32) */ INTO {self.table_name} VALUES {values}"
-                )
+                self._cursor.execute(f"INSERT INTO {self.table_name} VALUES {values}")
                 insert_count += len(batch)
         except mysql.Error:
             log.exception("Failed to insert embeddings")
