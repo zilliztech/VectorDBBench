@@ -380,7 +380,7 @@ vectordbbench alioss \
   --region cn-shenzhen
 ```
 
-`--skip-load` auto-disables `drop_old` ([cli.py:651](vectordb_bench/cli/cli.py#L651)) — `--skip-drop-old` is redundant.
+`--skip-load` auto-disables `drop_old` (see `parse_task_stages` in `cli.py` — drop-old is forced to `False` when load is skipped) — `--skip-drop-old` is redundant.
 
 #### Label filter benchmark (e.g. 1% / 10% selectivity)
 
