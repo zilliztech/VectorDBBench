@@ -64,6 +64,7 @@ class S3Vectors(VectorDB):
         self.secret_access_key = self.db_config.get("secret_access_key")
         self.bucket_name = self.db_config.get("bucket_name")
         self.index_name = self.db_config.get("index_name")
+        self.endpoint_url = self.db_config.get("endpoint_url")
 
         self._botocore_config = Config(
             max_pool_connections=self.db_config["max_pool_connections"],
@@ -78,6 +79,7 @@ class S3Vectors(VectorDB):
             region_name=self.region_name,
             aws_access_key_id=self.access_key_id,
             aws_secret_access_key=self.secret_access_key,
+            endpoint_url=self.endpoint_url,
             config=self._botocore_config,
         )
 
@@ -112,6 +114,7 @@ class S3Vectors(VectorDB):
             region_name=self.region_name,
             aws_access_key_id=self.access_key_id,
             aws_secret_access_key=self.secret_access_key,
+            endpoint_url=self.endpoint_url,
             config=self._botocore_config,
         )
 

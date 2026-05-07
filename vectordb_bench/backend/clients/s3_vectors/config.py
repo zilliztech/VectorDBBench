@@ -12,6 +12,10 @@ class S3VectorsConfig(DBConfig):
     bucket_name: str
     index_name: str = "vdbbench-index"
 
+    endpoint_url: str | None = None
+    """Custom endpoint URL (e.g. http://192.168.1.100:8080) for testing against
+    a local or on-prem S3 Vectors deployment. When None, uses AWS default."""
+
     insert_batch_size: int = 100
     """PutVectors per-call batch size. AWS hard limit: 500. Larger means fewer API
     calls (cheaper) but higher per-call latency and memory; smaller means more API
@@ -39,6 +43,7 @@ class S3VectorsConfig(DBConfig):
             "secret_access_key": self.secret_access_key.get_secret_value() if self.secret_access_key else "",
             "bucket_name": self.bucket_name,
             "index_name": self.index_name,
+            "endpoint_url": self.endpoint_url,
             "insert_batch_size": self.insert_batch_size,
             "max_pool_connections": self.max_pool_connections,
             "retry_mode": self.retry_mode,
