@@ -113,9 +113,9 @@ class AliOSS(VectorDB):
                         "key": str(metadata[i]),
                         "data": {self.case_config.data_type: embeddings[i]},
                         "metadata": (
-                            {self._scalar_label_field: labels_data[i], self._scalar_id_field: metadata[i]}
+                            {self._scalar_label_field: labels_data[i], self._scalar_id_field: str(metadata[i])}
                             if self.with_scalar_labels
-                            else {self._scalar_id_field: metadata[i]}
+                            else {self._scalar_id_field: str(metadata[i])}
                         ),
                     }
                     for i in range(batch_start, batch_end)
@@ -164,4 +164,4 @@ class AliOSS(VectorDB):
                 return_metadata=False,
             )
         )
-        return [int(v.key) for v in (resp.vectors or [])]
+        return [int(v["key"]) for v in (resp.vectors or [])]

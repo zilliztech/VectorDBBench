@@ -18,3 +18,14 @@ logs/
 # AI rules
 CLAUDE.md
 AGENTS.md
+
+# Local dataset cache (re-downloadable, not committed)
+data_cache/
+data_backup/
+
+# Insert bench transient state
+ai_oss/insert_bench/checkpoint_*.json
+ai_oss/insert_bench/insert_*.log
+ai_oss/insert_bench/run*.log
+ai_oss/insert_bench/download.log
+download.log
