@@ -331,3 +331,194 @@ vectordbbench MilvusSPANNRaBitQ \
   --uri http://localhost:19530 \
   --collection my_spann_rabitq_collection
 ```
+
+### Aliyun OSS Vector Bucket (AliOSS)
+
+Aliyun OSS Vector Bucket SDK: `alibabacloud-oss-v2`. Backend at [vectordb_bench/backend/clients/alioss/](vectordb_bench/backend/clients/alioss/).
+
+**CLI flags ([alioss/cli.py](vectordb_bench/backend/clients/alioss/cli.py)):**
+
+| Flag | Required | Default | Notes |
+|------|----------|---------|-------|
+| `--access-key-id` | yes | — | Aliyun AccessKey ID |
+| `--access-key-secret` | yes | — | Aliyun AccessKey Secret |
+| `--account-id` | yes | — | 12-digit Aliyun account ID |
+| `--bucket` | yes | — | Vector bucket name (must already exist) |
+| `--region` | no | `cn-shenzhen` | Aliyun region |
+| `--index` | no | `vdbbench-index` | Vector index name |
+| `--metric` | no | `cosine` | `cosine` or `l2` |
+| `--insert-batch-size` | no | `100` | PutVectors batch size; max 500 per Aliyun OSS docs |
+
+**Bucket creation:** the backend does NOT auto-create the bucket — create it manually (Aliyun console or `client.put_vector_bucket()`) before first run. The backend DOES create/drop the index when `drop_old=True`.
+
+#### No-filter: full benchmark (load + search)
+
+```bash
+vectordbbench alioss \
+  --case-type Performance768D1M \
+  --bucket my-vector-bucket \
+  --access-key-id LTAI... \
+  --access-key-secret ... \
+  --account-id 1829... \
+  --region cn-shenzhen \
+  --metric cosine
+```
+
+#### No-filter: search-only against an existing 1M index
+
+```bash
+vectordbbench alioss \
+  --case-type Performance768D1M \
+  --skip-load \
+  --bucket test \
+  --index vdbbench1m \
+  --num-concurrency 1 \
+  --concurrency-duration 30 \
+  --access-key-id LTAI... \
+  --access-key-secret ... \
+  --account-id 1829... \
+  --region cn-shenzhen
+```
+
+`--skip-load` auto-disables `drop_old` (see `parse_task_stages` in `cli.py` — drop-old is forced to `False` when load is skipped) — `--skip-drop-old` is redundant.
+
+#### Label filter benchmark (e.g. 1% / 10% selectivity)
+
+Requires the `neighbors_labels_label_<N>p.parquet` ground-truth file alongside `shuffle_train.parquet`. Pre-download manually if vdbbench's S3 fetch times out:
+
+```bash
+# 1% ground truth
+curl -L -o data_cache/cohere/cohere_medium_1m/neighbors_labels_label_1p.parquet \
+  https://assets.zilliz.com/benchmark/cohere_medium_1m/neighbors_labels_label_1p.parquet
+
+# 10% ground truth
+curl -L -o data_cache/cohere/cohere_medium_1m/neighbors_labels_label_10p.parquet \
+  https://assets.zilliz.com/benchmark/cohere_medium_1m/neighbors_labels_label_10p.parquet
+
+# Symlink into vdbbench cache so S3 fetch is skipped
+mkdir -p /tmp/vectordb_bench/dataset/cohere/cohere_medium_1m
+for f in shuffle_train.parquet test.parquet neighbors.parquet scalar_labels.parquet \
+         neighbors_labels_label_1p.parquet neighbors_labels_label_10p.parquet; do
+  ln -sf $(pwd)/data_cache/cohere/cohere_medium_1m/$f \
+    /tmp/vectordb_bench/dataset/cohere/cohere_medium_1m/$f
+done
+```
+
+**Full run (load + search) — first time only:**
+
+```bash
+vectordbbench alioss \
+  --case-type LabelFilterPerformanceCase \
+  --label-percentage 0.01 \
+  --bucket vdbbench-labeled \
+  --index vdbbench1m \
+  --insert-batch-size 500 \
+  --load-concurrency 4 \
+  --num-concurrency 1 \
+  --concurrency-duration 30 \
+  --access-key-id LTAI... --access-key-secret ... --account-id 1829... \
+  --region cn-shenzhen --metric cosine
+```
+
+**Search-only against an existing labeled index:**
+
+```bash
+# 1% label filter
+vectordbbench alioss \
+  --case-type LabelFilterPerformanceCase \
+  --label-percentage 0.01 \
+  --skip-load \
+  --bucket vdbbench-labeled \
+  --index vdbbench1m \
+  --num-concurrency 1 \
+  --concurrency-duration 30 \
+  --access-key-id LTAI... --access-key-secret ... --account-id 1829... \
+  --region cn-shenzhen --metric cosine
+
+# 10% label filter (same index, different GT file)
+vectordbbench alioss \
+  --case-type LabelFilterPerformanceCase \
+  --label-percentage 0.1 \
+  --skip-load \
+  --bucket vdbbench-labeled \
+  --index vdbbench1m \
+  --num-concurrency 1 \
+  --concurrency-duration 30 \
+  --access-key-id LTAI... --access-key-secret ... --account-id 1829... \
+  --region cn-shenzhen --metric cosine
+```
+
+Mapping `--label-percentage` → corpus label:
+- `0.01` → `label_1p` (1% of rows match)
+- `0.1` → `label_10p` (10% of rows match)
+- `0.001` → `label_0.1p`, `0.5` → `label_50p`, etc.
+
+**Result location:** `vectordb_bench/results/AliOSS/result_<date>_<runid>_alioss.json`. Recall lives at `results[0].metrics.recall`. Quick read:
+
+```bash
+python -c "import json,sys; d=json.load(open(sys.argv[1])); m=d['results'][0]['metrics']; print({k:m[k] for k in ('recall','ndcg','qps','serial_latency_p99')})" \
+  vectordb_bench/results/AliOSS/result_*.json
+```
+
+**Observed recall (Cohere 768D 1M, cn-shenzhen):**
+
+| Case | recall | qps | serial_latency_p99 | Notes |
+|------|--------|-----|-------------------|-------|
+| No-filter | 0.9852 | 4.01 | 0.349s | ANN search on full 1M |
+| Label-1% | 1.0 | 4.04 | 0.384s | ~10K hit set → brute-force exact |
+| Label-10% | 1.0 | 2.94 | 0.374s | ~100K hit set → brute-force exact |
+
+#### Standalone insert with checkpoint/resume
+
+For multi-hour 1M+ inserts where vdbbench's load is too fragile (no resume on crash/network blip), use [ai_oss/insert_bench/insert_with_checkpoint.py](ai_oss/insert_bench/insert_with_checkpoint.py). Streams a parquet file into an Aliyun OSS Vector index in fixed-size batches and persists per-batch progress to a JSON file so you can `Ctrl-C` and re-run safely.
+
+**Defaults:** bucket=`test`, index=`vdbbench1m`, total=1M, batch=100, dataset=`data_cache/cohere/cohere_medium_1m/shuffle_train.parquet`. Override via env vars.
+
+```bash
+# First run (creates checkpoint)
+python ai_oss/insert_bench/insert_with_checkpoint.py
+
+# Resume after Ctrl-C / crash / reboot — auto-skips inserted rows
+python ai_oss/insert_bench/insert_with_checkpoint.py
+
+# Clean restart (drops index + checkpoint)
+DROP_OLD=1 python ai_oss/insert_bench/insert_with_checkpoint.py
+
+# Faster: bigger batch (max 500 per Aliyun OSS docs)
+BATCH_SIZE=500 python ai_oss/insert_bench/insert_with_checkpoint.py
+
+# Smoke test on a small bucket
+TOTAL_ROWS=1000 BUCKET=bench1ktest INDEX=bench1ktest \
+  python ai_oss/insert_bench/insert_with_checkpoint.py
+```
+
+**Env vars:**
+
+| Var | Default | Purpose |
+|-----|---------|---------|
+| `BUCKET` | `test` | Target vector bucket |
+| `INDEX` | `vdbbench1m` | Target vector index |
+| `TOTAL_ROWS` | `1000000` | How many rows to insert |
+| `BATCH_SIZE` | `100` | PutVectors batch size (max 500) |
+| `DROP_OLD` | `0` | `1` drops index and resets checkpoint |
+| `PARQUET_PATH` | `data_cache/cohere/cohere_medium_1m/shuffle_train.parquet` | Source parquet |
+| `LOG_EVERY_BATCHES` | `50` | Progress log cadence |
+| `MAX_RETRIES` | `8` | Per-batch retry attempts on transient errors |
+| `INITIAL_BACKOFF_S` | `2.0` | First retry delay |
+| `MAX_BACKOFF_S` | `60.0` | Cap on exponential backoff |
+
+**Checkpoint file:** `ai_oss/insert_bench/checkpoint_<bucket>_<index>.json`, atomic-replaced after each successful batch:
+
+```json
+{"next_index": 1000000, "inserted": 1000000, "bucket": "test", "index": "vdbbench1m", "ts": ...}
+```
+
+Resume reads `next_index`, fast-skips parquet batches whose end ≤ `next_index` without materializing them, partial-skips the straddling batch, then continues. Transient errors (DNS, timeout, 5xx, throttling) trigger inline exponential backoff (2s → 60s, 8 attempts). Hard failures save the checkpoint at the last known-good row and exit non-zero.
+
+**Note:** the standalone script writes `metadata: {"id": str(rid)}` only — no scalar labels. For label filter cases, use the vdbbench load path instead (it auto-attaches labels from `scalar_labels.parquet`).
+
+**Common pitfalls:**
+
+- `'dict' object has no attribute 'key'` during search — `query_vectors` returns dicts, not objects. Already fixed at [alioss.py:167](vectordb_bench/backend/clients/alioss/alioss.py#L167).
+- `Parquet magic bytes not found in footer` on load — `/tmp/vectordb_bench/dataset/.../shuffle_train.parquet` has correct byte size but corrupt content from a prior interrupted download. Replace with a symlink to `data_cache/`.
+- `Read timeout on endpoint URL` for `assets.zilliz.com/...` — pre-download dataset files manually with `curl --retry`, then symlink into `/tmp/vectordb_bench/dataset/cohere/cohere_medium_1m/`.
