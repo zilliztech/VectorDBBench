@@ -32,6 +32,7 @@ def test_config_to_dict_exposes_all_tuning_fields():
     assert d["max_pool_connections"] == 50
     assert d["retry_mode"] == "adaptive"
     assert d["retry_max_attempts"] == 10
+    assert d["endpoint_url"] is None
 
 
 def _default_db_and_case():
@@ -70,6 +71,36 @@ def test_client_built_with_botocore_config():
         cfg = call_kwargs["config"]
         assert cfg.max_pool_connections == 50
         assert cfg.retries == {"mode": "adaptive", "max_attempts": 10}
+
+
+def test_endpoint_url_passed_to_boto3_client():
+    """When endpoint_url is set, both __init__ and init() boto3.client calls
+    must receive it. Guards against regression if a refactor drops the kwarg."""
+    from vectordb_bench.backend.clients.s3_vectors import s3_vectors as mod
+
+    db_config, case_config = _default_db_and_case()
+    db_config["endpoint_url"] = "http://192.168.1.100:8080"
+
+    with patch.object(mod, "boto3") as mock_boto3:
+        fake_client = MagicMock()
+        mock_boto3.client.return_value = fake_client
+
+        db = mod.S3Vectors(
+            dim=4,
+            db_config=db_config,
+            db_case_config=case_config,
+            drop_old=False,
+        )
+        # Verify __init__ client got endpoint_url
+        init_call = mock_boto3.client.call_args
+        assert init_call.kwargs.get("endpoint_url") == "http://192.168.1.100:8080"
+
+        with db.init():
+            # Verify init() client also got endpoint_url
+            # init() creates a second client, so total call_count is 2
+            assert mock_boto3.client.call_count == 2
+            calls = mock_boto3.client.call_args_list
+            assert calls[1].kwargs.get("endpoint_url") == "http://192.168.1.100:8080"
 
 
 def test_insert_chunks_to_batch_size():

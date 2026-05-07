@@ -77,6 +77,15 @@ class S3VectorsTypedDict(TypedDict):
             show_default=True,
         ),
     ]
+    endpoint_url: Annotated[
+        str | None,
+        click.option(
+            "--endpoint-url",
+            type=str,
+            help="Custom S3 Vectors endpoint URL (e.g. http://192.168.1.100:8080)",
+            default=None,
+        ),
+    ]
 
 
 class S3VectorsIndexTypedDict(CommonTypedDict, S3VectorsTypedDict): ...
@@ -96,6 +105,7 @@ def S3Vectors(**parameters: Unpack[S3VectorsIndexTypedDict]):
             secret_access_key=SecretStr(parameters["secret_access_key"]),
             bucket_name=parameters["bucket"],
             index_name=parameters["index"] if parameters["index"] else "vdbbench-index",
+            endpoint_url=parameters.get("endpoint_url"),
             insert_batch_size=parameters["insert_batch_size"],
             max_pool_connections=parameters["max_pool_connections"],
             retry_mode=parameters["retry_mode"],
