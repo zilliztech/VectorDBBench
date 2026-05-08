@@ -5,6 +5,7 @@ from enum import StrEnum
 from pydantic import BaseModel, SecretStr, validator
 
 from vectordb_bench.backend.filter import Filter, FilterOp
+from vectordb_bench.backend.payload import PayloadProfile
 
 
 class MetricType(StrEnum):
@@ -196,6 +197,9 @@ class VectorDB(ABC):
         """Wheather this database need to normalize dataset to support COSINE"""
         return False
 
+    def supports_payload_profile(self, payload_profile: PayloadProfile) -> bool:
+        return payload_profile == PayloadProfile.IDS_ONLY
+
     @abstractmethod
     def insert_embeddings(
         self,
@@ -222,6 +226,7 @@ class VectorDB(ABC):
         self,
         query: list[float],
         k: int = 100,
+        payload_profile: PayloadProfile = PayloadProfile.IDS_ONLY,
     ) -> list[int]:
         """Get k most similar embeddings to query vector.
 

@@ -341,6 +341,7 @@ class DatasetManager(BaseModel):
         self,
         source: DatasetSource = DatasetSource.S3,
         filters: Filter = non_filter,
+        with_train_files: bool = True,
     ) -> bool:
         """Download the dataset from DatasetSource
          url = f"{source}/{self.data.dir_name}"
@@ -354,7 +355,7 @@ class DatasetManager(BaseModel):
             bool: whether the dataset is successfully prepared
 
         """
-        self.train_files = self.data.train_files
+        self.train_files = self.data.train_files if with_train_files else []
         gt_file, test_file = None, None
         if self.data.with_gt:
             gt_file, test_file = filters.groundtruth_file, self.data.test_file

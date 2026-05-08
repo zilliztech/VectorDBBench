@@ -134,7 +134,11 @@ class CaseRunner(BaseModel):
     def _pre_run(self, drop_old: bool = True):
         try:
             self.init_db(drop_old)
-            self.ca.dataset.prepare(self.dataset_source, filters=self.ca.filters)
+            self.ca.dataset.prepare(
+                self.dataset_source,
+                filters=self.ca.filters,
+                with_train_files=TaskStage.LOAD in self.config.stages,
+            )
         except ModuleNotFoundError as e:
             log.warning(f"pre run case error: please install client for db: {self.config.db}, error={e}")
             raise e from None
@@ -217,6 +221,10 @@ class CaseRunner(BaseModel):
                 if TaskStage.SEARCH_SERIAL in self.config.stages:
                     search_results = self._serial_search()
                     m.recall, m.ndcg, m.serial_latency_p99, m.serial_latency_p95 = search_results
+            m.payload_profile = self.ca.payload_profile.value
+            m.payload_estimated_bytes_per_query = self.ca.estimated_payload_bytes_per_query(
+                self.config.case_config.k
+            )
 
         except Exception as e:
             log.warning(f"Failed to run performance case, reason = {e}")
@@ -323,6 +331,7 @@ class CaseRunner(BaseModel):
                 ground_truth=gt_df,
                 filters=self.ca.filters,
                 k=self.config.case_config.k,
+                payload_profile=self.ca.payload_profile,
             )
         if TaskStage.SEARCH_CONCURRENT in self.config.stages:
             self.search_runner = MultiProcessingSearchRunner(
@@ -333,6 +342,7 @@ class CaseRunner(BaseModel):
                 duration=self.config.case_config.concurrency_search_config.concurrency_duration,
                 concurrency_timeout=self.config.case_config.concurrency_search_config.concurrency_timeout,
                 k=self.config.case_config.k,
+                payload_profile=self.ca.payload_profile,
             )
 
     def _init_read_write_runner(self):

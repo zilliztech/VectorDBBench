@@ -12,6 +12,7 @@ import numpy as np
 from hdrh.histogram import HdrHistogram
 
 from vectordb_bench.backend.filter import Filter, non_filter
+from vectordb_bench.backend.payload import PayloadProfile
 
 from ... import config
 from ...models import ConcurrencySlotTimeoutError
@@ -45,16 +46,26 @@ class MultiProcessingSearchRunner:
         concurrencies: Iterable[int] = config.NUM_CONCURRENCY,
         duration: int = config.CONCURRENCY_DURATION,
         concurrency_timeout: int = config.CONCURRENCY_TIMEOUT,
+        payload_profile: PayloadProfile = PayloadProfile.IDS_ONLY,
     ):
         self.db = db
         self.k = k
         self.filters = filters
+        self.payload_profile = payload_profile
+        if not self.db.supports_payload_profile(self.payload_profile):
+            msg = f"{self.db.name} does not support payload_profile={self.payload_profile.value}"
+            raise NotImplementedError(msg)
         self.concurrencies = concurrencies
         self.duration = duration
         self.concurrency_timeout = concurrency_timeout
 
         self.test_data = test_data
         log.debug(f"test dataset columns: {len(test_data)}")
+
+    def _search_embedding(self, emb: list[float]) -> list[int]:
+        if self.payload_profile == PayloadProfile.IDS_ONLY:
+            return self.db.search_embedding(emb, self.k)
+        return self.db.search_embedding(emb, self.k, payload_profile=self.payload_profile)
 
     def search(
         self,
@@ -82,7 +93,7 @@ class MultiProcessingSearchRunner:
             while time.perf_counter() < start_time + self.duration:
                 s = time.perf_counter()
                 try:
-                    self.db.search_embedding(test_data[idx], self.k)
+                    self._search_embedding(test_data[idx])
                     count += 1
                     latencies.append(time.perf_counter() - s)
                 except Exception as e:
@@ -341,7 +352,7 @@ class MultiProcessingSearchRunner:
             while time.perf_counter() < start_time + dur:
                 s = time.perf_counter()
                 try:
-                    self.db.search_embedding(test_data[idx], self.k)
+                    self._search_embedding(test_data[idx])
                     success_count += 1
                     latency_us = int((time.perf_counter() - s) * US_TO_SECONDS)
                     histogram.record_value(min(latency_us, HDR_HISTOGRAM_MAX_US))

@@ -10,6 +10,7 @@ import psutil
 
 from vectordb_bench.backend.dataset import DatasetManager
 from vectordb_bench.backend.filter import Filter, FilterOp, non_filter
+from vectordb_bench.backend.payload import PayloadProfile
 
 from ... import config
 from ...metric import calc_ndcg, calc_recall, get_ideal_dcg
@@ -217,10 +218,15 @@ class SerialSearchRunner:
         ground_truth: list[list[int]],
         k: int = 100,
         filters: Filter = non_filter,
+        payload_profile: PayloadProfile = PayloadProfile.IDS_ONLY,
     ):
         self.db = db
         self.k = k
         self.filters = filters
+        self.payload_profile = payload_profile
+        if not self.db.supports_payload_profile(self.payload_profile):
+            msg = f"{self.db.name} does not support payload_profile={self.payload_profile.value}"
+            raise NotImplementedError(msg)
 
         if isinstance(test_data[0], np.ndarray):
             self.test_data = [query.tolist() for query in test_data]
@@ -228,9 +234,14 @@ class SerialSearchRunner:
             self.test_data = test_data
         self.ground_truth = ground_truth
 
+    def _search_embedding(self, emb: list[float]) -> list[int]:
+        if self.payload_profile == PayloadProfile.IDS_ONLY:
+            return self.db.search_embedding(emb, self.k)
+        return self.db.search_embedding(emb, self.k, payload_profile=self.payload_profile)
+
     def _get_db_search_res(self, emb: list[float], retry_idx: int = 0) -> list[int]:
         try:
-            results = self.db.search_embedding(emb, self.k)
+            results = self._search_embedding(emb)
         except Exception as e:
             log.warning(f"Serial search failed, retry_idx={retry_idx}, Exception: {e}")
             if retry_idx < config.MAX_SEARCH_RETRY:

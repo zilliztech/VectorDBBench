@@ -149,6 +149,7 @@ class CaseConfigParamType(Enum):
 
     dataset_with_size_type = "dataset_with_size_type"
     filter_rate = "filter_rate"
+    payload_profile = "payload_profile"
     insert_rate = "insert_rate"
     search_stages = "search_stages"
     concurrencies = "concurrencies"

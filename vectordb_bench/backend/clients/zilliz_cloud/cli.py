@@ -20,7 +20,7 @@ class ZillizTypedDict(CommonTypedDict):
     ]
     user_name: Annotated[
         str,
-        click.option("--user-name", type=str, help="Db username", required=True),
+        click.option("--user-name", type=str, help="Db username", default=""),
     ]
     password: Annotated[
         str,
@@ -30,6 +30,16 @@ class ZillizTypedDict(CommonTypedDict):
             help="Zilliz password",
             default=lambda: os.environ.get("ZILLIZ_PASSWORD", ""),
             show_default="$ZILLIZ_PASSWORD",
+        ),
+    ]
+    token: Annotated[
+        str,
+        click.option(
+            "--token",
+            type=str,
+            help="Zilliz API token",
+            default=lambda: os.environ.get("ZILLIZ_TOKEN", ""),
+            show_default="$ZILLIZ_TOKEN",
         ),
     ]
     level: Annotated[
@@ -72,6 +82,7 @@ def ZillizAutoIndex(**parameters: Unpack[ZillizTypedDict]):
             uri=SecretStr(parameters["uri"]),
             user=parameters["user_name"],
             password=SecretStr(parameters["password"]),
+            token=SecretStr(parameters["token"]),
             num_shards=parameters["num_shards"],
             collection_name=parameters["collection_name"],
         ),

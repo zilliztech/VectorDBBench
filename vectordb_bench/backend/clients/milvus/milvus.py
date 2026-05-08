@@ -8,6 +8,7 @@ from contextlib import contextmanager
 from pymilvus import Collection, CollectionSchema, DataType, FieldSchema, MilvusException, utility
 
 from vectordb_bench.backend.filter import Filter, FilterOp
+from vectordb_bench.backend.payload import PayloadProfile
 
 from ..api import VectorDB
 from .config import MilvusIndexConfig
@@ -57,6 +58,7 @@ class Milvus(VectorDB):
             uri=self.db_config.get("uri"),
             user=self.db_config.get("user"),
             password=self.db_config.get("password"),
+            token=self.db_config.get("token", ""),
             timeout=30,
         )
         if drop_old and utility.has_collection(self.collection_name):
@@ -239,23 +241,29 @@ class Milvus(VectorDB):
             msg = f"Not support Filter for Milvus - {filters}"
             raise ValueError(msg)
 
+    def supports_payload_profile(self, payload_profile: PayloadProfile) -> bool:
+        return payload_profile in {PayloadProfile.IDS_ONLY, PayloadProfile.VECTOR}
+
     def search_embedding(
         self,
         query: list[float],
         k: int = 100,
         timeout: int | None = None,
+        payload_profile: PayloadProfile = PayloadProfile.IDS_ONLY,
     ) -> list[int]:
         """Perform a search on a query embedding and return results."""
         assert self.col is not None
 
-        # Perform the search.
-        res = self.col.search(
-            data=[query],
-            anns_field=self._vector_field,
-            param=self.case_config.search_param(),
-            limit=k,
-            expr=self.expr,
-        )
+        search_kwargs = {
+            "data": [query],
+            "anns_field": self._vector_field,
+            "param": self.case_config.search_param(),
+            "limit": k,
+            "expr": self.expr,
+        }
+        if payload_profile == PayloadProfile.VECTOR:
+            search_kwargs["output_fields"] = [self._vector_field]
+        res = self.col.search(**search_kwargs)
 
         # Organize results.
         return [result.id for result in res[0]]

@@ -8,6 +8,7 @@ import turbopuffer as tpuf
 
 from vectordb_bench.backend.clients.turbopuffer.config import TurboPufferIndexConfig
 from vectordb_bench.backend.filter import Filter, FilterOp
+from vectordb_bench.backend.payload import PayloadProfile
 
 from ..api import VectorDB
 
@@ -97,17 +98,24 @@ class TurboPuffer(VectorDB):
             log.warning(f"Failed to insert. Error: {e}")
         return len(embeddings), None
 
+    def supports_payload_profile(self, payload_profile: PayloadProfile) -> bool:
+        return payload_profile in {PayloadProfile.IDS_ONLY, PayloadProfile.VECTOR}
+
     def search_embedding(
         self,
         query: list[float],
         k: int = 100,
         timeout: int | None = None,
+        payload_profile: PayloadProfile = PayloadProfile.IDS_ONLY,
     ) -> list[int]:
-        res = self.ns.query(
-            rank_by=("vector", "ANN", query),
-            top_k=k,
-            filters=self.expr,
-        )
+        query_kwargs = {
+            "rank_by": ("vector", "ANN", query),
+            "top_k": k,
+            "filters": self.expr,
+        }
+        if payload_profile == PayloadProfile.VECTOR:
+            query_kwargs["include_attributes"] = [self._vector_field]
+        res = self.ns.query(**query_kwargs)
         return [row.id for row in res.rows] if res.rows is not None else []
 
     def prepare_filter(self, filters: Filter):

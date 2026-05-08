@@ -193,6 +193,10 @@ def get_custom_case_config(parameters: dict) -> dict:
             "dataset_with_size_type": parameters["dataset_with_size_type"],
             "label_percentage": parameters["label_percentage"],
         }
+    elif parameters["case_type"] == "CloudPayloadSearchCase":
+        custom_case_config = {
+            "payload_profile": parameters["payload_profile"],
+        }
     return custom_case_config
 
 
@@ -452,6 +456,16 @@ class CommonTypedDict(TypedDict):
             "--label-percentage",
             help="Filter rate for LabelFilterPerformanceCase",
             default=0.01,
+            show_default=True,
+        ),
+    ]
+    payload_profile: Annotated[
+        str,
+        click.option(
+            "--payload-profile",
+            type=click.Choice(["ids_only", "vector"]),
+            help="Response payload profile for CloudPayloadSearchCase",
+            default="ids_only",
             show_default=True,
         ),
     ]

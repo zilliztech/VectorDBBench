@@ -5,6 +5,7 @@ from vectordb_bench.backend.cases import CaseLabel, CaseType
 from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.clients.api import IndexType, MetricType, SQType
 from vectordb_bench.backend.dataset import DatasetWithSizeType
+from vectordb_bench.backend.payload import PayloadProfile
 from vectordb_bench.frontend.components.custom.getCustomConfig import get_custom_configs
 
 from vectordb_bench.models import CaseConfig, CaseConfigParamType
@@ -264,6 +265,16 @@ def generate_int_filter_cases(dataset_with_size_type: DatasetWithSizeType) -> li
     ]
 
 
+def generate_cloud_payload_cases() -> list[CaseConfig]:
+    return [
+        CaseConfig(
+            case_id=CaseType.CloudPayloadSearchCase,
+            custom_case=dict(payload_profile=payload_profile.value),
+        )
+        for payload_profile in PayloadProfile
+    ]
+
+
 UI_CASE_CLUSTERS: list[UICaseItemCluster] = [
     UICaseItemCluster(
         label="Search Performance Test",
@@ -332,6 +343,19 @@ UI_CASE_CLUSTERS: list[UICaseItemCluster] = [
                 cases=generate_label_filter_cases(dataset_with_size_type),
             )
             for dataset_with_size_type in DatasetWithSizeType
+        ],
+    ),
+    UICaseItemCluster(
+        label="Cloud Payload Search Test",
+        uiCaseItems=[
+            UICaseItem(
+                label="Cloud Payload Search - LAION 100M",
+                description=(
+                    "[Batch Cases] These cases measure the same search envelope while varying response payload "
+                    "from IDs only to IDs with returned vectors."
+                ),
+                cases=generate_cloud_payload_cases(),
+            )
         ],
     ),
     UICaseItemCluster(

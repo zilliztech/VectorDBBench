@@ -5,6 +5,7 @@ from enum import Enum, auto
 from vectordb_bench import config
 from vectordb_bench.backend.clients.api import MetricType
 from vectordb_bench.backend.filter import Filter, FilterOp, IntFilter, LabelFilter, NewIntFilter, NonFilter, non_filter
+from vectordb_bench.backend.payload import PayloadProfile
 from vectordb_bench.base import BaseModel
 from vectordb_bench.frontend.components.custom.getCustomConfig import CustomDatasetConfig
 
@@ -56,6 +57,7 @@ class CaseType(Enum):
     LabelFilterPerformanceCase = 300
 
     NewIntFilterPerformanceCase = 400
+    CloudPayloadSearchCase = 500
 
     def case_cls(self, custom_configs: dict | None = None) -> type["Case"]:
         if custom_configs is None:
@@ -102,10 +104,16 @@ class Case(BaseModel):
     optimize_timeout: float | int | None = None
 
     filter_rate: float | None = None
+    payload_profile: PayloadProfile = PayloadProfile.IDS_ONLY
 
     @property
     def filters(self) -> Filter:
         return non_filter
+
+    def estimated_payload_bytes_per_query(self, k: int | None) -> int:
+        if k is None:
+            k = config.K_DEFAULT
+        return self.payload_profile.estimated_bytes_per_query(k=k, dim=self.dataset.data.dim)
 
     @property
     def with_scalar_labels(self) -> bool:
@@ -594,6 +602,61 @@ class NewIntFilterPerformanceCase(PerformanceCase):
         return NewIntFilter(filter_rate=self.filter_rate, int_field=int_field, int_value=int_value)
 
 
+class CloudPayloadSearchCase(PerformanceCase):
+    case_id: CaseType = CaseType.CloudPayloadSearchCase
+    dataset_with_size_type: DatasetWithSizeType | None = None
+    payload_profile: PayloadProfile = PayloadProfile.IDS_ONLY
+    filter_rate: float | None = None
+
+    def __init__(
+        self,
+        dataset_with_size_type: DatasetWithSizeType | str | None = None,
+        payload_profile: PayloadProfile | str = PayloadProfile.IDS_ONLY,
+        filter_rate: float | None = None,
+        **kwargs,
+    ):
+        if dataset_with_size_type is not None and not isinstance(dataset_with_size_type, DatasetWithSizeType):
+            dataset_with_size_type = DatasetWithSizeType(dataset_with_size_type)
+        if not isinstance(payload_profile, PayloadProfile):
+            payload_profile = PayloadProfile(payload_profile)
+
+        if dataset_with_size_type is None:
+            dataset = Dataset.LAION.manager(100_000_000)
+            load_timeout = config.LOAD_TIMEOUT_768D_100M
+            optimize_timeout = config.OPTIMIZE_TIMEOUT_768D_100M
+            dataset_name = "LAION 100M (768dim)"
+        else:
+            dataset = dataset_with_size_type.get_manager()
+            load_timeout = dataset_with_size_type.get_load_timeout()
+            optimize_timeout = dataset_with_size_type.get_optimize_timeout()
+            dataset_name = dataset_with_size_type.value
+
+        name = f"Cloud Payload Search - {payload_profile.value} - {dataset_name}"
+        description = (
+            "Cloud leaderboard search envelope case with explicit response payload profile. "
+            f"Payload profile: {payload_profile.value}; dataset: {dataset_name}."
+        )
+        super().__init__(
+            name=name,
+            description=description,
+            dataset=dataset,
+            load_timeout=load_timeout,
+            optimize_timeout=optimize_timeout,
+            dataset_with_size_type=dataset_with_size_type,
+            payload_profile=payload_profile,
+            filter_rate=filter_rate,
+            **kwargs,
+        )
+
+    @property
+    def filters(self) -> Filter:
+        if self.filter_rate is None:
+            return non_filter
+        int_field = self.dataset.data.train_id_field
+        int_value = int(self.dataset.data.size * self.filter_rate)
+        return NewIntFilter(filter_rate=self.filter_rate, int_field=int_field, int_value=int_value)
+
+
 class LabelFilterPerformanceCase(PerformanceCase):
     case_id: CaseType = CaseType.LabelFilterPerformanceCase
     dataset_with_size_type: DatasetWithSizeType
@@ -655,4 +718,5 @@ type2case = {
     CaseType.StreamingCustomDataset: StreamingCustomDataset,
     CaseType.NewIntFilterPerformanceCase: NewIntFilterPerformanceCase,
     CaseType.LabelFilterPerformanceCase: LabelFilterPerformanceCase,
+    CaseType.CloudPayloadSearchCase: CloudPayloadSearchCase,
 }
