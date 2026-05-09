@@ -11,6 +11,8 @@ from ....cli.cli import (
 )
 from .. import DB
 
+DEFAULT_PIN_TIMEOUT = 45 * 60
+
 
 class TurboPufferTypedDict(TypedDict):
     api_key: Annotated[
@@ -67,6 +69,16 @@ class TurboPufferTypedDict(TypedDict):
             help="Number of TurboPuffer pinning replicas to request",
         ),
     ]
+    pin_timeout: Annotated[
+        int,
+        click.option(
+            "--pin-timeout",
+            type=click.IntRange(min=1),
+            default=DEFAULT_PIN_TIMEOUT,
+            show_default=True,
+            help="Seconds to wait for TurboPuffer namespace pinning or unpinning to complete",
+        ),
+    ]
 
 
 class TurboPufferIndexTypedDict(CommonTypedDict, TurboPufferTypedDict): ...
@@ -77,6 +89,7 @@ class TurboPufferUnpinTypedDict(TypedDict):
     region: TurboPufferTypedDict.__annotations__["region"]
     api_base_url: TurboPufferTypedDict.__annotations__["api_base_url"]
     namespace: TurboPufferTypedDict.__annotations__["namespace"]
+    pin_timeout: TurboPufferTypedDict.__annotations__["pin_timeout"]
 
 
 def pin_namespace_once(parameters: TurboPufferIndexTypedDict):
@@ -96,6 +109,7 @@ def pin_namespace_once(parameters: TurboPufferIndexTypedDict):
         parameters["namespace"],
         parameters["pin_replicas"],
         parameters["api_base_url"] or None,
+        parameters["pin_timeout"],
     )
 
 
@@ -137,6 +151,11 @@ def TurboPufferUnpin(**parameters: Unpack[TurboPufferUnpinTypedDict]):
         parameters["api_base_url"] or None,
     )
     meta = wait_for_namespace_pinning(
-        parameters["api_key"], parameters["region"], parameters["namespace"], None, parameters["api_base_url"] or None
+        parameters["api_key"],
+        parameters["region"],
+        parameters["namespace"],
+        None,
+        parameters["api_base_url"] or None,
+        parameters["pin_timeout"],
     )
     click.echo(f"TurboPuffer namespace unpinned: {parameters['namespace']} pinning={meta.get('pinning')}")

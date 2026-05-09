@@ -43,9 +43,14 @@ def namespace_metadata_request(
 
 
 def wait_for_namespace_pinning(
-    api_key: str, region: str, namespace: str, replicas: int | None, api_base_url=None
+    api_key: str,
+    region: str,
+    namespace: str,
+    replicas: int | None,
+    api_base_url=None,
+    timeout: int = PINNING_TIMEOUT,
 ) -> dict:
-    deadline = time.monotonic() + PINNING_TIMEOUT
+    deadline = time.monotonic() + timeout
     while True:
         meta = namespace_metadata_request(api_key, region, namespace, "GET", api_base_url=api_base_url)
         pinning = meta.get("pinning")
