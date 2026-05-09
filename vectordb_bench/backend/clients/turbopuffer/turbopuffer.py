@@ -42,10 +42,6 @@ def namespace_metadata_request(
         raise RuntimeError(f"Failed to update TurboPuffer namespace metadata: {e.code} {detail}") from e
 
 
-def patch_namespace_metadata(api_key: str, region: str, namespace: str, payload: dict, api_base_url=None) -> dict:
-    return namespace_metadata_request(api_key, region, namespace, "PATCH", payload, api_base_url)
-
-
 def wait_for_namespace_pinning(
     api_key: str, region: str, namespace: str, replicas: int | None, api_base_url=None
 ) -> dict:
@@ -117,10 +113,11 @@ class TurboPuffer(VectorDB):
     def _apply_namespace_pinning(self):
         if not self.pin_namespace or self._pinning_applied:
             return
-        meta = patch_namespace_metadata(
+        meta = namespace_metadata_request(
             self.api_key,
             self.region,
             self.namespace,
+            "PATCH",
             {"pinning": {"replicas": self.pin_replicas}},
             self.api_base_url,
         )
