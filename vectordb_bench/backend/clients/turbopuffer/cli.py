@@ -79,10 +79,33 @@ class TurboPufferUnpinTypedDict(TypedDict):
     namespace: TurboPufferTypedDict.__annotations__["namespace"]
 
 
+def pin_namespace_once(parameters: TurboPufferIndexTypedDict):
+    from .turbopuffer import namespace_metadata_request, wait_for_namespace_pinning
+
+    namespace_metadata_request(
+        parameters["api_key"],
+        parameters["region"],
+        parameters["namespace"],
+        "PATCH",
+        {"pinning": {"replicas": parameters["pin_replicas"]}},
+        parameters["api_base_url"] or None,
+    )
+    wait_for_namespace_pinning(
+        parameters["api_key"],
+        parameters["region"],
+        parameters["namespace"],
+        parameters["pin_replicas"],
+        parameters["api_base_url"] or None,
+    )
+
+
 @cli.command()
 @click_parameter_decorators_from_typed_dict(TurboPufferIndexTypedDict)
 def TurboPuffer(**parameters: Unpack[TurboPufferIndexTypedDict]):
     from .config import TurboPufferConfig, TurboPufferIndexConfig
+
+    if parameters["pin_namespace"]:
+        pin_namespace_once(parameters)
 
     run(
         db=DB.TurboPuffer,
@@ -92,7 +115,7 @@ def TurboPuffer(**parameters: Unpack[TurboPufferIndexTypedDict]):
             region=parameters["region"],
             api_base_url=parameters["api_base_url"] or None,
             namespace=parameters["namespace"],
-            pin_namespace=parameters["pin_namespace"],
+            pin_namespace=False,
             pin_replicas=parameters["pin_replicas"],
         ),
         db_case_config=TurboPufferIndexConfig(),
