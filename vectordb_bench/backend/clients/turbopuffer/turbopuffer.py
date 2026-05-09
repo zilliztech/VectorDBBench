@@ -16,17 +16,19 @@ from vectordb_bench.backend.filter import Filter, FilterOp
 from ..api import VectorDB
 
 log = logging.getLogger(__name__)
+PINNING_POLL_INTERVAL = 10
+PINNING_TIMEOUT = 45 * 60
 
 
-def patch_namespace_metadata(
-    api_key: str, region: str, namespace: str, payload: dict, api_base_url: str | None = None
+def namespace_metadata_request(
+    api_key: str, region: str, namespace: str, method: str, payload=None, api_base_url=None
 ) -> dict:
     base_url = api_base_url or f"https://{region}.turbopuffer.com"
     url = f"{base_url.rstrip('/')}/v1/namespaces/{quote(namespace, safe='')}/metadata"
     req = Request(
         url,
-        data=dumps(payload).encode(),
-        method="PATCH",
+        data=dumps(payload).encode() if payload is not None else None,
+        method=method,
         headers={
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
@@ -38,6 +40,30 @@ def patch_namespace_metadata(
     except HTTPError as e:
         detail = e.read().decode(errors="replace")
         raise RuntimeError(f"Failed to update TurboPuffer namespace metadata: {e.code} {detail}") from e
+
+
+def patch_namespace_metadata(api_key: str, region: str, namespace: str, payload: dict, api_base_url=None) -> dict:
+    return namespace_metadata_request(api_key, region, namespace, "PATCH", payload, api_base_url)
+
+
+def wait_for_namespace_pinning(
+    api_key: str, region: str, namespace: str, replicas: int | None, api_base_url=None
+) -> dict:
+    deadline = time.monotonic() + PINNING_TIMEOUT
+    while True:
+        meta = namespace_metadata_request(api_key, region, namespace, "GET", api_base_url=api_base_url)
+        pinning = meta.get("pinning")
+        if replicas is None:
+            if pinning is None:
+                return meta
+        else:
+            status = pinning.get("status", {}) if isinstance(pinning, dict) else {}
+            if pinning and pinning.get("replicas") == replicas and status.get("ready_replicas") == replicas:
+                return meta
+        if time.monotonic() >= deadline:
+            raise TimeoutError(f"Timed out waiting for TurboPuffer pinning state on namespace {namespace}")
+        log.info("Waiting for TurboPuffer pinning state: %s", pinning)
+        time.sleep(PINNING_POLL_INTERVAL)
 
 
 class TurboPuffer(VectorDB):
@@ -97,6 +123,9 @@ class TurboPuffer(VectorDB):
             self.namespace,
             {"pinning": {"replicas": self.pin_replicas}},
             self.api_base_url,
+        )
+        meta = wait_for_namespace_pinning(
+            self.api_key, self.region, self.namespace, self.pin_replicas, self.api_base_url
         )
         pinning = meta.get("pinning", {})
         status = pinning.get("status", {})

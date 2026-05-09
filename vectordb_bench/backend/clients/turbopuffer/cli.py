@@ -103,13 +103,16 @@ def TurboPuffer(**parameters: Unpack[TurboPufferIndexTypedDict]):
 @cli.command()
 @click_parameter_decorators_from_typed_dict(TurboPufferUnpinTypedDict)
 def TurboPufferUnpin(**parameters: Unpack[TurboPufferUnpinTypedDict]):
-    from .turbopuffer import patch_namespace_metadata
+    from .turbopuffer import patch_namespace_metadata, wait_for_namespace_pinning
 
-    meta = patch_namespace_metadata(
+    patch_namespace_metadata(
         parameters["api_key"],
         parameters["region"],
         parameters["namespace"],
         {"pinning": None},
         parameters["api_base_url"] or None,
+    )
+    meta = wait_for_namespace_pinning(
+        parameters["api_key"], parameters["region"], parameters["namespace"], None, parameters["api_base_url"] or None
     )
     click.echo(f"TurboPuffer namespace unpinned: {parameters['namespace']} pinning={meta.get('pinning')}")
