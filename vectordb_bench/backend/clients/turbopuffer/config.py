@@ -8,6 +8,8 @@ class TurboPufferConfig(DBConfig):
     region: str
     api_base_url: str | None = None
     namespace: str = "vdbbench_test"
+    pin_namespace: bool = False
+    pin_replicas: int = 1
 
     def to_dict(self) -> dict:
         return {
@@ -15,6 +17,8 @@ class TurboPufferConfig(DBConfig):
             "region": self.region,
             "api_base_url": self.api_base_url,
             "namespace": self.namespace,
+            "pin_namespace": self.pin_namespace,
+            "pin_replicas": self.pin_replicas,
         }
 
 

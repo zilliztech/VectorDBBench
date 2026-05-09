@@ -3,6 +3,10 @@
 import logging
 import time
 from contextlib import contextmanager
+from json import dumps, loads
+from urllib.error import HTTPError
+from urllib.parse import quote
+from urllib.request import Request, urlopen
 
 import turbopuffer as tpuf
 
@@ -12,6 +16,28 @@ from vectordb_bench.backend.filter import Filter, FilterOp
 from ..api import VectorDB
 
 log = logging.getLogger(__name__)
+
+
+def patch_namespace_metadata(
+    api_key: str, region: str, namespace: str, payload: dict, api_base_url: str | None = None
+) -> dict:
+    base_url = api_base_url or f"https://{region}.turbopuffer.com"
+    url = f"{base_url.rstrip('/')}/v1/namespaces/{quote(namespace, safe='')}/metadata"
+    req = Request(
+        url,
+        data=dumps(payload).encode(),
+        method="PATCH",
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+    )
+    try:
+        with urlopen(req, timeout=60) as resp:
+            return loads(resp.read().decode() or "{}")
+    except HTTPError as e:
+        detail = e.read().decode(errors="replace")
+        raise RuntimeError(f"Failed to update TurboPuffer namespace metadata: {e.code} {detail}") from e
 
 
 class TurboPuffer(VectorDB):
@@ -34,6 +60,9 @@ class TurboPuffer(VectorDB):
         self.region = db_config.get("region", "")
         self.api_base_url = db_config.get("api_base_url")
         self.namespace = db_config.get("namespace", "")
+        self.pin_namespace = db_config.get("pin_namespace", False)
+        self.pin_replicas = db_config.get("pin_replicas", 1)
+        self._pinning_applied = False
         self.db_case_config = db_case_config
         self.metric = db_case_config.parse_metric()
 
@@ -59,10 +88,30 @@ class TurboPuffer(VectorDB):
             client_kwargs["base_url"] = self.api_base_url
         return tpuf.Turbopuffer(**client_kwargs)
 
+    def _apply_namespace_pinning(self):
+        if not self.pin_namespace or self._pinning_applied:
+            return
+        meta = patch_namespace_metadata(
+            self.api_key,
+            self.region,
+            self.namespace,
+            {"pinning": {"replicas": self.pin_replicas}},
+            self.api_base_url,
+        )
+        pinning = meta.get("pinning", {})
+        status = pinning.get("status", {})
+        log.info(
+            "TurboPuffer pinning requested: replicas=%s ready_replicas=%s",
+            pinning.get("replicas", self.pin_replicas),
+            status.get("ready_replicas"),
+        )
+        self._pinning_applied = True
+
     @contextmanager
     def init(self):
         self.client = self._create_client()
         self.ns = self.client.namespace(self.namespace)
+        self._apply_namespace_pinning()
         yield
 
     def optimize(self, data_size: int | None = None):
