@@ -156,6 +156,24 @@ class CaseConfigParamType(Enum):
     optimize_after_write = "optimize_after_write"
     read_dur_after_write = "read_dur_after_write"
 
+    # PolarDB parameters
+    insert_workers = "insert_workers"
+    post_load_index = "post_load_index"
+    pq_nbits = "pq_nbits"
+
+    # Lindorm parameters
+    efSearch = "efSearch"
+    pq_m = "pq_m"
+    centroids_hnsw_M = "centroids_hnsw_M"
+    centroids_hnsw_efConstruction = "centroids_hnsw_efConstruction"
+    centroids_hnsw_efSearch = "centroids_hnsw_efSearch"
+    filter_type = "filter_type"
+    reorder_factor = "reorder_factor"
+    client_refactor = "client_refactor"
+    k_expand_scope = "k_expand_scope"
+    exbits = "exbits"
+    number_of_regions = "number_of_regions"
+
 
 class CustomizedCase(BaseModel):
     pass
@@ -188,7 +206,7 @@ class CaseConfig(BaseModel):
     '''
 
     def __hash__(self) -> int:
-        return hash(self.json())
+        return hash(self.model_dump_json())
 
     @property
     def case(self) -> Case:
@@ -226,6 +244,7 @@ class TaskConfig(BaseModel):
     db_case_config: DBCaseConfig
     case_config: CaseConfig
     stages: list[TaskStage] = ALL_TASK_STAGES
+    load_concurrency: int = config.LOAD_CONCURRENCY
 
     @property
     def db_name(self):
@@ -296,7 +315,7 @@ class TestResult(BaseModel):
 
         log.info(f"write results to disk {result_file}")
         with pathlib.Path(result_file).open("w") as f:
-            b = partial.json(exclude={"db_config": {"password", "api_key"}})
+            b = partial.model_dump_json(exclude={"db_config": {"password", "api_key"}})
             f.write(b)
 
     def get_case_config(case_config: CaseConfig) -> dict[CaseConfig]:
@@ -363,7 +382,7 @@ class TestResult(BaseModel):
                     else:
                         # Default to 0 for older result files that don't have P95 data
                         case_result["metrics"]["serial_latency_p95"] = 0.0
-            return TestResult.validate(test_result)
+            return TestResult.model_validate(test_result)
 
     def display(self, dbs: list[DB] | None = None):
         filter_list = dbs if dbs and isinstance(dbs, list) else None

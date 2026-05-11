@@ -5,7 +5,7 @@ import polars as pl
 from vectordb_bench.cli.cli import get_custom_case_config
 from vectordb_bench.backend.cases import CaseLabel, CaseType, CloudInsertCase
 from vectordb_bench.backend.clients.api import EmptyDBCaseConfig, VectorDB
-from vectordb_bench.backend.clients.milvus import milvus as milvus_module
+from vectordb_bench.backend.dataset import DatasetWithSizeType
 from vectordb_bench.backend.clients.milvus.milvus import Milvus
 from vectordb_bench.backend.clients.pinecone.pinecone import Pinecone
 from vectordb_bench.backend.clients.turbopuffer.config import TurboPufferIndexConfig
@@ -29,12 +29,18 @@ def test_cloud_insert_case_defaults_to_laion_100m():
 def test_case_config_builds_cloud_insert_case_from_custom_case():
     case = CaseConfig(
         case_id=CaseType.CloudInsertCase,
-        custom_case={"batch_size": 5000, "duration": 1800},
+        custom_case={
+            "batch_size": 5000,
+            "duration": 1800,
+            "dataset_with_size_type": DatasetWithSizeType.CohereMedium.value,
+        },
     ).case
 
     assert isinstance(case, CloudInsertCase)
     assert case.batch_size == 5000
     assert case.duration == 1800
+    assert case.dataset.data.name == "Cohere"
+    assert case.dataset.data.size == 1_000_000
 
 
 def test_cli_builds_cloud_insert_custom_case_config():
@@ -42,11 +48,13 @@ def test_cli_builds_cloud_insert_custom_case_config():
         "case_type": "CloudInsertCase",
         "cloud_insert_batch_size": 10_000,
         "cloud_insert_duration": 1800,
+        "dataset_with_size_type": DatasetWithSizeType.CohereMedium.value,
     }
 
     assert get_custom_case_config(params) == {
         "batch_size": 10_000,
         "duration": 1800,
+        "dataset_with_size_type": DatasetWithSizeType.CohereMedium.value,
     }
 
 
@@ -77,12 +85,16 @@ def test_default_insert_readiness_is_immediately_ready():
 
 def test_metric_contains_cloud_insert_output_fields():
     metric = Metric(
+        inserted_count=100,
+        insert_rows_per_second=83.33,
         insert_completion_seconds=1.2,
         searchable_after_insert_seconds=3.4,
         indexed_after_searchable_seconds=5.6,
         additional_parameters={"disable_backpressure": True},
     )
 
+    assert metric.inserted_count == 100
+    assert metric.insert_rows_per_second == 83.33
     assert metric.insert_completion_seconds == 1.2
     assert metric.searchable_after_insert_seconds == 3.4
     assert metric.indexed_after_searchable_seconds == 5.6
@@ -109,22 +121,19 @@ def test_turbopuffer_insert_can_disable_backpressure():
     assert db.ns.kwargs["disable_backpressure"] is True
 
 
-def test_milvus_insert_readiness_uses_entity_count_and_index_progress(monkeypatch):
-    class Collection:
-        num_entities = 10
-
-        def flush(self):
-            pass
-
+def test_milvus_insert_readiness_uses_entity_count_and_index_progress():
     db = Milvus.__new__(Milvus)
-    db.col = Collection()
     db.collection_name = "c"
     db._vector_index_name = "vector_idx"
-    monkeypatch.setattr(
-        milvus_module.utility,
-        "index_building_progress",
-        lambda collection_name, index_name: {"pending_index_rows": 0},
-    )
+    db.client = type(
+        "Client",
+        (),
+        {
+            "flush": lambda self, collection_name: None,
+            "get_collection_stats": lambda self, collection_name: {"row_count": "10"},
+            "describe_index": lambda self, collection_name, index_name: {"pending_index_rows": 0},
+        },
+    )()
 
     assert db.poll_insert_readiness(10) == {
         "fully_searchable": True,
@@ -197,6 +206,8 @@ def test_cloud_insert_runner_records_insert_and_readiness_metrics(monkeypatch):
     metric = runner._run_cloud_insert_case()
 
     assert [metadata for _, metadata in db.inserts] == [[1, 2], [3]]
+    assert metric.inserted_count == 3
+    assert metric.insert_rows_per_second > 0
     assert metric.insert_completion_seconds >= 0
     assert metric.searchable_after_insert_seconds >= 0
     assert metric.indexed_after_searchable_seconds >= 0

@@ -1,7 +1,6 @@
 import logging
 import time
 from collections.abc import Callable
-from concurrent.futures import wait
 from datetime import datetime
 from pathlib import Path
 from pprint import pformat
@@ -20,7 +19,7 @@ from yaml import load
 from .. import config
 from ..backend.clients import DB
 from ..backend.clients.api import MetricType
-from ..interface import benchmark_runner, global_result_future
+from ..interface import benchmark_runner
 from ..models import (
     CaseConfig,
     CaseType,
@@ -202,7 +201,11 @@ def get_custom_case_config(parameters: dict) -> dict:
         if parameters["cloud_label_percentage"] is not None:
             custom_case_config["label_percentage"] = parameters["cloud_label_percentage"]
     elif parameters["case_type"] == "CloudInsertCase":
-        custom_case_config = {"batch_size": parameters["cloud_insert_batch_size"], "duration": parameters["cloud_insert_duration"]}
+        custom_case_config = {
+            "batch_size": parameters["cloud_insert_batch_size"],
+            "duration": parameters["cloud_insert_duration"],
+            "dataset_with_size_type": parameters["dataset_with_size_type"],
+        }
     return custom_case_config
 
 
@@ -239,6 +242,16 @@ class CommonTypedDict(TypedDict):
             default=True,
             help="Load or skip",
             show_default=True,
+        ),
+    ]
+    load_concurrency: Annotated[
+        int,
+        click.option(
+            "--load-concurrency",
+            type=int,
+            default=config.LOAD_CONCURRENCY,
+            show_default=True,
+            help="Number of concurrent workers for data loading in performance cases (0 = cpu_count)",
         ),
     ]
     search_serial: Annotated[
@@ -495,11 +508,22 @@ class CommonTypedDict(TypedDict):
     ]
     cloud_insert_batch_size: Annotated[
         int,
-        click.option("--cloud-insert-batch-size", type=int, default=5000, show_default=True, help="Insert batch size for CloudInsertCase"),
+        click.option(
+            "--cloud-insert-batch-size",
+            type=int,
+            default=5000,
+            show_default=True,
+            help="Insert batch size for CloudInsertCase",
+        ),
     ]
     cloud_insert_duration: Annotated[
         float | None,
-        click.option("--cloud-insert-duration", type=float, default=None, help="Optional insert duration in seconds for CloudInsertCase"),
+        click.option(
+            "--cloud-insert-duration",
+            type=float,
+            default=None,
+            help="Optional insert duration in seconds for CloudInsertCase",
+        ),
     ]
 
 
@@ -689,15 +713,16 @@ def run(
             parameters["search_serial"],
             parameters["search_concurrent"],
         ),
+        load_concurrency=parameters["load_concurrency"],
     )
     task_label = parameters["task_label"]
 
     log.info(f"Task:\n{pformat(task)}\n")
     if not parameters["dry_run"]:
         benchmark_runner.run([task], task_label)
-        time.sleep(5)
-        if global_result_future:
-            wait([global_result_future])
-
-        while benchmark_runner.has_running():
-            time.sleep(1)
+        try:
+            while benchmark_runner.has_running():
+                time.sleep(1)
+        except KeyboardInterrupt:
+            log.warning("Ctrl+C received, stopping benchmark...")
+            benchmark_runner.stop_running()

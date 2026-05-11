@@ -27,11 +27,6 @@ python >= 3.11
 pip install vectordb-bench
 ```
 
-**Install all database clients**
-
-``` shell
-pip install 'vectordb-bench[all]'
-```
 **Install the specific database client**
 
 ```shell
@@ -42,12 +37,11 @@ All the database client supported
 | Optional database client | install command                             |
 |--------------------------|---------------------------------------------|
 | pymilvus, zilliz_cloud (*default*)     | `pip install vectordb-bench`                |
-| all (*clients requirements might be conflict with each other*) | `pip install vectordb-bench[all]`           |
 | qdrant                   | `pip install vectordb-bench[qdrant]`        |
 | pinecone                 | `pip install vectordb-bench[pinecone]`      |
 | weaviate                 | `pip install vectordb-bench[weaviate]`      |
 | elastic, aliyun_elasticsearch| `pip install vectordb-bench[elastic]`       |
-| pgvector, pgvectorscale, pgdiskann, alloydb | `pip install vectordb-bench[pgvector]`      |
+| pgvector, pgvectorscale, pgdiskann, alloydb, vectorchord | `pip install vectordb-bench[pgvector]`      |
 | pgvecto.rs               | `pip install vectordb-bench[pgvecto_rs]`    |
 | redis                    | `pip install vectordb-bench[redis]`         |
 | memorydb                 | `pip install vectordb-bench[memorydb]`      |
@@ -62,9 +56,11 @@ All the database client supported
 | hologres                 | `pip install vectordb-bench[hologres]`      |
 | tencent_es               | `pip install vectordb-bench[tencent_es]`    |
 | alisql                   | `pip install 'vectordb-bench[alisql]'`      |
+| polardb                  | `pip install vectordb-bench[polardb]`       |
 | doris                    | `pip install vectordb-bench[doris]`         |
 | zvec                     | `pip install vectordb-bench[zvec]`          |
 | endee                    | `pip install vectordb-bench[endee]`         |
+| lindorm                  | `pip install vectordb-bench[lindorm]`       |
 
 ### Run
 
@@ -90,6 +86,7 @@ Options:
 Commands:
   pgvectorhnsw
   pgvectorivfflat
+  vectorchordrq
   test
   weaviate
 ```
@@ -150,6 +147,15 @@ Options:
                                   quantization type for vectors (in table). If
                                   equal to bit, the parameter
                                   quantization_type will be set to bit too.
+  --reranking / --skip-reranking  Enable reranking for HNSW search for binary
+                                  quantization
+  --reranking-metric [L2|COSINE|IP|DP]
+                                  Distance metric for reranking  [default:
+                                  COSINE]
+  --quantized-fetch-limit INTEGER
+                                  Limit of fetching quantized vector ranked by
+                                  distance for reranking                 --
+                                  bound by ef_search
   --custom-case-name TEXT         Custom case name i.e. PerformanceCase1536D50K
   --custom-case-description TEXT  Custom name description
   --custom-case-load-timeout INTEGER
@@ -173,6 +179,34 @@ Options:
                                   with-gt]
   --help                          Show this message and exit.
 ```
+
+### Run VectorChord (vchordrq) from command line
+
+VectorChord is a PostgreSQL extension for scalable vector similarity search using IVF + RaBitQ indexing.
+It is fully compatible with pgvector data types and provides faster queries and index builds.
+
+```shell
+vectordbbench vectorchordrq \
+  --user-name postgres --password '<password>' \
+  --host localhost --port 5432 --db-name vectordb \
+  --case-type Performance1536D50K \
+  --lists 1000 --probes 10 --epsilon 1.9 \
+  --spherical-centroids --build-threads 8 \
+  --max-parallel-workers 15
+```
+
+Key VectorChord-specific options:
+| Option | Description |
+|--------|-------------|
+| `--lists` | Number of IVF lists for vchordrq index |
+| `--probes` | Number of probes during search (default: 10) |
+| `--epsilon` | Reranking precision factor, 0.0-4.0 (default: 1.9) |
+| `--residual-quantization` | Enable residual quantization |
+| `--spherical-centroids` | L2-normalize centroids (recommended for cosine/IP) |
+| `--build-threads` | Number of threads for index building (1-255) |
+| `--degree-of-parallelism` | Degree of parallelism for index build (1-256) |
+| `--max-parallel-workers` | Sets max_parallel_workers & max_parallel_maintenance_workers |
+| `--max-scan-tuples` | Max tuples to scan before stopping (-1 for unlimited) |
 
 ### Run awsopensearch from command line
 
@@ -215,7 +249,6 @@ Options:
 
   --ondisk                        Ondisk mode with binary quantization(32x compression)
   --oversample-factor             Controls the degree of oversampling applied to minority classes in imbalanced datasets to improve model performance by balancing class distributions.(default 1.0)
-  
 
   # Quantization Type
   --quantization-type TEXT        which type of quantization to use valid values [fp32, fp16, bq]
@@ -284,13 +317,13 @@ Options:
   # Connection
   --cloud-id TEXT                 Elastic Cloud ID  [required]
   --password TEXT                 Elastic Cloud password  [required]
-  
+
   # HNSW Index Parameters
   --m INTEGER                     HNSW M parameter  [default: 16]
   --ef-construction INTEGER       HNSW efConstruction parameter  [default: 100]
   --num-candidates INTEGER        Number of candidates for search  [default: 100]
   --element-type [float|byte]     Element type for vectors (float: 4 bytes, byte: 1 byte)  [default: float]
-  
+
   # Index Configuration
   --number-of-shards INTEGER      Number of shards  [default: 1]
   --number-of-replicas INTEGER    Number of replicas  [default: 0]
@@ -301,7 +334,7 @@ Options:
   --use-routing BOOLEAN           Whether to use routing  [default: False]
   --use-rescore BOOLEAN           Whether to use rescore  [default: False]
   --oversample-ratio FLOAT        Oversample ratio for rescore  [default: 2.0]
-  
+
   # Common Options
   --case-type [CapacityDim128|CapacityDim960|Performance768D100M|...]
                                   Case type
@@ -470,6 +503,92 @@ Mote options:
                                 Rows per single stream load request; default
                                 uses NUM_PER_BATCH
 --no-index                      Create table without ANN index
+```
+
+### Run Lindorm from command line
+
+Lindorm supports index types: hnsw, ivfpq, or ivfbq.
+
+**Example: Run hnsw index test**
+
+```shell
+vectordbbench lindormhnsw --case-type Performance768D10M --index-name <index_name> --k 10 \
+--host <lindorm_host> --port <lindorm_port> --user <username> --password <password> --m 32 \
+--ef-construction 400 --ef-search 150
+```
+
+**Example: Run ivfpq index test**
+
+```shell
+vectordbbench lindormivfpq --case-type Performance768D10M \
+--index-name <index_name> --k 10 --host <lindorm_host> --port <lindorm_port> \
+--user <username> --password <password> --lists <nlist> --probes <nprobe> \
+--m 32 --ef-construction 500 --ef-search 200 --reorder-factor 2
+```
+
+**Example: Run ivfbq index test**
+
+```shell
+vectordbbench lindormivfbq --case-type Performance768D10M --index-name <index_name> \
+--k 10 --host <index_name> --port <lindorm_port> \
+--user <username> --password <password> --lists <nlist> --probes <nprobe> \
+--exbits 2 --m 32 --ef-construction 500 --ef-search 200 --reorder-factor 2
+```
+
+To list the options for Lindorm, execute `vectordbbench lindormhnsw --help`, The following are some Lindorm-specific command-line options.
+
+```text
+  --host TEXT                     host connection string  [required]
+  --port INTEGER                  Db Port  [required]
+  --user TEXT                     Db username  [required]
+  --password TEXT                 Db password  [required]
+  --index-name TEXT               Db index name  [required]
+  --filter-type TEXT              post_filter|pre_filter|efficient_filter
+  --number-of-regions INTEGER     Vector number of regions
+  --m INTEGER                     hnsw m  [required]
+  --ef-construction INTEGER       hnsw ef-construction  [required]
+  --ef-search INTEGER             hnsw ef-search  [required]
+```
+
+### Run PolarDB from command line
+
+PolarDB supports index types: faiss_hnsw_flat, faiss_hnsw_pq, and faiss_hnsw_sq.
+
+**Example: Run faiss_hnsw_flat benchmark**
+
+```shell
+vectordbbench polardbhnswflat \
+  --case-type Performance768D1M \
+  --username <db_user> \
+  --password '<db_password>' \
+  --host <db_host> \
+  --port 3306 \
+  --m 16 \
+  --ef-construction 256 \
+  --ef-search 256 \
+  --insert-workers 64 \
+  --num-concurrency '10,20,40,60,80' \
+  --concurrency-duration 60 \
+  --task-label <task_label> \
+  --db-label <db_label> \
+  --skip-search-serial \
+  --post-load-index
+```
+
+To list the options for PolarDB, execute `vectordbbench polardbhnswflat --help`. The following are some PolarDB-specific command-line options.
+
+```text
+  --username TEXT                  Username  [required]
+  --password TEXT                  Password
+  --host TEXT                      Db host  [default: 127.0.0.1]
+  --port INTEGER                   Db Port  [default: 3306]
+  --database TEXT                  Database name  [default: vectordbbench]
+  --m INTEGER                      M parameter (max_degree) in HNSW
+  --ef-construction INTEGER        ef_construction parameter in HNSW
+  --ef-search INTEGER              polar_vector_index_hnsw_ef_search session variable
+  --insert-workers INTEGER         Number of concurrent threads for data insertion
+  --post-load-index / --inline-index
+                                   Create index after load or inline at table creation
 ```
 
 #### Using a configuration file.
@@ -666,7 +785,7 @@ Now we can only run one task at the same time.
 ### Code Structure
 ![image](https://github.com/zilliztech/VectorDBBench/assets/105927039/8c06512e-5419-4381-b084-9c93aed59639)
 ### Client
-Our client module is designed with flexibility and extensibility in mind, aiming to integrate APIs from different systems seamlessly. As of now, it supports Milvus, Zilliz Cloud, Elastic Search, Pinecone, Qdrant Cloud, Weaviate Cloud, PgVector, Redis, Chroma, CockroachDB, etc. Stay tuned for more options, as we are consistently working on extending our reach to other systems.
+Our client module is designed with flexibility and extensibility in mind, aiming to integrate APIs from different systems seamlessly. As of now, it supports Milvus, Zilliz Cloud, Elastic Search, Pinecone, Qdrant Cloud, Weaviate Cloud, PgVector, VectorChord, Redis, Chroma, CockroachDB, etc. Stay tuned for more options, as we are consistently working on extending our reach to other systems.
 ### Benchmark Cases
 We've developed lots of comprehensive benchmark cases to test vector databases' various capabilities, each designed to give you a different piece of the puzzle. These cases are categorized into four main types:
 #### Capacity Case

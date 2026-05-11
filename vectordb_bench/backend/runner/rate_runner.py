@@ -3,7 +3,7 @@ import logging
 import multiprocessing as mp
 import time
 from concurrent.futures import ThreadPoolExecutor
-from copy import deepcopy
+from copy import copy, deepcopy
 
 from vectordb_bench import config
 from vectordb_bench.backend.clients import api
@@ -63,6 +63,17 @@ class RatedMultiThreadingInsertRunner:
                 db_copy.table = None
             except Exception:
                 log.debug("Failed to reset Doris client or table on thread-local copy", exc_info=True)
+            with db_copy.init():
+                _insert_embeddings(db_copy, emb, metadata, retry_idx=0)
+        elif db.name == "SeekDB":
+            # mysql.connector is not thread-safe; do not share one connection across workers.
+            # deepcopy() fails on an open _conn (socket is not picklable / not copy-safe in spawn workers).
+            db_copy = copy(db)
+            try:
+                db_copy._conn = None
+                db_copy._cursor = None
+            except Exception:
+                log.debug("Failed to reset SeekDB connection on thread-local copy", exc_info=True)
             with db_copy.init():
                 _insert_embeddings(db_copy, emb, metadata, retry_idx=0)
         else:

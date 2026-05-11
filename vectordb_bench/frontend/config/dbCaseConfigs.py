@@ -120,7 +120,7 @@ def get_custom_case_items() -> list[UICaseItem]:
                 CaseConfig(
                     case_id=CaseType.PerformanceCustomDataset,
                     custom_case={
-                        **custom_config.dict(),
+                        **custom_config.model_dump(),
                         "use_filter": False,
                     },
                 )
@@ -141,7 +141,7 @@ def get_custom_case_items() -> list[UICaseItem]:
                 CaseConfig(
                     case_id=CaseType.PerformanceCustomDataset,
                     custom_case={
-                        **custom_config.dict(),
+                        **custom_config.model_dump(),
                         "use_filter": True,
                         "label_percentage": label_percentage,
                     },
@@ -175,7 +175,7 @@ def get_custom_streaming_case_items() -> list[UICaseItem]:
                     case_id=CaseType.StreamingCustomDataset,
                     custom_case={
                         "description": custom_config.description,
-                        "dataset_config": custom_config.dataset_config.dict(),
+                        "dataset_config": custom_config.dataset_config.model_dump(),
                     },
                 )
             ],
@@ -2566,6 +2566,193 @@ CaseConfigParamInput_ef_construction_LanceDB = CaseConfigInput(
     isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
 )
 
+CaseConfigParamInput_IndexType_Lindorm = CaseConfigInput(
+    label=CaseConfigParamType.IndexType,
+    inputHelp="Select Index Type",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [
+            IndexType.HNSW.value,
+            IndexType.IVFPQ.value,
+            IndexType.IVFBQ.value,
+        ],
+    },
+)
+
+CaseConfigParamInput_M_Lindorm = CaseConfigInput(
+    label=CaseConfigParamType.M,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 100,
+        "value": 16,
+    },
+    isDisplayed=lambda config: config[CaseConfigParamType.IndexType] == IndexType.HNSW.value,
+    inputHelp="Hnsw M",
+)
+
+CaseConfigParamInput_EFConstruction_Lindorm = CaseConfigInput(
+    label=CaseConfigParamType.EFConstruction,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 1000,
+        "value": 100,
+    },
+    isDisplayed=lambda config: config[CaseConfigParamType.IndexType] == IndexType.HNSW.value,
+    inputHelp="Ef construction",
+)
+
+CaseConfigParamInput_Nlist_Lindorm = CaseConfigInput(
+    label=CaseConfigParamType.Nlist,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 2,
+        "max": 1000000,
+        "value": 10000,
+    },
+    isDisplayed=lambda config: config[CaseConfigParamType.IndexType] == IndexType.IVFPQ.value
+    or config[CaseConfigParamType.IndexType] == IndexType.IVFBQ.value,
+    inputHelp="N list",
+)
+
+CaseConfigParamInput_Centroids_Hnsw_M_Lindorm = CaseConfigInput(
+    label=CaseConfigParamType.centroids_hnsw_M,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 100,
+        "value": 32,
+    },
+    isDisplayed=lambda config: config[CaseConfigParamType.IndexType] == IndexType.IVFPQ.value
+    or config[CaseConfigParamType.IndexType] == IndexType.IVFBQ.value,
+    inputHelp="Centroids Hnsw M",
+)
+
+CaseConfigParamInput_Centroids_Hnsw_Ef_Construct = CaseConfigInput(
+    label=CaseConfigParamType.centroids_hnsw_efConstruction,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 1000,
+        "value": 500,
+    },
+    isDisplayed=lambda config: config[CaseConfigParamType.IndexType] == IndexType.IVFPQ.value
+    or config[CaseConfigParamType.IndexType] == IndexType.IVFBQ.value,
+    inputHelp="Centroids Hnsw Ef Construct",
+)
+
+
+CaseConfigParamInput_Centroids_Hnsw_Ef_Search = CaseConfigInput(
+    label=CaseConfigParamType.centroids_hnsw_efSearch,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 1000,
+        "value": 200,
+    },
+    isDisplayed=lambda config: config[CaseConfigParamType.IndexType] == IndexType.IVFPQ.value
+    or config[CaseConfigParamType.IndexType] == IndexType.IVFBQ.value,
+    inputHelp="Centroids Hnsw Ef Search",
+)
+
+CaseConfigParamInput_Exbits_Lindorm = CaseConfigInput(
+    label=CaseConfigParamType.exbits,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 0,
+        "max": 8,
+        "value": 0,
+    },
+    isDisplayed=lambda config: config[CaseConfigParamType.IndexType] == IndexType.IVFBQ.value,
+    inputHelp="Exbits",
+)
+
+
+class FilterType(Enum):
+    POST_FILTER = "post_filter"
+    PRE_FILTER = "pre_filter"
+    EFFICIENT_FILTER = "efficient_filter"
+
+
+CaseConfigParamInput_FilterType_Lindorm = CaseConfigInput(
+    label=CaseConfigParamType.filter_type,
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [FilterType.EFFICIENT_FILTER.value, FilterType.POST_FILTER.value, FilterType.PRE_FILTER.value],
+    },
+    inputHelp="Filter type",
+)
+
+CaseConfigParamInput_EFSearch_Lindorm = CaseConfigInput(
+    label=CaseConfigParamType.efSearch,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 1000,
+        "value": 100,
+    },
+    isDisplayed=lambda config: config[CaseConfigParamType.IndexType] == IndexType.HNSW.value,
+    inputHelp="Ef search",
+)
+
+CaseConfigParamInput_Nprobe_Lindorm = CaseConfigInput(
+    label=CaseConfigParamType.Nprobe,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 1000,
+        "value": 100,
+    },
+    isDisplayed=lambda config: config[CaseConfigParamType.IndexType] == IndexType.IVFPQ.value
+    or config[CaseConfigParamType.IndexType] == IndexType.IVFBQ.value,
+    inputHelp="N probe",
+)
+
+CaseConfigParamInput_ReorderFactor_Lindorm = CaseConfigInput(
+    label=CaseConfigParamType.reorder_factor,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 200,
+        "value": 10,
+    },
+    isDisplayed=lambda config: config[CaseConfigParamType.IndexType] == IndexType.IVFPQ.value
+    or config[CaseConfigParamType.IndexType] == IndexType.IVFBQ.value,
+    inputHelp="Reorder factor",
+)
+
+CaseConfigParamInput_ClientRefactor_Lindorm = CaseConfigInput(
+    label=CaseConfigParamType.client_refactor,
+    inputType=InputType.Bool,
+    inputConfig={"value": False},
+    isDisplayed=lambda config: config[CaseConfigParamType.IndexType] == IndexType.IVFPQ.value
+    or config[CaseConfigParamType.IndexType] == IndexType.IVFBQ.value,
+    inputHelp="Whether to use client refactor",
+)
+
+CaseConfigParamInput_KExpandScope_Lindorm = CaseConfigInput(
+    label=CaseConfigParamType.k_expand_scope,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 10000,
+        "value": 1000,
+    },
+    inputHelp="K expand scope",
+)
+
+CaseConfigParamInput_NumberOfRegions_Lindorm = CaseConfigInput(
+    label=CaseConfigParamType.number_of_regions,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 100,
+        "value": 1,
+    },
+    inputHelp="Vector number of regions",
+)
+
 LanceDBLoadConfig = [
     CaseConfigParamInput_IndexType_LanceDB,
     CaseConfigParamInput_num_partitions_LanceDB,
@@ -2657,6 +2844,156 @@ OSSOpenSearchPerformanceConfig = [
     CaseConfigParamInput_MEMORY_OPTIMIZED_SEARCH_AWSOpensearch,
 ]
 
+LindormLoadConfig = [
+    CaseConfigParamInput_IndexType_Lindorm,
+    CaseConfigParamInput_M_Lindorm,
+    CaseConfigParamInput_EFConstruction_Lindorm,
+    CaseConfigParamInput_Nlist_Lindorm,
+    CaseConfigParamInput_Exbits_Lindorm,
+    CaseConfigParamInput_NumberOfRegions_Lindorm,
+]
+
+LindormPerformanceConfig = [
+    CaseConfigParamInput_IndexType_Lindorm,
+    CaseConfigParamInput_M_Lindorm,
+    CaseConfigParamInput_EFConstruction_Lindorm,
+    CaseConfigParamInput_Nlist_Lindorm,
+    CaseConfigParamInput_Exbits_Lindorm,
+    CaseConfigParamInput_EFSearch_Lindorm,
+    CaseConfigParamInput_FilterType_Lindorm,
+    CaseConfigParamInput_Nprobe_Lindorm,
+    CaseConfigParamInput_ReorderFactor_Lindorm,
+    CaseConfigParamInput_ClientRefactor_Lindorm,
+    CaseConfigParamInput_KExpandScope_Lindorm,
+    CaseConfigParamInput_Centroids_Hnsw_M_Lindorm,
+    CaseConfigParamInput_Centroids_Hnsw_Ef_Construct,
+    CaseConfigParamInput_Centroids_Hnsw_Ef_Search,
+    CaseConfigParamInput_NumberOfRegions_Lindorm,
+]
+
+# PolarDB configs
+CaseConfigParamInput_IndexType_PolarDB = CaseConfigInput(
+    label=CaseConfigParamType.IndexType,
+    inputHelp="Select Index Type",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [
+            IndexType.HNSW.value,
+            IndexType.HNSW_PQ.value,
+            IndexType.HNSW_SQ.value,
+        ],
+    },
+)
+
+CaseConfigParamInput_M_PolarDB = CaseConfigInput(
+    label=CaseConfigParamType.M,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 2,
+        "max": 1024,
+        "value": 16,
+    },
+    inputHelp="HNSW M parameter",
+)
+
+CaseConfigParamInput_EFConstruction_PolarDB = CaseConfigInput(
+    label=CaseConfigParamType.ef_construction,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 8192,
+        "value": 200,
+    },
+    inputHelp="ef_construction",
+)
+
+CaseConfigParamInput_EFSearch_PolarDB = CaseConfigInput(
+    label=CaseConfigParamType.ef_search,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 8192,
+        "value": 200,
+    },
+    inputHelp="ef_search",
+)
+
+CaseConfigParamInput_InsertWorkers_PolarDB = CaseConfigInput(
+    label=CaseConfigParamType.insert_workers,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 1024,
+        "value": 10,
+    },
+    inputHelp="Number of insert workers",
+)
+
+CaseConfigParamInput_PostLoadIndex_PolarDB = CaseConfigInput(
+    label=CaseConfigParamType.post_load_index,
+    inputType=InputType.Bool,
+    inputConfig={
+        "value": True,
+    },
+    inputHelp="Create index after data load via ALTER TABLE",
+)
+
+CaseConfigParamInput_PQM_PolarDB = CaseConfigInput(
+    label=CaseConfigParamType.pq_m,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 16383,
+        "value": 1,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW_PQ.value,
+    inputHelp="PQ M parameter",
+)
+
+CaseConfigParamInput_PQNbits_PolarDB = CaseConfigInput(
+    label=CaseConfigParamType.pq_nbits,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 24,
+        "value": 8,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW_PQ.value,
+    inputHelp="PQ nbits parameter",
+)
+
+CaseConfigParamInput_SQType_PolarDB = CaseConfigInput(
+    label=CaseConfigParamType.sq_type,
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [
+            "8bit",
+            "4bit",
+            "8bit_uniform",
+            "4bit_uniform",
+            "8bit_direct",
+            "8bit_direct_signed",
+            "fp16",
+            "bf16",
+            "6bit",
+        ],
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW_SQ.value,
+    inputHelp="Scalar quantizer type",
+)
+
+PolarDBConfig = [
+    CaseConfigParamInput_IndexType_PolarDB,
+    CaseConfigParamInput_M_PolarDB,
+    CaseConfigParamInput_EFConstruction_PolarDB,
+    CaseConfigParamInput_EFSearch_PolarDB,
+    CaseConfigParamInput_InsertWorkers_PolarDB,
+    CaseConfigParamInput_PostLoadIndex_PolarDB,
+    CaseConfigParamInput_PQM_PolarDB,
+    CaseConfigParamInput_PQNbits_PolarDB,
+    CaseConfigParamInput_SQType_PolarDB,
+]
+
 # Map DB to config
 CASE_CONFIG_MAP = {
     DB.Milvus: {
@@ -2742,6 +3079,14 @@ CASE_CONFIG_MAP = {
     DB.OceanBase: {
         CaseLabel.Load: OceanBaseLoadConfig,
         CaseLabel.Performance: OceanBasePerformanceConfig,
+    },
+    DB.Lindorm: {
+        CaseLabel.Load: LindormLoadConfig,
+        CaseLabel.Performance: LindormPerformanceConfig,
+    },
+    DB.PolarDB: {
+        CaseLabel.Load: PolarDBConfig,
+        CaseLabel.Performance: PolarDBConfig,
     },
 }
 

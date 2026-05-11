@@ -14,6 +14,7 @@ from ..backend.clients.elastic_cloud.cli import (
 from ..backend.clients.endee.cli import Endee
 from ..backend.clients.hologres.cli import HologresHGraph
 from ..backend.clients.lancedb.cli import LanceDB
+from ..backend.clients.lindorm.cli import LindormHNSW, LindormIVFBQ, LindormIVFPQ
 from ..backend.clients.mariadb.cli import MariaDBHNSW
 from ..backend.clients.memorydb.cli import MemoryDB
 from ..backend.clients.milvus.cli import MilvusAutoIndex
@@ -24,14 +25,22 @@ from ..backend.clients.pgvecto_rs.cli import PgVectoRSHNSW, PgVectoRSIVFFlat
 from ..backend.clients.pgvector.cli import PgVectorHNSW
 from ..backend.clients.pgvectorscale.cli import PgVectorScaleDiskAnn
 from ..backend.clients.pinecone.cli import Pinecone
+from ..backend.clients.pinot.cli import Pinot
+from ..backend.clients.polardb.cli import (
+    PolarDBHNSWFlat,
+    PolarDBHNSWPQ,
+    PolarDBHNSWSQ,
+)
 from ..backend.clients.qdrant_cloud.cli import QdrantCloud
 from ..backend.clients.qdrant_local.cli import QdrantLocal
 from ..backend.clients.redis.cli import Redis
 from ..backend.clients.s3_vectors.cli import S3Vectors
+from ..backend.clients.seekdb.cli import SeekDBHNSW
 from ..backend.clients.tencent_elasticsearch.cli import TencentElasticsearch
 from ..backend.clients.test.cli import Test
 from ..backend.clients.tidb.cli import TiDB
 from ..backend.clients.turbopuffer.cli import TurboPuffer
+from ..backend.clients.vectorchord.cli import VectorChordGraph, VectorChordRQ
 from ..backend.clients.vespa.cli import Vespa
 from ..backend.clients.weaviate_cloud.cli import Weaviate
 from ..backend.clients.zilliz_cloud.cli import ZillizAutoIndex
@@ -77,7 +86,17 @@ cli.add_command(TurboPuffer)
 cli.add_command(Chroma)
 cli.add_command(Zvec)
 cli.add_command(Endee)
+cli.add_command(LindormIVFPQ)
+cli.add_command(LindormHNSW)
+cli.add_command(LindormIVFBQ)
 cli.add_command(Pinecone)
+cli.add_command(VectorChordRQ)
+cli.add_command(VectorChordGraph)
+cli.add_command(Pinot)
+cli.add_command(PolarDBHNSWFlat)
+cli.add_command(PolarDBHNSWPQ)
+cli.add_command(PolarDBHNSWSQ)
+cli.add_command(SeekDBHNSW)
 
 
 if __name__ == "__main__":

@@ -63,7 +63,7 @@ def format_results(test_results: list[TestResult], task_label: str) -> list[dict
                         db_label=task_config.db_config.db_label,
                         version=task_config.db_config.version,
                         note=task_config.db_config.note,
-                        params=task_config.db_case_config.dict(),
+                        params=task_config.db_case_config.model_dump(),
                         case_name=case.name,
                         dataset=dataset.full_name,
                         dim=dataset.dim,
@@ -71,6 +71,6 @@ def format_results(test_results: list[TestResult], task_label: str) -> list[dict
                         filter_rate=filter_.filter_rate,
                         k=task_config.case_config.k,
                         **metrics,
-                    ).dict()
+                    ).model_dump()
                 )
     return results

@@ -1,0 +1,38 @@
+name: Keep Open Command
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  keep-open:
+    if: >-
+      !github.event.issue.pull_request
+      && contains(github.event.comment.body, '/keep-open')
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const TEAM_ASSOCIATIONS = ['MEMBER', 'OWNER'];
+            const association = context.payload.comment.author_association;
+
+            if (!TEAM_ASSOCIATIONS.includes(association)) {
+              console.log(`Ignoring /keep-open from non-team user (association: ${association})`);
+              return;
+            }
+
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const issue_number = context.issue.number;
+
+            await github.rest.issues.addLabels({
+              owner,
+              repo,
+              issue_number,
+              labels: ['keep-open'],
+            });
+
+            console.log(`Added 'keep-open' label to #${issue_number}`);

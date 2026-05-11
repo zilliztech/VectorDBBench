@@ -1,4 +1,4 @@
-"""Wrapper around the Pinecone vector database over VectorDB"""
+"""Wrapper around the TurboPuffer vector database over VectorDB"""
 
 import logging
 import time
@@ -32,9 +32,9 @@ class TurboPuffer(VectorDB):
         with_scalar_labels: bool = False,
         **kwargs,
     ):
-        """Initialize wrapper around the milvus vector database."""
         self.api_key = db_config.get("api_key", "")
-        self.api_base_url = db_config.get("api_base_url", "")
+        self.region = db_config.get("region", "")
+        self.api_base_url = db_config.get("api_base_url")
         self.namespace = db_config.get("namespace", "")
         self.db_case_config = db_case_config
         self.metric = db_case_config.parse_metric()
@@ -45,19 +45,25 @@ class TurboPuffer(VectorDB):
 
         self.with_scalar_labels = with_scalar_labels
 
-        # Initialize client with new SDK pattern
-        self.client = tpuf.Turbopuffer(api_key=self.api_key, base_url=self.api_base_url)
-
         if drop_old:
             log.info(f"Drop old. delete the namespace: {self.namespace}")
-            ns = self.client.namespace(self.namespace)
+            tmp_client = self._create_client()
+            ns = tmp_client.namespace(self.namespace)
             try:
                 ns.delete_all()
             except Exception as e:
                 log.warning(f"Failed to delete all. Error: {e}")
+            tmp_client = None
+
+    def _create_client(self) -> tpuf.Turbopuffer:
+        client_kwargs = {"api_key": self.api_key, "region": self.region}
+        if self.api_base_url:
+            client_kwargs["base_url"] = self.api_base_url
+        return tpuf.Turbopuffer(**client_kwargs)
 
     @contextmanager
     def init(self):
+        self.client = self._create_client()
         self.ns = self.client.namespace(self.namespace)
         yield
 
@@ -80,7 +86,7 @@ class TurboPuffer(VectorDB):
         try:
             if self.with_scalar_labels:
                 self.ns.write(
-                    columns={
+                    upsert_columns={
                         self._scalar_id_field: metadata,
                         self._vector_field: embeddings,
                         self._scalar_label_field: labels_data,
@@ -90,7 +96,7 @@ class TurboPuffer(VectorDB):
                 )
             else:
                 self.ns.write(
-                    columns={
+                    upsert_columns={
                         self._scalar_id_field: metadata,
                         self._vector_field: embeddings,
                     },
@@ -109,7 +115,11 @@ class TurboPuffer(VectorDB):
         if not isinstance(metadata, dict):
             metadata = metadata.model_dump() if hasattr(metadata, "model_dump") else vars(metadata)
         unindexed_bytes = metadata.get("unindexed_bytes", 0)
-        return {"fully_searchable": unindexed_bytes <= TURBOPUFFER_SEARCHABLE_UNINDEXED_BYTES, "fully_indexed": unindexed_bytes == 0, "additional_parameters": {"disable_backpressure": self.db_case_config.disable_backpressure}}
+        return {
+            "fully_searchable": unindexed_bytes <= TURBOPUFFER_SEARCHABLE_UNINDEXED_BYTES,
+            "fully_indexed": unindexed_bytes == 0,
+            "additional_parameters": {"disable_backpressure": self.db_case_config.disable_backpressure},
+        }
 
     def search_embedding(
         self,
@@ -126,7 +136,7 @@ class TurboPuffer(VectorDB):
         if payload_profile == PayloadProfile.VECTOR:
             query_kwargs["include_attributes"] = [self._vector_field]
         res = self.ns.query(**query_kwargs)
-        return [row.id for row in res.rows] if res.rows is not None else []
+        return [int(row.id) for row in res.rows] if res.rows is not None else []
 
     def prepare_filter(self, filters: Filter):
         if filters.type == FilterOp.NonFilter:

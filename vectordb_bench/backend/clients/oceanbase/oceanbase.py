@@ -186,7 +186,7 @@ class OceanBase(VectorDB):
                 batch = [(metadata[i], embeddings[i]) for i in range(batch_start, batch_end)]
                 values = ", ".join(f"({item_id}, '[{','.join(map(str, embedding))}]')" for item_id, embedding in batch)
                 self._cursor.execute(
-                    f"INSERT /*+ ENABLE_PARALLEL_DML PARALLEL(32) */ INTO {self.table_name} VALUES {values}"  # noqa: S608
+                    f"INSERT /*+ ENABLE_PARALLEL_DML PARALLEL(32) */ INTO {self.table_name} VALUES {values}"
                 )
                 insert_count += len(batch)
         except mysql.Error:
@@ -217,7 +217,7 @@ class OceanBase(VectorDB):
         packed = struct.pack(f"<{len(query)}f", *query)
         hex_vec = packed.hex()
         query_str = (
-            f"SELECT id FROM {self.table_name} "  # noqa: S608
+            f"SELECT id FROM {self.table_name} "
             f"{self.expr} ORDER BY "
             f"{self.db_case_config.parse_metric_func_str()}(embedding, X'{hex_vec}') "
             f"APPROXIMATE LIMIT {k}"

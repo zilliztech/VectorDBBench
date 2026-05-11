@@ -43,7 +43,10 @@ def main():
         case = case_result.task_config.case_config.case
         return case.label == CaseLabel.Performance and case.filters.type == FilterOp.NonFilter
 
-    default_selected_task_labels = ["standard_2025"]
+    default_selected_task_labels = ["standard_20260403", "standard_20250519"]
+    # Filter defaults to only include labels that exist in results
+    available_labels = {r.task_label for r in allResults}
+    default_selected_task_labels = [l for l in default_selected_task_labels if l in available_labels]
     shownData, failedTasks, showCaseNames = getshownData(
         resultSelectorContainer,
         allResults,

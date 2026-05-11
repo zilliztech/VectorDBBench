@@ -43,8 +43,8 @@ class PgDiskANNIndexConfig(BaseModel, DBCaseConfig):
     metric_type: MetricType | None = None
     create_index_before_load: bool = False
     create_index_after_load: bool = True
-    maintenance_work_mem: str | None
-    max_parallel_workers: int | None
+    maintenance_work_mem: str | None = None
+    max_parallel_workers: int | None = None
 
     def parse_metric(self) -> str:
         if self.metric_type == MetricType.L2:
@@ -120,10 +120,10 @@ class PgDiskANNIndexConfig(BaseModel, DBCaseConfig):
 
 class PgDiskANNImplConfig(PgDiskANNIndexConfig):
     index: IndexType = IndexType.DISKANN
-    max_neighbors: int | None
-    l_value_ib: int | None
-    pq_param_num_chunks: int | None
-    l_value_is: float | None
+    max_neighbors: int | None = None
+    l_value_ib: int | None = None
+    pq_param_num_chunks: int | None = None
+    l_value_is: float | None = None
     reranking: bool | None = None
     reranking_metric: str | None = None
     quantized_fetch_limit: int | None = None

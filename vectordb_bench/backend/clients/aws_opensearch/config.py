@@ -1,7 +1,8 @@
 import logging
 from enum import Enum
+from typing import ClassVar
 
-from pydantic import BaseModel, SecretStr, validator
+from pydantic import BaseModel, SecretStr
 
 from ..api import DBCaseConfig, DBConfig, MetricType
 
@@ -9,6 +10,8 @@ log = logging.getLogger(__name__)
 
 
 class AWSOpenSearchConfig(DBConfig, BaseModel):
+    _extra_empty_skip: ClassVar[frozenset[str]] = frozenset({"user", "password", "host"})
+
     host: str = ""
     port: int = 80
     user: str | None = None
@@ -31,18 +34,6 @@ class AWSOpenSearchConfig(DBConfig, BaseModel):
             "ssl_show_warn": False,
             "timeout": 600,
         }
-
-    @validator("*")
-    def not_empty_field(cls, v: any, field: any):
-        if (
-            field.name in cls.common_short_configs()
-            or field.name in cls.common_long_configs()
-            or field.name in ["user", "password", "host"]
-        ):
-            return v
-        if isinstance(v, str | SecretStr) and len(v) == 0:
-            raise ValueError("Empty string!")
-        return v
 
 
 class AWSOS_Engine(Enum):

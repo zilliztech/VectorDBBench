@@ -58,6 +58,11 @@ class DB(Enum):
     TurboPuffer = "TurboPuffer"
     Zvec = "Zvec"
     Endee = "Endee"
+    Lindorm = "Lindorm"
+    VectorChord = "VectorChord"
+    PolarDB = "PolarDB"
+    Pinot = "Pinot"
+    SeekDB = "SeekDB"
 
     @property
     def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901, PLR0915
@@ -239,6 +244,30 @@ class DB(Enum):
             from .zvec.zvec import Zvec
 
             return Zvec
+
+        if self == DB.Lindorm:
+            from .lindorm.lindorm_search import LindormVector
+
+            return LindormVector
+
+        if self == DB.VectorChord:
+            from .vectorchord.vectorchord import VectorChord
+
+            return VectorChord
+        if self == DB.PolarDB:
+            from .polardb.polardb import PolarDB
+
+            return PolarDB
+
+        if self == DB.Pinot:
+            from .pinot.pinot import Pinot
+
+            return Pinot
+
+        if self == DB.SeekDB:
+            from .seekdb.seekdb import SeekDB
+
+            return SeekDB
 
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
@@ -424,6 +453,30 @@ class DB(Enum):
 
             return ZvecConfig
 
+        if self == DB.Lindorm:
+            from .lindorm.config import LindormConfig
+
+            return LindormConfig
+
+        if self == DB.VectorChord:
+            from .vectorchord.config import VectorChordConfig
+
+            return VectorChordConfig
+        if self == DB.PolarDB:
+            from .polardb.config import PolarDBConfig
+
+            return PolarDBConfig
+
+        if self == DB.Pinot:
+            from .pinot.config import PinotConfig
+
+            return PinotConfig
+
+        if self == DB.SeekDB:
+            from .seekdb.config import SeekDBConfig
+
+            return SeekDBConfig
+
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
 
@@ -570,6 +623,11 @@ class DB(Enum):
 
             return AliSQLIndexConfig
 
+        if self == DB.PolarDB:
+            from .polardb.config import _polardb_case_config
+
+            return _polardb_case_config.get(index_type)
+
         if self == DB.Doris:
             from .doris.config import DorisCaseConfig
 
@@ -584,6 +642,30 @@ class DB(Enum):
             from .chroma.config import ChromaIndexConfig
 
             return ChromaIndexConfig
+
+        if self == DB.Lindorm:
+            from .lindorm.config import _lindorm_vector_case_config
+
+            return _lindorm_vector_case_config.get(index_type)
+
+        if self == DB.VectorChord:
+            from .vectorchord.config import _vectorchord_case_config
+
+            return _vectorchord_case_config.get(index_type)
+
+        if self == DB.Pinot:
+            from .pinot.config import PinotHNSWConfig, PinotIVFFlatConfig, PinotIVFPQConfig
+
+            return {
+                IndexType.HNSW: PinotHNSWConfig,
+                IndexType.IVFFlat: PinotIVFFlatConfig,
+                IndexType.IVFPQ: PinotIVFPQConfig,
+            }.get(index_type, PinotHNSWConfig)
+
+        if self == DB.SeekDB:
+            from .seekdb.config import _seekdb_case_config
+
+            return _seekdb_case_config.get(index_type)
 
         # DB.Pinecone, DB.Redis
         return EmptyDBCaseConfig

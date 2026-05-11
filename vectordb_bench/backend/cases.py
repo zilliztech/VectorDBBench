@@ -672,9 +672,31 @@ class CloudInsertCase(Case):
     label: CaseLabel = CaseLabel.CloudInsert
     batch_size: int
     duration: float | None = None
+    dataset_with_size_type: DatasetWithSizeType | None = None
 
-    def __init__(self, batch_size: int, duration: float | None = None, **kwargs):
-        super().__init__(name=f"Cloud Insert - batch {batch_size}", description="Cloud leaderboard insert-only case with readiness polling.", dataset=Dataset.LAION.manager(100_000_000), batch_size=batch_size, duration=duration, **kwargs)
+    def __init__(
+        self,
+        batch_size: int,
+        duration: float | None = None,
+        dataset_with_size_type: DatasetWithSizeType | str | None = None,
+        **kwargs,
+    ):
+        if dataset_with_size_type is not None and not isinstance(dataset_with_size_type, DatasetWithSizeType):
+            dataset_with_size_type = DatasetWithSizeType(dataset_with_size_type)
+        dataset = (
+            Dataset.LAION.manager(100_000_000)
+            if dataset_with_size_type is None
+            else dataset_with_size_type.get_manager()
+        )
+        super().__init__(
+            name=f"Cloud Insert - batch {batch_size}",
+            description="Cloud leaderboard insert-only case with readiness polling.",
+            dataset=dataset,
+            batch_size=batch_size,
+            duration=duration,
+            dataset_with_size_type=dataset_with_size_type,
+            **kwargs,
+        )
 
 
 class LabelFilterPerformanceCase(PerformanceCase):

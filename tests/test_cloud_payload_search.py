@@ -5,17 +5,13 @@ from vectordb_bench.backend.filter import FilterOp
 from vectordb_bench.backend.payload import PayloadProfile
 
 
-class _Hit:
-    id = 1
-
-
-class _Collection:
+class _Client:
     def __init__(self):
         self.search_kwargs = None
 
     def search(self, **kwargs):
         self.search_kwargs = kwargs
-        return [[_Hit()]]
+        return [[{"pk": 1}]]
 
 
 def test_laion_100m_declares_scalar_label_assets():
@@ -43,12 +39,14 @@ def test_cloud_payload_case_can_combine_label_filter_with_scalar_label_payload()
 
 def test_milvus_scalar_label_payload_requests_label_output_field():
     db = Milvus.__new__(Milvus)
-    db.col = _Collection()
+    db.client = _Client()
     db.case_config = type("CaseConfig", (), {"search_param": lambda self: {}})()
+    db.collection_name = "collection"
     db.expr = "label == 'label_1p'"
+    db._primary_field = "pk"
     db._vector_field = "vector"
     db._scalar_label_field = "label"
 
     assert db.supports_payload_profile(PayloadProfile.SCALAR_LABEL)
     assert db.search_embedding([0.1, 0.2], payload_profile=PayloadProfile.SCALAR_LABEL) == [1]
-    assert db.col.search_kwargs["output_fields"] == ["label"]
+    assert db.client.search_kwargs["output_fields"] == ["label"]

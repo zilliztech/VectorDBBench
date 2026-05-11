@@ -205,6 +205,7 @@ class QdrantCloud(VectorDB):
             query_filter=self.query_filter,
             search_params=self.db_case_config.search_param(),
             with_payload=self.db_case_config.with_payload,
+            timeout=timeout,
         )
 
         res = points_res.points

@@ -1,9 +1,13 @@
-from pydantic import BaseModel, SecretStr, validator
+from typing import ClassVar
+
+from pydantic import BaseModel, SecretStr
 
 from ..api import DBCaseConfig, DBConfig, IndexType, MetricType, SQType
 
 
 class MilvusConfig(DBConfig):
+    _extra_empty_skip: ClassVar[frozenset[str]] = frozenset({"user", "password"})
+
     uri: SecretStr = "http://localhost:19530"
     user: str | None = None
     password: SecretStr | None = None
@@ -18,18 +22,6 @@ class MilvusConfig(DBConfig):
             "num_shards": self.num_shards,
             "replica_number": self.replica_number,
         }
-
-    @validator("*")
-    def not_empty_field(cls, v: any, field: any):
-        if (
-            field.name in cls.common_short_configs()
-            or field.name in cls.common_long_configs()
-            or field.name in ["user", "password"]
-        ):
-            return v
-        if isinstance(v, str | SecretStr) and len(v) == 0:
-            raise ValueError("Empty string!")
-        return v
 
 
 class MilvusIndexConfig(BaseModel):
@@ -441,6 +433,65 @@ class SCANNConfig(MilvusIndexConfig, DBCaseConfig):
         }
 
 
+class SVSVamanaConfig(MilvusIndexConfig, DBCaseConfig):
+    svs_graph_max_degree: int
+    svs_construction_window_size: int = 40
+    svs_alpha: float | None = None
+    svs_storage_kind: str = "fp32"
+    svs_search_window_size: int | None = None
+    svs_search_buffer_capacity: int | None = None
+    index: IndexType = IndexType.SVS_VAMANA
+
+    def index_param(self) -> dict:
+        params = {
+            "svs_graph_max_degree": self.svs_graph_max_degree,
+            "svs_construction_window_size": self.svs_construction_window_size,
+            "svs_storage_kind": self.svs_storage_kind,
+        }
+        if self.svs_alpha is not None:
+            params["svs_alpha"] = self.svs_alpha
+        return {
+            "metric_type": self.parse_metric(),
+            "index_type": self.index.value,
+            "params": params,
+        }
+
+    def search_param(self) -> dict:
+        return {
+            "metric_type": self.parse_metric(),
+            "params": {
+                "svs_search_window_size": self.svs_search_window_size,
+                "svs_search_buffer_capacity": self.svs_search_buffer_capacity,
+            },
+        }
+
+
+class SVSVamanaLVQConfig(SVSVamanaConfig):
+    svs_storage_kind: str = "lvq4x4"
+    index: IndexType = IndexType.SVS_VAMANA_LVQ
+
+
+class SVSVamanaLeanVecConfig(SVSVamanaConfig):
+    svs_storage_kind: str = "leanvec4x4"
+    svs_leanvec_dim: int = 0
+    index: IndexType = IndexType.SVS_VAMANA_LEANVEC
+
+    def index_param(self) -> dict:
+        params = {
+            "svs_graph_max_degree": self.svs_graph_max_degree,
+            "svs_construction_window_size": self.svs_construction_window_size,
+            "svs_storage_kind": self.svs_storage_kind,
+            "svs_leanvec_dim": self.svs_leanvec_dim,
+        }
+        if self.svs_alpha is not None:
+            params["svs_alpha"] = self.svs_alpha
+        return {
+            "metric_type": self.parse_metric(),
+            "index_type": self.index.value,
+            "params": params,
+        }
+
+
 _milvus_case_config = {
     IndexType.AUTOINDEX: AutoIndexConfig,
     IndexType.HNSW: HNSWConfig,
@@ -458,4 +509,7 @@ _milvus_case_config = {
     IndexType.GPU_CAGRA: GPUCAGRAConfig,
     IndexType.GPU_BRUTE_FORCE: GPUBruteForceConfig,
     IndexType.SCANN_MILVUS: SCANNConfig,
+    IndexType.SVS_VAMANA: SVSVamanaConfig,
+    IndexType.SVS_VAMANA_LVQ: SVSVamanaLVQConfig,
+    IndexType.SVS_VAMANA_LEANVEC: SVSVamanaLeanVecConfig,
 }

@@ -49,8 +49,8 @@ class AliSQLIndexConfig(BaseModel):
 
 
 class AliSQLHNSWConfig(AliSQLIndexConfig, DBCaseConfig):
-    M: int | None
-    ef_search: int | None
+    M: int | None = None
+    ef_search: int | None = None
     index: IndexType = IndexType.HNSW
 
     def index_param(self) -> dict:

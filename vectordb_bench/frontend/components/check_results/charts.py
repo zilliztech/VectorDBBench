@@ -153,4 +153,4 @@ def drawMetricChart(data, metric, st, key: str):
         ),
     )
 
-    chart.plotly_chart(fig, use_container_width=True, key=key)
+    chart.plotly_chart(fig, width="stretch", key=key)

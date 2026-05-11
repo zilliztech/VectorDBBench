@@ -119,7 +119,7 @@ class TiDB(VectorDB):
                 cursor.execute(f"""
                     SELECT PROGRESS FROM information_schema.tiflash_replica
                     WHERE TABLE_SCHEMA = "{database}" AND TABLE_NAME = "{self.table_name}"
-                    """)  # noqa: S608
+                    """)
                 result = cursor.fetchone()
                 return result[0]
         except Exception as e:
@@ -131,7 +131,7 @@ class TiDB(VectorDB):
             with self._get_connection() as (conn, cursor):
                 cursor.execute('SET @@TIDB_ISOLATION_READ_ENGINES="tidb,tiflash"')
                 conn.commit()
-                cursor.execute(f"SELECT COUNT(*) FROM {self.table_name}")  # noqa: S608
+                cursor.execute(f"SELECT COUNT(*) FROM {self.table_name}")
                 result = cursor.fetchone()
                 return result[0]
         except Exception as e:
@@ -155,7 +155,7 @@ class TiDB(VectorDB):
                     SELECT SUM(ROWS_STABLE_NOT_INDEXED)
                     FROM information_schema.tiflash_indexes
                     WHERE TIDB_DATABASE = "{database}" AND TIDB_TABLE = "{self.table_name}"
-                    """)  # noqa: S608
+                    """)
                 result = cursor.fetchone()
                 return result[0]
         except Exception as e:
@@ -172,7 +172,7 @@ class TiDB(VectorDB):
         try:
             with self._get_connection() as (conn, cursor):
                 buf = io.StringIO()
-                buf.write(f"INSERT INTO {self.table_name} (id, embedding) VALUES ")  # noqa: S608
+                buf.write(f"INSERT INTO {self.table_name} (id, embedding) VALUES ")
                 for i in range(offset, offset + size):
                     if i > offset:
                         buf.write(",")
@@ -220,6 +220,6 @@ class TiDB(VectorDB):
         self.cursor.execute(f"""
             SELECT id FROM {self.table_name}
             ORDER BY {self.search_fn}(embedding, "{query!s}") LIMIT {k};
-            """)  # noqa: S608
+            """)
         result = self.cursor.fetchall()
         return [int(i[0]) for i in result]

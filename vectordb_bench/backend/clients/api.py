@@ -1,8 +1,9 @@
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from enum import StrEnum
+from typing import ClassVar
 
-from pydantic import BaseModel, SecretStr, validator
+from pydantic import BaseModel, model_validator
 
 from vectordb_bench.backend.filter import Filter, FilterOp
 from vectordb_bench.backend.payload import PayloadProfile
@@ -27,6 +28,7 @@ class IndexType(StrEnum):
     STREAMING_DISKANN = "DISKANN"
     IVFFlat = "IVF_FLAT"
     IVFPQ = "IVF_PQ"
+    IVFBQ = "IVF_BQ"
     IVFSQ8 = "IVF_SQ8"
     IVF_RABITQ = "IVF_RABITQ"
     Flat = "FLAT"
@@ -42,13 +44,19 @@ class IndexType(StrEnum):
     GPU_IVF_PQ = "GPU_IVF_PQ"
     GPU_CAGRA = "GPU_CAGRA"
     SCANN = "scann"
+    VCHORDRQ = "vchordrq"
+    VCHORDG = "vchordg"
     SCANN_MILVUS = "SCANN_MILVUS"
+    SVS_VAMANA = "SVS_VAMANA"
+    SVS_VAMANA_LVQ = "SVS_VAMANA_LVQ"
+    SVS_VAMANA_LEANVEC = "SVS_VAMANA_LEANVEC"
     Hologres_HGraph = "HGraph"
     Hologres_Graph = "Graph"
     NONE = "NONE"
 
 
 class SQType(StrEnum):
+    SQ4U = "SQ4U"
     SQ6 = "SQ6"
     SQ8 = "SQ8"
     BF16 = "BF16"
@@ -71,6 +79,9 @@ class DBConfig(ABC, BaseModel):
     version: str = ""
     note: str = ""
 
+    # Field names subclasses allow to be empty (optional creds, alt-route fields).
+    _extra_empty_skip: ClassVar[frozenset[str]] = frozenset()
+
     @staticmethod
     def common_short_configs() -> list[str]:
         """
@@ -89,13 +100,17 @@ class DBConfig(ABC, BaseModel):
     def to_dict(self) -> dict:
         raise NotImplementedError
 
-    @validator("*")
-    def not_empty_field(cls, v: any, field: any):
-        if field.name in cls.common_short_configs() or field.name in cls.common_long_configs():
-            return v
-        if not v and isinstance(v, str | SecretStr):
-            raise ValueError("Empty string!")
-        return v
+    @model_validator(mode="before")
+    @classmethod
+    def not_empty_field(cls, data: any) -> any:
+        if not isinstance(data, dict):
+            return data
+        skip = set(cls.common_short_configs()) | set(cls.common_long_configs()) | cls._extra_empty_skip
+        empty = [k for k, v in data.items() if k not in skip and isinstance(v, str) and not v]
+        if empty:
+            msg = f"Empty field(s): {', '.join(empty)}"
+            raise ValueError(msg)
+        return data
 
 
 class DBCaseConfig(ABC):
@@ -139,6 +154,11 @@ class VectorDB(ABC):
     "The filtering types supported by the VectorDB Client, default only non-filter"
     supported_filter_types: list[FilterOp] = [FilterOp.NonFilter]
     name: str = ""
+
+    # Whether the client can share a single connection across threads.
+    # If False, concurrent runners will deep-copy the instance and call
+    # init() per thread instead of sharing the parent connection.
+    thread_safe: bool = True
 
     @classmethod
     def filter_supported(cls, filters: Filter) -> bool:

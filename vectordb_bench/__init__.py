@@ -20,6 +20,7 @@ class config:
     DATASET_SOURCE = env.str("DATASET_SOURCE", "S3")  # Options "S3" or "AliyunOSS"
     DATASET_LOCAL_DIR = env.path("DATASET_LOCAL_DIR", "/tmp/vectordb_bench/dataset")
     NUM_PER_BATCH = env.int("NUM_PER_BATCH", 100)
+    LOAD_CONCURRENCY = env.int("LOAD_CONCURRENCY", 0)  # 0 = cpu_count
     TIME_PER_BATCH = 1  # 1s. for streaming insertion.
     MAX_INSERT_RETRY = 5
     MAX_SEARCH_RETRY = 5

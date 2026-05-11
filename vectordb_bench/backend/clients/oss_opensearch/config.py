@@ -1,7 +1,8 @@
 import logging
 from enum import Enum
+from typing import ClassVar
 
-from pydantic import BaseModel, SecretStr, root_validator, validator
+from pydantic import BaseModel, SecretStr, field_validator, model_validator
 
 from ..api import DBCaseConfig, DBConfig, MetricType
 
@@ -9,6 +10,8 @@ log = logging.getLogger(__name__)
 
 
 class OSSOpenSearchConfig(DBConfig, BaseModel):
+    _extra_empty_skip: ClassVar[frozenset[str]] = frozenset({"user", "password", "host"})
+
     host: str = ""
     port: int = 80
     user: str | None = None
@@ -31,18 +34,6 @@ class OSSOpenSearchConfig(DBConfig, BaseModel):
             "ssl_show_warn": False,
             "timeout": 600,
         }
-
-    @validator("*")
-    def not_empty_field(cls, v: any, field: any):
-        if (
-            field.name in cls.common_short_configs()
-            or field.name in cls.common_long_configs()
-            or field.name in ["user", "password", "host"]
-        ):
-            return v
-        if isinstance(v, str | SecretStr) and len(v) == 0:
-            raise ValueError("Empty string!")
-        return v
 
 
 class OSSOS_Engine(Enum):
@@ -111,7 +102,8 @@ class OSSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
     compression_level: str = CompressionLevel.LEVEL_32X
     oversample_factor: float = 1.0
 
-    @validator("quantization_type", pre=True, always=True)
+    @field_validator("quantization_type", mode="before")
+    @classmethod
     def validate_quantization_type(cls, value: any):
         """Convert string values to enum"""
         if not value:
@@ -128,19 +120,22 @@ class OSSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
 
         return mapping.get(value, OSSOpenSearchQuantization.NONE)
 
-    @root_validator
-    def validate_engine_name(cls, values: dict):
-        """Map engine_name string from UI to engine enum"""
-        if values.get("engine_name"):
-            engine_name = values["engine_name"].lower()
+    @model_validator(mode="before")
+    @classmethod
+    def validate_engine_name(cls, data: any) -> any:
+        if not isinstance(data, dict):
+            return data
+        # Map engine_name to engine enum
+        if data.get("engine_name"):
+            engine_name = data["engine_name"].lower()
             if engine_name == "faiss":
-                values["engine"] = OSSOS_Engine.faiss
+                data["engine"] = OSSOS_Engine.faiss
             elif engine_name == "lucene":
-                values["engine"] = OSSOS_Engine.lucene
+                data["engine"] = OSSOS_Engine.lucene
             else:
                 log.warning(f"Unknown engine_name: {engine_name}, defaulting to faiss")
-                values["engine"] = OSSOS_Engine.faiss
-        return values
+                data["engine"] = OSSOS_Engine.faiss
+        return data
 
     def __eq__(self, obj: any):
         return (

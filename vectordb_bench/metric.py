@@ -32,6 +32,8 @@ class Metric:
     payload_profile: str = "ids_only"
     payload_estimated_bytes_per_query: int = 0
 
+    inserted_count: int = 0
+    insert_rows_per_second: float = 0.0
     insert_completion_seconds: float = 0.0
     searchable_after_insert_seconds: float = 0.0
     indexed_after_searchable_seconds: float = 0.0

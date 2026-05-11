@@ -21,6 +21,7 @@ log = logging.getLogger(__name__)
 class PgVector(VectorDB):
     """Use psycopg instructions"""
 
+    thread_safe: bool = False
     supported_filter_types: list[FilterOp] = [
         FilterOp.NonFilter,
         FilterOp.NumGE,
@@ -334,6 +335,13 @@ class PgVector(VectorDB):
 
         index_param = self.case_config.index_param()
         self._set_parallel_index_build_param()
+        # pgvector registers access methods in lowercase ("hnsw", "ivfflat") but
+        # IndexType enum values are uppercase; also IVFFlat maps to "ivfflat" (no underscore).
+        index_type_lower = index_param["index_type"].lower()
+        if index_type_lower == "ivf_flat":
+            index_type_lower = "ivfflat"
+        log.info(f"index_type (original={index_param['index_type']}, normalized={index_type_lower})")
+
         options = []
         for option in index_param["index_creation_with_options"]:
             if option["val"] is not None:
@@ -359,8 +367,8 @@ class PgVector(VectorDB):
                     if index_param["quantization_type"] == "bit"
                     else sql.Identifier("embedding")
                 ),
-                index_type=sql.Identifier(index_param["index_type"]),
-                # This assumes that the quantization_type value matches the quantization function name
+                index_type=sql.Identifier(index_type_lower),
+                # quantization_type value matches the quantization function name
                 quantization_type=sql.SQL(index_param["quantization_type"]),
                 dim=self.dim,
                 embedding_metric=sql.Identifier(index_param["metric"]),
@@ -374,7 +382,7 @@ class PgVector(VectorDB):
             ).format(
                 index_name=sql.Identifier(self._index_name),
                 table_name=sql.Identifier(self.table_name),
-                index_type=sql.Identifier(index_param["index_type"]),
+                index_type=sql.Identifier(index_type_lower),
                 embedding_metric=sql.Identifier(index_param["metric"]),
             )
 

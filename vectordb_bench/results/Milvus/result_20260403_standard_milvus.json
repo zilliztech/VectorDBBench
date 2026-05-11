@@ -1,0 +1,4074 @@
+{
+  "run_id": "c11e83b51ff14060a08f06d58f801214",
+  "task_label": "standard_20260403",
+  "results": [
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 1444.847,
+        "optimize_duration": 7859.1353,
+        "load_duration": 9303.9823,
+        "qps": 3917.2035,
+        "serial_latency_p99": 0.0024,
+        "serial_latency_p95": 0.0023,
+        "recall": 0.9203,
+        "ndcg": 0.9238,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20,
+          30,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          467.4942,
+          1828.2004,
+          2454.4495,
+          2976.5539,
+          3178.6052,
+          3494.4787,
+          3755.8025,
+          3917.2035
+        ],
+        "conc_latency_p99_list": [
+          0.0025411477516172455,
+          0.0033511776782688685,
+          0.005052069290541106,
+          0.011894863871420993,
+          0.016992485875962308,
+          0.020195355401374387,
+          0.026863074758439298,
+          0.03365033164591297
+        ],
+        "conc_latency_p95_list": [
+          0.0023739541989925782,
+          0.00314145510783419,
+          0.004699915152013999,
+          0.009829005991923623,
+          0.014131764802732504,
+          0.017079706999356854,
+          0.022949057801451987,
+          0.02835416550078662
+        ],
+        "conc_latency_avg_list": [
+          0.002136165356290855,
+          0.002730801989459182,
+          0.004067402028788586,
+          0.006701902388970856,
+          0.009401196782828802,
+          0.011384491649831373,
+          0.015778383442210466,
+          0.020076245655094027
+        ],
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Milvus",
+        "db_config": {
+          "db_label": "16c64g-sq4u-fp16-force_merge",
+          "version": "2.6.14",
+          "note": "",
+          "uri": "**********",
+          "user": null,
+          "password": null,
+          "num_shards": 1,
+          "replica_number": 1
+        },
+        "db_case_config": {
+          "index": "HNSW_SQ",
+          "metric_type": "COSINE",
+          "use_partition_key": false,
+          "M": 16,
+          "efConstruction": 300,
+          "ef": 100,
+          "sq_type": "SQ4U",
+          "refine": true,
+          "refine_type": "FP16",
+          "refine_k": 1.0
+        },
+        "case_config": {
+          "case_id": 4,
+          "custom_case": {},
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 1444.847,
+        "optimize_duration": 7859.1353,
+        "load_duration": 9303.9823,
+        "qps": 3628.8527,
+        "serial_latency_p99": 0.0026,
+        "serial_latency_p95": 0.0024,
+        "recall": 0.9318,
+        "ndcg": 0.9346,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20,
+          30,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          456.622,
+          1760.1234,
+          2305.1866,
+          2811.6811,
+          3062.7639,
+          3254.2934,
+          3483.1948,
+          3628.8527
+        ],
+        "conc_latency_p99_list": [
+          0.0025775732805777807,
+          0.003496330338239204,
+          0.005392098429438191,
+          0.012580982464569393,
+          0.01744679359835574,
+          0.02114546248485566,
+          0.02862863955655484,
+          0.03660006429607165
+        ],
+        "conc_latency_p95_list": [
+          0.002428409402637044,
+          0.003272143194044474,
+          0.005011953243229073,
+          0.010387669454212298,
+          0.01447147800354287,
+          0.017890810401149794,
+          0.023953950349823568,
+          0.030202264491526864
+        ],
+        "conc_latency_avg_list": [
+          0.002187054468852311,
+          0.002836289985030498,
+          0.004330527318313066,
+          0.007095944638723138,
+          0.009756847450075634,
+          0.012226813030036315,
+          0.017037973309470753,
+          0.021662613936531003
+        ],
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Milvus",
+        "db_config": {
+          "db_label": "16c64g-sq4u-fp16-force_merge",
+          "version": "2.6.14",
+          "note": "",
+          "uri": "**********",
+          "user": null,
+          "password": null,
+          "num_shards": 1,
+          "replica_number": 1
+        },
+        "db_case_config": {
+          "index": "HNSW_SQ",
+          "metric_type": "COSINE",
+          "use_partition_key": false,
+          "M": 16,
+          "efConstruction": 300,
+          "ef": 120,
+          "sq_type": "SQ4U",
+          "refine": true,
+          "refine_type": "FP16",
+          "refine_k": 1.0
+        },
+        "case_config": {
+          "case_id": 4,
+          "custom_case": {},
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 1444.847,
+        "optimize_duration": 7859.1353,
+        "load_duration": 9303.9823,
+        "qps": 3250.1112,
+        "serial_latency_p99": 0.0027,
+        "serial_latency_p95": 0.0025,
+        "recall": 0.9443,
+        "ndcg": 0.9463,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20,
+          30,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          434.6843,
+          1686.1263,
+          2163.5936,
+          2555.03,
+          2793.5899,
+          2921.7137,
+          3130.5251,
+          3250.1112
+        ],
+        "conc_latency_p99_list": [
+          0.0027417352329939604,
+          0.003703351480362472,
+          0.005958503000438213,
+          0.013709455646312565,
+          0.01829364382574568,
+          0.022580389242502868,
+          0.03056172190743382,
+          0.037927262283337766
+        ],
+        "conc_latency_p95_list": [
+          0.0025719269993714987,
+          0.0034471726998162922,
+          0.005409308793605305,
+          0.011277809000603156,
+          0.015221869490051177,
+          0.019072343403240672,
+          0.02558471505108173,
+          0.03225500610860763
+        ],
+        "conc_latency_avg_list": [
+          0.002297469730699608,
+          0.0029608701952901183,
+          0.004614075755959777,
+          0.007808470701124476,
+          0.010702304970719298,
+          0.013606579627839316,
+          0.018957654525715156,
+          0.02420684028195088
+        ],
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Milvus",
+        "db_config": {
+          "db_label": "16c64g-sq4u-fp16-force_merge",
+          "version": "2.6.14",
+          "note": "",
+          "uri": "**********",
+          "user": null,
+          "password": null,
+          "num_shards": 1,
+          "replica_number": 1
+        },
+        "db_case_config": {
+          "index": "HNSW_SQ",
+          "metric_type": "COSINE",
+          "use_partition_key": false,
+          "M": 16,
+          "efConstruction": 300,
+          "ef": 150,
+          "sq_type": "SQ4U",
+          "refine": true,
+          "refine_type": "FP16",
+          "refine_k": 1.0
+        },
+        "case_config": {
+          "case_id": 4,
+          "custom_case": {},
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 1444.847,
+        "optimize_duration": 7859.1353,
+        "load_duration": 9303.9823,
+        "qps": 2762.4144,
+        "serial_latency_p99": 0.0031,
+        "serial_latency_p95": 0.0029,
+        "recall": 0.9556,
+        "ndcg": 0.9567,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20,
+          30,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          395.9308,
+          1515.3208,
+          1959.8545,
+          2234.9654,
+          2427.3893,
+          2537.495,
+          2657.5964,
+          2762.4144
+        ],
+        "conc_latency_p99_list": [
+          0.003096595037495717,
+          0.00413693475740729,
+          0.007250679123098961,
+          0.01500825069088023,
+          0.01980871459498304,
+          0.024630421155015937,
+          0.033659081743244314,
+          0.041983861521002835
+        ],
+        "conc_latency_p95_list": [
+          0.0028621868113987148,
+          0.003837919446232263,
+          0.006172719193273224,
+          0.012415598499501357,
+          0.0168672572079231,
+          0.021068831244338074,
+          0.028828703101316914,
+          0.03613693019142374
+        ],
+        "conc_latency_avg_list": [
+          0.002522697462250955,
+          0.0032950399942241306,
+          0.0050943009057731,
+          0.008926197356642889,
+          0.012320074532162776,
+          0.01567786154805744,
+          0.022343385743465827,
+          0.028501836863104958
+        ],
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Milvus",
+        "db_config": {
+          "db_label": "16c64g-sq4u-fp16-force_merge",
+          "version": "2.6.14",
+          "note": "",
+          "uri": "**********",
+          "user": null,
+          "password": null,
+          "num_shards": 1,
+          "replica_number": 1
+        },
+        "db_case_config": {
+          "index": "HNSW_SQ",
+          "metric_type": "COSINE",
+          "use_partition_key": false,
+          "M": 16,
+          "efConstruction": 300,
+          "ef": 200,
+          "sq_type": "SQ4U",
+          "refine": true,
+          "refine_type": "FP16",
+          "refine_k": 1.0
+        },
+        "case_config": {
+          "case_id": 4,
+          "custom_case": {},
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 1444.847,
+        "optimize_duration": 7859.1353,
+        "load_duration": 9303.9823,
+        "qps": 2384.6245,
+        "serial_latency_p99": 0.0032,
+        "serial_latency_p95": 0.003,
+        "recall": 0.9627,
+        "ndcg": 0.9632,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20,
+          30,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          368.492,
+          1356.984,
+          1780.9947,
+          1978.8754,
+          2086.4087,
+          2180.2788,
+          2347.7647,
+          2384.6245
+        ],
+        "conc_latency_p99_list": [
+          0.0033670899452408775,
+          0.004818720840266903,
+          0.008331618664960839,
+          0.01588158588972873,
+          0.02218642996114793,
+          0.02756158859701827,
+          0.036660355595813585,
+          0.047074296680802936
+        ],
+        "conc_latency_p95_list": [
+          0.0031033190454763816,
+          0.004360820600413717,
+          0.00704125490374281,
+          0.013423533007153307,
+          0.019178588101203785,
+          0.023883526999270543,
+          0.03231190550286556,
+          0.041070348300854674
+        ],
+        "conc_latency_avg_list": [
+          0.0027103553220750067,
+          0.0036796698451320694,
+          0.005606053561698588,
+          0.010084455073144883,
+          0.01433518456445194,
+          0.0182535198619555,
+          0.025308713260092305,
+          0.03299686872047841
+        ],
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Milvus",
+        "db_config": {
+          "db_label": "16c64g-sq4u-fp16-force_merge",
+          "version": "2.6.14",
+          "note": "",
+          "uri": "**********",
+          "user": null,
+          "password": null,
+          "num_shards": 1,
+          "replica_number": 1
+        },
+        "db_case_config": {
+          "index": "HNSW_SQ",
+          "metric_type": "COSINE",
+          "use_partition_key": false,
+          "M": 16,
+          "efConstruction": 300,
+          "ef": 250,
+          "sq_type": "SQ4U",
+          "refine": true,
+          "refine_type": "FP16",
+          "refine_k": 1.0
+        },
+        "case_config": {
+          "case_id": 4,
+          "custom_case": {},
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 1444.847,
+        "optimize_duration": 7859.1353,
+        "load_duration": 9303.9823,
+        "qps": 2134.1717,
+        "serial_latency_p99": 0.0038,
+        "serial_latency_p95": 0.0036,
+        "recall": 0.9671,
+        "ndcg": 0.9672,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20,
+          30,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          342.9302,
+          1297.1692,
+          1605.3373,
+          1723.4931,
+          1874.7201,
+          1950.9837,
+          2026.1279,
+          2134.1717
+        ],
+        "conc_latency_p99_list": [
+          0.003612513002881314,
+          0.005075874237372772,
+          0.009592544495098993,
+          0.01732624325857614,
+          0.02383941526291892,
+          0.02994993883999997,
+          0.04171322006412084,
+          0.052276343395351435
+        ],
+        "conc_latency_p95_list": [
+          0.00337228730058996,
+          0.00455044719419675,
+          0.008192990009411006,
+          0.015064282899402313,
+          0.02108702180557884,
+          0.02638680679956451,
+          0.036932101499405685,
+          0.04595883999718353
+        ],
+        "conc_latency_avg_list": [
+          0.0029124934026024873,
+          0.0038495151919032532,
+          0.0062189602467817824,
+          0.011577066999218889,
+          0.01595138406671783,
+          0.02037925821852399,
+          0.029283526202598515,
+          0.03685219368742522
+        ],
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Milvus",
+        "db_config": {
+          "db_label": "16c64g-sq4u-fp16-force_merge",
+          "version": "2.6.14",
+          "note": "",
+          "uri": "**********",
+          "user": null,
+          "password": null,
+          "num_shards": 1,
+          "replica_number": 1
+        },
+        "db_case_config": {
+          "index": "HNSW_SQ",
+          "metric_type": "COSINE",
+          "use_partition_key": false,
+          "M": 16,
+          "efConstruction": 300,
+          "ef": 300,
+          "sq_type": "SQ4U",
+          "refine": true,
+          "refine_type": "FP16",
+          "refine_k": 1.0
+        },
+        "case_config": {
+          "case_id": 4,
+          "custom_case": {},
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 1444.847,
+        "optimize_duration": 7859.1353,
+        "load_duration": 9303.9823,
+        "qps": 1641.3478,
+        "serial_latency_p99": 0.0041,
+        "serial_latency_p95": 0.0039,
+        "recall": 0.9729,
+        "ndcg": 0.9726,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20,
+          30,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          300.7136,
+          1134.4852,
+          1338.9285,
+          1408.0122,
+          1523.2338,
+          1540.9389,
+          1631.3282,
+          1641.3478
+        ],
+        "conc_latency_p99_list": [
+          0.004302493912400677,
+          0.006291621240816314,
+          0.011818032589217181,
+          0.020626583240227772,
+          0.028327662804658774,
+          0.03604436940222513,
+          0.0508815360846347,
+          0.06704054794870894
+        ],
+        "conc_latency_p95_list": [
+          0.003943610056012403,
+          0.0053649904970370695,
+          0.010212573444005101,
+          0.018129582199617286,
+          0.02555973254638957,
+          0.03308224900683854,
+          0.04562628499115817,
+          0.05833644095400814
+        ],
+        "conc_latency_avg_list": [
+          0.0033214706270654664,
+          0.004401974502845957,
+          0.00745933768945177,
+          0.014171396440932295,
+          0.0196399944581788,
+          0.025851743210982894,
+          0.03640642504236049,
+          0.048033687367785266
+        ],
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Milvus",
+        "db_config": {
+          "db_label": "16c64g-sq4u-fp16-force_merge",
+          "version": "2.6.14",
+          "note": "",
+          "uri": "**********",
+          "user": null,
+          "password": null,
+          "num_shards": 1,
+          "replica_number": 1
+        },
+        "db_case_config": {
+          "index": "HNSW_SQ",
+          "metric_type": "COSINE",
+          "use_partition_key": false,
+          "M": 16,
+          "efConstruction": 300,
+          "ef": 400,
+          "sq_type": "SQ4U",
+          "refine": true,
+          "refine_type": "FP16",
+          "refine_k": 1.0
+        },
+        "case_config": {
+          "case_id": 4,
+          "custom_case": {},
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 1444.847,
+        "optimize_duration": 7859.1353,
+        "load_duration": 9303.9823,
+        "qps": 1488.5841,
+        "serial_latency_p99": 0.0047,
+        "serial_latency_p95": 0.0043,
+        "recall": 0.9764,
+        "ndcg": 0.976,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20,
+          30,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          259.0154,
+          1019.3401,
+          1241.5382,
+          1301.0531,
+          1358.779,
+          1399.0002,
+          1425.3615,
+          1488.5841
+        ],
+        "conc_latency_p99_list": [
+          0.004889184155326802,
+          0.007301273914636109,
+          0.01256226149998838,
+          0.02185779360006564,
+          0.03058185266534565,
+          0.03868378391998703,
+          0.0577071424780297,
+          0.07162654809217199
+        ],
+        "conc_latency_p95_list": [
+          0.004537451700889505,
+          0.006121107403305359,
+          0.010819275506946724,
+          0.019440887503151316,
+          0.02824652445488027,
+          0.035727200949622784,
+          0.05152663829067023,
+          0.0646723014942836
+        ],
+        "conc_latency_avg_list": [
+          0.0038569616304989004,
+          0.0048995726665189525,
+          0.008043409835523815,
+          0.015340665489496967,
+          0.022014652133720863,
+          0.02845767912486287,
+          0.04164023567491625,
+          0.05289991318053246
+        ],
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Milvus",
+        "db_config": {
+          "db_label": "16c64g-sq4u-fp16-force_merge",
+          "version": "2.6.14",
+          "note": "",
+          "uri": "**********",
+          "user": null,
+          "password": null,
+          "num_shards": 1,
+          "replica_number": 1
+        },
+        "db_case_config": {
+          "index": "HNSW_SQ",
+          "metric_type": "COSINE",
+          "use_partition_key": false,
+          "M": 16,
+          "efConstruction": 300,
+          "ef": 500,
+          "sq_type": "SQ4U",
+          "refine": true,
+          "refine_type": "FP16",
+          "refine_k": 1.0
+        },
+        "case_config": {
+          "case_id": 4,
+          "custom_case": {},
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 1459.7483,
+        "optimize_duration": 7524.2304,
+        "load_duration": 8983.9787,
+        "qps": 2747.3167,
+        "serial_latency_p99": 0.0033,
+        "serial_latency_p95": 0.003,
+        "recall": 0.9204,
+        "ndcg": 0.9262,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20,
+          30,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          412.8127,
+          1516.5887,
+          1934.7028,
+          2345.2563,
+          2531.5491,
+          2627.1159,
+          2747.3167,
+          2733.8527
+        ],
+        "conc_latency_p99_list": [
+          0.0030919767648447303,
+          0.004120720853097738,
+          0.006685402100338251,
+          0.014304348317091375,
+          0.019310851126065252,
+          0.024482081828900833,
+          0.03435190891788809,
+          0.04423686145673856
+        ],
+        "conc_latency_p95_list": [
+          0.0028119500013417563,
+          0.003827417498541763,
+          0.006025877799402224,
+          0.011986060402705334,
+          0.016484533800394274,
+          0.020710799152220714,
+          0.028733705398917665,
+          0.037459268098609756
+        ],
+        "conc_latency_avg_list": [
+          0.002419260628861797,
+          0.003292419872587543,
+          0.005160383001607833,
+          0.00850752764269055,
+          0.011804369542313493,
+          0.01513907190518365,
+          0.021623125977333776,
+          0.028768996633767287
+        ],
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Milvus",
+        "db_config": {
+          "db_label": "16c64g-sq8-force_merge",
+          "version": "2.6.14",
+          "note": "",
+          "uri": "**********",
+          "user": null,
+          "password": null,
+          "num_shards": 1,
+          "replica_number": 1
+        },
+        "db_case_config": {
+          "index": "HNSW_SQ",
+          "metric_type": "COSINE",
+          "use_partition_key": false,
+          "M": 16,
+          "efConstruction": 300,
+          "ef": 100,
+          "sq_type": "SQ8",
+          "refine": false,
+          "refine_type": "FP32",
+          "refine_k": 1.0
+        },
+        "case_config": {
+          "case_id": 4,
+          "custom_case": {},
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 1459.7483,
+        "optimize_duration": 7524.2304,
+        "load_duration": 8983.9787,
+        "qps": 2514.4481,
+        "serial_latency_p99": 0.0032,
+        "serial_latency_p95": 0.003,
+        "recall": 0.9303,
+        "ndcg": 0.9357,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20,
+          30,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          376.3101,
+          1413.4044,
+          1804.5963,
+          2063.4126,
+          2224.2985,
+          2285.9557,
+          2428.4015,
+          2514.4481
+        ],
+        "conc_latency_p99_list": [
+          0.003350270938608448,
+          0.004419036731342202,
+          0.007495493090173118,
+          0.01604453914129406,
+          0.021470454052177963,
+          0.027058087129116764,
+          0.03722573504091981,
+          0.048193111100408685
+        ],
+        "conc_latency_p95_list": [
+          0.003067891455066274,
+          0.004094811100731022,
+          0.006531247201928636,
+          0.013379140298275157,
+          0.018289522749910248,
+          0.0233742457050539,
+          0.03192761289792543,
+          0.040280850498675136
+        ],
+        "conc_latency_avg_list": [
+          0.002653342368273733,
+          0.0035319332925499757,
+          0.005532113228559582,
+          0.009670992982743579,
+          0.013421869019516723,
+          0.017384391084778364,
+          0.024445988357111505,
+          0.03128177971695877
+        ],
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Milvus",
+        "db_config": {
+          "db_label": "16c64g-sq8-force_merge",
+          "version": "2.6.14",
+          "note": "",
+          "uri": "**********",
+          "user": null,
+          "password": null,
+          "num_shards": 1,
+          "replica_number": 1
+        },
+        "db_case_config": {
+          "index": "HNSW_SQ",
+          "metric_type": "COSINE",
+          "use_partition_key": false,
+          "M": 16,
+          "efConstruction": 300,
+          "ef": 120,
+          "sq_type": "SQ8",
+          "refine": false,
+          "refine_type": "FP32",
+          "refine_k": 1.0
+        },
+        "case_config": {
+          "case_id": 4,
+          "custom_case": {},
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 1459.7483,
+        "optimize_duration": 7524.2304,
+        "load_duration": 8983.9787,
+        "qps": 2177.2345,
+        "serial_latency_p99": 0.0034,
+        "serial_latency_p95": 0.0031,
+        "recall": 0.9408,
+        "ndcg": 0.9456,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20,
+          30,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          354.703,
+          1270.9673,
+          1660.8118,
+          1799.9874,
+          1911.9995,
+          2018.5829,
+          2119.3303,
+          2177.2345
+        ],
+        "conc_latency_p99_list": [
+          0.0035591462109005084,
+          0.0051245430819108154,
+          0.008888348671316635,
+          0.017485948742978506,
+          0.023954762732464586,
+          0.02942745841770374,
+          0.04045989539969013,
+          0.052306493496216695
+        ],
+        "conc_latency_p95_list": [
+          0.003282636954463669,
+          0.004633509999257512,
+          0.0075649314512702395,
+          0.014845420597703196,
+          0.02076956499913649,
+          0.025784255946928167,
+          0.035505612393899356,
+          0.045118153299335974
+        ],
+        "conc_latency_avg_list": [
+          0.002815711151857267,
+          0.003928179410303787,
+          0.006011238757150647,
+          0.011084966830100315,
+          0.015638666422418603,
+          0.019708495546663755,
+          0.02799275543572887,
+          0.03611913807969698
+        ],
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Milvus",
+        "db_config": {
+          "db_label": "16c64g-sq8-force_merge",
+          "version": "2.6.14",
+          "note": "",
+          "uri": "**********",
+          "user": null,
+          "password": null,
+          "num_shards": 1,
+          "replica_number": 1
+        },
+        "db_case_config": {
+          "index": "HNSW_SQ",
+          "metric_type": "COSINE",
+          "use_partition_key": false,
+          "M": 16,
+          "efConstruction": 300,
+          "ef": 150,
+          "sq_type": "SQ8",
+          "refine": false,
+          "refine_type": "FP32",
+          "refine_k": 1.0
+        },
+        "case_config": {
+          "case_id": 4,
+          "custom_case": {},
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 1459.7483,
+        "optimize_duration": 7524.2304,
+        "load_duration": 8983.9787,
+        "qps": 1833.2575,
+        "serial_latency_p99": 0.0039,
+        "serial_latency_p95": 0.0035,
+        "recall": 0.951,
+        "ndcg": 0.9555,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20,
+          30,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          329.7676,
+          1176.835,
+          1426.5695,
+          1546.3292,
+          1656.2697,
+          1716.0803,
+          1790.6121,
+          1833.2575
+        ],
+        "conc_latency_p99_list": [
+          0.003868887719290797,
+          0.005920497829865769,
+          0.01097595489642117,
+          0.01919553377847477,
+          0.02603815700131236,
+          0.03326150514345494,
+          0.04663379819947293,
+          0.05838948019809325
+        ],
+        "conc_latency_p95_list": [
+          0.003534871701413067,
+          0.005110333902484853,
+          0.009471108402794925,
+          0.01673110910487594,
+          0.023566940006276127,
+          0.02969893909685197,
+          0.04118938999890815,
+          0.05255015200236812
+        ],
+        "conc_latency_avg_list": [
+          0.0030290844068619504,
+          0.004243610521352684,
+          0.007000278697486464,
+          0.012908119052890047,
+          0.018050427070200076,
+          0.023198493359582885,
+          0.03316593436696198,
+          0.04298056582898082
+        ],
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Milvus",
+        "db_config": {
+          "db_label": "16c64g-sq8-force_merge",
+          "version": "2.6.14",
+          "note": "",
+          "uri": "**********",
+          "user": null,
+          "password": null,
+          "num_shards": 1,
+          "replica_number": 1
+        },
+        "db_case_config": {
+          "index": "HNSW_SQ",
+          "metric_type": "COSINE",
+          "use_partition_key": false,
+          "M": 16,
+          "efConstruction": 300,
+          "ef": 200,
+          "sq_type": "SQ8",
+          "refine": false,
+          "refine_type": "FP32",
+          "refine_k": 1.0
+        },
+        "case_config": {
+          "case_id": 4,
+          "custom_case": {},
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 1459.7483,
+        "optimize_duration": 7524.2304,
+        "load_duration": 8983.9787,
+        "qps": 1552.4803,
+        "serial_latency_p99": 0.004,
+        "serial_latency_p95": 0.0037,
+        "recall": 0.9565,
+        "ndcg": 0.9605,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20,
+          30,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          303.2446,
+          1078.6424,
+          1299.206,
+          1360.6235,
+          1425.268,
+          1465.3767,
+          1520.0788,
+          1552.4803
+        ],
+        "conc_latency_p99_list": [
+          0.0040712328813970085,
+          0.006725932629851741,
+          0.012099390296789348,
+          0.021067992354510352,
+          0.02953478858660674,
+          0.037649333699373524,
+          0.05402578063920373,
+          0.07030989054946984
+        ],
+        "conc_latency_p95_list": [
+          0.0038339799008099357,
+          0.005704106903795035,
+          0.01050544159807032,
+          0.01850984884877107,
+          0.02700225284861517,
+          0.034401998404064216,
+          0.04840153990226099,
+          0.06195298564853147
+        ],
+        "conc_latency_avg_list": [
+          0.003293997160806082,
+          0.004629127288807816,
+          0.00768599232973781,
+          0.014665701743116042,
+          0.02097794137202591,
+          0.027194933866063295,
+          0.03908773235524631,
+          0.050673599669096146
+        ],
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Milvus",
+        "db_config": {
+          "db_label": "16c64g-sq8-force_merge",
+          "version": "2.6.14",
+          "note": "",
+          "uri": "**********",
+          "user": null,
+          "password": null,
+          "num_shards": 1,
+          "replica_number": 1
+        },
+        "db_case_config": {
+          "index": "HNSW_SQ",
+          "metric_type": "COSINE",
+          "use_partition_key": false,
+          "M": 16,
+          "efConstruction": 300,
+          "ef": 250,
+          "sq_type": "SQ8",
+          "refine": false,
+          "refine_type": "FP32",
+          "refine_k": 1.0
+        },
+        "case_config": {
+          "case_id": 4,
+          "custom_case": {},
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 1459.7483,
+        "optimize_duration": 7524.2304,
+        "load_duration": 8983.9787,
+        "qps": 1355.3121,
+        "serial_latency_p99": 0.0044,
+        "serial_latency_p95": 0.0042,
+        "recall": 0.9602,
+        "ndcg": 0.964,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20,
+          30,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          279.2851,
+          975.7699,
+          1150.3744,
+          1187.2494,
+          1247.0213,
+          1283.8337,
+          1302.6721,
+          1355.3121
+        ],
+        "conc_latency_p99_list": [
+          0.004451236832683208,
+          0.0076792708405992016,
+          0.01329627803701441,
+          0.023810231103198035,
+          0.033509768832373055,
+          0.04278365236037641,
+          0.06259672742118709,
+          0.08097375019555315
+        ],
+        "conc_latency_p95_list": [
+          0.004183817799275858,
+          0.006473346400889567,
+          0.011516073600796517,
+          0.0212969502517808,
+          0.030741239200142444,
+          0.03883912599849282,
+          0.056272352899395625,
+          0.07115194579964736
+        ],
+        "conc_latency_avg_list": [
+          0.003576748584184128,
+          0.005118136384013237,
+          0.008682482330775591,
+          0.0168131587141993,
+          0.023978672854972592,
+          0.031007006045867456,
+          0.04562714668667405,
+          0.058088526012853484
+        ],
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Milvus",
+        "db_config": {
+          "db_label": "16c64g-sq8-force_merge",
+          "version": "2.6.14",
+          "note": "",
+          "uri": "**********",
+          "user": null,
+          "password": null,
+          "num_shards": 1,
+          "replica_number": 1
+        },
+        "db_case_config": {
+          "index": "HNSW_SQ",
+          "metric_type": "COSINE",
+          "use_partition_key": false,
+          "M": 16,
+          "efConstruction": 300,
+          "ef": 300,
+          "sq_type": "SQ8",
+          "refine": false,
+          "refine_type": "FP32",
+          "refine_k": 1.0
+        },
+        "case_config": {
+          "case_id": 4,
+          "custom_case": {},
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 1459.7483,
+        "optimize_duration": 7524.2304,
+        "load_duration": 8983.9787,
+        "qps": 1079.2123,
+        "serial_latency_p99": 0.0053,
+        "serial_latency_p95": 0.0049,
+        "recall": 0.9648,
+        "ndcg": 0.9686,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20,
+          30,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          241.6992,
+          799.4681,
+          939.7848,
+          975.2814,
+          1001.75,
+          1029.2059,
+          1065.2548,
+          1079.2123
+        ],
+        "conc_latency_p99_list": [
+          0.005288620950886979,
+          0.009748364380211563,
+          0.015409245888222355,
+          0.028667413447983563,
+          0.04076468282910357,
+          0.05202346699952616,
+          0.07527647967857774,
+          0.09870467029977587
+        ],
+        "conc_latency_p95_list": [
+          0.004910965752060292,
+          0.008243431097071152,
+          0.013543863647282705,
+          0.025803527399330048,
+          0.03817865899909521,
+          0.048153773248486686,
+          0.06777279375382932,
+          0.08822071449685609
+        ],
+        "conc_latency_avg_list": [
+          0.004132684600647634,
+          0.006247207634111248,
+          0.010625959006772904,
+          0.02046250279903178,
+          0.02985517599151899,
+          0.0386749397755516,
+          0.055773659676497576,
+          0.07301672729002262
+        ],
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Milvus",
+        "db_config": {
+          "db_label": "16c64g-sq8-force_merge",
+          "version": "2.6.14",
+          "note": "",
+          "uri": "**********",
+          "user": null,
+          "password": null,
+          "num_shards": 1,
+          "replica_number": 1
+        },
+        "db_case_config": {
+          "index": "HNSW_SQ",
+          "metric_type": "COSINE",
+          "use_partition_key": false,
+          "M": 16,
+          "efConstruction": 300,
+          "ef": 400,
+          "sq_type": "SQ8",
+          "refine": false,
+          "refine_type": "FP32",
+          "refine_k": 1.0
+        },
+        "case_config": {
+          "case_id": 4,
+          "custom_case": {},
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 1459.7483,
+        "optimize_duration": 7524.2304,
+        "load_duration": 8983.9787,
+        "qps": 876.5772,
+        "serial_latency_p99": 0.0063,
+        "serial_latency_p95": 0.0059,
+        "recall": 0.9676,
+        "ndcg": 0.9713,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20,
+          30,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          213.9083,
+          704.2348,
+          797.531,
+          821.1706,
+          825.533,
+          797.2598,
+          858.8645,
+          876.5772
+        ],
+        "conc_latency_p99_list": [
+          0.0060647999984212225,
+          0.01099963705062691,
+          0.017907913918024848,
+          0.03398729390319204,
+          0.049453794501459925,
+          0.06846078443864825,
+          0.09411621719773387,
+          0.12295867912092945
+        ],
+        "conc_latency_p95_list": [
+          0.005586325001786463,
+          0.009474276846958667,
+          0.015768809196015348,
+          0.03062209299969254,
+          0.046334437996847555,
+          0.06321956860047066,
+          0.08318591200077208,
+          0.10695994940178935
+        ],
+        "conc_latency_avg_list": [
+          0.004670567833335547,
+          0.007091383770451675,
+          0.01252405204148396,
+          0.02430557731179879,
+          0.036228697626746305,
+          0.04987607783688658,
+          0.06916092553517646,
+          0.09005697652328008
+        ],
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Milvus",
+        "db_config": {
+          "db_label": "16c64g-sq8-force_merge",
+          "version": "2.6.14",
+          "note": "",
+          "uri": "**********",
+          "user": null,
+          "password": null,
+          "num_shards": 1,
+          "replica_number": 1
+        },
+        "db_case_config": {
+          "index": "HNSW_SQ",
+          "metric_type": "COSINE",
+          "use_partition_key": false,
+          "M": 16,
+          "efConstruction": 300,
+          "ef": 500,
+          "sq_type": "SQ8",
+          "refine": false,
+          "refine_type": "FP32",
+          "refine_k": 1.0
+        },
+        "case_config": {
+          "case_id": 4,
+          "custom_case": {},
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 129.799,
+        "optimize_duration": 152.2479,
+        "load_duration": 282.0468,
+        "qps": 10663.1231,
+        "serial_latency_p99": 0.002,
+        "serial_latency_p95": 0.0018,
+        "recall": 0.8405,
+        "ndcg": 0.8674,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20,
+          30,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          592.3235,
+          2657.0693,
+          4857.6653,
+          7731.1954,
+          9035.8688,
+          9746.5046,
+          10547.8051,
+          10663.1231
+        ],
+        "conc_latency_p99_list": [
+          0.0019481061986880378,
+          0.002309793634340169,
+          0.0025996991485590097,
+          0.003907884397631278,
+          0.005842388768505771,
+          0.007729610755923204,
+          0.011498715590278154,
+          0.01563908824173267
+        ],
+        "conc_latency_p95_list": [
+          0.0018476900004316121,
+          0.0021391708025475962,
+          0.0023516209941590203,
+          0.0031451117574761156,
+          0.004541207106376533,
+          0.006081955801346338,
+          0.008940340152912542,
+          0.012104344801628029
+        ],
+        "conc_latency_avg_list": [
+          0.0016856015045043139,
+          0.0018777718208453423,
+          0.0020532305285396453,
+          0.0025771131947367317,
+          0.0033031913740212363,
+          0.0040746336526161255,
+          0.005611474910509973,
+          0.007361856948830913
+        ],
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Milvus",
+        "db_config": {
+          "db_label": "16c64g-sq4u-fp16-force_merge",
+          "version": "2.6.14",
+          "note": "",
+          "uri": "**********",
+          "user": null,
+          "password": null,
+          "num_shards": 1,
+          "replica_number": 1
+        },
+        "db_case_config": {
+          "index": "HNSW_SQ",
+          "metric_type": "COSINE",
+          "use_partition_key": false,
+          "M": 16,
+          "efConstruction": 300,
+          "ef": 100,
+          "sq_type": "SQ4U",
+          "refine": true,
+          "refine_type": "FP16",
+          "refine_k": 1.0
+        },
+        "case_config": {
+          "case_id": 5,
+          "custom_case": {},
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 129.799,
+        "optimize_duration": 152.2479,
+        "load_duration": 282.0468,
+        "qps": 10333.9072,
+        "serial_latency_p99": 0.002,
+        "serial_latency_p95": 0.0019,
+        "recall": 0.889,
+        "ndcg": 0.9058,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20,
+          30,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          568.5874,
+          2594.6923,
+          4693.0426,
+          7429.976,
+          8564.4439,
+          9136.6911,
+          9985.356,
+          10333.9072
+        ],
+        "conc_latency_p99_list": [
+          0.0020693473634310062,
+          0.0023700819991063315,
+          0.0026944835495669377,
+          0.004012327503005508,
+          0.006051957674062573,
+          0.008206313409027643,
+          0.012019852105004216,
+          0.015895357320114278
+        ],
+        "conc_latency_p95_list": [
+          0.0019474557979265227,
+          0.0021944244945188984,
+          0.002450034000503365,
+          0.003276585503044771,
+          0.004752537995955206,
+          0.006455344991991296,
+          0.009426155498658773,
+          0.012384038396703547
+        ],
+        "conc_latency_avg_list": [
+          0.0017559580574677634,
+          0.0019229909223785742,
+          0.0021257891514691474,
+          0.0026812402175934932,
+          0.0034838524012537763,
+          0.00433970032247638,
+          0.005933638012347279,
+          0.007582591068540877
+        ],
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Milvus",
+        "db_config": {
+          "db_label": "16c64g-sq4u-fp16-force_merge",
+          "version": "2.6.14",
+          "note": "",
+          "uri": "**********",
+          "user": null,
+          "password": null,
+          "num_shards": 1,
+          "replica_number": 1
+        },
+        "db_case_config": {
+          "index": "HNSW_SQ",
+          "metric_type": "COSINE",
+          "use_partition_key": false,
+          "M": 16,
+          "efConstruction": 300,
+          "ef": 100,
+          "sq_type": "SQ4U",
+          "refine": true,
+          "refine_type": "FP16",
+          "refine_k": 1.2
+        },
+        "case_config": {
+          "case_id": 5,
+          "custom_case": {},
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 129.799,
+        "optimize_duration": 152.2479,
+        "load_duration": 282.0468,
+        "qps": 9575.6863,
+        "serial_latency_p99": 0.0023,
+        "serial_latency_p95": 0.0021,
+        "recall": 0.9189,
+        "ndcg": 0.93,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20,
+          30,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          535.4941,
+          2437.6236,
+          4429.593,
+          6980.413,
+          8035.6356,
+          8594.0728,
+          9041.3709,
+          9575.6863
+        ],
+        "conc_latency_p99_list": [
+          0.002218716748757288,
+          0.002563155780226227,
+          0.0028770195422111954,
+          0.004238974919717297,
+          0.006498919794103134,
+          0.008666419192886682,
+          0.013239830499514937,
+          0.016983359853475096
+        ],
+        "conc_latency_p95_list": [
+          0.002100886751577491,
+          0.0023667280438530724,
+          0.0026158143016800747,
+          0.0034943125079735177,
+          0.005161623004823923,
+          0.006949284041184,
+          0.010531335494306404,
+          0.013410061004833551
+        ],
+        "conc_latency_avg_list": [
+          0.0018646425533687709,
+          0.0020474016047948205,
+          0.00225211486396273,
+          0.00285420751423595,
+          0.003711133378722069,
+          0.004623532072278411,
+          0.006552865012667485,
+          0.008189225702132959
+        ],
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Milvus",
+        "db_config": {
+          "db_label": "16c64g-sq4u-fp16-force_merge",
+          "version": "2.6.14",
+          "note": "",
+          "uri": "**********",
+          "user": null,
+          "password": null,
+          "num_shards": 1,
+          "replica_number": 1
+        },
+        "db_case_config": {
+          "index": "HNSW_SQ",
+          "metric_type": "COSINE",
+          "use_partition_key": false,
+          "M": 16,
+          "efConstruction": 300,
+          "ef": 100,
+          "sq_type": "SQ4U",
+          "refine": true,
+          "refine_type": "FP16",
+          "refine_k": 1.5
+        },
+        "case_config": {
+          "case_id": 5,
+          "custom_case": {},
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 129.799,
+        "optimize_duration": 152.2479,
+        "load_duration": 282.0468,
+        "qps": 8596.7694,
+        "serial_latency_p99": 0.0024,
+        "serial_latency_p95": 0.0022,
+        "recall": 0.9416,
+        "ndcg": 0.9493,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20,
+          30,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          497.6866,
+          2259.6612,
+          4114.0036,
+          6455.3584,
+          7309.2383,
+          7686.907,
+          8294.3018,
+          8596.7694
+        ],
+        "conc_latency_p99_list": [
+          0.002440318200387992,
+          0.0028159428038634342,
+          0.0031061971996678038,
+          0.004590758396079762,
+          0.00719438069412717,
+          0.009845319669257151,
+          0.014379469840059753,
+          0.018956097210466392
+        ],
+        "conc_latency_p95_list": [
+          0.0022961719951126724,
+          0.002580139000201598,
+          0.0028258040038053878,
+          0.003789236750890268,
+          0.005791235491051338,
+          0.00791677404558868,
+          0.011584387852053624,
+          0.015152870106976477
+        ],
+        "conc_latency_avg_list": [
+          0.0020063849993894605,
+          0.002208682703794502,
+          0.002425080457737401,
+          0.003086665132816786,
+          0.00408523815973775,
+          0.005170043147020008,
+          0.007138938063080818,
+          0.009125464665924427
+        ],
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Milvus",
+        "db_config": {
+          "db_label": "16c64g-sq4u-fp16-force_merge",
+          "version": "2.6.14",
+          "note": "",
+          "uri": "**********",
+          "user": null,
+          "password": null,
+          "num_shards": 1,
+          "replica_number": 1
+        },
+        "db_case_config": {
+          "index": "HNSW_SQ",
+          "metric_type": "COSINE",
+          "use_partition_key": false,
+          "M": 16,
+          "efConstruction": 300,
+          "ef": 100,
+          "sq_type": "SQ4U",
+          "refine": true,
+          "refine_type": "FP16",
+          "refine_k": 2.0
+        },
+        "case_config": {
+          "case_id": 5,
+          "custom_case": {},
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 129.799,
+        "optimize_duration": 152.2479,
+        "load_duration": 282.0468,
+        "qps": 7704.3625,
+        "serial_latency_p99": 0.0027,
+        "serial_latency_p95": 0.0025,
+        "recall": 0.9541,
+        "ndcg": 0.96,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20,
+          30,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          464.498,
+          2087.0727,
+          3811.3426,
+          5897.8764,
+          6613.5685,
+          6995.184,
+          7496.7496,
+          7704.3625
+        ],
+        "conc_latency_p99_list": [
+          0.002632544774387497,
+          0.0030649999552406367,
+          0.003373088193475267,
+          0.004990858241653769,
+          0.00786220946611138,
+          0.010790031323267592,
+          0.015690509527339604,
+          0.020764024818781757
+        ],
+        "conc_latency_p95_list": [
+          0.002470412495313212,
+          0.002798333394457586,
+          0.0030606225445808377,
+          0.004139978906459873,
+          0.006436757100163957,
+          0.008721163390146102,
+          0.012695113198424209,
+          0.016752441306016403
+        ],
+        "conc_latency_avg_list": [
+          0.002149911288992391,
+          0.0023915170520859654,
+          0.002617775435786274,
+          0.0033781344953593517,
+          0.0045130488491076,
+          0.005680457334630225,
+          0.007906434767685636,
+          0.010188877722018175
+        ],
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Milvus",
+        "db_config": {
+          "db_label": "16c64g-sq4u-fp16-force_merge",
+          "version": "2.6.14",
+          "note": "",
+          "uri": "**********",
+          "user": null,
+          "password": null,
+          "num_shards": 1,
+          "replica_number": 1
+        },
+        "db_case_config": {
+          "index": "HNSW_SQ",
+          "metric_type": "COSINE",
+          "use_partition_key": false,
+          "M": 16,
+          "efConstruction": 300,
+          "ef": 100,
+          "sq_type": "SQ4U",
+          "refine": true,
+          "refine_type": "FP16",
+          "refine_k": 2.5
+        },
+        "case_config": {
+          "case_id": 5,
+          "custom_case": {},
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 129.799,
+        "optimize_duration": 152.2479,
+        "load_duration": 282.0468,
+        "qps": 7023.6735,
+        "serial_latency_p99": 0.003,
+        "serial_latency_p95": 0.0028,
+        "recall": 0.962,
+        "ndcg": 0.9667,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20,
+          30,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          437.0253,
+          1938.4624,
+          3454.7847,
+          5460.2663,
+          6058.6283,
+          6398.7693,
+          6828.1471,
+          7023.6735
+        ],
+        "conc_latency_p99_list": [
+          0.0028729987128463105,
+          0.0033484641878749246,
+          0.0037352688424289217,
+          0.0053953273908700725,
+          0.008702208310278365,
+          0.011712039967096652,
+          0.0172460880043218,
+          0.02189830483126571
+        ],
+        "conc_latency_p95_list": [
+          0.00266674381273333,
+          0.003031579001981299,
+          0.0033792859961977225,
+          0.004472345393151045,
+          0.007129233997693518,
+          0.009540854604711059,
+          0.014027368000824936,
+          0.018085699503717478
+        ],
+        "conc_latency_avg_list": [
+          0.0022852531678980575,
+          0.0025748727575029204,
+          0.0028880249144625355,
+          0.003650684004208795,
+          0.004931203325481902,
+          0.006211804309036586,
+          0.008678531268037587,
+          0.011200709193523
+        ],
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Milvus",
+        "db_config": {
+          "db_label": "16c64g-sq4u-fp16-force_merge",
+          "version": "2.6.14",
+          "note": "",
+          "uri": "**********",
+          "user": null,
+          "password": null,
+          "num_shards": 1,
+          "replica_number": 1
+        },
+        "db_case_config": {
+          "index": "HNSW_SQ",
+          "metric_type": "COSINE",
+          "use_partition_key": false,
+          "M": 16,
+          "efConstruction": 300,
+          "ef": 100,
+          "sq_type": "SQ4U",
+          "refine": true,
+          "refine_type": "FP16",
+          "refine_k": 3.0
+        },
+        "case_config": {
+          "case_id": 5,
+          "custom_case": {},
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 129.799,
+        "optimize_duration": 152.2479,
+        "load_duration": 282.0468,
+        "qps": 6031.3725,
+        "serial_latency_p99": 0.0033,
+        "serial_latency_p95": 0.003,
+        "recall": 0.971,
+        "ndcg": 0.9743,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20,
+          30,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          375.0077,
+          1749.9239,
+          3171.188,
+          4757.8121,
+          5337.8052,
+          5585.8874,
+          5830.76,
+          6031.3725
+        ],
+        "conc_latency_p99_list": [
+          0.0034118053846759725,
+          0.00371807467265171,
+          0.004087487124343162,
+          0.006445972005603836,
+          0.0099661920015933,
+          0.013419415393291265,
+          0.01954109726633761,
+          0.02450512952229475
+        ],
+        "conc_latency_p95_list": [
+          0.0031440883423783815,
+          0.0033821857992734294,
+          0.003687061999517027,
+          0.0053249524033162745,
+          0.008198342995456187,
+          0.011055400453187756,
+          0.01616062365719699,
+          0.020329035600298084
+        ],
+        "conc_latency_avg_list": [
+          0.002663293590200931,
+          0.0028528372994040497,
+          0.0031468442372841717,
+          0.004191480480374251,
+          0.005595629037850519,
+          0.007119491187741896,
+          0.010171118781282724,
+          0.013044592076065837
+        ],
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Milvus",
+        "db_config": {
+          "db_label": "16c64g-sq4u-fp16-force_merge",
+          "version": "2.6.14",
+          "note": "",
+          "uri": "**********",
+          "user": null,
+          "password": null,
+          "num_shards": 1,
+          "replica_number": 1
+        },
+        "db_case_config": {
+          "index": "HNSW_SQ",
+          "metric_type": "COSINE",
+          "use_partition_key": false,
+          "M": 16,
+          "efConstruction": 300,
+          "ef": 100,
+          "sq_type": "SQ4U",
+          "refine": true,
+          "refine_type": "FP16",
+          "refine_k": 4.0
+        },
+        "case_config": {
+          "case_id": 5,
+          "custom_case": {},
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 129.799,
+        "optimize_duration": 152.2479,
+        "load_duration": 282.0468,
+        "qps": 5258.1868,
+        "serial_latency_p99": 0.0036,
+        "serial_latency_p95": 0.0033,
+        "recall": 0.9768,
+        "ndcg": 0.9793,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20,
+          30,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          351.2889,
+          1555.9976,
+          2891.7532,
+          4328.3041,
+          4710.0472,
+          4944.6567,
+          5159.0143,
+          5258.1868
+        ],
+        "conc_latency_p99_list": [
+          0.0036150889145210364,
+          0.004169191400287673,
+          0.004474782356992364,
+          0.00714936985692475,
+          0.011309100479702464,
+          0.014964991490269298,
+          0.02106605595399745,
+          0.02670282432547537
+        ],
+        "conc_latency_p95_list": [
+          0.0032958149939076972,
+          0.0038005771988537163,
+          0.004026532001444138,
+          0.0059051988064311445,
+          0.0093500265997136,
+          0.012421341851586474,
+          0.017624663742026314,
+          0.022111607256374555
+        ],
+        "conc_latency_avg_list": [
+          0.0028433795541688497,
+          0.003208622344277306,
+          0.0034516157786571304,
+          0.004607007276075149,
+          0.006345752606166889,
+          0.008043607402151223,
+          0.01149538342406618,
+          0.014941377751891149
+        ],
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Milvus",
+        "db_config": {
+          "db_label": "16c64g-sq4u-fp16-force_merge",
+          "version": "2.6.14",
+          "note": "",
+          "uri": "**********",
+          "user": null,
+          "password": null,
+          "num_shards": 1,
+          "replica_number": 1
+        },
+        "db_case_config": {
+          "index": "HNSW_SQ",
+          "metric_type": "COSINE",
+          "use_partition_key": false,
+          "M": 16,
+          "efConstruction": 300,
+          "ef": 100,
+          "sq_type": "SQ4U",
+          "refine": true,
+          "refine_type": "FP16",
+          "refine_k": 5.0
+        },
+        "case_config": {
+          "case_id": 5,
+          "custom_case": {},
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 119.5399,
+        "optimize_duration": 235.8939,
+        "load_duration": 355.4338,
+        "qps": 5973.0024,
+        "serial_latency_p99": 0.0024,
+        "serial_latency_p95": 0.0023,
+        "recall": 0.9192,
+        "ndcg": 0.9299,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20,
+          30,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          192.2873,
+          780.772,
+          1243.1343,
+          2209.7863,
+          5135.3255,
+          5268.6684,
+          5595.5025,
+          5973.0024
+        ],
+        "conc_latency_p99_list": [
+          0.006922555523342447,
+          0.011980964867980226,
+          0.01822498522611567,
+          0.021657125554483937,
+          0.011112995611620146,
+          0.015273953418945892,
+          0.021470034882659094,
+          0.025694710013340227
+        ],
+        "conc_latency_p95_list": [
+          0.006153562400140799,
+          0.009661811696423684,
+          0.013727128539176193,
+          0.01456564510299358,
+          0.00905536999925971,
+          0.012242838197562377,
+          0.017436827097844797,
+          0.020891863998258486
+        ],
+        "conc_latency_avg_list": [
+          0.005195547580597013,
+          0.00639603304659674,
+          0.0080334040769494,
+          0.009027100221592798,
+          0.0058122537237125,
+          0.007549590091448817,
+          0.010597991937403054,
+          0.01314884199753361
+        ],
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Milvus",
+        "db_config": {
+          "db_label": "16c64g-sq8-force_merge",
+          "version": "2.6.14",
+          "note": "",
+          "uri": "**********",
+          "user": null,
+          "password": null,
+          "num_shards": 1,
+          "replica_number": 1
+        },
+        "db_case_config": {
+          "index": "HNSW_SQ",
+          "metric_type": "COSINE",
+          "use_partition_key": false,
+          "M": 16,
+          "efConstruction": 300,
+          "ef": 100,
+          "sq_type": "SQ8",
+          "refine": false,
+          "refine_type": "FP32",
+          "refine_k": 1.0
+        },
+        "case_config": {
+          "case_id": 5,
+          "custom_case": {},
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 119.5399,
+        "optimize_duration": 235.8939,
+        "load_duration": 355.4338,
+        "qps": 5416.5758,
+        "serial_latency_p99": 0.0026,
+        "serial_latency_p95": 0.0024,
+        "recall": 0.9334,
+        "ndcg": 0.9421,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20,
+          30,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          468.5468,
+          2023.0586,
+          3273.7331,
+          4338.5873,
+          4722.177,
+          4899.851,
+          5215.5063,
+          5416.5758
+        ],
+        "conc_latency_p99_list": [
+          0.002587841608328745,
+          0.0031619464718096405,
+          0.003964070154324872,
+          0.007774805837543681,
+          0.012349921874993024,
+          0.01622475358992233,
+          0.022378725241142112,
+          0.02744747619624828
+        ],
+        "conc_latency_p95_list": [
+          0.0024390827456954867,
+          0.0029180134042690042,
+          0.0035825525046675466,
+          0.006318293401272964,
+          0.009966622248612111,
+          0.013235174745204858,
+          0.018063901497225743,
+          0.02230343740739044
+        ],
+        "conc_latency_avg_list": [
+          0.0021313683553780983,
+          0.0024673246161570224,
+          0.0030484556683506147,
+          0.0045937434301476935,
+          0.006330211445594135,
+          0.008107756352776998,
+          0.01136996968107513,
+          0.014491805104902885
+        ],
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Milvus",
+        "db_config": {
+          "db_label": "16c64g-sq8-force_merge",
+          "version": "2.6.14",
+          "note": "",
+          "uri": "**********",
+          "user": null,
+          "password": null,
+          "num_shards": 1,
+          "replica_number": 1
+        },
+        "db_case_config": {
+          "index": "HNSW_SQ",
+          "metric_type": "COSINE",
+          "use_partition_key": false,
+          "M": 16,
+          "efConstruction": 300,
+          "ef": 120,
+          "sq_type": "SQ8",
+          "refine": false,
+          "refine_type": "FP32",
+          "refine_k": 1.0
+        },
+        "case_config": {
+          "case_id": 5,
+          "custom_case": {},
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 119.5399,
+        "optimize_duration": 235.8939,
+        "load_duration": 355.4338,
+        "qps": 4771.4324,
+        "serial_latency_p99": 0.0028,
+        "serial_latency_p95": 0.0025,
+        "recall": 0.9479,
+        "ndcg": 0.9545,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20,
+          30,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          446.4305,
+          1857.0762,
+          3066.2065,
+          3959.9145,
+          4119.6984,
+          4404.2396,
+          4654.3656,
+          4771.4324
+        ],
+        "conc_latency_p99_list": [
+          0.0027465902952826583,
+          0.003445194798405282,
+          0.004290146040148099,
+          0.008809843383787666,
+          0.014246009238704564,
+          0.017628938370035024,
+          0.024053513460094107,
+          0.029474502794328145
+        ],
+        "conc_latency_p95_list": [
+          0.0025784781464608377,
+          0.0031829175946768372,
+          0.003835800604429096,
+          0.0071477785022580065,
+          0.011466846610710487,
+          0.014443101210054009,
+          0.019454453799698967,
+          0.023967151201213708
+        ],
+        "conc_latency_avg_list": [
+          0.002237092280444995,
+          0.0026882400384546624,
+          0.0032547429679731454,
+          0.005034559716886033,
+          0.007252702527297999,
+          0.009024968635487724,
+          0.012743531884434339,
+          0.016486166204689928
+        ],
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Milvus",
+        "db_config": {
+          "db_label": "16c64g-sq8-force_merge",
+          "version": "2.6.14",
+          "note": "",
+          "uri": "**********",
+          "user": null,
+          "password": null,
+          "num_shards": 1,
+          "replica_number": 1
+        },
+        "db_case_config": {
+          "index": "HNSW_SQ",
+          "metric_type": "COSINE",
+          "use_partition_key": false,
+          "M": 16,
+          "efConstruction": 300,
+          "ef": 150,
+          "sq_type": "SQ8",
+          "refine": false,
+          "refine_type": "FP32",
+          "refine_k": 1.0
+        },
+        "case_config": {
+          "case_id": 5,
+          "custom_case": {},
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 119.5399,
+        "optimize_duration": 235.8939,
+        "load_duration": 355.4338,
+        "qps": 4006.3994,
+        "serial_latency_p99": 0.0032,
+        "serial_latency_p95": 0.003,
+        "recall": 0.9609,
+        "ndcg": 0.966,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20,
+          30,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          396.0794,
+          1682.937,
+          2770.1408,
+          3415.7329,
+          3586.5656,
+          3732.9793,
+          3908.8395,
+          4006.3994
+        ],
+        "conc_latency_p99_list": [
+          0.0031631914011086342,
+          0.003759940078307404,
+          0.005007598159427288,
+          0.010577416090527546,
+          0.01645218172343448,
+          0.0200205380024272,
+          0.02614469664360513,
+          0.03247302199597469
+        ],
+        "conc_latency_p95_list": [
+          0.0029416235047392547,
+          0.0034802541093085894,
+          0.004256061747582862,
+          0.008588075407897121,
+          0.01299767559976317,
+          0.016106622002553195,
+          0.021291244098392777,
+          0.026077511996845715
+        ],
+        "conc_latency_avg_list": [
+          0.002521469348982409,
+          0.0029665274119998614,
+          0.0036030252400985627,
+          0.005839950739688844,
+          0.008331452198117406,
+          0.010640699049339198,
+          0.015161825352942679,
+          0.019627049620518894
+        ],
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Milvus",
+        "db_config": {
+          "db_label": "16c64g-sq8-force_merge",
+          "version": "2.6.14",
+          "note": "",
+          "uri": "**********",
+          "user": null,
+          "password": null,
+          "num_shards": 1,
+          "replica_number": 1
+        },
+        "db_case_config": {
+          "index": "HNSW_SQ",
+          "metric_type": "COSINE",
+          "use_partition_key": false,
+          "M": 16,
+          "efConstruction": 300,
+          "ef": 200,
+          "sq_type": "SQ8",
+          "refine": false,
+          "refine_type": "FP32",
+          "refine_k": 1.0
+        },
+        "case_config": {
+          "case_id": 5,
+          "custom_case": {},
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 119.5399,
+        "optimize_duration": 235.8939,
+        "load_duration": 355.4338,
+        "qps": 3441.7597,
+        "serial_latency_p99": 0.0035,
+        "serial_latency_p95": 0.0032,
+        "recall": 0.9682,
+        "ndcg": 0.9725,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20,
+          30,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          363.4573,
+          1530.4211,
+          2519.3499,
+          2941.0933,
+          3130.5066,
+          3239.8074,
+          3357.9662,
+          3441.7597
+        ],
+        "conc_latency_p99_list": [
+          0.003447128901898394,
+          0.004104390731372401,
+          0.005795499211671998,
+          0.012608604685810857,
+          0.018390358952165124,
+          0.02161771130544366,
+          0.029535210086614822,
+          0.03676844512228854
+        ],
+        "conc_latency_p95_list": [
+          0.0032040981095633465,
+          0.0037800333026098087,
+          0.004730919548455857,
+          0.010123601651866907,
+          0.014520535804331302,
+          0.017753759350307517,
+          0.023507353749300814,
+          0.029112758993869645
+        ],
+        "conc_latency_avg_list": [
+          0.0027478315701259456,
+          0.0032620836103758183,
+          0.003962182206516774,
+          0.006784177567489496,
+          0.009538412010322416,
+          0.012277581280440339,
+          0.017678232976666337,
+          0.022830987265851796
+        ],
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Milvus",
+        "db_config": {
+          "db_label": "16c64g-sq8-force_merge",
+          "version": "2.6.14",
+          "note": "",
+          "uri": "**********",
+          "user": null,
+          "password": null,
+          "num_shards": 1,
+          "replica_number": 1
+        },
+        "db_case_config": {
+          "index": "HNSW_SQ",
+          "metric_type": "COSINE",
+          "use_partition_key": false,
+          "M": 16,
+          "efConstruction": 300,
+          "ef": 250,
+          "sq_type": "SQ8",
+          "refine": false,
+          "refine_type": "FP32",
+          "refine_k": 1.0
+        },
+        "case_config": {
+          "case_id": 5,
+          "custom_case": {},
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 119.5399,
+        "optimize_duration": 235.8939,
+        "load_duration": 355.4338,
+        "qps": 3040.6216,
+        "serial_latency_p99": 0.0037,
+        "serial_latency_p95": 0.0035,
+        "recall": 0.9734,
+        "ndcg": 0.9771,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20,
+          30,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          323.1632,
+          1408.5716,
+          2291.0458,
+          2658.8647,
+          2809.4563,
+          2889.303,
+          2958.6865,
+          3040.6216
+        ],
+        "conc_latency_p99_list": [
+          0.0038972479960648343,
+          0.004427719511440956,
+          0.006464274920726896,
+          0.013835774816980114,
+          0.01854686296428553,
+          0.023528500349348183,
+          0.030925163915235258,
+          0.037629884978523494
+        ],
+        "conc_latency_p95_list": [
+          0.0036286949907662347,
+          0.00409807980468031,
+          0.005293481396074639,
+          0.01114347539114533,
+          0.015239884803304439,
+          0.01894600450323196,
+          0.02535856414833688,
+          0.03149616299779154
+        ],
+        "conc_latency_avg_list": [
+          0.0030909596088423805,
+          0.0035447166881325863,
+          0.004357504468202672,
+          0.007503025706852371,
+          0.010637931999990373,
+          0.013780835663880903,
+          0.02002760247152969,
+          0.02587108250217688
+        ],
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Milvus",
+        "db_config": {
+          "db_label": "16c64g-sq8-force_merge",
+          "version": "2.6.14",
+          "note": "",
+          "uri": "**********",
+          "user": null,
+          "password": null,
+          "num_shards": 1,
+          "replica_number": 1
+        },
+        "db_case_config": {
+          "index": "HNSW_SQ",
+          "metric_type": "COSINE",
+          "use_partition_key": false,
+          "M": 16,
+          "efConstruction": 300,
+          "ef": 300,
+          "sq_type": "SQ8",
+          "refine": false,
+          "refine_type": "FP32",
+          "refine_k": 1.0
+        },
+        "case_config": {
+          "case_id": 5,
+          "custom_case": {},
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 119.5399,
+        "optimize_duration": 235.8939,
+        "load_duration": 355.4338,
+        "qps": 2446.7373,
+        "serial_latency_p99": 0.0043,
+        "serial_latency_p95": 0.004,
+        "recall": 0.9791,
+        "ndcg": 0.9822,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20,
+          30,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          290.4004,
+          1199.0654,
+          1943.7472,
+          2207.5563,
+          2272.2082,
+          2361.8647,
+          2425.272,
+          2446.7373
+        ],
+        "conc_latency_p99_list": [
+          0.004225126459205057,
+          0.005225188090844314,
+          0.007753408416756429,
+          0.015723756006627808,
+          0.021543593837413895,
+          0.025226465429732312,
+          0.0348595633450895,
+          0.04409603113395864
+        ],
+        "conc_latency_p95_list": [
+          0.003936908097239211,
+          0.004869158701330889,
+          0.006411225302144882,
+          0.012806271501176525,
+          0.017710478595108724,
+          0.02138321524907951,
+          0.02917539790214505,
+          0.037459137551195454
+        ],
+        "conc_latency_avg_list": [
+          0.003439496089142086,
+          0.004164736080481502,
+          0.005136606676356694,
+          0.0090353538125237,
+          0.013157439387184814,
+          0.01685513374865052,
+          0.024467911853133933,
+          0.03215223014404708
+        ],
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Milvus",
+        "db_config": {
+          "db_label": "16c64g-sq8-force_merge",
+          "version": "2.6.14",
+          "note": "",
+          "uri": "**********",
+          "user": null,
+          "password": null,
+          "num_shards": 1,
+          "replica_number": 1
+        },
+        "db_case_config": {
+          "index": "HNSW_SQ",
+          "metric_type": "COSINE",
+          "use_partition_key": false,
+          "M": 16,
+          "efConstruction": 300,
+          "ef": 400,
+          "sq_type": "SQ8",
+          "refine": false,
+          "refine_type": "FP32",
+          "refine_k": 1.0
+        },
+        "case_config": {
+          "case_id": 5,
+          "custom_case": {},
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 119.5399,
+        "optimize_duration": 235.8939,
+        "load_duration": 355.4338,
+        "qps": 2084.6245,
+        "serial_latency_p99": 0.005,
+        "serial_latency_p95": 0.0046,
+        "recall": 0.9819,
+        "ndcg": 0.9847,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20,
+          30,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          257.7354,
+          1074.5131,
+          1699.1152,
+          1906.3127,
+          1964.552,
+          1992.5973,
+          2059.3939,
+          2084.6245
+        ],
+        "conc_latency_p99_list": [
+          0.004679669999168255,
+          0.0057560302416095515,
+          0.008956946645048449,
+          0.016920548141788453,
+          0.022776664053235435,
+          0.02843890285366797,
+          0.039300132958451285,
+          0.0494756092831085
+        ],
+        "conc_latency_p95_list": [
+          0.004424713403568603,
+          0.005422145003103651,
+          0.007496941405406687,
+          0.014108828103053384,
+          0.019311829509388187,
+          0.024556438496802002,
+          0.033556375399348325,
+          0.04314066854931297
+        ],
+        "conc_latency_avg_list": [
+          0.00387603491228106,
+          0.004647482651951955,
+          0.005875930555797928,
+          0.010467915104743828,
+          0.015220352811585824,
+          0.019988946757462604,
+          0.028783135202314097,
+          0.037787432564769345
+        ],
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Milvus",
+        "db_config": {
+          "db_label": "16c64g-sq8-force_merge",
+          "version": "2.6.14",
+          "note": "",
+          "uri": "**********",
+          "user": null,
+          "password": null,
+          "num_shards": 1,
+          "replica_number": 1
+        },
+        "db_case_config": {
+          "index": "HNSW_SQ",
+          "metric_type": "COSINE",
+          "use_partition_key": false,
+          "M": 16,
+          "efConstruction": 300,
+          "ef": 500,
+          "sq_type": "SQ8",
+          "refine": false,
+          "refine_type": "FP32",
+          "refine_k": 1.0
+        },
+        "case_config": {
+          "case_id": 5,
+          "custom_case": {},
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    }
+  ]
+}

@@ -6,7 +6,7 @@ from ..api import DBCaseConfig, DBConfig, MetricType
 
 class ChromaConfig(DBConfig):
     user: str | None = None
-    password: SecretStr | None
+    password: SecretStr | None = None
     host: SecretStr = "localhost"
     port: int = 8000
 

@@ -5,12 +5,14 @@ from ..api import DBCaseConfig, DBConfig, MetricType
 
 class TurboPufferConfig(DBConfig):
     api_key: SecretStr
-    api_base_url: str
+    region: str
+    api_base_url: str | None = None
     namespace: str = "vdbbench_test"
 
     def to_dict(self) -> dict:
         return {
             "api_key": self.api_key.get_secret_value(),
+            "region": self.region,
             "api_base_url": self.api_base_url,
             "namespace": self.namespace,
         }

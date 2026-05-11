@@ -7,7 +7,6 @@ import traceback
 from enum import Enum, auto
 
 import numpy as np
-import psutil
 
 from ..base import BaseModel
 from ..metric import Metric
@@ -16,7 +15,14 @@ from . import utils
 from .cases import Case, CaseLabel, StreamingPerformanceCase
 from .clients import DB, MetricType, api
 from .data_source import DatasetSource
-from .runner import MultiProcessingSearchRunner, ReadWriteRunner, SerialInsertRunner, SerialSearchRunner
+from .runner import (
+    ConcurrentInsertRunner,
+    MultiProcessingSearchRunner,
+    ReadWriteRunner,
+    SerialInsertRunner,
+    SerialSearchRunner,
+)
+from .utils import kill_proc_tree
 
 log = logging.getLogger(__name__)
 
@@ -225,9 +231,7 @@ class CaseRunner(BaseModel):
                     search_results = self._serial_search()
                     m.recall, m.ndcg, m.serial_latency_p99, m.serial_latency_p95 = search_results
             m.payload_profile = self.ca.payload_profile.value
-            m.payload_estimated_bytes_per_query = self.ca.estimated_payload_bytes_per_query(
-                self.config.case_config.k
-            )
+            m.payload_estimated_bytes_per_query = self.ca.estimated_payload_bytes_per_query(self.config.case_config.k)
 
         except Exception as e:
             log.warning(f"Failed to run performance case, reason = {e}")
@@ -262,7 +266,9 @@ class CaseRunner(BaseModel):
                     if deadline is not None and time.perf_counter() >= deadline:
                         break
                     batch_end = min(batch_start + self.ca.batch_size, len(metadata))
-                    insert_count, error = self.db.insert_embeddings(embeddings=embeddings[batch_start:batch_end], metadata=metadata[batch_start:batch_end])
+                    insert_count, error = self.db.insert_embeddings(
+                        embeddings=embeddings[batch_start:batch_end], metadata=metadata[batch_start:batch_end]
+                    )
                     if error is not None:
                         raise error
                     count += insert_count
@@ -272,22 +278,32 @@ class CaseRunner(BaseModel):
             status = self.db.poll_insert_readiness(count)
             searchable_started = time.perf_counter()
             while not status["fully_searchable"]:
-                time.sleep(5); status = self.db.poll_insert_readiness(count)
+                time.sleep(5)
+                status = self.db.poll_insert_readiness(count)
             indexed_started = time.perf_counter()
             while not status["fully_indexed"]:
-                time.sleep(5); status = self.db.poll_insert_readiness(count)
-        return Metric(insert_completion_seconds=round(insert_done - started, 4), searchable_after_insert_seconds=round(indexed_started - searchable_started, 4), indexed_after_searchable_seconds=round(time.perf_counter() - indexed_started, 4), additional_parameters=status.get("additional_parameters", {}))
+                time.sleep(5)
+                status = self.db.poll_insert_readiness(count)
+        return Metric(
+            inserted_count=count,
+            insert_rows_per_second=round(count / max(insert_done - started, 0.001), 4),
+            insert_completion_seconds=round(insert_done - started, 4),
+            searchable_after_insert_seconds=round(indexed_started - searchable_started, 4),
+            indexed_after_searchable_seconds=round(time.perf_counter() - indexed_started, 4),
+            additional_parameters=status.get("additional_parameters", {}),
+        )
 
     @utils.time_it
     def _load_train_data(self):
-        """Insert train data and get the insert_duration"""
+        """Insert train data concurrently and get the insert_duration"""
         try:
-            runner = SerialInsertRunner(
+            runner = ConcurrentInsertRunner(
                 self.db,
                 self.ca.dataset,
                 self.normalize,
                 self.ca.filters,
                 self.ca.load_timeout,
+                max_workers=self.config.load_concurrency or None,
             )
             runner.run()
         except Exception as e:
@@ -338,8 +354,7 @@ class CaseRunner(BaseModel):
                 return future.result(timeout=self.ca.optimize_timeout)[1]
             except TimeoutError as e:
                 log.warning(f"VectorDB optimize timeout in {self.ca.optimize_timeout}")
-                for pid, _ in executor._processes.items():
-                    psutil.Process(pid).kill()
+                kill_proc_tree(pids=list(executor._processes.keys()))
                 raise PerformanceTimeoutError from e
             except Exception as e:
                 log.warning(f"VectorDB optimize error: {e}")
