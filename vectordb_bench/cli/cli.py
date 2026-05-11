@@ -197,6 +197,10 @@ def get_custom_case_config(parameters: dict) -> dict:
         custom_case_config = {
             "payload_profile": parameters["payload_profile"],
         }
+        if parameters["cloud_filter_rate"] is not None:
+            custom_case_config["filter_rate"] = parameters["cloud_filter_rate"]
+        if parameters["cloud_label_percentage"] is not None:
+            custom_case_config["label_percentage"] = parameters["cloud_label_percentage"]
     return custom_case_config
 
 
@@ -463,10 +467,28 @@ class CommonTypedDict(TypedDict):
         str,
         click.option(
             "--payload-profile",
-            type=click.Choice(["ids_only", "vector"]),
+            type=click.Choice(["ids_only", "vector", "scalar_label"]),
             help="Response payload profile for CloudPayloadSearchCase",
             default="ids_only",
             show_default=True,
+        ),
+    ]
+    cloud_filter_rate: Annotated[
+        float | None,
+        click.option(
+            "--cloud-filter-rate",
+            type=float,
+            default=None,
+            help="Optional int filter rate for CloudPayloadSearchCase",
+        ),
+    ]
+    cloud_label_percentage: Annotated[
+        float | None,
+        click.option(
+            "--cloud-label-percentage",
+            type=float,
+            default=None,
+            help="Optional label percentage for CloudPayloadSearchCase",
         ),
     ]
 

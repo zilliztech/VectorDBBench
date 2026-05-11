@@ -136,6 +136,8 @@ class LAION(BaseDataset):
     metric_type: MetricType = MetricType.L2
     use_shuffled: bool = False
     with_gt: bool = True
+    with_scalar_labels: bool = True
+    scalar_label_percentages: list[float] = [0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5]
     _size_label: dict = {
         100_000_000: SizeLabel(100_000_000, "LARGE", 100),
     }

@@ -607,14 +607,19 @@ class CloudPayloadSearchCase(PerformanceCase):
     dataset_with_size_type: DatasetWithSizeType | None = None
     payload_profile: PayloadProfile = PayloadProfile.IDS_ONLY
     filter_rate: float | None = None
+    label_percentage: float | None = None
 
     def __init__(
         self,
         dataset_with_size_type: DatasetWithSizeType | str | None = None,
         payload_profile: PayloadProfile | str = PayloadProfile.IDS_ONLY,
         filter_rate: float | None = None,
+        label_percentage: float | None = None,
         **kwargs,
     ):
+        if filter_rate is not None and label_percentage is not None:
+            msg = "CloudPayloadSearchCase supports only one filter type per run"
+            raise ValueError(msg)
         if dataset_with_size_type is not None and not isinstance(dataset_with_size_type, DatasetWithSizeType):
             dataset_with_size_type = DatasetWithSizeType(dataset_with_size_type)
         if not isinstance(payload_profile, PayloadProfile):
@@ -645,11 +650,14 @@ class CloudPayloadSearchCase(PerformanceCase):
             dataset_with_size_type=dataset_with_size_type,
             payload_profile=payload_profile,
             filter_rate=filter_rate,
+            label_percentage=label_percentage,
             **kwargs,
         )
 
     @property
     def filters(self) -> Filter:
+        if self.label_percentage is not None:
+            return LabelFilter(label_percentage=self.label_percentage)
         if self.filter_rate is None:
             return non_filter
         int_field = self.dataset.data.train_id_field

@@ -242,7 +242,11 @@ class Milvus(VectorDB):
             raise ValueError(msg)
 
     def supports_payload_profile(self, payload_profile: PayloadProfile) -> bool:
-        return payload_profile in {PayloadProfile.IDS_ONLY, PayloadProfile.VECTOR}
+        return payload_profile in {
+            PayloadProfile.IDS_ONLY,
+            PayloadProfile.VECTOR,
+            PayloadProfile.SCALAR_LABEL,
+        }
 
     def search_embedding(
         self,
@@ -263,6 +267,8 @@ class Milvus(VectorDB):
         }
         if payload_profile == PayloadProfile.VECTOR:
             search_kwargs["output_fields"] = [self._vector_field]
+        elif payload_profile == PayloadProfile.SCALAR_LABEL:
+            search_kwargs["output_fields"] = [self._scalar_label_field]
         res = self.col.search(**search_kwargs)
 
         # Organize results.
