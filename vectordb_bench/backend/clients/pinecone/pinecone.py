@@ -64,6 +64,10 @@ class Pinecone(VectorDB):
     def optimize(self, data_size: int | None = None):
         pass
 
+    def poll_insert_readiness(self, expected_count: int) -> dict:
+        count = self.index.describe_index_stats().get("total_vector_count", 0)
+        return {"fully_searchable": count >= expected_count, "fully_indexed": count >= expected_count, "additional_parameters": {}}
+
     def insert_embeddings(
         self,
         embeddings: list[list[float]],

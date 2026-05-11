@@ -200,6 +200,9 @@ class VectorDB(ABC):
     def supports_payload_profile(self, payload_profile: PayloadProfile) -> bool:
         return payload_profile == PayloadProfile.IDS_ONLY
 
+    def poll_insert_readiness(self, expected_count: int) -> dict:
+        return {"fully_searchable": True, "fully_indexed": True, "additional_parameters": {}}
+
     @abstractmethod
     def insert_embeddings(
         self,

@@ -32,6 +32,11 @@ class Metric:
     payload_profile: str = "ids_only"
     payload_estimated_bytes_per_query: int = 0
 
+    insert_completion_seconds: float = 0.0
+    searchable_after_insert_seconds: float = 0.0
+    indexed_after_searchable_seconds: float = 0.0
+    additional_parameters: dict = field(default_factory=dict)
+
     # for streaming cases
     st_ideal_insert_duration: int = 0
     st_search_stage_list: list[int] = field(default_factory=list)

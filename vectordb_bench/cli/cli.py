@@ -201,6 +201,8 @@ def get_custom_case_config(parameters: dict) -> dict:
             custom_case_config["filter_rate"] = parameters["cloud_filter_rate"]
         if parameters["cloud_label_percentage"] is not None:
             custom_case_config["label_percentage"] = parameters["cloud_label_percentage"]
+    elif parameters["case_type"] == "CloudInsertCase":
+        custom_case_config = {"batch_size": parameters["cloud_insert_batch_size"], "duration": parameters["cloud_insert_duration"]}
     return custom_case_config
 
 
@@ -490,6 +492,14 @@ class CommonTypedDict(TypedDict):
             default=None,
             help="Optional label percentage for CloudPayloadSearchCase",
         ),
+    ]
+    cloud_insert_batch_size: Annotated[
+        int,
+        click.option("--cloud-insert-batch-size", type=int, default=5000, show_default=True, help="Insert batch size for CloudInsertCase"),
+    ]
+    cloud_insert_duration: Annotated[
+        float | None,
+        click.option("--cloud-insert-duration", type=float, default=None, help="Optional insert duration in seconds for CloudInsertCase"),
     ]
 
 

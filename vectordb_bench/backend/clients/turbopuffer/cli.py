@@ -39,6 +39,10 @@ class TurboPufferTypedDict(TypedDict):
             show_default=True,
         ),
     ]
+    disable_backpressure: Annotated[
+        bool,
+        click.option("--disable-backpressure/--enable-backpressure", type=bool, default=False, show_default=True, help="Disable Turbopuffer write backpressure"),
+    ]
 
 
 class TurboPufferIndexTypedDict(CommonTypedDict, TurboPufferTypedDict): ...
@@ -57,6 +61,6 @@ def TurboPuffer(**parameters: Unpack[TurboPufferIndexTypedDict]):
             api_base_url=parameters["api_base_url"],
             namespace=parameters["namespace"],
         ),
-        db_case_config=TurboPufferIndexConfig(),
+        db_case_config=TurboPufferIndexConfig(disable_backpressure=parameters["disable_backpressure"]),
         **parameters,
     )

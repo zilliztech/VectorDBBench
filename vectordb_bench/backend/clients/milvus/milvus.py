@@ -248,6 +248,12 @@ class Milvus(VectorDB):
             PayloadProfile.SCALAR_LABEL,
         }
 
+    def poll_insert_readiness(self, expected_count: int) -> dict:
+        assert self.col is not None
+        self.col.flush()
+        progress = utility.index_building_progress(self.collection_name, index_name=self._vector_index_name)
+        return {"fully_searchable": self.col.num_entities >= expected_count, "fully_indexed": progress.get("pending_index_rows", -1) == 0, "additional_parameters": {}}
+
     def search_embedding(
         self,
         query: list[float],

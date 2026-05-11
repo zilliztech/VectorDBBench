@@ -58,6 +58,7 @@ class CaseType(Enum):
 
     NewIntFilterPerformanceCase = 400
     CloudPayloadSearchCase = 500
+    CloudInsertCase = 600
 
     def case_cls(self, custom_configs: dict | None = None) -> type["Case"]:
         if custom_configs is None:
@@ -81,6 +82,7 @@ class CaseLabel(Enum):
     Load = auto()
     Performance = auto()
     Streaming = auto()
+    CloudInsert = auto()
 
 
 class Case(BaseModel):
@@ -665,6 +667,16 @@ class CloudPayloadSearchCase(PerformanceCase):
         return NewIntFilter(filter_rate=self.filter_rate, int_field=int_field, int_value=int_value)
 
 
+class CloudInsertCase(Case):
+    case_id: CaseType = CaseType.CloudInsertCase
+    label: CaseLabel = CaseLabel.CloudInsert
+    batch_size: int
+    duration: float | None = None
+
+    def __init__(self, batch_size: int, duration: float | None = None, **kwargs):
+        super().__init__(name=f"Cloud Insert - batch {batch_size}", description="Cloud leaderboard insert-only case with readiness polling.", dataset=Dataset.LAION.manager(100_000_000), batch_size=batch_size, duration=duration, **kwargs)
+
+
 class LabelFilterPerformanceCase(PerformanceCase):
     case_id: CaseType = CaseType.LabelFilterPerformanceCase
     dataset_with_size_type: DatasetWithSizeType
@@ -727,4 +739,5 @@ type2case = {
     CaseType.NewIntFilterPerformanceCase: NewIntFilterPerformanceCase,
     CaseType.LabelFilterPerformanceCase: LabelFilterPerformanceCase,
     CaseType.CloudPayloadSearchCase: CloudPayloadSearchCase,
+    CaseType.CloudInsertCase: CloudInsertCase,
 }

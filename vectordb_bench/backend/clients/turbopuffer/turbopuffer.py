@@ -13,6 +13,7 @@ from vectordb_bench.backend.payload import PayloadProfile
 from ..api import VectorDB
 
 log = logging.getLogger(__name__)
+TURBOPUFFER_SEARCHABLE_UNINDEXED_BYTES = 2 * 1024 * 1024 * 1024
 
 
 class TurboPuffer(VectorDB):
@@ -85,6 +86,7 @@ class TurboPuffer(VectorDB):
                         self._scalar_label_field: labels_data,
                     },
                     distance_metric=self.metric,
+                    disable_backpressure=self.db_case_config.disable_backpressure,
                 )
             else:
                 self.ns.write(
@@ -93,6 +95,7 @@ class TurboPuffer(VectorDB):
                         self._vector_field: embeddings,
                     },
                     distance_metric=self.metric,
+                    disable_backpressure=self.db_case_config.disable_backpressure,
                 )
         except Exception as e:
             log.warning(f"Failed to insert. Error: {e}")
@@ -100,6 +103,13 @@ class TurboPuffer(VectorDB):
 
     def supports_payload_profile(self, payload_profile: PayloadProfile) -> bool:
         return payload_profile in {PayloadProfile.IDS_ONLY, PayloadProfile.VECTOR}
+
+    def poll_insert_readiness(self, expected_count: int) -> dict:
+        metadata = self.ns.metadata()
+        if not isinstance(metadata, dict):
+            metadata = metadata.model_dump() if hasattr(metadata, "model_dump") else vars(metadata)
+        unindexed_bytes = metadata.get("unindexed_bytes", 0)
+        return {"fully_searchable": unindexed_bytes <= TURBOPUFFER_SEARCHABLE_UNINDEXED_BYTES, "fully_indexed": unindexed_bytes == 0, "additional_parameters": {"disable_backpressure": self.db_case_config.disable_backpressure}}
 
     def search_embedding(
         self,

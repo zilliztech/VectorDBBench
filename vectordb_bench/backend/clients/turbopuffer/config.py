@@ -20,6 +20,7 @@ class TurboPufferIndexConfig(BaseModel, DBCaseConfig):
     metric_type: MetricType | None = None
     use_multi_ns_for_filter: bool = False
     time_wait_warmup: int = 60 * 1  # 1min
+    disable_backpressure: bool = False
 
     def parse_metric(self) -> str:
         if self.metric_type == MetricType.COSINE:
