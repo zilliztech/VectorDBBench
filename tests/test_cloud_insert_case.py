@@ -1,18 +1,23 @@
 from contextlib import contextmanager
 
+import numpy as np
 import polars as pl
 
 from vectordb_bench.cli.cli import get_custom_case_config
+from vectordb_bench.backend.assembler import Assembler
 from vectordb_bench.backend.cases import CaseLabel, CaseType, CloudInsertCase
+from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.clients.api import EmptyDBCaseConfig, VectorDB
 from vectordb_bench.backend.dataset import DatasetWithSizeType
+from vectordb_bench.backend.data_source import DatasetSource
 from vectordb_bench.backend.clients.milvus.milvus import Milvus
 from vectordb_bench.backend.clients.pinecone.pinecone import Pinecone
 from vectordb_bench.backend.clients.turbopuffer.config import TurboPufferIndexConfig
 from vectordb_bench.backend.clients.turbopuffer.turbopuffer import TurboPuffer
+from vectordb_bench.backend.clients.zilliz_cloud.config import AutoIndexConfig, ZillizCloudConfig
 from vectordb_bench.backend.task_runner import CaseRunner
 from vectordb_bench.metric import Metric
-from vectordb_bench.models import CaseConfig
+from vectordb_bench.models import CaseConfig, TaskConfig, TaskStage
 
 
 def test_cloud_insert_case_defaults_to_laion_100m():
@@ -56,6 +61,27 @@ def test_cli_builds_cloud_insert_custom_case_config():
         "duration": 1800,
         "dataset_with_size_type": DatasetWithSizeType.CohereMedium.value,
     }
+
+
+def test_assembler_schedules_cloud_insert_case():
+    task = TaskConfig(
+        db=DB.ZillizCloud,
+        db_config=ZillizCloudConfig(uri="https://example.com", user="db_admin"),
+        db_case_config=AutoIndexConfig(),
+        case_config=CaseConfig(
+            case_id=CaseType.CloudInsertCase,
+            custom_case={
+                "batch_size": 1000,
+                "dataset_with_size_type": DatasetWithSizeType.CohereMedium.value,
+            },
+        ),
+        stages=[TaskStage.DROP_OLD, TaskStage.LOAD],
+    )
+
+    runner = Assembler.assemble_all("run-id", "task-label", [task], DatasetSource.S3)
+
+    assert len(runner.case_runners) == 1
+    assert runner.case_runners[0].ca.label == CaseLabel.CloudInsert
 
 
 def test_default_insert_readiness_is_immediately_ready():
@@ -121,6 +147,49 @@ def test_turbopuffer_insert_can_disable_backpressure():
     assert db.ns.kwargs["disable_backpressure"] is True
 
 
+def test_turbopuffer_insert_serializes_numpy_vectors():
+    db = TurboPuffer.__new__(TurboPuffer)
+    db.with_scalar_labels = False
+    db._scalar_id_field = "id"
+    db._vector_field = "vector"
+    db.metric = "cosine_distance"
+    db.db_case_config = TurboPufferIndexConfig(disable_backpressure=False)
+
+    class Namespace:
+        kwargs = None
+
+        def write(self, **kwargs):
+            self.kwargs = kwargs
+
+    db.ns = Namespace()
+
+    insert_count, error = db.insert_embeddings([np.array([0.1, 0.2])], [1])
+
+    assert error is None
+    assert insert_count == 1
+    assert db.ns.kwargs["upsert_columns"]["vector"] == [[0.1, 0.2]]
+
+
+def test_turbopuffer_insert_returns_write_error():
+    db = TurboPuffer.__new__(TurboPuffer)
+    db.with_scalar_labels = False
+    db._scalar_id_field = "id"
+    db._vector_field = "vector"
+    db.metric = "cosine_distance"
+    db.db_case_config = TurboPufferIndexConfig(disable_backpressure=False)
+
+    class Namespace:
+        def write(self, **kwargs):
+            raise RuntimeError("write failed")
+
+    db.ns = Namespace()
+
+    insert_count, error = db.insert_embeddings([[0.1]], [1])
+
+    assert insert_count == 0
+    assert isinstance(error, RuntimeError)
+
+
 def test_milvus_insert_readiness_uses_entity_count_and_index_progress():
     db = Milvus.__new__(Milvus)
     db.collection_name = "c"
@@ -160,6 +229,22 @@ def test_turbopuffer_insert_readiness_uses_unindexed_bytes():
     assert status["fully_searchable"] is True
     assert status["fully_indexed"] is False
     assert status["additional_parameters"] == {"disable_backpressure": True}
+
+
+def test_turbopuffer_insert_readiness_uses_nested_unindexed_bytes():
+    db = TurboPuffer.__new__(TurboPuffer)
+    db.db_case_config = TurboPufferIndexConfig(disable_backpressure=False)
+    db.ns = type(
+        "Namespace",
+        (),
+        {"metadata": lambda self: {"index": {"status": "updating", "unindexed_bytes": 1}}},
+    )()
+
+    status = db.poll_insert_readiness(10)
+
+    assert status["fully_searchable"] is True
+    assert status["fully_indexed"] is False
+    assert status["additional_parameters"] == {"disable_backpressure": False}
 
 
 def test_cloud_insert_runner_records_insert_and_readiness_metrics(monkeypatch):

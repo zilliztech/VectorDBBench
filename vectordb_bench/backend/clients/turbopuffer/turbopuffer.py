@@ -83,12 +83,13 @@ class TurboPuffer(VectorDB):
         labels_data: list[str] | None = None,
         **kwargs,
     ) -> tuple[int, Exception]:
+        vectors = [embedding.tolist() if hasattr(embedding, "tolist") else embedding for embedding in embeddings]
         try:
             if self.with_scalar_labels:
                 self.ns.write(
                     upsert_columns={
                         self._scalar_id_field: metadata,
-                        self._vector_field: embeddings,
+                        self._vector_field: vectors,
                         self._scalar_label_field: labels_data,
                     },
                     distance_metric=self.metric,
@@ -98,13 +99,14 @@ class TurboPuffer(VectorDB):
                 self.ns.write(
                     upsert_columns={
                         self._scalar_id_field: metadata,
-                        self._vector_field: embeddings,
+                        self._vector_field: vectors,
                     },
                     distance_metric=self.metric,
                     disable_backpressure=self.db_case_config.disable_backpressure,
                 )
         except Exception as e:
             log.warning(f"Failed to insert. Error: {e}")
+            return 0, e
         return len(embeddings), None
 
     def supports_payload_profile(self, payload_profile: PayloadProfile) -> bool:
@@ -114,7 +116,10 @@ class TurboPuffer(VectorDB):
         metadata = self.ns.metadata()
         if not isinstance(metadata, dict):
             metadata = metadata.model_dump() if hasattr(metadata, "model_dump") else vars(metadata)
-        unindexed_bytes = metadata.get("unindexed_bytes", 0)
+        index = metadata.get("index", {})
+        if not isinstance(index, dict):
+            index = index.model_dump() if hasattr(index, "model_dump") else vars(index)
+        unindexed_bytes = metadata.get("unindexed_bytes", index.get("unindexed_bytes", 0))
         return {
             "fully_searchable": unindexed_bytes <= TURBOPUFFER_SEARCHABLE_UNINDEXED_BYTES,
             "fully_indexed": unindexed_bytes == 0,

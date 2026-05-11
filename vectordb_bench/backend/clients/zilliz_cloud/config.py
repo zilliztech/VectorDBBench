@@ -14,7 +14,7 @@ class ZillizCloudConfig(DBConfig):
 
     @staticmethod
     def common_long_configs() -> list[str]:
-        return DBConfig.common_long_configs() + ["user", "password", "token"]
+        return [*DBConfig.common_long_configs(), "user", "password", "token"]
 
     def to_dict(self) -> dict:
         return {

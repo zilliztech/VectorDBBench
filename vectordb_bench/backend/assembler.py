@@ -48,6 +48,7 @@ class Assembler:
         load_runners = [r for r in runners if r.ca.label == CaseLabel.Load]
         perf_runners = [r for r in runners if r.ca.label == CaseLabel.Performance]
         streaming_runners = [r for r in runners if r.ca.label == CaseLabel.Streaming]
+        cloud_insert_runners = [r for r in runners if r.ca.label == CaseLabel.CloudInsert]
 
         # group by db
         db2runner: dict[DB, list[CaseRunner]] = {}
@@ -71,6 +72,7 @@ class Assembler:
         all_runners = []
         all_runners.extend(load_runners)
         all_runners.extend(streaming_runners)
+        all_runners.extend(cloud_insert_runners)
         for v in db2runner.values():
             all_runners.extend(v)
 

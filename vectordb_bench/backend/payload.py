@@ -17,4 +17,5 @@ class PayloadProfile(StrEnum):
             return k * (id_distance_bytes + dim * 4)
         if self == PayloadProfile.SCALAR_LABEL:
             return k * (id_distance_bytes + scalar_label_bytes)
-        raise ValueError(f"Unsupported payload profile: {self}")
+        msg = f"Unsupported payload profile: {self}"
+        raise ValueError(msg)

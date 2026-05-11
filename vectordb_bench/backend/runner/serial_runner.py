@@ -8,7 +8,7 @@ import traceback
 import numpy as np
 
 from vectordb_bench.backend.dataset import DatasetManager
-from vectordb_bench.backend.filter import Filter, FilterOp, non_filter
+from vectordb_bench.backend.filter import Filter, non_filter
 from vectordb_bench.backend.payload import PayloadProfile
 
 from ... import config
