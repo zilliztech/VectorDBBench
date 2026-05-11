@@ -135,7 +135,14 @@ class TurboPufferIndexTypedDict(CommonTypedDict, TurboPufferTypedDict): ...
 
 
 class TurboPufferUnpinTypedDict(TypedDict):
-    """Options for explicit TurboPuffer namespace pinning cleanup."""
+    """Options for explicit TurboPuffer namespace pinning cleanup.
+
+    Namespace pinning is persistent service state: enabling it before a benchmark
+    reserves replicas for the namespace until it is cleared.  Unpinning is kept
+    as a separate command so failed or interrupted benchmark runs can be cleaned
+    up later, and so a billing-affecting teardown action is not hidden behind
+    ordinary benchmark flags.
+    """
 
     api_key: ApiKeyOption
     region: RegionOption
