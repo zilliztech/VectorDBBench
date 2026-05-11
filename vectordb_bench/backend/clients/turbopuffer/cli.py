@@ -13,43 +13,58 @@ from .. import DB
 
 DEFAULT_PIN_TIMEOUT = 45 * 60
 
+ApiKeyOption = Annotated[
+    str,
+    click.option("--api-key", type=str, help="TurboPuffer API key", required=True),
+]
+RegionOption = Annotated[
+    str,
+    click.option(
+        "--region",
+        type=str,
+        help="TurboPuffer region (e.g. aws-us-east-1, gcp-us-central1)",
+        required=True,
+    ),
+]
+ApiBaseUrlOption = Annotated[
+    str,
+    click.option(
+        "--api-base-url",
+        type=str,
+        help="Override the region-based API URL",
+        required=False,
+        default="",
+        show_default=False,
+    ),
+]
+NamespaceOption = Annotated[
+    str,
+    click.option(
+        "--namespace",
+        type=str,
+        help="TurboPuffer namespace",
+        required=False,
+        default="vdbbench_test",
+        show_default=True,
+    ),
+]
+PinTimeoutOption = Annotated[
+    int,
+    click.option(
+        "--pin-timeout",
+        type=click.IntRange(min=1),
+        default=DEFAULT_PIN_TIMEOUT,
+        show_default=True,
+        help="Seconds to wait for TurboPuffer namespace pinning or unpinning to complete",
+    ),
+]
+
 
 class TurboPufferTypedDict(TypedDict):
-    api_key: Annotated[
-        str,
-        click.option("--api-key", type=str, help="TurboPuffer API key", required=True),
-    ]
-    region: Annotated[
-        str,
-        click.option(
-            "--region",
-            type=str,
-            help="TurboPuffer region (e.g. aws-us-east-1, gcp-us-central1)",
-            required=True,
-        ),
-    ]
-    api_base_url: Annotated[
-        str,
-        click.option(
-            "--api-base-url",
-            type=str,
-            help="Override the region-based API URL",
-            required=False,
-            default="",
-            show_default=False,
-        ),
-    ]
-    namespace: Annotated[
-        str,
-        click.option(
-            "--namespace",
-            type=str,
-            help="TurboPuffer namespace",
-            required=False,
-            default="vdbbench_test",
-            show_default=True,
-        ),
-    ]
+    api_key: ApiKeyOption
+    region: RegionOption
+    api_base_url: ApiBaseUrlOption
+    namespace: NamespaceOption
     pin_namespace: Annotated[
         bool,
         click.option(
@@ -69,27 +84,18 @@ class TurboPufferTypedDict(TypedDict):
             help="Number of TurboPuffer pinning replicas to request",
         ),
     ]
-    pin_timeout: Annotated[
-        int,
-        click.option(
-            "--pin-timeout",
-            type=click.IntRange(min=1),
-            default=DEFAULT_PIN_TIMEOUT,
-            show_default=True,
-            help="Seconds to wait for TurboPuffer namespace pinning or unpinning to complete",
-        ),
-    ]
+    pin_timeout: PinTimeoutOption
 
 
 class TurboPufferIndexTypedDict(CommonTypedDict, TurboPufferTypedDict): ...
 
 
 class TurboPufferUnpinTypedDict(TypedDict):
-    api_key: TurboPufferTypedDict.__annotations__["api_key"]
-    region: TurboPufferTypedDict.__annotations__["region"]
-    api_base_url: TurboPufferTypedDict.__annotations__["api_base_url"]
-    namespace: TurboPufferTypedDict.__annotations__["namespace"]
-    pin_timeout: TurboPufferTypedDict.__annotations__["pin_timeout"]
+    api_key: ApiKeyOption
+    region: RegionOption
+    api_base_url: ApiBaseUrlOption
+    namespace: NamespaceOption
+    pin_timeout: PinTimeoutOption
 
 
 def pin_namespace_once(parameters: TurboPufferIndexTypedDict):

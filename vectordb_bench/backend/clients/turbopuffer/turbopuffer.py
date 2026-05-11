@@ -4,6 +4,7 @@ import logging
 import time
 from contextlib import contextmanager
 from json import dumps, loads
+from typing import Any
 from urllib.error import HTTPError
 from urllib.parse import quote
 from urllib.request import Request, urlopen
@@ -21,11 +22,16 @@ PINNING_TIMEOUT = 45 * 60
 
 
 def namespace_metadata_request(
-    api_key: str, region: str, namespace: str, method: str, payload=None, api_base_url=None
+    api_key: str,
+    region: str,
+    namespace: str,
+    method: str,
+    payload: dict[str, Any] | None = None,
+    api_base_url: str | None = None,
 ) -> dict:
     base_url = api_base_url or f"https://{region}.turbopuffer.com"
     url = f"{base_url.rstrip('/')}/v1/namespaces/{quote(namespace, safe='')}/metadata"
-    req = Request(
+    req = Request(  # noqa: S310
         url,
         data=dumps(payload).encode() if payload is not None else None,
         method=method,
@@ -35,11 +41,12 @@ def namespace_metadata_request(
         },
     )
     try:
-        with urlopen(req, timeout=60) as resp:
+        with urlopen(req, timeout=60) as resp:  # noqa: S310
             return loads(resp.read().decode() or "{}")
     except HTTPError as e:
         detail = e.read().decode(errors="replace")
-        raise RuntimeError(f"Failed to update TurboPuffer namespace metadata: {e.code} {detail}") from e
+        msg = f"Failed to update TurboPuffer namespace metadata: {e.code} {detail}"
+        raise RuntimeError(msg) from e
 
 
 def wait_for_namespace_pinning(
@@ -47,7 +54,7 @@ def wait_for_namespace_pinning(
     region: str,
     namespace: str,
     replicas: int | None,
-    api_base_url=None,
+    api_base_url: str | None = None,
     timeout: int = PINNING_TIMEOUT,
 ) -> dict:
     deadline = time.monotonic() + timeout
@@ -62,7 +69,8 @@ def wait_for_namespace_pinning(
             if pinning and pinning.get("replicas") == replicas and status.get("ready_replicas") == replicas:
                 return meta
         if time.monotonic() >= deadline:
-            raise TimeoutError(f"Timed out waiting for TurboPuffer pinning state on namespace {namespace}")
+            msg = f"Timed out waiting for TurboPuffer pinning state on namespace {namespace}"
+            raise TimeoutError(msg)
         log.info("Waiting for TurboPuffer pinning state: %s", pinning)
         time.sleep(PINNING_POLL_INTERVAL)
 
