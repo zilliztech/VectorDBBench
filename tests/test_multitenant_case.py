@@ -232,3 +232,26 @@ def test_turbopuffer_groups_multitenant_insert_and_search(monkeypatch):
     assert fake_client.namespaces["mt_tenant_0000"].write_calls[0]["upsert_columns"]["id"] == [0, 2]
     assert fake_client.namespaces["mt_tenant_0001"].write_calls[0]["upsert_columns"]["id"] == [1]
     assert fake_client.namespaces["mt_tenant_0001"].query_calls
+
+
+def test_turbopuffer_supports_scalar_label_payload_for_multitenant_search() -> None:
+    from vectordb_bench.backend.clients.turbopuffer.turbopuffer import TurboPuffer
+
+    fake_client = FakeTurboClient()
+    db = TurboPuffer.__new__(TurboPuffer)
+    db.client = fake_client
+    db.namespace = "single"
+    db.multitenant_namespace_prefix = "mt_"
+    db._ns_cache = {}
+    db._vector_field = "vector"
+    db._scalar_label_field = "label"
+    db.expr = None
+
+    assert db.supports_payload_profile(PayloadProfile.SCALAR_LABEL)
+    assert db.search_embedding(
+        [1.0, 0.0],
+        k=50,
+        payload_profile=PayloadProfile.SCALAR_LABEL,
+        tenant="tenant_0001",
+    ) == [10]
+    assert fake_client.namespaces["mt_tenant_0001"].query_calls[0]["include_attributes"] == ["label"]

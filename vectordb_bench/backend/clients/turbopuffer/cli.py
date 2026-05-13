@@ -10,6 +10,7 @@ from ....cli.cli import (
     run,
 )
 from .. import DB
+from ..api import MetricType
 
 
 class TurboPufferTypedDict(TypedDict):
@@ -48,6 +49,28 @@ class TurboPufferTypedDict(TypedDict):
             show_default=True,
         ),
     ]
+    multitenant_namespace_prefix: Annotated[
+        str,
+        click.option(
+            "--multitenant-namespace-prefix",
+            type=str,
+            help="Namespace prefix for CloudMultiTenantSearchCase tenant namespaces",
+            required=False,
+            default="vdbbench_mt_",
+            show_default=True,
+        ),
+    ]
+    metric_type: Annotated[
+        str,
+        click.option(
+            "--metric-type",
+            type=click.Choice([MetricType.COSINE.value, MetricType.L2.value]),
+            help="TurboPuffer distance metric type",
+            required=False,
+            default=MetricType.COSINE.value,
+            show_default=True,
+        ),
+    ]
     disable_backpressure: Annotated[
         bool,
         click.option(
@@ -76,7 +99,11 @@ def TurboPuffer(**parameters: Unpack[TurboPufferIndexTypedDict]):
             region=parameters["region"],
             api_base_url=parameters["api_base_url"] or None,
             namespace=parameters["namespace"],
+            multitenant_namespace_prefix=parameters["multitenant_namespace_prefix"],
         ),
-        db_case_config=TurboPufferIndexConfig(disable_backpressure=parameters["disable_backpressure"]),
+        db_case_config=TurboPufferIndexConfig(
+            metric_type=MetricType(parameters["metric_type"]),
+            disable_backpressure=parameters["disable_backpressure"],
+        ),
         **parameters,
     )

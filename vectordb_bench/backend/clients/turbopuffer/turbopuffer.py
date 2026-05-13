@@ -159,7 +159,11 @@ class TurboPuffer(VectorDB):
         return len(embeddings), None
 
     def supports_payload_profile(self, payload_profile: PayloadProfile) -> bool:
-        return payload_profile in {PayloadProfile.IDS_ONLY, PayloadProfile.VECTOR}
+        return payload_profile in {
+            PayloadProfile.IDS_ONLY,
+            PayloadProfile.SCALAR_LABEL,
+            PayloadProfile.VECTOR,
+        }
 
     def poll_insert_readiness(self, expected_count: int) -> dict:
         if getattr(self, "multitenant_tenant_labels", []):
@@ -212,6 +216,8 @@ class TurboPuffer(VectorDB):
         }
         if payload_profile == PayloadProfile.VECTOR:
             query_kwargs["include_attributes"] = [self._vector_field]
+        elif payload_profile == PayloadProfile.SCALAR_LABEL:
+            query_kwargs["include_attributes"] = [self._scalar_label_field]
         res = self._namespace_for_tenant(tenant).query(**query_kwargs)
         return [int(row.id) for row in res.rows] if res.rows is not None else []
 
