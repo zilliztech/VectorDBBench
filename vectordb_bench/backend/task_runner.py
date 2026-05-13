@@ -16,6 +16,7 @@ from .cases import Case, CaseLabel, StreamingPerformanceCase
 from .clients import DB, MetricType, api
 from .data_source import DatasetSource
 from .runner import (
+    ColdWarmSearchRunner,
     ConcurrentInsertRunner,
     MultiProcessingSearchRunner,
     ReadWriteRunner,
@@ -57,6 +58,7 @@ class CaseRunner(BaseModel):
     search_runner: MultiProcessingSearchRunner | None = None
     final_search_runner: MultiProcessingSearchRunner | None = None
     read_write_runner: ReadWriteRunner | None = None
+    cold_warm_search_runner: ColdWarmSearchRunner | None = None
 
     def __eq__(self, obj: any):
         if isinstance(obj, CaseRunner):
@@ -163,6 +165,8 @@ class CaseRunner(BaseModel):
             return self._run_streaming_case()
         if self.ca.label == CaseLabel.CloudInsert:
             return self._run_cloud_insert_case()
+        if self.ca.label == CaseLabel.CloudColdLatency:
+            return self._run_cloud_cold_latency_case(drop_old)
         msg = f"unknown case type: {self.ca.label}"
         log.warning(msg)
         raise ValueError(msg)
@@ -286,6 +290,51 @@ class CaseRunner(BaseModel):
             indexed_after_searchable_seconds=round(time.perf_counter() - indexed_started, 4),
             additional_parameters=status.get("additional_parameters", {}),
         )
+
+    def _init_cold_warm_search_runner(self) -> None:
+        if self.normalize:
+            test_emb = np.stack(self.ca.dataset.test_data)
+            test_emb = test_emb / np.linalg.norm(test_emb, axis=1)[:, np.newaxis]
+            self.test_emb = test_emb.tolist()
+        else:
+            self.test_emb = self.ca.dataset.test_data
+
+        self.cold_warm_search_runner = ColdWarmSearchRunner(
+            db=self.db,
+            test_data=self.test_emb,
+            filters=self.ca.filters,
+            k=self.config.case_config.k,
+            payload_profile=self.ca.payload_profile,
+            query_count=self.ca.query_count,
+        )
+
+    def _run_cloud_cold_latency_case(self, drop_old: bool = True) -> Metric:
+        log.info("Start cloud cold latency case")
+        try:
+            m = Metric()
+            if drop_old:
+                if TaskStage.LOAD in self.config.stages:
+                    _, load_dur = self._load_train_data()
+                    build_dur = self._optimize()
+                    m.insert_duration = round(load_dur, 4)
+                    m.optimize_duration = round(build_dur, 4)
+                    m.load_duration = round(load_dur + build_dur, 4)
+                else:
+                    log.info("Data loading skipped")
+
+            self._init_cold_warm_search_runner()
+            m.additional_parameters = {
+                "cold_latency": self.cold_warm_search_runner.run(),
+            }
+            m.payload_profile = self.ca.payload_profile.value
+            m.payload_estimated_bytes_per_query = self.ca.estimated_payload_bytes_per_query(self.config.case_config.k)
+        except Exception as e:
+            log.warning(f"Failed to run cloud cold latency case, reason = {e}")
+            traceback.print_exc()
+            raise e from None
+        else:
+            log.info(f"Cloud cold latency case got result: {m}")
+            return m
 
     @utils.time_it
     def _load_train_data(self):

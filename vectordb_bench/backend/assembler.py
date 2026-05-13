@@ -49,10 +49,13 @@ class Assembler:
         perf_runners = [r for r in runners if r.ca.label == CaseLabel.Performance]
         streaming_runners = [r for r in runners if r.ca.label == CaseLabel.Streaming]
         cloud_insert_runners = [r for r in runners if r.ca.label == CaseLabel.CloudInsert]
+        cloud_cold_latency_runners = [r for r in runners if r.ca.label == CaseLabel.CloudColdLatency]
+
+        search_filter_runners = [*perf_runners, *cloud_cold_latency_runners]
 
         # group by db
         db2runner: dict[DB, list[CaseRunner]] = {}
-        for r in perf_runners:
+        for r in search_filter_runners:
             db = r.config.db
             if db not in db2runner:
                 db2runner[db] = []

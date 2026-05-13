@@ -3,13 +3,18 @@ from contextlib import contextmanager
 import numpy as np
 import pytest
 
+from vectordb_bench.backend.assembler import Assembler
 from vectordb_bench.backend.cases import CaseLabel, CaseType, CloudColdLatencyCase
+from vectordb_bench.backend.clients import DB
+from vectordb_bench.backend.clients.api import EmptyDBCaseConfig
+from vectordb_bench.backend.data_source import DatasetSource
 from vectordb_bench.backend.dataset import DatasetWithSizeType
 from vectordb_bench.backend.filter import Filter, FilterOp
 from vectordb_bench.backend.payload import PayloadProfile
 from vectordb_bench.backend.runner.cold_warm_runner import ColdWarmSearchRunner
+from vectordb_bench.backend.task_runner import CaseRunner, RunningStatus
 from vectordb_bench.cli.cli import get_custom_case_config
-from vectordb_bench.models import CaseConfig
+from vectordb_bench.models import CaseConfig, TaskConfig, TaskStage
 
 
 def test_cloud_cold_latency_case_defaults_to_laion_100m():
@@ -216,3 +221,85 @@ def test_cold_warm_runner_rejects_too_few_queries():
 
     with pytest.raises(ValueError, match="query_count=2 exceeds test_data size=1"):
         ColdWarmSearchRunner(db=db, test_data=[[0.1]], query_count=2)
+
+
+def test_assembler_schedules_cloud_cold_latency_case():
+    task = TaskConfig(
+        db=DB.Test,
+        db_config=DB.Test.config_cls(),
+        db_case_config=EmptyDBCaseConfig(),
+        case_config=CaseConfig(
+            case_id=CaseType.CloudColdLatencyCase,
+            custom_case={"query_count": 1},
+        ),
+        stages=[TaskStage.SEARCH_SERIAL],
+    )
+
+    runner = Assembler.assemble_all("run-id", "task-label", [task], DatasetSource.S3)
+
+    assert len(runner.case_runners) == 1
+    assert runner.case_runners[0].ca.label == CaseLabel.CloudColdLatency
+
+
+def test_case_runner_stores_cloud_cold_latency_metric(monkeypatch):
+    case = CloudColdLatencyCase(query_count=1)
+    task = TaskConfig(
+        db=DB.Test,
+        db_config=DB.Test.config_cls(),
+        db_case_config=EmptyDBCaseConfig(),
+        case_config=CaseConfig(
+            case_id=CaseType.CloudColdLatencyCase,
+            custom_case={"query_count": 1},
+        ),
+        stages=[TaskStage.SEARCH_SERIAL],
+    )
+    runner = CaseRunner(
+        run_id="run-id",
+        config=task,
+        ca=case,
+        status=RunningStatus.PENDING,
+        dataset_source=DatasetSource.S3,
+    )
+    runner.db = FakeColdWarmDB()
+    runner.test_emb = [[0.1]]
+
+    expected = {
+        "cold_stats": {
+            "first_query_latency": 0.2,
+            "p99_latency": 0.2,
+            "p95_latency": 0.2,
+            "avg_latency": 0.2,
+        },
+        "warm_stats": {
+            "first_query_latency": 0.1,
+            "p99_latency": 0.1,
+            "p95_latency": 0.1,
+            "avg_latency": 0.1,
+        },
+        "cold_warm_ratio": {
+            "first_query_latency_ratio": 2.0,
+            "p99_latency_ratio": 2.0,
+            "p95_latency_ratio": 2.0,
+            "avg_latency_ratio": 2.0,
+        },
+    }
+
+    class FakeRunner:
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+
+        def run(self):
+            return expected
+
+    monkeypatch.setattr("vectordb_bench.backend.task_runner.ColdWarmSearchRunner", FakeRunner)
+    monkeypatch.setattr(
+        CaseRunner,
+        "_init_cold_warm_search_runner",
+        lambda self: setattr(self, "cold_warm_search_runner", FakeRunner()),
+    )
+
+    metric = runner._run_cloud_cold_latency_case()
+
+    assert metric.additional_parameters["cold_latency"] == expected
+    assert metric.payload_profile == "ids_only"
+    assert metric.payload_estimated_bytes_per_query == case.estimated_payload_bytes_per_query(task.case_config.k)
