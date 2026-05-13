@@ -5,7 +5,7 @@ import pytest
 
 from vectordb_bench.backend.cases import CaseLabel, CaseType, CloudColdLatencyCase
 from vectordb_bench.backend.dataset import DatasetWithSizeType
-from vectordb_bench.backend.filter import FilterOp
+from vectordb_bench.backend.filter import Filter, FilterOp
 from vectordb_bench.backend.payload import PayloadProfile
 from vectordb_bench.backend.runner.cold_warm_runner import ColdWarmSearchRunner
 from vectordb_bench.cli.cli import get_custom_case_config
@@ -95,7 +95,7 @@ def test_cli_builds_cloud_cold_latency_custom_case_config():
 class FakeColdWarmDB:
     name = "FakeColdWarmDB"
 
-    def __init__(self, supported_payload_profiles=None):
+    def __init__(self, supported_payload_profiles: set[PayloadProfile] | None = None):
         self.supported_payload_profiles = supported_payload_profiles or {PayloadProfile.IDS_ONLY}
         self.calls = []
         self.prepare_filter_calls = []
@@ -109,7 +109,7 @@ class FakeColdWarmDB:
         self.init_enter_count += 1
         yield
 
-    def prepare_filter(self, filters):
+    def prepare_filter(self, filters: Filter):
         self.prepare_filter_calls.append(filters)
 
     def search_embedding(self, query: list[float], k: int = 100, **kwargs) -> list[int]:
@@ -117,7 +117,7 @@ class FakeColdWarmDB:
         return list(range(k))
 
 
-def test_cold_warm_runner_computes_stats_and_ratios(monkeypatch):
+def test_cold_warm_runner_computes_stats_and_ratios(monkeypatch: pytest.MonkeyPatch):
     db = FakeColdWarmDB()
     # Cold latencies: 0.2, 0.2, 0.2. Warm latencies: 0.1, 0.1, 0.1.
     perf_values = iter([0.0, 0.2, 0.2, 0.4, 0.4, 0.6, 0.6, 0.7, 0.7, 0.8, 0.8, 0.9])
@@ -157,7 +157,7 @@ def test_cold_warm_runner_computes_stats_and_ratios(monkeypatch):
     assert [call[0] for call in db.calls] == [[0.1], [0.2], [0.3], [0.1], [0.2], [0.3]]
 
 
-def test_cold_warm_runner_passes_payload_profile_in_both_passes(monkeypatch):
+def test_cold_warm_runner_passes_payload_profile_in_both_passes(monkeypatch: pytest.MonkeyPatch):
     db = FakeColdWarmDB(supported_payload_profiles={PayloadProfile.IDS_ONLY, PayloadProfile.VECTOR})
     perf_values = iter([0.0, 0.1, 0.1, 0.2])
     monkeypatch.setattr("vectordb_bench.backend.runner.cold_warm_runner.time.perf_counter", lambda: next(perf_values))
@@ -175,6 +175,27 @@ def test_cold_warm_runner_passes_payload_profile_in_both_passes(monkeypatch):
     assert db.calls == [
         ([0.1], 3, {"payload_profile": PayloadProfile.VECTOR}),
         ([0.1], 3, {"payload_profile": PayloadProfile.VECTOR}),
+    ]
+
+
+def test_cold_warm_runner_omits_payload_profile_for_ids_only(monkeypatch: pytest.MonkeyPatch):
+    db = FakeColdWarmDB()
+    perf_values = iter([0.0, 0.1, 0.1, 0.2])
+    monkeypatch.setattr("vectordb_bench.backend.runner.cold_warm_runner.time.perf_counter", lambda: next(perf_values))
+
+    runner = ColdWarmSearchRunner(
+        db=db,
+        test_data=[[0.1]],
+        k=3,
+        payload_profile=PayloadProfile.IDS_ONLY,
+        query_count=1,
+    )
+
+    runner.run()
+
+    assert db.calls == [
+        ([0.1], 3, {}),
+        ([0.1], 3, {}),
     ]
 
 
