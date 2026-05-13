@@ -256,25 +256,19 @@ class CaseRunner(BaseModel):
 
     def _run_cloud_insert_case(self) -> Metric:
         assert self.db is not None
-        count, started = 0, time.perf_counter()
-        deadline = None if self.ca.duration is None else started + self.ca.duration
+        started = time.perf_counter()
+        runner = ConcurrentInsertRunner(
+            self.db,
+            self.ca.dataset,
+            self.normalize,
+            self.ca.filters,
+            max_workers=self.config.load_concurrency or None,
+            batch_size=self.ca.batch_size,
+            duration=self.ca.duration,
+        )
+        count = runner.task()
+        insert_done = time.perf_counter()
         with self.db.init():
-            for data_df in self.ca.dataset:
-                metadata = data_df[self.ca.dataset.data.train_id_field].to_list()
-                embeddings = data_df[self.ca.dataset.data.train_vector_field].to_list()
-                for batch_start in range(0, len(metadata), self.ca.batch_size):
-                    if deadline is not None and time.perf_counter() >= deadline:
-                        break
-                    batch_end = min(batch_start + self.ca.batch_size, len(metadata))
-                    insert_count, error = self.db.insert_embeddings(
-                        embeddings=embeddings[batch_start:batch_end], metadata=metadata[batch_start:batch_end]
-                    )
-                    if error is not None:
-                        raise error
-                    count += insert_count
-                if deadline is not None and time.perf_counter() >= deadline:
-                    break
-            insert_done = time.perf_counter()
             status = self.db.poll_insert_readiness(count)
             searchable_started = time.perf_counter()
             while not status["fully_searchable"]:

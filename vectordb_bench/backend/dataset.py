@@ -340,6 +340,9 @@ class DatasetManager(BaseModel):
     def __iter__(self):
         return DataSetIterator(self)
 
+    def iter_batches(self, batch_size: int):
+        return DataSetIterator(self, batch_size=batch_size)
+
     # TODO passing use_shuffle from outside
     def prepare(
         self,
@@ -404,8 +407,9 @@ class DatasetManager(BaseModel):
 
 
 class DataSetIterator:
-    def __init__(self, dataset: DatasetManager):
+    def __init__(self, dataset: DatasetManager, batch_size: int = config.NUM_PER_BATCH):
         self._ds = dataset
+        self._batch_size = batch_size
         self._idx = 0  # file number
         self._cur = None
         self._sub_idx = [0 for i in range(len(self._ds.train_files))]  # iter num for each file
@@ -431,7 +435,7 @@ class DataSetIterator:
             msg = f"No such file: {p}"
             log.warning(msg)
             raise IndexError(msg)
-        return ParquetFile(p, memory_map=True, pre_buffer=True).iter_batches(config.NUM_PER_BATCH)
+        return ParquetFile(p, memory_map=True, pre_buffer=True).iter_batches(self._batch_size)
 
     def __next__(self) -> pd.DataFrame:
         """return the data in the next file of the training list"""

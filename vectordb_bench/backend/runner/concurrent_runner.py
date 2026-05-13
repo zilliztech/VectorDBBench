@@ -64,6 +64,8 @@ class ConcurrentInsertRunner:
         timeout: float | None = None,
         max_workers: int | None = None,
         backend: ExecutorBackend = ExecutorBackend.THREADING,
+        batch_size: int = config.NUM_PER_BATCH,
+        duration: float | None = None,
     ):
         self.timeout = timeout if isinstance(timeout, int | float) else None
         self.dataset: DatasetManager = dataset
@@ -71,6 +73,8 @@ class ConcurrentInsertRunner:
         self.normalize = normalize
         self.filters = filters
         self.backend = backend
+        self.batch_size = batch_size
+        self.duration = duration if isinstance(duration, int | float) else None
 
         effective_workers = max_workers or min(mp.cpu_count(), 4)
         if not db.thread_safe:
@@ -143,6 +147,8 @@ class ConcurrentInsertRunner:
         Thread-safe: only one thread reads from the iterator at a time.
         Returns None when the iterator is exhausted.
         """
+        if self._deadline is not None and time.perf_counter() >= self._deadline:
+            return None
         with self._iter_lock:
             try:
                 data_df = next(self._dataset_iter)
@@ -181,12 +187,13 @@ class ConcurrentInsertRunner:
         """Insert entire dataset using concurrent executor. Runs in subprocess."""
         count = 0
         self._iter_lock = threading.Lock()
-        self._dataset_iter = iter(self.dataset)
+        self._deadline = None if self.duration is None else time.perf_counter() + self.duration
+        self._dataset_iter = self.dataset.iter_batches(self.batch_size)
 
         with self.db.init():
             log.info(
                 f"({mp.current_process().name:16}) Start concurrent insert, "
-                f"batch_size={config.NUM_PER_BATCH}, max_workers={self.max_workers}"
+                f"batch_size={self.batch_size}, max_workers={self.max_workers}"
             )
             start = time.perf_counter()
 

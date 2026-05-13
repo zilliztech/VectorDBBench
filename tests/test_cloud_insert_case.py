@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 
 import numpy as np
-import polars as pl
+import pandas as pd
 
 from vectordb_bench.cli.cli import get_custom_case_config
 from vectordb_bench.backend.assembler import Assembler
@@ -15,9 +15,11 @@ from vectordb_bench.backend.clients.pinecone.pinecone import Pinecone
 from vectordb_bench.backend.clients.turbopuffer.config import TurboPufferIndexConfig
 from vectordb_bench.backend.clients.turbopuffer.turbopuffer import TurboPuffer
 from vectordb_bench.backend.clients.zilliz_cloud.config import AutoIndexConfig, ZillizCloudConfig
+from vectordb_bench.backend.runner.concurrent_runner import ConcurrentInsertRunner
 from vectordb_bench.backend.task_runner import CaseRunner
 from vectordb_bench.metric import Metric
 from vectordb_bench.models import CaseConfig, TaskConfig, TaskStage
+from vectordb_bench.backend.payload import PayloadProfile
 
 
 def test_cloud_insert_case_defaults_to_laion_100m():
@@ -219,6 +221,181 @@ def test_pinecone_insert_readiness_uses_vector_count():
     assert db.poll_insert_readiness(9)["fully_indexed"] is True
 
 
+def test_pinecone_supports_cloud_payload_profiles():
+    db = Pinecone.__new__(Pinecone)
+
+    assert db.supports_payload_profile(PayloadProfile.IDS_ONLY)
+    assert db.supports_payload_profile(PayloadProfile.SCALAR_LABEL)
+    assert db.supports_payload_profile(PayloadProfile.VECTOR)
+
+
+def test_pinecone_search_requests_metadata_for_scalar_label_payload():
+    db = Pinecone.__new__(Pinecone)
+    db.expr = None
+
+    class Index:
+        kwargs = None
+
+        def query(self, **kwargs):
+            self.kwargs = kwargs
+            return {"matches": [{"id": "1"}]}
+
+    db.index = Index()
+
+    assert db.search_embedding([0.1], payload_profile=PayloadProfile.SCALAR_LABEL) == [1]
+    assert db.index.kwargs["include_metadata"] is True
+    assert db.index.kwargs["include_values"] is False
+
+
+def test_pinecone_search_requests_values_for_vector_payload():
+    db = Pinecone.__new__(Pinecone)
+    db.expr = {"meta": {"$gte": 10}}
+
+    class Index:
+        kwargs = None
+
+        def query(self, **kwargs):
+            self.kwargs = kwargs
+            return {"matches": [{"id": "2"}]}
+
+    db.index = Index()
+
+    assert db.search_embedding([0.1], payload_profile=PayloadProfile.VECTOR) == [2]
+    assert db.index.kwargs["include_metadata"] is False
+    assert db.index.kwargs["include_values"] is True
+    assert db.index.kwargs["filter"] == {"meta": {"$gte": 10}}
+
+
+def test_pinecone_search_retries_rate_limited_queries(monkeypatch):
+    db = Pinecone.__new__(Pinecone)
+    db.expr = None
+    monkeypatch.setenv("PINECONE_QUERY_RETRY_SLEEP_SECONDS", "0.25")
+    sleeps = []
+    monkeypatch.setattr("vectordb_bench.backend.clients.pinecone.pinecone.time.sleep", sleeps.append)
+
+    class RateLimitError(Exception):
+        status = 429
+
+    class Index:
+        calls = 0
+
+        def query(self, **kwargs):
+            self.calls += 1
+            if self.calls < 3:
+                raise RateLimitError("too many requests")
+            return {"matches": [{"id": "3"}]}
+
+    db.index = Index()
+
+    assert db.search_embedding([0.1]) == [3]
+    assert db.index.calls == 3
+    assert sleeps == [0.25, 0.25]
+
+
+def test_pinecone_search_stops_after_rate_limit_retry_budget(monkeypatch):
+    db = Pinecone.__new__(Pinecone)
+    db.expr = None
+    monkeypatch.setenv("PINECONE_QUERY_MAX_RETRIES", "1")
+    monkeypatch.setattr("vectordb_bench.backend.clients.pinecone.pinecone.time.sleep", lambda _: None)
+
+    class RateLimitError(Exception):
+        status = 429
+
+    class Index:
+        def query(self, **kwargs):
+            raise RateLimitError("too many requests")
+
+    db.index = Index()
+
+    try:
+        db.search_embedding([0.1])
+    except RateLimitError:
+        pass
+    else:
+        raise AssertionError("expected Pinecone rate limit error")
+
+
+def test_pinecone_insert_tracks_last_write_lsn():
+    db = Pinecone.__new__(Pinecone)
+    db.batch_size = 1000
+    db.with_scalar_labels = False
+    db._scalar_id_field = "meta"
+
+    class UpsertResponse:
+        _response_info = {"raw_headers": {"x-pinecone-request-lsn": "123"}}
+
+    class Index:
+        def upsert(self, records):
+            return UpsertResponse()
+
+    db.index = Index()
+
+    insert_count, error = db.insert_embeddings([[0.1]], [1])
+
+    assert error is None
+    assert insert_count == 1
+    assert db._last_write_lsn == 123
+
+
+def test_pinecone_insert_keeps_highest_write_lsn():
+    db = Pinecone.__new__(Pinecone)
+    db.batch_size = 1
+    db.with_scalar_labels = False
+    db._scalar_id_field = "meta"
+    responses = iter(["123", "122"])
+
+    class UpsertResponse:
+        def __init__(self, lsn):
+            self._response_info = {"raw_headers": {"x-pinecone-request-lsn": lsn}}
+
+    class Index:
+        def upsert(self, records):
+            return UpsertResponse(next(responses))
+
+    db.index = Index()
+
+    insert_count, error = db.insert_embeddings([[0.1], [0.2]], [1, 2])
+
+    assert error is None
+    assert insert_count == 2
+    assert db._last_write_lsn == 123
+
+
+def test_pinecone_record_write_lsn_keeps_highest_value():
+    db = Pinecone.__new__(Pinecone)
+
+    db._record_write_lsn(123)
+    db._record_write_lsn(122)
+
+    assert db._last_write_lsn == 123
+
+
+def test_pinecone_insert_readiness_uses_lsn_when_available():
+    db = Pinecone.__new__(Pinecone)
+    db._last_write_lsn = 123
+    db._readiness_probe_vector = [0.0]
+
+    class QueryResponse(dict):
+        def __init__(self, indexed_lsn):
+            super().__init__({"matches": []})
+            self._response_info = {"raw_headers": {"x-pinecone-max-indexed-lsn": str(indexed_lsn)}}
+
+    class Index:
+        indexed_lsn = 122
+
+        def describe_index_stats(self):
+            return {"total_vector_count": 10}
+
+        def query(self, **kwargs):
+            return QueryResponse(self.indexed_lsn)
+
+    db.index = Index()
+
+    assert db.poll_insert_readiness(10)["fully_searchable"] is False
+    db.index.indexed_lsn = 123
+    assert db.poll_insert_readiness(10)["fully_indexed"] is True
+
+
 def test_turbopuffer_insert_readiness_uses_unindexed_bytes():
     db = TurboPuffer.__new__(TurboPuffer)
     db.db_case_config = TurboPufferIndexConfig(disable_backpressure=True)
@@ -256,10 +433,18 @@ def test_cloud_insert_runner_records_insert_and_readiness_metrics(monkeypatch):
     class Dataset:
         data = Data()
 
-        def __iter__(self):
-            yield pl.DataFrame({"id": [1, 2, 3], "vector": [[0.1], [0.2], [0.3]]})
+        def iter_batches(self, batch_size):
+            assert batch_size == 2
+            return iter(
+                [
+                    pd.DataFrame({"id": [1, 2], "vector": [np.array([0.1]), np.array([0.2])]}),
+                    pd.DataFrame({"id": [3], "vector": [np.array([0.3])]}),
+                ]
+            )
 
     class DB:
+        thread_safe = True
+        name = "fake"
         inserts = []
         readiness_calls = 0
 
@@ -286,7 +471,8 @@ def test_cloud_insert_runner_records_insert_and_readiness_metrics(monkeypatch):
     monkeypatch.setattr("vectordb_bench.backend.task_runner.time.sleep", lambda _: None)
     case = CloudInsertCase(batch_size=2)
     case.dataset = Dataset()
-    runner = CaseRunner.construct(ca=case, db=db)
+    config = type("Config", (), {"load_concurrency": 1})()
+    runner = CaseRunner.construct(ca=case, db=db, config=config)
 
     metric = runner._run_cloud_insert_case()
 
@@ -297,3 +483,104 @@ def test_cloud_insert_runner_records_insert_and_readiness_metrics(monkeypatch):
     assert metric.searchable_after_insert_seconds >= 0
     assert metric.indexed_after_searchable_seconds >= 0
     assert metric.additional_parameters == {"example": "value"}
+
+
+def test_cloud_insert_runner_uses_concurrent_insert_runner(monkeypatch):
+    created = {}
+
+    class Data:
+        metric_type = "L2"
+
+    class Dataset:
+        data = Data()
+
+    class FakeConcurrentInsertRunner:
+        def __init__(self, db, dataset, normalize, filters, max_workers, batch_size, duration):
+            created.update(
+                {
+                    "db": db,
+                    "dataset": dataset,
+                    "normalize": normalize,
+                    "filters": filters,
+                    "max_workers": max_workers,
+                    "batch_size": batch_size,
+                    "duration": duration,
+                }
+            )
+
+        def task(self):
+            return 3
+
+    class DB:
+        @contextmanager
+        def init(self):
+            yield
+
+        def need_normalize_cosine(self):
+            return False
+
+        def poll_insert_readiness(self, expected_count):
+            return {"fully_searchable": True, "fully_indexed": True, "additional_parameters": {}}
+
+    monkeypatch.setattr("vectordb_bench.backend.task_runner.ConcurrentInsertRunner", FakeConcurrentInsertRunner)
+    case = CloudInsertCase(batch_size=1000, duration=60)
+    case.dataset = Dataset()
+    config = type("Config", (), {"load_concurrency": 7})()
+    runner = CaseRunner.construct(ca=case, db=DB(), config=config)
+
+    metric = runner._run_cloud_insert_case()
+
+    assert metric.inserted_count == 3
+    assert created["batch_size"] == 1000
+    assert created["duration"] == 60
+    assert created["max_workers"] == 7
+    assert created["dataset"] is case.dataset
+
+
+def test_concurrent_insert_runner_uses_custom_batch_size_iterator():
+    class Data:
+        train_id_field = "id"
+        train_vector_field = "vector"
+
+    class Dataset:
+        data = Data()
+        requested_batch_size = None
+
+        def iter_batches(self, batch_size):
+            self.requested_batch_size = batch_size
+            return iter(
+                [
+                    pd.DataFrame(
+                        {
+                            "id": [1, 2],
+                            "vector": [np.array([0.1]), np.array([0.2])],
+                        }
+                    )
+                ]
+            )
+
+        def __iter__(self):
+            raise AssertionError("ConcurrentInsertRunner should request an explicit batch size")
+
+    class DB:
+        thread_safe = True
+        name = "fake"
+
+        def __init__(self):
+            self.inserts = []
+
+        @contextmanager
+        def init(self):
+            yield
+
+        def insert_embeddings(self, embeddings, metadata, labels_data=None):
+            self.inserts.append((embeddings, metadata))
+            return len(metadata), None
+
+    dataset = Dataset()
+    db = DB()
+    runner = ConcurrentInsertRunner(db, dataset, normalize=False, max_workers=1, batch_size=1000)
+
+    assert runner.task() == 2
+    assert dataset.requested_batch_size == 1000
+    assert db.inserts == [([[0.1], [0.2]], [1, 2])]
