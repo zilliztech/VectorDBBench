@@ -1,4 +1,6 @@
+import json
 from contextlib import contextmanager
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -7,6 +9,7 @@ from vectordb_bench.backend.assembler import Assembler
 from vectordb_bench.backend.cases import CaseLabel, CaseType, CloudColdLatencyCase
 from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.clients.api import EmptyDBCaseConfig
+from vectordb_bench.backend.clients.pinecone.config import PineconeConfig
 from vectordb_bench.backend.data_source import DatasetSource
 from vectordb_bench.backend.dataset import DatasetWithSizeType
 from vectordb_bench.backend.filter import Filter, FilterOp
@@ -14,7 +17,8 @@ from vectordb_bench.backend.payload import PayloadProfile
 from vectordb_bench.backend.runner.cold_warm_runner import ColdWarmSearchRunner
 from vectordb_bench.backend.task_runner import CaseRunner, RunningStatus
 from vectordb_bench.cli.cli import get_custom_case_config
-from vectordb_bench.models import CaseConfig, TaskConfig, TaskStage
+from vectordb_bench.metric import Metric
+from vectordb_bench.models import CaseConfig, CaseResult, TaskConfig, TaskStage, TestResult
 
 
 def test_cloud_cold_latency_case_defaults_to_laion_100m():
@@ -116,6 +120,73 @@ def test_cli_keeps_cloud_cold_latency_default_dataset_as_laion():
     }
     assert case.dataset.data.name == "LAION"
     assert case.dataset.data.size == 100_000_000
+
+
+def test_cloud_cold_latency_result_file_uses_cold_latency_metrics(tmp_path: Path):
+    cold_latency = {
+        "cold_stats": {
+            "first_query_latency": 0.2,
+            "p99_latency": 0.3,
+            "p95_latency": 0.25,
+            "avg_latency": 0.21,
+        },
+        "warm_stats": {
+            "first_query_latency": 0.1,
+            "p99_latency": 0.15,
+            "p95_latency": 0.12,
+            "avg_latency": 0.11,
+        },
+        "ratios": {
+            "first_query_latency": 2.0,
+            "p99_latency": 2.0,
+            "p95_latency": 2.0833,
+            "avg_latency": 1.9091,
+        },
+    }
+    result = CaseResult(
+        task_config=TaskConfig(
+            db=DB.Pinecone,
+            db_config=PineconeConfig(
+                db_label="pinecone_cloud_cold_latency",
+                api_key="secret-key",
+                index_name="laion100m",
+            ),
+            db_case_config=EmptyDBCaseConfig(),
+            case_config=CaseConfig(
+                case_id=CaseType.CloudColdLatencyCase,
+                custom_case={"payload_profile": "vector", "query_count": 1000},
+            ),
+            stages=[TaskStage.SEARCH_SERIAL],
+            load_concurrency=0,
+        ),
+        metrics=Metric(
+            insert_duration=0.0,
+            optimize_duration=0.0,
+            load_duration=0.0,
+            payload_profile="vector",
+            payload_estimated_bytes_per_query=309200,
+            additional_parameters={"cold_latency": cold_latency},
+        ),
+    )
+    test_result = TestResult(run_id="run-id", task_label="cloud_cold_latency_pinecone", results=[result])
+
+    test_result.write_db_file(tmp_path, test_result, "pinecone")
+
+    result_file = next(tmp_path.glob("result_*_pinecone.json"))
+    written = json.loads(result_file.read_text())
+    assert written["results"][0]["metrics"] == {
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "payload_profile": "vector",
+        "payload_estimated_bytes_per_query": 309200,
+        "cold_latency": cold_latency,
+    }
+    assert written["results"][0]["task_config"]["db_config"]["api_key"] == "**********"
+    assert written["results"][0]["task_config"]["db_config"]["index_name"] == "laion100m"
+
+    read_back = TestResult.read_file(result_file)
+    assert read_back.results[0].metrics.additional_parameters["cold_latency"] == cold_latency
 
 
 class FakeColdWarmDB:

@@ -1,4 +1,6 @@
+import json
 from contextlib import contextmanager
+from pathlib import Path
 from unittest.mock import MagicMock
 
 import numpy as np
@@ -9,6 +11,7 @@ from vectordb_bench.backend.cases import CaseLabel, CaseType, CloudInsertCase
 from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.clients.api import EmptyDBCaseConfig, VectorDB
 from vectordb_bench.backend.clients.milvus.milvus import Milvus
+from vectordb_bench.backend.clients.pinecone.config import PineconeConfig
 from vectordb_bench.backend.clients.pinecone.pinecone import Pinecone
 from vectordb_bench.backend.clients.turbopuffer.config import TurboPufferIndexConfig
 from vectordb_bench.backend.clients.turbopuffer.turbopuffer import TurboPuffer
@@ -20,7 +23,7 @@ from vectordb_bench.backend.runner.concurrent_runner import ConcurrentInsertRunn
 from vectordb_bench.backend.task_runner import CaseRunner
 from vectordb_bench.cli.cli import get_custom_case_config
 from vectordb_bench.metric import Metric
-from vectordb_bench.models import CaseConfig, TaskConfig, TaskStage
+from vectordb_bench.models import CaseConfig, CaseResult, TaskConfig, TaskStage, TestResult
 
 
 def test_cloud_insert_case_defaults_to_laion_100m():
@@ -152,6 +155,58 @@ def test_metric_contains_cloud_insert_output_fields():
     assert metric.searchable_after_insert_seconds == 3.4
     assert metric.indexed_after_searchable_seconds == 5.6
     assert metric.additional_parameters == {"disable_backpressure": True}
+
+
+def test_cloud_insert_result_file_uses_insert_only_metrics(tmp_path: Path):
+    result = CaseResult(
+        task_config=TaskConfig(
+            db=DB.Pinecone,
+            db_config=PineconeConfig(
+                db_label="pinecone_cloud_insert_laion100m_bs1k",
+                api_key="secret-key",
+                index_name="laion100m",
+            ),
+            db_case_config=EmptyDBCaseConfig(),
+            case_config=CaseConfig(
+                case_id=CaseType.CloudInsertCase,
+                custom_case={"batch_size": 1000, "duration": None},
+            ),
+            stages=[TaskStage.DROP_OLD, TaskStage.LOAD],
+            load_concurrency=0,
+        ),
+        metrics=Metric(
+            inserted_count=100_000_000,
+            insert_rows_per_second=3919.9296,
+            insert_completion_seconds=255.1066,
+            searchable_after_insert_seconds=0.0,
+            indexed_after_searchable_seconds=28.5956,
+            additional_parameters={},
+        ),
+    )
+    test_result = TestResult(run_id="run-id", task_label="cloud_insert_pinecone_laion100m_bs1k", results=[result])
+
+    test_result.write_db_file(tmp_path, test_result, "pinecone")
+
+    result_file = next(tmp_path.glob("result_*_pinecone.json"))
+    written = json.loads(result_file.read_text())
+    assert written["results"][0]["metrics"] == {
+        "inserted_count": 100_000_000,
+        "insert_rows_per_second": 3919.9296,
+        "insert_completion_seconds": 255.1066,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 28.5956,
+        "additional_parameters": {},
+    }
+    assert written["results"][0]["task_config"]["db_config"]["api_key"] == "**********"
+    assert written["results"][0]["task_config"]["db_config"]["index_name"] == "laion100m"
+    assert written["results"][0]["task_config"]["case_config"] == {
+        "case_id": 600,
+        "custom_case": {"batch_size": 1000, "duration": None},
+    }
+
+    read_back = TestResult.read_file(result_file)
+    assert read_back.results[0].task_config.case_config.case_id == CaseType.CloudInsertCase
+    assert read_back.results[0].task_config.case_config.custom_case == {"batch_size": 1000, "duration": None}
 
 
 def test_turbopuffer_insert_can_disable_backpressure():
