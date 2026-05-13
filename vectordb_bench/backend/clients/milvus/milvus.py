@@ -4,6 +4,7 @@ import logging
 import time
 from collections.abc import Iterable
 from contextlib import contextmanager
+from typing import Any
 
 from pymilvus import DataType, MilvusClient, MilvusException
 
@@ -47,6 +48,8 @@ class Milvus(VectorDB):
         self._primary_field = "pk"
         self._scalar_id_field = "id"
         self._scalar_label_field = "label"
+        self._scalar_payload_label_field = self._scalar_label_field
+        self._multitenant_partition_key_field = self._scalar_label_field
         self._vector_field = "vector"
         self._vector_index_name = "vector_idx"
         self._scalar_id_index_name = "id_sort_idx"
@@ -119,6 +122,56 @@ class Milvus(VectorDB):
                 index_type="BITMAP",
             )
         return index_params
+
+    def supports_multitenant(self) -> bool:
+        return True
+
+    def validate_multitenant_schema(self) -> None:
+        client = MilvusClient(
+            uri=self.db_config.get("uri"),
+            user=self.db_config.get("user"),
+            password=self.db_config.get("password"),
+            token=self.db_config.get("token", ""),
+            timeout=30,
+        )
+        try:
+            desc = client.describe_collection(self.collection_name)
+            fields = desc.get("fields", []) if isinstance(desc, dict) else []
+            fields_by_name = {self._field_property(field, "name"): field for field in fields}
+            partition_key_field = self._find_multitenant_partition_key_field(fields_by_name)
+            if partition_key_field is None:
+                label_field = fields_by_name.get(self._scalar_label_field)
+                if label_field is None:
+                    msg = f"{self.name} multitenant collection {self.collection_name} is missing tenant label field"
+                    raise ValueError(msg)
+                msg = (
+                    f"{self.name} multitenant collection {self.collection_name} "
+                    "label field is not a partition key"
+                )
+                raise ValueError(msg)
+            self._multitenant_partition_key_field = partition_key_field
+            if "scalar_label" in fields_by_name:
+                self._scalar_payload_label_field = "scalar_label"
+        finally:
+            client.close()
+
+    def _find_multitenant_partition_key_field(self, fields_by_name: dict[str, dict | object]) -> str | None:
+        for field_name in [self._scalar_label_field, "labels"]:
+            field = fields_by_name.get(field_name)
+            if field is not None and self._field_property(field, "is_partition_key", False):
+                return field_name
+        return None
+
+    @staticmethod
+    def _field_property(field: dict | object, name: str, default: Any = None):
+        if isinstance(field, dict):
+            if name in field:
+                return field[name]
+            params = field.get("params")
+            if isinstance(params, dict) and name in params:
+                return params[name]
+            return default
+        return getattr(field, name, default)
 
     @contextmanager
     def init(self):
@@ -228,10 +281,10 @@ class Milvus(VectorDB):
                         self._scalar_id_field: metadata[i],
                         self._vector_field: embeddings[i],
                     }
-                    if self.with_scalar_labels:
-                        row[self._scalar_label_field] = (
-                            tenant_labels_data[i] if tenant_labels_data is not None else labels_data[i]
-                        )
+                    if tenant_labels_data is not None:
+                        row[self._multitenant_partition_key_field] = tenant_labels_data[i]
+                    elif self.with_scalar_labels:
+                        row[self._scalar_label_field] = labels_data[i]
                     batch_data.append(row)
                 res = self.client.insert(self.collection_name, batch_data)
                 insert_count += res["insert_count"]
@@ -246,7 +299,7 @@ class Milvus(VectorDB):
         elif filters.type == FilterOp.NumGE:
             self.expr = f"{self._scalar_id_field} >= {filters.int_value}"
         elif filters.type == FilterOp.StrEqual:
-            self.expr = f"{self._scalar_label_field} == '{filters.label_value}'"
+            self.expr = f"{self._scalar_payload_label_field} == '{filters.label_value}'"
         else:
             msg = f"Not support Filter for Milvus - {filters}"
             raise ValueError(msg)
@@ -285,11 +338,12 @@ class Milvus(VectorDB):
         if payload_profile == PayloadProfile.VECTOR:
             output_fields = [self._vector_field]
         elif payload_profile == PayloadProfile.SCALAR_LABEL:
-            output_fields = [self._scalar_label_field]
+            output_fields = [getattr(self, "_scalar_payload_label_field", self._scalar_label_field)]
 
         expr = self.expr
         if tenant is not None:
-            tenant_expr = f"{self._scalar_label_field} == '{tenant}'"
+            tenant_field = getattr(self, "_multitenant_partition_key_field", self._scalar_label_field)
+            tenant_expr = f"{tenant_field} == '{tenant}'"
             expr = tenant_expr if not expr else f"({expr}) and ({tenant_expr})"
 
         search_kwargs = {

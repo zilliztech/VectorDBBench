@@ -229,6 +229,9 @@ class VectorDB(ABC):
     def supports_multitenant(self) -> bool:
         return False
 
+    def validate_multitenant_schema(self) -> None:
+        return None
+
     @abstractmethod
     def insert_embeddings(
         self,

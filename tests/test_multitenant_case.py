@@ -1,11 +1,18 @@
 from contextlib import contextmanager
 from types import SimpleNamespace
 
+import pytest
+
 from vectordb_bench.backend.cases import CaseType, CloudMultiTenantSearchCase
+from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.clients.api import EmptyDBCaseConfig, VectorDB
-from vectordb_bench.backend.dataset import DatasetWithSizeType
+from vectordb_bench.backend.clients.zilliz_cloud.config import AutoIndexConfig, ZillizCloudConfig
+from vectordb_bench.backend.data_source import DatasetSource
+from vectordb_bench.backend.dataset import DatasetManager, DatasetWithSizeType
 from vectordb_bench.backend.filter import FilterOp
 from vectordb_bench.backend.payload import PayloadProfile
+from vectordb_bench.backend.task_runner import CaseRunner, RunningStatus
+from vectordb_bench.models import CaseConfig, TaskConfig, TaskStage
 
 
 def test_multitenant_case_defaults_to_cohere_large_1000_tenants():
@@ -96,6 +103,72 @@ def test_vector_db_accepts_optional_tenant_context():
     assert result == []
     assert db.insert_calls[0][3] == ["tenant_0002"]
     assert db.search_calls[0][3] == "tenant_0002"
+
+
+def test_search_only_zilliz_multitenant_validates_existing_partition_key_schema(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    case = CloudMultiTenantSearchCase()
+    task = TaskConfig(
+        db=DB.ZillizCloud,
+        db_config=ZillizCloudConfig(uri="http://example.invalid", collection_name="existing"),
+        db_case_config=AutoIndexConfig(use_partition_key=False),
+        case_config=CaseConfig(case_id=CaseType.CloudMultiTenantSearchCase),
+        stages=[TaskStage.SEARCH_CONCURRENT],
+    )
+    runner = CaseRunner(
+        run_id="run-id",
+        config=task,
+        ca=case,
+        status=RunningStatus.PENDING,
+        dataset_source=DatasetSource.S3,
+    )
+    calls: list[tuple[str, object]] = []
+
+    class ExistingCollectionDB:
+        def supports_multitenant(self) -> bool:
+            return True
+
+        def set_multitenant_context(self, tenant_labels: list[str]) -> None:
+            calls.append(("set_context", tenant_labels))
+
+        def validate_multitenant_schema(self) -> None:
+            calls.append(("validate_schema", None))
+
+    def fake_init_db(self: CaseRunner, _drop_old: bool = True) -> None:
+        self.db = ExistingCollectionDB()
+
+    def fake_prepare(*_args: object, **_kwargs: object) -> None:
+        calls.append(("prepare", None))
+
+    monkeypatch.setattr(CaseRunner, "init_db", fake_init_db)
+    monkeypatch.setattr(DatasetManager, "prepare", fake_prepare)
+
+    runner._pre_run(drop_old=False)
+
+    assert ("validate_schema", None) in calls
+    assert calls[0][0] == "set_context"
+
+
+def test_zilliz_multitenant_create_still_requires_partition_key() -> None:
+    case = CloudMultiTenantSearchCase()
+    task = TaskConfig(
+        db=DB.ZillizCloud,
+        db_config=ZillizCloudConfig(uri="http://example.invalid", collection_name="new_collection"),
+        db_case_config=AutoIndexConfig(use_partition_key=False),
+        case_config=CaseConfig(case_id=CaseType.CloudMultiTenantSearchCase),
+        stages=[TaskStage.DROP_OLD, TaskStage.LOAD],
+    )
+    runner = CaseRunner(
+        run_id="run-id",
+        config=task,
+        ca=case,
+        status=RunningStatus.PENDING,
+        dataset_source=DatasetSource.S3,
+    )
+
+    with pytest.raises(ValueError, match="requires use_partition_key=True"):
+        runner._pre_run(drop_old=True)
 
 
 class FakeTurboNamespace:

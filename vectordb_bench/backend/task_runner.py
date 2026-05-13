@@ -148,9 +148,13 @@ class CaseRunner(BaseModel):
 
     def _pre_run(self, drop_old: bool = True):
         try:
+            creates_multitenant_collection = (
+                TaskStage.DROP_OLD in self.config.stages or TaskStage.LOAD in self.config.stages
+            )
             if (
                 self.ca.is_multitenant
                 and self.config.db in {DB.Milvus, DB.ZillizCloud}
+                and creates_multitenant_collection
                 and not getattr(self.config.db_case_config, "use_partition_key", False)
             ):
                 msg = "CloudMultiTenantSearchCase requires use_partition_key=True for Milvus/ZillizCloud"
@@ -161,6 +165,8 @@ class CaseRunner(BaseModel):
                     msg = f"{self.config.db_name} does not support CloudMultiTenantSearchCase"
                     raise NotImplementedError(msg)
                 self.db.set_multitenant_context(self.ca.tenant_labels())
+                if self.config.db in {DB.Milvus, DB.ZillizCloud} and not creates_multitenant_collection:
+                    self.db.validate_multitenant_schema()
             self.ca.dataset.prepare(
                 self.dataset_source,
                 filters=self.ca.filters,
