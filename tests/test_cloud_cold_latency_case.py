@@ -109,6 +109,9 @@ class FakeColdWarmDB:
     def supports_payload_profile(self, payload_profile: PayloadProfile) -> bool:
         return payload_profile in self.supported_payload_profiles
 
+    def need_normalize_cosine(self) -> bool:
+        return False
+
     @contextmanager
     def init(self):
         self.init_enter_count += 1
@@ -241,8 +244,9 @@ def test_assembler_schedules_cloud_cold_latency_case():
     assert runner.case_runners[0].ca.label == CaseLabel.CloudColdLatency
 
 
-def test_case_runner_stores_cloud_cold_latency_metric(monkeypatch):
+def test_case_runner_stores_cloud_cold_latency_metric(monkeypatch: pytest.MonkeyPatch):
     case = CloudColdLatencyCase(query_count=1)
+    case.dataset.test_data = [[0.1]]
     task = TaskConfig(
         db=DB.Test,
         db_config=DB.Test.config_cls(),
@@ -261,7 +265,6 @@ def test_case_runner_stores_cloud_cold_latency_metric(monkeypatch):
         dataset_source=DatasetSource.S3,
     )
     runner.db = FakeColdWarmDB()
-    runner.test_emb = [[0.1]]
 
     expected = {
         "cold_stats": {
@@ -283,23 +286,27 @@ def test_case_runner_stores_cloud_cold_latency_metric(monkeypatch):
             "avg_latency_ratio": 2.0,
         },
     }
+    captured_kwargs = {}
 
     class FakeRunner:
         def __init__(self, **kwargs):
-            self.kwargs = kwargs
+            captured_kwargs.update(kwargs)
 
         def run(self):
             return expected
 
     monkeypatch.setattr("vectordb_bench.backend.task_runner.ColdWarmSearchRunner", FakeRunner)
-    monkeypatch.setattr(
-        CaseRunner,
-        "_init_cold_warm_search_runner",
-        lambda self: setattr(self, "cold_warm_search_runner", FakeRunner()),
-    )
 
     metric = runner._run_cloud_cold_latency_case()
 
     assert metric.additional_parameters["cold_latency"] == expected
     assert metric.payload_profile == "ids_only"
     assert metric.payload_estimated_bytes_per_query == case.estimated_payload_bytes_per_query(task.case_config.k)
+    assert captured_kwargs == {
+        "db": runner.db,
+        "test_data": [[0.1]],
+        "filters": case.filters,
+        "k": task.case_config.k,
+        "payload_profile": case.payload_profile,
+        "query_count": case.query_count,
+    }
