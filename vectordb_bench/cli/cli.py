@@ -19,6 +19,7 @@ from yaml import load
 from .. import config
 from ..backend.clients import DB
 from ..backend.clients.api import MetricType
+from ..backend.dataset import DatasetWithSizeType
 from ..interface import benchmark_runner
 from ..models import (
     CaseConfig,
@@ -34,6 +35,8 @@ try:
     from yaml import CLoader as Loader
 except ImportError:
     from yaml import Loader
+
+DEFAULT_DATASET_WITH_SIZE_TYPE = DatasetWithSizeType.CohereMedium.value
 
 
 def click_get_defaults_from_file(ctx, param, value):  # noqa: ANN001, ARG001
@@ -165,6 +168,7 @@ are required """,
 
 def get_custom_case_config(parameters: dict) -> dict:
     custom_case_config = {}
+    dataset_with_size_type = parameters["dataset_with_size_type"] or DEFAULT_DATASET_WITH_SIZE_TYPE
     if parameters["case_type"] == "PerformanceCustomDataset":
         custom_case_config = {
             "name": parameters["custom_case_name"],
@@ -184,12 +188,12 @@ def get_custom_case_config(parameters: dict) -> dict:
         }
     elif parameters["case_type"] == "NewIntFilterPerformanceCase":
         custom_case_config = {
-            "dataset_with_size_type": parameters["dataset_with_size_type"],
+            "dataset_with_size_type": dataset_with_size_type,
             "filter_rate": parameters["filter_rate"],
         }
     elif parameters["case_type"] == "LabelFilterPerformanceCase":
         custom_case_config = {
-            "dataset_with_size_type": parameters["dataset_with_size_type"],
+            "dataset_with_size_type": dataset_with_size_type,
             "label_percentage": parameters["label_percentage"],
         }
     elif parameters["case_type"] == "CloudPayloadSearchCase":
@@ -204,8 +208,9 @@ def get_custom_case_config(parameters: dict) -> dict:
         custom_case_config = {
             "payload_profile": parameters["payload_profile"],
             "query_count": parameters["cloud_cold_query_count"],
-            "dataset_with_size_type": parameters["dataset_with_size_type"],
         }
+        if parameters["dataset_with_size_type"] is not None:
+            custom_case_config["dataset_with_size_type"] = parameters["dataset_with_size_type"]
         if parameters["cloud_filter_rate"] is not None:
             custom_case_config["filter_rate"] = parameters["cloud_filter_rate"]
         if parameters["cloud_label_percentage"] is not None:
@@ -214,7 +219,7 @@ def get_custom_case_config(parameters: dict) -> dict:
         custom_case_config = {
             "batch_size": parameters["cloud_insert_batch_size"],
             "duration": parameters["cloud_insert_duration"],
-            "dataset_with_size_type": parameters["dataset_with_size_type"],
+            "dataset_with_size_type": dataset_with_size_type,
         }
     return custom_case_config
 
@@ -460,14 +465,14 @@ class CommonTypedDict(TypedDict):
     ]
     task_label: Annotated[str, click.option("--task-label", help="Task label")]
     dataset_with_size_type: Annotated[
-        str,
+        str | None,
         click.option(
             "--dataset-with-size-type",
-            help="Dataset with size type for NewIntFilterPerformanceCase/LabelFilterPerformanceCase, you can use "
-            "Medium Cohere (768dim, 1M)|Large Cohere (768dim, 10M)|Medium Bioasq (1024dim, 1M)|"
-            "Large Bioasq (1024dim, 10M)|Large OpenAI (1536dim, 5M)|Medium OpenAI (1536dim, 500K)",
-            default="Medium Cohere (768dim, 1M)",
-            show_default=True,
+            help="Dataset with size type. When omitted, filter/insert cases use Medium Cohere (768dim, 1M), "
+            "and CloudColdLatencyCase uses LAION 100M. Supported values include Medium Cohere (768dim, 1M)|"
+            "Large Cohere (768dim, 10M)|Medium Bioasq (1024dim, 1M)|Large Bioasq (1024dim, 10M)|"
+            "Large OpenAI (1536dim, 5M)|Medium OpenAI (1536dim, 500K)",
+            default=None,
         ),
     ]
     filter_rate: Annotated[
@@ -493,7 +498,7 @@ class CommonTypedDict(TypedDict):
         click.option(
             "--payload-profile",
             type=click.Choice(["ids_only", "vector", "scalar_label"]),
-            help="Response payload profile for CloudPayloadSearchCase",
+            help="Response payload profile for CloudPayloadSearchCase and CloudColdLatencyCase",
             default="ids_only",
             show_default=True,
         ),
@@ -504,7 +509,7 @@ class CommonTypedDict(TypedDict):
             "--cloud-filter-rate",
             type=float,
             default=None,
-            help="Optional int filter rate for CloudPayloadSearchCase",
+            help="Optional int filter rate for CloudPayloadSearchCase and CloudColdLatencyCase",
         ),
     ]
     cloud_label_percentage: Annotated[
@@ -513,7 +518,7 @@ class CommonTypedDict(TypedDict):
             "--cloud-label-percentage",
             type=float,
             default=None,
-            help="Optional label percentage for CloudPayloadSearchCase",
+            help="Optional label percentage for CloudPayloadSearchCase and CloudColdLatencyCase",
         ),
     ]
     cloud_cold_query_count: Annotated[

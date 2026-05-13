@@ -97,6 +97,27 @@ def test_cli_builds_cloud_cold_latency_custom_case_config():
     }
 
 
+def test_cli_keeps_cloud_cold_latency_default_dataset_as_laion():
+    params = {
+        "case_type": "CloudColdLatencyCase",
+        "payload_profile": "ids_only",
+        "cloud_filter_rate": None,
+        "cloud_label_percentage": None,
+        "cloud_cold_query_count": 1000,
+        "dataset_with_size_type": None,
+    }
+
+    custom_case = get_custom_case_config(params)
+    case = CaseConfig(case_id=CaseType.CloudColdLatencyCase, custom_case=custom_case).case
+
+    assert custom_case == {
+        "payload_profile": "ids_only",
+        "query_count": 1000,
+    }
+    assert case.dataset.data.name == "LAION"
+    assert case.dataset.data.size == 100_000_000
+
+
 class FakeColdWarmDB:
     name = "FakeColdWarmDB"
 
