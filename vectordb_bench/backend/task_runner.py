@@ -131,18 +131,36 @@ class CaseRunner(BaseModel):
         if "collection_name" in db_config_dict and not collection_name:
             collection_name = db_config_dict.pop("collection_name")
 
+        extra_db_kwargs = {}
+        if collection_name:
+            extra_db_kwargs["collection_name"] = collection_name
+        if self.ca.is_multitenant:
+            extra_db_kwargs["multitenant_tenant_labels"] = self.ca.tenant_labels()
+
         self.db = db_cls(
             dim=self.ca.dataset.data.dim,
             db_config=db_config_dict,
             db_case_config=self.config.db_case_config,
             drop_old=drop_old,
-            with_scalar_labels=self.ca.with_scalar_labels,
-            **({"collection_name": collection_name} if collection_name else {}),
+            with_scalar_labels=self.ca.with_scalar_labels or self.ca.is_multitenant,
+            **extra_db_kwargs,
         )
 
     def _pre_run(self, drop_old: bool = True):
         try:
+            if (
+                self.ca.is_multitenant
+                and self.config.db in {DB.Milvus, DB.ZillizCloud}
+                and not getattr(self.config.db_case_config, "use_partition_key", False)
+            ):
+                msg = "CloudMultiTenantSearchCase requires use_partition_key=True for Milvus/ZillizCloud"
+                raise ValueError(msg)
             self.init_db(drop_old)
+            if self.ca.is_multitenant and self.db is not None:
+                if not self.db.supports_multitenant():
+                    msg = f"{self.config.db_name} does not support CloudMultiTenantSearchCase"
+                    raise NotImplementedError(msg)
+                self.db.set_multitenant_context(self.ca.tenant_labels())
             self.ca.dataset.prepare(
                 self.dataset_source,
                 filters=self.ca.filters,
@@ -261,6 +279,9 @@ class CaseRunner(BaseModel):
     def _run_cloud_insert_case(self) -> Metric:
         assert self.db is not None
         started = time.perf_counter()
+        runner_kwargs = {}
+        if self.ca.is_multitenant:
+            runner_kwargs["tenant_case"] = self.ca
         runner = ConcurrentInsertRunner(
             self.db,
             self.ca.dataset,
@@ -269,6 +290,7 @@ class CaseRunner(BaseModel):
             max_workers=self.config.load_concurrency or None,
             batch_size=self.ca.batch_size,
             duration=self.ca.duration,
+            **runner_kwargs,
         )
         count = runner.task()
         insert_done = time.perf_counter()
@@ -340,6 +362,9 @@ class CaseRunner(BaseModel):
     def _load_train_data(self):
         """Insert train data concurrently and get the insert_duration"""
         try:
+            runner_kwargs = {}
+            if self.ca.is_multitenant:
+                runner_kwargs["tenant_case"] = self.ca
             runner = ConcurrentInsertRunner(
                 self.db,
                 self.ca.dataset,
@@ -347,6 +372,7 @@ class CaseRunner(BaseModel):
                 self.ca.filters,
                 self.ca.load_timeout,
                 max_workers=self.config.load_concurrency or None,
+                **runner_kwargs,
             )
             runner.run()
         except Exception as e:
@@ -411,7 +437,9 @@ class CaseRunner(BaseModel):
         else:
             self.test_emb = self.ca.dataset.test_data
 
-        gt_df = self.ca.dataset.gt_data
+        tenant_labels = self.ca.tenant_labels() if self.ca.is_multitenant else None
+        measure_recall = getattr(self.ca, "measure_recall", True)
+        gt_df = self.ca.dataset.gt_data if measure_recall else None
 
         if TaskStage.SEARCH_SERIAL in self.config.stages:
             self.serial_search_runner = SerialSearchRunner(
@@ -421,6 +449,8 @@ class CaseRunner(BaseModel):
                 filters=self.ca.filters,
                 k=self.config.case_config.k,
                 payload_profile=self.ca.payload_profile,
+                tenant_labels=tenant_labels,
+                measure_recall=measure_recall,
             )
         if TaskStage.SEARCH_CONCURRENT in self.config.stages:
             self.search_runner = MultiProcessingSearchRunner(
@@ -432,6 +462,7 @@ class CaseRunner(BaseModel):
                 concurrency_timeout=self.config.case_config.concurrency_search_config.concurrency_timeout,
                 k=self.config.case_config.k,
                 payload_profile=self.ca.payload_profile,
+                tenant_labels=tenant_labels,
             )
 
     def _init_read_write_runner(self):

@@ -1,25 +1,26 @@
 from contextlib import contextmanager
+from unittest.mock import MagicMock
 
 import numpy as np
 import pandas as pd
 
-from vectordb_bench.cli.cli import get_custom_case_config
 from vectordb_bench.backend.assembler import Assembler
 from vectordb_bench.backend.cases import CaseLabel, CaseType, CloudInsertCase
 from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.clients.api import EmptyDBCaseConfig, VectorDB
-from vectordb_bench.backend.dataset import DatasetWithSizeType
-from vectordb_bench.backend.data_source import DatasetSource
 from vectordb_bench.backend.clients.milvus.milvus import Milvus
 from vectordb_bench.backend.clients.pinecone.pinecone import Pinecone
 from vectordb_bench.backend.clients.turbopuffer.config import TurboPufferIndexConfig
 from vectordb_bench.backend.clients.turbopuffer.turbopuffer import TurboPuffer
 from vectordb_bench.backend.clients.zilliz_cloud.config import AutoIndexConfig, ZillizCloudConfig
+from vectordb_bench.backend.data_source import DatasetSource
+from vectordb_bench.backend.dataset import DatasetWithSizeType
+from vectordb_bench.backend.payload import PayloadProfile
 from vectordb_bench.backend.runner.concurrent_runner import ConcurrentInsertRunner
 from vectordb_bench.backend.task_runner import CaseRunner
+from vectordb_bench.cli.cli import get_custom_case_config
 from vectordb_bench.metric import Metric
 from vectordb_bench.models import CaseConfig, TaskConfig, TaskStage
-from vectordb_bench.backend.payload import PayloadProfile
 
 
 def test_cloud_insert_case_defaults_to_laion_100m():
@@ -62,6 +63,30 @@ def test_cli_builds_cloud_insert_custom_case_config():
         "batch_size": 10_000,
         "duration": 1800,
         "dataset_with_size_type": DatasetWithSizeType.CohereMedium.value,
+    }
+
+
+def test_cli_builds_multitenant_custom_case_config():
+    cfg = get_custom_case_config(
+        {
+            "case_type": "CloudMultiTenantSearchCase",
+            "dataset_with_size_type": "Small Cohere (768dim, 100K)",
+            "tenant_count": 13,
+            "tenant_prefix": "acct_",
+            "tenant_id_width": 3,
+            "payload_profile": "vector",
+            "cloud_filter_rate": 0.01,
+            "cloud_label_percentage": None,
+        }
+    )
+
+    assert cfg == {
+        "dataset_with_size_type": "Small Cohere (768dim, 100K)",
+        "tenant_count": 13,
+        "tenant_prefix": "acct_",
+        "tenant_id_width": 3,
+        "payload_profile": "vector",
+        "filter_rate": 0.01,
     }
 
 
@@ -584,3 +609,65 @@ def test_concurrent_insert_runner_uses_custom_batch_size_iterator():
     assert runner.task() == 2
     assert dataset.requested_batch_size == 1000
     assert db.inserts == [([[0.1], [0.2]], [1, 2])]
+
+
+class TenantInsertProbeDB:
+    name = "TenantInsertProbeDB"
+    thread_safe = True
+
+    def __init__(self):
+        self.calls = []
+
+    @contextmanager
+    def init(self):
+        yield
+
+    def insert_embeddings(self, embeddings, metadata, labels_data=None, tenant_labels_data=None):
+        self.calls.append(
+            {
+                "embeddings": embeddings,
+                "metadata": metadata,
+                "labels_data": labels_data,
+                "tenant_labels_data": tenant_labels_data,
+            }
+        )
+        return len(embeddings), None
+
+
+class TenantAwareCase:
+    is_multitenant = True
+
+    def tenant_labels_for_ids(self, row_ids):
+        return [f"tenant_{int(row_id) % 3:04d}" for row_id in row_ids]
+
+
+def test_concurrent_insert_runner_passes_tenant_labels():
+    db = TenantInsertProbeDB()
+    dataset = MagicMock()
+    dataset.data.train_id_field = "id"
+    dataset.data.train_vector_field = "emb"
+    dataset.iter_batches.return_value = iter(
+        [
+            pd.DataFrame(
+                {
+                    "id": [0, 1, 5],
+                    "emb": [[1.0, 0.0], [0.0, 1.0], [0.5, 0.5]],
+                }
+            )
+        ]
+    )
+
+    runner = ConcurrentInsertRunner(
+        db=db,
+        dataset=dataset,
+        normalize=False,
+        max_workers=1,
+        batch_size=10,
+        tenant_case=TenantAwareCase(),
+    )
+
+    count = runner.task()
+
+    assert count == 3
+    assert db.calls[0]["metadata"] == [0, 1, 5]
+    assert db.calls[0]["tenant_labels_data"] == ["tenant_0000", "tenant_0001", "tenant_0002"]

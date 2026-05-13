@@ -223,12 +223,19 @@ class VectorDB(ABC):
     def poll_insert_readiness(self, expected_count: int) -> dict:
         return {"fully_searchable": True, "fully_indexed": True, "additional_parameters": {}}
 
+    def set_multitenant_context(self, tenant_labels: list[str]) -> None:
+        self.multitenant_tenant_labels = tenant_labels
+
+    def supports_multitenant(self) -> bool:
+        return False
+
     @abstractmethod
     def insert_embeddings(
         self,
         embeddings: list[list[float]],
         metadata: list[int],
         labels_data: list[str] | None = None,
+        tenant_labels_data: list[str] | None = None,
         **kwargs,
     ) -> tuple[int, Exception]:
         """Insert the embeddings to the vector database. The default number of embeddings for
@@ -250,6 +257,7 @@ class VectorDB(ABC):
         query: list[float],
         k: int = 100,
         payload_profile: PayloadProfile = PayloadProfile.IDS_ONLY,
+        tenant: str | None = None,
     ) -> list[int]:
         """Get k most similar embeddings to query vector.
 

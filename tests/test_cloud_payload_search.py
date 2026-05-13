@@ -1,8 +1,11 @@
+from contextlib import contextmanager
+
 from vectordb_bench.backend.cases import CloudPayloadSearchCase
 from vectordb_bench.backend.clients.milvus.milvus import Milvus
 from vectordb_bench.backend.dataset import Dataset
 from vectordb_bench.backend.filter import FilterOp
 from vectordb_bench.backend.payload import PayloadProfile
+from vectordb_bench.backend.runner.serial_runner import SerialSearchRunner
 
 
 class _Client:
@@ -50,3 +53,44 @@ def test_milvus_scalar_label_payload_requests_label_output_field():
     assert db.supports_payload_profile(PayloadProfile.SCALAR_LABEL)
     assert db.search_embedding([0.1, 0.2], payload_profile=PayloadProfile.SCALAR_LABEL) == [1]
     assert db.client.search_kwargs["output_fields"] == ["label"]
+
+
+class TenantSearchProbeDB:
+    name = "TenantSearchProbeDB"
+
+    def __init__(self):
+        self.tenants = []
+
+    def supports_payload_profile(self, payload_profile):
+        return True
+
+    @contextmanager
+    def init(self):
+        yield
+
+    def prepare_filter(self, filters):
+        return None
+
+    def search_embedding(self, query, k=100, payload_profile=None, tenant=None):
+        self.tenants.append(tenant)
+        return []
+
+
+def test_serial_search_runner_passes_tenant_and_skips_recall():
+    db = TenantSearchProbeDB()
+    runner = SerialSearchRunner(
+        db=db,
+        test_data=[[1.0, 0.0], [0.0, 1.0]],
+        ground_truth=None,
+        tenant_labels=["tenant_0000", "tenant_0001"],
+        measure_recall=False,
+    )
+
+    recall, ndcg, p99, p95 = runner.search((runner.test_data, runner.ground_truth))
+
+    assert recall == 0
+    assert ndcg == 0
+    assert p99 >= 0
+    assert p95 >= 0
+    assert set(db.tenants).issubset({"tenant_0000", "tenant_0001"})
+    assert db.tenants

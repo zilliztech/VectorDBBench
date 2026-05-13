@@ -211,6 +211,7 @@ class Milvus(VectorDB):
         embeddings: Iterable[list[float]],
         metadata: list[int],
         labels_data: list[str] | None = None,
+        tenant_labels_data: list[str] | None = None,
         **kwargs,
     ) -> tuple[int, Exception]:
         """Insert embeddings into Milvus. should call self.init() first"""
@@ -228,7 +229,9 @@ class Milvus(VectorDB):
                         self._vector_field: embeddings[i],
                     }
                     if self.with_scalar_labels:
-                        row[self._scalar_label_field] = labels_data[i]
+                        row[self._scalar_label_field] = (
+                            tenant_labels_data[i] if tenant_labels_data is not None else labels_data[i]
+                        )
                     batch_data.append(row)
                 res = self.client.insert(self.collection_name, batch_data)
                 insert_count += res["insert_count"]
@@ -273,6 +276,7 @@ class Milvus(VectorDB):
         k: int = 100,
         timeout: int | None = None,
         payload_profile: PayloadProfile = PayloadProfile.IDS_ONLY,
+        tenant: str | None = None,
     ) -> list[int]:
         """Perform a search on a query embedding and return results."""
         assert self.client is not None
@@ -283,13 +287,18 @@ class Milvus(VectorDB):
         elif payload_profile == PayloadProfile.SCALAR_LABEL:
             output_fields = [self._scalar_label_field]
 
+        expr = self.expr
+        if tenant is not None:
+            tenant_expr = f"{self._scalar_label_field} == '{tenant}'"
+            expr = tenant_expr if not expr else f"({expr}) and ({tenant_expr})"
+
         search_kwargs = {
             "collection_name": self.collection_name,
             "data": [query],
             "anns_field": self._vector_field,
             "search_params": self.case_config.search_param(),
             "limit": k,
-            "filter": self.expr,
+            "filter": expr,
             "output_fields": output_fields,
         }
         res = self.client.search(**search_kwargs)

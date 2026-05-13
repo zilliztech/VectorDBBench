@@ -60,6 +60,7 @@ class CaseType(Enum):
     CloudPayloadSearchCase = 500
     CloudInsertCase = 600
     CloudColdLatencyCase = 700
+    CloudMultiTenantSearchCase = 800
 
     def case_cls(self, custom_configs: dict | None = None) -> type["Case"]:
         if custom_configs is None:
@@ -118,6 +119,10 @@ class Case(BaseModel):
         if k is None:
             k = config.K_DEFAULT
         return self.payload_profile.estimated_bytes_per_query(k=k, dim=self.dataset.data.dim)
+
+    @property
+    def is_multitenant(self) -> bool:
+        return False
 
     @property
     def with_scalar_labels(self) -> bool:
@@ -771,6 +776,91 @@ class CloudInsertCase(Case):
         )
 
 
+class CloudMultiTenantSearchCase(PerformanceCase):
+    case_id: CaseType = CaseType.CloudMultiTenantSearchCase
+    dataset_with_size_type: DatasetWithSizeType = DatasetWithSizeType.CohereLarge
+    tenant_count: int = 1000
+    tenant_prefix: str = "tenant_"
+    tenant_id_width: int = 4
+    tenant_distribution: str = "uniform_by_id_mod"
+    measure_recall: bool = False
+    payload_profile: PayloadProfile = PayloadProfile.IDS_ONLY
+    filter_rate: float | None = None
+    label_percentage: float | None = None
+
+    def __init__(
+        self,
+        dataset_with_size_type: DatasetWithSizeType | str = DatasetWithSizeType.CohereLarge,
+        tenant_count: int = 1000,
+        tenant_prefix: str = "tenant_",
+        tenant_id_width: int = 4,
+        payload_profile: PayloadProfile | str = PayloadProfile.IDS_ONLY,
+        filter_rate: float | None = None,
+        label_percentage: float | None = None,
+        **kwargs,
+    ):
+        if filter_rate is not None and label_percentage is not None:
+            msg = "CloudMultiTenantSearchCase supports only one filter type per run"
+            raise ValueError(msg)
+        if not isinstance(dataset_with_size_type, DatasetWithSizeType):
+            dataset_with_size_type = DatasetWithSizeType(dataset_with_size_type)
+        if not isinstance(payload_profile, PayloadProfile):
+            payload_profile = PayloadProfile(payload_profile)
+        if tenant_count <= 0:
+            msg = "tenant_count must be greater than 0"
+            raise ValueError(msg)
+        if tenant_id_width <= 0:
+            msg = "tenant_id_width must be greater than 0"
+            raise ValueError(msg)
+
+        dataset = dataset_with_size_type.get_manager()
+        super().__init__(
+            name=f"Cloud Multi-Tenant Search - {dataset_with_size_type.value}, {tenant_count} tenants",
+            description=(
+                "Multi-tenant QPS/latency benchmark with deterministic tenant routing "
+                f"({dataset_with_size_type.value}, {tenant_count} tenants)."
+            ),
+            dataset=dataset,
+            load_timeout=dataset_with_size_type.get_load_timeout(),
+            optimize_timeout=dataset_with_size_type.get_optimize_timeout(),
+            dataset_with_size_type=dataset_with_size_type,
+            tenant_count=tenant_count,
+            tenant_prefix=tenant_prefix,
+            tenant_id_width=tenant_id_width,
+            payload_profile=payload_profile,
+            filter_rate=filter_rate,
+            label_percentage=label_percentage,
+            **kwargs,
+        )
+
+    @property
+    def is_multitenant(self) -> bool:
+        return True
+
+    def tenant_for_id(self, row_id: int) -> str:
+        tenant_id = int(row_id) % self.tenant_count
+        return f"{self.tenant_prefix}{tenant_id:0{self.tenant_id_width}d}"
+
+    def tenant_labels_for_ids(self, row_ids: list[int]) -> list[str]:
+        return [self.tenant_for_id(row_id) for row_id in row_ids]
+
+    def tenant_labels(self) -> list[str]:
+        return [
+            f"{self.tenant_prefix}{tenant_id:0{self.tenant_id_width}d}"
+            for tenant_id in range(self.tenant_count)
+        ]
+
+    @property
+    def filters(self) -> Filter:
+        if self.label_percentage is not None:
+            return LabelFilter(label_percentage=self.label_percentage)
+        if self.filter_rate is None:
+            return non_filter
+        int_field = self.dataset.data.train_id_field
+        int_value = int(self.dataset.data.size * self.filter_rate)
+        return NewIntFilter(filter_rate=self.filter_rate, int_field=int_field, int_value=int_value)
+
+
 class LabelFilterPerformanceCase(PerformanceCase):
     case_id: CaseType = CaseType.LabelFilterPerformanceCase
     dataset_with_size_type: DatasetWithSizeType
@@ -835,4 +925,5 @@ type2case = {
     CaseType.CloudPayloadSearchCase: CloudPayloadSearchCase,
     CaseType.CloudInsertCase: CloudInsertCase,
     CaseType.CloudColdLatencyCase: CloudColdLatencyCase,
+    CaseType.CloudMultiTenantSearchCase: CloudMultiTenantSearchCase,
 }

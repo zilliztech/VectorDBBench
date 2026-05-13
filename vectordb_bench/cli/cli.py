@@ -221,6 +221,18 @@ def get_custom_case_config(parameters: dict) -> dict:
             "duration": parameters["cloud_insert_duration"],
             "dataset_with_size_type": dataset_with_size_type,
         }
+    elif parameters["case_type"] == "CloudMultiTenantSearchCase":
+        custom_case_config = {
+            "dataset_with_size_type": parameters["dataset_with_size_type"],
+            "tenant_count": parameters["tenant_count"],
+            "tenant_prefix": parameters["tenant_prefix"],
+            "tenant_id_width": parameters["tenant_id_width"],
+            "payload_profile": parameters["payload_profile"],
+        }
+        if parameters["cloud_filter_rate"] is not None:
+            custom_case_config["filter_rate"] = parameters["cloud_filter_rate"]
+        if parameters["cloud_label_percentage"] is not None:
+            custom_case_config["label_percentage"] = parameters["cloud_label_percentage"]
     return custom_case_config
 
 
@@ -548,6 +560,36 @@ class CommonTypedDict(TypedDict):
             type=float,
             default=None,
             help="Optional insert duration in seconds for CloudInsertCase",
+        ),
+    ]
+    tenant_count: Annotated[
+        int,
+        click.option(
+            "--tenant-count",
+            type=int,
+            default=1000,
+            show_default=True,
+            help="Tenant count for CloudMultiTenantSearchCase",
+        ),
+    ]
+    tenant_prefix: Annotated[
+        str,
+        click.option(
+            "--tenant-prefix",
+            type=str,
+            default="tenant_",
+            show_default=True,
+            help="Tenant label prefix for CloudMultiTenantSearchCase",
+        ),
+    ]
+    tenant_id_width: Annotated[
+        int,
+        click.option(
+            "--tenant-id-width",
+            type=int,
+            default=4,
+            show_default=True,
+            help="Zero-padding width for CloudMultiTenantSearchCase tenant IDs",
         ),
     ]
 

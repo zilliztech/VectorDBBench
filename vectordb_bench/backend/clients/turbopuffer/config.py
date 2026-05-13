@@ -8,6 +8,7 @@ class TurboPufferConfig(DBConfig):
     region: str
     api_base_url: str | None = None
     namespace: str = "vdbbench_test"
+    multitenant_namespace_prefix: str = "vdbbench_mt_"
 
     def to_dict(self) -> dict:
         return {
@@ -15,6 +16,7 @@ class TurboPufferConfig(DBConfig):
             "region": self.region,
             "api_base_url": self.api_base_url,
             "namespace": self.namespace,
+            "multitenant_namespace_prefix": self.multitenant_namespace_prefix,
         }
 
 
