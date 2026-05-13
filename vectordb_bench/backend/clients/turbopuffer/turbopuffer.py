@@ -46,6 +46,7 @@ class TurboPuffer(VectorDB):
         self._vector_field = "vector"
         self._scalar_id_field = "id"
         self._scalar_label_field = "label"
+        self._scalar_payload_label_field = db_config.get("scalar_payload_label_field", self._scalar_label_field)
 
         self.with_scalar_labels = with_scalar_labels
         self.expr = None
@@ -217,7 +218,7 @@ class TurboPuffer(VectorDB):
         if payload_profile == PayloadProfile.VECTOR:
             query_kwargs["include_attributes"] = [self._vector_field]
         elif payload_profile == PayloadProfile.SCALAR_LABEL:
-            query_kwargs["include_attributes"] = [self._scalar_label_field]
+            query_kwargs["include_attributes"] = [self._scalar_payload_label_field]
         res = self._namespace_for_tenant(tenant).query(**query_kwargs)
         return [int(row.id) for row in res.rows] if res.rows is not None else []
 
@@ -227,7 +228,7 @@ class TurboPuffer(VectorDB):
         elif filters.type == FilterOp.NumGE:
             self.expr = (self._scalar_id_field, "Gte", filters.int_value)
         elif filters.type == FilterOp.StrEqual:
-            self.expr = (self._scalar_label_field, "Eq", filters.label_value)
+            self.expr = (self._scalar_payload_label_field, "Eq", filters.label_value)
         else:
             msg = f"Not support Filter for TurboPuffer - {filters}"
             raise ValueError(msg)

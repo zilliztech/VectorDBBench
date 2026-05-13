@@ -245,6 +245,7 @@ def test_turbopuffer_supports_scalar_label_payload_for_multitenant_search() -> N
     db._ns_cache = {}
     db._vector_field = "vector"
     db._scalar_label_field = "label"
+    db._scalar_payload_label_field = "scalar_label"
     db.expr = None
 
     assert db.supports_payload_profile(PayloadProfile.SCALAR_LABEL)
@@ -254,4 +255,4 @@ def test_turbopuffer_supports_scalar_label_payload_for_multitenant_search() -> N
         payload_profile=PayloadProfile.SCALAR_LABEL,
         tenant="tenant_0001",
     ) == [10]
-    assert fake_client.namespaces["mt_tenant_0001"].query_calls[0]["include_attributes"] == ["label"]
+    assert fake_client.namespaces["mt_tenant_0001"].query_calls[0]["include_attributes"] == ["scalar_label"]

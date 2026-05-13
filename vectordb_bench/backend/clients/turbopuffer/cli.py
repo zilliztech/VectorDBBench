@@ -60,6 +60,17 @@ class TurboPufferTypedDict(TypedDict):
             show_default=True,
         ),
     ]
+    scalar_payload_label_field: Annotated[
+        str,
+        click.option(
+            "--scalar-payload-label-field",
+            type=str,
+            help="TurboPuffer attribute used for scalar_label payload and label filtering",
+            required=False,
+            default="label",
+            show_default=True,
+        ),
+    ]
     metric_type: Annotated[
         str,
         click.option(
@@ -100,6 +111,7 @@ def TurboPuffer(**parameters: Unpack[TurboPufferIndexTypedDict]):
             api_base_url=parameters["api_base_url"] or None,
             namespace=parameters["namespace"],
             multitenant_namespace_prefix=parameters["multitenant_namespace_prefix"],
+            scalar_payload_label_field=parameters["scalar_payload_label_field"],
         ),
         db_case_config=TurboPufferIndexConfig(
             metric_type=MetricType(parameters["metric_type"]),

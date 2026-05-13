@@ -9,6 +9,7 @@ class TurboPufferConfig(DBConfig):
     api_base_url: str | None = None
     namespace: str = "vdbbench_test"
     multitenant_namespace_prefix: str = "vdbbench_mt_"
+    scalar_payload_label_field: str = "label"
 
     def to_dict(self) -> dict:
         return {
@@ -17,6 +18,7 @@ class TurboPufferConfig(DBConfig):
             "api_base_url": self.api_base_url,
             "namespace": self.namespace,
             "multitenant_namespace_prefix": self.multitenant_namespace_prefix,
+            "scalar_payload_label_field": self.scalar_payload_label_field,
         }
 
 

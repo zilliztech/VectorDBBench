@@ -32,6 +32,8 @@ def test_turbopuffer_cli_accepts_multitenant_namespace_prefix_and_metric_type(
             "cohere10m_multitenant",
             "--multitenant-namespace-prefix",
             "cohere10m_",
+            "--scalar-payload-label-field",
+            "scalar_label",
             "--metric-type",
             "COSINE",
             "--dry-run",
@@ -40,4 +42,5 @@ def test_turbopuffer_cli_accepts_multitenant_namespace_prefix_and_metric_type(
 
     assert result.exit_code == 0
     assert captured["db_config"].multitenant_namespace_prefix == "cohere10m_"
+    assert captured["db_config"].scalar_payload_label_field == "scalar_label"
     assert captured["db_case_config"].metric_type == MetricType.COSINE
