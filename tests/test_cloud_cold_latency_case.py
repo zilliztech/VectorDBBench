@@ -173,7 +173,9 @@ def test_cloud_cold_latency_result_file_uses_cold_latency_metrics(tmp_path: Path
     test_result.write_db_file(tmp_path, test_result, "pinecone")
 
     result_file = next(tmp_path.glob("result_*_pinecone.json"))
-    written = json.loads(result_file.read_text())
+    raw_output = result_file.read_text()
+    assert raw_output.startswith('{\n  "run_id"')
+    written = json.loads(raw_output)
     assert written["results"][0]["metrics"] == {
         "insert_duration": 0.0,
         "optimize_duration": 0.0,
@@ -184,8 +186,17 @@ def test_cloud_cold_latency_result_file_uses_cold_latency_metrics(tmp_path: Path
     }
     assert written["results"][0]["task_config"]["db_config"]["api_key"] == "**********"
     assert written["results"][0]["task_config"]["db_config"]["index_name"] == "laion100m"
+    assert written["results"][0]["task_config"]["case_config"] == {
+        "case_id": 700,
+        "custom_case": {"payload_profile": "vector", "query_count": 1000},
+    }
 
     read_back = TestResult.read_file(result_file)
+    assert read_back.results[0].task_config.case_config.case_id == CaseType.CloudColdLatencyCase
+    assert read_back.results[0].task_config.case_config.custom_case == {
+        "payload_profile": "vector",
+        "query_count": 1000,
+    }
     assert read_back.results[0].metrics.additional_parameters["cold_latency"] == cold_latency
 
 

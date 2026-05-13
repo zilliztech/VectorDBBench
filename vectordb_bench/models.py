@@ -324,7 +324,7 @@ class TestResult(BaseModel):
     def _output_case_config_for_case(case_result: CaseResult) -> dict:
         case_config = case_result.task_config.case_config
 
-        if case_config.case_id == CaseType.CloudInsertCase:
+        if case_config.case_id in {CaseType.CloudInsertCase, CaseType.CloudColdLatencyCase}:
             return {
                 "case_id": case_config.case_id.value,
                 "custom_case": case_config.custom_case,
@@ -376,7 +376,8 @@ class TestResult(BaseModel):
 
         log.info(f"write results to disk {result_file}")
         with pathlib.Path(result_file).open("w") as f:
-            ujson.dump(partial.model_dump_for_output(), f)
+            f.write(ujson.dumps(partial.model_dump_for_output(), indent=2))
+            f.write("\n")
 
     def get_case_config(case_config: CaseConfig) -> dict[CaseConfig]:
         if case_config["case_id"] in {6, 7, 8, 9, 12, 13, 14, 15}:

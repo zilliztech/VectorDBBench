@@ -188,7 +188,9 @@ def test_cloud_insert_result_file_uses_insert_only_metrics(tmp_path: Path):
     test_result.write_db_file(tmp_path, test_result, "pinecone")
 
     result_file = next(tmp_path.glob("result_*_pinecone.json"))
-    written = json.loads(result_file.read_text())
+    raw_output = result_file.read_text()
+    assert raw_output.startswith('{\n  "run_id"')
+    written = json.loads(raw_output)
     assert written["results"][0]["metrics"] == {
         "inserted_count": 100_000_000,
         "insert_rows_per_second": 3919.9296,
