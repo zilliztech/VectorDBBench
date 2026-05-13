@@ -59,6 +59,7 @@ class CaseType(Enum):
     NewIntFilterPerformanceCase = 400
     CloudPayloadSearchCase = 500
     CloudInsertCase = 600
+    CloudColdLatencyCase = 700
 
     def case_cls(self, custom_configs: dict | None = None) -> type["Case"]:
         if custom_configs is None:
@@ -83,6 +84,7 @@ class CaseLabel(Enum):
     Performance = auto()
     Streaming = auto()
     CloudInsert = auto()
+    CloudColdLatency = auto()
 
 
 class Case(BaseModel):
@@ -667,6 +669,76 @@ class CloudPayloadSearchCase(PerformanceCase):
         return NewIntFilter(filter_rate=self.filter_rate, int_field=int_field, int_value=int_value)
 
 
+class CloudColdLatencyCase(Case):
+    case_id: CaseType = CaseType.CloudColdLatencyCase
+    label: CaseLabel = CaseLabel.CloudColdLatency
+    dataset_with_size_type: DatasetWithSizeType | None = None
+    payload_profile: PayloadProfile = PayloadProfile.IDS_ONLY
+    filter_rate: float | None = None
+    label_percentage: float | None = None
+    query_count: int = 1000
+
+    def __init__(
+        self,
+        dataset_with_size_type: DatasetWithSizeType | str | None = None,
+        payload_profile: PayloadProfile | str = PayloadProfile.IDS_ONLY,
+        filter_rate: float | None = None,
+        label_percentage: float | None = None,
+        query_count: int = 1000,
+        **kwargs,
+    ):
+        if filter_rate is not None and label_percentage is not None:
+            msg = "CloudColdLatencyCase supports only one filter type per run"
+            raise ValueError(msg)
+        if query_count <= 0:
+            msg = "query_count must be positive"
+            raise ValueError(msg)
+        if dataset_with_size_type is not None and not isinstance(dataset_with_size_type, DatasetWithSizeType):
+            dataset_with_size_type = DatasetWithSizeType(dataset_with_size_type)
+        if not isinstance(payload_profile, PayloadProfile):
+            payload_profile = PayloadProfile(payload_profile)
+
+        if dataset_with_size_type is None:
+            dataset = Dataset.LAION.manager(100_000_000)
+            load_timeout = config.LOAD_TIMEOUT_768D_100M
+            optimize_timeout = config.OPTIMIZE_TIMEOUT_768D_100M
+            dataset_name = "LAION 100M (768dim)"
+        else:
+            dataset = dataset_with_size_type.get_manager()
+            load_timeout = dataset_with_size_type.get_load_timeout()
+            optimize_timeout = dataset_with_size_type.get_optimize_timeout()
+            dataset_name = dataset_with_size_type.value
+
+        name = f"Cloud Cold Latency - {payload_profile.value} - {dataset_name}"
+        description = (
+            "Cloud leaderboard cold/warm serial latency case with explicit response payload profile. "
+            f"Payload profile: {payload_profile.value}; dataset: {dataset_name}; query count: {query_count}."
+        )
+        super().__init__(
+            name=name,
+            description=description,
+            dataset=dataset,
+            load_timeout=load_timeout,
+            optimize_timeout=optimize_timeout,
+            dataset_with_size_type=dataset_with_size_type,
+            payload_profile=payload_profile,
+            filter_rate=filter_rate,
+            label_percentage=label_percentage,
+            query_count=query_count,
+            **kwargs,
+        )
+
+    @property
+    def filters(self) -> Filter:
+        if self.label_percentage is not None:
+            return LabelFilter(label_percentage=self.label_percentage)
+        if self.filter_rate is None:
+            return non_filter
+        int_field = self.dataset.data.train_id_field
+        int_value = int(self.dataset.data.size * self.filter_rate)
+        return NewIntFilter(filter_rate=self.filter_rate, int_field=int_field, int_value=int_value)
+
+
 class CloudInsertCase(Case):
     case_id: CaseType = CaseType.CloudInsertCase
     label: CaseLabel = CaseLabel.CloudInsert
@@ -762,4 +834,5 @@ type2case = {
     CaseType.LabelFilterPerformanceCase: LabelFilterPerformanceCase,
     CaseType.CloudPayloadSearchCase: CloudPayloadSearchCase,
     CaseType.CloudInsertCase: CloudInsertCase,
+    CaseType.CloudColdLatencyCase: CloudColdLatencyCase,
 }

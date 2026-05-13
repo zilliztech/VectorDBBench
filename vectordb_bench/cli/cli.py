@@ -200,6 +200,16 @@ def get_custom_case_config(parameters: dict) -> dict:
             custom_case_config["filter_rate"] = parameters["cloud_filter_rate"]
         if parameters["cloud_label_percentage"] is not None:
             custom_case_config["label_percentage"] = parameters["cloud_label_percentage"]
+    elif parameters["case_type"] == "CloudColdLatencyCase":
+        custom_case_config = {
+            "payload_profile": parameters["payload_profile"],
+            "query_count": parameters["cloud_cold_query_count"],
+            "dataset_with_size_type": parameters["dataset_with_size_type"],
+        }
+        if parameters["cloud_filter_rate"] is not None:
+            custom_case_config["filter_rate"] = parameters["cloud_filter_rate"]
+        if parameters["cloud_label_percentage"] is not None:
+            custom_case_config["label_percentage"] = parameters["cloud_label_percentage"]
     elif parameters["case_type"] == "CloudInsertCase":
         custom_case_config = {
             "batch_size": parameters["cloud_insert_batch_size"],
@@ -504,6 +514,16 @@ class CommonTypedDict(TypedDict):
             type=float,
             default=None,
             help="Optional label percentage for CloudPayloadSearchCase",
+        ),
+    ]
+    cloud_cold_query_count: Annotated[
+        int,
+        click.option(
+            "--cloud-cold-query-count",
+            type=int,
+            default=1000,
+            show_default=True,
+            help="Number of serial queries per cold/warm pass for CloudColdLatencyCase",
         ),
     ]
     cloud_insert_batch_size: Annotated[
