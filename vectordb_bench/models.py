@@ -244,6 +244,7 @@ class TaskConfig(BaseModel):
     case_config: CaseConfig
     stages: list[TaskStage] = ALL_TASK_STAGES
     load_concurrency: int = config.LOAD_CONCURRENCY
+    load_processes: int = 0
 
     @property
     def db_name(self):

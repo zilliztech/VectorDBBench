@@ -240,6 +240,23 @@ class CommonTypedDict(TypedDict):
             help="Number of concurrent workers for data loading in performance cases (0 = cpu_count)",
         ),
     ]
+    load_processes: Annotated[
+        int,
+        click.option(
+            "--load-processes",
+            type=int,
+            default=0,
+            show_default=True,
+            help=(
+                "Use an N-worker multi-process loader instead of the threaded "
+                "one (--load-concurrency). 0 disables it. Recommended for "
+                "SQL-based vector DBs (OceanBase / TiDB / pgvector / Doris / "
+                "VectorChord) where the insert path is GIL-bound. When a client "
+                "declares thread_safe=False, this is auto-enabled with "
+                "--load-concurrency workers even if this flag is 0"
+            ),
+        ),
+    ]
     search_serial: Annotated[
         bool,
         click.option(
@@ -653,6 +670,7 @@ def run(
             parameters["search_concurrent"],
         ),
         load_concurrency=parameters["load_concurrency"],
+        load_processes=parameters["load_processes"],
     )
     task_label = parameters["task_label"]
 
