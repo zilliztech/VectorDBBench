@@ -2970,6 +2970,121 @@ PolarDBConfig = [
     CaseConfigParamInput_SQType_PolarDB,
 ]
 
+# CSS HANNS configs
+CaseConfigParamInput_ENGINE_NAME_CSS = CaseConfigInput(
+    label=CaseConfigParamType.engine_name,
+    displayLabel="Engine",
+    inputHelp="Vector search engine",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": ["hanns"],
+        "default": "hanns",
+    },
+)
+
+CaseConfigParamInput_METRIC_TYPE_NAME_CSS = CaseConfigInput(
+    label=CaseConfigParamType.metric_type_name,
+    displayLabel="Metric Type",
+    inputHelp="Distance metric type for vector similarity",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": ["cosine", "l2", "ip"],
+        "default": "cosine",
+    },
+)
+
+CaseConfigParamInput_MAX_DEGREE_CSS = CaseConfigInput(
+    label=CaseConfigParamType.max_degree,
+    displayLabel="Max Degree",
+    inputHelp="HANNS (vamana) max degree for graph build",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 2,
+        "max": 512,
+        "value": 56,
+    },
+)
+
+CaseConfigParamInput_SEARCH_LIST_SIZE_BUILD_CSS = CaseConfigInput(
+    label=CaseConfigParamType.search_list_size_build,
+    displayLabel="Search List Size (Build)",
+    inputHelp="HANNS build search_list_size (1-10000)",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 10000,
+        "value": 200,
+    },
+)
+
+CaseConfigParamInput_SEARCH_LIST_SIZE_CSS = CaseConfigInput(
+    label=CaseConfigParamType.search_list_size,
+    displayLabel="Search List Size (Search)",
+    inputHelp="HANNS search search_list_size (1-10000)",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 10000,
+        "value": 100,
+    },
+)
+
+CaseConfigParamInput_ENCODER_CSS = CaseConfigInput(
+    label=CaseConfigParamType.encoder,
+    displayLabel="Encoder",
+    inputHelp="HANNS encoder type",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": ["sq8", "extended-rabitq"],
+        "default": "sq8",
+    },
+)
+
+CaseConfigParamInput_ENCODER_NBIT_CSS = CaseConfigInput(
+    label=CaseConfigParamType.nbit,
+    displayLabel="Encoder Nbit",
+    inputHelp="Nbit for extended-rabitq encoder",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": ["1", "2", "4", "8"],
+        "default": "4",
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.encoder) == "extended-rabitq",
+)
+
+CaseConfigParamInput_PCA_DIM_CSS = CaseConfigInput(
+    label=CaseConfigParamType.pca_dim,
+    displayLabel="PCA Dim",
+    inputHelp="PCA dimension for hanns (0=disabled)",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 0,
+        "max": 4096,
+        "value": 0,
+    },
+)
+
+CSSLoadingConfig = [
+    CaseConfigParamInput_ENGINE_NAME_CSS,
+    CaseConfigParamInput_METRIC_TYPE_NAME_CSS,
+    CaseConfigParamInput_MAX_DEGREE_CSS,
+    CaseConfigParamInput_SEARCH_LIST_SIZE_BUILD_CSS,
+    CaseConfigParamInput_ENCODER_CSS,
+    CaseConfigParamInput_ENCODER_NBIT_CSS,
+    CaseConfigParamInput_PCA_DIM_CSS,
+]
+
+CSSPerformanceConfig = [
+    CaseConfigParamInput_ENGINE_NAME_CSS,
+    CaseConfigParamInput_METRIC_TYPE_NAME_CSS,
+    CaseConfigParamInput_SEARCH_LIST_SIZE_CSS,
+    CaseConfigParamInput_MAX_DEGREE_CSS,
+    CaseConfigParamInput_SEARCH_LIST_SIZE_BUILD_CSS,
+    CaseConfigParamInput_ENCODER_CSS,
+    CaseConfigParamInput_ENCODER_NBIT_CSS,
+    CaseConfigParamInput_PCA_DIM_CSS,
+]
+
 # Map DB to config
 CASE_CONFIG_MAP = {
     DB.Milvus: {
@@ -3063,6 +3178,10 @@ CASE_CONFIG_MAP = {
     DB.PolarDB: {
         CaseLabel.Load: PolarDBConfig,
         CaseLabel.Performance: PolarDBConfig,
+    },
+    DB.CSS: {
+        CaseLabel.Load: CSSLoadingConfig,
+        CaseLabel.Performance: CSSPerformanceConfig,
     },
 }
 

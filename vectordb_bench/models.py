@@ -173,6 +173,12 @@ class CaseConfigParamType(Enum):
     exbits = "exbits"
     number_of_regions = "number_of_regions"
 
+    # CSS HANNS parameters
+    max_degree = "max_degree"
+    search_list_size_build = "search_list_size_build"
+    encoder = "encoder"
+    nbit = "nbit"
+    pca_dim = "pca_dim"
 
 class CustomizedCase(BaseModel):
     pass

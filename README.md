@@ -47,7 +47,7 @@ All the database client supported
 | memorydb                 | `pip install vectordb-bench[memorydb]`      |
 | chromadb                 | `pip install vectordb-bench[chromadb]`      |
 | cockroachdb              | `pip install vectordb-bench[cockroachdb]`   |
-| awsopensearch            | `pip install vectordb-bench[opensearch]` |
+| awsopensearch, css            | `pip install vectordb-bench[opensearch]` |
 | aliyun_opensearch        | `pip install vectordb-bench[aliyun_opensearch]` |
 | mongodb                  | `pip install vectordb-bench[mongodb]`       |
 | tidb                     | `pip install vectordb-bench[tidb]`          |
@@ -254,6 +254,50 @@ Options:
   --quantization-type TEXT        which type of quantization to use valid values [fp32, fp16, bq]
   --help                          Show this message and exit.
   ```
+
+### Run CSS from command line
+
+CSS uses the HANNS engine with the vamana index. Supported encoders: sq8, extended-rabitq.
+
+**Example: Run HANNS with sq8 encoder test**
+
+```shell
+vectordbbench CSS --case-type Performance768D10M --k 10 --host <css_host> --port <css_port> \
+  --user <username> --password <password> \
+  --max-degree 56 --search-list-size-build 200 --encoder sq8 \
+  --search-list-size 100
+```
+
+**Example: Run HANNS with extended-rabitq encoder test**
+
+```shell
+vectordbbench CSS --case-type Performance768D10M --k 10 --host <css_host> --port <css_port> \
+  --user <username> --password <password> \
+  --max-degree 56 --search-list-size-build 200 --encoder extended-rabitq --nbit 4 \
+  --search-list-size 100
+```
+
+To list the options for CSS, execute `vectordbbench CSS --help`. The following are some CSS-specific command-line options.
+
+```text
+$ vectordbbench CSS --help
+Options:
+  --host TEXT                     Db host  [required]
+  --port INTEGER                  Db Port  [default: 80]
+  --user TEXT                     Db User
+  --password TEXT                 Db password
+  --metric-type [l2|cosine|ip]    Distance metric type  [default: cosine]
+  --engine [hanns]                Engine type for vectors  [default: hanns]
+  --max-degree INTEGER            HANNS max_degree (2-512)  [default: 56]
+  --search-list-size-build INTEGER
+                                 HANNS build search_list_size (1-10000)  [default: 200]
+  --search-list-size INTEGER      HANNS search search_list_size (1-10000)  [default: 100]
+  --encoder [sq8|extended-rabitq] HANNS encoder  [default: sq8]
+  --nbit [1|2|4|8]               HANNS encoder nbit (for extended-rabitq)  [default: 4]
+  --pca-dim INTEGER               PCA dimension for HANNS (0=disabled)  [default: 0]
+  --help                          Show this message and exit.
+```
+
 ### Run Elastic Cloud from command line
 
 Elastic Cloud supports multiple index types: HNSW, HNSW_INT8, HNSW_INT4, and HNSW_BBQ.
