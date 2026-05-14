@@ -10,6 +10,9 @@ class TurboPufferConfig(DBConfig):
     namespace: str = "vdbbench_test"
     multitenant_namespace_prefix: str = "vdbbench_mt_"
     scalar_payload_label_field: str = "label"
+    pin_namespace: bool = False
+    pin_replicas: int = 1
+    pin_timeout: int = 45 * 60
 
     def to_dict(self) -> dict:
         return {
@@ -19,6 +22,9 @@ class TurboPufferConfig(DBConfig):
             "namespace": self.namespace,
             "multitenant_namespace_prefix": self.multitenant_namespace_prefix,
             "scalar_payload_label_field": self.scalar_payload_label_field,
+            "pin_namespace": self.pin_namespace,
+            "pin_replicas": self.pin_replicas,
+            "pin_timeout": self.pin_timeout,
         }
 
 

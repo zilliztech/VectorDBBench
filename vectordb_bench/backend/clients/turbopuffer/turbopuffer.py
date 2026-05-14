@@ -3,6 +3,11 @@
 import logging
 import time
 from contextlib import contextmanager
+from json import dumps, loads
+from typing import Any
+from urllib.error import HTTPError
+from urllib.parse import quote
+from urllib.request import Request, urlopen
 
 import turbopuffer as tpuf
 
@@ -14,6 +19,62 @@ from ..api import VectorDB
 
 log = logging.getLogger(__name__)
 TURBOPUFFER_SEARCHABLE_UNINDEXED_BYTES = 2 * 1024 * 1024 * 1024
+PINNING_POLL_INTERVAL = 10
+PINNING_TIMEOUT = 45 * 60
+
+
+def namespace_metadata_request(
+    api_key: str,
+    region: str,
+    namespace: str,
+    method: str,
+    payload: dict[str, Any] | None = None,
+    api_base_url: str | None = None,
+) -> dict:
+    base_url = api_base_url or f"https://{region}.turbopuffer.com"
+    url = f"{base_url.rstrip('/')}/v1/namespaces/{quote(namespace, safe='')}/metadata"
+    req = Request(  # noqa: S310
+        url,
+        data=dumps(payload).encode() if payload is not None else None,
+        method=method,
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+    )
+    try:
+        with urlopen(req, timeout=60) as resp:  # noqa: S310
+            return loads(resp.read().decode() or "{}")
+    except HTTPError as e:
+        detail = e.read().decode(errors="replace")
+        msg = f"Failed to update TurboPuffer namespace metadata: {e.code} {detail}"
+        raise RuntimeError(msg) from e
+
+
+def wait_for_namespace_pinning(
+    api_key: str,
+    region: str,
+    namespace: str,
+    replicas: int | None,
+    api_base_url: str | None = None,
+    timeout: int = PINNING_TIMEOUT,
+) -> dict:
+    deadline = time.monotonic() + timeout
+    while True:
+        meta = namespace_metadata_request(api_key, region, namespace, "GET", api_base_url=api_base_url)
+        pinning = meta.get("pinning")
+        if replicas is None:
+            if pinning is None:
+                return meta
+        else:
+            status = pinning.get("status", {}) if isinstance(pinning, dict) else {}
+            if pinning and pinning.get("replicas") == replicas and status.get("ready_replicas") == replicas:
+                return meta
+        if time.monotonic() >= deadline:
+            msg = f"Timed out waiting for TurboPuffer pinning state on namespace {namespace}"
+            raise TimeoutError(msg)
+        log.info("Waiting for TurboPuffer pinning state on %s: %s", namespace, pinning)
+        time.sleep(PINNING_POLL_INTERVAL)
 
 
 class TurboPuffer(VectorDB):
@@ -40,6 +101,10 @@ class TurboPuffer(VectorDB):
         self.multitenant_tenant_labels: list[str] = kwargs.get("multitenant_tenant_labels", [])
         self._multitenant_touched_tenants: set[str] = set()
         self._ns_cache = {}
+        self.pin_namespace = db_config.get("pin_namespace", False)
+        self.pin_replicas = db_config.get("pin_replicas", 1)
+        self.pin_timeout = db_config.get("pin_timeout", PINNING_TIMEOUT)
+        self._pinning_applied = False
         self.db_case_config = db_case_config
         self.metric = db_case_config.parse_metric()
 
@@ -74,11 +139,47 @@ class TurboPuffer(VectorDB):
             client_kwargs["base_url"] = self.api_base_url
         return tpuf.Turbopuffer(**client_kwargs)
 
+    def _apply_namespace_pinning(self):
+        if not self.pin_namespace or self._pinning_applied:
+            return
+        for namespace in self._target_namespaces_for_pinning():
+            namespace_metadata_request(
+                self.api_key,
+                self.region,
+                namespace,
+                "PATCH",
+                {"pinning": {"replicas": self.pin_replicas}},
+                self.api_base_url,
+            )
+            meta = wait_for_namespace_pinning(
+                self.api_key,
+                self.region,
+                namespace,
+                self.pin_replicas,
+                self.api_base_url,
+                self.pin_timeout,
+            )
+            pinning = meta.get("pinning", {})
+            status = pinning.get("status", {}) if isinstance(pinning, dict) else {}
+            log.info(
+                "TurboPuffer pinning requested for %s: replicas=%s ready_replicas=%s",
+                namespace,
+                pinning.get("replicas", self.pin_replicas) if isinstance(pinning, dict) else self.pin_replicas,
+                status.get("ready_replicas"),
+            )
+        self._pinning_applied = True
+
+    def _target_namespaces_for_pinning(self) -> list[str]:
+        if self.multitenant_tenant_labels:
+            return [self._namespace_name_for_tenant(tenant) for tenant in self.multitenant_tenant_labels]
+        return [self.namespace]
+
     @contextmanager
     def init(self):
         self.client = self._create_client()
         self._ns_cache = {}
         self.ns = self.client.namespace(self.namespace)
+        self._apply_namespace_pinning()
         yield
 
     def supports_multitenant(self) -> bool:

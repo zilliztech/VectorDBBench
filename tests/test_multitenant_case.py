@@ -234,6 +234,55 @@ def test_turbopuffer_groups_multitenant_insert_and_search(monkeypatch):
     assert fake_client.namespaces["mt_tenant_0001"].query_calls
 
 
+def test_turbopuffer_pins_multitenant_namespaces_on_init(monkeypatch):
+    from vectordb_bench.backend.clients.api import MetricType
+    from vectordb_bench.backend.clients.turbopuffer import turbopuffer as turbopuffer_module
+    from vectordb_bench.backend.clients.turbopuffer.config import TurboPufferIndexConfig
+    from vectordb_bench.backend.clients.turbopuffer.turbopuffer import TurboPuffer
+
+    fake_client = FakeTurboClient()
+    calls = []
+
+    def fake_metadata_request(api_key, region, namespace, method, payload=None, api_base_url=None):
+        calls.append((method, namespace, payload, api_base_url))
+        return {}
+
+    def fake_wait_for_pinning(api_key, region, namespace, replicas, api_base_url=None, timeout=None):
+        calls.append(("WAIT", namespace, replicas, timeout))
+        return {"pinning": {"replicas": replicas, "status": {"ready_replicas": replicas}}}
+
+    monkeypatch.setattr(TurboPuffer, "_create_client", lambda self: fake_client)
+    monkeypatch.setattr(turbopuffer_module, "namespace_metadata_request", fake_metadata_request)
+    monkeypatch.setattr(turbopuffer_module, "wait_for_namespace_pinning", fake_wait_for_pinning)
+
+    db = TurboPuffer(
+        dim=2,
+        db_config={
+            "api_key": "k",
+            "region": "r",
+            "api_base_url": "https://tpuf.example",
+            "namespace": "single",
+            "multitenant_namespace_prefix": "mt_",
+            "pin_namespace": True,
+            "pin_replicas": 2,
+            "pin_timeout": 30,
+        },
+        db_case_config=TurboPufferIndexConfig(metric_type=MetricType.COSINE),
+        drop_old=False,
+    )
+    db.set_multitenant_context(["tenant_0000", "tenant_0001"])
+
+    with db.init():
+        pass
+
+    assert calls == [
+        ("PATCH", "mt_tenant_0000", {"pinning": {"replicas": 2}}, "https://tpuf.example"),
+        ("WAIT", "mt_tenant_0000", 2, 30),
+        ("PATCH", "mt_tenant_0001", {"pinning": {"replicas": 2}}, "https://tpuf.example"),
+        ("WAIT", "mt_tenant_0001", 2, 30),
+    ]
+
+
 def test_turbopuffer_supports_scalar_label_payload_for_multitenant_search() -> None:
     from vectordb_bench.backend.clients.turbopuffer.turbopuffer import TurboPuffer
 
