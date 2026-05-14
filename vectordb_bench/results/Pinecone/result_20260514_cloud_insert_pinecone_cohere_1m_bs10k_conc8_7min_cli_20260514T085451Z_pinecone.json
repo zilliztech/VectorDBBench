@@ -1,0 +1,46 @@
+{
+  "run_id": "8e4ee42d8f7d4c3e920dbc6b80f13c8c",
+  "task_label": "cloud_insert_pinecone_cohere_1m_bs10k_conc8_7min_cli_20260514T085451Z",
+  "results": [
+    {
+      "metrics": {
+        "inserted_count": 220000,
+        "insert_rows_per_second": 383.7986,
+        "insert_completion_seconds": 573.2173,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0001,
+        "additional_parameters": {}
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "pinecone_cloud_insert_cohere_1m_bs10k_conc8_7min_cli",
+          "version": "",
+          "note": "",
+          "api_key": "**********",
+          "index_name": "vdbbench-ci-c1m-bs10k-7m-0514",
+          "multitenant_namespace_prefix": "vdbbench_mt_"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": 600,
+          "custom_case": {
+            "batch_size": 10000,
+            "duration": 420.0,
+            "dataset_with_size_type": "Medium Cohere (768dim, 1M)"
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load"
+        ],
+        "load_concurrency": 8
+      },
+      "label": ":)"
+    }
+  ],
+  "file_fmt": "result_{}_{}_{}.json",
+  "timestamp": 1778716800.0
+}
