@@ -23,6 +23,8 @@ class OceanBase(VectorDB):
         FilterOp.NumGE,
         FilterOp.StrEqual,
     ]
+    # insert path is GIL-bound; multi-threading cannot improve load throughput
+    thread_safe: bool = False
 
     def __init__(
         self,
@@ -57,6 +59,15 @@ class OceanBase(VectorDB):
                 self._create_table()
         finally:
             self._disconnect()
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state["_conn"] = None
+        state["_cursor"] = None
+        return state
+
+    def __setstate__(self, state: dict) -> None:
+        self.__dict__.update(state)
 
     def _connect(self):
         try:
