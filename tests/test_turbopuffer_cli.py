@@ -99,8 +99,10 @@ def test_turbopuffer_cli_pins_cloud_payload_namespace_before_run(monkeypatch: Mo
         ("WAIT", 2, "secret", "aws-us-west-2", "laion100m", None, 7200),
     ]
     assert captured["db_config"].pin_namespace is False
+    assert captured["db_config"].pin_namespace_requested is True
     assert captured["db_config"].pin_replicas == 2
     assert captured["db_config"].pin_timeout == 7200
+    assert captured["db_config"].pin_target_namespace_count == 1
     assert captured["db_case_config"].metric_type == MetricType.COSINE
     assert captured["db_case_config"].disable_backpressure is True
 
@@ -164,6 +166,8 @@ def test_turbopuffer_cli_pins_cloud_multitenant_namespaces_before_run(
         ("WAIT", "cohere10m_tenant_0001", 1),
     ]
     assert captured["db_config"].pin_namespace is False
+    assert captured["db_config"].pin_namespace_requested is True
+    assert captured["db_config"].pin_target_namespace_count == 2
     assert captured["db_config"].multitenant_namespace_prefix == "cohere10m_"
 
 

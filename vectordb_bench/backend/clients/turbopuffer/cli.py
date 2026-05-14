@@ -191,6 +191,7 @@ def pin_namespaces_once(parameters: TurboPufferIndexTypedDict) -> None:
 def TurboPuffer(**parameters: Unpack[TurboPufferIndexTypedDict]):
     from .config import TurboPufferConfig, TurboPufferIndexConfig
 
+    pin_target_namespace_count = len(target_namespaces_for_pinning(parameters)) if parameters["pin_namespace"] else 0
     if parameters["pin_namespace"]:
         pin_namespaces_once(parameters)
 
@@ -205,8 +206,10 @@ def TurboPuffer(**parameters: Unpack[TurboPufferIndexTypedDict]):
             multitenant_namespace_prefix=parameters["multitenant_namespace_prefix"],
             scalar_payload_label_field=parameters["scalar_payload_label_field"],
             pin_namespace=False,
+            pin_namespace_requested=parameters["pin_namespace"],
             pin_replicas=parameters["pin_replicas"],
             pin_timeout=parameters["pin_timeout"],
+            pin_target_namespace_count=pin_target_namespace_count,
         ),
         db_case_config=TurboPufferIndexConfig(
             metric_type=MetricType(parameters["metric_type"]),
