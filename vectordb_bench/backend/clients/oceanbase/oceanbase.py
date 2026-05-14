@@ -23,6 +23,8 @@ class OceanBase(VectorDB):
         FilterOp.NumGE,
         FilterOp.StrEqual,
     ]
+    # mysql-connector cursor cannot be shared across threads
+    thread_safe: bool = False
 
     def __init__(
         self,
