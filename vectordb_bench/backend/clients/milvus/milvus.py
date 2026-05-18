@@ -145,10 +145,7 @@ class Milvus(VectorDB):
                 if label_field is None:
                     msg = f"{self.name} multitenant collection {self.collection_name} is missing tenant label field"
                     raise ValueError(msg)
-                msg = (
-                    f"{self.name} multitenant collection {self.collection_name} "
-                    "label field is not a partition key"
-                )
+                msg = f"{self.name} multitenant collection {self.collection_name} label field is not a partition key"
                 raise ValueError(msg)
             self._multitenant_partition_key_field = partition_key_field
             if "scalar_label" in fields_by_name:

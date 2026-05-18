@@ -158,10 +158,7 @@ class Pinecone(VectorDB):
         tenant_count = len(tenant_labels)
         base_count = expected_count // tenant_count if tenant_count else 0
         remainder = expected_count % tenant_count if tenant_count else 0
-        return {
-            tenant: base_count + (1 if idx < remainder else 0)
-            for idx, tenant in enumerate(tenant_labels)
-        }
+        return {tenant: base_count + (1 if idx < remainder else 0) for idx, tenant in enumerate(tenant_labels)}
 
     def _multitenant_lsn_ready(self, expected_by_tenant: dict[str, int]) -> bool:
         last_write_lsn = getattr(self, "_last_write_lsn", None)
@@ -245,8 +242,8 @@ class Pinecone(VectorDB):
                             for insert_data, tenant_label in zip(insert_datas, batch_tenant_labels, strict=True)
                             if tenant_label == tenant
                         ]
-                        self._multitenant_insert_counts[tenant] = (
-                            self._multitenant_insert_counts.get(tenant, 0) + len(tenant_insert_datas)
+                        self._multitenant_insert_counts[tenant] = self._multitenant_insert_counts.get(tenant, 0) + len(
+                            tenant_insert_datas
                         )
                         upsert_res = self.index.upsert(
                             tenant_insert_datas,

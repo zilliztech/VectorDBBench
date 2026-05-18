@@ -284,9 +284,11 @@ class TestResult(BaseModel):
     def _redact_sensitive_fields(cls, value: Any) -> Any:
         if isinstance(value, dict):
             return {
-                key: "**********"
-                if key.lower() in cls.sensitive_output_fields and item
-                else cls._redact_sensitive_fields(item)
+                key: (
+                    "**********"
+                    if key.lower() in cls.sensitive_output_fields and item
+                    else cls._redact_sensitive_fields(item)
+                )
                 for key, item in value.items()
             }
         if isinstance(value, list):

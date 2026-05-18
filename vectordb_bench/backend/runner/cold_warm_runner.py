@@ -39,8 +39,7 @@ class ColdWarmSearchRunner:
             raise NotImplementedError(msg)
 
         self.test_data = [
-            query.tolist() if isinstance(query, np.ndarray) else query
-            for query in test_data[:query_count]
+            query.tolist() if isinstance(query, np.ndarray) else query for query in test_data[:query_count]
         ]
 
     def _search_embedding(self, emb: list[float]) -> list[int]:

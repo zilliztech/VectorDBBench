@@ -188,9 +188,7 @@ class SerialSearchRunner:
             tenant_rng = random.Random(0)
             for idx, emb in enumerate(test_data):
                 tenant = (
-                    self.tenant_labels[tenant_rng.randrange(len(self.tenant_labels))]
-                    if self.tenant_labels
-                    else None
+                    self.tenant_labels[tenant_rng.randrange(len(self.tenant_labels))] if self.tenant_labels else None
                 )
                 s = time.perf_counter()
                 try:

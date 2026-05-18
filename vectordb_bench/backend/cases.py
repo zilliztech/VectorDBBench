@@ -845,10 +845,7 @@ class CloudMultiTenantSearchCase(PerformanceCase):
         return [self.tenant_for_id(row_id) for row_id in row_ids]
 
     def tenant_labels(self) -> list[str]:
-        return [
-            f"{self.tenant_prefix}{tenant_id:0{self.tenant_id_width}d}"
-            for tenant_id in range(self.tenant_count)
-        ]
+        return [f"{self.tenant_prefix}{tenant_id:0{self.tenant_id_width}d}" for tenant_id in range(self.tenant_count)]
 
     @property
     def filters(self) -> Filter:
