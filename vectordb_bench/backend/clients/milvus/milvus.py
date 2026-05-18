@@ -17,6 +17,7 @@ from .config import MilvusIndexConfig
 log = logging.getLogger(__name__)
 
 MILVUS_LOAD_REQS_SIZE = 1.5 * 1024 * 1024
+MILVUS_FORCE_MERGE_TARGET_SIZE_MB = ((1 << 63) - 1) // (1024**2)
 
 
 class Milvus(VectorDB):
@@ -229,13 +230,15 @@ class Milvus(VectorDB):
                     # wait for sort, index, compact
                     self._wait_for_segments_sorted()
                     self._wait_for_index()
-                    compaction_id = self.client.compact(self.collection_name, target_size=(2**63 - 1))
+                    compaction_id = self.client.compact(
+                        self.collection_name, target_size=MILVUS_FORCE_MERGE_TARGET_SIZE_MB
+                    )
                     if compaction_id > 0:
                         self._wait_for_compaction(compaction_id)
                     log.info(f"{self.name} force merge compaction completed.")
                 except Exception as e:
                     log.warning(f"{self.name} compact or list segments error: {e}")
-                    if hasattr(e, "code") and e.code().name == "PERMISSION_DENIED":
+                    if getattr(getattr(e, "code", None), "name", None) == "PERMISSION_DENIED":
                         log.warning("Skip compact due to list segments or compact permission denied.")
                     else:
                         raise e from None
