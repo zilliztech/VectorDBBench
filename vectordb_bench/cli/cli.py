@@ -192,6 +192,15 @@ def get_custom_case_config(parameters: dict) -> dict:
             "dataset_with_size_type": parameters["dataset_with_size_type"],
             "label_percentage": parameters["label_percentage"],
         }
+    elif parameters["case_type"] == "StreamingPerformanceCase":
+        custom_case_config = {
+            "dataset_with_size_type": parameters["dataset_with_size_type"],
+            "insert_rate": parameters["streaming_insert_rate"],
+            "search_stages": parameters["streaming_search_stages"],
+            "concurrencies": parameters["streaming_concurrencies"],
+            "optimize_after_write": parameters["streaming_optimize_after_write"],
+            "read_dur_after_write": parameters["streaming_read_dur_after_write"],
+        }
     return custom_case_config
 
 
@@ -439,9 +448,9 @@ class CommonTypedDict(TypedDict):
         str,
         click.option(
             "--dataset-with-size-type",
-            help="Dataset with size type for NewIntFilterPerformanceCase/LabelFilterPerformanceCase, you can use "
-            "Medium Cohere (768dim, 1M)|Large Cohere (768dim, 10M)|Medium Bioasq (1024dim, 1M)|"
-            "Large Bioasq (1024dim, 10M)|Large OpenAI (1536dim, 5M)|Medium OpenAI (1536dim, 500K)",
+            help="Dataset with size type for StreamingPerformanceCase / NewIntFilterPerformanceCase / "
+            "LabelFilterPerformanceCase. Options include: Small Cohere, Medium Cohere (768dim, 1M), "
+            "Large Cohere (768dim, 10M), etc. Use 'vectordbbench list-datasets' to see all available options.",
             default="Medium Cohere (768dim, 1M)",
             show_default=True,
         ),
@@ -461,6 +470,59 @@ class CommonTypedDict(TypedDict):
             "--label-percentage",
             help="Filter rate for LabelFilterPerformanceCase",
             default=0.01,
+            show_default=True,
+        ),
+    ]
+    streaming_insert_rate: Annotated[
+        int,
+        click.option(
+            "--streaming-insert-rate",
+            type=int,
+            help="Fixed insertion rate (rows/s) for StreamingPerformanceCase, must be divisible by NUM_PER_BATCH",
+            default=500,
+            show_default=True,
+        ),
+    ]
+    streaming_search_stages: Annotated[
+        str,
+        click.option(
+            "--streaming-search-stages",
+            type=str,
+            help=(
+                "Search stages for StreamingPerformanceCase, "
+                "JSON list of floats (0<=stage<1.0), e.g. '[0.2, 0.5, 0.8]'"
+            ),
+            default="[0.5, 0.8]",
+            show_default=True,
+        ),
+    ]
+    streaming_concurrencies: Annotated[
+        str,
+        click.option(
+            "--streaming-concurrencies",
+            type=str,
+            help="Concurrency levels for streaming search tests, JSON list of ints, e.g. '[5, 10, 20]'",
+            default="[5, 10]",
+            show_default=True,
+        ),
+    ]
+    streaming_optimize_after_write: Annotated[
+        bool,
+        click.option(
+            "--streaming-optimize-after-write/--no-streaming-optimize-after-write",
+            type=bool,
+            default=True,
+            help="Whether to optimize after inserting all data in streaming case",
+            show_default=True,
+        ),
+    ]
+    streaming_read_dur_after_write: Annotated[
+        int,
+        click.option(
+            "--streaming-read-dur-after-write",
+            type=int,
+            help="Search test duration (seconds) after inserting all data in streaming case",
+            default=30,
             show_default=True,
         ),
     ]
