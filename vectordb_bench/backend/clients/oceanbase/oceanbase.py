@@ -44,6 +44,8 @@ class OceanBase(VectorDB):
         self._index_name = "vidx"
         self._primary_field = "id"
         self._vector_field = "embedding"
+        self._scalar_label_field = "label"
+        self.with_scalar_labels = kwargs.get("with_scalar_labels", False)
 
         log.info(
             f"{self.name} initialized with config:\nDatabase: {self.db_config}\nCase Config: {self.db_case_config}"
@@ -123,7 +125,8 @@ class OceanBase(VectorDB):
         partitions = getattr(self.db_case_config, "partitions", 0)
         log.info(f"Creating table {self.table_name} (partitions={partitions})")
 
-        create_table_query = f"CREATE TABLE {self.table_name} (id INT PRIMARY KEY, embedding VECTOR({self.dim}))"
+        label_col = f", {self._scalar_label_field} VARCHAR(64)" if self.with_scalar_labels else ""
+        create_table_query = f"CREATE TABLE {self.table_name} (id INT PRIMARY KEY, embedding VECTOR({self.dim}){label_col})"
         if partitions > 1:
             create_table_query += f" PARTITION BY KEY(id) PARTITIONS {partitions}"
         create_table_query += ";"
@@ -182,19 +185,31 @@ class OceanBase(VectorDB):
         self,
         embeddings: list[list[float]],
         metadata: list[int],
+        labels_data: list[str] | None = None,
         **kwargs: Any,
     ) -> tuple[int, Exception | None]:
         if not self._cursor:
             raise ValueError("Cursor is not initialized")
 
+        if self.with_scalar_labels:
+            assert labels_data is not None, "labels_data is required when with_scalar_labels is True"
+
         insert_count = 0
         try:
             for batch_start in range(0, len(embeddings), self.load_batch_size):
                 batch_end = min(batch_start + self.load_batch_size, len(embeddings))
-                batch = [(metadata[i], embeddings[i]) for i in range(batch_start, batch_end)]
-                values = ", ".join(f"({item_id}, '[{','.join(map(str, embedding))}]')" for item_id, embedding in batch)
+                if self.with_scalar_labels:
+                    values = ", ".join(
+                        f"({metadata[i]}, '[{','.join(map(str, embeddings[i]))}]', '{labels_data[i]}')"
+                        for i in range(batch_start, batch_end)
+                    )
+                else:
+                    values = ", ".join(
+                        f"({metadata[i]}, '[{','.join(map(str, embeddings[i]))}]')"
+                        for i in range(batch_start, batch_end)
+                    )
                 self._cursor.execute(f"INSERT INTO {self.table_name} VALUES {values}")
-                insert_count += len(batch)
+                insert_count += batch_end - batch_start
         except mysql.Error:
             log.exception("Failed to insert embeddings")
             raise
@@ -207,7 +222,7 @@ class OceanBase(VectorDB):
         elif filters.type == FilterOp.NumGE:
             self.expr = f"WHERE id >= {filters.int_value}"
         elif filters.type == FilterOp.StrEqual:
-            self.expr = f"WHERE id == '{filters.label_value}'"
+            self.expr = f"WHERE {self._scalar_label_field} = '{filters.label_value}'"
         else:
             msg = f"Not support Filter for Oceanbase - {filters}"
             raise ValueError(msg)
