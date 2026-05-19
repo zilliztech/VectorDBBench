@@ -708,6 +708,17 @@ vectordbbench batchcli --batch-config-file <your-yaml-configuration-file>
 ### Introduction
 To facilitate the presentation of test results and provide a comprehensive performance analysis report, we offer a [leaderboard page](https://zilliz.com/benchmark). It allows us to choose from QPS, QP$, and latency metrics, and provides a comprehensive assessment of a system's performance based on the test results of various cases and a set of scoring mechanisms (to be introduced later). On this leaderboard, we can select the systems and models to be compared, and filter out cases we do not want to consider. Comprehensive scores are always ranked from best to worst, and the specific test results of each query will be presented in the list below.
 
+### CloudLeadboard v2
+
+VectorDBBench now includes CloudLeadboard v2 cases for production-oriented cloud vector database evaluation. These cases complement the original raw-performance leaderboard by measuring behaviors that matter for managed services:
+
+- `CloudInsertCase`: insert throughput plus searchable and indexed readiness delays.
+- `CloudPayloadSearchCase`: search performance when responses return IDs only, scalar metadata, or vectors.
+- `CloudMultiTenantSearchCase`: tenant-routed search for SaaS-shaped workloads.
+- `CloudColdLatencyCase`: cold and warm serial latency for first-query and cache-sensitive serving paths.
+
+The May 2026 release note explains why the cloud leaderboard was added, what changed, which systems were tested this round, and how to run each new case: [docs/release/2026-05-cloud-leadboard.md](docs/release/2026-05-cloud-leadboard.md).
+
 ### Scoring Rules
 
 1. For each case, select a base value and score each system based on relative values.
