@@ -1,0 +1,49 @@
+{
+  "run_id": "dd7a9e99e6f75bc2aa3e29a5de151a14",
+  "task_label": "cloud_insert_zilliz_cloud_tiered_4cu_laion100m_bs1k_20260513",
+  "results": [
+    {
+      "metrics": {
+        "inserted_count": 100000000,
+        "insert_rows_per_second": 6841.42,
+        "insert_completion_seconds": 14616.84,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 620.32,
+        "additional_parameters": {}
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "zilliz_cloud_tiered_4cu_cloud_insert_laion100m_bs1k",
+          "version": "",
+          "note": "",
+          "num_shards": 1,
+          "collection_name": "LAION100M"
+        },
+        "db_case_config": {
+          "index": "AUTOINDEX",
+          "metric_type": "L2",
+          "use_partition_key": false,
+          "level": 1,
+          "num_shards": 1
+        },
+        "case_config": {
+          "case_id": 600,
+          "custom_case": {
+            "batch_size": 1000,
+            "duration": null,
+            "dataset_with_size_type": "LAION 100M"
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    }
+  ],
+  "file_fmt": "result_{}_{}_{}.json",
+  "timestamp": 1778630400.0
+}

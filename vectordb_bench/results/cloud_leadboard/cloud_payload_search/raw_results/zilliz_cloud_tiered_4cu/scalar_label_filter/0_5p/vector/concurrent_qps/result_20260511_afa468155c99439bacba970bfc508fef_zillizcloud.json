@@ -1,0 +1,98 @@
+{
+  "run_id": "afa468155c99439bacba970bfc508fef",
+  "task_label": "afa468155c99439bacba970bfc508fef",
+  "results": [
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 57.1731,
+        "serial_latency_p99": 0.0,
+        "serial_latency_p95": 0.0,
+        "recall": 0.0,
+        "ndcg": 0.0,
+        "conc_num_list": [
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          55.5869,
+          57.1731
+        ],
+        "conc_latency_p99_list": [
+          1.5935375807242236,
+          1.8701637146563734
+        ],
+        "conc_latency_p95_list": [
+          1.3854679467825917,
+          1.712759150704369
+        ],
+        "conc_latency_avg_list": [
+          1.0731091858631148,
+          1.3877502594260402
+        ],
+        "payload_profile": "vector",
+        "payload_estimated_bytes_per_query": 309200,
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "zilliz_cloud_tiered_4cu_scalar_label_filter_0_5p_vector_concurrent_qps_20260511",
+          "version": "",
+          "note": "",
+          "uri": "**********",
+          "user": "db_admin",
+          "password": "**********",
+          "token": "**********",
+          "num_shards": 1,
+          "collection_name": "LAION100M"
+        },
+        "db_case_config": {
+          "index": "AUTOINDEX",
+          "metric_type": "L2",
+          "use_partition_key": false,
+          "level": 1,
+          "num_shards": 1
+        },
+        "case_config": {
+          "case_id": 500,
+          "custom_case": {
+            "payload_profile": "vector",
+            "label_percentage": 0.005
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              60,
+              80
+            ],
+            "concurrency_duration": 60,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_concurrent"
+        ]
+      },
+      "label": ":)"
+    }
+  ],
+  "file_fmt": "result_{}_{}_{}.json",
+  "timestamp": 1778457600.0
+}

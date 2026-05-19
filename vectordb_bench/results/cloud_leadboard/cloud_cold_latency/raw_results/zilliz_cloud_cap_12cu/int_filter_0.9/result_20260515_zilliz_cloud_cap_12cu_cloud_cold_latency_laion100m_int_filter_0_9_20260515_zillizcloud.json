@@ -1,0 +1,71 @@
+{
+  "run_id": "9cdc8c50fe944d58a15069cd392d66b2",
+  "task_label": "zilliz_cloud_cap_12cu_cloud_cold_latency_laion100m_int_filter_0_9_20260515",
+  "results": [
+    {
+      "metrics": {
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "cold_latency": {
+          "cold_stats": {
+            "first_query_latency": 0.1951,
+            "p99_latency": 0.0155,
+            "p95_latency": 0.0133,
+            "avg_latency": 0.0114
+          },
+          "warm_stats": {
+            "first_query_latency": 0.0106,
+            "p99_latency": 0.0144,
+            "p95_latency": 0.0131,
+            "avg_latency": 0.0112
+          },
+          "cold_warm_ratio": {
+            "first_query_latency_ratio": 18.4057,
+            "p99_latency_ratio": 1.0764,
+            "p95_latency_ratio": 1.0153,
+            "avg_latency_ratio": 1.0179
+          }
+        }
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "zilliz_cloud_cap_12cu_cloud_cold_latency_laion100m_int_filter_0_9_20260515",
+          "version": "",
+          "note": "",
+          "uri": "**********",
+          "user": "db_admin",
+          "password": "**********",
+          "token": "**********",
+          "num_shards": 1,
+          "collection_name": "LAION100M_capacity"
+        },
+        "db_case_config": {
+          "index": "AUTOINDEX",
+          "metric_type": "L2",
+          "use_partition_key": false,
+          "level": 1,
+          "num_shards": 1
+        },
+        "case_config": {
+          "case_id": 700,
+          "custom_case": {
+            "payload_profile": "ids_only",
+            "query_count": 1000,
+            "filter_rate": 0.9
+          }
+        },
+        "stages": [
+          "search_serial"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    }
+  ],
+  "file_fmt": "result_{}_{}_{}.json",
+  "timestamp": 1778803200.0
+}

@@ -1,0 +1,46 @@
+{
+  "run_id": "7fbff0c1faf655b8a73af47a20f2586a",
+  "task_label": "cloud_insert_turbopuffer_bp_on_laion100m_bs10k_20260513",
+  "results": [
+    {
+      "metrics": {
+        "inserted_count": 100000000,
+        "insert_rows_per_second": 3213.43,
+        "insert_completion_seconds": 31123.5675,
+        "searchable_after_insert_seconds": 0,
+        "indexed_after_searchable_seconds": 114.24,
+        "additional_parameters": {}
+      },
+      "task_config": {
+        "db": "TurboPuffer",
+        "db_config": {
+          "db_label": "turbopuffer_bp_on_cloud_insert_laion100m_bs10k",
+          "version": "",
+          "note": ""
+        },
+        "db_case_config": {
+          "metric_type": "L2",
+          "use_multi_ns_for_filter": false,
+          "time_wait_warmup": 60,
+          "disable_backpressure": false
+        },
+        "case_config": {
+          "case_id": 600,
+          "custom_case": {
+            "batch_size": 10000,
+            "duration": null,
+            "dataset_with_size_type": "LAION 100M"
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    }
+  ],
+  "file_fmt": "result_{}_{}_{}.json",
+  "timestamp": 1778630400.0
+}

@@ -1,0 +1,95 @@
+{
+  "run_id": "33eb1c2a84774d888d8c0600febe4298",
+  "task_label": "turbopuffer_int_filter_10p_scalar_label_serial_recall_20260514",
+  "results": [
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 0.0,
+        "serial_latency_p99": 0.0457,
+        "serial_latency_p95": 0.0425,
+        "recall": 0.9076,
+        "ndcg": 0.9196,
+        "conc_num_list": [],
+        "conc_qps_list": [],
+        "conc_latency_p99_list": [],
+        "conc_latency_p95_list": [],
+        "conc_latency_avg_list": [],
+        "payload_profile": "scalar_label",
+        "payload_estimated_bytes_per_query": 3600,
+        "inserted_count": 0,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {},
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "TurboPuffer",
+        "db_config": {
+          "db_label": "turbopuffer_int_filter_10p_scalar_label_serial_recall_20260514",
+          "version": "",
+          "note": "",
+          "api_key": "**********",
+          "region": "aws-us-west-2",
+          "api_base_url": null,
+          "namespace": "laion100m_bulk",
+          "multitenant_namespace_prefix": "vdbbench_mt_",
+          "scalar_payload_label_field": "label"
+        },
+        "db_case_config": {
+          "metric_type": "L2",
+          "use_multi_ns_for_filter": false,
+          "time_wait_warmup": 60,
+          "disable_backpressure": false
+        },
+        "case_config": {
+          "case_id": 500,
+          "custom_case": {
+            "payload_profile": "scalar_label",
+            "filter_rate": 0.9
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_serial"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    }
+  ],
+  "file_fmt": "result_{}_{}_{}.json",
+  "timestamp": 1778716800.0
+}

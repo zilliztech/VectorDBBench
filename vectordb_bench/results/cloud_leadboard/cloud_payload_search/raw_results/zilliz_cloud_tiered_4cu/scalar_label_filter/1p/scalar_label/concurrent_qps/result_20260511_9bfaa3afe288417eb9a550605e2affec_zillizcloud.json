@@ -1,0 +1,98 @@
+{
+  "run_id": "9bfaa3afe288417eb9a550605e2affec",
+  "task_label": "9bfaa3afe288417eb9a550605e2affec",
+  "results": [
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 84.9877,
+        "serial_latency_p99": 0.0,
+        "serial_latency_p95": 0.0,
+        "recall": 0.0,
+        "ndcg": 0.0,
+        "conc_num_list": [
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          79.6971,
+          84.9877
+        ],
+        "conc_latency_p99_list": [
+          1.007299353738781,
+          1.2081143411388622
+        ],
+        "conc_latency_p95_list": [
+          0.892455630225595,
+          1.1024479369982145
+        ],
+        "conc_latency_avg_list": [
+          0.7479302712349924,
+          0.9323111501872958
+        ],
+        "payload_profile": "scalar_label",
+        "payload_estimated_bytes_per_query": 3600,
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "tiered4cu_scalar_filter_scalar_label_c60c80_60s_20260511",
+          "version": "",
+          "note": "",
+          "uri": "**********",
+          "user": "db_admin",
+          "password": "**********",
+          "token": "**********",
+          "num_shards": 1,
+          "collection_name": "LAION100M"
+        },
+        "db_case_config": {
+          "index": "AUTOINDEX",
+          "metric_type": "L2",
+          "use_partition_key": false,
+          "level": 1,
+          "num_shards": 1
+        },
+        "case_config": {
+          "case_id": 500,
+          "custom_case": {
+            "payload_profile": "scalar_label",
+            "label_percentage": 0.01
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              60,
+              80
+            ],
+            "concurrency_duration": 60,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_concurrent"
+        ]
+      },
+      "label": ":)"
+    }
+  ],
+  "file_fmt": "result_{}_{}_{}.json",
+  "timestamp": 1778457600.0
+}

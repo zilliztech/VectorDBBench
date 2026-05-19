@@ -1,0 +1,64 @@
+{
+  "run_id": "2927c5721eb54888813a2147b00d0d13",
+  "task_label": "pinecone_cloud_cold_latency_laion100m_int_filter_0_9_20260515",
+  "results": [
+    {
+      "metrics": {
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "cold_latency": {
+          "cold_stats": {
+            "first_query_latency": 0.9106,
+            "p99_latency": 1.1424,
+            "p95_latency": 0.6552,
+            "avg_latency": 0.237
+          },
+          "warm_stats": {
+            "first_query_latency": 0.115,
+            "p99_latency": 1.1493,
+            "p95_latency": 0.6602,
+            "avg_latency": 0.2473
+          },
+          "cold_warm_ratio": {
+            "first_query_latency_ratio": 7.9183,
+            "p99_latency_ratio": 0.994,
+            "p95_latency_ratio": 0.9924,
+            "avg_latency_ratio": 0.9584
+          }
+        }
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "pinecone_cloud_cold_latency_laion100m_int_filter_0_9_20260515",
+          "version": "",
+          "note": "",
+          "api_key": "**********",
+          "index_name": "vdbbench-laion-100m-768d-l2",
+          "multitenant_namespace_prefix": "vdbbench_mt_"
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": 700,
+          "custom_case": {
+            "payload_profile": "ids_only",
+            "query_count": 1000,
+            "filter_rate": 0.9
+          }
+        },
+        "stages": [
+          "search_serial"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    }
+  ],
+  "file_fmt": "result_{}_{}_{}.json",
+  "timestamp": 1778803200.0
+}

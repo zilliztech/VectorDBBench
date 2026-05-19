@@ -1,0 +1,43 @@
+{
+  "run_id": "b6a12c599c8c5ac9b6c09e451c4faa1c",
+  "task_label": "cloud_insert_pinecone_laion100m_bs5k_20260513",
+  "results": [
+    {
+      "metrics": {
+        "inserted_count": 100000000,
+        "insert_rows_per_second": 388.8317,
+        "insert_completion_seconds": 257181.8042,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0012,
+        "additional_parameters": {}
+      },
+      "task_config": {
+        "db": "Pinecone",
+        "db_config": {
+          "db_label": "pinecone_cloud_insert_laion100m_bs5k",
+          "version": "",
+          "note": ""
+        },
+        "db_case_config": {
+          "null": null
+        },
+        "case_config": {
+          "case_id": 600,
+          "custom_case": {
+            "batch_size": 5000,
+            "duration": null,
+            "dataset_with_size_type": "LAION 100M"
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    }
+  ],
+  "file_fmt": "result_{}_{}_{}.json",
+  "timestamp": 1778630400.0
+}
