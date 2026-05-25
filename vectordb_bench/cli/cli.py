@@ -39,6 +39,17 @@ except ImportError:
 DEFAULT_DATASET_WITH_SIZE_TYPE = DatasetWithSizeType.CohereMedium.value
 
 
+def copy_if_not_none(
+    custom_case_config: dict[str, Any],
+    parameters: dict[str, Any],
+    key: str,
+    target_key: str | None = None,
+) -> None:
+    value = parameters[key]
+    if value is not None:
+        custom_case_config[target_key or key] = value
+
+
 def click_get_defaults_from_file(ctx, param, value):  # noqa: ANN001, ARG001
     if value:
         path = Path(value)
@@ -200,6 +211,7 @@ def get_custom_case_config(parameters: dict) -> dict:
         custom_case_config = {
             "payload_profile": parameters["payload_profile"],
         }
+        copy_if_not_none(custom_case_config, parameters, "dataset_with_size_type")
         if parameters["cloud_filter_rate"] is not None:
             custom_case_config["filter_rate"] = parameters["cloud_filter_rate"]
         if parameters["cloud_label_percentage"] is not None:
@@ -223,12 +235,12 @@ def get_custom_case_config(parameters: dict) -> dict:
         }
     elif parameters["case_type"] == "CloudMultiTenantSearchCase":
         custom_case_config = {
-            "dataset_with_size_type": parameters["dataset_with_size_type"],
             "tenant_count": parameters["tenant_count"],
             "tenant_prefix": parameters["tenant_prefix"],
             "tenant_id_width": parameters["tenant_id_width"],
             "payload_profile": parameters["payload_profile"],
         }
+        copy_if_not_none(custom_case_config, parameters, "dataset_with_size_type")
         if parameters["cloud_filter_rate"] is not None:
             custom_case_config["filter_rate"] = parameters["cloud_filter_rate"]
         if parameters["cloud_label_percentage"] is not None:
@@ -481,7 +493,8 @@ class CommonTypedDict(TypedDict):
         click.option(
             "--dataset-with-size-type",
             help="Dataset with size type. When omitted, filter/insert cases use Medium Cohere (768dim, 1M), "
-            "and CloudColdLatencyCase uses LAION 100M. Supported values include Medium Cohere (768dim, 1M)|"
+            "CloudPayloadSearchCase and CloudColdLatencyCase use LAION 100M, and CloudMultiTenantSearchCase "
+            "uses Large Cohere (768dim, 10M). Supported values include Medium Cohere (768dim, 1M)|"
             "Large Cohere (768dim, 10M)|Medium Bioasq (1024dim, 1M)|Large Bioasq (1024dim, 10M)|"
             "Large OpenAI (1536dim, 5M)|Medium OpenAI (1536dim, 500K)",
             default=None,

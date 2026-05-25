@@ -1,11 +1,12 @@
 import pytest
 
 from vectordb_bench import config
-from vectordb_bench.backend.cases import CloudPayloadSearchCase, CaseType
+from vectordb_bench.backend.cases import CaseType, CloudPayloadSearchCase
 from vectordb_bench.backend.dataset import DatasetWithSizeType
 from vectordb_bench.backend.payload import PayloadProfile
 from vectordb_bench.backend.runner.mp_runner import MultiProcessingSearchRunner
 from vectordb_bench.backend.runner.serial_runner import SerialSearchRunner
+from vectordb_bench.cli.cli import get_custom_case_config
 from vectordb_bench.models import CaseConfig
 
 
@@ -56,6 +57,43 @@ def test_case_config_builds_cloud_payload_case_from_custom_case():
 
     assert isinstance(case, CloudPayloadSearchCase)
     assert case.payload_profile == PayloadProfile.VECTOR
+
+
+def test_cli_propagates_cloud_payload_dataset_selection():
+    custom_case = get_custom_case_config(
+        {
+            "case_type": "CloudPayloadSearchCase",
+            "dataset_with_size_type": DatasetWithSizeType.CohereSmall.value,
+            "payload_profile": "vector",
+            "cloud_filter_rate": None,
+            "cloud_label_percentage": None,
+        }
+    )
+
+    assert custom_case["dataset_with_size_type"] == DatasetWithSizeType.CohereSmall.value
+
+    case = CaseConfig(case_id=CaseType.CloudPayloadSearchCase, custom_case=custom_case).case
+    assert case.dataset_with_size_type == DatasetWithSizeType.CohereSmall
+    assert case.dataset.data.size == 100_000
+
+
+def test_cli_omits_cloud_payload_dataset_when_not_selected():
+    custom_case = get_custom_case_config(
+        {
+            "case_type": "CloudPayloadSearchCase",
+            "dataset_with_size_type": None,
+            "payload_profile": "ids_only",
+            "cloud_filter_rate": None,
+            "cloud_label_percentage": None,
+        }
+    )
+
+    assert "dataset_with_size_type" not in custom_case
+
+    case = CaseConfig(case_id=CaseType.CloudPayloadSearchCase, custom_case=custom_case).case
+    assert case.dataset_with_size_type is None
+    assert case.dataset.data.name == "LAION"
+    assert case.dataset.data.size == 100_000_000
 
 
 def test_serial_runner_omits_payload_argument_for_ids_only():

@@ -69,6 +69,27 @@ def test_cli_builds_cloud_insert_custom_case_config():
     }
 
 
+def test_cli_builds_cloud_insert_custom_case_config_with_default_dataset():
+    cfg = get_custom_case_config(
+        {
+            "case_type": "CloudInsertCase",
+            "cloud_insert_batch_size": 10_000,
+            "cloud_insert_duration": None,
+            "dataset_with_size_type": None,
+        }
+    )
+
+    assert cfg == {
+        "batch_size": 10_000,
+        "duration": None,
+        "dataset_with_size_type": DatasetWithSizeType.CohereMedium.value,
+    }
+
+    case = CaseConfig(case_id=CaseType.CloudInsertCase, custom_case=cfg).case
+    assert case.dataset_with_size_type == DatasetWithSizeType.CohereMedium
+    assert case.dataset.data.size == 1_000_000
+
+
 def test_cli_builds_multitenant_custom_case_config():
     cfg = get_custom_case_config(
         {
@@ -91,6 +112,32 @@ def test_cli_builds_multitenant_custom_case_config():
         "payload_profile": "vector",
         "filter_rate": 0.01,
     }
+
+
+def test_cli_omits_multitenant_dataset_when_not_selected():
+    cfg = get_custom_case_config(
+        {
+            "case_type": "CloudMultiTenantSearchCase",
+            "dataset_with_size_type": None,
+            "tenant_count": 13,
+            "tenant_prefix": "acct_",
+            "tenant_id_width": 3,
+            "payload_profile": "ids_only",
+            "cloud_filter_rate": None,
+            "cloud_label_percentage": None,
+        }
+    )
+
+    assert cfg == {
+        "tenant_count": 13,
+        "tenant_prefix": "acct_",
+        "tenant_id_width": 3,
+        "payload_profile": "ids_only",
+    }
+
+    case = CaseConfig(case_id=CaseType.CloudMultiTenantSearchCase, custom_case=cfg).case
+    assert case.dataset_with_size_type == DatasetWithSizeType.CohereLarge
+    assert case.dataset.data.size == 10_000_000
 
 
 def test_assembler_schedules_cloud_insert_case():
