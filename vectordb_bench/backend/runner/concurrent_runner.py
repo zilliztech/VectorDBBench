@@ -66,6 +66,7 @@ class ConcurrentInsertRunner:
         backend: ExecutorBackend = ExecutorBackend.THREADING,
         batch_size: int = config.NUM_PER_BATCH,
         duration: float | None = None,
+        with_scalar_labels: bool = False,
         tenant_case=None,  # noqa: ANN001
     ):
         self.timeout = timeout if isinstance(timeout, int | float) else None
@@ -76,6 +77,7 @@ class ConcurrentInsertRunner:
         self.backend = backend
         self.batch_size = batch_size
         self.duration = duration if isinstance(duration, int | float) else None
+        self.with_scalar_labels = with_scalar_labels
         self.tenant_case = tenant_case
 
         effective_workers = max_workers or min(mp.cpu_count(), 4)
@@ -178,11 +180,12 @@ class ConcurrentInsertRunner:
         del emb_np
 
         labels_data = None
-        if self.filters.type == FilterOp.StrEqual:
+        if self.filters.type == FilterOp.StrEqual or self.with_scalar_labels:
+            label_field = self.filters.label_field if self.filters.type == FilterOp.StrEqual else "labels"
             if self.dataset.data.scalar_labels_file_separated:
-                labels_data = self.dataset.scalar_labels[self.filters.label_field][all_metadata].to_list()
+                labels_data = self.dataset.scalar_labels[label_field][all_metadata].to_list()
             else:
-                labels_data = data_df[self.filters.label_field].tolist()
+                labels_data = data_df[label_field].tolist()
 
         tenant_labels_data = None
         if self.tenant_case is not None and getattr(self.tenant_case, "is_multitenant", False):

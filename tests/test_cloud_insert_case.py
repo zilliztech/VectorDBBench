@@ -728,3 +728,38 @@ def test_concurrent_insert_runner_passes_tenant_labels():
     assert count == 3
     assert db.calls[0]["metadata"] == [0, 1, 5]
     assert db.calls[0]["tenant_labels_data"] == ["tenant_0000", "tenant_0001", "tenant_0002"]
+
+
+def test_concurrent_insert_runner_passes_scalar_labels_for_scalar_payload_without_filter():
+    db = TenantInsertProbeDB()
+    dataset = MagicMock()
+    dataset.data.train_id_field = "id"
+    dataset.data.train_vector_field = "emb"
+    dataset.data.scalar_labels_file_separated = False
+    dataset.iter_batches.return_value = iter(
+        [
+            pd.DataFrame(
+                {
+                    "id": [0, 1, 5],
+                    "emb": [[1.0, 0.0], [0.0, 1.0], [0.5, 0.5]],
+                    "labels": ["label_a", "label_b", "label_c"],
+                }
+            )
+        ]
+    )
+
+    runner = ConcurrentInsertRunner(
+        db=db,
+        dataset=dataset,
+        normalize=False,
+        max_workers=1,
+        batch_size=10,
+        with_scalar_labels=True,
+    )
+
+    count = runner.task()
+
+    assert count == 3
+    assert db.calls[0]["metadata"] == [0, 1, 5]
+    assert db.calls[0]["labels_data"] == ["label_a", "label_b", "label_c"]
+    assert db.calls[0]["tenant_labels_data"] is None

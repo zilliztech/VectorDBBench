@@ -142,7 +142,7 @@ class CaseRunner(BaseModel):
             db_config=db_config_dict,
             db_case_config=self.config.db_case_config,
             drop_old=drop_old,
-            with_scalar_labels=self.ca.with_scalar_labels or self.ca.is_multitenant,
+            with_scalar_labels=self.ca.with_scalar_labels,
             **extra_db_kwargs,
         )
 
@@ -378,6 +378,7 @@ class CaseRunner(BaseModel):
                 self.ca.filters,
                 self.ca.load_timeout,
                 max_workers=self.config.load_concurrency or None,
+                with_scalar_labels=self.ca.with_scalar_labels,
                 **runner_kwargs,
             )
             runner.run()

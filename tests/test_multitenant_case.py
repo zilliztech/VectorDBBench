@@ -234,6 +234,43 @@ def test_turbopuffer_groups_multitenant_insert_and_search(monkeypatch):
     assert fake_client.namespaces["mt_tenant_0001"].query_calls
 
 
+def test_turbopuffer_multitenant_insert_preserves_scalar_payload_labels(monkeypatch):
+    from vectordb_bench.backend.clients.api import MetricType
+    from vectordb_bench.backend.clients.turbopuffer.config import TurboPufferIndexConfig
+    from vectordb_bench.backend.clients.turbopuffer.turbopuffer import TurboPuffer
+
+    fake_client = FakeTurboClient()
+    monkeypatch.setattr(TurboPuffer, "_create_client", lambda self: fake_client)
+
+    db = TurboPuffer(
+        dim=2,
+        db_config={
+            "api_key": "k",
+            "region": "r",
+            "api_base_url": None,
+            "namespace": "single",
+            "multitenant_namespace_prefix": "mt_",
+            "scalar_payload_label_field": "scalar_label",
+        },
+        db_case_config=TurboPufferIndexConfig(metric_type=MetricType.COSINE),
+        drop_old=False,
+        with_scalar_labels=True,
+    )
+
+    with db.init():
+        count, err = db.insert_embeddings(
+            embeddings=[[1.0, 0.0], [0.0, 1.0]],
+            metadata=[0, 1],
+            labels_data=["label_a", "label_b"],
+            tenant_labels_data=["tenant_0000", "tenant_0001"],
+        )
+
+    assert count == 2
+    assert err is None
+    assert fake_client.namespaces["mt_tenant_0000"].write_calls[0]["upsert_columns"]["scalar_label"] == ["label_a"]
+    assert fake_client.namespaces["mt_tenant_0001"].write_calls[0]["upsert_columns"]["scalar_label"] == ["label_b"]
+
+
 def test_turbopuffer_pins_multitenant_namespaces_on_init(monkeypatch):
     from vectordb_bench.backend.clients.api import MetricType
     from vectordb_bench.backend.clients.turbopuffer import turbopuffer as turbopuffer_module

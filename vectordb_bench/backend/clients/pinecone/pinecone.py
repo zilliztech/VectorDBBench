@@ -220,9 +220,7 @@ class Pinecone(VectorDB):
                 for i in range(batch_start_offset, batch_end_offset):
                     metadata_dict = {self._scalar_id_field: metadata[i]}
                     if self.with_scalar_labels:
-                        metadata_dict[self._scalar_label_field] = (
-                            tenant_labels_data[i] if tenant_labels_data is not None else labels_data[i]
-                        )
+                        metadata_dict[self._scalar_label_field] = labels_data[i]
                     insert_data = (
                         str(metadata[i]),
                         embeddings[i],

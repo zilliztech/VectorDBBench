@@ -229,6 +229,8 @@ class TurboPuffer(VectorDB):
                         self._scalar_id_field: [metadata[i] for i in idxs],
                         self._vector_field: [vectors[i] for i in idxs],
                     }
+                    if self.with_scalar_labels:
+                        upsert_columns[self._scalar_payload_label_field] = [labels_data[i] for i in idxs]
                     self._namespace_for_tenant(tenant).write(
                         upsert_columns=upsert_columns,
                         distance_metric=self.metric,
@@ -241,7 +243,7 @@ class TurboPuffer(VectorDB):
                     upsert_columns={
                         self._scalar_id_field: metadata,
                         self._vector_field: vectors,
-                        self._scalar_label_field: labels_data,
+                        self._scalar_payload_label_field: labels_data,
                     },
                     distance_metric=self.metric,
                     disable_backpressure=self.db_case_config.disable_backpressure,

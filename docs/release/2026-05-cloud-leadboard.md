@@ -84,6 +84,8 @@ vectordbbench zillizautoindex \
 
 The case can also run unfiltered search, integer-filter search through `--cloud-filter-rate`, or scalar-label filter search through `--cloud-label-percentage`. It records QPS, latency, recall where applicable, and estimated response payload bytes per query.
 
+When `payload_profile` is `scalar_label`, VectorDBBench materializes scalar label data even for unfiltered runs. This keeps the loaded schema aligned with the requested response payload instead of only loading labels for scalar-label filter runs.
+
 Example: run vector-payload search on Pinecone with a highly selective integer filter.
 
 ```bash
@@ -104,6 +106,8 @@ vectordbbench pinecone \
 **Purpose.** CloudMultiTenantSearchCase models SaaS-shaped traffic. Instead of treating the dataset as one flat global collection, it splits records across many tenants and routes each query to a tenant. This highlights products whose namespace, partition-key, or tenant-filter paths behave differently from single-tenant search.
 
 **How it works.** The case defaults to the Cohere 10M dataset and assigns each row to a deterministic tenant by `row_id % tenant_count`. During search, queries are routed to the corresponding tenant label or namespace. The case supports the same payload profiles and optional filter modes as payload search.
+
+Tenant routing labels and scalar payload labels are separate concepts. A multi-tenant run can route by tenant while still storing and returning scalar-label payload data when `payload_profile` is `scalar_label`, and scalar-label filters continue to use the scalar label field rather than the tenant routing field.
 
 Example: run 1,000-tenant IDs-only search on turbopuffer.
 
@@ -156,6 +160,7 @@ Important caveats:
 - Managed-service configuration can materially change results, especially for serverless scaling, pinned replicas, capacity units, and storage-tiering modes.
 - "Fully indexed" and "fully searchable" readiness may be exposed differently by each vendor, so the implementation must document how each status is detected or inferred.
 - The current multi-tenant case uses deterministic tenant assignment and uniform tenant routing. It does not represent every SaaS tenant distribution.
+- Multi-tenant routing labels or namespaces are not equivalent to scalar payload labels. Benchmark clients must keep those fields separate when a run combines tenant routing with scalar-label payload or filter behavior.
 - Cold latency depends on cache state, idle window, replica pinning, storage architecture, and service warmup behavior. The idle and warmup rules must stay strict between products.
 - Payload search rankings are workload-specific. IDs-only, scalar-label, vector-return, integer-filter, and label-filter runs can produce different winners.
 - Cost Pareto results must be read together with recall, latency, payload profile, and readiness constraints rather than as a standalone ranking.

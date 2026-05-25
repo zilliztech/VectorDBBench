@@ -70,3 +70,40 @@ def test_pinecone_groups_multitenant_upsert_and_query(monkeypatch):
     assert fake_index.upserts[0][1] == "mt_tenant_0000"
     assert fake_index.upserts[1][1] == "mt_tenant_0001"
     assert fake_index.queries[-1]["namespace"] == "mt_tenant_0001"
+
+
+def test_pinecone_multitenant_upsert_preserves_scalar_payload_labels(monkeypatch):
+    from vectordb_bench.backend.clients.pinecone import pinecone as pinecone_module
+    from vectordb_bench.backend.clients.pinecone.pinecone import Pinecone
+
+    fake_index = FakePineconeIndex()
+    monkeypatch.setattr(
+        pinecone_module.pinecone,
+        "Pinecone",
+        lambda api_key: FakePineconeClient(fake_index),
+    )
+
+    db = Pinecone(
+        dim=2,
+        db_config={
+            "api_key": "k",
+            "index_name": "idx",
+            "multitenant_namespace_prefix": "mt_",
+        },
+        db_case_config=None,
+        drop_old=False,
+        with_scalar_labels=True,
+    )
+
+    with db.init():
+        count, err = db.insert_embeddings(
+            embeddings=[[1.0, 0.0], [0.0, 1.0]],
+            metadata=[0, 1],
+            labels_data=["label_a", "label_b"],
+            tenant_labels_data=["tenant_0000", "tenant_0001"],
+        )
+
+    assert count == 2
+    assert err is None
+    assert fake_index.upserts[0][0][0][2]["label"] == "label_a"
+    assert fake_index.upserts[1][0][0][2]["label"] == "label_b"

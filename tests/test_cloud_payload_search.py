@@ -29,6 +29,13 @@ def test_scalar_label_payload_profile_estimates_small_string_payload():
     assert PayloadProfile.SCALAR_LABEL.estimated_bytes_per_query(k=100, dim=768) == 3600
 
 
+def test_scalar_label_payload_profile_requires_scalar_label_materialization_without_filter():
+    case = CloudPayloadSearchCase(payload_profile="scalar_label")
+
+    assert case.filters.type == FilterOp.NonFilter
+    assert case.with_scalar_labels is True
+
+
 def test_cloud_payload_case_can_combine_label_filter_with_scalar_label_payload():
     case = CloudPayloadSearchCase(
         payload_profile="scalar_label",

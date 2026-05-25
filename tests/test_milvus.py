@@ -211,3 +211,38 @@ def test_milvus_validate_multitenant_schema_uses_existing_labels_partition_key(
 
     assert captured["filter"] == "labels == 'tenant_0003'"
     assert captured["output_fields"] == ["scalar_label"]
+
+
+def test_milvus_multitenant_insert_writes_tenant_and_scalar_payload_labels() -> None:
+    inserted = {}
+
+    def insert(collection_name, batch_data):
+        inserted["collection_name"] = collection_name
+        inserted["batch_data"] = batch_data
+        return {"insert_count": len(batch_data)}
+
+    db = object.__new__(Milvus)
+    db.client = SimpleNamespace(insert=insert)
+    db.collection_name = "test_collection"
+    db.batch_size = 100
+    db._primary_field = "pk"
+    db._scalar_id_field = "id"
+    db._vector_field = "vector"
+    db._scalar_label_field = "label"
+    db._scalar_payload_label_field = "scalar_label"
+    db._multitenant_partition_key_field = "labels"
+    db.with_scalar_labels = True
+
+    count, err = db.insert_embeddings(
+        embeddings=[[0.1, 0.2], [0.3, 0.4]],
+        metadata=[1, 2],
+        labels_data=["label_a", "label_b"],
+        tenant_labels_data=["tenant_0001", "tenant_0002"],
+    )
+
+    assert count == 2
+    assert err is None
+    assert inserted["batch_data"] == [
+        {"pk": 1, "id": 1, "vector": [0.1, 0.2], "labels": "tenant_0001", "scalar_label": "label_a"},
+        {"pk": 2, "id": 2, "vector": [0.3, 0.4], "labels": "tenant_0002", "scalar_label": "label_b"},
+    ]

@@ -51,6 +51,11 @@ class Milvus(VectorDB):
         self._scalar_label_field = "label"
         self._scalar_payload_label_field = self._scalar_label_field
         self._multitenant_partition_key_field = self._scalar_label_field
+        self.multitenant_tenant_labels: list[str] = kwargs.get("multitenant_tenant_labels", [])
+        if self.multitenant_tenant_labels:
+            self._multitenant_partition_key_field = "labels"
+            if self.with_scalar_labels:
+                self._scalar_payload_label_field = "scalar_label"
         self._vector_field = "vector"
         self._vector_index_name = "vector_idx"
         self._scalar_id_index_name = "id_sort_idx"
@@ -74,15 +79,26 @@ class Milvus(VectorDB):
             schema.add_field(self._scalar_id_field, DataType.INT64)
             schema.add_field(self._vector_field, DataType.FLOAT_VECTOR, dim=dim)
 
+            if self.multitenant_tenant_labels:
+                schema.add_field(
+                    self._multitenant_partition_key_field,
+                    DataType.VARCHAR,
+                    max_length=256,
+                    is_partition_key=True,
+                )
+
             if self.with_scalar_labels:
                 is_partition_key = db_case_config.use_partition_key
                 log.info(f"with_scalar_labels, add a new varchar field, as partition_key: {is_partition_key}")
-                schema.add_field(
-                    self._scalar_label_field,
-                    DataType.VARCHAR,
-                    max_length=256,
-                    is_partition_key=is_partition_key,
-                )
+                if not self.multitenant_tenant_labels or (
+                    self._scalar_payload_label_field != self._multitenant_partition_key_field
+                ):
+                    schema.add_field(
+                        self._scalar_payload_label_field,
+                        DataType.VARCHAR,
+                        max_length=256,
+                        is_partition_key=is_partition_key and not self.multitenant_tenant_labels,
+                    )
 
             log.info(f"{self.name} create collection: {self.collection_name}")
 
@@ -118,7 +134,7 @@ class Milvus(VectorDB):
         )
         if self.with_scalar_labels:
             index_params.add_index(
-                field_name=self._scalar_label_field,
+                field_name=self._scalar_payload_label_field,
                 index_name=self._scalar_labels_index_name,
                 index_type="BITMAP",
             )
@@ -283,8 +299,8 @@ class Milvus(VectorDB):
                     }
                     if tenant_labels_data is not None:
                         row[self._multitenant_partition_key_field] = tenant_labels_data[i]
-                    elif self.with_scalar_labels:
-                        row[self._scalar_label_field] = labels_data[i]
+                    if self.with_scalar_labels:
+                        row[self._scalar_payload_label_field] = labels_data[i]
                     batch_data.append(row)
                 res = self.client.insert(self.collection_name, batch_data)
                 insert_count += res["insert_count"]

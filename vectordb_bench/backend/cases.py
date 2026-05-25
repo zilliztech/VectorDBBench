@@ -126,7 +126,7 @@ class Case(BaseModel):
 
     @property
     def with_scalar_labels(self) -> bool:
-        return self.filters.type == FilterOp.StrEqual
+        return self.filters.type == FilterOp.StrEqual or self.payload_profile == PayloadProfile.SCALAR_LABEL
 
     def check_scalar_labels(self) -> None:
         if self.with_scalar_labels and not self.dataset.data.with_scalar_labels:
