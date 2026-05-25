@@ -5,6 +5,7 @@ from unittest.mock import MagicMock
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from vectordb_bench.backend.assembler import Assembler
 from vectordb_bench.backend.cases import CaseLabel, CaseType, CloudInsertCase
@@ -664,6 +665,36 @@ def test_cloud_insert_runner_uses_concurrent_insert_runner(monkeypatch):
     assert created["duration"] == 60
     assert created["max_workers"] == 7
     assert created["dataset"] is case.dataset
+
+
+def test_concurrent_insert_runner_does_not_retry_non_retryable_insert_errors(monkeypatch):
+    from vectordb_bench.backend.runner import concurrent_runner as concurrent_runner_module
+
+    class NonRetryableInsertError(RuntimeError):
+        non_retryable = True
+
+    class FakeDB:
+        def __init__(self):
+            self.calls = 0
+
+        def insert_embeddings(self, **kwargs):
+            self.calls += 1
+            return 2, NonRetryableInsertError("partial tenant insert")
+
+    monkeypatch.setattr(concurrent_runner_module.time, "sleep", lambda _seconds: None)
+
+    runner = ConcurrentInsertRunner.__new__(ConcurrentInsertRunner)
+    db = FakeDB()
+
+    with pytest.raises(RuntimeError, match="Non-retryable insert failure"):
+        runner._insert_batch_with_retry(
+            db,
+            embeddings=[[1.0], [2.0], [3.0]],
+            metadata=[0, 1, 2],
+            tenant_labels_data=["tenant_0000", "tenant_0001", "tenant_0000"],
+        )
+
+    assert db.calls == 1
 
 
 def test_concurrent_insert_runner_uses_custom_batch_size_iterator():

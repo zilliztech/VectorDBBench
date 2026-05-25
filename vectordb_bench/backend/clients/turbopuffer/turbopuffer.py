@@ -15,7 +15,7 @@ from vectordb_bench.backend.clients.turbopuffer.config import TurboPufferIndexCo
 from vectordb_bench.backend.filter import Filter, FilterOp
 from vectordb_bench.backend.payload import PayloadProfile
 
-from ..api import VectorDB
+from ..api import PartialInsertError, VectorDB
 
 log = logging.getLogger(__name__)
 TURBOPUFFER_SEARCHABLE_UNINDEXED_BYTES = 2 * 1024 * 1024 * 1024
@@ -219,12 +219,13 @@ class TurboPuffer(VectorDB):
         **kwargs,
     ) -> tuple[int, Exception]:
         vectors = [embedding.tolist() if hasattr(embedding, "tolist") else embedding for embedding in embeddings]
-        try:
-            if tenant_labels_data is not None:
-                inserted = 0
-                for tenant in sorted(set(tenant_labels_data)):
-                    self._multitenant_touched_tenants.add(tenant)
-                    idxs = [i for i, label in enumerate(tenant_labels_data) if label == tenant]
+        if tenant_labels_data is not None:
+            inserted = 0
+            successful_tenants: dict[str, int] = {}
+            for tenant in sorted(set(tenant_labels_data)):
+                self._multitenant_touched_tenants.add(tenant)
+                idxs = [i for i, label in enumerate(tenant_labels_data) if label == tenant]
+                try:
                     upsert_columns = {
                         self._scalar_id_field: [metadata[i] for i in idxs],
                         self._vector_field: [vectors[i] for i in idxs],
@@ -236,8 +237,27 @@ class TurboPuffer(VectorDB):
                         distance_metric=self.metric,
                         disable_backpressure=self.db_case_config.disable_backpressure,
                     )
-                    inserted += len(idxs)
-                return inserted, None
+                except Exception as e:
+                    msg = (
+                        "TurboPuffer multitenant insert failed for "
+                        f"tenant={tenant} after writing {inserted} rows; "
+                        f"successful_tenants={successful_tenants}; "
+                        f"failed_tenant_count={len(idxs)}"
+                    )
+                    err = PartialInsertError(
+                        msg,
+                        inserted_count=inserted,
+                        successful_tenants=successful_tenants,
+                        failed_tenant=tenant,
+                        failed_tenant_count=len(idxs),
+                        cause=e,
+                    )
+                    log.warning(f"Failed to insert. Error: {err}")
+                    return inserted, err
+                inserted += len(idxs)
+                successful_tenants[tenant] = len(idxs)
+            return inserted, None
+        try:
             if self.with_scalar_labels:
                 self.ns.write(
                     upsert_columns={

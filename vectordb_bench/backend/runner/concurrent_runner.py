@@ -131,6 +131,9 @@ class ConcurrentInsertRunner:
         insert_count, error = db.insert_embeddings(**insert_kwargs)
         if error is not None:
             log.warning(f"Insert failed, try_idx={retry_idx}, Exception: {error}")
+            if getattr(error, "non_retryable", False):
+                msg = f"Non-retryable insert failure after {insert_count} inserted rows: {error}"
+                raise RuntimeError(msg) from error
             retry_idx += 1
             if retry_idx <= config.MAX_INSERT_RETRY:
                 time.sleep(retry_idx)

@@ -64,6 +64,29 @@ class SQType(StrEnum):
     FP32 = "FP32"
 
 
+class NonRetryableInsertError(RuntimeError):
+    non_retryable = True
+
+
+class PartialInsertError(NonRetryableInsertError):
+    def __init__(
+        self,
+        message: str,
+        *,
+        inserted_count: int,
+        successful_tenants: dict[str, int] | None = None,
+        failed_tenant: str | None = None,
+        failed_tenant_count: int | None = None,
+        cause: Exception | None = None,
+    ):
+        super().__init__(message)
+        self.inserted_count = inserted_count
+        self.successful_tenants = successful_tenants or {}
+        self.failed_tenant = failed_tenant
+        self.failed_tenant_count = failed_tenant_count
+        self.__cause__ = cause
+
+
 class DBConfig(ABC, BaseModel):
     """DBConfig contains the connection info of vector database
 

@@ -271,6 +271,62 @@ def test_turbopuffer_multitenant_insert_preserves_scalar_payload_labels(monkeypa
     assert fake_client.namespaces["mt_tenant_0001"].write_calls[0]["upsert_columns"]["scalar_label"] == ["label_b"]
 
 
+def test_turbopuffer_multitenant_partial_insert_failure_is_explicit(monkeypatch):
+    from vectordb_bench.backend.clients.api import MetricType
+    from vectordb_bench.backend.clients.turbopuffer.config import TurboPufferIndexConfig
+    from vectordb_bench.backend.clients.turbopuffer.turbopuffer import TurboPuffer
+
+    class FailingNamespace(FakeTurboNamespace):
+        def __init__(self, fail_write: bool = False):
+            super().__init__()
+            self.fail_write = fail_write
+
+        def write(self, **kwargs):
+            self.write_calls.append(kwargs)
+            if self.fail_write:
+                raise RuntimeError("tenant write failed")
+
+    class FailingTurboClient:
+        def __init__(self):
+            self.namespaces = {}
+
+        def namespace(self, name):
+            self.namespaces.setdefault(name, FailingNamespace(fail_write=name == "mt_tenant_0001"))
+            return self.namespaces[name]
+
+    fake_client = FailingTurboClient()
+    monkeypatch.setattr(TurboPuffer, "_create_client", lambda self: fake_client)
+
+    db = TurboPuffer(
+        dim=2,
+        db_config={
+            "api_key": "k",
+            "region": "r",
+            "api_base_url": None,
+            "namespace": "single",
+            "multitenant_namespace_prefix": "mt_",
+        },
+        db_case_config=TurboPufferIndexConfig(metric_type=MetricType.COSINE),
+        drop_old=False,
+    )
+
+    with db.init():
+        count, err = db.insert_embeddings(
+            embeddings=[[1.0, 0.0], [0.0, 1.0], [0.5, 0.5]],
+            metadata=[0, 1, 2],
+            tenant_labels_data=["tenant_0000", "tenant_0001", "tenant_0000"],
+        )
+
+    assert count == 2
+    assert getattr(err, "non_retryable", False) is True
+    assert getattr(err, "inserted_count") == 2
+    assert getattr(err, "successful_tenants") == {"tenant_0000": 2}
+    assert getattr(err, "failed_tenant") == "tenant_0001"
+    assert "tenant_0001" in str(err)
+    assert fake_client.namespaces["mt_tenant_0000"].write_calls
+    assert fake_client.namespaces["mt_tenant_0001"].write_calls
+
+
 def test_turbopuffer_pins_multitenant_namespaces_on_init(monkeypatch):
     from vectordb_bench.backend.clients.api import MetricType
     from vectordb_bench.backend.clients.turbopuffer import turbopuffer as turbopuffer_module
