@@ -22,6 +22,7 @@ class Metric:
     qps: float = 0.0
     serial_latency_p99: float = 0.0
     serial_latency_p95: float = 0.0
+    serial_latency_avg: float = 0.0
     recall: float = 0.0
     ndcg: float = 0.0
     conc_num_list: list[int] = field(default_factory=list)
@@ -39,6 +40,7 @@ class Metric:
     st_ndcg_list: list[float] = field(default_factory=list)
     st_serial_latency_p99_list: list[float] = field(default_factory=list)
     st_serial_latency_p95_list: list[float] = field(default_factory=list)
+    st_serial_latency_avg_list: list[float] = field(default_factory=list)
     st_conc_failed_rate_list: list[float] = field(default_factory=list)
 
     # for streaming cases - concurrent latency data per stage
