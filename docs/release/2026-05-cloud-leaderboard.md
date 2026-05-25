@@ -1,8 +1,8 @@
-# CloudLeadboard v2 Release Note
+# VectorDBBench Cloud Leaderboard Release Note
 
 May 2026
 
-CloudLeadboard v2 moves VectorDBBench beyond a single raw-throughput ranking. It evaluates managed vector databases around the behaviors production teams have to plan for: ingest readiness, payload-aware search, tenant-shaped workloads, cold latency, and cost at practical QPS targets.
+The VectorDBBench Cloud Leaderboard moves beyond a single raw-throughput ranking. It evaluates managed vector databases around the behaviors production teams have to plan for: ingest readiness, payload-aware search, tenant-shaped workloads, cold latency, and cost at practical QPS targets.
 
 ## Why we need a new leaderboard now
 
@@ -16,11 +16,11 @@ The existing VectorDBBench leaderboard remains useful for comparing baseline sea
 - What happens when traffic is split across many tenants?
 - What does each reachable QPS tier cost?
 
-CloudLeadboard v2 is designed around those questions. It keeps performance visible, but puts it next to the readiness, payload, tenant, cold-start, and cost signals that determine what a customer can safely deploy.
+The Cloud Leaderboard is designed around those questions. It keeps performance visible, but puts it next to the readiness, payload, tenant, cold-start, and cost signals that determine what a customer can safely deploy.
 
-## What CloudLeadboard v2 changes
+## What the Cloud Leaderboard changes
 
-CloudLeadboard v2 is a production cloud decision layer, not a replacement for the original raw-performance board. The main change is that benchmark cases now model cloud operating concerns directly instead of treating all products as simple warm search engines.
+The Cloud Leaderboard is a production cloud decision layer, not a replacement for the original raw-performance board. The main change is that benchmark cases now model cloud operating concerns directly instead of treating all products as simple warm search engines.
 
 The new cases add:
 
@@ -152,7 +152,7 @@ vectordbbench turbopuffer \
 
 ## Caveats
 
-This release note introduces the new CloudLeadboard v2 direction; it is not the full benchmark report. Detailed tables, raw JSON artifacts, pricing worksheets, and edge-case analysis should live in the benchmark report or external result artifact repository.
+This release note introduces the new Cloud Leaderboard direction; it is not the full benchmark report. Detailed tables, raw JSON artifacts, pricing worksheets, and edge-case analysis should live in the benchmark report or external result artifact repository.
 
 Important caveats:
 
