@@ -3,7 +3,7 @@
 **Date:** 2026-05-25
 **Last Updated:** 2026-05-26
 **Scope Reviewed:** Initial full-text search support in VectorDBBench
-**Current Conclusion:** The implementation is best described as an initial Milvus BM25 sparse retrieval benchmark. The first implementation draft should focus on native BM25-ranked top-k retrieval for Milvus, Elasticsearch, Vespa, and Turbopuffer. ClickHouse should be excluded from the first BM25 draft because its official full-text search API is token/boolean oriented rather than native BM25-ranked retrieval. The initial dataset matrix should use English MS MARCO Passage and BEIR HotpotQA; Chinese mMARCO should be tracked as a later multilingual/analyzer stress dataset.
+**Current Conclusion:** The implementation is best described as an initial Milvus BM25 sparse retrieval benchmark. The first implementation draft should focus on native BM25-ranked top-k retrieval for Milvus, ElasticCloud, Vespa, and Turbopuffer. ClickHouse should be excluded from the first BM25 draft because its official full-text search API is token/boolean oriented rather than native BM25-ranked retrieval. The initial dataset matrix should use English MS MARCO Passage and BEIR HotpotQA; Chinese mMARCO should be tracked as a later multilingual/analyzer stress dataset.
 
 ## Review Summary
 
@@ -15,7 +15,7 @@ Several correctness issues should be resolved before the feature is presented as
 
 - Required initial BM25 retrieval backends:
   - Milvus
-  - Elasticsearch
+  - ElasticCloud
   - Vespa
   - Turbopuffer
 - Future token/boolean FTS backend:
@@ -36,7 +36,7 @@ The first implementation draft is a BM25-ranked retrieval benchmark:
 - Backend behavior: native BM25 or BM25-equivalent scoring over a text field.
 - Output: top-k document IDs ranked by the backend's native BM25 score.
 - Metrics: existing VectorDBBench `qps`, `serial_latency_p95`, `serial_latency_p99`, `recall`, `ndcg`, and `mrr`; `k` is already recorded in `task_config.case_config.k`, so no duplicate `*_at_k` fields are needed.
-- Payload: `ids_only` by default, with an opt-in `text` response payload profile that asks the backend to return the matched document text for each top-k hit.
+- Payload: first implementation runs IDs-only. Text payload retrieval should be added after PR 775's shared payload mechanism lands, reusing that infrastructure rather than creating an FTS-only payload abstraction.
 
 The first implementation draft is not a generic FTS benchmark:
 
@@ -47,9 +47,9 @@ The first implementation draft is not a generic FTS benchmark:
 - No text-filter benchmark.
 - No externally supplied sparse-vector benchmark.
 
-ClickHouse is explicitly out of scope for the first BM25 retrieval draft. Official ClickHouse full-text search uses `TYPE text` indexes with token/boolean functions such as `hasAnyTokens`, `hasAllTokens`, and `hasPhrase`; it does not expose a documented native BM25 top-k retrieval API comparable to Elasticsearch, Vespa, Turbopuffer, or Milvus BM25. Track ClickHouse as a later token/boolean FTS benchmark with performance-oriented metrics.
+ClickHouse is explicitly out of scope for the first BM25 retrieval draft. Official ClickHouse full-text search uses `TYPE text` indexes with token/boolean functions such as `hasAnyTokens`, `hasAllTokens`, and `hasPhrase`; it does not expose a documented native BM25 top-k retrieval API comparable to ElasticCloud, Vespa, Turbopuffer, or Milvus BM25. Track ClickHouse as a later token/boolean FTS benchmark with performance-oriented metrics.
 
-FTS response payload should be measured as part of the search envelope, not as a separate metric family. Metrics should still be computed from returned document IDs. The selected payload profile and estimated payload bytes per query should be recorded as metadata when available, but returned document text should not be persisted in result JSON.
+Future FTS response payload should be measured as part of the search envelope, not as a separate metric family. Metrics should still be computed from returned document IDs. The selected payload profile and estimated payload bytes per query should be recorded as metadata when available, but returned document text should not be persisted in result JSON.
 
 ## Dataset Design Decision
 
@@ -73,6 +73,7 @@ FTS response payload should be measured as part of the search envelope, not as a
   - `HotpotQA Small (100K documents)`
   - `HotpotQA Medium (1M documents)`
   - `HotpotQA Large (5.2M documents)`
+- Small and Medium are default visible tiers. Large is available as an advanced or opt-in tier.
 - Defer `nano-beir/hotpotqa`.
   - It is useful for smoke tests, but should not be exposed as a benchmark dataset tier in the first public matrix.
 - Defer Chinese mMARCO.
@@ -80,15 +81,15 @@ FTS response payload should be measured as part of the search envelope, not as a
 
 ## Target Coverage Checklist
 
-- [ ] Confirm the exact Elasticsearch target in VectorDBBench terms.
+- [x] Confirm the exact Elasticsearch target in VectorDBBench terms.
   - Evidence: the codebase has `DB.ElasticCloud`, `DB.AliyunElasticsearch`, and `DB.TencentElasticsearch`, but the confirmed requirement says "Elasticsearch".
-  - Impact: The implementation scope could mean only `DB.ElasticCloud`, all Elasticsearch-compatible wrappers, or a new local Elasticsearch backend.
-  - Acceptance: The design doc and UI list the exact Elasticsearch DB enum(s) covered by FTS.
+  - Decision: Use `DB.ElasticCloud` for the first BM25 implementation. Aliyun Elasticsearch and Tencent Elasticsearch are out of first-draft scope unless explicitly added later.
+  - Acceptance: The design doc and UI list `DB.ElasticCloud` as the Elasticsearch-compatible backend covered by FTS.
 
-- [ ] Add FTS backend support for Elasticsearch.
+- [ ] Add FTS backend support for ElasticCloud.
   - Evidence: current Elasticsearch client paths are vector-search oriented and do not implement `insert_documents()` or `search_documents()`.
-  - Impact: Elasticsearch is one of the confirmed target backends and cannot run the current FTS case.
-  - Acceptance: Elasticsearch can load the shared text corpus, run text queries, and report recall, NDCG, MRR, serial latency, and QPS through the same FTS case runner.
+  - Impact: ElasticCloud is one of the confirmed target backends and cannot run the current FTS case.
+  - Acceptance: ElasticCloud can load the shared text corpus, run text queries, and report recall, NDCG, MRR, serial latency, and QPS through the same FTS case runner.
 
 - [ ] Add FTS backend support for Vespa.
   - Evidence: current Vespa config and wrapper are HNSW/vector oriented.
@@ -122,14 +123,14 @@ FTS response payload should be measured as part of the search envelope, not as a
   - Acceptance: The design docs list Chinese mMARCO as future work, not as part of the initial required backend x dataset matrix.
 
 - [ ] Define the BM25 backend x dataset benchmark matrix.
-  - Evidence: target coverage spans Milvus, Elasticsearch, Vespa, Turbopuffer, and two initial datasets; current UI exposes one FTS case.
+  - Evidence: target coverage spans Milvus, ElasticCloud, Vespa, Turbopuffer, and two initial datasets; current UI exposes one FTS case.
   - Impact: Without an explicit matrix, results may be incomplete or hard to compare.
-  - Acceptance: The UI/CLI can express each intended backend/dataset pair, and the result output preserves both backend and dataset labels.
+  - Acceptance: The UI/CLI can express each intended backend/dataset pair, Small and Medium are default visible tiers, Large is advanced or opt-in, and the result output preserves backend and dataset labels.
 
-- [ ] Add an FTS response payload option.
+- [ ] Add an FTS response payload option after PR 775 lands.
   - Evidence: PR 775 (https://github.com/zilliztech/VectorDBBench/pull/775) adds response payload profiles for cloud benchmarks and threads payload choice through cases, runners, backend search calls, and result metadata.
   - Impact: FTS often retrieves matched text after search; an IDs-only benchmark can understate latency and QPS cost for production text-search workloads.
-  - Acceptance: FTS supports `ids_only` and `text` payload profiles; serial and concurrent search pass the profile to backend `search_documents()` calls; supported backends request the text field in `text` mode; metric calculation still uses IDs; result metadata records the selected payload profile and estimated payload bytes per query when available.
+  - Acceptance: First implementation does not add an FTS-only payload abstraction. After PR 775 lands, FTS supports `ids_only` and `text` payload profiles by reusing the shared payload mechanism; serial and concurrent search pass the profile to backend `search_documents()` calls; supported backends request the text field in `text` mode; metric calculation still uses IDs; result metadata records the selected payload profile and estimated payload bytes per query when available.
 
 ## Scope Checklist
 
@@ -140,7 +141,7 @@ FTS response payload should be measured as part of the search envelope, not as a
 
 - [ ] Treat Milvus-only coverage as a current gap, not the final target.
   - Evidence: only Milvus implements `insert_documents()` and `search_documents()`; UI config maps `CaseLabel.FullTextSearchPerformance` only under `DB.Milvus`; CLI only registers `MilvusFTS`.
-  - Impact: The confirmed first BM25 target requires Elasticsearch, Vespa, and Turbopuffer in addition to the existing Milvus path.
+  - Impact: The confirmed first BM25 target requires ElasticCloud, Vespa, and Turbopuffer in addition to the existing Milvus path.
   - Acceptance: The issue tracker or PR checklist has explicit tasks for each required backend.
 
 - [ ] Document that this is sparse-only search, not dense+sparse hybrid search.
@@ -194,8 +195,13 @@ FTS response payload should be measured as part of the search envelope, not as a
 
 - [ ] Define the intended extension model before adding more FTS backends or query types.
   - Evidence: Current API adds Milvus-specific `insert_documents()` and `search_documents()` without a broader capability model.
-  - Impact: Adding Elasticsearch, Vespa, Turbopuffer, MS MARCO, HotpotQA, and later ClickHouse token/boolean FTS or mMARCO may require more special cases.
+  - Impact: Adding ElasticCloud, Vespa, Turbopuffer, MS MARCO, HotpotQA, and later ClickHouse token/boolean FTS or mMARCO may require more special cases.
   - Acceptance: A short design note identifies supported retrieval modes and required backend methods.
+
+- [ ] Avoid hard-coding FTS as the opposite of vector search.
+  - Evidence: current FTS mode sets `dim = 0`, Milvus infers `_is_fts` from `MilvusFtsConfig`, and schema creation is either dense-vector fields or text/BM25 sparse fields.
+  - Impact: Future dense+BM25 hybrid search needs dense vector fields, text fields, BM25 sparse fields, and ranker config in the same workload. A binary vector-or-FTS model would force another refactor.
+  - Acceptance: The first BM25 implementation uses an explicit workload kind, keeps hybrid out of scope, and avoids schema/config assumptions that prevent a future `HYBRID_DENSE_BM25` workload.
 
 - [ ] Define backend capability boundaries for text search.
   - Evidence: target backends may expose different text-search capabilities, ranking defaults, analyzers, and scoring semantics.
@@ -225,9 +231,9 @@ FTS response payload should be measured as part of the search envelope, not as a
   - Acceptance: UI-style config keys instantiate `MilvusFtsConfig` with the expected analyzer and BM25 fields.
 
 - [ ] Add UI/task generation tests for the confirmed backend matrix.
-  - Acceptance: Milvus, Elasticsearch, Vespa, and Turbopuffer can generate BM25 FTS tasks for MS MARCO and HotpotQA without a `KeyError`.
+  - Acceptance: Milvus, ElasticCloud, Vespa, and Turbopuffer can generate BM25 FTS tasks for MS MARCO and HotpotQA without a `KeyError`.
 
-- [ ] Add tests for FTS payload profile propagation.
+- [ ] Add tests for FTS payload profile propagation after PR 775 lands.
   - Acceptance: `ids_only` omits extra payload retrieval where supported; `text` passes a payload profile into serial and concurrent `search_documents()` calls; unsupported profiles fail fast; backends request the text field in `text` mode.
 
 - [ ] Add dependency/import verification for the Docker requirements path.
@@ -241,4 +247,4 @@ Use wording like:
 
 After initial BM25 target coverage is implemented, use wording like:
 
-> This feature benchmarks native BM25-ranked text retrieval across Milvus, Elasticsearch, Vespa, and Turbopuffer on English MS MARCO Passage and BEIR HotpotQA. It uses a shared corpus/query/qrels lifecycle with qrel-preserving corpus-size tiers and reports recall, NDCG, MRR, serial latency, and QPS using the existing VectorDBBench result schema. Backend-specific analyzer and ranking settings are documented per backend. ClickHouse token/boolean FTS and Chinese mMARCO are tracked as future follow-up work.
+> This feature benchmarks native BM25-ranked text retrieval across Milvus, ElasticCloud, Vespa, and Turbopuffer on English MS MARCO Passage and BEIR HotpotQA. It uses a shared corpus/query/qrels lifecycle with qrel-preserving corpus-size tiers and reports recall, NDCG, MRR, serial latency, and QPS using the existing VectorDBBench result schema. Backend-specific analyzer and ranking settings are documented per backend. ClickHouse token/boolean FTS, FTS text payload retrieval, and Chinese mMARCO are tracked as future follow-up work.
