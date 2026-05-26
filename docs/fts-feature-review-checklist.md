@@ -36,6 +36,7 @@ The first implementation draft is a BM25-ranked retrieval benchmark:
 - Backend behavior: native BM25 or BM25-equivalent scoring over a text field.
 - Output: top-k document IDs ranked by the backend's native BM25 score.
 - Metrics: existing VectorDBBench `qps`, `serial_latency_p95`, `serial_latency_p99`, `recall`, `ndcg`, and `mrr`; `k` is already recorded in `task_config.case_config.k`, so no duplicate `*_at_k` fields are needed.
+- Payload: `ids_only` by default, with an opt-in `text` response payload profile that asks the backend to return the matched document text for each top-k hit.
 
 The first implementation draft is not a generic FTS benchmark:
 
@@ -47,6 +48,8 @@ The first implementation draft is not a generic FTS benchmark:
 - No externally supplied sparse-vector benchmark.
 
 ClickHouse is explicitly out of scope for the first BM25 retrieval draft. Official ClickHouse full-text search uses `TYPE text` indexes with token/boolean functions such as `hasAnyTokens`, `hasAllTokens`, and `hasPhrase`; it does not expose a documented native BM25 top-k retrieval API comparable to Elasticsearch, Vespa, Turbopuffer, or Milvus BM25. Track ClickHouse as a later token/boolean FTS benchmark with performance-oriented metrics.
+
+FTS response payload should be measured as part of the search envelope, not as a separate metric family. Metrics should still be computed from returned document IDs. The selected payload profile and estimated payload bytes per query should be recorded as metadata when available, but returned document text should not be persisted in result JSON.
 
 ## Dataset Design Decision
 
@@ -123,6 +126,11 @@ ClickHouse is explicitly out of scope for the first BM25 retrieval draft. Offici
   - Impact: Without an explicit matrix, results may be incomplete or hard to compare.
   - Acceptance: The UI/CLI can express each intended backend/dataset pair, and the result output preserves both backend and dataset labels.
 
+- [ ] Add an FTS response payload option.
+  - Evidence: PR 775 (https://github.com/zilliztech/VectorDBBench/pull/775) adds response payload profiles for cloud benchmarks and threads payload choice through cases, runners, backend search calls, and result metadata.
+  - Impact: FTS often retrieves matched text after search; an IDs-only benchmark can understate latency and QPS cost for production text-search workloads.
+  - Acceptance: FTS supports `ids_only` and `text` payload profiles; serial and concurrent search pass the profile to backend `search_documents()` calls; supported backends request the text field in `text` mode; metric calculation still uses IDs; result metadata records the selected payload profile and estimated payload bytes per query when available.
+
 ## Scope Checklist
 
 - [ ] Rename or document the current implementation as "Milvus BM25 sparse retrieval" until the full target matrix is implemented.
@@ -194,6 +202,11 @@ ClickHouse is explicitly out of scope for the first BM25 retrieval draft. Offici
   - Impact: Comparing results is only meaningful if the benchmark states what is normalized and what remains backend-specific.
   - Acceptance: Each backend config documents ranking model, analyzer/tokenizer defaults, tunable parameters, and unsupported options.
 
+- [ ] Define FTS payload capability boundaries.
+  - Evidence: Not every backend may support fetching stored text through the same API shape or with the same response cost.
+  - Impact: Unsupported payload profiles should fail before a benchmark run, not after loading a large corpus.
+  - Acceptance: Each supported FTS backend declares support for `ids_only` and `text` payload profiles or is gated out for unsupported profiles.
+
 ## Test Checklist
 
 - [ ] Add unit tests for FTS dataset size limiting.
@@ -213,6 +226,9 @@ ClickHouse is explicitly out of scope for the first BM25 retrieval draft. Offici
 
 - [ ] Add UI/task generation tests for the confirmed backend matrix.
   - Acceptance: Milvus, Elasticsearch, Vespa, and Turbopuffer can generate BM25 FTS tasks for MS MARCO and HotpotQA without a `KeyError`.
+
+- [ ] Add tests for FTS payload profile propagation.
+  - Acceptance: `ids_only` omits extra payload retrieval where supported; `text` passes a payload profile into serial and concurrent `search_documents()` calls; unsupported profiles fail fast; backends request the text field in `text` mode.
 
 - [ ] Add dependency/import verification for the Docker requirements path.
   - Acceptance: A clean install from `install/requirements_py3.11.txt` can import modules that are imported at application startup.

@@ -28,6 +28,7 @@ In scope:
 - English MS MARCO Passage.
 - BEIR HotpotQA.
 - Existing performance metrics: QPS, serial latency, recall, NDCG, MRR, insert duration, optimize duration, load duration.
+- Optional response payload profile for FTS searches: `ids_only` by default, with an opt-in text payload mode that retrieves the matched document text.
 
 Out of scope:
 
@@ -39,6 +40,7 @@ Out of scope:
 - Text-filter benchmarks.
 - Externally supplied sparse vectors or SPLADE-style retrieval.
 - New `*_at_k` metric fields.
+- Persisting returned document text into benchmark result JSON.
 
 ClickHouse should be tracked as a later token/boolean FTS benchmark, not included in the first BM25 matrix.
 
@@ -92,6 +94,19 @@ These should not be squeezed into vector index configuration models. The common 
 Reuse the output fields, but keep the internal FTS relevance calculations separate.
 
 Vector quality metrics compare returned IDs against ordered nearest-neighbor ground truth. FTS quality metrics compare returned IDs against qrels. The JSON field names can stay as `recall`, `ndcg`, and `mrr`, with the configured `k` recorded in task configuration.
+
+### Response Payload Semantics
+
+FTS should support an explicit response payload profile. Retrieving only IDs is not representative of every production FTS workload; many applications search text and then return the actual matched text, snippets, or document body.
+
+The first FTS implementation should support:
+
+- `ids_only`: default. Search requests return only document IDs and scores where the backend requires scores internally.
+- `text`: opt-in. Search requests also ask the backend to return the stored document text field for each top-k hit.
+
+The benchmark should still compute recall, NDCG, and MRR from returned document IDs. Text payloads are requested and transferred to measure latency/QPS impact, but they should not be stored in result JSON. Result metadata should record the selected payload profile and an estimated response payload size per query when available.
+
+This follows the design shape from PR 775's cloud payload work (https://github.com/zilliztech/VectorDBBench/pull/775): payload is a search response profile threaded through cases, runners, backend search calls, and result metadata. If that PR is merged first, reuse or extend its payload-profile mechanism rather than creating a second unrelated one. For FTS, the payload profile must be text-aware rather than vector-aware.
 
 ### Case Identity
 
@@ -161,11 +176,20 @@ WorkloadKind = VECTOR | FULL_TEXT_BM25
 
 or a small search adapter object. The runner should not infer search semantics from whether the first query payload is a string.
 
+Search runners should also pass the selected response payload profile to backend search calls. The runner may continue to consume only document IDs for metric calculation, but the backend call must actually request the configured payload so latency and QPS reflect the chosen response envelope.
+
 ### UI, CLI, And Task Assembly
 
 FTS should be selectable through the normal task/config path for backends that declare BM25 FTS support.
 
 The first-draft UI and CLI should not become long-term Milvus-only side paths. They should expose the FTS case only for the supported BM25 backends and should preserve backend, dataset, size tier, and workload labels in task/result metadata.
+
+The UI and CLI should expose response payload as a normal FTS case parameter:
+
+- default: `ids_only`
+- optional: `text`
+
+This should not create separate public case classes such as `FTSWithTextPayload`; it is a workload parameter like `k` or concurrency.
 
 ## Insert Runner Strategy
 
@@ -202,10 +226,16 @@ Add a narrow FTS backend contract:
 
 ```python
 insert_documents(texts: list[str], doc_ids: list[str]) -> tuple[int, str | None]
-search_documents(query_text: str, k: int) -> list[str]
+search_documents(
+    query_text: str,
+    k: int,
+    payload_profile: FtsPayloadProfile = FtsPayloadProfile.IDS_ONLY,
+) -> list[str]
 ```
 
 The exact return signature should follow existing VectorDBBench conventions, but document IDs must be normalized for metric comparison.
+
+The text payload mode should keep the return value as document IDs for metric compatibility. Backend adapters should request the text field and discard or ignore the returned text after the request completes unless a later design adds explicit payload validation.
 
 Dataset managers should expose enough common lifecycle data for the shared runner:
 
@@ -215,6 +245,11 @@ Dataset managers should expose enough common lifecycle data for the shared runne
 - ground truth
 - dataset size label
 - dataset source label
+- estimated text payload bytes per query, if available
+
+The case config or search adapter should expose the selected response payload profile. Payload choice is a workload parameter, not a dataset identity.
+
+If PR 775's `Metric.payload_profile` and `Metric.payload_estimated_bytes_per_query` fields are present, FTS should reuse them. If not, add equivalent result metadata fields, not duplicate metric families.
 
 The existing vector path should remain the default behavior. FTS changes should be additive and capability-gated.
 
@@ -229,10 +264,12 @@ The existing vector path should remain the default behavior. FTS changes should 
    - `WorkloadKind`
    - BM25 FTS backend capability gate
    - explicit search mode instead of `search_fulltext` inference
+   - FTS response payload profile with `ids_only` and `text`
 3. Fold FTS into the shared performance lifecycle:
    - one orchestration path
    - mode-specific load/search/metric adapters
    - shared result schema
+   - payload profile threaded through serial and concurrent search
 4. Implement backend adapters:
    - Milvus cleanup
    - Elasticsearch
@@ -249,6 +286,7 @@ The existing vector path should remain the default behavior. FTS changes should 
    - FTS case generation for supported backends
    - unsupported backend gating
    - metric calculation from qrels
+   - payload profile propagation and unsupported payload gating
 
 ## Risks
 
@@ -272,6 +310,10 @@ If UI/CLI/task assembly does not gate FTS support, unsupported backends may fail
 
 Backends expose different analyzer defaults and tokenizer controls. The first benchmark should document defaults and avoid claiming analyzer-normalized semantic equivalence across systems.
 
+### Payload Comparability
+
+Text payload sizes vary by dataset and backend response encoding. Use the payload profile to measure realistic response-envelope cost, but treat estimated bytes as approximate metadata unless backend-specific exact byte accounting is added later.
+
 ## Case Coverage Discussion Point
 
 The next design decision is which FTS cases to expose publicly. The case matrix should balance useful coverage against benchmark explosion across:
@@ -280,6 +322,7 @@ The next design decision is which FTS cases to expose publicly. The case matrix 
 - dataset: MS MARCO, HotpotQA
 - corpus size: Small, Medium, Large
 - query concurrency and configured `k`
+- response payload profile: `ids_only` vs `text`
 - backend-specific analyzer/config variants
 
 The default should favor a compact, comparable BM25 retrieval matrix first, with larger and backend-tuning-heavy cases available as opt-in extensions.
