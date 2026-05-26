@@ -1,5 +1,7 @@
-import pytest
+import json
 import logging
+
+import pytest
 from vectordb_bench.models import (
     TaskConfig, CaseConfig,
     CaseResult, TestResult,
@@ -14,6 +16,50 @@ from vectordb_bench import config
 
 
 log = logging.getLogger("vectordb_bench")
+
+
+def test_result_read_file_allows_display_with_sanitized_db_config(tmp_path):
+    json_file = tmp_path / "result_sanitized_pinecone.json"
+    json_file.write_text(
+        json.dumps(
+            {
+                "run_id": "sanitized-config",
+                "task_label": "standard",
+                "results": [
+                    {
+                        "metrics": {
+                            "max_load_count": 1000,
+                            "load_duration": 0,
+                            "qps": 0,
+                            "serial_latency_p99": 0.1,
+                            "recall": 0,
+                        },
+                        "task_config": {
+                            "db": "Pinecone",
+                            "db_config": {
+                                "db_label": "pinecone-serverless",
+                                "version": "",
+                                "note": "",
+                            },
+                            "db_case_config": {
+                                "null": None,
+                            },
+                            "case_config": {
+                                "case_id": CaseType.Performance768D1M.value,
+                                "custom_case": {},
+                            },
+                        },
+                        "label": ":)",
+                    }
+                ],
+            }
+        )
+    )
+
+    result = TestResult.read_file(json_file, trans_unit=True)
+
+    assert result.results[0].task_config.db_config.db_label == "pinecone-serverless"
+    assert result.results[0].metrics.max_load_count == 1
 
 
 class TestModels:

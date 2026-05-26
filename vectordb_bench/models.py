@@ -411,7 +411,18 @@ class TestResult(BaseModel):
                 case_config = task_config.get("case_config")
                 db = DB(task_config.get("db"))
 
-                task_config["db_config"] = db.config_cls(**task_config["db_config"])
+                raw_db_config = task_config["db_config"]
+                try:
+                    task_config["db_config"] = db.config_cls(**raw_db_config)
+                except Exception as exc:
+                    error_summary = str(exc).splitlines()[0]
+                    log.warning(
+                        "Couldn't validate db config for '%s' (%s): %s",
+                        db.value,
+                        full_path,
+                        error_summary,
+                    )
+                    task_config["db_config"] = db.config_cls.model_construct(**raw_db_config)
 
                 # Safely instantiate DBCaseConfig (fallback to EmptyDBCaseConfig on None)
                 raw_case_cfg = task_config.get("db_case_config") or {}
