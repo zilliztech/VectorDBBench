@@ -199,6 +199,9 @@ def test_cloud_cold_latency_result_file_uses_cold_latency_metrics(tmp_path: Path
     }
     assert read_back.results[0].metrics.additional_parameters["cold_latency"] == cold_latency
 
+    frontend_read_back = TestResult.read_file(result_file, trans_unit=True)
+    assert frontend_read_back.results[0].metrics.additional_parameters["cold_latency"] == cold_latency
+
 
 class FakeColdWarmDB:
     name = "FakeColdWarmDB"

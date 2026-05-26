@@ -258,6 +258,10 @@ def test_cloud_insert_result_file_uses_insert_only_metrics(tmp_path: Path):
     assert read_back.results[0].task_config.case_config.case_id == CaseType.CloudInsertCase
     assert read_back.results[0].task_config.case_config.custom_case == {"batch_size": 1000, "duration": None}
 
+    frontend_read_back = TestResult.read_file(result_file, trans_unit=True)
+    assert frontend_read_back.results[0].task_config.case_config.case_id == CaseType.CloudInsertCase
+    assert frontend_read_back.results[0].metrics.inserted_count == 100_000_000
+
 
 def test_turbopuffer_insert_can_disable_backpressure():
     db = TurboPuffer.__new__(TurboPuffer)

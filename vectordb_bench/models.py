@@ -433,25 +433,25 @@ class TestResult(BaseModel):
                     metrics.setdefault("additional_parameters", {})["cold_latency"] = metrics.pop("cold_latency")
 
                 if trans_unit:
-                    cur_max_count = case_result["metrics"]["max_load_count"]
-                    case_result["metrics"]["max_load_count"] = (
-                        cur_max_count / 1000 if int(cur_max_count) > 0 else cur_max_count
-                    )
+                    metrics = case_result["metrics"]
+                    if "max_load_count" in metrics:
+                        cur_max_count = metrics["max_load_count"]
+                        metrics["max_load_count"] = cur_max_count / 1000 if int(cur_max_count) > 0 else cur_max_count
 
-                    cur_latency = case_result["metrics"]["serial_latency_p99"]
-                    case_result["metrics"]["serial_latency_p99"] = (
-                        cur_latency * 1000 if cur_latency > 0 else cur_latency
-                    )
+                    has_serial_latency = "serial_latency_p99" in metrics
+                    if has_serial_latency:
+                        cur_latency = metrics["serial_latency_p99"]
+                        metrics["serial_latency_p99"] = cur_latency * 1000 if cur_latency > 0 else cur_latency
 
                     # Handle P95 latency for backward compatibility with existing result files
-                    if "serial_latency_p95" in case_result["metrics"]:
-                        cur_latency_p95 = case_result["metrics"]["serial_latency_p95"]
-                        case_result["metrics"]["serial_latency_p95"] = (
+                    if "serial_latency_p95" in metrics:
+                        cur_latency_p95 = metrics["serial_latency_p95"]
+                        metrics["serial_latency_p95"] = (
                             cur_latency_p95 * 1000 if cur_latency_p95 > 0 else cur_latency_p95
                         )
-                    else:
+                    elif has_serial_latency:
                         # Default to 0 for older result files that don't have P95 data
-                        case_result["metrics"]["serial_latency_p95"] = 0.0
+                        metrics["serial_latency_p95"] = 0.0
             return TestResult.model_validate(test_result)
 
     def display(self, dbs: list[DB] | None = None):
