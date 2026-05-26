@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-26
 **Status:** Draft for review
-**Scope:** Dataset choices and size-tier policy for full-text search benchmarks in VectorDBBench.
+**Scope:** Dataset choices, size-tier policy, and first-draft scope boundary for BM25 full-text retrieval benchmarks in VectorDBBench.
 
 ## Decision
 
@@ -15,6 +15,43 @@ The benchmark should expose dataset sizes as corpus-size tiers, similar to exist
 - `Large`: full native corpus
 
 For capped tiers, use a qrel-preserving corpus cap. The cap must include all documents with positive qrels for the selected query split, then fill remaining slots deterministically from the native corpus order. If the number of qrel-required documents exceeds the cap, the dataset configuration is invalid.
+
+## Scope Boundary
+
+The first implementation draft should benchmark native BM25-ranked top-k retrieval only.
+
+Initial BM25 retrieval backends:
+
+- Milvus BM25, preserving the current sparse BM25 path as the baseline.
+- Elasticsearch, using native `text` fields, BM25 similarity, and `match` queries.
+- Vespa, using `index: enable-bm25` and a `bm25(text)` rank profile.
+- Turbopuffer, using `full_text_search` schema configuration and `rank_by: ["text", "BM25", query]`.
+
+Out of scope for the first implementation draft:
+
+- ClickHouse full-text search.
+- Phrase search.
+- Boolean query search.
+- Fuzzy or prefix search.
+- Dense+sparse hybrid search.
+- Text-filter benchmarks.
+- Externally supplied sparse vectors or SPLADE-style retrieval.
+
+ClickHouse should be tracked as a later token/boolean FTS benchmark. Official ClickHouse full-text search uses `TYPE text` indexes with token/boolean functions such as `hasAnyTokens`, `hasAllTokens`, and `hasPhrase`; it does not expose a documented native BM25-ranked top-k retrieval API comparable to Elasticsearch, Vespa, Turbopuffer, or Milvus BM25. Forcing ClickHouse into the first BM25 matrix would make qrels-based `recall`, `ndcg`, and `mrr` compare native BM25 systems against a synthetic scoring path.
+
+The first implementation should keep the existing VectorDBBench metric JSON fields:
+
+- `qps`
+- `serial_latency_p95`
+- `serial_latency_p99`
+- `recall`
+- `ndcg`
+- `mrr`
+- `insert_duration`
+- `optimize_duration`
+- `load_duration`
+
+Do not add duplicate `*_at_k` fields. The configured `k` is already recorded in `task_config.case_config.k`, so `recall`, `ndcg`, and `mrr` should be documented as qrels-based metrics at the configured `k`.
 
 ## Initial Dataset Matrix
 
@@ -51,6 +88,7 @@ Chinese mMARCO is still valuable, but it should come later. Chinese text has no 
 - Do not use `scoreddocs_iter()` as relevance ground truth.
 - Keep dataset adapters separate from vector parquet datasets, but use the shared retrieval benchmark lifecycle where practical.
 - Preserve exact dataset option labels in result metadata so backend x dataset comparisons are unambiguous.
+- Preserve the BM25 retrieval boundary in dataset docs and result labels so later token/boolean FTS workloads are not mixed with qrels-based BM25 retrieval results.
 
 ## Cap Construction
 
@@ -70,3 +108,4 @@ For `Large`, stream the full native corpus.
 - Whether to add an evaluation-heavy MS MARCO variant using `msmarco-passage/dev` instead of `dev/small`.
 - Whether to add Chinese mMARCO, likely `mmarco/v2/zh/dev/small`, as a separate multilingual/analyzer benchmark.
 - Whether each backend should expose configurable analyzers or only documented defaults for the initial benchmark.
+- Whether to create a separate ClickHouse token/boolean FTS design using `TYPE text`, `hasAnyTokens`, `hasAllTokens`, and `hasPhrase`.

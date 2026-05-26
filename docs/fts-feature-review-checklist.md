@@ -3,7 +3,7 @@
 **Date:** 2026-05-25
 **Last Updated:** 2026-05-26
 **Scope Reviewed:** Initial full-text search support in VectorDBBench
-**Current Conclusion:** The implementation is best described as an initial Milvus BM25 sparse retrieval benchmark. Confirmed target coverage now requires Elasticsearch, Vespa, Turbopuffer, and ClickHouse. The initial dataset matrix should use English MS MARCO Passage and BEIR HotpotQA; Chinese mMARCO should be tracked as a later multilingual/analyzer stress dataset.
+**Current Conclusion:** The implementation is best described as an initial Milvus BM25 sparse retrieval benchmark. The first implementation draft should focus on native BM25-ranked top-k retrieval for Milvus, Elasticsearch, Vespa, and Turbopuffer. ClickHouse should be excluded from the first BM25 draft because its official full-text search API is token/boolean oriented rather than native BM25-ranked retrieval. The initial dataset matrix should use English MS MARCO Passage and BEIR HotpotQA; Chinese mMARCO should be tracked as a later multilingual/analyzer stress dataset.
 
 ## Review Summary
 
@@ -13,10 +13,12 @@ Several correctness issues should be resolved before the feature is presented as
 
 ## Confirmed Target Requirements
 
-- Required backends:
+- Required initial BM25 retrieval backends:
+  - Milvus
   - Elasticsearch
   - Vespa
   - Turbopuffer
+- Future token/boolean FTS backend:
   - ClickHouse
 - Required initial datasets:
   - MS MARCO Passage, English
@@ -25,6 +27,26 @@ Several correctness issues should be resolved before the feature is presented as
   - Chinese mMARCO for multilingual tokenizer/analyzer coverage
 
 The current PR does not meet these requirements yet. It currently wires one MS MARCO-style translator and one Milvus BM25 implementation path.
+
+## Scope Boundary
+
+The first implementation draft is a BM25-ranked retrieval benchmark:
+
+- Input: natural-language text queries from MS MARCO or HotpotQA.
+- Backend behavior: native BM25 or BM25-equivalent scoring over a text field.
+- Output: top-k document IDs ranked by the backend's native BM25 score.
+- Metrics: existing VectorDBBench `qps`, `serial_latency_p95`, `serial_latency_p99`, `recall`, `ndcg`, and `mrr`; `k` is already recorded in `task_config.case_config.k`, so no duplicate `*_at_k` fields are needed.
+
+The first implementation draft is not a generic FTS benchmark:
+
+- No phrase search benchmark.
+- No boolean query benchmark.
+- No fuzzy or prefix search benchmark.
+- No dense+sparse hybrid benchmark.
+- No text-filter benchmark.
+- No externally supplied sparse-vector benchmark.
+
+ClickHouse is explicitly out of scope for the first BM25 retrieval draft. Official ClickHouse full-text search uses `TYPE text` indexes with token/boolean functions such as `hasAnyTokens`, `hasAllTokens`, and `hasPhrase`; it does not expose a documented native BM25 top-k retrieval API comparable to Elasticsearch, Vespa, Turbopuffer, or Milvus BM25. Track ClickHouse as a later token/boolean FTS benchmark with performance-oriented metrics.
 
 ## Dataset Design Decision
 
@@ -75,10 +97,11 @@ The current PR does not meet these requirements yet. It currently wires one MS M
   - Impact: Turbopuffer is one of the confirmed target backends and needs a text retrieval implementation path.
   - Acceptance: Turbopuffer can load the shared text corpus, run text queries, and report the shared FTS metrics using its supported text search API.
 
-- [ ] Add FTS backend support for ClickHouse.
+- [ ] Defer ClickHouse to a token/boolean FTS benchmark.
   - Evidence: current ClickHouse wrapper is vector-search oriented and does not implement the FTS document/search methods.
-  - Impact: ClickHouse is one of the confirmed target backends and cannot run the current FTS case.
-  - Acceptance: ClickHouse can load the shared text corpus, run text queries, and report the shared FTS metrics.
+  - Evidence: official ClickHouse text search uses `TYPE text` indexes and token/boolean functions, not a documented native BM25 top-k scorer.
+  - Impact: Forcing ClickHouse into the BM25 retrieval matrix would compare a synthetic scoring path against native BM25 systems.
+  - Acceptance: The first BM25 retrieval matrix excludes ClickHouse, and a separate follow-up tracks ClickHouse token/boolean FTS semantics and metrics.
 
 - [ ] Add MS MARCO English dataset support.
   - Evidence: current code only defines `MSMarcoTranslator` for `msmarco-passage/dev/small`.
@@ -95,8 +118,8 @@ The current PR does not meet these requirements yet. It currently wires one MS M
   - Impact: Adding it later keeps the first benchmark matrix focused while preserving the multilingual requirement as a follow-up.
   - Acceptance: The design docs list Chinese mMARCO as future work, not as part of the initial required backend x dataset matrix.
 
-- [ ] Define the backend x dataset benchmark matrix.
-  - Evidence: target coverage spans four backends and two initial datasets; current UI exposes one FTS case.
+- [ ] Define the BM25 backend x dataset benchmark matrix.
+  - Evidence: target coverage spans Milvus, Elasticsearch, Vespa, Turbopuffer, and two initial datasets; current UI exposes one FTS case.
   - Impact: Without an explicit matrix, results may be incomplete or hard to compare.
   - Acceptance: The UI/CLI can express each intended backend/dataset pair, and the result output preserves both backend and dataset labels.
 
@@ -109,7 +132,7 @@ The current PR does not meet these requirements yet. It currently wires one MS M
 
 - [ ] Treat Milvus-only coverage as a current gap, not the final target.
   - Evidence: only Milvus implements `insert_documents()` and `search_documents()`; UI config maps `CaseLabel.FullTextSearchPerformance` only under `DB.Milvus`; CLI only registers `MilvusFTS`.
-  - Impact: The confirmed target requires Elasticsearch, Vespa, Turbopuffer, and ClickHouse.
+  - Impact: The confirmed first BM25 target requires Elasticsearch, Vespa, and Turbopuffer in addition to the existing Milvus path.
   - Acceptance: The issue tracker or PR checklist has explicit tasks for each required backend.
 
 - [ ] Document that this is sparse-only search, not dense+sparse hybrid search.
@@ -163,7 +186,7 @@ The current PR does not meet these requirements yet. It currently wires one MS M
 
 - [ ] Define the intended extension model before adding more FTS backends or query types.
   - Evidence: Current API adds Milvus-specific `insert_documents()` and `search_documents()` without a broader capability model.
-  - Impact: Adding Elasticsearch, Vespa, Turbopuffer, ClickHouse, MS MARCO, HotpotQA, and later mMARCO may require more special cases.
+  - Impact: Adding Elasticsearch, Vespa, Turbopuffer, MS MARCO, HotpotQA, and later ClickHouse token/boolean FTS or mMARCO may require more special cases.
   - Acceptance: A short design note identifies supported retrieval modes and required backend methods.
 
 - [ ] Define backend capability boundaries for text search.
@@ -189,7 +212,7 @@ The current PR does not meet these requirements yet. It currently wires one MS M
   - Acceptance: UI-style config keys instantiate `MilvusFtsConfig` with the expected analyzer and BM25 fields.
 
 - [ ] Add UI/task generation tests for the confirmed backend matrix.
-  - Acceptance: Elasticsearch, Vespa, Turbopuffer, and ClickHouse can generate FTS tasks for MS MARCO and HotpotQA without a `KeyError`.
+  - Acceptance: Milvus, Elasticsearch, Vespa, and Turbopuffer can generate BM25 FTS tasks for MS MARCO and HotpotQA without a `KeyError`.
 
 - [ ] Add dependency/import verification for the Docker requirements path.
   - Acceptance: A clean install from `install/requirements_py3.11.txt` can import modules that are imported at application startup.
@@ -200,6 +223,6 @@ Use wording like:
 
 > This PR adds initial FTS support for Milvus BM25 sparse retrieval using MS MARCO. It benchmarks text-to-BM25 sparse-vector search as a separate mode from dense vector search. It does not yet cover generic FTS query semantics, hybrid dense+sparse retrieval, or non-Milvus backends.
 
-After target coverage is implemented, use wording like:
+After initial BM25 target coverage is implemented, use wording like:
 
-> This feature benchmarks text retrieval across Elasticsearch, Vespa, Turbopuffer, and ClickHouse on English MS MARCO Passage and BEIR HotpotQA. It uses a shared corpus/query/qrels lifecycle with qrel-preserving corpus-size tiers and reports recall, NDCG, MRR, serial latency, and QPS. Backend-specific analyzer and ranking settings are documented per backend. Chinese mMARCO is tracked as a future multilingual/analyzer stress dataset.
+> This feature benchmarks native BM25-ranked text retrieval across Milvus, Elasticsearch, Vespa, and Turbopuffer on English MS MARCO Passage and BEIR HotpotQA. It uses a shared corpus/query/qrels lifecycle with qrel-preserving corpus-size tiers and reports recall, NDCG, MRR, serial latency, and QPS using the existing VectorDBBench result schema. Backend-specific analyzer and ranking settings are documented per backend. ClickHouse token/boolean FTS and Chinese mMARCO are tracked as future follow-up work.
