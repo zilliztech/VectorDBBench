@@ -9,7 +9,14 @@ from vectordb_bench.backend.payload import PayloadProfile
 from vectordb_bench.base import BaseModel
 from vectordb_bench.frontend.components.custom.getCustomConfig import CustomDatasetConfig
 
-from .dataset import CustomDataset, Dataset, DatasetManager, DatasetWithSizeType, FtsDataset, FtsDatasetManager
+from .dataset import (
+    CustomDataset,
+    Dataset,
+    DatasetManager,
+    DatasetWithSizeType,
+    FtsDatasetManager,
+    FtsDatasetWithSizeType,
+)
 
 log = logging.getLogger(__name__)
 
@@ -918,14 +925,30 @@ class FtsPerformanceCase(Case):
 
 class FTSmsmarcoPerformance(FtsPerformanceCase):
     case_id: CaseType = CaseType.FTSmsmarcoPerformance
-    name: str = "FTS Performance Test"
-    description: str = (
-        "This case tests full-text search performance using BM25 on the MS MARCO dataset. "
-        "It measures index building time, recall, NDCG, MRR, and search QPS."
-    )
-    dataset: FtsDatasetManager = FtsDataset.MSMARCO.manager(100_000)
-    load_timeout: float | int = config.LOAD_TIMEOUT_768D_100K
-    optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_768D_100K
+    dataset_with_size_type: FtsDatasetWithSizeType = FtsDatasetWithSizeType.MSMarcoSmall
+
+    def __init__(
+        self,
+        dataset_with_size_type: FtsDatasetWithSizeType | str = FtsDatasetWithSizeType.MSMarcoSmall,
+        **kwargs,
+    ):
+        if not isinstance(dataset_with_size_type, FtsDatasetWithSizeType):
+            dataset_with_size_type = FtsDatasetWithSizeType(dataset_with_size_type)
+        dataset = dataset_with_size_type.get_manager()
+        name = f"FTS BM25 Performance - {dataset_with_size_type.value}"
+        description = (
+            f"This case tests native BM25 full-text search performance on {dataset_with_size_type.value}. "
+            "It measures index building time, recall, NDCG, MRR, serial latency, and search QPS."
+        )
+        super().__init__(
+            name=name,
+            description=description,
+            dataset=dataset,
+            dataset_with_size_type=dataset_with_size_type,
+            load_timeout=dataset_with_size_type.get_load_timeout(),
+            optimize_timeout=dataset_with_size_type.get_optimize_timeout(),
+            **kwargs,
+        )
 
 
 type2case = {
