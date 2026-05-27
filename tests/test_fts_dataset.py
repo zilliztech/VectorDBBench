@@ -54,6 +54,17 @@ class FakeDataset:
         yield from self.qrels
 
 
+def make_tiny_msmarco_manager(size: int = 3) -> FtsDatasetManager:
+    manager = FtsDatasetManager(data=MSMarcoFts(size=100_000))
+    small_label = manager.data._size_label[100_000]
+    manager.data._size_label = {
+        **manager.data._size_label,
+        size: small_label._replace(size=size),
+    }
+    manager.data.size = size
+    return manager
+
+
 def test_msmarco_translator_uses_string_ids_and_qrels():
     translator = MSMarcoTranslator()
     dataset = FakeDataset()
@@ -80,18 +91,28 @@ def test_hotpotqa_translator_combines_title_and_text_and_uses_qrels():
     assert ground_truth == {"q1": ["d3"], "q2": ["d1"]}
 
 
-def test_fts_iterator_preserves_qrel_docs_before_filler(monkeypatch):
-    manager = FtsDatasetManager(data=MSMarcoFts(size=100_000))
-    manager.data.size = 3
+def test_fts_iterator_preserves_qrel_docs_before_filler():
+    manager = make_tiny_msmarco_manager()
     manager._ir_dataset = FakeDataset()
-    manager.required_doc_ids = {"d3", "d1"}
-    manager.selected_doc_ids = None
+    manager.required_doc_ids = {"d4"}
+    manager.selected_doc_ids = manager._build_selected_doc_ids()
+
+    assert manager.selected_doc_ids == {"d1", "d2", "d4"}
 
     batches = list(manager)
     docs = [doc.doc_id for batch in batches for doc in batch]
 
     assert len(docs) == 3
-    assert set(["d3", "d1"]).issubset(set(docs))
+    assert "d4" in docs
+
+
+def test_fts_cap_rejects_required_qrel_docs_missing_from_corpus():
+    manager = make_tiny_msmarco_manager()
+    manager._ir_dataset = FakeDataset()
+    manager.required_doc_ids = {"missing"}
+
+    with pytest.raises(ValueError, match="missing from corpus"):
+        manager._build_selected_doc_ids()
 
 
 def test_fts_dataset_size_registry():
