@@ -474,21 +474,11 @@ class MilvusFtsConfig(BaseModel, DBCaseConfig):
     analyzer_stop_words: str | None = None
     drop_ratio_search: float | None = None
 
-    def index_param(self) -> dict:
-        params = {
-            "inverted_index_algo": self.inverted_index_algo,
-        }
-        if self.bm25_k1 is not None:
-            params["bm25_k1"] = self.bm25_k1
-        if self.bm25_b is not None:
-            params["bm25_b"] = self.bm25_b
-
-        # Build analyzer parameters
-        analyzer_params = {"type": "english"}
-        # Set tokenizer
+    def analyzer_param(self) -> dict:
+        analyzer_params = {}
         if self.analyzer_tokenizer:
             analyzer_params["tokenizer"] = self.analyzer_tokenizer
-        # Build filters array
+
         filters = []
         if self.analyzer_enable_lowercase:
             filters.append("lowercase")
@@ -504,12 +494,25 @@ class MilvusFtsConfig(BaseModel, DBCaseConfig):
         if filters:
             analyzer_params["filter"] = filters
 
+        return analyzer_params or {"tokenizer": "standard"}
+
+    def sparse_index_param(self) -> dict:
+        params = {
+            "inverted_index_algo": self.inverted_index_algo,
+        }
+        if self.bm25_k1 is not None:
+            params["bm25_k1"] = self.bm25_k1
+        if self.bm25_b is not None:
+            params["bm25_b"] = self.bm25_b
+
         return {
             "index_type": self.index_type,
             "metric_type": self.metric_type,
             "params": params,
-            "analyzer_params": analyzer_params,
         }
+
+    def index_param(self) -> dict:
+        return {**self.sparse_index_param(), "analyzer_params": self.analyzer_param()}
 
     def search_param(self) -> dict:
 
