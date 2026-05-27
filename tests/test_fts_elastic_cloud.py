@@ -1,7 +1,9 @@
 import pytest
 
 from vectordb_bench.backend.clients.elastic_cloud.config import ElasticCloudFtsConfig
+from vectordb_bench.backend.clients.elastic_cloud.config import ElasticCloudConfig
 from vectordb_bench.backend.clients.elastic_cloud import elastic_cloud as elastic_cloud_module
+from vectordb_bench.backend.clients.elastic_cloud.cli import build_elastic_config
 from vectordb_bench.backend.clients.elastic_cloud.elastic_cloud import ElasticCloud
 
 
@@ -21,6 +23,91 @@ def test_elastic_cloud_fts_config_defaults():
     assert config.index_param()["properties"]["doc_id"] == {"type": "keyword"}
     assert config.index_param()["properties"]["text"]["type"] == "text"
     assert config.search_param() == {}
+
+
+def test_elastic_cloud_config_supports_cloud_id():
+    config = ElasticCloudConfig(cloud_id="cloud:abc", password="secret")
+
+    assert config.to_dict() == {
+        "cloud_id": "cloud:abc",
+        "basic_auth": ("elastic", "secret"),
+    }
+
+
+def test_elastic_cloud_config_supports_self_hosted_http():
+    config = ElasticCloudConfig(host="localhost", port=9200)
+
+    assert config.to_dict() == {
+        "hosts": ["http://localhost:9200"],
+        "verify_certs": True,
+    }
+
+
+def test_elastic_cloud_config_supports_self_hosted_url_and_auth():
+    config = ElasticCloudConfig(
+        host="https://es.example.com:9243",
+        user_name="elastic",
+        password="secret",
+        verify_certs=False,
+    )
+
+    assert config.to_dict() == {
+        "hosts": ["https://es.example.com:9243"],
+        "basic_auth": ("elastic", "secret"),
+        "verify_certs": False,
+    }
+
+
+def test_elastic_cloud_config_requires_cloud_id_or_host():
+    with pytest.raises(ValueError, match="Either cloud_id or host"):
+        ElasticCloudConfig().to_dict()
+
+
+def test_elastic_cloud_config_requires_password_for_cloud_id():
+    with pytest.raises(ValueError, match="password is required when cloud_id is set"):
+        ElasticCloudConfig(cloud_id="cloud:abc").to_dict()
+
+
+def test_elastic_cloud_cli_builds_self_hosted_config():
+    config = build_elastic_config(
+        {
+            "db_label": "local",
+            "cloud_id": None,
+            "host": "localhost",
+            "port": 9201,
+            "user_name": None,
+            "password": None,
+            "use_ssl": True,
+            "verify_certs": False,
+        }
+    )
+
+    assert config.db_label == "local"
+    assert config.to_dict() == {
+        "hosts": ["https://localhost:9201"],
+        "verify_certs": False,
+    }
+
+
+def test_elastic_cloud_cli_builds_cloud_config():
+    config = build_elastic_config(
+        {
+            "db_label": "cloud",
+            "cloud_id": "cloud:abc",
+            "host": None,
+            "port": 9200,
+            "user_name": "bench",
+            "password": "secret",
+            "use_ssl": False,
+            "verify_certs": True,
+        }
+    )
+
+    assert config.db_label == "cloud"
+    assert config.to_dict() == {
+        "cloud_id": "cloud:abc",
+        "basic_auth": ("bench", "secret"),
+    }
 
 
 def test_elastic_cloud_declares_full_text_support():

@@ -8,7 +8,7 @@ the supported backend and dataset matrix.
 Backends:
 
 - Milvus
-- ElasticCloud
+- Elasticsearch through the existing `elasticcloudhnsw` backend command
 - Vespa
 - TurboPuffer
 
@@ -36,12 +36,13 @@ Elastic:
   official pricing page describes hosted pricing as resource based and
   pay-as-you-go.
 - Elastic self-managed has a "Free and open" tier. This is a viable no-service
-  option for Elasticsearch itself, but the current VDBBench command in this
-  branch is `elasticcloudhnsw`, which takes Elastic Cloud credentials
-  (`--cloud-id`, `--password`) rather than a self-managed host URL.
-- For this E2E plan, Elastic uses ElasticCloud credentials. If we want a
-  no-charge self-managed Elastic run, we should first add or verify host/port
-  CLI support for this backend.
+  option for Elasticsearch itself.
+- The VDBBench backend enum and command are still named `ElasticCloud` /
+  `elasticcloudhnsw` for compatibility, but the connection config now supports
+  both managed Elastic Cloud (`--cloud-id`) and self-hosted Elasticsearch
+  (`--host`, `--port`).
+- For this E2E plan, use self-hosted Elasticsearch by default. Elastic Cloud is
+  an alternate run mode for teams that already have hosted credentials.
 
 References:
 
@@ -77,6 +78,9 @@ export MILVUS_URI="http://..."
 export MILVUS_USER=""
 export MILVUS_PASSWORD=""
 
+export ELASTIC_HOST="127.0.0.1"
+export ELASTIC_PORT="9200"
+export ELASTIC_USER=""
 export ELASTIC_CLOUD_ID="..."
 export ELASTIC_PASSWORD="..."
 
@@ -146,8 +150,8 @@ python3.11 -m vectordb_bench.cli.vectordbbench milvusfts \
 
 python3.11 -m vectordb_bench.cli.vectordbbench elasticcloudhnsw \
   --dry-run \
-  --cloud-id "$ELASTIC_CLOUD_ID" \
-  --password "$ELASTIC_PASSWORD" \
+  --host "$ELASTIC_HOST" \
+  --port "$ELASTIC_PORT" \
   --case-type FTSmsmarcoPerformance \
   --dataset-with-size-type "MS MARCO Small (100K documents)"
 
@@ -217,10 +221,16 @@ python3.11 -m vectordb_bench.cli.vectordbbench milvusfts \
 
 ## ElasticCloud Matrix
 
+The command name remains `elasticcloudhnsw`, but these runs target self-hosted
+Elasticsearch. If your local cluster requires authentication, add
+`--user-name "$ELASTIC_USER" --password "$ELASTIC_PASSWORD"` to each command. If
+the cluster uses HTTPS, add `--use-ssl`; if it uses a private CA or self-signed
+certificate for HTTPS during local testing, add `--no-verify-certs`.
+
 ```bash
 python3.11 -m vectordb_bench.cli.vectordbbench elasticcloudhnsw \
-  --cloud-id "$ELASTIC_CLOUD_ID" \
-  --password "$ELASTIC_PASSWORD" \
+  --host "$ELASTIC_HOST" \
+  --port "$ELASTIC_PORT" \
   --task-label "fts-e2e-elastic-msmarco-small" \
   --case-type FTSmsmarcoPerformance \
   --dataset-with-size-type "MS MARCO Small (100K documents)" \
@@ -228,8 +238,8 @@ python3.11 -m vectordb_bench.cli.vectordbbench elasticcloudhnsw \
   --k 100 --concurrency-duration 30 --num-concurrency "1,5,10,20" --concurrency-timeout 3600
 
 python3.11 -m vectordb_bench.cli.vectordbbench elasticcloudhnsw \
-  --cloud-id "$ELASTIC_CLOUD_ID" \
-  --password "$ELASTIC_PASSWORD" \
+  --host "$ELASTIC_HOST" \
+  --port "$ELASTIC_PORT" \
   --task-label "fts-e2e-elastic-msmarco-medium" \
   --case-type FTSmsmarcoPerformance \
   --dataset-with-size-type "MS MARCO Medium (1M documents)" \
@@ -237,8 +247,8 @@ python3.11 -m vectordb_bench.cli.vectordbbench elasticcloudhnsw \
   --k 100 --concurrency-duration 30 --num-concurrency "1,5,10,20" --concurrency-timeout 3600
 
 python3.11 -m vectordb_bench.cli.vectordbbench elasticcloudhnsw \
-  --cloud-id "$ELASTIC_CLOUD_ID" \
-  --password "$ELASTIC_PASSWORD" \
+  --host "$ELASTIC_HOST" \
+  --port "$ELASTIC_PORT" \
   --task-label "fts-e2e-elastic-hotpotqa-small" \
   --case-type FTSmsmarcoPerformance \
   --dataset-with-size-type "HotpotQA Small (100K documents)" \
@@ -246,11 +256,24 @@ python3.11 -m vectordb_bench.cli.vectordbbench elasticcloudhnsw \
   --k 100 --concurrency-duration 30 --num-concurrency "1,5,10,20" --concurrency-timeout 3600
 
 python3.11 -m vectordb_bench.cli.vectordbbench elasticcloudhnsw \
-  --cloud-id "$ELASTIC_CLOUD_ID" \
-  --password "$ELASTIC_PASSWORD" \
+  --host "$ELASTIC_HOST" \
+  --port "$ELASTIC_PORT" \
   --task-label "fts-e2e-elastic-hotpotqa-medium" \
   --case-type FTSmsmarcoPerformance \
   --dataset-with-size-type "HotpotQA Medium (1M documents)" \
+  --drop-old --load --search-serial --search-concurrent \
+  --k 100 --concurrency-duration 30 --num-concurrency "1,5,10,20" --concurrency-timeout 3600
+```
+
+Elastic Cloud alternate:
+
+```bash
+python3.11 -m vectordb_bench.cli.vectordbbench elasticcloudhnsw \
+  --cloud-id "$ELASTIC_CLOUD_ID" \
+  --password "$ELASTIC_PASSWORD" \
+  --task-label "fts-e2e-elastic-cloud-msmarco-small" \
+  --case-type FTSmsmarcoPerformance \
+  --dataset-with-size-type "MS MARCO Small (100K documents)" \
   --drop-old --load --search-serial --search-concurrent \
   --k 100 --concurrency-duration 30 --num-concurrency "1,5,10,20" --concurrency-timeout 3600
 ```

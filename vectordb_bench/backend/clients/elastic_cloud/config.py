@@ -7,16 +7,15 @@ from ..api import DBCaseConfig, DBConfig, IndexType, MetricType
 
 
 class ElasticCloudConfig(DBConfig, BaseModel):
-    _extra_empty_skip: ClassVar[frozenset[str]] = frozenset({"cloud_id", "host"})
+    _extra_empty_skip: ClassVar[frozenset[str]] = frozenset({"cloud_id", "host", "user_name", "password"})
 
-    # Elastic Cloud connection. Takes precedence when set.
     cloud_id: SecretStr | None = None
-    # Self-hosted / host-based connection (used when cloud_id is not provided).
-    scheme: str = "https"
-    host: str = ""
+    host: SecretStr | None = None
     port: int = 9200
-    user: str = "elastic"
-    password: SecretStr
+    user_name: str | None = None
+    password: SecretStr | None = None
+    use_ssl: bool = False
+    verify_certs: bool = True
 
     @model_validator(mode="after")
     def _check_connection_target(self) -> "ElasticCloudConfig":
@@ -27,16 +26,36 @@ class ElasticCloudConfig(DBConfig, BaseModel):
         return self
 
     def to_dict(self) -> dict:
-        auth = (self.user, self.password.get_secret_value())
         if self.cloud_id and self.cloud_id.get_secret_value():
+            if not self.password:
+                msg = "password is required when cloud_id is set"
+                raise ValueError(msg)
             return {
                 "cloud_id": self.cloud_id.get_secret_value(),
-                "basic_auth": auth,
+                "basic_auth": (self.user_name or "elastic", self.password.get_secret_value()),
             }
-        return {
-            "hosts": [{"scheme": self.scheme, "host": self.host, "port": self.port}],
-            "basic_auth": auth,
+
+        if not self.host:
+            msg = "Either cloud_id or host must be set"
+            raise ValueError(msg)
+
+        host = self.host.get_secret_value()
+        if host.startswith(("http://", "https://")):
+            url = host
+        else:
+            scheme = "https" if self.use_ssl else "http"
+            url = f"{scheme}://{host}:{self.port}"
+
+        config = {
+            "hosts": [url],
+            "verify_certs": self.verify_certs,
         }
+        if self.password:
+            config["basic_auth"] = (self.user_name or "elastic", self.password.get_secret_value())
+        elif self.user_name:
+            msg = "password is required when user_name is set"
+            raise ValueError(msg)
+        return config
 
 
 class ESElementType(StrEnum):
