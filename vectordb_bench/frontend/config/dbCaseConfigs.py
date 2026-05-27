@@ -2225,7 +2225,7 @@ CaseConfigParamInput_FTS_analyzer_enable_lowercase = CaseConfigInput(
 )
 
 CaseConfigParamInput_FTS_analyzer_max_token_length = CaseConfigInput(
-    label=CaseConfigParamType.analyzer_max_len,
+    label=CaseConfigParamType.analyzer_max_token_length,
     displayLabel="Max Token Length",
     inputHelp="Maximum length of individual tokens (optional, leave empty to disable).",
     inputType=InputType.Number,

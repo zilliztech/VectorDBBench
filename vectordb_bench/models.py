@@ -54,6 +54,7 @@ class CaseConfigParamType(Enum):
     analyzer_tokenizer = "analyzer_tokenizer"
     analyzer_enable_lowercase = "analyzer_enable_lowercase"
     analyzer_max_len = "analyzer_max_len"
+    analyzer_max_token_length = "analyzer_max_token_length"
     analyzer_stop_words = "analyzer_stop_words"
     index = "index"
     M = "M"

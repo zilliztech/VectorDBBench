@@ -2,6 +2,10 @@ import contextlib
 import logging
 import signal
 import time
+import signal
+import threading
+from contextlib import contextmanager
+from collections.abc import Callable
 from functools import wraps
 
 import psutil
@@ -86,6 +90,25 @@ def time_it(func: any):
         return result, delta
 
     return inner
+
+
+@contextmanager
+def timeout(timeout_seconds: float | int | None, exc_factory: Callable[[], Exception]):
+    if timeout_seconds is None or not hasattr(signal, "SIGALRM") or threading.current_thread() is not threading.main_thread():
+        yield
+        return
+
+    def _handle_timeout(signum, frame):  # noqa: ANN001, ARG001
+        raise exc_factory()
+
+    previous_handler = signal.getsignal(signal.SIGALRM)
+    signal.signal(signal.SIGALRM, _handle_timeout)
+    previous_timer = signal.setitimer(signal.ITIMER_REAL, float(timeout_seconds))
+    try:
+        yield
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, *previous_timer)
+        signal.signal(signal.SIGALRM, previous_handler)
 
 
 def compose_train_files(train_count: int, use_shuffled: bool) -> list[str]:

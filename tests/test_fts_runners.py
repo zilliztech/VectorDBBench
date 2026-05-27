@@ -1,10 +1,14 @@
 from types import SimpleNamespace
+import time
+
+import pytest
 
 from vectordb_bench.backend.cases import CaseLabel
 from vectordb_bench.backend.runner.mp_runner import MultiProcessingSearchRunner
-from vectordb_bench.backend.runner.serial_runner import SerialSearchRunner
+from vectordb_bench.backend.runner.serial_runner import SerialFtsInsertRunner, SerialSearchRunner
 from vectordb_bench.backend.task_runner import CaseRunner
 from vectordb_bench.backend.workload import WorkloadKind
+from vectordb_bench.models import LoadTimeoutError, PerformanceTimeoutError
 
 
 class FakeDB:
@@ -178,3 +182,30 @@ def test_fts_load_data_gets_single_timing_boundary(monkeypatch):
     result, _ = runner._load_data()
 
     assert result is None
+
+
+def test_fts_insert_runner_enforces_load_timeout(monkeypatch):
+    runner = SerialFtsInsertRunner(db=FakeDB(), dataset=[], timeout=0.01)
+
+    def slow_insert():
+        time.sleep(1)
+        return 0, 1.0
+
+    monkeypatch.setattr(runner, "_insert_all_batches", slow_insert)
+
+    with pytest.raises(LoadTimeoutError):
+        runner.run()
+
+
+def test_fts_optimize_enforces_optimize_timeout(monkeypatch):
+    runner = make_case_runner(CaseLabel.FullTextSearchPerformance)
+    object.__setattr__(runner, "ca", SimpleNamespace(label=CaseLabel.FullTextSearchPerformance, optimize_timeout=0.01))
+
+    def slow_optimize(self):
+        time.sleep(1)
+        return None, 1.0
+
+    monkeypatch.setattr(CaseRunner, "_optimize_task", slow_optimize)
+
+    with pytest.raises(PerformanceTimeoutError):
+        runner._optimize()

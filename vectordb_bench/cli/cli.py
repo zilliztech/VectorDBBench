@@ -18,7 +18,7 @@ from yaml import load
 
 from .. import config
 from ..backend.clients import DB
-from ..backend.clients.api import MetricType
+from ..backend.clients.api import IndexType, MetricType
 from ..backend.dataset import DatasetWithSizeType, FtsDatasetWithSizeType
 from ..interface import benchmark_runner
 from ..models import (
@@ -258,6 +258,16 @@ def get_custom_case_config(parameters: dict) -> dict:
             "dataset_with_size_type": dataset_with_size_type,
         }
     return custom_case_config
+
+
+def select_cli_db_case_config(db: DB, db_case_config: DBCaseConfig, case_type: str) -> DBCaseConfig:
+    if case_type != CaseType.FTSmsmarcoPerformance.name:
+        return db_case_config
+
+    fts_case_config_cls = db.case_config_cls(IndexType.FTS_AUTOINDEX)
+    if isinstance(db_case_config, fts_case_config_cls):
+        return db_case_config
+    return fts_case_config_cls()
 
 
 log = logging.getLogger(__name__)
@@ -807,7 +817,7 @@ def run(
     task = TaskConfig(
         db=db,
         db_config=db_config,
-        db_case_config=db_case_config,
+        db_case_config=select_cli_db_case_config(db, db_case_config, parameters["case_type"]),
         case_config=CaseConfig(
             case_id=CaseType[parameters["case_type"]],
             k=parameters["k"],
