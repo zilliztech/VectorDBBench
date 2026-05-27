@@ -371,7 +371,7 @@ class TurboPuffer(VectorDB):
         text_field = self._text_field
         try:
             self.ns.write(
-                columns={
+                upsert_columns={
                     self._scalar_id_field: [str(doc_id) for doc_id in doc_ids],
                     text_field: docs,
                 },

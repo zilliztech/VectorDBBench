@@ -1,4 +1,7 @@
+import inspect
+
 import pytest
+from turbopuffer.resources.namespaces import NamespacesResource
 
 from vectordb_bench.backend.clients.turbopuffer.config import TurboPufferFtsConfig
 from vectordb_bench.backend.clients.turbopuffer.turbopuffer import TurboPuffer
@@ -21,6 +24,13 @@ def test_turbopuffer_fts_config_defaults():
 
 def test_turbopuffer_declares_full_text_support():
     assert TurboPuffer.supports_full_text_search() is True
+
+
+def test_turbopuffer_sdk_write_uses_upsert_columns_keyword():
+    params = inspect.signature(NamespacesResource.write).parameters
+
+    assert "upsert_columns" in params
+    assert "columns" not in params
 
 
 def test_turbopuffer_search_documents_uses_bm25_rank_by():
@@ -58,7 +68,7 @@ def test_turbopuffer_insert_documents_writes_text_schema():
 
     assert db.insert_documents(["alpha", "beta"], ["d1", "d2"]) == (2, None)
     assert calls == {
-        "columns": {
+        "upsert_columns": {
             "id": ["d1", "d2"],
             "text": ["alpha", "beta"],
         },
