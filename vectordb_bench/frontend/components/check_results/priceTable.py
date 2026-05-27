@@ -27,7 +27,7 @@ def priceTable(container, data):
     expander = container.expander("Price List (Editable).")
     editTable = expander.data_editor(
         table,
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
         height=height,
         disabled=("DB", "Label"),

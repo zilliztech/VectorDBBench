@@ -1,5 +1,6 @@
 import logging
 from enum import Enum
+from typing import ClassVar
 
 from pydantic import BaseModel, SecretStr, field_validator, model_validator
 
@@ -9,6 +10,8 @@ log = logging.getLogger(__name__)
 
 
 class OSSOpenSearchConfig(DBConfig, BaseModel):
+    _extra_empty_skip: ClassVar[frozenset[str]] = frozenset({"user", "password", "host"})
+
     host: str = ""
     port: int = 80
     user: str | None = None
@@ -31,19 +34,6 @@ class OSSOpenSearchConfig(DBConfig, BaseModel):
             "ssl_show_warn": False,
             "timeout": 600,
         }
-
-    @model_validator(mode="before")
-    @classmethod
-    def not_empty_field(cls, data: any) -> any:
-        if not isinstance(data, dict):
-            return data
-        skip = set(cls.common_short_configs()) | set(cls.common_long_configs()) | {"user", "password", "host"}
-        for field_name, v in data.items():
-            if field_name in skip:
-                continue
-            if isinstance(v, str) and not v:
-                raise ValueError("Empty string!")
-        return data
 
 
 class OSSOS_Engine(Enum):

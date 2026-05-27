@@ -22,7 +22,7 @@ plotly
 environs
 pydantic>=2.0,<3
 scikit-learn
-pymilvus
+pymilvus<3.0.0
 clickhouse_connect
 pyvespa
 mysql-connector-python

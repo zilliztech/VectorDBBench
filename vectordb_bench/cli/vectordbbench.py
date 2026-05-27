@@ -35,6 +35,7 @@ from ..backend.clients.qdrant_cloud.cli import QdrantCloud
 from ..backend.clients.qdrant_local.cli import QdrantLocal
 from ..backend.clients.redis.cli import Redis
 from ..backend.clients.s3_vectors.cli import S3Vectors
+from ..backend.clients.seekdb.cli import SeekDBHNSW
 from ..backend.clients.tencent_elasticsearch.cli import TencentElasticsearch
 from ..backend.clients.test.cli import Test
 from ..backend.clients.tidb.cli import TiDB
@@ -95,6 +96,7 @@ cli.add_command(Pinot)
 cli.add_command(PolarDBHNSWFlat)
 cli.add_command(PolarDBHNSWPQ)
 cli.add_command(PolarDBHNSWSQ)
+cli.add_command(SeekDBHNSW)
 
 
 if __name__ == "__main__":

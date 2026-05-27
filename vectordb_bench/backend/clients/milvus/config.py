@@ -1,9 +1,13 @@
-from pydantic import BaseModel, SecretStr, model_validator
+from typing import ClassVar
+
+from pydantic import BaseModel, SecretStr
 
 from ..api import DBCaseConfig, DBConfig, IndexType, MetricType, SQType
 
 
 class MilvusConfig(DBConfig):
+    _extra_empty_skip: ClassVar[frozenset[str]] = frozenset({"user", "password"})
+
     uri: SecretStr = "http://localhost:19530"
     user: str | None = None
     password: SecretStr | None = None
@@ -18,19 +22,6 @@ class MilvusConfig(DBConfig):
             "num_shards": self.num_shards,
             "replica_number": self.replica_number,
         }
-
-    @model_validator(mode="before")
-    @classmethod
-    def not_empty_field(cls, data: any) -> any:
-        if not isinstance(data, dict):
-            return data
-        skip = set(cls.common_short_configs()) | set(cls.common_long_configs()) | {"user", "password"}
-        for field_name, v in data.items():
-            if field_name in skip:
-                continue
-            if isinstance(v, str) and not v:
-                raise ValueError("Empty string!")
-        return data
 
 
 class MilvusIndexConfig(BaseModel):
