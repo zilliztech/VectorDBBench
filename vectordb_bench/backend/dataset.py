@@ -349,6 +349,7 @@ class DatasetManager(BaseModel):
         source: DatasetSource = DatasetSource.S3,
         filters: Filter = non_filter,
         with_train_files: bool = True,
+        with_scalar_labels: bool = False,
     ) -> bool:
         """Download the dataset from DatasetSource
          url = f"{source}/{self.data.dir_name}"
@@ -379,9 +380,11 @@ class DatasetManager(BaseModel):
                 local_ds_root=self.data_dir,
             )
 
+        needs_scalar_labels = filters.type == FilterOp.StrEqual or with_scalar_labels
+
         # read scalar_labels_file if separated
         if (
-            filters.type == FilterOp.StrEqual
+            needs_scalar_labels
             and self.data.with_scalar_labels
             and self.data.scalar_labels_file_separated
         ):

@@ -841,3 +841,60 @@ def test_concurrent_insert_runner_passes_scalar_labels_for_scalar_payload_withou
     assert db.calls[0]["metadata"] == [0, 1, 5]
     assert db.calls[0]["labels_data"] == ["label_a", "label_b", "label_c"]
     assert db.calls[0]["tenant_labels_data"] is None
+
+
+def test_pre_run_prepares_separated_scalar_labels_for_scalar_payload():
+    class Dataset:
+        def __init__(self):
+            self.prepare_kwargs = None
+            self.data = type("Data", (), {"dim": 2, "metric_type": "L2"})()
+
+        def prepare(self, source, filters, with_train_files, with_scalar_labels=False):
+            self.prepare_kwargs = {
+                "source": source,
+                "filters": filters,
+                "with_train_files": with_train_files,
+                "with_scalar_labels": with_scalar_labels,
+            }
+            return True
+
+    class Case:
+        is_multitenant = False
+        with_scalar_labels = True
+        filters = MagicMock()
+        dataset = Dataset()
+
+    class DB:
+        init_args = None
+
+        @classmethod
+        def init_cls(cls, **kwargs):
+            cls.init_args = kwargs
+            return cls()
+
+        def need_normalize_cosine(self):
+            return False
+
+    class DBConfig:
+        def to_dict(self):
+            return {}
+
+    config = type(
+        "Config",
+        (),
+        {
+            "db": DB,
+            "db_config": DBConfig(),
+            "db_case_config": EmptyDBCaseConfig(),
+            "stages": [TaskStage.LOAD],
+        },
+    )()
+    runner = CaseRunner.construct(
+        ca=Case(),
+        config=config,
+        dataset_source=DatasetSource.S3,
+    )
+
+    runner._pre_run()
+
+    assert Case.dataset.prepare_kwargs["with_scalar_labels"] is True

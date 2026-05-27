@@ -171,6 +171,7 @@ class CaseRunner(BaseModel):
                 self.dataset_source,
                 filters=self.ca.filters,
                 with_train_files=TaskStage.LOAD in self.config.stages,
+                with_scalar_labels=self.ca.with_scalar_labels,
             )
         except ModuleNotFoundError as e:
             log.warning(f"pre run case error: please install client for db: {self.config.db}, error={e}")

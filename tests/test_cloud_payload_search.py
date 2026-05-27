@@ -1,9 +1,12 @@
 from contextlib import contextmanager
 
+import polars as pl
+
 from vectordb_bench.backend.cases import CloudPayloadSearchCase
 from vectordb_bench.backend.clients.milvus.milvus import Milvus
+from vectordb_bench.backend.data_source import DatasetSource
 from vectordb_bench.backend.dataset import Dataset
-from vectordb_bench.backend.filter import FilterOp
+from vectordb_bench.backend.filter import FilterOp, non_filter
 from vectordb_bench.backend.payload import PayloadProfile
 from vectordb_bench.backend.runner.serial_runner import SerialSearchRunner
 
@@ -34,6 +37,28 @@ def test_scalar_label_payload_profile_requires_scalar_label_materialization_with
 
     assert case.filters.type == FilterOp.NonFilter
     assert case.with_scalar_labels is True
+
+
+def test_dataset_prepare_loads_separated_scalar_labels_for_scalar_payload(monkeypatch):
+    dataset = Dataset.LAION.manager(100_000_000)
+    dataset.data.with_remote_resource = False
+    loaded_scalar_labels = object()
+
+    def fake_read_file(file_name):
+        if file_name == dataset.data.scalar_labels_file:
+            return loaded_scalar_labels
+        return pl.DataFrame({dataset.data.test_vector_field: [], dataset.data.gt_neighbors_field: []})
+
+    monkeypatch.setattr(dataset, "_read_file", fake_read_file)
+
+    dataset.prepare(
+        source=DatasetSource.S3,
+        filters=non_filter,
+        with_train_files=False,
+        with_scalar_labels=True,
+    )
+
+    assert dataset.scalar_labels is loaded_scalar_labels
 
 
 def test_cloud_payload_case_can_combine_label_filter_with_scalar_label_payload():
