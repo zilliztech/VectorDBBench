@@ -81,7 +81,8 @@ def test_hotpotqa_translator_combines_title_and_text_and_uses_qrels():
 
 
 def test_fts_iterator_preserves_qrel_docs_before_filler(monkeypatch):
-    manager = FtsDatasetManager(data=MSMarcoFts(size=3))
+    manager = FtsDatasetManager(data=MSMarcoFts(size=100_000))
+    manager.data.size = 3
     manager._ir_dataset = FakeDataset()
     manager.required_doc_ids = {"d3", "d1"}
     manager.selected_doc_ids = None
@@ -99,6 +100,8 @@ def test_fts_dataset_size_registry():
     assert FtsDataset.HOTPOTQA.manager(5_233_329).data.full_name == "HotpotQA FTS (LARGE)"
     assert FtsDatasetWithSizeType.MSMarcoSmall.get_manager().data.size == 100_000
     assert FtsDatasetWithSizeType.HotpotQAMedium.get_manager().data.size == 1_000_000
+    with pytest.raises(ValueError):
+        FtsDataset.MSMARCO.manager(3)
 
 
 def test_cap_smaller_than_required_qrels_is_invalid():
