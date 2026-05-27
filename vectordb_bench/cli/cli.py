@@ -37,6 +37,7 @@ except ImportError:
     from yaml import Loader
 
 DEFAULT_DATASET_WITH_SIZE_TYPE = DatasetWithSizeType.CohereMedium.value
+SUPPORTED_DATASET_WITH_SIZE_TYPES = "|".join(dataset.value for dataset in DatasetWithSizeType)
 
 
 def copy_if_not_none(
@@ -498,9 +499,7 @@ class CommonTypedDict(TypedDict):
             "--dataset-with-size-type",
             help="Dataset with size type. When omitted, filter/insert cases use Medium Cohere (768dim, 1M), "
             "CloudPayloadSearchCase and CloudColdLatencyCase use LAION 100M, and CloudMultiTenantSearchCase "
-            "uses Large Cohere (768dim, 10M). Supported values include Medium Cohere (768dim, 1M)|"
-            "Large Cohere (768dim, 10M)|Medium Bioasq (1024dim, 1M)|Large Bioasq (1024dim, 10M)|"
-            "Large OpenAI (1536dim, 5M)|Medium OpenAI (1536dim, 500K)",
+            f"uses Large Cohere (768dim, 10M). Supported values include {SUPPORTED_DATASET_WITH_SIZE_TYPES}",
             default=None,
         ),
     ]

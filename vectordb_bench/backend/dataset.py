@@ -488,6 +488,7 @@ class DatasetWithSizeType(Enum):
     CohereSmall = "Small Cohere (768dim, 100K)"
     CohereMedium = "Medium Cohere (768dim, 1M)"
     CohereLarge = "Large Cohere (768dim, 10M)"
+    LAIONLarge = "Large LAION (768dim, 100M)"
     BioasqMedium = "Medium Bioasq (1024dim, 1M)"
     BioasqLarge = "Large Bioasq (1024dim, 10M)"
     OpenAISmall = "Small OpenAI (1536dim, 50K)"
@@ -501,6 +502,8 @@ class DatasetWithSizeType(Enum):
         return DatasetWithSizeMap.get(self)
 
     def get_load_timeout(self) -> float:
+        if self is DatasetWithSizeType.LAIONLarge:
+            return config.LOAD_TIMEOUT_768D_100M
         if "small" in self.value.lower():
             return config.LOAD_TIMEOUT_768D_100K
         if "medium" in self.value.lower():
@@ -511,6 +514,8 @@ class DatasetWithSizeType(Enum):
         raise KeyError(msg)
 
     def get_optimize_timeout(self) -> float:
+        if self is DatasetWithSizeType.LAIONLarge:
+            return config.OPTIMIZE_TIMEOUT_768D_100M
         if "small" in self.value.lower():
             return config.OPTIMIZE_TIMEOUT_768D_100K
         if "medium" in self.value.lower():
@@ -524,6 +529,7 @@ DatasetWithSizeMap = {
     DatasetWithSizeType.CohereSmall: Dataset.COHERE.manager(100_000),
     DatasetWithSizeType.CohereMedium: Dataset.COHERE.manager(1_000_000),
     DatasetWithSizeType.CohereLarge: Dataset.COHERE.manager(10_000_000),
+    DatasetWithSizeType.LAIONLarge: Dataset.LAION.manager(100_000_000),
     DatasetWithSizeType.BioasqMedium: Dataset.BIOASQ.manager(1_000_000),
     DatasetWithSizeType.BioasqLarge: Dataset.BIOASQ.manager(10_000_000),
     DatasetWithSizeType.OpenAISmall: Dataset.OPENAI.manager(50_000),

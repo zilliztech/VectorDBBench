@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from vectordb_bench import config
 from vectordb_bench.backend.assembler import Assembler
 from vectordb_bench.backend.cases import CaseLabel, CaseType, CloudInsertCase
 from vectordb_bench.backend.clients import DB
@@ -56,6 +57,28 @@ def test_case_config_builds_cloud_insert_case_from_custom_case():
     assert case.dataset.data.size == 1_000_000
 
 
+def test_case_config_builds_cloud_insert_case_from_laion_100m_dataset_option():
+    case = CaseConfig(
+        case_id=CaseType.CloudInsertCase,
+        custom_case={
+            "batch_size": 10_000,
+            "dataset_with_size_type": "Large LAION (768dim, 100M)",
+        },
+    ).case
+
+    assert isinstance(case, CloudInsertCase)
+    assert case.batch_size == 10_000
+    assert case.dataset_with_size_type == DatasetWithSizeType.LAIONLarge
+    assert case.dataset.data.name == "LAION"
+    assert case.dataset.data.size == 100_000_000
+    assert case.dataset.data.dim == 768
+
+
+def test_laion_100m_dataset_option_uses_100m_timeouts():
+    assert DatasetWithSizeType.LAIONLarge.get_load_timeout() == config.LOAD_TIMEOUT_768D_100M
+    assert DatasetWithSizeType.LAIONLarge.get_optimize_timeout() == config.OPTIMIZE_TIMEOUT_768D_100M
+
+
 def test_cli_builds_cloud_insert_custom_case_config():
     params = {
         "case_type": "CloudInsertCase",
@@ -73,6 +96,30 @@ def test_cli_builds_cloud_insert_custom_case_config():
         "readiness_poll_interval": 10,
         "dataset_with_size_type": DatasetWithSizeType.CohereMedium.value,
     }
+
+
+def test_cli_builds_cloud_insert_custom_case_config_with_laion_100m_dataset():
+    cfg = get_custom_case_config(
+        {
+            "case_type": "CloudInsertCase",
+            "cloud_insert_batch_size": 10_000,
+            "cloud_insert_duration": None,
+            "cloud_insert_readiness_timeout": None,
+            "cloud_insert_readiness_poll_interval": None,
+            "dataset_with_size_type": DatasetWithSizeType.LAIONLarge.value,
+        }
+    )
+
+    assert cfg == {
+        "batch_size": 10_000,
+        "duration": None,
+        "dataset_with_size_type": DatasetWithSizeType.LAIONLarge.value,
+    }
+
+    case = CaseConfig(case_id=CaseType.CloudInsertCase, custom_case=cfg).case
+    assert case.dataset_with_size_type == DatasetWithSizeType.LAIONLarge
+    assert case.dataset.data.name == "LAION"
+    assert case.dataset.data.size == 100_000_000
 
 
 def test_cli_builds_cloud_insert_custom_case_config_with_default_dataset():
