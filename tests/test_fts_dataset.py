@@ -54,6 +54,12 @@ class FakeDataset:
         yield from self.qrels
 
 
+class FakeDatasetWithMissingQrel(FakeDataset):
+    def __init__(self):
+        super().__init__()
+        self.qrels = [Qrel("q1", "missing", 1)]
+
+
 def make_tiny_msmarco_manager(size: int = 3) -> FtsDatasetManager:
     manager = FtsDatasetManager(data=MSMarcoFts(size=100_000))
     small_label = manager.data._size_label[100_000]
@@ -113,6 +119,14 @@ def test_fts_cap_rejects_required_qrel_docs_missing_from_corpus():
 
     with pytest.raises(ValueError, match="missing from corpus"):
         manager._build_selected_doc_ids()
+
+
+def test_fts_prepare_propagates_missing_required_qrel_docs(monkeypatch):
+    manager = FtsDatasetManager(data=MSMarcoFts(size=100_000))
+    monkeypatch.setattr(manager._translator, "load", lambda: FakeDatasetWithMissingQrel())
+
+    with pytest.raises(ValueError, match="missing from corpus"):
+        manager.prepare(source=None)
 
 
 def test_fts_dataset_size_registry():
