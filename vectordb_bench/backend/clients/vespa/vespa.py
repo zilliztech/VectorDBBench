@@ -1,6 +1,7 @@
 import datetime
 import logging
 import math
+import threading
 from collections.abc import Generator
 from contextlib import contextmanager
 
@@ -11,6 +12,35 @@ from . import util
 from .config import VespaFtsConfig, VespaHNSWConfig
 
 log = logging.getLogger(__name__)
+
+
+def _is_successful_response(response) -> bool:
+    if hasattr(response, "is_successful"):
+        return response.is_successful()
+    if hasattr(response, "get_status_code"):
+        return response.get_status_code() == 200
+    return getattr(response, "status_code", None) == 200
+
+
+def _response_json(response) -> dict:
+    if hasattr(response, "get_json"):
+        return response.get_json()
+    return getattr(response, "json", {})
+
+
+def _document_id_from_hit(hit: dict) -> str | None:
+    fields = hit.get("fields")
+    if isinstance(fields, dict) and "id" in fields:
+        return str(fields["id"])
+
+    document_id = hit.get("id")
+    if document_id is None:
+        return None
+
+    document_id = str(document_id)
+    if document_id.startswith("id:") and "::" in document_id:
+        return document_id.rsplit("::", 1)[-1]
+    return document_id
 
 
 class Vespa(VectorDB):
@@ -108,7 +138,31 @@ class Vespa(VectorDB):
             {"id": str(doc_id), "fields": {"id": str(doc_id), "text": text}}
             for doc_id, text in zip(doc_ids, texts, strict=True)
         )
-        self.client.feed_iterable(data, self.schema_name)
+
+        successful_count = 0
+        failures: list[str] = []
+        lock = threading.Lock()
+
+        def callback(response, doc_id):
+            nonlocal successful_count
+            with lock:
+                if _is_successful_response(response):
+                    successful_count += 1
+                    return
+                failures.append(f"{doc_id}: {_response_json(response)}")
+
+        try:
+            self.client.feed_iterable(data, self.schema_name, callback=callback)
+        except Exception as exc:
+            log.warning("Vespa feed failed for schema %s", self.schema_name, exc_info=True)
+            return successful_count, exc
+
+        if failures:
+            msg = f"Vespa feed failed for {len(failures)} documents in schema {self.schema_name}: {failures[:3]}"
+            err = RuntimeError(msg)
+            log.warning(msg)
+            return successful_count, err
+
         return len(texts), None
 
     def search_embedding(
@@ -169,10 +223,18 @@ class Vespa(VectorDB):
                 "type": "any",
                 "ranking": "bm25",
                 "hits": k,
+                "default-index": "text",
             }
         )
-        children = result.get_json().get("root", {}).get("children", [])
-        return [str(child["fields"]["id"]) for child in children]
+        children = result.get_json().get("root", {}).get("children", []) or []
+        ids = []
+        for child in children:
+            if not isinstance(child, dict):
+                continue
+            doc_id = _document_id_from_hit(child)
+            if doc_id is not None:
+                ids.append(doc_id)
+        return ids
 
     def optimize(self, data_size: int | None = None):
         """optimize will be called between insertion and search in performance cases.

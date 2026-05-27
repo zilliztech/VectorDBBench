@@ -1,6 +1,7 @@
 import pytest
 
 from vectordb_bench.backend.clients.vespa.config import VespaFtsConfig
+from vectordb_bench.backend.clients.vespa import vespa as vespa_module
 from vectordb_bench.backend.clients.vespa.vespa import Vespa
 
 
@@ -43,6 +44,50 @@ def test_vespa_search_documents_uses_user_query():
     assert calls["query"] == "hello world"
     assert calls["ranking"] == "bm25"
     assert calls["hits"] == 4
+    assert calls["default-index"] == "text"
+
+
+def test_vespa_search_documents_skips_malformed_hits_and_falls_back_to_document_id():
+    db = make_fts_db()
+
+    class Result:
+        def get_json(self):
+            return {
+                "root": {
+                    "children": [
+                        {"fields": {"id": "from-fields"}},
+                        {"id": "id:docs:docs::from-vespa-id", "fields": {"text": "missing id"}},
+                        {"fields": {"text": "missing id"}},
+                        {"id": "id:docs:docs::only-top-level"},
+                        {},
+                    ]
+                }
+            }
+
+    class Client:
+        def query(self, query):
+            return Result()
+
+    db.client = Client()
+
+    assert db.search_documents("hello") == ["from-fields", "from-vespa-id", "only-top-level"]
+
+
+@pytest.mark.parametrize("payload", [{"root": {}}, {"root": {"children": None}}])
+def test_vespa_search_documents_returns_empty_list_for_missing_children(payload):
+    db = make_fts_db()
+
+    class Result:
+        def get_json(self):
+            return payload
+
+    class Client:
+        def query(self, query):
+            return Result()
+
+    db.client = Client()
+
+    assert db.search_documents("hello") == []
 
 
 def test_vespa_insert_documents_feeds_text_documents():
@@ -50,9 +95,10 @@ def test_vespa_insert_documents_feeds_text_documents():
     calls = {}
 
     class Client:
-        def feed_iterable(self, data, schema_name):
+        def feed_iterable(self, data, schema_name, callback=None):
             calls["data"] = list(data)
             calls["schema_name"] = schema_name
+            calls["callback"] = callback
 
     db.client = Client()
 
@@ -63,7 +109,41 @@ def test_vespa_insert_documents_feeds_text_documents():
             {"id": "d2", "fields": {"id": "d2", "text": "beta"}},
         ],
         "schema_name": "docs",
+        "callback": calls["callback"],
     }
+    assert callable(calls["callback"])
+
+
+def test_vespa_insert_documents_reports_feed_failures(monkeypatch):
+    db = make_fts_db()
+    warnings = []
+
+    class Response:
+        def __init__(self, status_code):
+            self.status_code = status_code
+
+        def is_successful(self):
+            return self.status_code == 200
+
+        def get_json(self):
+            return {"message": "bad feed"}
+
+    class Client:
+        def feed_iterable(self, data, schema_name, callback=None):
+            list(data)
+            callback(Response(200), "d1")
+            callback(Response(500), "d2")
+
+    db.client = Client()
+    monkeypatch.setattr(vespa_module.log, "warning", lambda *args, **kwargs: warnings.append(args[0]))
+
+    count, err = db.insert_documents(["alpha", "beta"], ["d1", "d2"])
+
+    assert count == 1
+    assert isinstance(err, RuntimeError)
+    assert "d2" in str(err)
+    assert warnings
+    assert warnings[0].startswith("Vespa feed failed")
 
 
 def test_vespa_insert_documents_validates_lengths():
