@@ -8,7 +8,7 @@ from elasticsearch.helpers import bulk
 from vectordb_bench.backend.filter import Filter, FilterOp
 
 from ..api import VectorDB
-from .config import ElasticCloudIndexConfig
+from .config import ElasticCloudFtsConfig, ElasticCloudIndexConfig
 
 for logger in ("elasticsearch", "elastic_transport"):
     logging.getLogger(logger).setLevel(logging.WARNING)
@@ -47,6 +47,10 @@ class ElasticCloud(VectorDB):
         self.label_col_name = label_col_name
         self.vector_col_name = vector_col_name
         self.with_scalar_labels = with_scalar_labels
+        self._is_fts = isinstance(db_case_config, ElasticCloudFtsConfig)
+        self.text_col_name = "text"
+        if self._is_fts:
+            self.id_col_name = "doc_id"
 
         from elasticsearch import Elasticsearch
 
@@ -58,6 +62,10 @@ class ElasticCloud(VectorDB):
             if is_existed_res.raw:
                 client.indices.delete(index=self.indice)
             self._create_indice(client)
+
+    @classmethod
+    def supports_full_text_search(cls) -> bool:
+        return True
 
     @contextmanager
     def init(self) -> None:
@@ -71,6 +79,18 @@ class ElasticCloud(VectorDB):
         del self.client
 
     def _create_indice(self, client: any) -> None:
+        if self._is_fts:
+            mappings = self.case_config.index_param()
+            settings = {
+                "index": {
+                    "number_of_shards": self.case_config.number_of_shards,
+                    "number_of_replicas": self.case_config.number_of_replicas,
+                    "refresh_interval": self.case_config.refresh_interval,
+                }
+            }
+            client.indices.create(index=self.indice, mappings=mappings, settings=settings)
+            return
+
         mappings = {
             "_source": {"excludes": [self.vector_col_name]},
             "properties": {
@@ -149,6 +169,32 @@ class ElasticCloud(VectorDB):
             log.warning(f"Failed to insert data: {self.indice} error: {e!s}")
             return (0, e)
 
+    def insert_documents(
+        self,
+        texts: Iterable[str],
+        doc_ids: list[str],
+        **kwargs,
+    ) -> tuple[int, Exception | None]:
+        assert self.client is not None, "should self.init() first"
+        docs = list(texts)
+        actions = [
+            {
+                "_index": self.indice,
+                "_id": str(doc_ids[i]),
+                "_source": {
+                    self.id_col_name: str(doc_ids[i]),
+                    self.text_col_name: docs[i],
+                },
+            }
+            for i in range(len(docs))
+        ]
+        try:
+            result = bulk(self.client, actions)
+            return result[0], None
+        except Exception as e:
+            log.warning(f"Failed to insert FTS docs: {self.indice} error: {e!s}")
+            return 0, e
+
     def prepare_filter(self, filters: Filter):
         self.routing_key = None
         if filters.type == FilterOp.NonFilter:
@@ -202,6 +248,24 @@ class ElasticCloud(VectorDB):
             filter_path=[f"hits.hits.fields.{self.id_col_name}"],
         )
         return [h["fields"][self.id_col_name][0] for h in res["hits"]["hits"]]
+
+    def search_documents(
+        self,
+        query: str,
+        k: int = 100,
+        **kwargs,
+    ) -> list[str]:
+        assert self.client is not None, "should self.init() first"
+        res = self.client.search(
+            index=self.indice,
+            query={"match": {self.text_col_name: query}},
+            size=k,
+            _source=False,
+            docvalue_fields=[self.id_col_name],
+            stored_fields="_none_",
+            filter_path=[f"hits.hits.fields.{self.id_col_name}"],
+        )
+        return [str(hit["fields"][self.id_col_name][0]) for hit in res["hits"]["hits"]]
 
     def optimize(self, data_size: int | None = None):
         """optimize will be called between insertion and search in performance cases."""

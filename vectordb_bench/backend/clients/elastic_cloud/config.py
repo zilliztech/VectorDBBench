@@ -108,3 +108,21 @@ class ElasticCloudIndexConfig(BaseModel, DBCaseConfig):
         return {
             "num_candidates": self.num_candidates,
         }
+
+
+class ElasticCloudFtsConfig(BaseModel, DBCaseConfig):
+    number_of_shards: int = 1
+    number_of_replicas: int = 0
+    refresh_interval: str = "30s"
+    use_force_merge: bool = True
+
+    def index_param(self) -> dict:
+        return {
+            "properties": {
+                "doc_id": {"type": "keyword", "store": True},
+                "text": {"type": "text"},
+            },
+        }
+
+    def search_param(self) -> dict:
+        return {}
