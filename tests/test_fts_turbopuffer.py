@@ -15,6 +15,17 @@ def make_fts_db():
     return db
 
 
+def make_vector_db(with_scalar_labels=False):
+    db = TurboPuffer.__new__(TurboPuffer)
+    db.ns = None
+    db._scalar_id_field = "id"
+    db._vector_field = "vector"
+    db._scalar_label_field = "label"
+    db.metric = "cosine_distance"
+    db.with_scalar_labels = with_scalar_labels
+    return db
+
+
 def test_turbopuffer_fts_config_defaults():
     config = TurboPufferFtsConfig()
 
@@ -78,6 +89,47 @@ def test_turbopuffer_insert_documents_writes_text_schema():
                 "full_text_search": True,
             }
         },
+    }
+
+
+def test_turbopuffer_insert_embeddings_without_labels_uses_upsert_columns():
+    db = make_vector_db()
+    calls = {}
+
+    class Namespace:
+        def write(self, **kwargs):
+            calls.update(kwargs)
+
+    db.ns = Namespace()
+
+    assert db.insert_embeddings([[0.1, 0.2]], [1]) == (1, None)
+    assert calls == {
+        "upsert_columns": {
+            "id": [1],
+            "vector": [[0.1, 0.2]],
+        },
+        "distance_metric": "cosine_distance",
+    }
+
+
+def test_turbopuffer_insert_embeddings_with_labels_uses_upsert_columns():
+    db = make_vector_db(with_scalar_labels=True)
+    calls = {}
+
+    class Namespace:
+        def write(self, **kwargs):
+            calls.update(kwargs)
+
+    db.ns = Namespace()
+
+    assert db.insert_embeddings([[0.1, 0.2]], [1], labels_data=["a"]) == (1, None)
+    assert calls == {
+        "upsert_columns": {
+            "id": [1],
+            "vector": [[0.1, 0.2]],
+            "label": ["a"],
+        },
+        "distance_metric": "cosine_distance",
     }
 
 
