@@ -301,15 +301,30 @@ class CaseRunner(BaseModel):
         )
         count = runner.task()
         insert_done = time.perf_counter()
+        readiness_timeout = self.ca.readiness_timeout
+        readiness_poll_interval = self.ca.readiness_poll_interval
+        readiness_deadline = None if readiness_timeout is None else time.perf_counter() + readiness_timeout
         with self.db.init():
             status = self.db.poll_insert_readiness(count)
             searchable_started = time.perf_counter()
             while not status["fully_searchable"]:
-                time.sleep(5)
+                if readiness_deadline is not None and time.perf_counter() >= readiness_deadline:
+                    msg = (
+                        "Cloud insert readiness timed out waiting for fully_searchable "
+                        f"after {readiness_timeout}s; last_status={status}"
+                    )
+                    raise TimeoutError(msg)
+                time.sleep(readiness_poll_interval)
                 status = self.db.poll_insert_readiness(count)
             indexed_started = time.perf_counter()
             while not status["fully_indexed"]:
-                time.sleep(5)
+                if readiness_deadline is not None and time.perf_counter() >= readiness_deadline:
+                    msg = (
+                        "Cloud insert readiness timed out waiting for fully_indexed "
+                        f"after {readiness_timeout}s; last_status={status}"
+                    )
+                    raise TimeoutError(msg)
+                time.sleep(readiness_poll_interval)
                 status = self.db.poll_insert_readiness(count)
         return Metric(
             inserted_count=count,

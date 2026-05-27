@@ -36,6 +36,7 @@ def test_cloud_insert_case_defaults_to_laion_100m():
     assert case.dataset.data.size == 100_000_000
     assert case.batch_size == 1000
     assert case.duration is None
+    assert case.readiness_timeout is None
 
 
 def test_case_config_builds_cloud_insert_case_from_custom_case():
@@ -60,12 +61,16 @@ def test_cli_builds_cloud_insert_custom_case_config():
         "case_type": "CloudInsertCase",
         "cloud_insert_batch_size": 10_000,
         "cloud_insert_duration": 1800,
+        "cloud_insert_readiness_timeout": 7200,
+        "cloud_insert_readiness_poll_interval": 10,
         "dataset_with_size_type": DatasetWithSizeType.CohereMedium.value,
     }
 
     assert get_custom_case_config(params) == {
         "batch_size": 10_000,
         "duration": 1800,
+        "readiness_timeout": 7200,
+        "readiness_poll_interval": 10,
         "dataset_with_size_type": DatasetWithSizeType.CohereMedium.value,
     }
 
@@ -76,6 +81,8 @@ def test_cli_builds_cloud_insert_custom_case_config_with_default_dataset():
             "case_type": "CloudInsertCase",
             "cloud_insert_batch_size": 10_000,
             "cloud_insert_duration": None,
+            "cloud_insert_readiness_timeout": None,
+            "cloud_insert_readiness_poll_interval": None,
             "dataset_with_size_type": None,
         }
     )
@@ -613,6 +620,53 @@ def test_cloud_insert_runner_records_insert_and_readiness_metrics(monkeypatch):
     assert metric.searchable_after_insert_seconds >= 0
     assert metric.indexed_after_searchable_seconds >= 0
     assert metric.additional_parameters == {"example": "value"}
+
+
+def test_cloud_insert_runner_times_out_when_readiness_never_completes(monkeypatch):
+    class Data:
+        train_id_field = "id"
+        train_vector_field = "vector"
+        metric_type = "L2"
+
+    class Dataset:
+        data = Data()
+
+        def iter_batches(self, batch_size):
+            return iter([pd.DataFrame({"id": [1], "vector": [np.array([0.1])]})])
+
+    class DB:
+        @contextmanager
+        def init(self):
+            yield
+
+        def need_normalize_cosine(self):
+            return False
+
+        def poll_insert_readiness(self, expected_count):
+            return {
+                "fully_searchable": False,
+                "fully_indexed": False,
+                "additional_parameters": {"reason": "stalled"},
+            }
+
+    class FakeConcurrentInsertRunner:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def task(self):
+            return 1
+
+    def fail_on_sleep(_seconds):
+        raise AssertionError("readiness polling did not time out before sleeping")
+
+    monkeypatch.setattr("vectordb_bench.backend.task_runner.ConcurrentInsertRunner", FakeConcurrentInsertRunner)
+    monkeypatch.setattr("vectordb_bench.backend.task_runner.time.sleep", fail_on_sleep)
+    case = CloudInsertCase(batch_size=1, readiness_timeout=0, readiness_poll_interval=0)
+    case.dataset = Dataset()
+    runner = CaseRunner.construct(ca=case, db=DB(), config=type("Config", (), {"load_concurrency": 1})())
+
+    with pytest.raises(TimeoutError, match="fully_searchable.*last_status.*stalled"):
+        runner._run_cloud_insert_case()
 
 
 def test_cloud_insert_runner_uses_concurrent_insert_runner(monkeypatch):

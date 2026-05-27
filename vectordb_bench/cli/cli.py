@@ -233,6 +233,10 @@ def get_custom_case_config(parameters: dict) -> dict:
             "duration": parameters["cloud_insert_duration"],
             "dataset_with_size_type": dataset_with_size_type,
         }
+        if parameters.get("cloud_insert_readiness_timeout") is not None:
+            custom_case_config["readiness_timeout"] = parameters["cloud_insert_readiness_timeout"]
+        if parameters.get("cloud_insert_readiness_poll_interval") is not None:
+            custom_case_config["readiness_poll_interval"] = parameters["cloud_insert_readiness_poll_interval"]
     elif parameters["case_type"] == "CloudMultiTenantSearchCase":
         custom_case_config = {
             "tenant_count": parameters["tenant_count"],
@@ -573,6 +577,24 @@ class CommonTypedDict(TypedDict):
             type=float,
             default=None,
             help="Optional insert duration in seconds for CloudInsertCase",
+        ),
+    ]
+    cloud_insert_readiness_timeout: Annotated[
+        float | None,
+        click.option(
+            "--cloud-insert-readiness-timeout",
+            type=float,
+            default=None,
+            help="Optional readiness polling timeout in seconds for CloudInsertCase",
+        ),
+    ]
+    cloud_insert_readiness_poll_interval: Annotated[
+        float | None,
+        click.option(
+            "--cloud-insert-readiness-poll-interval",
+            type=float,
+            default=None,
+            help="Optional readiness polling interval in seconds for CloudInsertCase",
         ),
     ]
     tenant_count: Annotated[

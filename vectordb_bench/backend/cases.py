@@ -749,12 +749,16 @@ class CloudInsertCase(Case):
     label: CaseLabel = CaseLabel.CloudInsert
     batch_size: int
     duration: float | None = None
+    readiness_timeout: float | None = config.CLOUD_INSERT_READINESS_TIMEOUT
+    readiness_poll_interval: float = config.CLOUD_INSERT_READINESS_POLL_INTERVAL
     dataset_with_size_type: DatasetWithSizeType | None = None
 
     def __init__(
         self,
         batch_size: int,
         duration: float | None = None,
+        readiness_timeout: float | None = config.CLOUD_INSERT_READINESS_TIMEOUT,
+        readiness_poll_interval: float = config.CLOUD_INSERT_READINESS_POLL_INTERVAL,
         dataset_with_size_type: DatasetWithSizeType | str | None = None,
         **kwargs,
     ):
@@ -771,6 +775,8 @@ class CloudInsertCase(Case):
             dataset=dataset,
             batch_size=batch_size,
             duration=duration,
+            readiness_timeout=readiness_timeout,
+            readiness_poll_interval=readiness_poll_interval,
             dataset_with_size_type=dataset_with_size_type,
             **kwargs,
         )
