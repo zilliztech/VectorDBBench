@@ -255,6 +255,28 @@ class VectorDB(ABC):
     def validate_multitenant_schema(self) -> None:
         return None
 
+    @classmethod
+    def supports_full_text_search(cls) -> bool:
+        return False
+
+    def insert_documents(
+        self,
+        texts: list[str],
+        doc_ids: list[str],
+        **kwargs,
+    ) -> tuple[int, Exception | None]:
+        msg = f"{self.name or self.__class__.__name__} does not support full-text document insert"
+        raise NotImplementedError(msg)
+
+    def search_documents(
+        self,
+        query: str,
+        k: int = 100,
+        **kwargs,
+    ) -> list[str]:
+        msg = f"{self.name or self.__class__.__name__} does not support full-text document search"
+        raise NotImplementedError(msg)
+
     @abstractmethod
     def insert_embeddings(
         self,
