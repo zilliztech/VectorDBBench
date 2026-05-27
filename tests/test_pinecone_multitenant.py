@@ -25,6 +25,14 @@ class FakePineconeIndex:
         self.deletes.append((delete_all, namespace))
 
 
+class FailingPineconeIndex(FakePineconeIndex):
+    def upsert(self, vectors, namespace=None):
+        self.upserts.append((vectors, namespace))
+        if namespace == "mt_tenant_0001":
+            raise RuntimeError("tenant upsert failed")
+        return SimpleNamespace(_response_info={"raw_headers": {"x-pinecone-request-lsn": "7"}})
+
+
 class FakePineconeClient:
     def __init__(self, index):
         self.index = index
@@ -107,3 +115,41 @@ def test_pinecone_multitenant_upsert_preserves_scalar_payload_labels(monkeypatch
     assert err is None
     assert fake_index.upserts[0][0][0][2]["label"] == "label_a"
     assert fake_index.upserts[1][0][0][2]["label"] == "label_b"
+
+
+def test_pinecone_multitenant_partial_insert_failure_is_explicit(monkeypatch):
+    from vectordb_bench.backend.clients.pinecone import pinecone as pinecone_module
+    from vectordb_bench.backend.clients.pinecone.pinecone import Pinecone
+
+    fake_index = FailingPineconeIndex()
+    monkeypatch.setattr(
+        pinecone_module.pinecone,
+        "Pinecone",
+        lambda api_key: FakePineconeClient(fake_index),
+    )
+
+    db = Pinecone(
+        dim=2,
+        db_config={
+            "api_key": "k",
+            "index_name": "idx",
+            "multitenant_namespace_prefix": "mt_",
+        },
+        db_case_config=None,
+        drop_old=False,
+    )
+
+    with db.init():
+        count, err = db.insert_embeddings(
+            embeddings=[[1.0, 0.0], [0.0, 1.0], [0.5, 0.5]],
+            metadata=[0, 1, 2],
+            tenant_labels_data=["tenant_0000", "tenant_0001", "tenant_0000"],
+        )
+
+    assert count == 2
+    assert getattr(err, "non_retryable", False) is True
+    assert getattr(err, "inserted_count") == 2
+    assert getattr(err, "successful_tenants") == {"tenant_0000": 2}
+    assert getattr(err, "failed_tenant") == "tenant_0001"
+    assert getattr(err, "failed_tenant_count") == 1
+    assert db._multitenant_insert_counts == {"tenant_0000": 2}

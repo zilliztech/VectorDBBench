@@ -12,7 +12,7 @@ import pinecone
 from vectordb_bench.backend.filter import Filter, FilterOp
 from vectordb_bench.backend.payload import PayloadProfile
 
-from ..api import DBCaseConfig, VectorDB
+from ..api import DBCaseConfig, PartialInsertError, VectorDB
 
 log = logging.getLogger(__name__)
 
@@ -213,6 +213,7 @@ class Pinecone(VectorDB):
     ) -> tuple[int, Exception]:
         assert len(embeddings) == len(metadata)
         insert_count = 0
+        successful_tenants: dict[str, int] = {}
         try:
             for batch_start_offset in range(0, len(embeddings), self.batch_size):
                 batch_end_offset = min(batch_start_offset + self.batch_size, len(embeddings))
@@ -240,16 +241,35 @@ class Pinecone(VectorDB):
                             for insert_data, tenant_label in zip(insert_datas, batch_tenant_labels, strict=True)
                             if tenant_label == tenant
                         ]
-                        self._multitenant_insert_counts[tenant] = self._multitenant_insert_counts.get(tenant, 0) + len(
-                            tenant_insert_datas
-                        )
-                        upsert_res = self.index.upsert(
-                            tenant_insert_datas,
-                            namespace=self._namespace_for_tenant(tenant),
-                        )
+                        try:
+                            upsert_res = self.index.upsert(
+                                tenant_insert_datas,
+                                namespace=self._namespace_for_tenant(tenant),
+                            )
+                        except Exception as e:
+                            msg = (
+                                "Pinecone multitenant insert failed for "
+                                f"tenant={tenant} after writing {insert_count} rows; "
+                                f"successful_tenants={successful_tenants}; "
+                                f"failed_tenant_count={len(tenant_insert_datas)}"
+                            )
+                            return insert_count, PartialInsertError(
+                                msg,
+                                inserted_count=insert_count,
+                                successful_tenants=successful_tenants,
+                                failed_tenant=tenant,
+                                failed_tenant_count=len(tenant_insert_datas),
+                                cause=e,
+                            )
                         write_lsn = self._extract_lsn(upsert_res, "x-pinecone-request-lsn")
                         if write_lsn is not None:
                             self._record_write_lsn(write_lsn)
+                        insert_count += len(tenant_insert_datas)
+                        successful_tenants[tenant] = successful_tenants.get(tenant, 0) + len(tenant_insert_datas)
+                        self._multitenant_insert_counts[tenant] = self._multitenant_insert_counts.get(tenant, 0) + len(
+                            tenant_insert_datas
+                        )
+                    continue
                 insert_count += batch_end_offset - batch_start_offset
         except Exception as e:
             return insert_count, e
