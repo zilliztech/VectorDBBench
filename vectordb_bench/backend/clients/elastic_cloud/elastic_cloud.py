@@ -30,7 +30,7 @@ class ElasticCloud(VectorDB):
         self,
         dim: int,
         db_config: dict,
-        db_case_config: ElasticCloudIndexConfig,
+        db_case_config: ElasticCloudIndexConfig | ElasticCloudFtsConfig,
         indice: str = "vdb_bench_indice",  # must be lowercase
         id_col_name: str = "id",
         label_col_name: str = "label",
@@ -175,8 +175,17 @@ class ElasticCloud(VectorDB):
         doc_ids: list[str],
         **kwargs,
     ) -> tuple[int, Exception | None]:
+        if not getattr(self, "_is_fts", False):
+            msg = "ElasticCloud full-text insert requires ElasticCloudFtsConfig"
+            raise RuntimeError(msg)
         assert self.client is not None, "should self.init() first"
         docs = list(texts)
+        if len(docs) != len(doc_ids):
+            msg = (
+                f"Mismatch between texts ({len(docs)}) and doc_ids "
+                f"({len(doc_ids)}) lengths"
+            )
+            raise ValueError(msg)
         actions = [
             {
                 "_index": self.indice,
@@ -255,6 +264,9 @@ class ElasticCloud(VectorDB):
         k: int = 100,
         **kwargs,
     ) -> list[str]:
+        if not getattr(self, "_is_fts", False):
+            msg = "ElasticCloud full-text search requires ElasticCloudFtsConfig"
+            raise RuntimeError(msg)
         assert self.client is not None, "should self.init() first"
         res = self.client.search(
             index=self.indice,
@@ -263,9 +275,19 @@ class ElasticCloud(VectorDB):
             _source=False,
             docvalue_fields=[self.id_col_name],
             stored_fields="_none_",
-            filter_path=[f"hits.hits.fields.{self.id_col_name}"],
+            filter_path=["hits.hits._id", f"hits.hits.fields.{self.id_col_name}"],
         )
-        return [str(hit["fields"][self.id_col_name][0]) for hit in res["hits"]["hits"]]
+        doc_ids = []
+        for hit in res.get("hits", {}).get("hits", []):
+            if hit.get("_id") is not None:
+                doc_ids.append(str(hit["_id"]))
+                continue
+
+            fields = hit.get("fields", {})
+            values = fields.get(self.id_col_name, [])
+            if values:
+                doc_ids.append(str(values[0]))
+        return doc_ids
 
     def optimize(self, data_size: int | None = None):
         """optimize will be called between insertion and search in performance cases."""

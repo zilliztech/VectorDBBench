@@ -119,7 +119,7 @@ class ElasticCloudFtsConfig(BaseModel, DBCaseConfig):
     def index_param(self) -> dict:
         return {
             "properties": {
-                "doc_id": {"type": "keyword", "store": True},
+                "doc_id": {"type": "keyword"},
                 "text": {"type": "text"},
             },
         }
