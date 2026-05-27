@@ -8,7 +8,7 @@ from vespa import application
 
 from ..api import VectorDB
 from . import util
-from .config import VespaHNSWConfig
+from .config import VespaFtsConfig, VespaHNSWConfig
 
 log = logging.getLogger(__name__)
 
@@ -18,7 +18,7 @@ class Vespa(VectorDB):
         self,
         dim: int,
         db_config: dict[str, str],
-        db_case_config: VespaHNSWConfig | None = None,
+        db_case_config: VespaHNSWConfig | VespaFtsConfig | None = None,
         collection_name: str = "VectorDBBenchCollection",
         drop_old: bool = False,
         **kwargs,
@@ -26,6 +26,7 @@ class Vespa(VectorDB):
         self.dim = dim
         self.db_config = db_config
         self.case_config = db_case_config or VespaHNSWConfig()
+        self._is_fts = isinstance(self.case_config, VespaFtsConfig)
         self.schema_name = collection_name
 
         client = self.deploy_http()
@@ -57,6 +58,10 @@ class Vespa(VectorDB):
         yield
         self.client = None
 
+    @classmethod
+    def supports_full_text_search(cls) -> bool:
+        return True
+
     def need_normalize_cosine(self) -> bool:
         """Wheather this database need to normalize dataset to support COSINE"""
         return False
@@ -83,6 +88,28 @@ class Vespa(VectorDB):
         data = ({"id": str(i), "fields": {"id": i, "embedding": e}} for i, e in zip(metadata, embeddings, strict=True))
         self.client.feed_iterable(data, self.schema_name)
         return len(embeddings), None
+
+    def insert_documents(
+        self,
+        texts: list[str],
+        doc_ids: list[str],
+        **kwargs,
+    ) -> tuple[int, Exception | None]:
+        if not self._is_fts:
+            msg = "Vespa full-text insert requires VespaFtsConfig"
+            raise RuntimeError(msg)
+        assert self.client is not None
+
+        if len(texts) != len(doc_ids):
+            msg = f"Mismatch between texts ({len(texts)}) and doc_ids ({len(doc_ids)}) lengths"
+            raise ValueError(msg)
+
+        data = (
+            {"id": str(doc_id), "fields": {"id": str(doc_id), "text": text}}
+            for doc_id, text in zip(doc_ids, texts, strict=True)
+        )
+        self.client.feed_iterable(data, self.schema_name)
+        return len(texts), None
 
     def search_embedding(
         self,
@@ -123,6 +150,30 @@ class Vespa(VectorDB):
         result = self.client.query({"yql": yql, "input.query(query_embedding)": query_embedding, "ranking": ranking})
         return [child["fields"]["id"] for child in result.get_json()["root"]["children"]]
 
+    def search_documents(
+        self,
+        query: str,
+        k: int = 100,
+        **kwargs,
+    ) -> list[str]:
+        if not self._is_fts:
+            msg = "Vespa full-text search requires VespaFtsConfig"
+            raise RuntimeError(msg)
+        assert self.client is not None
+
+        yql = f"select id from {self.schema_name} where userQuery()"  # noqa: S608
+        result = self.client.query(
+            {
+                "yql": yql,
+                "query": query,
+                "type": "any",
+                "ranking": "bm25",
+                "hits": k,
+            }
+        )
+        children = result.get_json().get("root", {}).get("children", [])
+        return [str(child["fields"]["id"]) for child in children]
+
     def optimize(self, data_size: int | None = None):
         """optimize will be called between insertion and search in performance cases.
 
@@ -150,6 +201,27 @@ class Vespa(VectorDB):
             Validation,
             ValidationID,
         )
+
+        tomorrow = datetime.date.today() + datetime.timedelta(days=1)
+
+        if self._is_fts:
+            fields = [
+                Field("id", "string", indexing=["summary", "attribute"]),
+                Field("text", "string", indexing=["index", "summary"], index="enable-bm25"),
+            ]
+            return ApplicationPackage(
+                "vectordbbench",
+                [
+                    Schema(
+                        self.schema_name,
+                        Document(fields),
+                        rank_profiles=[
+                            RankProfile(name="bm25", first_phase="bm25(text)", inherits="default"),
+                        ],
+                    )
+                ],
+                validations=[Validation(ValidationID.fieldTypeChange, until=tomorrow)],
+            )
 
         fields = [
             Field(
@@ -184,8 +256,6 @@ class Vespa(VectorDB):
                     is_document_field=False,
                 )
             )
-
-        tomorrow = datetime.date.today() + datetime.timedelta(days=1)
 
         return ApplicationPackage(
             "vectordbbench",

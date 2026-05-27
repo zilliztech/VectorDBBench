@@ -49,3 +49,11 @@ class VespaHNSWConfig(BaseModel, DBCaseConfig):
                 return "hamming"
             case _:
                 raise NotImplementedError
+
+
+class VespaFtsConfig(BaseModel, DBCaseConfig):
+    def index_param(self) -> dict:
+        return {}
+
+    def search_param(self) -> dict:
+        return {}
