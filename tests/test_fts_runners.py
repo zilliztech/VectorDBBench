@@ -51,3 +51,10 @@ def test_mp_runner_uses_explicit_fts_workload():
     )
 
     assert runner._search_func("alpha", 5) == ["doc-1"]
+
+
+def test_fts_and_vector_perf_paths_use_same_orchestration_methods():
+    from vectordb_bench.backend.task_runner import CaseRunner
+
+    assert hasattr(CaseRunner, "_run_perf_case")
+    assert not hasattr(CaseRunner, "_run_fts_perf_case")
