@@ -1,5 +1,9 @@
+from types import SimpleNamespace
+
+from vectordb_bench.backend.cases import CaseLabel
 from vectordb_bench.backend.runner.mp_runner import MultiProcessingSearchRunner
 from vectordb_bench.backend.runner.serial_runner import SerialSearchRunner
+from vectordb_bench.backend.task_runner import CaseRunner
 from vectordb_bench.backend.workload import WorkloadKind
 
 
@@ -16,6 +20,21 @@ class FakeDB:
     def search_documents(self, query, k=100):
         self.calls.append(("fts", query, k))
         return ["doc-1"]
+
+    def need_normalize_cosine(self):
+        return False
+
+
+class FakeInsertRunner:
+    def __init__(self, *args):
+        self.args = args
+
+    def run(self):
+        return None
+
+
+def make_case_runner(label):
+    return CaseRunner.construct(ca=SimpleNamespace(label=label))
 
 
 def test_serial_runner_uses_explicit_vector_workload():
@@ -54,7 +73,108 @@ def test_mp_runner_uses_explicit_fts_workload():
 
 
 def test_fts_and_vector_perf_paths_use_same_orchestration_methods():
-    from vectordb_bench.backend.task_runner import CaseRunner
-
     assert hasattr(CaseRunner, "_run_perf_case")
     assert not hasattr(CaseRunner, "_run_fts_perf_case")
+
+
+def test_fts_load_data_dispatches_to_fts_loader():
+    runner = make_case_runner(CaseLabel.FullTextSearchPerformance)
+    calls = []
+
+    object.__setattr__(runner, "_load_fts_data", lambda: calls.append("fts"))
+    object.__setattr__(runner, "_load_train_data", lambda: calls.append("vector"))
+
+    result, _ = runner._load_data()
+
+    assert result is None
+    assert calls == ["fts"]
+
+
+def test_vector_load_data_dispatches_to_vector_loader():
+    runner = make_case_runner(CaseLabel.Performance)
+    calls = []
+
+    object.__setattr__(runner, "_load_fts_data", lambda: calls.append("fts"))
+    object.__setattr__(runner, "_load_train_data", lambda: calls.append("vector"))
+
+    result, _ = runner._load_data()
+
+    assert result is None
+    assert calls == ["vector"]
+
+
+def test_fts_init_search_runners_dispatches_to_fts_initializer():
+    runner = make_case_runner(CaseLabel.FullTextSearchPerformance)
+    calls = []
+
+    object.__setattr__(runner, "_init_fts_search_runner", lambda: calls.append("fts"))
+    object.__setattr__(runner, "_init_search_runner", lambda: calls.append("vector"))
+
+    runner._init_search_runners()
+
+    assert calls == ["fts"]
+
+
+def test_vector_init_search_runners_dispatches_to_vector_initializer():
+    runner = make_case_runner(CaseLabel.Performance)
+    calls = []
+
+    object.__setattr__(runner, "_init_fts_search_runner", lambda: calls.append("fts"))
+    object.__setattr__(runner, "_init_search_runner", lambda: calls.append("vector"))
+
+    runner._init_search_runners()
+
+    assert calls == ["vector"]
+
+
+def test_fts_run_routes_to_shared_perf_case():
+    runner = make_case_runner(CaseLabel.FullTextSearchPerformance)
+    calls = []
+
+    object.__setattr__(runner, "_pre_run", lambda drop_old=True: calls.append(("pre", drop_old)))
+    object.__setattr__(runner, "_run_perf_case", lambda drop_old=True: calls.append(("perf", drop_old)) or "metric")
+
+    assert runner.run(drop_old=False) == "metric"
+    assert calls == [("pre", False), ("perf", False)]
+
+
+def test_vector_load_train_data_is_not_individually_timed(monkeypatch):
+    from vectordb_bench.backend import task_runner
+
+    monkeypatch.setattr(task_runner, "SerialInsertRunner", FakeInsertRunner)
+    runner = CaseRunner.construct(
+        db=FakeDB(),
+        ca=SimpleNamespace(
+            dataset=SimpleNamespace(data=SimpleNamespace(metric_type=None)),
+            filters="filters",
+            load_timeout=1,
+        ),
+    )
+
+    assert runner._load_train_data() is None
+
+
+def test_fts_load_fts_data_is_not_individually_timed(monkeypatch):
+    from vectordb_bench.backend import task_runner
+
+    monkeypatch.setattr(task_runner, "SerialFtsInsertRunner", FakeInsertRunner)
+    runner = CaseRunner.construct(
+        db=FakeDB(),
+        ca=SimpleNamespace(dataset="dataset", load_timeout=1),
+    )
+
+    assert runner._load_fts_data() is None
+
+
+def test_fts_load_data_gets_single_timing_boundary(monkeypatch):
+    from vectordb_bench.backend import task_runner
+
+    monkeypatch.setattr(task_runner, "SerialFtsInsertRunner", FakeInsertRunner)
+    runner = CaseRunner.construct(
+        db=FakeDB(),
+        ca=SimpleNamespace(label=CaseLabel.FullTextSearchPerformance, dataset="dataset", load_timeout=1),
+    )
+
+    result, _ = runner._load_data()
+
+    assert result is None
