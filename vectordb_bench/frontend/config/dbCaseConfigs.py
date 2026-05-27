@@ -12,6 +12,7 @@ from vectordb_bench.models import CaseConfig, CaseConfigParamType
 MAX_STREAMLIT_INT = (1 << 53) - 1
 
 DB_LIST = [d for d in DB if d != DB.Test]
+FTS_SUPPORTED_DBS = {DB.Milvus, DB.ElasticCloud, DB.Vespa, DB.TurboPuffer}
 
 
 class Delimiter(Enum):
@@ -52,6 +53,7 @@ class UICaseItem(BaseModel):
     description: str = ""
     cases: list[CaseConfig] = []
     caseLabel: CaseLabel = CaseLabel.Performance
+    supportedDbs: list[DB] | None = None
     extra_custom_case_config_inputs: list[ConfigInput] = []
     tmp_custom_config: dict = dict()
 
@@ -104,10 +106,19 @@ class UICaseItem(BaseModel):
         ]
         return cases
 
+    def supports_dbs(self, dbs: list[DB]) -> bool:
+        if self.supportedDbs is None:
+            return True
+        return all(db in self.supportedDbs for db in dbs)
+
 
 class UICaseItemCluster(BaseModel):
     label: str = ""
     uiCaseItems: list[UICaseItem] = []
+
+
+def get_selectable_case_items(caseCluster: UICaseItemCluster, activedDbList: list[DB]) -> list[UICaseItem]:
+    return [uiCaseItem for uiCaseItem in caseCluster.uiCaseItems if uiCaseItem.supports_dbs(activedDbList)]
 
 
 def get_custom_case_items() -> list[UICaseItem]:
@@ -179,6 +190,7 @@ def get_fts_case_items(include_advanced: bool = False) -> list[UICaseItem]:
             ),
             cases=[generate_fts_case(dataset_with_size_type)],
             caseLabel=CaseLabel.FullTextSearchPerformance,
+            supportedDbs=list(FTS_SUPPORTED_DBS),
         )
         for dataset_with_size_type in dataset_with_size_types
     ]
@@ -3221,12 +3233,11 @@ CASE_CONFIG_MAP = {
 
 
 def get_case_config_inputs(db: DB, case_label: CaseLabel) -> list[CaseConfigInput]:
-    if db not in CASE_CONFIG_MAP:
-        return []
+    db_case_config_map = CASE_CONFIG_MAP.get(db, {})
     if case_label == CaseLabel.Load:
-        return CASE_CONFIG_MAP[db][CaseLabel.Load]
+        return db_case_config_map.get(CaseLabel.Load, [])
     if case_label == CaseLabel.Performance or case_label == CaseLabel.Streaming:
-        return CASE_CONFIG_MAP[db][CaseLabel.Performance]
+        return db_case_config_map.get(CaseLabel.Performance, [])
     elif case_label == CaseLabel.FullTextSearchPerformance:
-        return CASE_CONFIG_MAP[db].get(CaseLabel.FullTextSearchPerformance, [])
+        return db_case_config_map.get(CaseLabel.FullTextSearchPerformance, [])
     return []

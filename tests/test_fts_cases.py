@@ -2,7 +2,13 @@ from vectordb_bench.backend.cases import CaseLabel, CaseType
 from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.dataset import FtsDatasetWithSizeType
 from vectordb_bench.cli.cli import CommonTypedDict, get_custom_case_config
-from vectordb_bench.frontend.config.dbCaseConfigs import CASE_CONFIG_MAP, get_fts_case_items
+from vectordb_bench.frontend.config.dbCaseConfigs import (
+    CASE_CONFIG_MAP,
+    UI_CASE_CLUSTERS,
+    get_case_config_inputs,
+    get_fts_case_items,
+    get_selectable_case_items,
+)
 from vectordb_bench.models import CaseConfig
 
 
@@ -71,6 +77,20 @@ def test_case_config_map_exposes_fts_only_for_supported_backends():
 
     for db in unsupported_backends:
         assert CaseLabel.FullTextSearchPerformance not in CASE_CONFIG_MAP.get(db, {})
+
+
+def test_turbopuffer_missing_vector_ui_configs_return_empty_inputs():
+    assert get_case_config_inputs(DB.TurboPuffer, CaseLabel.Load) == []
+    assert get_case_config_inputs(DB.TurboPuffer, CaseLabel.Performance) == []
+
+
+def test_fts_ui_cases_are_selectable_only_when_active_backends_support_fts():
+    fts_cluster = next(cluster for cluster in UI_CASE_CLUSTERS if cluster.label == "Full-Text Search (FTS) Test")
+
+    assert get_selectable_case_items(fts_cluster, [DB.Milvus])
+    assert get_selectable_case_items(fts_cluster, [DB.ElasticCloud, DB.Vespa])
+    assert get_selectable_case_items(fts_cluster, [DB.Clickhouse]) == []
+    assert get_selectable_case_items(fts_cluster, [DB.Milvus, DB.Clickhouse]) == []
 
 
 def test_cli_custom_case_config_passes_fts_dataset_with_size_type():
