@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from vectordb_bench.backend.cases import CaseLabel, CaseType
 from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.clients.api import IndexType, MetricType, SQType
-from vectordb_bench.backend.dataset import DatasetWithSizeType
+from vectordb_bench.backend.dataset import DatasetWithSizeType, FtsDatasetWithSizeType
 from vectordb_bench.frontend.components.custom.getCustomConfig import get_custom_configs
 
 from vectordb_bench.models import CaseConfig, CaseConfigParamType
@@ -155,6 +155,33 @@ def get_custom_case_items() -> list[UICaseItem]:
 
 def generate_normal_cases(case_id: CaseType, custom_case: dict | None = None) -> list[CaseConfig]:
     return [CaseConfig(case_id=case_id, custom_case=custom_case)]
+
+
+def generate_fts_case(dataset_with_size_type: FtsDatasetWithSizeType) -> CaseConfig:
+    return CaseConfig(
+        case_id=CaseType.FTSmsmarcoPerformance,
+        custom_case={"dataset_with_size_type": dataset_with_size_type.value},
+    )
+
+
+def get_fts_case_items(include_advanced: bool = False) -> list[UICaseItem]:
+    dataset_with_size_types = [
+        dataset_with_size_type
+        for dataset_with_size_type in FtsDatasetWithSizeType
+        if include_advanced or not dataset_with_size_type.is_advanced
+    ]
+    return [
+        UICaseItem(
+            label=f"FTS BM25 Performance - {dataset_with_size_type.value}",
+            description=(
+                f"This case tests native BM25 full-text search performance on {dataset_with_size_type.value}. "
+                "It measures index building time, recall, NDCG, MRR, serial latency, and search QPS."
+            ),
+            cases=[generate_fts_case(dataset_with_size_type)],
+            caseLabel=CaseLabel.FullTextSearchPerformance,
+        )
+        for dataset_with_size_type in dataset_with_size_types
+    ]
 
 
 def get_custom_case_cluter() -> UICaseItemCluster:
@@ -360,18 +387,7 @@ UI_CASE_CLUSTERS: list[UICaseItemCluster] = [
     ),
     UICaseItemCluster(
         label="Full-Text Search (FTS) Test",
-        uiCaseItems=[
-            UICaseItem(
-                label="FTS Performance Test (MS MARCO Small)",
-                description=(
-                    "This case tests full-text search performance using BM25 on the MS MARCO dataset "
-                    "with 100K documents. It measures index building time, recall, NDCG, MRR, and search QPS. "
-                    "Currently supported for Milvus only."
-                ),
-                cases=[CaseConfig(case_id=CaseType.FTSmsmarcoPerformance)],
-                caseLabel=CaseLabel.FullTextSearchPerformance,
-            ),
-        ],
+        uiCaseItems=get_fts_case_items(),
     ),
 ]
 
@@ -2295,6 +2311,10 @@ MilvusFtsConfig = [
     CaseConfigParamInput_FTS_drop_ratio_search,
 ]
 
+ElasticCloudFtsConfig = []
+VespaFtsConfig = []
+TurboPufferFtsConfig = []
+
 WeaviateLoadConfig = [
     CaseConfigParamInput_MaxConnections,
     CaseConfigParamInput_EFConstruction_Weaviate,
@@ -3115,6 +3135,7 @@ CASE_CONFIG_MAP = {
     DB.ElasticCloud: {
         CaseLabel.Load: ESLoadingConfig,
         CaseLabel.Performance: ESPerformanceConfig,
+        CaseLabel.FullTextSearchPerformance: ElasticCloudFtsConfig,
     },
     DB.AWSOpenSearch: {
         CaseLabel.Load: AWSOpensearchLoadingConfig,
@@ -3163,6 +3184,7 @@ CASE_CONFIG_MAP = {
     DB.Vespa: {
         CaseLabel.Load: VespaLoadingConfig,
         CaseLabel.Performance: VespaPerformanceConfig,
+        CaseLabel.FullTextSearchPerformance: VespaFtsConfig,
     },
     DB.LanceDB: {
         CaseLabel.Load: LanceDBLoadConfig,
@@ -3192,6 +3214,9 @@ CASE_CONFIG_MAP = {
         CaseLabel.Load: PolarDBConfig,
         CaseLabel.Performance: PolarDBConfig,
     },
+    DB.TurboPuffer: {
+        CaseLabel.FullTextSearchPerformance: TurboPufferFtsConfig,
+    },
 }
 
 
@@ -3203,5 +3228,5 @@ def get_case_config_inputs(db: DB, case_label: CaseLabel) -> list[CaseConfigInpu
     if case_label == CaseLabel.Performance or case_label == CaseLabel.Streaming:
         return CASE_CONFIG_MAP[db][CaseLabel.Performance]
     elif case_label == CaseLabel.FullTextSearchPerformance:
-        return CASE_CONFIG_MAP[db][CaseLabel.FullTextSearchPerformance]
+        return CASE_CONFIG_MAP[db].get(CaseLabel.FullTextSearchPerformance, [])
     return []

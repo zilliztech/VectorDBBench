@@ -19,7 +19,7 @@ from yaml import load
 from .. import config
 from ..backend.clients import DB
 from ..backend.clients.api import MetricType
-from ..backend.dataset import DatasetWithSizeType
+from ..backend.dataset import DatasetWithSizeType, FtsDatasetWithSizeType
 from ..interface import benchmark_runner
 from ..models import (
     CaseConfig,
@@ -250,6 +250,13 @@ def get_custom_case_config(parameters: dict) -> dict:
             custom_case_config["filter_rate"] = parameters["cloud_filter_rate"]
         if parameters["cloud_label_percentage"] is not None:
             custom_case_config["label_percentage"] = parameters["cloud_label_percentage"]
+    elif parameters["case_type"] == "FTSmsmarcoPerformance":
+        dataset_with_size_type = parameters["dataset_with_size_type"]
+        if dataset_with_size_type not in {dataset.value for dataset in FtsDatasetWithSizeType}:
+            dataset_with_size_type = FtsDatasetWithSizeType.MSMarcoSmall.value
+        custom_case_config = {
+            "dataset_with_size_type": dataset_with_size_type,
+        }
     return custom_case_config
 
 
@@ -499,7 +506,10 @@ class CommonTypedDict(TypedDict):
             "--dataset-with-size-type",
             help="Dataset with size type. When omitted, filter/insert cases use Medium Cohere (768dim, 1M), "
             "CloudPayloadSearchCase and CloudColdLatencyCase use LAION 100M, and CloudMultiTenantSearchCase "
-            f"uses Large Cohere (768dim, 10M). Supported values include {SUPPORTED_DATASET_WITH_SIZE_TYPES}",
+            f"uses Large Cohere (768dim, 10M). Supported vector values include "
+            f"{SUPPORTED_DATASET_WITH_SIZE_TYPES}. For FTSmsmarcoPerformance, supported default UI datasets include "
+            f"{FtsDatasetWithSizeType.MSMarcoSmall.value}|{FtsDatasetWithSizeType.MSMarcoMedium.value}|"
+            f"{FtsDatasetWithSizeType.HotpotQASmall.value}|{FtsDatasetWithSizeType.HotpotQAMedium.value}.",
             default=None,
         ),
     ]
