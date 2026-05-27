@@ -60,3 +60,13 @@ class TurboPufferIndexConfig(BaseModel, DBCaseConfig):
 
     def search_param(self) -> dict:
         return {}
+
+
+class TurboPufferFtsConfig(BaseModel, DBCaseConfig):
+    time_wait_warmup: int = 60
+
+    def index_param(self) -> dict:
+        return {}
+
+    def search_param(self) -> dict:
+        return {}
