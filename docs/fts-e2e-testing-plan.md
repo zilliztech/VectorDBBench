@@ -50,6 +50,10 @@ References:
 - https://www.elastic.co/pricing/faq
 - https://www.elastic.co/pricing/self-managed
 - https://www.elastic.co/elasticsearch/service
+- https://www.elastic.co/docs/deploy-manage/deploy/self-managed/install-elasticsearch-docker-basic
+- https://www.elastic.co/docs/reference/elasticsearch/clients/python/connecting
+- https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-match-query
+- https://www.elastic.co/docs/reference/elasticsearch/index-settings/similarity
 
 Vespa:
 
@@ -66,6 +70,23 @@ References:
 - https://vespa.ai/free-trial/
 - https://cloud.vespa.ai/price-calculator
 - https://cloud.vespa.ai/
+- https://docs.vespa.ai/en/basics/deploy-an-application-local.html
+- https://docs.vespa.ai/en/operations/self-managed/docker-containers.html
+- https://docs.vespa.ai/en/ranking/bm25.html
+
+Milvus:
+
+- Milvus standalone is available as open source and can be self-hosted with
+  Docker Compose.
+- Milvus BM25 full-text search requires Milvus 2.5.0 or newer. For the first
+  reproducible E2E baseline, pin the standalone image version instead of using
+  an unversioned or moving `latest` target.
+
+References:
+
+- https://milvus.io/docs/install_standalone-docker-compose.md
+- https://milvus.io/docs/full-text-search.md
+- https://milvus.io/docs/analyzer-overview.md
 
 ## Common Environment
 
@@ -73,6 +94,8 @@ Set these before running the matrix:
 
 ```bash
 export DATASET_LOCAL_DIR=/tmp/vectordb_bench/dataset
+export RESULTS_LOCAL_DIR=/tmp/vectordb_bench/results
+export NUM_PER_BATCH=100
 
 export MILVUS_URI="http://..."
 export MILVUS_USER=""
@@ -95,6 +118,11 @@ export TURBOPUFFER_NAMESPACE_PREFIX="vdbbench-fts-e2e"
 Use `python3.11 -m vectordb_bench.cli.vectordbbench` from the repository root.
 Do not use bare `pytest` or an unpinned Python executable for local validation.
 
+FTS datasets are loaded through `ir_datasets` regardless of the global
+`DATASET_SOURCE` setting. By default, `ir_datasets` stores downloaded files
+under `$DATASET_LOCAL_DIR/ir_datasets` and temporary files under
+`$DATASET_LOCAL_DIR/ir_datasets_tmp`.
+
 ## Common Benchmark Options
 
 Each E2E run should include:
@@ -114,6 +142,251 @@ Each E2E run should include:
 The default VDBBench concurrency list is larger (`1,5,10,20,30,40,60,80`).
 For the first functional E2E pass, `1,5,10,20` is enough to exercise concurrent
 search without turning validation into a full leaderboard run.
+
+## Standalone Backend Deployment
+
+These steps assume the database server and VDBBench client may be different
+machines. Run the server deployment commands on the backend host. Run all
+`python3.11 -m vectordb_bench.cli.vectordbbench ...` commands from the
+repository root on the VDBBench client.
+
+### Milvus Standalone
+
+Deploy Milvus standalone with Docker Compose. Pin the version used for a test
+run; the first recommended baseline is `v2.6.17`.
+
+```bash
+mkdir -p ~/milvus-standalone
+cd ~/milvus-standalone
+
+export MILVUS_VERSION=v2.6.17
+wget "https://github.com/milvus-io/milvus/releases/download/${MILVUS_VERSION}/milvus-standalone-docker-compose.yml" \
+  -O docker-compose.yml
+
+docker compose pull
+docker compose up -d
+docker compose ps
+```
+
+Milvus standalone uses etcd and MinIO internally. The VDBBench client only needs
+Milvus proxy port `19530`. Keep etcd and MinIO private. Port `9091` is useful
+for private health checks but should not be exposed publicly.
+
+Server-side health check:
+
+```bash
+cd ~/milvus-standalone
+docker compose ps
+curl -fsS http://127.0.0.1:9091/healthz
+docker logs --tail 100 milvus-standalone
+```
+
+Client-side connectivity check:
+
+```bash
+export SERVER_IP="<milvus-server-ip-or-dns>"
+export MILVUS_URI="http://${SERVER_IP}:19530"
+
+nc -vz "$SERVER_IP" 19530
+
+python3.11 - <<'PY'
+import os
+from pymilvus import connections, utility
+
+connections.connect(
+    uri=os.environ["MILVUS_URI"],
+    user=os.environ.get("MILVUS_USER") or None,
+    password=os.environ.get("MILVUS_PASSWORD") or None,
+    timeout=10,
+)
+print("server_version:", utility.get_server_version())
+print("collections:", utility.list_collections())
+PY
+```
+
+If auth is enabled, set `MILVUS_USER` and `MILVUS_PASSWORD`; otherwise leave
+them empty. The current VDBBench `milvusfts` command does not expose TLS
+certificate options, so use plaintext only on a private network, VPN, or SSH
+tunnel unless TLS support is added later.
+
+Milvus FTS caveats:
+
+- VDBBench creates `doc_id`, `text`, and `sparse_vector` fields.
+- The `text` field must be analyzer-enabled `VARCHAR`.
+- A `FunctionType.BM25` function generates sparse vectors from text.
+- The sparse vector field is indexed with BM25 using `SPARSE_INVERTED_INDEX`.
+- Analyzer behavior affects both result quality and ingest/search latency.
+
+### Elasticsearch Standalone
+
+Deploy a single-node Elasticsearch server. Pin the version used for a test run;
+the first recommended baseline is `8.16.0`, matching the current Python client
+dependency in this branch.
+
+For an isolated benchmark-only network, the simplest deployment disables
+security. Do not expose this mode publicly.
+
+```bash
+export ES_VERSION=8.16.0
+
+sudo sysctl -w vm.max_map_count=1048576
+docker volume create esdata01
+
+docker run -d --name es01 \
+  -p 0.0.0.0:9200:9200 \
+  --restart unless-stopped \
+  --ulimit nofile=65535:65535 \
+  -m 8g \
+  -e "discovery.type=single-node" \
+  -e "xpack.security.enabled=false" \
+  -v esdata01:/usr/share/elasticsearch/data \
+  docker.elastic.co/elasticsearch/elasticsearch:${ES_VERSION}
+```
+
+For a reachable shared server, prefer Elastic's secure Docker defaults and use a
+password. Current VDBBench supports username/password and TLS verification
+toggling, but not CA certificate or fingerprint flags. For local secure Docker
+with the generated private CA, use `--use-ssl --no-verify-certs` only for E2E
+benchmark validation.
+
+```bash
+export ES_VERSION=8.16.0
+export ELASTIC_PASSWORD="replace-with-strong-password"
+
+sudo sysctl -w vm.max_map_count=1048576
+docker network create elastic || true
+docker volume create esdata01
+
+printf '%s' "$ELASTIC_PASSWORD" > bootstrapPassword.txt
+chmod 0444 bootstrapPassword.txt
+
+docker run -d --name es01 --net elastic \
+  -p 0.0.0.0:9200:9200 \
+  --restart unless-stopped \
+  --ulimit nofile=65535:65535 \
+  -m 8g \
+  -e "discovery.type=single-node" \
+  -e ELASTIC_PASSWORD_FILE=/run/secrets/bootstrapPassword.txt \
+  -v "$PWD/bootstrapPassword.txt:/run/secrets/bootstrapPassword.txt:ro" \
+  -v esdata01:/usr/share/elasticsearch/data \
+  docker.elastic.co/elasticsearch/elasticsearch:${ES_VERSION}
+```
+
+The VDBBench client only needs Elasticsearch HTTP REST port `9200`. Port `9300`
+is the node transport port and is not needed for this single-node client
+benchmark.
+
+Health checks:
+
+```bash
+export ELASTIC_HOST="<elasticsearch-server-ip-or-dns>"
+export ELASTIC_PORT=9200
+
+curl "http://${ELASTIC_HOST}:${ELASTIC_PORT}/"
+curl "http://${ELASTIC_HOST}:${ELASTIC_PORT}/_cluster/health?pretty&wait_for_status=yellow&timeout=60s"
+curl "http://${ELASTIC_HOST}:${ELASTIC_PORT}/_cat/nodes?v"
+```
+
+For secure Docker:
+
+```bash
+export ELASTIC_USER=elastic
+export ELASTIC_PASSWORD="replace-with-strong-password"
+
+curl -k -u "${ELASTIC_USER}:${ELASTIC_PASSWORD}" "https://${ELASTIC_HOST}:${ELASTIC_PORT}/"
+curl -k -u "${ELASTIC_USER}:${ELASTIC_PASSWORD}" \
+  "https://${ELASTIC_HOST}:${ELASTIC_PORT}/_cluster/health?pretty&wait_for_status=yellow&timeout=60s"
+```
+
+Elasticsearch FTS caveats:
+
+- VDBBench maps `doc_id` as `keyword` and `text` as `text`.
+- Search uses a plain `match` query on the `text` field.
+- Elasticsearch BM25 is the default text similarity.
+- No analyzer, stemming, stopword, synonym, phrase, fuzzy, or hybrid options are
+  exposed in this first draft.
+- Use one shard and zero replicas for the first baseline to reduce tie-order and
+  shard-layout variance.
+
+### Vespa Standalone
+
+Deploy Vespa as a single Docker container. The VDBBench client deploys the Vespa
+application package during the run, so both the config/deploy API and the
+query/feed API must be reachable.
+
+Disposable deployment:
+
+```bash
+docker rm -f vespa || true
+docker run -d --name vespa --hostname vespa-container \
+  -p 8080:8080 -p 19071:19071 \
+  vespaengine/vespa:8.694.53
+```
+
+Persistent deployment:
+
+```bash
+sudo mkdir -p /srv/vespa/{var,logs}
+sudo chown -R 1000:1000 /srv/vespa/{var,logs}
+
+docker rm -f vespa || true
+docker run -d --name vespa --user vespa:vespa --hostname vespa-container \
+  --ulimit nofile=262144:262144 --pids-limit=-1 \
+  -v /srv/vespa/var:/opt/vespa/var \
+  -v /srv/vespa/logs:/opt/vespa/logs \
+  -p 8080:8080 -p 19071:19071 \
+  vespaengine/vespa:8.694.53
+```
+
+The VDBBench client needs:
+
+- `19071` for Vespa deploy/config API.
+- `8080` for feed/query API.
+
+Set `VESPA_URI` to the base URI without a port; the current VDBBench adapter
+uses `VESPA_URI:19071` internally for deployment and `VESPA_URI:VESPA_PORT` for
+feed/query.
+
+```bash
+export VESPA_URI="http://<vespa-server-ip-or-dns>"
+export VESPA_PORT=8080
+```
+
+Do not set `VESPA_URI=http://host:8080`.
+
+Health checks:
+
+```bash
+curl -fsS "$VESPA_URI:19071/state/v1/health"
+curl -fsS "$VESPA_URI:$VESPA_PORT/state/v1/health"
+curl -fsS "$VESPA_URI:$VESPA_PORT/status.html"
+docker logs --tail=200 vespa
+```
+
+Self-hosted Vespa defaults to unauthenticated HTTP. The current VDBBench Vespa
+CLI has no certificate, key, CA, token, or auth flags, so use a private network,
+VPN, firewall, or SSH tunnel for remote testing:
+
+```bash
+ssh -N -L 8080:127.0.0.1:8080 -L 19071:127.0.0.1:19071 user@vespa-server
+export VESPA_URI=http://127.0.0.1
+export VESPA_PORT=8080
+```
+
+Vespa FTS caveats:
+
+- VDBBench deploys the Vespa app automatically at run start.
+- The FTS app uses a `text` field with `index: enable-bm25`.
+- The rank profile uses `bm25(text)`.
+- Queries use `userQuery()`, `type=any`, `ranking=bm25`, `hits=k`, and
+  `default-index=text`.
+- BM25/analyzer knobs are not exposed by VDBBench's first-draft Vespa FTS CLI.
+
+### TurboPuffer Hosted
+
+TurboPuffer is hosted-only for this plan. There is no standalone server
+deployment step. Set API credentials on the VDBBench client and run the
+TurboPuffer matrix below.
 
 ## Preflight
 
@@ -369,7 +642,7 @@ python3.11 -m vectordb_bench.cli.vectordbbench turbopuffer \
 For each task label:
 
 1. Confirm the command exits with status `0`.
-2. Confirm a result JSON is written under `vectordb_bench/results/<DB>/`.
+2. Confirm a result JSON is written under `$RESULTS_LOCAL_DIR/<DB>/`.
 3. Confirm the result JSON is readable by `TestResult.read_file`.
 4. Confirm the performance metrics include:
    - `insert_duration`
@@ -390,6 +663,50 @@ For each task label:
    - dataset/qrel validation errors
    - systemic empty search result failures
    - insert retry exhaustion
+
+Result directory names use the VDBBench DB enum values:
+
+- `$RESULTS_LOCAL_DIR/Milvus/`
+- `$RESULTS_LOCAL_DIR/ElasticCloud/`
+- `$RESULTS_LOCAL_DIR/Vespa/`
+- `$RESULTS_LOCAL_DIR/TurboPuffer/`
+
+Result files use:
+
+```text
+result_YYYYMMDD_<task-label>_<db>.json
+```
+
+For example:
+
+```text
+$RESULTS_LOCAL_DIR/Milvus/result_20260528_fts-e2e-milvus-msmarco-small_milvus.json
+```
+
+Using the same task label on the same date overwrites the previous result file.
+
+Validate a result JSON with the project parser:
+
+```bash
+export RESULT_PATH="$RESULTS_LOCAL_DIR/Milvus/result_20260528_fts-e2e-milvus-msmarco-small_milvus.json"
+
+python3.11 - <<'PY'
+import os
+from pathlib import Path
+
+from vectordb_bench.models import TestResult
+
+result = TestResult.read_file(Path(os.environ["RESULT_PATH"]))
+assert len(result.results) >= 1
+case_result = result.results[0]
+assert case_result.label.name == "NORMAL"
+assert case_result.task_config.case_config.case_id.name == "FTSmsmarcoPerformance"
+assert case_result.metrics.recall >= 0
+assert case_result.metrics.ndcg >= 0
+assert case_result.metrics.mrr >= 0
+print(result.run_id, result.task_label, case_result.metrics)
+PY
+```
 
 ## Stop Conditions
 
