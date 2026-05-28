@@ -192,7 +192,7 @@ def TurboPuffer(**parameters: Unpack[TurboPufferIndexTypedDict]):
     from .config import TurboPufferConfig, TurboPufferIndexConfig
 
     pin_target_namespace_count = len(target_namespaces_for_pinning(parameters)) if parameters["pin_namespace"] else 0
-    if parameters["pin_namespace"]:
+    if parameters["pin_namespace"] and not parameters["dry_run"]:
         pin_namespaces_once(parameters)
 
     run(

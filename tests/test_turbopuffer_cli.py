@@ -47,7 +47,7 @@ def test_turbopuffer_cli_accepts_multitenant_namespace_prefix_and_metric_type(
     assert captured["db_case_config"].metric_type == MetricType.COSINE
 
 
-def test_turbopuffer_cli_pins_cloud_payload_namespace_before_run(monkeypatch: MonkeyPatch) -> None:
+def test_turbopuffer_cli_skips_pin_namespace_during_dry_run(monkeypatch: MonkeyPatch) -> None:
     calls = []
     captured = {}
 
@@ -94,10 +94,7 @@ def test_turbopuffer_cli_pins_cloud_payload_namespace_before_run(monkeypatch: Mo
     )
 
     assert result.exit_code == 0, result.output
-    assert calls == [
-        ("PATCH", {"pinning": {"replicas": 2}}, "secret", "aws-us-west-2", "laion100m", None),
-        ("WAIT", 2, "secret", "aws-us-west-2", "laion100m", None, 7200),
-    ]
+    assert calls == []
     assert captured["db_config"].pin_namespace is False
     assert captured["db_config"].pin_namespace_requested is True
     assert captured["db_config"].pin_replicas == 2
@@ -107,7 +104,7 @@ def test_turbopuffer_cli_pins_cloud_payload_namespace_before_run(monkeypatch: Mo
     assert captured["db_case_config"].disable_backpressure is True
 
 
-def test_turbopuffer_cli_pins_cloud_multitenant_namespaces_before_run(
+def test_turbopuffer_cli_skips_multitenant_pin_namespaces_during_dry_run(
     monkeypatch: MonkeyPatch,
 ) -> None:
     calls = []
@@ -159,12 +156,7 @@ def test_turbopuffer_cli_pins_cloud_multitenant_namespaces_before_run(
     )
 
     assert result.exit_code == 0, result.output
-    assert calls == [
-        ("PATCH", "cohere10m_tenant_0000", {"pinning": {"replicas": 1}}),
-        ("WAIT", "cohere10m_tenant_0000", 1),
-        ("PATCH", "cohere10m_tenant_0001", {"pinning": {"replicas": 1}}),
-        ("WAIT", "cohere10m_tenant_0001", 1),
-    ]
+    assert calls == []
     assert captured["db_config"].pin_namespace is False
     assert captured["db_config"].pin_namespace_requested is True
     assert captured["db_config"].pin_target_namespace_count == 2
