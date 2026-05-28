@@ -27,7 +27,7 @@ monitoring, result validation, and baseline observations in one document per
 backend:
 
 - Milvus: `docs/fts-backends/milvus.md`
-- Elasticsearch: `docs/fts-backends/elasticsearch.md` (TODO)
+- Elasticsearch: `docs/fts-backends/elasticsearch.md`
 - Vespa: `docs/fts-backends/vespa.md` (TODO)
 - TurboPuffer: `docs/fts-backends/turbopuffer.md` (TODO)
 
