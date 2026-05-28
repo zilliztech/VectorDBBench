@@ -11,7 +11,10 @@ from urllib.request import Request, urlopen
 
 import turbopuffer as tpuf
 
-from vectordb_bench.backend.clients.turbopuffer.config import TurboPufferIndexConfig
+from vectordb_bench.backend.clients.turbopuffer.config import (
+    TurboPufferIndexConfig,
+    TurboPufferMultitenantWarmupPolicy,
+)
 from vectordb_bench.backend.filter import Filter, FilterOp
 from vectordb_bench.backend.payload import PayloadProfile
 
@@ -206,9 +209,26 @@ class TurboPuffer(VectorDB):
         #   once the cache warming operation has been started.
         # It does not wait for the operation to complete,
         #   which can take multiple minutes for large namespaces.
-        self.ns.hint_cache_warm()
+        warmed_namespaces = self._warmup_target_namespaces()
+        for namespace in warmed_namespaces:
+            self._namespace_for_tenant(namespace).hint_cache_warm()
+        if not warmed_namespaces:
+            log.info("TurboPuffer cache warmup skipped")
+            return
         log.info(f"warming up but no api waiting for complete. just sleep {self.db_case_config.time_wait_warmup}s")
         time.sleep(self.db_case_config.time_wait_warmup)
+
+    def _warmup_target_namespaces(self) -> list[str | None]:
+        if not self.multitenant_tenant_labels:
+            return [None]
+        policy = getattr(
+            self.db_case_config,
+            "multitenant_warmup_policy",
+            TurboPufferMultitenantWarmupPolicy.NONE,
+        )
+        if policy == TurboPufferMultitenantWarmupPolicy.ALL:
+            return self.multitenant_tenant_labels
+        return []
 
     def insert_embeddings(
         self,

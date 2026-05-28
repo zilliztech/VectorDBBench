@@ -11,6 +11,7 @@ from ....cli.cli import (
 )
 from .. import DB
 from ..api import MetricType
+from .config import TurboPufferMultitenantWarmupPolicy
 
 DEFAULT_PIN_TIMEOUT = 45 * 60
 
@@ -129,6 +130,16 @@ class TurboPufferTypedDict(TypedDict):
         ),
     ]
     pin_timeout: PinTimeoutOption
+    multitenant_warmup_policy: Annotated[
+        str,
+        click.option(
+            "--multitenant-warmup-policy",
+            type=click.Choice([policy.value for policy in TurboPufferMultitenantWarmupPolicy]),
+            default=TurboPufferMultitenantWarmupPolicy.NONE.value,
+            show_default=True,
+            help="TurboPuffer cache warmup policy for CloudMultiTenantSearchCase tenant namespaces",
+        ),
+    ]
 
 
 class TurboPufferIndexTypedDict(CommonTypedDict, TurboPufferTypedDict): ...
@@ -214,6 +225,7 @@ def TurboPuffer(**parameters: Unpack[TurboPufferIndexTypedDict]):
         db_case_config=TurboPufferIndexConfig(
             metric_type=MetricType(parameters["metric_type"]),
             disable_backpressure=parameters["disable_backpressure"],
+            multitenant_warmup_policy=TurboPufferMultitenantWarmupPolicy(parameters["multitenant_warmup_policy"]),
         ),
         **parameters,
     )

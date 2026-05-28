@@ -1,9 +1,12 @@
+from types import SimpleNamespace
+
 from click.testing import CliRunner
 from pytest import MonkeyPatch
 
 from vectordb_bench.backend.clients.api import MetricType
 from vectordb_bench.backend.clients.turbopuffer import cli as turbopuffer_cli
 from vectordb_bench.backend.clients.turbopuffer import turbopuffer as turbopuffer_client
+from vectordb_bench.backend.clients.turbopuffer.turbopuffer import TurboPuffer
 
 
 def test_turbopuffer_cli_accepts_multitenant_namespace_prefix_and_metric_type(
@@ -45,6 +48,7 @@ def test_turbopuffer_cli_accepts_multitenant_namespace_prefix_and_metric_type(
     assert captured["db_config"].multitenant_namespace_prefix == "cohere10m_"
     assert captured["db_config"].scalar_payload_label_field == "scalar_label"
     assert captured["db_case_config"].metric_type == MetricType.COSINE
+    assert captured["db_case_config"].multitenant_warmup_policy == "none"
 
 
 def test_turbopuffer_cli_skips_pin_namespace_during_dry_run(monkeypatch: MonkeyPatch) -> None:
@@ -102,6 +106,97 @@ def test_turbopuffer_cli_skips_pin_namespace_during_dry_run(monkeypatch: MonkeyP
     assert captured["db_config"].pin_target_namespace_count == 1
     assert captured["db_case_config"].metric_type == MetricType.COSINE
     assert captured["db_case_config"].disable_backpressure is True
+
+
+def test_turbopuffer_cli_accepts_multitenant_warmup_policy(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    captured = {}
+
+    def fake_run(**kwargs):
+        captured.update(kwargs)
+
+    monkeypatch.setattr(turbopuffer_cli, "run", fake_run)
+
+    result = CliRunner().invoke(
+        turbopuffer_cli.TurboPuffer,
+        [
+            "--case-type",
+            "CloudMultiTenantSearchCase",
+            "--api-key",
+            "secret",
+            "--region",
+            "aws-us-west-2",
+            "--multitenant-warmup-policy",
+            "all",
+            "--dry-run",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert captured["db_case_config"].multitenant_warmup_policy == "all"
+
+
+def test_turbopuffer_multitenant_optimize_skips_base_namespace_by_default(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    warmed = []
+
+    class FakeNamespace:
+        def __init__(self, name: str):
+            self.name = name
+
+        def hint_cache_warm(self):
+            warmed.append(self.name)
+
+    class FakeClient:
+        def namespace(self, name: str):
+            return FakeNamespace(name)
+
+    monkeypatch.setattr(turbopuffer_client.time, "sleep", lambda _seconds: None)
+    db = object.__new__(TurboPuffer)
+    db.client = FakeClient()
+    db.ns = FakeNamespace("base")
+    db.namespace = "base"
+    db.multitenant_namespace_prefix = "mt_"
+    db.multitenant_tenant_labels = ["tenant_0000", "tenant_0001"]
+    db._ns_cache = {}
+    db.db_case_config = SimpleNamespace(time_wait_warmup=1, multitenant_warmup_policy="none")
+
+    db.optimize()
+
+    assert warmed == []
+
+
+def test_turbopuffer_multitenant_optimize_can_warm_all_tenant_namespaces(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    warmed = []
+
+    class FakeNamespace:
+        def __init__(self, name: str):
+            self.name = name
+
+        def hint_cache_warm(self):
+            warmed.append(self.name)
+
+    class FakeClient:
+        def namespace(self, name: str):
+            return FakeNamespace(name)
+
+    monkeypatch.setattr(turbopuffer_client.time, "sleep", lambda _seconds: None)
+    db = object.__new__(TurboPuffer)
+    db.client = FakeClient()
+    db.ns = FakeNamespace("base")
+    db.namespace = "base"
+    db.multitenant_namespace_prefix = "mt_"
+    db.multitenant_tenant_labels = ["tenant_0000", "tenant_0001"]
+    db._ns_cache = {}
+    db.db_case_config = SimpleNamespace(time_wait_warmup=1, multitenant_warmup_policy="all")
+
+    db.optimize()
+
+    assert warmed == ["mt_tenant_0000", "mt_tenant_0001"]
 
 
 def test_turbopuffer_cli_skips_multitenant_pin_namespaces_during_dry_run(

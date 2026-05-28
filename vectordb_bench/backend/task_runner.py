@@ -67,6 +67,7 @@ class CaseRunner(BaseModel):
                 and self.config.db == obj.config.db
                 and self.config.db_case_config == obj.config.db_case_config
                 and self.ca.dataset == obj.ca.dataset
+                and self.ca.with_scalar_labels == obj.ca.with_scalar_labels
             )
         return False
 
@@ -76,10 +77,17 @@ class CaseRunner(BaseModel):
             (
                 self.ca.label,
                 self.config.db,
-                self.config.db_case_config,
+                self._db_case_config_hash_key(),
                 self.ca.dataset,
+                self.ca.with_scalar_labels,
             )
         )
+
+    def _db_case_config_hash_key(self) -> str | object:
+        db_case_config = self.config.db_case_config
+        if hasattr(db_case_config, "model_dump_json"):
+            return db_case_config.model_dump_json()
+        return db_case_config
 
     def display(self) -> dict:
         c_dict = self.ca.dict(
@@ -148,6 +156,7 @@ class CaseRunner(BaseModel):
 
     def _pre_run(self, drop_old: bool = True):
         try:
+            self._validate_cloud_cold_latency_config(drop_old)
             creates_multitenant_collection = (
                 TaskStage.DROP_OLD in self.config.stages or TaskStage.LOAD in self.config.stages
             )
@@ -176,6 +185,19 @@ class CaseRunner(BaseModel):
         except ModuleNotFoundError as e:
             log.warning(f"pre run case error: please install client for db: {self.config.db}, error={e}")
             raise e from None
+
+    def _validate_cloud_cold_latency_config(self, drop_old: bool) -> None:
+        if getattr(self.ca, "label", None) != CaseLabel.CloudColdLatency:
+            return
+        if drop_old:
+            msg = (
+                "CloudColdLatencyCase requires an existing cold collection. "
+                "Run with --skip-drop-old and --skip-load."
+            )
+            raise ValueError(msg)
+        if TaskStage.LOAD in self.config.stages:
+            msg = "CloudColdLatencyCase is search-only. Run with --skip-load."
+            raise ValueError(msg)
 
     def run(self, drop_old: bool = True) -> Metric:
         log.info("Starting run")
@@ -355,6 +377,7 @@ class CaseRunner(BaseModel):
     def _run_cloud_cold_latency_case(self, drop_old: bool = True) -> Metric:
         log.info("Start cloud cold latency case")
         try:
+            self._validate_cloud_cold_latency_config(drop_old)
             m = Metric()
             if drop_old:
                 if TaskStage.LOAD in self.config.stages:

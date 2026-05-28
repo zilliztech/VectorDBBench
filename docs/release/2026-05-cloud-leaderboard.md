@@ -109,6 +109,8 @@ vectordbbench pinecone \
 
 Tenant routing labels and scalar payload labels are separate concepts. A multi-tenant run can route by tenant while still storing and returning scalar-label payload data when `payload_profile` is `scalar_label`, and scalar-label filters continue to use the scalar label field rather than the tenant routing field.
 
+TurboPuffer tenant namespace cache warmup is explicit. By default, `CloudMultiTenantSearchCase` does not warm tenant namespaces during `optimize()`; use `--multitenant-warmup-policy all` only when the benchmark should model proactively warmed tenant namespaces.
+
 Example: run 1,000-tenant IDs-only search on turbopuffer.
 
 ```bash
@@ -132,13 +134,15 @@ vectordbbench turbopuffer \
 
 **Purpose.** CloudColdLatencyCase measures first-query and cold-path latency that warm benchmark loops can hide. This matters for serverless products, storage-tiered products, idle workloads, and customer-facing applications where the first query after an idle period is visible to users.
 
-**How it works.** The case loads and optimizes data when requested, then uses `ColdWarmSearchRunner` to run serial searches in cold and warm passes. It records cold-latency details in `additional_parameters["cold_latency"]` and also records payload profile and estimated payload bytes per query.
+**How it works.** The case is intentionally search-only and must run against an existing collection that has already become cold according to the product's cache and storage behavior. It rejects `drop_old` and `load` stages because insert-then-immediately-search runs can leave caches, indexing paths, or vendor warmup APIs in an ambiguous state. `ColdWarmSearchRunner` runs serial searches in cold and warm passes. It records cold-latency details in `additional_parameters["cold_latency"]` and also records payload profile and estimated payload bytes per query.
 
 Example: run a pinned turbopuffer cold-latency test with scalar-label payloads.
 
 ```bash
 vectordbbench turbopuffer \
   --case-type CloudColdLatencyCase \
+  --skip-drop-old \
+  --skip-load \
   --api-key "$TURBOPUFFER_API_KEY" \
   --region aws-us-east-1 \
   --namespace cloud_cold_latency_scalar_label \

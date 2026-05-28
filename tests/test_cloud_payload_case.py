@@ -2,12 +2,16 @@ import pytest
 
 from vectordb_bench import config
 from vectordb_bench.backend.cases import CaseType, CloudPayloadSearchCase
+from vectordb_bench.backend.clients import DB
+from vectordb_bench.backend.clients.api import EmptyDBCaseConfig
+from vectordb_bench.backend.data_source import DatasetSource
 from vectordb_bench.backend.dataset import DatasetWithSizeType
 from vectordb_bench.backend.payload import PayloadProfile
 from vectordb_bench.backend.runner.mp_runner import MultiProcessingSearchRunner
 from vectordb_bench.backend.runner.serial_runner import SerialSearchRunner
+from vectordb_bench.backend.task_runner import CaseRunner, RunningStatus
 from vectordb_bench.cli.cli import get_custom_case_config
-from vectordb_bench.models import CaseConfig
+from vectordb_bench.models import CaseConfig, TaskConfig
 
 
 class FakeDB:
@@ -57,6 +61,43 @@ def test_case_config_builds_cloud_payload_case_from_custom_case():
 
     assert isinstance(case, CloudPayloadSearchCase)
     assert case.payload_profile == PayloadProfile.VECTOR
+
+
+def test_case_runner_reuse_key_distinguishes_scalar_label_schema_requirement():
+    ids_only_case = CloudPayloadSearchCase(
+        dataset_with_size_type=DatasetWithSizeType.CohereSmall.value,
+        payload_profile=PayloadProfile.IDS_ONLY,
+    )
+    scalar_label_case = CloudPayloadSearchCase(
+        dataset_with_size_type=DatasetWithSizeType.CohereSmall.value,
+        payload_profile=PayloadProfile.SCALAR_LABEL,
+    )
+    task = TaskConfig(
+        db=DB.Test,
+        db_config=DB.Test.config_cls(),
+        db_case_config=EmptyDBCaseConfig(),
+        case_config=CaseConfig(case_id=CaseType.CloudPayloadSearchCase),
+    )
+
+    ids_only_runner = CaseRunner(
+        run_id="run-id",
+        config=task,
+        ca=ids_only_case,
+        status=RunningStatus.PENDING,
+        dataset_source=DatasetSource.S3,
+    )
+    scalar_label_runner = CaseRunner(
+        run_id="run-id",
+        config=task,
+        ca=scalar_label_case,
+        status=RunningStatus.PENDING,
+        dataset_source=DatasetSource.S3,
+    )
+
+    assert ids_only_case.with_scalar_labels is False
+    assert scalar_label_case.with_scalar_labels is True
+    assert ids_only_runner != scalar_label_runner
+    assert hash(ids_only_runner) != hash(scalar_label_runner)
 
 
 def test_cli_propagates_cloud_payload_dataset_selection():

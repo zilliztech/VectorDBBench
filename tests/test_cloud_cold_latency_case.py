@@ -405,7 +405,7 @@ def test_case_runner_stores_cloud_cold_latency_metric(monkeypatch: pytest.Monkey
 
     monkeypatch.setattr("vectordb_bench.backend.task_runner.ColdWarmSearchRunner", FakeRunner)
 
-    metric = runner._run_cloud_cold_latency_case()
+    metric = runner._run_cloud_cold_latency_case(drop_old=False)
 
     assert metric.additional_parameters["cold_latency"] == expected
     assert metric.payload_profile == "ids_only"
@@ -418,3 +418,53 @@ def test_case_runner_stores_cloud_cold_latency_metric(monkeypatch: pytest.Monkey
         "payload_profile": case.payload_profile,
         "query_count": case.query_count,
     }
+
+
+def test_cloud_cold_latency_case_rejects_drop_old():
+    case = CloudColdLatencyCase(query_count=1)
+    case.dataset.test_data = [[0.1]]
+    task = TaskConfig(
+        db=DB.Test,
+        db_config=DB.Test.config_cls(),
+        db_case_config=EmptyDBCaseConfig(),
+        case_config=CaseConfig(
+            case_id=CaseType.CloudColdLatencyCase,
+            custom_case={"query_count": 1},
+        ),
+        stages=[TaskStage.SEARCH_SERIAL],
+    )
+    runner = CaseRunner(
+        run_id="run-id",
+        config=task,
+        ca=case,
+        status=RunningStatus.PENDING,
+        dataset_source=DatasetSource.S3,
+    )
+
+    with pytest.raises(ValueError, match="requires an existing cold collection"):
+        runner._run_cloud_cold_latency_case(drop_old=True)
+
+
+def test_cloud_cold_latency_case_rejects_load_stage():
+    case = CloudColdLatencyCase(query_count=1)
+    case.dataset.test_data = [[0.1]]
+    task = TaskConfig(
+        db=DB.Test,
+        db_config=DB.Test.config_cls(),
+        db_case_config=EmptyDBCaseConfig(),
+        case_config=CaseConfig(
+            case_id=CaseType.CloudColdLatencyCase,
+            custom_case={"query_count": 1},
+        ),
+        stages=[TaskStage.LOAD, TaskStage.SEARCH_SERIAL],
+    )
+    runner = CaseRunner(
+        run_id="run-id",
+        config=task,
+        ca=case,
+        status=RunningStatus.PENDING,
+        dataset_source=DatasetSource.S3,
+    )
+
+    with pytest.raises(ValueError, match="search-only"):
+        runner._run_cloud_cold_latency_case(drop_old=False)

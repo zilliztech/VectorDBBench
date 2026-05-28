@@ -1,6 +1,13 @@
+from enum import StrEnum
+
 from pydantic import BaseModel, SecretStr
 
 from ..api import DBCaseConfig, DBConfig, MetricType
+
+
+class TurboPufferMultitenantWarmupPolicy(StrEnum):
+    NONE = "none"
+    ALL = "all"
 
 
 class TurboPufferConfig(DBConfig):
@@ -37,6 +44,7 @@ class TurboPufferIndexConfig(BaseModel, DBCaseConfig):
     use_multi_ns_for_filter: bool = False
     time_wait_warmup: int = 60 * 1  # 1min
     disable_backpressure: bool = False
+    multitenant_warmup_policy: TurboPufferMultitenantWarmupPolicy = TurboPufferMultitenantWarmupPolicy.NONE
 
     def parse_metric(self) -> str:
         if self.metric_type == MetricType.COSINE:
