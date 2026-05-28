@@ -84,12 +84,21 @@ Expected health output:
 OK
 ```
 
-To reset the server for a clean run:
+## Server Teardown For Fresh Runs
+
+Run this teardown before a fresh E2E benchmark when the Milvus server state
+must not carry over from a previous run. It removes Milvus, etcd, and MinIO
+containers plus their persisted benchmark data under the standalone compose
+directory. Only use this on a disposable benchmark deployment.
 
 ```bash
 cd ~/milvus-standalone
-sudo docker compose down -v
+sudo docker compose down -v --remove-orphans
+sudo rm -rf volumes
+
 sudo docker compose up -d
+sudo docker compose ps
+curl -fsS http://127.0.0.1:9091/healthz
 ```
 
 ## Client Setup

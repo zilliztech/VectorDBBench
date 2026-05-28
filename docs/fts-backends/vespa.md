@@ -59,15 +59,29 @@ endpoint is not useful yet. The VDBBench Vespa adapter deploys the application
 package at run start; after deployment, `8080/state/v1/health` should report
 `"code" : "up"`.
 
-To reset Vespa for a clean run:
+## Server Teardown For Fresh Runs
+
+Run this teardown before a fresh E2E benchmark when the Vespa server state must
+not carry over from a previous run. It removes the Vespa container and clears
+the persisted Vespa state/log directories. Only use this on a disposable
+benchmark deployment.
 
 ```bash
-docker rm -f vespa
+docker rm -f vespa >/dev/null 2>&1 || true
 sudo find /srv/vespa/var -mindepth 1 -delete
 sudo find /srv/vespa/logs -mindepth 1 -delete
-```
 
-Then recreate the container with the deployment command above.
+docker run -d --name vespa --user vespa:vespa --hostname vespa-container \
+  --ulimit nofile=262144:262144 --pids-limit=-1 \
+  -v /srv/vespa/var:/opt/vespa/var \
+  -v /srv/vespa/logs:/opt/vespa/logs \
+  -p 0.0.0.0:8080:8080 \
+  -p 0.0.0.0:19071:19071 \
+  --restart unless-stopped \
+  vespaengine/vespa:8.694.53
+
+curl -fsS http://127.0.0.1:19071/state/v1/health
+```
 
 ## Client Setup
 

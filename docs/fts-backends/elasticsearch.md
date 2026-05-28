@@ -62,11 +62,16 @@ Expected health status after startup:
 green
 ```
 
-To reset Elasticsearch for a clean run:
+## Server Teardown For Fresh Runs
+
+Run this teardown before a fresh E2E benchmark when the Elasticsearch server
+state must not carry over from a previous run. It removes the benchmark
+container and the `esdata01` Docker volume. Only use this on a disposable
+benchmark deployment.
 
 ```bash
-sudo docker rm -f es01
-sudo docker volume rm esdata01
+sudo docker rm -f es01 >/dev/null 2>&1 || true
+sudo docker volume rm esdata01 >/dev/null 2>&1 || true
 sudo docker volume create esdata01
 
 sudo docker run -d --name es01 \
@@ -78,6 +83,8 @@ sudo docker run -d --name es01 \
   -e "xpack.security.enabled=false" \
   -v esdata01:/usr/share/elasticsearch/data \
   docker.elastic.co/elasticsearch/elasticsearch:8.16.0
+
+curl -fsS "http://127.0.0.1:9200/_cluster/health?pretty&wait_for_status=yellow&timeout=60s"
 ```
 
 ## Client Setup
