@@ -21,6 +21,7 @@ from vectordb_bench.backend.clients.zilliz_cloud.config import AutoIndexConfig, 
 from vectordb_bench.backend.data_source import DatasetSource
 from vectordb_bench.backend.dataset import DatasetWithSizeType
 from vectordb_bench.backend.payload import PayloadProfile
+from vectordb_bench.backend.result_collector import ResultCollector
 from vectordb_bench.backend.runner.concurrent_runner import ConcurrentInsertRunner
 from vectordb_bench.backend.task_runner import CaseRunner
 from vectordb_bench.cli.cli import get_custom_case_config
@@ -311,6 +312,10 @@ def test_cloud_insert_result_file_uses_insert_only_metrics(tmp_path: Path):
     read_back = TestResult.read_file(result_file)
     assert read_back.results[0].task_config.case_config.case_id == CaseType.CloudInsertCase
     assert read_back.results[0].task_config.case_config.custom_case == {"batch_size": 1000, "duration": None}
+
+    collected = ResultCollector.collect(tmp_path)
+    assert len(collected) == 1
+    assert collected[0].results[0].metrics.inserted_count == 100_000_000
 
 
 def test_turbopuffer_insert_can_disable_backpressure():

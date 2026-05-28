@@ -14,6 +14,7 @@ from vectordb_bench.backend.data_source import DatasetSource
 from vectordb_bench.backend.dataset import DatasetWithSizeType
 from vectordb_bench.backend.filter import Filter, FilterOp
 from vectordb_bench.backend.payload import PayloadProfile
+from vectordb_bench.backend.result_collector import ResultCollector
 from vectordb_bench.backend.runner.cold_warm_runner import ColdWarmSearchRunner
 from vectordb_bench.backend.task_runner import CaseRunner, RunningStatus
 from vectordb_bench.cli.cli import get_custom_case_config
@@ -198,6 +199,10 @@ def test_cloud_cold_latency_result_file_uses_cold_latency_metrics(tmp_path: Path
         "query_count": 1000,
     }
     assert read_back.results[0].metrics.additional_parameters["cold_latency"] == cold_latency
+
+    collected = ResultCollector.collect(tmp_path)
+    assert len(collected) == 1
+    assert collected[0].results[0].metrics.additional_parameters["cold_latency"] == cold_latency
 
 
 class FakeColdWarmDB:
