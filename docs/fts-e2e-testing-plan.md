@@ -28,7 +28,7 @@ backend:
 
 - Milvus: `docs/fts-backends/milvus.md`
 - Elasticsearch: `docs/fts-backends/elasticsearch.md`
-- Vespa: `docs/fts-backends/vespa.md` (TODO)
+- Vespa: `docs/fts-backends/vespa.md`
 - TurboPuffer: `docs/fts-backends/turbopuffer.md` (TODO)
 
 Out of scope for the first E2E pass:
