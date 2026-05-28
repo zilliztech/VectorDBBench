@@ -19,6 +19,18 @@ Default datasets:
 - HotpotQA Small (100K documents)
 - HotpotQA Medium (1M documents)
 
+## Backend Runbooks
+
+Keep this document as the shared FTS BM25 matrix and common configuration
+reference. Put backend-specific deployment, health checks, benchmark commands,
+monitoring, result validation, and baseline observations in one document per
+backend:
+
+- Milvus: `docs/fts-backends/milvus.md`
+- Elasticsearch: `docs/fts-backends/elasticsearch.md` (TODO)
+- Vespa: `docs/fts-backends/vespa.md` (TODO)
+- TurboPuffer: `docs/fts-backends/turbopuffer.md` (TODO)
+
 Out of scope for the first E2E pass:
 
 - Large datasets:
