@@ -383,11 +383,7 @@ class DatasetManager(BaseModel):
         needs_scalar_labels = filters.type == FilterOp.StrEqual or with_scalar_labels
 
         # read scalar_labels_file if separated
-        if (
-            needs_scalar_labels
-            and self.data.with_scalar_labels
-            and self.data.scalar_labels_file_separated
-        ):
+        if needs_scalar_labels and self.data.with_scalar_labels and self.data.scalar_labels_file_separated:
             self.scalar_labels = self._read_file(self.data.scalar_labels_file)
 
         if gt_file is not None and test_file is not None:

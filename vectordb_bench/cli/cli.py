@@ -222,22 +222,22 @@ def get_custom_case_config(parameters: dict) -> dict:
             "payload_profile": parameters["payload_profile"],
             "query_count": parameters["cloud_cold_query_count"],
         }
-        if parameters["dataset_with_size_type"] is not None:
-            custom_case_config["dataset_with_size_type"] = parameters["dataset_with_size_type"]
-        if parameters["cloud_filter_rate"] is not None:
-            custom_case_config["filter_rate"] = parameters["cloud_filter_rate"]
-        if parameters["cloud_label_percentage"] is not None:
-            custom_case_config["label_percentage"] = parameters["cloud_label_percentage"]
+        copy_if_not_none(custom_case_config, parameters, "dataset_with_size_type")
+        copy_if_not_none(custom_case_config, parameters, "cloud_filter_rate", "filter_rate")
+        copy_if_not_none(custom_case_config, parameters, "cloud_label_percentage", "label_percentage")
     elif parameters["case_type"] == "CloudInsertCase":
         custom_case_config = {
             "batch_size": parameters["cloud_insert_batch_size"],
             "duration": parameters["cloud_insert_duration"],
             "dataset_with_size_type": dataset_with_size_type,
         }
-        if parameters.get("cloud_insert_readiness_timeout") is not None:
-            custom_case_config["readiness_timeout"] = parameters["cloud_insert_readiness_timeout"]
-        if parameters.get("cloud_insert_readiness_poll_interval") is not None:
-            custom_case_config["readiness_poll_interval"] = parameters["cloud_insert_readiness_poll_interval"]
+        copy_if_not_none(custom_case_config, parameters, "cloud_insert_readiness_timeout", "readiness_timeout")
+        copy_if_not_none(
+            custom_case_config,
+            parameters,
+            "cloud_insert_readiness_poll_interval",
+            "readiness_poll_interval",
+        )
     elif parameters["case_type"] == "CloudMultiTenantSearchCase":
         custom_case_config = {
             "tenant_count": parameters["tenant_count"],
