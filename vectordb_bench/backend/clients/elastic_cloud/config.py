@@ -21,7 +21,7 @@ class ElasticCloudConfig(DBConfig, BaseModel):
     def _check_connection_target(self) -> "ElasticCloudConfig":
         has_cloud_id = bool(self.cloud_id and self.cloud_id.get_secret_value())
         if not has_cloud_id and not self.host:
-            msg = "ElasticCloudConfig requires either cloud_id or host to be set."
+            msg = "Either cloud_id or host must be set"
             raise ValueError(msg)
         return self
 
