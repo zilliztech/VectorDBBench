@@ -95,6 +95,7 @@ class ConcurrentInsertRunner:
         state = self.__dict__.copy()
         state.pop("_iter_lock", None)
         state.pop("_dataset_iter", None)
+        state.pop("_stop_event", None)
         return state
 
     def _create_executor(self) -> TaskExecutor:
@@ -166,9 +167,15 @@ class ConcurrentInsertRunner:
         Thread-safe: only one thread reads from the iterator at a time.
         Returns None when the iterator is exhausted.
         """
+        stop_event = getattr(self, "_stop_event", None)
+        if stop_event is not None and stop_event.is_set():
+            return None
         if self._deadline is not None and time.perf_counter() >= self._deadline:
             return None
         with self._iter_lock:
+            stop_event = getattr(self, "_stop_event", None)
+            if stop_event is not None and stop_event.is_set():
+                return None
             try:
                 data_df = next(self._dataset_iter)
             except StopIteration:
@@ -199,18 +206,25 @@ class ConcurrentInsertRunner:
     def _worker_loop(self) -> int:
         """Worker loop: pull batches from the shared iterator and insert them."""
         total = 0
-        while True:
-            batch = self._next_batch()
-            if batch is None:
-                break
-            embeddings, metadata, labels_data, tenant_labels_data = batch
-            total += self._worker_insert(embeddings, metadata, labels_data, tenant_labels_data)
+        try:
+            while True:
+                batch = self._next_batch()
+                if batch is None:
+                    break
+                embeddings, metadata, labels_data, tenant_labels_data = batch
+                total += self._worker_insert(embeddings, metadata, labels_data, tenant_labels_data)
+        except Exception:
+            stop_event = getattr(self, "_stop_event", None)
+            if stop_event is not None:
+                stop_event.set()
+            raise
         return total
 
     def task(self) -> int:
         """Insert entire dataset using concurrent executor. Runs in subprocess."""
         count = 0
         self._iter_lock = threading.Lock()
+        self._stop_event = threading.Event()
         self._deadline = None if self.duration is None else time.perf_counter() + self.duration
         self._dataset_iter = self.dataset.iter_batches(self.batch_size)
 

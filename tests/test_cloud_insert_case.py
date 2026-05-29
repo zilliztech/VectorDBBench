@@ -23,10 +23,49 @@ from vectordb_bench.backend.dataset import DatasetWithSizeType
 from vectordb_bench.backend.payload import PayloadProfile
 from vectordb_bench.backend.result_collector import ResultCollector
 from vectordb_bench.backend.runner.concurrent_runner import ConcurrentInsertRunner
+from vectordb_bench.backend.runner.executor import TaskResult
 from vectordb_bench.backend.task_runner import CaseRunner
 from vectordb_bench.cli.cli import get_custom_case_config
 from vectordb_bench.metric import Metric
 from vectordb_bench.models import CaseConfig, CaseResult, TaskConfig, TaskStage, TestResult
+
+
+class _SerialTaskExecutor:
+    def __init__(self):
+        self.submitted = []
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        return False
+
+    def submit(self, fn):
+        self.submitted.append(fn)
+
+    def wait_all(self):
+        results = []
+        for fn in self.submitted:
+            try:
+                results.append(TaskResult(value=fn()))
+            except Exception as e:
+                results.append(TaskResult(error=e))
+        return results
+
+
+class _ConcurrentRunnerData:
+    train_id_field = "id"
+    train_vector_field = "vector"
+
+
+class _ConcurrentRunnerDataset:
+    data = _ConcurrentRunnerData()
+
+    def __init__(self, ids):
+        self.ids = ids
+
+    def iter_batches(self, batch_size):
+        return iter([pd.DataFrame({"id": [row_id], "vector": [np.array([row_id / 10 + 0.1])]}) for row_id in self.ids])
 
 
 def test_cloud_insert_case_defaults_to_laion_100m():
@@ -801,6 +840,69 @@ def test_concurrent_insert_runner_does_not_retry_non_retryable_insert_errors(mon
         )
 
     assert db.calls == 1
+
+
+def test_concurrent_insert_runner_stops_handing_out_batches_after_non_retryable_error():
+    class NonRetryableInsertError(RuntimeError):
+        non_retryable = True
+
+    class DB:
+        thread_safe = True
+        name = "fake"
+
+        def __init__(self):
+            self.calls = []
+
+        @contextmanager
+        def init(self):
+            yield
+
+        def insert_embeddings(self, embeddings, metadata, labels_data=None):
+            self.calls.append(metadata)
+            if len(self.calls) == 1:
+                return 0, NonRetryableInsertError("partial tenant insert")
+            return len(metadata), None
+
+    db = DB()
+    runner = ConcurrentInsertRunner(
+        db, _ConcurrentRunnerDataset([0, 1, 2]), normalize=False, max_workers=2, batch_size=1
+    )
+    runner._create_executor = lambda: _SerialTaskExecutor()
+
+    with pytest.raises(RuntimeError, match="Non-retryable insert failure"):
+        runner.task()
+
+    assert db.calls == [[0]]
+
+
+def test_concurrent_insert_runner_stops_handing_out_batches_after_retry_exhaustion(monkeypatch):
+    from vectordb_bench.backend.runner import concurrent_runner as concurrent_runner_module
+
+    class DB:
+        thread_safe = True
+        name = "fake"
+
+        def __init__(self):
+            self.calls = []
+
+        @contextmanager
+        def init(self):
+            yield
+
+        def insert_embeddings(self, embeddings, metadata, labels_data=None):
+            self.calls.append(metadata)
+            return 0, RuntimeError("insert failed")
+
+    monkeypatch.setattr(concurrent_runner_module.config, "MAX_INSERT_RETRY", 0)
+
+    db = DB()
+    runner = ConcurrentInsertRunner(db, _ConcurrentRunnerDataset([0, 1]), normalize=False, max_workers=2, batch_size=1)
+    runner._create_executor = lambda: _SerialTaskExecutor()
+
+    with pytest.raises(RuntimeError, match="Insert failed and retried more than 0 times"):
+        runner.task()
+
+    assert db.calls == [[0]]
 
 
 def test_concurrent_insert_runner_uses_custom_batch_size_iterator():
