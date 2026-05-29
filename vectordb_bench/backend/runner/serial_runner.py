@@ -2,6 +2,7 @@ import concurrent.futures
 import logging
 import math
 import multiprocessing as mp
+import random
 import time
 import traceback
 
@@ -9,6 +10,7 @@ import numpy as np
 
 from vectordb_bench.backend.dataset import DatasetManager
 from vectordb_bench.backend.filter import Filter, non_filter
+from vectordb_bench.backend.payload import PayloadProfile
 
 from ... import config
 from ...metric import calc_ndcg, calc_recall, get_ideal_dcg
@@ -130,10 +132,19 @@ class SerialSearchRunner:
         ground_truth: list[list[int]],
         k: int = 100,
         filters: Filter = non_filter,
+        payload_profile: PayloadProfile = PayloadProfile.IDS_ONLY,
+        tenant_labels: list[str] | None = None,
+        measure_recall: bool = True,
     ):
         self.db = db
         self.k = k
         self.filters = filters
+        self.payload_profile = payload_profile
+        self.tenant_labels = tenant_labels or []
+        self.measure_recall = measure_recall
+        if not self.db.supports_payload_profile(self.payload_profile):
+            msg = f"{self.db.name} does not support payload_profile={self.payload_profile.value}"
+            raise NotImplementedError(msg)
 
         if isinstance(test_data[0], np.ndarray):
             self.test_data = [query.tolist() for query in test_data]
@@ -141,13 +152,22 @@ class SerialSearchRunner:
             self.test_data = test_data
         self.ground_truth = ground_truth
 
-    def _get_db_search_res(self, emb: list[float], retry_idx: int = 0) -> list[int]:
+    def _search_embedding(self, emb: list[float], tenant: str | None = None) -> list[int]:
+        if tenant is None:
+            if self.payload_profile == PayloadProfile.IDS_ONLY:
+                return self.db.search_embedding(emb, self.k)
+            return self.db.search_embedding(emb, self.k, payload_profile=self.payload_profile)
+        if self.payload_profile == PayloadProfile.IDS_ONLY:
+            return self.db.search_embedding(emb, self.k, tenant=tenant)
+        return self.db.search_embedding(emb, self.k, payload_profile=self.payload_profile, tenant=tenant)
+
+    def _get_db_search_res(self, emb: list[float], tenant: str | None = None, retry_idx: int = 0) -> list[int]:
         try:
-            results = self.db.search_embedding(emb, self.k)
+            results = self._search_embedding(emb, tenant=tenant)
         except Exception as e:
             log.warning(f"Serial search failed, retry_idx={retry_idx}, Exception: {e}")
             if retry_idx < config.MAX_SEARCH_RETRY:
-                return self._get_db_search_res(emb=emb, retry_idx=retry_idx + 1)
+                return self._get_db_search_res(emb=emb, tenant=tenant, retry_idx=retry_idx + 1)
 
             msg = f"Serial search failed and retried more than {config.MAX_SEARCH_RETRY} times"
             raise RuntimeError(msg) from e
@@ -162,20 +182,24 @@ class SerialSearchRunner:
             ideal_dcg = get_ideal_dcg(self.k)
 
             log.debug(f"test dataset size: {len(test_data)}")
-            log.debug(f"ground truth size: {len(ground_truth)}")
+            log.debug(f"ground truth size: {len(ground_truth) if ground_truth is not None else 0}")
 
             latencies, recalls, ndcgs = [], [], []
+            tenant_rng = random.Random(0)
             for idx, emb in enumerate(test_data):
+                tenant = (
+                    self.tenant_labels[tenant_rng.randrange(len(self.tenant_labels))] if self.tenant_labels else None
+                )
                 s = time.perf_counter()
                 try:
-                    results = self._get_db_search_res(emb)
+                    results = self._get_db_search_res(emb, tenant=tenant)
                 except Exception as e:
                     log.warning(f"VectorDB search_embedding error: {e}")
                     raise e from None
 
                 latencies.append(time.perf_counter() - s)
 
-                if ground_truth is not None:
+                if self.measure_recall and ground_truth is not None:
                     gt = ground_truth[idx]
                     recalls.append(calc_recall(self.k, gt[: self.k], results))
                     ndcgs.append(calc_ndcg(gt[: self.k], results, ideal_dcg))

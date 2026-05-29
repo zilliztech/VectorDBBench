@@ -29,6 +29,15 @@ class Metric:
     conc_latency_p99_list: list[float] = field(default_factory=list)
     conc_latency_p95_list: list[float] = field(default_factory=list)
     conc_latency_avg_list: list[float] = field(default_factory=list)
+    payload_profile: str = "ids_only"
+    payload_estimated_bytes_per_query: int = 0
+
+    inserted_count: int = 0
+    insert_rows_per_second: float = 0.0
+    insert_completion_seconds: float = 0.0
+    searchable_after_insert_seconds: float = 0.0
+    indexed_after_searchable_seconds: float = 0.0
+    additional_parameters: dict = field(default_factory=dict)
 
     # for streaming cases
     st_ideal_insert_duration: int = 0

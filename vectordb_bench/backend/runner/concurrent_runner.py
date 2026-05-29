@@ -64,6 +64,10 @@ class ConcurrentInsertRunner:
         timeout: float | None = None,
         max_workers: int | None = None,
         backend: ExecutorBackend = ExecutorBackend.THREADING,
+        batch_size: int = config.NUM_PER_BATCH,
+        duration: float | None = None,
+        with_scalar_labels: bool = False,
+        tenant_case=None,  # noqa: ANN001
     ):
         self.timeout = timeout if isinstance(timeout, int | float) else None
         self.dataset: DatasetManager = dataset
@@ -71,6 +75,10 @@ class ConcurrentInsertRunner:
         self.normalize = normalize
         self.filters = filters
         self.backend = backend
+        self.batch_size = batch_size
+        self.duration = duration if isinstance(duration, int | float) else None
+        self.with_scalar_labels = with_scalar_labels
+        self.tenant_case = tenant_case
 
         effective_workers = max_workers or min(mp.cpu_count(), 4)
         if not db.thread_safe:
@@ -87,6 +95,7 @@ class ConcurrentInsertRunner:
         state = self.__dict__.copy()
         state.pop("_iter_lock", None)
         state.pop("_dataset_iter", None)
+        state.pop("_stop_event", None)
         return state
 
     def _create_executor(self) -> TaskExecutor:
@@ -109,20 +118,34 @@ class ConcurrentInsertRunner:
         embeddings: list[list[float]],
         metadata: list[int],
         labels_data: list[str] | None = None,
+        tenant_labels_data: list[str] | None = None,
         retry_idx: int = 0,
     ) -> int:
         """Insert a single batch with retry logic. Returns inserted count."""
-        insert_count, error = db.insert_embeddings(
-            embeddings=embeddings,
-            metadata=metadata,
-            labels_data=labels_data,
-        )
+        insert_kwargs = {
+            "embeddings": embeddings,
+            "metadata": metadata,
+            "labels_data": labels_data,
+        }
+        if tenant_labels_data is not None:
+            insert_kwargs["tenant_labels_data"] = tenant_labels_data
+        insert_count, error = db.insert_embeddings(**insert_kwargs)
         if error is not None:
             log.warning(f"Insert failed, try_idx={retry_idx}, Exception: {error}")
+            if getattr(error, "non_retryable", False):
+                msg = f"Non-retryable insert failure after {insert_count} inserted rows: {error}"
+                raise RuntimeError(msg) from error
             retry_idx += 1
             if retry_idx <= config.MAX_INSERT_RETRY:
                 time.sleep(retry_idx)
-                return self._insert_batch_with_retry(db, embeddings, metadata, labels_data, retry_idx)
+                return self._insert_batch_with_retry(
+                    db,
+                    embeddings,
+                    metadata,
+                    labels_data,
+                    tenant_labels_data,
+                    retry_idx,
+                )
             msg = f"Insert failed and retried more than {config.MAX_INSERT_RETRY} times"
             raise RuntimeError(msg)
         return insert_count
@@ -132,18 +155,27 @@ class ConcurrentInsertRunner:
         embeddings: list[list[float]],
         metadata: list[int],
         labels_data: list[str] | None = None,
+        tenant_labels_data: list[str] | None = None,
     ) -> int:
         """Worker function: insert a batch with retry."""
         db = self._get_thread_db()
-        return self._insert_batch_with_retry(db, embeddings, metadata, labels_data)
+        return self._insert_batch_with_retry(db, embeddings, metadata, labels_data, tenant_labels_data)
 
-    def _next_batch(self) -> tuple[list[list[float]], list[int], list[str] | None] | None:
+    def _next_batch(self) -> tuple[list[list[float]], list[int], list[str] | None, list[str] | None] | None:
         """Pull the next batch from the shared dataset iterator.
 
         Thread-safe: only one thread reads from the iterator at a time.
         Returns None when the iterator is exhausted.
         """
+        stop_event = getattr(self, "_stop_event", None)
+        if stop_event is not None and stop_event.is_set():
+            return None
+        if self._deadline is not None and time.perf_counter() >= self._deadline:
+            return None
         with self._iter_lock:
+            stop_event = getattr(self, "_stop_event", None)
+            if stop_event is not None and stop_event.is_set():
+                return None
             try:
                 data_df = next(self._dataset_iter)
             except StopIteration:
@@ -158,35 +190,48 @@ class ConcurrentInsertRunner:
         del emb_np
 
         labels_data = None
-        if self.filters.type == FilterOp.StrEqual:
+        if self.filters.type == FilterOp.StrEqual or self.with_scalar_labels:
+            label_field = self.filters.label_field if self.filters.type == FilterOp.StrEqual else "labels"
             if self.dataset.data.scalar_labels_file_separated:
-                labels_data = self.dataset.scalar_labels[self.filters.label_field][all_metadata].to_list()
+                labels_data = self.dataset.scalar_labels[label_field][all_metadata].to_list()
             else:
-                labels_data = data_df[self.filters.label_field].tolist()
+                labels_data = data_df[label_field].tolist()
 
-        return all_embeddings, all_metadata, labels_data
+        tenant_labels_data = None
+        if self.tenant_case is not None and getattr(self.tenant_case, "is_multitenant", False):
+            tenant_labels_data = self.tenant_case.tenant_labels_for_ids(all_metadata)
+
+        return all_embeddings, all_metadata, labels_data, tenant_labels_data
 
     def _worker_loop(self) -> int:
         """Worker loop: pull batches from the shared iterator and insert them."""
         total = 0
-        while True:
-            batch = self._next_batch()
-            if batch is None:
-                break
-            embeddings, metadata, labels_data = batch
-            total += self._worker_insert(embeddings, metadata, labels_data)
+        try:
+            while True:
+                batch = self._next_batch()
+                if batch is None:
+                    break
+                embeddings, metadata, labels_data, tenant_labels_data = batch
+                total += self._worker_insert(embeddings, metadata, labels_data, tenant_labels_data)
+        except Exception:
+            stop_event = getattr(self, "_stop_event", None)
+            if stop_event is not None:
+                stop_event.set()
+            raise
         return total
 
     def task(self) -> int:
         """Insert entire dataset using concurrent executor. Runs in subprocess."""
         count = 0
         self._iter_lock = threading.Lock()
-        self._dataset_iter = iter(self.dataset)
+        self._stop_event = threading.Event()
+        self._deadline = None if self.duration is None else time.perf_counter() + self.duration
+        self._dataset_iter = self.dataset.iter_batches(self.batch_size)
 
         with self.db.init():
             log.info(
                 f"({mp.current_process().name:16}) Start concurrent insert, "
-                f"batch_size={config.NUM_PER_BATCH}, max_workers={self.max_workers}"
+                f"batch_size={self.batch_size}, max_workers={self.max_workers}"
             )
             start = time.perf_counter()
 

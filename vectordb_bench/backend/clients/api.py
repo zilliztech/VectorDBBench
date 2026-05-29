@@ -6,6 +6,7 @@ from typing import ClassVar
 from pydantic import BaseModel, model_validator
 
 from vectordb_bench.backend.filter import Filter, FilterOp
+from vectordb_bench.backend.payload import PayloadProfile
 
 
 class MetricType(StrEnum):
@@ -61,6 +62,29 @@ class SQType(StrEnum):
     BF16 = "BF16"
     FP16 = "FP16"
     FP32 = "FP32"
+
+
+class NonRetryableInsertError(RuntimeError):
+    non_retryable = True
+
+
+class PartialInsertError(NonRetryableInsertError):
+    def __init__(
+        self,
+        message: str,
+        *,
+        inserted_count: int,
+        successful_tenants: dict[str, int] | None = None,
+        failed_tenant: str | None = None,
+        failed_tenant_count: int | None = None,
+        cause: Exception | None = None,
+    ):
+        super().__init__(message)
+        self.inserted_count = inserted_count
+        self.successful_tenants = successful_tenants or {}
+        self.failed_tenant = failed_tenant
+        self.failed_tenant_count = failed_tenant_count
+        self.__cause__ = cause
 
 
 class DBConfig(ABC, BaseModel):
@@ -216,12 +240,28 @@ class VectorDB(ABC):
         """Wheather this database need to normalize dataset to support COSINE"""
         return False
 
+    def supports_payload_profile(self, payload_profile: PayloadProfile) -> bool:
+        return payload_profile == PayloadProfile.IDS_ONLY
+
+    def poll_insert_readiness(self, expected_count: int) -> dict:
+        return {"fully_searchable": True, "fully_indexed": True, "additional_parameters": {}}
+
+    def set_multitenant_context(self, tenant_labels: list[str]) -> None:
+        self.multitenant_tenant_labels = tenant_labels
+
+    def supports_multitenant(self) -> bool:
+        return False
+
+    def validate_multitenant_schema(self) -> None:
+        return None
+
     @abstractmethod
     def insert_embeddings(
         self,
         embeddings: list[list[float]],
         metadata: list[int],
         labels_data: list[str] | None = None,
+        tenant_labels_data: list[str] | None = None,
         **kwargs,
     ) -> tuple[int, Exception]:
         """Insert the embeddings to the vector database. The default number of embeddings for
@@ -242,6 +282,8 @@ class VectorDB(ABC):
         self,
         query: list[float],
         k: int = 100,
+        payload_profile: PayloadProfile = PayloadProfile.IDS_ONLY,
+        tenant: str | None = None,
     ) -> list[int]:
         """Get k most similar embeddings to query vector.
 

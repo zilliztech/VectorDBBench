@@ -2,6 +2,7 @@ import concurrent
 import hashlib
 import logging
 import re
+import time
 import traceback
 from enum import Enum, auto
 
@@ -15,6 +16,7 @@ from .cases import Case, CaseLabel, StreamingPerformanceCase
 from .clients import DB, MetricType, api
 from .data_source import DatasetSource
 from .runner import (
+    ColdWarmSearchRunner,
     ConcurrentInsertRunner,
     MultiProcessingSearchRunner,
     ReadWriteRunner,
@@ -56,27 +58,85 @@ class CaseRunner(BaseModel):
     search_runner: MultiProcessingSearchRunner | None = None
     final_search_runner: MultiProcessingSearchRunner | None = None
     read_write_runner: ReadWriteRunner | None = None
+    cold_warm_search_runner: ColdWarmSearchRunner | None = None
 
     def __eq__(self, obj: any):
         if isinstance(obj, CaseRunner):
-            return (
-                self.ca.label == CaseLabel.Performance
-                and self.config.db == obj.config.db
-                and self.config.db_case_config == obj.config.db_case_config
-                and self.ca.dataset == obj.ca.dataset
-            )
+            key = self.load_reuse_key()
+            return key is not None and key == obj.load_reuse_key()
         return False
 
     def __hash__(self) -> int:
         """Hash method to maintain consistency with __eq__ method."""
-        return hash(
-            (
-                self.ca.label,
-                self.config.db,
-                self.config.db_case_config,
-                self.ca.dataset,
-            )
+        return hash(self.load_reuse_key())
+
+    def load_reuse_key(self) -> tuple | None:
+        if self.ca.label != CaseLabel.Performance:
+            return None
+        return (
+            self.config.db.value,
+            self._db_config_hash_key(),
+            self._db_case_config_hash_key(),
+            self._collection_name_hash_key(),
+            self._dataset_hash_key(),
+            self.ca.with_scalar_labels,
+            self.ca.is_multitenant,
+            self._multitenant_routing_hash_key(),
         )
+
+    @classmethod
+    def _hashable_value(cls, value: object) -> object:
+        if isinstance(value, dict):
+            hashable = tuple(sorted((str(k), cls._hashable_value(v)) for k, v in value.items()))
+        elif isinstance(value, (list, tuple)):
+            hashable = tuple(cls._hashable_value(v) for v in value)
+        elif isinstance(value, (set, frozenset)):
+            hashable = tuple(sorted((cls._hashable_value(v) for v in value), key=repr))
+        elif isinstance(value, Enum):
+            hashable = value.value
+        elif hasattr(value, "model_dump"):
+            hashable = cls._hashable_value(value.model_dump(mode="json"))
+        elif hasattr(value, "get_secret_value"):
+            hashable = value.get_secret_value()
+        else:
+            hashable = value
+        return hashable
+
+    def _db_config_hash_key(self) -> object:
+        db_config = self.config.db_config
+        if hasattr(db_config, "to_dict"):
+            return self._hashable_value(db_config.to_dict())
+        return self._hashable_value(db_config)
+
+    def _db_case_config_hash_key(self) -> object:
+        return self._hashable_value(self.config.db_case_config)
+
+    def _collection_name_hash_key(self) -> str | None:
+        return self._doris_collection_name()
+
+    def _dataset_hash_key(self) -> object:
+        return self._hashable_value(self.ca.dataset.data)
+
+    def _multitenant_routing_hash_key(self) -> tuple | None:
+        if not self.ca.is_multitenant:
+            return None
+        return (
+            getattr(self.ca, "tenant_count", None),
+            getattr(self.ca, "tenant_prefix", None),
+            getattr(self.ca, "tenant_id_width", None),
+            getattr(self.ca, "tenant_distribution", None),
+        )
+
+    def _doris_collection_name(self) -> str | None:
+        if self.config.db != DB.Doris:
+            return None
+        case_type_name = self.config.case_config.case_id.name
+        base = f"{case_type_name.lower()}"
+        base = re.sub(r"[^a-z0-9_]+", "_", base).strip("_")
+        if len(base) > 63:
+            h = hashlib.md5(base.encode(), usedforsecurity=False).hexdigest()[:6]
+            base = f"{base[:(63-7)]}_{h}"
+        return base
 
     def display(self) -> dict:
         c_dict = self.ca.dict(
@@ -108,17 +168,7 @@ class CaseRunner(BaseModel):
         # Compose a compact, case-unique collection/table name for Doris to avoid cross-case interference
         collection_name = None
         try:
-            if self.config.db == DB.Doris:
-                # Primary identifier = case-type enum name from CLI (e.g., Performance768D10M)
-                case_type_name = self.config.case_config.case_id.name
-                base = f"{case_type_name.lower()}"
-                # Sanitize to [a-z0-9_]
-                base = re.sub(r"[^a-z0-9_]+", "_", base).strip("_")
-                # Cap to 63 chars; add short hash if truncated
-                if len(base) > 63:
-                    h = hashlib.md5(base.encode(), usedforsecurity=False).hexdigest()[:6]
-                    base = f"{base[:(63-7)]}_{h}"
-                collection_name = base
+            collection_name = self._doris_collection_name()
         except Exception:
             # If anything goes wrong, fall back silently; Doris will use its default name logic
             collection_name = None
@@ -128,22 +178,65 @@ class CaseRunner(BaseModel):
         if "collection_name" in db_config_dict and not collection_name:
             collection_name = db_config_dict.pop("collection_name")
 
+        extra_db_kwargs = {}
+        if collection_name:
+            extra_db_kwargs["collection_name"] = collection_name
+        if self.ca.is_multitenant:
+            extra_db_kwargs["multitenant_tenant_labels"] = self.ca.tenant_labels()
+
         self.db = db_cls(
             dim=self.ca.dataset.data.dim,
             db_config=db_config_dict,
             db_case_config=self.config.db_case_config,
             drop_old=drop_old,
             with_scalar_labels=self.ca.with_scalar_labels,
-            **({"collection_name": collection_name} if collection_name else {}),
+            **extra_db_kwargs,
         )
 
     def _pre_run(self, drop_old: bool = True):
         try:
+            self._validate_cloud_cold_latency_config(drop_old)
+            creates_multitenant_collection = (
+                TaskStage.DROP_OLD in self.config.stages or TaskStage.LOAD in self.config.stages
+            )
+            if (
+                self.ca.is_multitenant
+                and self.config.db in {DB.Milvus, DB.ZillizCloud}
+                and creates_multitenant_collection
+                and not getattr(self.config.db_case_config, "use_partition_key", False)
+            ):
+                msg = "CloudMultiTenantSearchCase requires use_partition_key=True for Milvus/ZillizCloud"
+                raise ValueError(msg)
             self.init_db(drop_old)
-            self.ca.dataset.prepare(self.dataset_source, filters=self.ca.filters)
+            if self.ca.is_multitenant and self.db is not None:
+                if not self.db.supports_multitenant():
+                    msg = f"{self.config.db_name} does not support CloudMultiTenantSearchCase"
+                    raise NotImplementedError(msg)
+                self.db.set_multitenant_context(self.ca.tenant_labels())
+                if self.config.db in {DB.Milvus, DB.ZillizCloud} and not creates_multitenant_collection:
+                    self.db.validate_multitenant_schema()
+            self.ca.dataset.prepare(
+                self.dataset_source,
+                filters=self.ca.filters,
+                with_train_files=TaskStage.LOAD in self.config.stages,
+                with_scalar_labels=self.ca.with_scalar_labels,
+            )
         except ModuleNotFoundError as e:
             log.warning(f"pre run case error: please install client for db: {self.config.db}, error={e}")
             raise e from None
+
+    def _validate_cloud_cold_latency_config(self, drop_old: bool) -> None:
+        if getattr(self.ca, "label", None) != CaseLabel.CloudColdLatency:
+            return
+        if drop_old:
+            msg = (
+                "CloudColdLatencyCase requires an existing cold collection. "
+                "Run with --skip-drop-old and --skip-load."
+            )
+            raise ValueError(msg)
+        if TaskStage.LOAD in self.config.stages:
+            msg = "CloudColdLatencyCase is search-only. Run with --skip-load."
+            raise ValueError(msg)
 
     def run(self, drop_old: bool = True) -> Metric:
         log.info("Starting run")
@@ -156,6 +249,10 @@ class CaseRunner(BaseModel):
             return self._run_perf_case(drop_old)
         if self.ca.label == CaseLabel.Streaming:
             return self._run_streaming_case()
+        if self.ca.label == CaseLabel.CloudInsert:
+            return self._run_cloud_insert_case()
+        if self.ca.label == CaseLabel.CloudColdLatency:
+            return self._run_cloud_cold_latency_case(drop_old)
         msg = f"unknown case type: {self.ca.label}"
         log.warning(msg)
         raise ValueError(msg)
@@ -223,6 +320,8 @@ class CaseRunner(BaseModel):
                 if TaskStage.SEARCH_SERIAL in self.config.stages:
                     search_results = self._serial_search()
                     m.recall, m.ndcg, m.serial_latency_p99, m.serial_latency_p95 = search_results
+            m.payload_profile = self.ca.payload_profile.value
+            m.payload_estimated_bytes_per_query = self.ca.estimated_payload_bytes_per_query(self.config.case_config.k)
 
         except Exception as e:
             log.warning(f"Failed to run performance case, reason = {e}")
@@ -245,10 +344,111 @@ class CaseRunner(BaseModel):
             log.info(f"Streaming case got result: {m}")
             return m
 
+    def _run_cloud_insert_case(self) -> Metric:
+        assert self.db is not None
+        started = time.perf_counter()
+        runner_kwargs = {}
+        if self.ca.is_multitenant:
+            runner_kwargs["tenant_case"] = self.ca
+        runner = ConcurrentInsertRunner(
+            self.db,
+            self.ca.dataset,
+            self.normalize,
+            self.ca.filters,
+            max_workers=self.config.load_concurrency or None,
+            batch_size=self.ca.batch_size,
+            duration=self.ca.duration,
+            **runner_kwargs,
+        )
+        count = runner.task()
+        insert_done = time.perf_counter()
+        readiness_timeout = self.ca.readiness_timeout
+        readiness_poll_interval = self.ca.readiness_poll_interval
+        readiness_deadline = None if readiness_timeout is None else time.perf_counter() + readiness_timeout
+        with self.db.init():
+            status = self.db.poll_insert_readiness(count)
+            searchable_started = time.perf_counter()
+            while not status["fully_searchable"]:
+                if readiness_deadline is not None and time.perf_counter() >= readiness_deadline:
+                    msg = (
+                        "Cloud insert readiness timed out waiting for fully_searchable "
+                        f"after {readiness_timeout}s; last_status={status}"
+                    )
+                    raise TimeoutError(msg)
+                time.sleep(readiness_poll_interval)
+                status = self.db.poll_insert_readiness(count)
+            indexed_started = time.perf_counter()
+            while not status["fully_indexed"]:
+                if readiness_deadline is not None and time.perf_counter() >= readiness_deadline:
+                    msg = (
+                        "Cloud insert readiness timed out waiting for fully_indexed "
+                        f"after {readiness_timeout}s; last_status={status}"
+                    )
+                    raise TimeoutError(msg)
+                time.sleep(readiness_poll_interval)
+                status = self.db.poll_insert_readiness(count)
+        return Metric(
+            inserted_count=count,
+            insert_rows_per_second=round(count / max(insert_done - started, 0.001), 4),
+            insert_completion_seconds=round(insert_done - started, 4),
+            searchable_after_insert_seconds=round(indexed_started - searchable_started, 4),
+            indexed_after_searchable_seconds=round(time.perf_counter() - indexed_started, 4),
+            additional_parameters=status.get("additional_parameters", {}),
+        )
+
+    def _init_cold_warm_search_runner(self) -> None:
+        if self.normalize:
+            test_emb = np.stack(self.ca.dataset.test_data)
+            test_emb = test_emb / np.linalg.norm(test_emb, axis=1)[:, np.newaxis]
+            self.test_emb = test_emb.tolist()
+        else:
+            self.test_emb = self.ca.dataset.test_data
+
+        self.cold_warm_search_runner = ColdWarmSearchRunner(
+            db=self.db,
+            test_data=self.test_emb,
+            filters=self.ca.filters,
+            k=self.config.case_config.k,
+            payload_profile=self.ca.payload_profile,
+            query_count=self.ca.query_count,
+        )
+
+    def _run_cloud_cold_latency_case(self, drop_old: bool = True) -> Metric:
+        log.info("Start cloud cold latency case")
+        try:
+            self._validate_cloud_cold_latency_config(drop_old)
+            m = Metric()
+            if drop_old:
+                if TaskStage.LOAD in self.config.stages:
+                    _, load_dur = self._load_train_data()
+                    build_dur = self._optimize()
+                    m.insert_duration = round(load_dur, 4)
+                    m.optimize_duration = round(build_dur, 4)
+                    m.load_duration = round(load_dur + build_dur, 4)
+                else:
+                    log.info("Data loading skipped")
+
+            self._init_cold_warm_search_runner()
+            m.additional_parameters = {
+                "cold_latency": self.cold_warm_search_runner.run(),
+            }
+            m.payload_profile = self.ca.payload_profile.value
+            m.payload_estimated_bytes_per_query = self.ca.estimated_payload_bytes_per_query(self.config.case_config.k)
+        except Exception as e:
+            log.warning(f"Failed to run cloud cold latency case, reason = {e}")
+            traceback.print_exc()
+            raise e from None
+        else:
+            log.info(f"Cloud cold latency case got result: {m}")
+            return m
+
     @utils.time_it
     def _load_train_data(self):
         """Insert train data concurrently and get the insert_duration"""
         try:
+            runner_kwargs = {}
+            if self.ca.is_multitenant:
+                runner_kwargs["tenant_case"] = self.ca
             runner = ConcurrentInsertRunner(
                 self.db,
                 self.ca.dataset,
@@ -256,6 +456,8 @@ class CaseRunner(BaseModel):
                 self.ca.filters,
                 self.ca.load_timeout,
                 max_workers=self.config.load_concurrency or None,
+                with_scalar_labels=self.ca.with_scalar_labels,
+                **runner_kwargs,
             )
             runner.run()
         except Exception as e:
@@ -320,7 +522,9 @@ class CaseRunner(BaseModel):
         else:
             self.test_emb = self.ca.dataset.test_data
 
-        gt_df = self.ca.dataset.gt_data
+        tenant_labels = self.ca.tenant_labels() if self.ca.is_multitenant else None
+        measure_recall = getattr(self.ca, "measure_recall", True)
+        gt_df = self.ca.dataset.gt_data if measure_recall else None
 
         if TaskStage.SEARCH_SERIAL in self.config.stages:
             self.serial_search_runner = SerialSearchRunner(
@@ -329,6 +533,9 @@ class CaseRunner(BaseModel):
                 ground_truth=gt_df,
                 filters=self.ca.filters,
                 k=self.config.case_config.k,
+                payload_profile=self.ca.payload_profile,
+                tenant_labels=tenant_labels,
+                measure_recall=measure_recall,
             )
         if TaskStage.SEARCH_CONCURRENT in self.config.stages:
             self.search_runner = MultiProcessingSearchRunner(
@@ -339,6 +546,8 @@ class CaseRunner(BaseModel):
                 duration=self.config.case_config.concurrency_search_config.concurrency_duration,
                 concurrency_timeout=self.config.case_config.concurrency_search_config.concurrency_timeout,
                 k=self.config.case_config.k,
+                payload_profile=self.ca.payload_profile,
+                tenant_labels=tenant_labels,
             )
 
     def _init_read_write_runner(self):

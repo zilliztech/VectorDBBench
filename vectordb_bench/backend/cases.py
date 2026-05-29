@@ -5,6 +5,7 @@ from enum import Enum, auto
 from vectordb_bench import config
 from vectordb_bench.backend.clients.api import MetricType
 from vectordb_bench.backend.filter import Filter, FilterOp, IntFilter, LabelFilter, NewIntFilter, NonFilter, non_filter
+from vectordb_bench.backend.payload import PayloadProfile
 from vectordb_bench.base import BaseModel
 from vectordb_bench.frontend.components.custom.getCustomConfig import CustomDatasetConfig
 
@@ -56,6 +57,10 @@ class CaseType(Enum):
     LabelFilterPerformanceCase = 300
 
     NewIntFilterPerformanceCase = 400
+    CloudPayloadSearchCase = 500
+    CloudInsertCase = 600
+    CloudColdLatencyCase = 700
+    CloudMultiTenantSearchCase = 800
 
     def case_cls(self, custom_configs: dict | None = None) -> type["Case"]:
         if custom_configs is None:
@@ -79,6 +84,8 @@ class CaseLabel(Enum):
     Load = auto()
     Performance = auto()
     Streaming = auto()
+    CloudInsert = auto()
+    CloudColdLatency = auto()
 
 
 class Case(BaseModel):
@@ -102,14 +109,24 @@ class Case(BaseModel):
     optimize_timeout: float | int | None = None
 
     filter_rate: float | None = None
+    payload_profile: PayloadProfile = PayloadProfile.IDS_ONLY
 
     @property
     def filters(self) -> Filter:
         return non_filter
 
+    def estimated_payload_bytes_per_query(self, k: int | None) -> int:
+        if k is None:
+            k = config.K_DEFAULT
+        return self.payload_profile.estimated_bytes_per_query(k=k, dim=self.dataset.data.dim)
+
+    @property
+    def is_multitenant(self) -> bool:
+        return False
+
     @property
     def with_scalar_labels(self) -> bool:
-        return self.filters.type == FilterOp.StrEqual
+        return self.filters.type == FilterOp.StrEqual or self.payload_profile == PayloadProfile.SCALAR_LABEL
 
     def check_scalar_labels(self) -> None:
         if self.with_scalar_labels and not self.dataset.data.with_scalar_labels:
@@ -594,6 +611,259 @@ class NewIntFilterPerformanceCase(PerformanceCase):
         return NewIntFilter(filter_rate=self.filter_rate, int_field=int_field, int_value=int_value)
 
 
+class CloudPayloadSearchCase(PerformanceCase):
+    case_id: CaseType = CaseType.CloudPayloadSearchCase
+    dataset_with_size_type: DatasetWithSizeType | None = None
+    payload_profile: PayloadProfile = PayloadProfile.IDS_ONLY
+    filter_rate: float | None = None
+    label_percentage: float | None = None
+
+    def __init__(
+        self,
+        dataset_with_size_type: DatasetWithSizeType | str | None = None,
+        payload_profile: PayloadProfile | str = PayloadProfile.IDS_ONLY,
+        filter_rate: float | None = None,
+        label_percentage: float | None = None,
+        **kwargs,
+    ):
+        if filter_rate is not None and label_percentage is not None:
+            msg = "CloudPayloadSearchCase supports only one filter type per run"
+            raise ValueError(msg)
+        if dataset_with_size_type is not None and not isinstance(dataset_with_size_type, DatasetWithSizeType):
+            dataset_with_size_type = DatasetWithSizeType(dataset_with_size_type)
+        if not isinstance(payload_profile, PayloadProfile):
+            payload_profile = PayloadProfile(payload_profile)
+
+        if dataset_with_size_type is None:
+            dataset = Dataset.LAION.manager(100_000_000)
+            load_timeout = config.LOAD_TIMEOUT_768D_100M
+            optimize_timeout = config.OPTIMIZE_TIMEOUT_768D_100M
+            dataset_name = "LAION 100M (768dim)"
+        else:
+            dataset = dataset_with_size_type.get_manager()
+            load_timeout = dataset_with_size_type.get_load_timeout()
+            optimize_timeout = dataset_with_size_type.get_optimize_timeout()
+            dataset_name = dataset_with_size_type.value
+
+        name = f"Cloud Payload Search - {payload_profile.value} - {dataset_name}"
+        description = (
+            "Cloud leaderboard search envelope case with explicit response payload profile. "
+            f"Payload profile: {payload_profile.value}; dataset: {dataset_name}."
+        )
+        super().__init__(
+            name=name,
+            description=description,
+            dataset=dataset,
+            load_timeout=load_timeout,
+            optimize_timeout=optimize_timeout,
+            dataset_with_size_type=dataset_with_size_type,
+            payload_profile=payload_profile,
+            filter_rate=filter_rate,
+            label_percentage=label_percentage,
+            **kwargs,
+        )
+
+    @property
+    def filters(self) -> Filter:
+        if self.label_percentage is not None:
+            return LabelFilter(label_percentage=self.label_percentage)
+        if self.filter_rate is None:
+            return non_filter
+        int_field = self.dataset.data.train_id_field
+        int_value = int(self.dataset.data.size * self.filter_rate)
+        return NewIntFilter(filter_rate=self.filter_rate, int_field=int_field, int_value=int_value)
+
+
+class CloudColdLatencyCase(Case):
+    case_id: CaseType = CaseType.CloudColdLatencyCase
+    label: CaseLabel = CaseLabel.CloudColdLatency
+    dataset_with_size_type: DatasetWithSizeType | None = None
+    payload_profile: PayloadProfile = PayloadProfile.IDS_ONLY
+    filter_rate: float | None = None
+    label_percentage: float | None = None
+    query_count: int = 1000
+
+    def __init__(
+        self,
+        dataset_with_size_type: DatasetWithSizeType | str | None = None,
+        payload_profile: PayloadProfile | str = PayloadProfile.IDS_ONLY,
+        filter_rate: float | None = None,
+        label_percentage: float | None = None,
+        query_count: int = 1000,
+        **kwargs,
+    ):
+        if filter_rate is not None and label_percentage is not None:
+            msg = "CloudColdLatencyCase supports only one filter type per run"
+            raise ValueError(msg)
+        if query_count <= 0:
+            msg = "query_count must be positive"
+            raise ValueError(msg)
+        if dataset_with_size_type is not None and not isinstance(dataset_with_size_type, DatasetWithSizeType):
+            dataset_with_size_type = DatasetWithSizeType(dataset_with_size_type)
+        if not isinstance(payload_profile, PayloadProfile):
+            payload_profile = PayloadProfile(payload_profile)
+
+        if dataset_with_size_type is None:
+            dataset = Dataset.LAION.manager(100_000_000)
+            load_timeout = config.LOAD_TIMEOUT_768D_100M
+            optimize_timeout = config.OPTIMIZE_TIMEOUT_768D_100M
+            dataset_name = "LAION 100M (768dim)"
+        else:
+            dataset = dataset_with_size_type.get_manager()
+            load_timeout = dataset_with_size_type.get_load_timeout()
+            optimize_timeout = dataset_with_size_type.get_optimize_timeout()
+            dataset_name = dataset_with_size_type.value
+
+        name = f"Cloud Cold Latency - {payload_profile.value} - {dataset_name}"
+        description = (
+            "Cloud leaderboard cold/warm serial latency case with explicit response payload profile. "
+            f"Payload profile: {payload_profile.value}; dataset: {dataset_name}; query count: {query_count}."
+        )
+        super().__init__(
+            name=name,
+            description=description,
+            dataset=dataset,
+            load_timeout=load_timeout,
+            optimize_timeout=optimize_timeout,
+            dataset_with_size_type=dataset_with_size_type,
+            payload_profile=payload_profile,
+            filter_rate=filter_rate,
+            label_percentage=label_percentage,
+            query_count=query_count,
+            **kwargs,
+        )
+
+    @property
+    def filters(self) -> Filter:
+        if self.label_percentage is not None:
+            return LabelFilter(label_percentage=self.label_percentage)
+        if self.filter_rate is None:
+            return non_filter
+        int_field = self.dataset.data.train_id_field
+        int_value = int(self.dataset.data.size * self.filter_rate)
+        return NewIntFilter(filter_rate=self.filter_rate, int_field=int_field, int_value=int_value)
+
+
+class CloudInsertCase(Case):
+    case_id: CaseType = CaseType.CloudInsertCase
+    label: CaseLabel = CaseLabel.CloudInsert
+    batch_size: int
+    duration: float | None = None
+    readiness_timeout: float | None = config.CLOUD_INSERT_READINESS_TIMEOUT
+    readiness_poll_interval: float = config.CLOUD_INSERT_READINESS_POLL_INTERVAL
+    dataset_with_size_type: DatasetWithSizeType | None = None
+
+    def __init__(
+        self,
+        batch_size: int,
+        duration: float | None = None,
+        readiness_timeout: float | None = config.CLOUD_INSERT_READINESS_TIMEOUT,
+        readiness_poll_interval: float = config.CLOUD_INSERT_READINESS_POLL_INTERVAL,
+        dataset_with_size_type: DatasetWithSizeType | str | None = None,
+        **kwargs,
+    ):
+        if dataset_with_size_type is not None and not isinstance(dataset_with_size_type, DatasetWithSizeType):
+            dataset_with_size_type = DatasetWithSizeType(dataset_with_size_type)
+        dataset = (
+            Dataset.LAION.manager(100_000_000)
+            if dataset_with_size_type is None
+            else dataset_with_size_type.get_manager()
+        )
+        super().__init__(
+            name=f"Cloud Insert - batch {batch_size}",
+            description="Cloud leaderboard insert-only case with readiness polling.",
+            dataset=dataset,
+            batch_size=batch_size,
+            duration=duration,
+            readiness_timeout=readiness_timeout,
+            readiness_poll_interval=readiness_poll_interval,
+            dataset_with_size_type=dataset_with_size_type,
+            **kwargs,
+        )
+
+
+class CloudMultiTenantSearchCase(PerformanceCase):
+    case_id: CaseType = CaseType.CloudMultiTenantSearchCase
+    dataset_with_size_type: DatasetWithSizeType = DatasetWithSizeType.CohereLarge
+    tenant_count: int = 1000
+    tenant_prefix: str = "tenant_"
+    tenant_id_width: int = 4
+    tenant_distribution: str = "uniform_by_id_mod"
+    measure_recall: bool = False
+    payload_profile: PayloadProfile = PayloadProfile.IDS_ONLY
+    filter_rate: float | None = None
+    label_percentage: float | None = None
+
+    def __init__(
+        self,
+        dataset_with_size_type: DatasetWithSizeType | str = DatasetWithSizeType.CohereLarge,
+        tenant_count: int = 1000,
+        tenant_prefix: str = "tenant_",
+        tenant_id_width: int = 4,
+        payload_profile: PayloadProfile | str = PayloadProfile.IDS_ONLY,
+        filter_rate: float | None = None,
+        label_percentage: float | None = None,
+        **kwargs,
+    ):
+        if filter_rate is not None and label_percentage is not None:
+            msg = "CloudMultiTenantSearchCase supports only one filter type per run"
+            raise ValueError(msg)
+        if not isinstance(dataset_with_size_type, DatasetWithSizeType):
+            dataset_with_size_type = DatasetWithSizeType(dataset_with_size_type)
+        if not isinstance(payload_profile, PayloadProfile):
+            payload_profile = PayloadProfile(payload_profile)
+        if tenant_count <= 0:
+            msg = "tenant_count must be greater than 0"
+            raise ValueError(msg)
+        if tenant_id_width <= 0:
+            msg = "tenant_id_width must be greater than 0"
+            raise ValueError(msg)
+
+        dataset = dataset_with_size_type.get_manager()
+        super().__init__(
+            name=f"Cloud Multi-Tenant Search - {dataset_with_size_type.value}, {tenant_count} tenants",
+            description=(
+                "Multi-tenant QPS/latency benchmark with deterministic tenant routing "
+                f"({dataset_with_size_type.value}, {tenant_count} tenants)."
+            ),
+            dataset=dataset,
+            load_timeout=dataset_with_size_type.get_load_timeout(),
+            optimize_timeout=dataset_with_size_type.get_optimize_timeout(),
+            dataset_with_size_type=dataset_with_size_type,
+            tenant_count=tenant_count,
+            tenant_prefix=tenant_prefix,
+            tenant_id_width=tenant_id_width,
+            payload_profile=payload_profile,
+            filter_rate=filter_rate,
+            label_percentage=label_percentage,
+            **kwargs,
+        )
+
+    @property
+    def is_multitenant(self) -> bool:
+        return True
+
+    def tenant_for_id(self, row_id: int) -> str:
+        tenant_id = int(row_id) % self.tenant_count
+        return f"{self.tenant_prefix}{tenant_id:0{self.tenant_id_width}d}"
+
+    def tenant_labels_for_ids(self, row_ids: list[int]) -> list[str]:
+        return [self.tenant_for_id(row_id) for row_id in row_ids]
+
+    def tenant_labels(self) -> list[str]:
+        return [f"{self.tenant_prefix}{tenant_id:0{self.tenant_id_width}d}" for tenant_id in range(self.tenant_count)]
+
+    @property
+    def filters(self) -> Filter:
+        if self.label_percentage is not None:
+            return LabelFilter(label_percentage=self.label_percentage)
+        if self.filter_rate is None:
+            return non_filter
+        int_field = self.dataset.data.train_id_field
+        int_value = int(self.dataset.data.size * self.filter_rate)
+        return NewIntFilter(filter_rate=self.filter_rate, int_field=int_field, int_value=int_value)
+
+
 class LabelFilterPerformanceCase(PerformanceCase):
     case_id: CaseType = CaseType.LabelFilterPerformanceCase
     dataset_with_size_type: DatasetWithSizeType
@@ -655,4 +925,8 @@ type2case = {
     CaseType.StreamingCustomDataset: StreamingCustomDataset,
     CaseType.NewIntFilterPerformanceCase: NewIntFilterPerformanceCase,
     CaseType.LabelFilterPerformanceCase: LabelFilterPerformanceCase,
+    CaseType.CloudPayloadSearchCase: CloudPayloadSearchCase,
+    CaseType.CloudInsertCase: CloudInsertCase,
+    CaseType.CloudColdLatencyCase: CloudColdLatencyCase,
+    CaseType.CloudMultiTenantSearchCase: CloudMultiTenantSearchCase,
 }

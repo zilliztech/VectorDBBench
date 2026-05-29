@@ -138,6 +138,8 @@ class LAION(BaseDataset):
     metric_type: MetricType = MetricType.L2
     use_shuffled: bool = False
     with_gt: bool = True
+    with_scalar_labels: bool = True
+    scalar_label_percentages: list[float] = [0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5]
     _size_label: ClassVar[dict] = {
         100_000_000: SizeLabel(100_000_000, "LARGE", 100),
     }
@@ -338,11 +340,16 @@ class DatasetManager(BaseModel):
     def __iter__(self):
         return DataSetIterator(self)
 
+    def iter_batches(self, batch_size: int):
+        return DataSetIterator(self, batch_size=batch_size)
+
     # TODO passing use_shuffle from outside
     def prepare(
         self,
         source: DatasetSource = DatasetSource.S3,
         filters: Filter = non_filter,
+        with_train_files: bool = True,
+        with_scalar_labels: bool = False,
     ) -> bool:
         """Download the dataset from DatasetSource
          url = f"{source}/{self.data.dir_name}"
@@ -356,7 +363,7 @@ class DatasetManager(BaseModel):
             bool: whether the dataset is successfully prepared
 
         """
-        self.train_files = self.data.train_files
+        self.train_files = self.data.train_files if with_train_files else []
         gt_file, test_file = None, None
         if self.data.with_gt:
             gt_file, test_file = filters.groundtruth_file, self.data.test_file
@@ -373,12 +380,10 @@ class DatasetManager(BaseModel):
                 local_ds_root=self.data_dir,
             )
 
+        needs_scalar_labels = filters.type == FilterOp.StrEqual or with_scalar_labels
+
         # read scalar_labels_file if separated
-        if (
-            filters.type == FilterOp.StrEqual
-            and self.data.with_scalar_labels
-            and self.data.scalar_labels_file_separated
-        ):
+        if needs_scalar_labels and self.data.with_scalar_labels and self.data.scalar_labels_file_separated:
             self.scalar_labels = self._read_file(self.data.scalar_labels_file)
 
         if gt_file is not None and test_file is not None:
@@ -401,8 +406,9 @@ class DatasetManager(BaseModel):
 
 
 class DataSetIterator:
-    def __init__(self, dataset: DatasetManager):
+    def __init__(self, dataset: DatasetManager, batch_size: int = config.NUM_PER_BATCH):
         self._ds = dataset
+        self._batch_size = batch_size
         self._idx = 0  # file number
         self._cur = None
         self._sub_idx = [0 for i in range(len(self._ds.train_files))]  # iter num for each file
@@ -428,7 +434,7 @@ class DataSetIterator:
             msg = f"No such file: {p}"
             log.warning(msg)
             raise IndexError(msg)
-        return ParquetFile(p, memory_map=True, pre_buffer=True).iter_batches(config.NUM_PER_BATCH)
+        return ParquetFile(p, memory_map=True, pre_buffer=True).iter_batches(self._batch_size)
 
     def __next__(self) -> pd.DataFrame:
         """return the data in the next file of the training list"""
@@ -478,6 +484,7 @@ class DatasetWithSizeType(Enum):
     CohereSmall = "Small Cohere (768dim, 100K)"
     CohereMedium = "Medium Cohere (768dim, 1M)"
     CohereLarge = "Large Cohere (768dim, 10M)"
+    LAIONLarge = "Large LAION (768dim, 100M)"
     BioasqMedium = "Medium Bioasq (1024dim, 1M)"
     BioasqLarge = "Large Bioasq (1024dim, 10M)"
     OpenAISmall = "Small OpenAI (1536dim, 50K)"
@@ -491,6 +498,8 @@ class DatasetWithSizeType(Enum):
         return DatasetWithSizeMap.get(self)
 
     def get_load_timeout(self) -> float:
+        if self is DatasetWithSizeType.LAIONLarge:
+            return config.LOAD_TIMEOUT_768D_100M
         if "small" in self.value.lower():
             return config.LOAD_TIMEOUT_768D_100K
         if "medium" in self.value.lower():
@@ -501,6 +510,8 @@ class DatasetWithSizeType(Enum):
         raise KeyError(msg)
 
     def get_optimize_timeout(self) -> float:
+        if self is DatasetWithSizeType.LAIONLarge:
+            return config.OPTIMIZE_TIMEOUT_768D_100M
         if "small" in self.value.lower():
             return config.OPTIMIZE_TIMEOUT_768D_100K
         if "medium" in self.value.lower():
@@ -514,6 +525,7 @@ DatasetWithSizeMap = {
     DatasetWithSizeType.CohereSmall: Dataset.COHERE.manager(100_000),
     DatasetWithSizeType.CohereMedium: Dataset.COHERE.manager(1_000_000),
     DatasetWithSizeType.CohereLarge: Dataset.COHERE.manager(10_000_000),
+    DatasetWithSizeType.LAIONLarge: Dataset.LAION.manager(100_000_000),
     DatasetWithSizeType.BioasqMedium: Dataset.BIOASQ.manager(1_000_000),
     DatasetWithSizeType.BioasqLarge: Dataset.BIOASQ.manager(10_000_000),
     DatasetWithSizeType.OpenAISmall: Dataset.OPENAI.manager(50_000),

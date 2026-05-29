@@ -13,6 +13,13 @@ from vectordb_bench.cli.cli import (
 )
 
 
+def _use_partition_key(parameters: dict) -> bool:
+    explicit = parameters.get("use_partition_key")
+    if explicit is not None:
+        return explicit
+    return parameters.get("case_type") == "CloudMultiTenantSearchCase"
+
+
 class ZillizTypedDict(CommonTypedDict):
     uri: Annotated[
         str,
@@ -20,7 +27,7 @@ class ZillizTypedDict(CommonTypedDict):
     ]
     user_name: Annotated[
         str,
-        click.option("--user-name", type=str, help="Db username", required=True),
+        click.option("--user-name", type=str, help="Db username", default=""),
     ]
     password: Annotated[
         str,
@@ -30,6 +37,16 @@ class ZillizTypedDict(CommonTypedDict):
             help="Zilliz password",
             default=lambda: os.environ.get("ZILLIZ_PASSWORD", ""),
             show_default="$ZILLIZ_PASSWORD",
+        ),
+    ]
+    token: Annotated[
+        str,
+        click.option(
+            "--token",
+            type=str,
+            help="Zilliz API token",
+            default=lambda: os.environ.get("ZILLIZ_TOKEN", ""),
+            show_default="$ZILLIZ_TOKEN",
         ),
     ]
     level: Annotated[
@@ -58,6 +75,17 @@ class ZillizTypedDict(CommonTypedDict):
             show_default=True,
         ),
     ]
+    use_partition_key: Annotated[
+        bool | None,
+        click.option(
+            "--use-partition-key/--no-use-partition-key",
+            default=None,
+            help=(
+                "Use the Zilliz Cloud partition key on the label field. "
+                "Defaults to enabled for CloudMultiTenantSearchCase and disabled otherwise."
+            ),
+        ),
+    ]
 
 
 @cli.command()
@@ -72,12 +100,14 @@ def ZillizAutoIndex(**parameters: Unpack[ZillizTypedDict]):
             uri=SecretStr(parameters["uri"]),
             user=parameters["user_name"],
             password=SecretStr(parameters["password"]),
+            token=SecretStr(parameters["token"]),
             num_shards=parameters["num_shards"],
             collection_name=parameters["collection_name"],
         ),
         db_case_config=AutoIndexConfig(
             level=int(parameters["level"]) if parameters["level"] else 1,
             num_shards=parameters["num_shards"],
+            use_partition_key=_use_partition_key(parameters),
         ),
         **parameters,
     )
