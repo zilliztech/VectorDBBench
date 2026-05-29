@@ -46,6 +46,7 @@ class Pinecone(VectorDB):
         self.multitenant_namespace_prefix = db_config.get("multitenant_namespace_prefix", "vdbbench_mt_")
         self.multitenant_tenant_labels: list[str] = kwargs.get("multitenant_tenant_labels", [])
         self._multitenant_insert_counts: dict[str, int] = {}
+        self._multitenant_insert_counts_lock = threading.Lock()
         self.batch_size = int(
             min(PINECONE_MAX_SIZE_PER_BATCH / (dim * 5), PINECONE_MAX_NUM_PER_BATCH),
         )
@@ -85,6 +86,7 @@ class Pinecone(VectorDB):
     def __getstate__(self):
         state = self.__dict__.copy()
         state.pop("_last_write_lsn_lock", None)
+        state.pop("_multitenant_insert_counts_lock", None)
         return state
 
     def optimize(self, data_size: int | None = None):
@@ -151,14 +153,29 @@ class Pinecone(VectorDB):
         }
 
     def _expected_multitenant_counts(self, expected_count: int) -> dict[str, int]:
-        insert_counts = getattr(self, "_multitenant_insert_counts", {})
+        insert_counts = self._multitenant_insert_count_snapshot()
         if insert_counts:
-            return dict(insert_counts)
+            return insert_counts
         tenant_labels = self.multitenant_tenant_labels
         tenant_count = len(tenant_labels)
         base_count = expected_count // tenant_count if tenant_count else 0
         remainder = expected_count % tenant_count if tenant_count else 0
         return {tenant: base_count + (1 if idx < remainder else 0) for idx, tenant in enumerate(tenant_labels)}
+
+    def _multitenant_insert_count_snapshot(self) -> dict[str, int]:
+        if not hasattr(self, "_multitenant_insert_counts_lock"):
+            self._multitenant_insert_counts_lock = threading.Lock()
+        with self._multitenant_insert_counts_lock:
+            return dict(getattr(self, "_multitenant_insert_counts", {}))
+
+    def _record_multitenant_insert_count(self, tenant: str, count: int) -> None:
+        if not hasattr(self, "_multitenant_insert_counts_lock"):
+            self._multitenant_insert_counts_lock = threading.Lock()
+        with self._multitenant_insert_counts_lock:
+            # Pinecone readiness is count-based per tenant namespace. Unlike
+            # providers that only track touched tenants, this counter must keep
+            # every successful write from concurrent insert workers.
+            self._multitenant_insert_counts[tenant] = self._multitenant_insert_counts.get(tenant, 0) + count
 
     def _multitenant_lsn_ready(self, expected_by_tenant: dict[str, int]) -> bool:
         last_write_lsn = getattr(self, "_last_write_lsn", None)
@@ -266,9 +283,7 @@ class Pinecone(VectorDB):
                             self._record_write_lsn(write_lsn)
                         insert_count += len(tenant_insert_datas)
                         successful_tenants[tenant] = successful_tenants.get(tenant, 0) + len(tenant_insert_datas)
-                        self._multitenant_insert_counts[tenant] = self._multitenant_insert_counts.get(tenant, 0) + len(
-                            tenant_insert_datas
-                        )
+                        self._record_multitenant_insert_count(tenant, len(tenant_insert_datas))
                     continue
                 insert_count += batch_end_offset - batch_start_offset
         except Exception as e:

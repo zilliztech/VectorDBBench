@@ -1,3 +1,4 @@
+import threading
 from types import SimpleNamespace
 
 
@@ -153,3 +154,61 @@ def test_pinecone_multitenant_partial_insert_failure_is_explicit(monkeypatch):
     assert getattr(err, "failed_tenant") == "tenant_0001"
     assert getattr(err, "failed_tenant_count") == 1
     assert db._multitenant_insert_counts == {"tenant_0000": 2}
+
+
+def test_pinecone_multitenant_insert_counts_are_thread_safe(monkeypatch):
+    from vectordb_bench.backend.clients.pinecone import pinecone as pinecone_module
+    from vectordb_bench.backend.clients.pinecone.pinecone import Pinecone
+
+    class RacingCounts(dict):
+        def __init__(self, lock_getter):
+            super().__init__()
+            self.barrier = threading.Barrier(2)
+            self.lock_getter = lock_getter
+
+        def get(self, key, default=None):
+            value = super().get(key, default)
+            lock = self.lock_getter()
+            if key == "tenant_0000" and (lock is None or not lock.locked()):
+                self.barrier.wait(timeout=5)
+            return value
+
+    fake_index = FakePineconeIndex()
+    monkeypatch.setattr(
+        pinecone_module.pinecone,
+        "Pinecone",
+        lambda api_key: FakePineconeClient(fake_index),
+    )
+
+    db = Pinecone(
+        dim=2,
+        db_config={
+            "api_key": "k",
+            "index_name": "idx",
+            "multitenant_namespace_prefix": "mt_",
+        },
+        db_case_config=None,
+        drop_old=False,
+    )
+    db._multitenant_insert_counts = RacingCounts(lambda: getattr(db, "_multitenant_insert_counts_lock", None))
+    results = []
+
+    def insert_one(row_id):
+        results.append(
+            db.insert_embeddings(
+                embeddings=[[float(row_id), 0.0]],
+                metadata=[row_id],
+                tenant_labels_data=["tenant_0000"],
+            )
+        )
+
+    with db.init():
+        threads = [threading.Thread(target=insert_one, args=(row_id,)) for row_id in (1, 2)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+
+    assert len(fake_index.upserts) == 2
+    assert sorted(results) == [(1, None), (1, None)]
+    assert dict(db._multitenant_insert_counts) == {"tenant_0000": 2}
