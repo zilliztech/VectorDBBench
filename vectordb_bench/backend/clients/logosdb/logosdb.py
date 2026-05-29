@@ -1,8 +1,8 @@
 import logging
-import os
 import shutil
 from collections.abc import Iterable
 from contextlib import contextmanager
+from pathlib import Path
 
 import numpy as np
 
@@ -30,7 +30,7 @@ class LogosDB(VectorDB):
         self.uri = db_config["uri"]
         self.db = None
 
-        if drop_old and os.path.exists(self.uri):
+        if drop_old and Path(self.uri).exists():
             log.info(f"{self.name} drop_old: removing {self.uri}")
             shutil.rmtree(self.uri)
 
