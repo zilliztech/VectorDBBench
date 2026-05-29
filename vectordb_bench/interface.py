@@ -163,7 +163,7 @@ class BenchMarkRunner:
                 return
 
             c_results = []
-            latest_runner, cached_load_duration = None, None
+            latest_loaded_reuse_key, cached_load_duration = None, None
             for idx, runner in enumerate(running_task.case_runners):
                 case_res = CaseResult(
                     metrics=Metric(),
@@ -171,7 +171,10 @@ class BenchMarkRunner:
                 )
 
                 drop_old = TaskStage.DROP_OLD in runner.config.stages
-                if (latest_runner and runner == latest_runner) or not self.drop_old:
+                reuse_key = runner.load_reuse_key()
+                if reuse_key is not None and reuse_key == latest_loaded_reuse_key:
+                    drop_old = False
+                if not self.drop_old:
                     drop_old = False
                 num_cases = running_task.num_cases()
                 try:
@@ -182,14 +185,12 @@ class BenchMarkRunner:
                         f"result={case_res.metrics}, label={case_res.label}"
                     )
 
-                    # cache the latest succeeded runner
-                    latest_runner = runner
-
-                    # cache the latest drop_old=True load_duration of the latest succeeded runner
-                    cached_load_duration = case_res.metrics.load_duration if drop_old else cached_load_duration
+                    if drop_old and TaskStage.LOAD in runner.config.stages and reuse_key is not None:
+                        latest_loaded_reuse_key = reuse_key
+                        cached_load_duration = case_res.metrics.load_duration
 
                     # use the cached load duration if this case didn't drop the existing collection
-                    if not drop_old:
+                    if not drop_old and reuse_key is not None and reuse_key == latest_loaded_reuse_key:
                         case_res.metrics.load_duration = cached_load_duration if cached_load_duration else 0.0
                 except (LoadTimeoutError, PerformanceTimeoutError) as e:
                     log.warning(f"[{idx+1}/{num_cases}] case {runner.display()} failed to run, reason={e}")

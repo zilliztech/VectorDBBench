@@ -62,32 +62,81 @@ class CaseRunner(BaseModel):
 
     def __eq__(self, obj: any):
         if isinstance(obj, CaseRunner):
-            return (
-                self.ca.label == CaseLabel.Performance
-                and self.config.db == obj.config.db
-                and self.config.db_case_config == obj.config.db_case_config
-                and self.ca.dataset == obj.ca.dataset
-                and self.ca.with_scalar_labels == obj.ca.with_scalar_labels
-            )
+            key = self.load_reuse_key()
+            return key is not None and key == obj.load_reuse_key()
         return False
 
     def __hash__(self) -> int:
         """Hash method to maintain consistency with __eq__ method."""
-        return hash(
-            (
-                self.ca.label,
-                self.config.db,
-                self._db_case_config_hash_key(),
-                self.ca.dataset,
-                self.ca.with_scalar_labels,
-            )
+        return hash(self.load_reuse_key())
+
+    def load_reuse_key(self) -> tuple | None:
+        if self.ca.label != CaseLabel.Performance:
+            return None
+        return (
+            self.config.db.value,
+            self._db_config_hash_key(),
+            self._db_case_config_hash_key(),
+            self._collection_name_hash_key(),
+            self._dataset_hash_key(),
+            self.ca.with_scalar_labels,
+            self.ca.is_multitenant,
+            self._multitenant_routing_hash_key(),
         )
 
-    def _db_case_config_hash_key(self) -> str | object:
-        db_case_config = self.config.db_case_config
-        if hasattr(db_case_config, "model_dump_json"):
-            return db_case_config.model_dump_json()
-        return db_case_config
+    @classmethod
+    def _hashable_value(cls, value: object) -> object:
+        if isinstance(value, dict):
+            hashable = tuple(sorted((str(k), cls._hashable_value(v)) for k, v in value.items()))
+        elif isinstance(value, (list, tuple)):
+            hashable = tuple(cls._hashable_value(v) for v in value)
+        elif isinstance(value, (set, frozenset)):
+            hashable = tuple(sorted((cls._hashable_value(v) for v in value), key=repr))
+        elif isinstance(value, Enum):
+            hashable = value.value
+        elif hasattr(value, "model_dump"):
+            hashable = cls._hashable_value(value.model_dump(mode="json"))
+        elif hasattr(value, "get_secret_value"):
+            hashable = value.get_secret_value()
+        else:
+            hashable = value
+        return hashable
+
+    def _db_config_hash_key(self) -> object:
+        db_config = self.config.db_config
+        if hasattr(db_config, "to_dict"):
+            return self._hashable_value(db_config.to_dict())
+        return self._hashable_value(db_config)
+
+    def _db_case_config_hash_key(self) -> object:
+        return self._hashable_value(self.config.db_case_config)
+
+    def _collection_name_hash_key(self) -> str | None:
+        return self._doris_collection_name()
+
+    def _dataset_hash_key(self) -> object:
+        return self._hashable_value(self.ca.dataset.data)
+
+    def _multitenant_routing_hash_key(self) -> tuple | None:
+        if not self.ca.is_multitenant:
+            return None
+        return (
+            getattr(self.ca, "tenant_count", None),
+            getattr(self.ca, "tenant_prefix", None),
+            getattr(self.ca, "tenant_id_width", None),
+            getattr(self.ca, "tenant_distribution", None),
+        )
+
+    def _doris_collection_name(self) -> str | None:
+        if self.config.db != DB.Doris:
+            return None
+        case_type_name = self.config.case_config.case_id.name
+        base = f"{case_type_name.lower()}"
+        base = re.sub(r"[^a-z0-9_]+", "_", base).strip("_")
+        if len(base) > 63:
+            h = hashlib.md5(base.encode(), usedforsecurity=False).hexdigest()[:6]
+            base = f"{base[:(63-7)]}_{h}"
+        return base
 
     def display(self) -> dict:
         c_dict = self.ca.dict(
@@ -119,17 +168,7 @@ class CaseRunner(BaseModel):
         # Compose a compact, case-unique collection/table name for Doris to avoid cross-case interference
         collection_name = None
         try:
-            if self.config.db == DB.Doris:
-                # Primary identifier = case-type enum name from CLI (e.g., Performance768D10M)
-                case_type_name = self.config.case_config.case_id.name
-                base = f"{case_type_name.lower()}"
-                # Sanitize to [a-z0-9_]
-                base = re.sub(r"[^a-z0-9_]+", "_", base).strip("_")
-                # Cap to 63 chars; add short hash if truncated
-                if len(base) > 63:
-                    h = hashlib.md5(base.encode(), usedforsecurity=False).hexdigest()[:6]
-                    base = f"{base[:(63-7)]}_{h}"
-                collection_name = base
+            collection_name = self._doris_collection_name()
         except Exception:
             # If anything goes wrong, fall back silently; Doris will use its default name logic
             collection_name = None
