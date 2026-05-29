@@ -29,7 +29,7 @@ backend:
 - Milvus: `docs/fts-backends/milvus.md`
 - Elasticsearch: `docs/fts-backends/elasticsearch.md`
 - Vespa: `docs/fts-backends/vespa.md`
-- TurboPuffer: `docs/fts-backends/turbopuffer.md` (TODO)
+- TurboPuffer: `docs/fts-backends/turbopuffer.md`
 
 Out of scope for the first E2E pass:
 
@@ -99,6 +99,19 @@ References:
 - https://milvus.io/docs/install_standalone-docker-compose.md
 - https://milvus.io/docs/full-text-search.md
 - https://milvus.io/docs/analyzer-overview.md
+
+TurboPuffer:
+
+- TurboPuffer is a managed service, so there is no server-side Docker
+  deployment for this E2E path.
+- Use a fresh namespace for each benchmark run and delete it during teardown.
+- Keep the API key out of shell command arguments and logs. Prefer a local
+  config file with restrictive file permissions, or interactive secret input.
+
+References:
+
+- https://turbopuffer.com/pricing
+- https://turbopuffer.com/docs
 
 ## Common Environment
 

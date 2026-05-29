@@ -180,6 +180,17 @@ class TurboPuffer(VectorDB):
             return [self._namespace_name_for_tenant(tenant) for tenant in self.multitenant_tenant_labels]
         return [self.namespace]
 
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state.pop("client", None)
+        state.pop("ns", None)
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.client = self._create_client()
+        self.ns = None
+
     @classmethod
     def supports_full_text_search(cls) -> bool:
         return True

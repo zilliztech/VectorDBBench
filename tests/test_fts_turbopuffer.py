@@ -1,4 +1,5 @@
 import inspect
+import pickle
 
 import pytest
 from turbopuffer.resources.namespaces import NamespacesResource
@@ -35,6 +36,37 @@ def test_turbopuffer_fts_config_defaults():
 
 def test_turbopuffer_declares_full_text_support():
     assert TurboPuffer.supports_full_text_search() is True
+
+
+def test_turbopuffer_recreates_sdk_client_after_pickle(monkeypatch):
+    created = []
+
+    class Client:
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+            created.append(kwargs)
+
+    monkeypatch.setattr("vectordb_bench.backend.clients.turbopuffer.turbopuffer.tpuf.Turbopuffer", Client)
+
+    db = TurboPuffer(
+        dim=0,
+        db_config={
+            "api_key": "key",
+            "region": "aws-us-west-2",
+            "api_base_url": "https://api.turbopuffer.com",
+            "namespace": "namespace",
+        },
+        db_case_config=TurboPufferFtsConfig(),
+    )
+    db.ns = object()
+
+    restored = pickle.loads(pickle.dumps(db))
+
+    assert restored.ns is None
+    assert isinstance(restored.client, Client)
+    assert created == [
+        {"api_key": "key", "region": "aws-us-west-2", "base_url": "https://api.turbopuffer.com"},
+    ]
 
 
 def test_turbopuffer_sdk_write_uses_upsert_columns_keyword():
