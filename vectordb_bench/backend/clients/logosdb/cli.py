@@ -32,6 +32,10 @@ class LogosDBTypedDict(CommonTypedDict):
 def LogosDB(**parameters: Unpack[LogosDBTypedDict]):
     from .config import LogosDBConfig, LogosDBIndexConfig
 
+    # LogosDB is documented as single-process; disable concurrent search
+    # until a thread-safe concurrent runner is available.
+    parameters["search_concurrent"] = False
+
     run(
         db=DBTYPE,
         db_config=LogosDBConfig(uri=parameters["uri"]),
