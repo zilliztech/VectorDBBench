@@ -22,7 +22,7 @@ class CustomDatasetConfig(BaseModel):
     test_col_name: str = "emb"
     gt_col_name: str = "neighbors_id"
     scalar_labels_name: str = "scalar_labels"
-    label_percentages: list[str] = []
+    label_percentages: list[float] = []
     with_label_percentages: list[float] = [0.001, 0.02, 0.5]
 
 

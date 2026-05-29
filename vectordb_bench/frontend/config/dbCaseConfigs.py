@@ -2970,6 +2970,223 @@ PolarDBConfig = [
     CaseConfigParamInput_SQType_PolarDB,
 ]
 
+CaseConfigParamInput_VERSION_GaussVector = CaseConfigInput(
+    label=CaseConfigParamType.version,
+    inputType=InputType.option,
+    inputConfig={
+        "option"= ["102.1.0" ,"103.0.0"],
+        "default": "102.1.0",
+    },
+)
+
+CaseConfigParamInput_IndexType_GaussVector = CaseConfigInput(
+    label=CaseConfigParamType.IndexType,
+    inputType=InputType.option,
+    inputConfig={
+        "options": [IndexType.GsDiskANN.value],
+    },
+)
+
+CaseConfigParamInput_QUEUE_SIZE_GaussVector = CaseConfigInput(
+    label=CaseConfigParamType.queue_size,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 64,
+        "max": 1000,
+        "value": 100,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.GsDiskANN.value,
+)
+
+CaseConfigParamInput_DISKANN_NUM_PARALLELS_GaussVector = CaseConfigInput(
+    label=CaseConfigParamType.num_parallels,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 64,
+        "value": 16,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.GsDiskANN.value,
+)
+
+CaseConfigParamInput_LAMBDA_FOR_BALANCE_GaussVector = CaseConfigInput(
+    label=CaseConfigParamType.lambda_for_balance,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 0.0,
+        "max": 1.0,
+        "value": 0.00001,
+        "step": 0.00001,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.GsDiskANN.value 
+    and config.get(CaseConfigParamType.version) < "103.0.0",
+)
+
+CaseConfigParamInput_ENABLE_PQ_GaussVector = CaseConfigInput(
+    label=CaseConfigParamType.enable_pq,
+    inputType=InputType.Bool,
+    inputConfig={
+        "value": True,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.GsDiskANN.value 
+    and config.get(CaseConfigParamType.version) < "103.0.0",
+)
+
+CaseConfigParamInput_SUBGRAPH_COUNT_GaussVector = CaseConfigInput(
+    label=CaseConfigParamType.subgraph_count,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 32,
+        "value": 1,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.GsDiskANN.value,
+)
+
+CaseConfigParamInput_ENABLE_VECTOR_COPY_GaussVector = CaseConfigInput(
+    label=CaseConfigParamType.enable_vector_copy,
+    inputType=InputType.Bool,
+    inputConfig={
+        "value": False,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.GsDiskANN.value,
+)
+
+CaseConfigParamInput_BUILD_WITH_QUANTIZED_VECTOR_GaussVector = CaseConfigInput(
+    label=CaseConfigParamType.build_with_quantized_vector,
+    inputType=InputType.Bool,
+    inputConfig={
+        "value": False,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.GsDiskANN.value,
+)
+
+CaseConfigParamInput_GRAPH_DEGREE_GaussVector = CaseConfigInput(
+    label=CaseConfigParamType.graph_degree,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 48,
+        "max": 256,
+        "value": 96,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.GsDiskANN.value,
+)
+
+CaseConfigParamInput_GSDISKANN_QUANTIZATION_TYPE_GaussVector = CaseConfigInput(
+    label=CaseConfigParamType.quantization_type,
+    inputType=InputType.option,
+    inputConfig={
+        "option": ["lvq", "pq"],
+        "default": "lvq",
+    },
+    isDisplayed=lambda config: (config.get(CaseConfigParamType.enable_pq, False)
+        or config.get(CaseConfigParamType.version, None) >= "103.0.0")
+    and config.get(CaseConfigParamType.IndexType, None) == IndexType.GsDiskANN.value,
+)
+
+CaseConfigParamInput_PQ_NESG_GaussVector = CaseConfigInput(
+    label=CaseConfigParamType.pq_nseg,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 65535,
+        "value": 128,
+    },
+    isDisplayed=lambda config: (config.get(CaseConfigParamType.enable_pq, False)
+        or config.get(CaseConfigParamType.version, None) >= "103.0.0")
+    and config.get(CaseConfigParamType.quantization_type, None) == "pq"
+    and config.get(CaseConfigParamType.IndexType, None) == IndexType.GsDiskANN.value,
+)
+
+CaseConfigParamInput_PQ_NCLUS_GaussVector = CaseConfigInput(
+    label=CaseConfigParamType.pq_nclus,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 2,
+        "max": 256,
+        "value": 16,
+    },
+    isDisplayed=lambda config: (config.get(CaseConfigParamType.enable_pq, False)
+        or config.get(CaseConfigParamType.version, None) >= "103.0.0")
+    and config.get(CaseConfigParamType.quantization_type, None) == "pq"
+    and config.get(CaseConfigParamType.IndexType, None) == IndexType.GsDiskANN.value,
+)
+
+CaseConfigParamInput_USING_CLUSTERING_FOR_PARALLEL_GaussVector = CaseConfigInput(
+    label=CaseConfigParamType.using_clustering_for_parallel,
+    inputType=InputType.Bool,
+    inputConfig={
+        "value": False,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.GsDiskANN.value,
+)
+
+CaseConfigParamInput_MAINTENANCE_WORK_MEM_GaussVector = CaseConfigInput(
+    label=CaseConfigParamType.maintenance_work_mem,
+    inputType=InputType.Text,
+    displayLabel="maintenance_work_mem"
+    inputConfig={
+        "value": "8GB",
+    },
+)
+
+CaseConfigParamInput_USING_MEM_INDEX_MODE_GaussVector = CaseConfigInput(
+    label=CaseConfigParamType.modify_vector_index_mode,
+    inputType=InputType.Option,
+    inputConfig={
+        "options": ["1", "2", "3"],
+        "default": "2",
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.GsDiskANN.value,
+)
+
+CaseConfigParamInput_LVQ_NCLUS_GaussVector = CaseConfigInput(
+    label=CaseConfigParamType.lvq_nclus,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 2,
+        "max": 128,
+        "value": 128,
+    },
+    isDisplayed=lambda config: (config.get(CaseConfigParamType.enable_pq, False)
+        or config.get(CaseConfigParamType.version, None) >= "103.0.0")
+    and config.get(CaseConfigParamType.quantization_type, None) == "lvq"
+    and config.get(CaseConfigParamType.IndexType, None) == IndexType.GsDiskANN.value,
+)
+
+CaseConfigParamInput_DISKANN_PROBE_NCANDIDATES_GaussVector = CaseConfigInput(
+    label=CaseConfigParamType.diskann_probe_ncandidates,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 32768,
+        "value": 128,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.GsDiskANN.value,
+)
+
+# GaussVector configuration
+GaussVectorConfig = [
+    CaseConfigParamInput_VERSION_GaussVector,
+    CaseConfigParamInput_IndexType_GaussVector,
+    CaseConfigParamInput_QUEUE_SIZE_GaussVector,
+    CaseConfigParamInput_DISKANN_NUM_PARALLELS_GaussVector,
+    CaseConfigParamInput_LAMBDA_FOR_BALANCE_GaussVector,
+    CaseConfigParamInput_ENABLE_PQ_GaussVector,
+    CaseConfigParamInput_SUBGRAPH_COUNT_GaussVector,
+    CaseConfigParamInput_ENABLE_VECTOR_COPY_GaussVector,
+    CaseConfigParamInput_BUILD_WITH_QUANTIZED_VECTOR_GaussVector,
+    CaseConfigParamInput_GRAPH_DEGREE_GaussVector,
+    CaseConfigParamInput_GSDISKANN_QUANTIZATION_TYPE_GaussVector,
+    CaseConfigParamInput_PQ_NESG_GaussVector,
+    CaseConfigParamInput_PQ_NCLUS_GaussVector,
+    CaseConfigParamInput_USING_CLUSTERING_FOR_PARALLEL_GaussVector,
+    CaseConfigParamInput_LVQ_NCLUS_GaussVector,
+    CaseConfigParamInput_DISKANN_PROBE_NCANDIDATES_GaussVector,
+    CaseConfigParamInput_MAINTENANCE_WORK_MEM_GaussVector,
+    CaseConfigParamInput_USING_MEM_INDEX_MODE_GaussVector,
+]
+
 # Map DB to config
 CASE_CONFIG_MAP = {
     DB.Milvus: {
@@ -3063,6 +3280,10 @@ CASE_CONFIG_MAP = {
     DB.PolarDB: {
         CaseLabel.Load: PolarDBConfig,
         CaseLabel.Performance: PolarDBConfig,
+    },
+    DB.GaussVector: {
+        CaseLabel.Load: GaussVectorConfig,
+        CaseLabel.Performance: GaussVectorConfig,
     },
 }
 

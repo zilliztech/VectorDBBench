@@ -52,6 +52,7 @@ class IndexType(StrEnum):
     SVS_VAMANA_LEANVEC = "SVS_VAMANA_LEANVEC"
     Hologres_HGraph = "HGraph"
     Hologres_Graph = "Graph"
+    GsDiskANN = "GsDiskANN"
     NONE = "NONE"
 
 

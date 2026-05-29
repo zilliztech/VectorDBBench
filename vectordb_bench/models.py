@@ -175,6 +175,22 @@ class CaseConfigParamType(Enum):
     exbits = "exbits"
     number_of_regions = "number_of_regions"
 
+    # GaussVector
+    version = "version"
+    num_parallels = "num_parallels"
+    queue_size = "queue_size"
+    using_clustering_for_parallel = "using_clustering_for_parallel"
+    lambda_for_balance = "lambda_for_balance"
+    enable_pq = "enable_pq"
+    subgraph_count = "subgraph_count"
+    enable_vector_copy = "enable_vector_copy"
+    build_with_quantized_vector = "build_with_quantized_vector"
+    quantization_type = "quantization_type"
+    pq_nseg = "pq_nseg"
+    pq_nclus = "pq_nclus"
+    lvq_nclus = "lvq_nclus"
+    diskann_probe_ncandidates = "diskann_probe_ncandidates"
+    modify_vector_index_mode = "modify_vector_index_mode"
 
 class CustomizedCase(BaseModel):
     pass

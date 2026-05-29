@@ -61,6 +61,7 @@ All the database client supported
 | zvec                     | `pip install vectordb-bench[zvec]`          |
 | endee                    | `pip install vectordb-bench[endee]`         |
 | lindorm                  | `pip install vectordb-bench[lindorm]`       |
+| gaussvector              | `pip install vectordb-bench[gaussvector]`   |
 
 ### Run
 
@@ -549,6 +550,73 @@ To list the options for Lindorm, execute `vectordbbench lindormhnsw --help`, The
   --ef-construction INTEGER       hnsw ef-construction  [required]
   --ef-search INTEGER             hnsw ef-search  [required]
 ```
+
+### Run GaussVector from command line
+
+GaussVector is an open-source vector search database developed by Huawei. It supports GsDiskANN index types.
+
+**Example: Run GsDiskANN index test**
+
+```shell
+vectordbbench gaussvectordiskann \
+  --user-name <db_user> --password '<password>' \
+  --host <db_host> --port <db_port> --db-name postgres \
+  --case-type Performance1024D1M \
+  --num-parallels 64 \
+  --quantization-type lvq --lvq-nclus 128 \
+  --diskann-probe-ncandidates 55 \
+  --k 10
+```
+
+To list the options for GaussVector DiskANN, execute `vectordbbench gaussvectordiskann --help`
+
+```text
+$ vectordbbench gaussvectordiskann --help
+Usage: vectordbbench gaussvectordiskann [OPTIONS]
+
+Options:
+ [...]
+  --user-name TEXT                Db username  [required]
+  --host TEXT                     Db host  [required]
+  --port INTEGER                  Db port  [required]
+  --db-name TEXT                  Db name  [required]
+  --queue-size INTEGER            Queue size, 64~1000
+  --num-parallels INTEGER         Number of parallel workers, 1...64
+  --enable-pq BOOLEAN             Enable PQ compression (T or F)
+  --subgraph-count INTEGER        Subgraph count, 0~32
+  --enable-vector-copy BOOLEAN    Enable vector copy (T or F)
+  --build-with-quantized-vector BOOLEAN
+                                  Build with quantized vector (T or F)
+  --graph-degree INTEGER          Graph degree, 48~256
+  --pq-nseg INTEGER               PQ number of segments (only when quantization_type=pq)
+  --pq-nclus INTEGER              PQ number of clusters (only when quantization_type=pq)
+  --quantization-type TEXT        Quantization type (pq/lvq)
+  --lvq-nclus INTEGER             LVQ number of clusters (only when quantization_type=lvq)
+  --maintenance-work-mem TEXT     Memory for index building (e.g. 8GB)
+  --diskann-probe-ncandidates INTEGER
+                                  DiskANN search candidates, 1~max
+  --modify-vector-index-mode TEXT Memory type [1,2,3]
+  --version TEXT                  DB version (e.g. 102.1.0)
+```
+
+Key GaussVector-specific options:
+
+| Option | Description | Notes |
+|--------|-------------|-------|
+| `--num-parallels` | Number of parallel workers | Range: 1~64 |
+| `--enable-pq` | Enable PQ compression | Default: True |
+| `--subgraph-count` | Subgraph count | Range: 0~32 |
+| `--enable-vector-copy` | Enable vector copy | Default: False |
+| `--build-with-quantized-vector` | Build with quantized vector | Default: False |
+| `--graph-degree` | Graph degree for DiskANN | Range: 48~256 |
+| `--quantization-type` | Quantization type | Values: `pq` or `lvq` |
+| `--pq-nseg` | PQ number of segments | Only when `quantization_type=pq` |
+| `--pq-nclus` | PQ number of clusters | Only when `quantization_type=pq` |
+| `--lvq-nclus` | LVQ number of clusters | Only when `quantization_type=lvq` |
+| `--diskann-probe-ncandidates` | DiskANN search candidates | Range: 1~max |
+| `--maintenance-work-mem` | Memory for index building | Default: 8GB |
+| `--modify-vector-index-mode` | Index mode configuration | Values: 1, 2, or 3 |
+| `--version` | Database version | Affects parameter availability |
 
 ### Run PolarDB from command line
 
