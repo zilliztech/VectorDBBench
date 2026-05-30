@@ -11,7 +11,7 @@ def explainPrams(st):
     st.markdown("### 2. Dataset")
     st.markdown("""
 - We provide two embedding datasets:
-    - (1)*[Cohere 768dim](https://huggingface.co/datasets/Cohere/wikipedia-22-12)*, generated using the **Cohere** model based on the Wikipedia corpus. 
+    - (1)*[Cohere 768dim](https://cohere.com/blog/embedding-archives-wikipedia)*, generated using the **Cohere** model based on the Wikipedia corpus.
     - (2)*[Cohere 1024dim](https://huggingface.co/datasets/Cohere/beir-embed-english-v3)*, generated using the **Cohere** embed-english-v3.0 model based on the bioasq corpus.
     - (3)*OpenAI 1536dim*, generated using the **OpenAI** model based on the [C4 corpus](https://huggingface.co/datasets/legacy-datasets/c4).
 """)
