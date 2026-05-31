@@ -61,6 +61,7 @@ All the database client supported
 | zvec                     | `pip install vectordb-bench[zvec]`          |
 | endee                    | `pip install vectordb-bench[endee]`         |
 | lindorm                  | `pip install vectordb-bench[lindorm]`       |
+| ydb                      | `pip install 'vectordb-bench[ydb]'`         |
 
 ### Run
 
@@ -342,6 +343,55 @@ Options:
   --k INTEGER                     K value for number of nearest neighbors to search  [default: 100]
   --num-concurrency TEXT          Comma-separated list of concurrency values  [default: 1,5,10,20,30,40,60,80]
   --help                          Show this message and exit.
+```
+
+### Run YDB from command line
+
+Install the optional client and editable source checkout:
+
+```shell
+pip install -e '.[ydb]'
+```
+
+Set connection parameters (local single-node example):
+
+```shell
+export YDB_ENDPOINT=grpc://localhost:2136
+export YDB_DATABASE=/Root/test
+# optional login/password auth:
+# export YDB_USER=...
+# export YDB_PASSWORD=...
+```
+
+Supported benchmark cases (minimum set):
+
+| Case | Description |
+|------|-------------|
+| `Performance1536D500K` | OpenAI 500K × 1536d, no filter |
+| `Performance768D1M` | Cohere 1M × 768d, no filter |
+| `Performance768D1M1P` / `Performance768D1M99P` | Cohere 1M with `id >= …` filter (1% / 99%) |
+| `Performance1536D500K1P` / `Performance1536D500K99P` | OpenAI 500K with int filter (1% / 99%) |
+| `LabelFilterPerformanceCase` | Optional label filter (`labels = label_XXp`) |
+
+Example:
+
+```shell
+vectordbbench ydb \
+  --case-type Performance768D1M \
+  --load --search-serial --search-concurrent \
+  --kmeans-tree-search-top-size 10
+```
+
+YDB-specific behaviour:
+
+- Vector index type: `vector_kmeans_tree` (built **after** data load, not on an empty table).
+- Filtered cases use index keys `ON (id, embedding)` or `ON (labels, embedding)`; see [YDB vector indexes](https://ydb.tech/docs/ru/dev/vector-indexes).
+- Covering index `COVER (embedding)` is enabled by default (`--cover-embedding`) for better search latency.
+- `PRAGMA ydb.KMeansTreeSearchTopSize` defaults to **10** (`--kmeans-tree-search-top-size`).
+- After index build, the client waits until a probe query against `VIEW index` succeeds.
+
+```shell
+vectordbbench ydb --help
 ```
 
 ### Run OceanBase from command line
@@ -796,7 +846,7 @@ Now we can only run one task at the same time.
 ### Code Structure
 ![image](https://github.com/zilliztech/VectorDBBench/assets/105927039/8c06512e-5419-4381-b084-9c93aed59639)
 ### Client
-Our client module is designed with flexibility and extensibility in mind, aiming to integrate APIs from different systems seamlessly. As of now, it supports Milvus, Zilliz Cloud, Elastic Search, Pinecone, Qdrant Cloud, Weaviate Cloud, PgVector, VectorChord, Redis, Chroma, CockroachDB, etc. Stay tuned for more options, as we are consistently working on extending our reach to other systems.
+Our client module is designed with flexibility and extensibility in mind, aiming to integrate APIs from different systems seamlessly. As of now, it supports Milvus, Zilliz Cloud, Elastic Search, Pinecone, Qdrant Cloud, Weaviate Cloud, PgVector, VectorChord, Redis, Chroma, CockroachDB, YDB, etc. Stay tuned for more options, as we are consistently working on extending our reach to other systems.
 ### Benchmark Cases
 We've developed lots of comprehensive benchmark cases to test vector databases' various capabilities, each designed to give you a different piece of the puzzle. These cases are categorized into four main types:
 #### Capacity Case

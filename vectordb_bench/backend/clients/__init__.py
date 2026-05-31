@@ -63,6 +63,7 @@ class DB(Enum):
     PolarDB = "PolarDB"
     Pinot = "Pinot"
     SeekDB = "SeekDB"
+    YDB = "YDB"
 
     @property
     def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901, PLR0915
@@ -268,6 +269,11 @@ class DB(Enum):
             from .seekdb.seekdb import SeekDB
 
             return SeekDB
+
+        if self == DB.YDB:
+            from .ydb.ydb_client import YDB
+
+            return YDB
 
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
@@ -477,6 +483,11 @@ class DB(Enum):
 
             return SeekDBConfig
 
+        if self == DB.YDB:
+            from .ydb.config import YDBConfig
+
+            return YDBConfig
+
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
 
@@ -666,6 +677,11 @@ class DB(Enum):
             from .seekdb.config import _seekdb_case_config
 
             return _seekdb_case_config.get(index_type)
+
+        if self == DB.YDB:
+            from .ydb.config import YDBIndexConfig
+
+            return YDBIndexConfig
 
         # DB.Pinecone, DB.Redis
         return EmptyDBCaseConfig

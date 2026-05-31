@@ -112,7 +112,7 @@ class CaseRunner(BaseModel):
         return self._hashable_value(self.config.db_case_config)
 
     def _collection_name_hash_key(self) -> str | None:
-        return self._doris_collection_name()
+        return self._case_unique_collection_name()
 
     def _dataset_hash_key(self) -> object:
         return self._hashable_value(self.ca.dataset.data)
@@ -127,8 +127,8 @@ class CaseRunner(BaseModel):
             getattr(self.ca, "tenant_distribution", None),
         )
 
-    def _doris_collection_name(self) -> str | None:
-        if self.config.db != DB.Doris:
+    def _case_unique_collection_name(self) -> str | None:
+        if self.config.db not in (DB.Doris, DB.YDB):
             return None
         case_type_name = self.config.case_config.case_id.name
         base = f"{case_type_name.lower()}"
@@ -165,16 +165,20 @@ class CaseRunner(BaseModel):
 
     def init_db(self, drop_old: bool = True) -> None:
         db_cls = self.config.db.init_cls
-        # Compose a compact, case-unique collection/table name for Doris to avoid cross-case interference
+        # Compose a compact, case-unique collection/table name for Doris/YDB to avoid cross-case interference
         collection_name = None
         try:
-            collection_name = self._doris_collection_name()
+            collection_name = self._case_unique_collection_name()
         except Exception:
-            # If anything goes wrong, fall back silently; Doris will use its default name logic
+            # If anything goes wrong, fall back silently; client will use its default name logic
             collection_name = None
 
-        # Check if collection_name is in the db_config (e.g., for Zilliz, Milvus)
         db_config_dict = self.config.db_config.to_dict()
+        explicit_table_name = db_config_dict.pop("table_name", None) or None
+        if explicit_table_name:
+            collection_name = explicit_table_name
+
+        # Check if collection_name is in the db_config (e.g., for Zilliz, Milvus)
         if "collection_name" in db_config_dict and not collection_name:
             collection_name = db_config_dict.pop("collection_name")
 
@@ -183,6 +187,8 @@ class CaseRunner(BaseModel):
             extra_db_kwargs["collection_name"] = collection_name
         if self.ca.is_multitenant:
             extra_db_kwargs["multitenant_tenant_labels"] = self.ca.tenant_labels()
+
+        extra_db_kwargs["filters"] = self.ca.filters
 
         self.db = db_cls(
             dim=self.ca.dataset.data.dim,

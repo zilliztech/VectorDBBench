@@ -39,6 +39,7 @@ from ..backend.clients.seekdb.cli import SeekDBHNSW
 from ..backend.clients.tencent_elasticsearch.cli import TencentElasticsearch
 from ..backend.clients.test.cli import Test
 from ..backend.clients.tidb.cli import TiDB
+from ..backend.clients.ydb.cli import YDB
 from ..backend.clients.turbopuffer.cli import TurboPuffer, TurboPufferUnpin
 from ..backend.clients.vectorchord.cli import VectorChordGraph, VectorChordRQ
 from ..backend.clients.vespa.cli import Vespa
@@ -66,6 +67,7 @@ cli.add_command(OceanBaseHNSW)
 cli.add_command(OceanBaseIVF)
 cli.add_command(MariaDBHNSW)
 cli.add_command(TiDB)
+cli.add_command(YDB)
 cli.add_command(CockroachDBCli)
 cli.add_command(Clickhouse)
 cli.add_command(Vespa)
