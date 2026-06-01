@@ -922,6 +922,11 @@ class FtsPerformanceCase(Case):
     def filters(self) -> Filter:
         return non_filter
 
+    def estimated_payload_bytes_per_query(self, k: int | None) -> int:
+        if k is None:
+            k = config.K_DEFAULT
+        return self.payload_profile.estimated_bytes_per_query(k=k, dim=0)
+
 
 class FTSmsmarcoPerformance(FtsPerformanceCase):
     case_id: CaseType = CaseType.FTSmsmarcoPerformance

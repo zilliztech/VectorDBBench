@@ -1,4 +1,6 @@
 from types import SimpleNamespace
+import pickle
+from queue import Empty
 import time
 
 import pytest
@@ -8,7 +10,7 @@ from vectordb_bench.backend.runner.mp_runner import MultiProcessingSearchRunner
 from vectordb_bench.backend.runner.serial_runner import SerialFtsInsertRunner, SerialSearchRunner
 from vectordb_bench.backend.task_runner import CaseRunner
 from vectordb_bench.backend.workload import WorkloadKind
-from vectordb_bench.models import LoadTimeoutError, PerformanceTimeoutError
+from vectordb_bench.models import ConcurrencySlotTimeoutError, LoadTimeoutError, PerformanceTimeoutError
 
 
 class FakeDB:
@@ -144,6 +146,54 @@ def test_fts_run_routes_to_shared_perf_case():
 
     assert runner.run(drop_old=False) == "metric"
     assert calls == [("pre", False), ("perf", False)]
+
+
+def test_mp_runner_rebuilds_search_function_after_pickle():
+    runner = MultiProcessingSearchRunner(
+        db=FakeDB(),
+        test_data=["query"],
+        workload_kind=WorkloadKind.FULL_TEXT_BM25,
+    )
+
+    restored = pickle.loads(pickle.dumps(runner))
+
+    assert restored._search_once("alpha") == ["doc-1"]
+
+
+def test_mp_runner_waits_for_ready_signals_without_qsize():
+    class ReadyQueue:
+        def __init__(self):
+            self.values = [1, 1]
+
+        def get(self, timeout=None):
+            if not self.values:
+                raise Empty
+            return self.values.pop()
+
+    runner = MultiProcessingSearchRunner(
+        db=FakeDB(),
+        test_data=["query"],
+        concurrency_timeout=1,
+        workload_kind=WorkloadKind.FULL_TEXT_BM25,
+    )
+
+    runner._wait_for_queue_fill(ReadyQueue(), size=2)
+
+
+def test_mp_runner_ready_wait_times_out_when_workers_do_not_signal():
+    class EmptyQueue:
+        def get(self, timeout=None):
+            raise Empty
+
+    runner = MultiProcessingSearchRunner(
+        db=FakeDB(),
+        test_data=["query"],
+        concurrency_timeout=0.01,
+        workload_kind=WorkloadKind.FULL_TEXT_BM25,
+    )
+
+    with pytest.raises(ConcurrencySlotTimeoutError):
+        runner._wait_for_queue_fill(EmptyQueue(), size=1)
 
 
 def test_vector_load_train_data_is_not_individually_timed(monkeypatch):

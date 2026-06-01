@@ -62,10 +62,12 @@ def test_turbopuffer_recreates_sdk_client_after_pickle(monkeypatch):
         db_case_config=TurboPufferFtsConfig(),
     )
     db.ns = object()
+    db._ns_cache = {"namespace": object()}
 
     restored = pickle.loads(pickle.dumps(db))
 
     assert restored.ns is None
+    assert restored._ns_cache == {}
     assert isinstance(restored.client, Client)
     assert created == [
         {"api_key": "key", "region": "aws-us-west-2", "base_url": "https://api.turbopuffer.com"},

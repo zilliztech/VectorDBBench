@@ -184,11 +184,13 @@ class TurboPuffer(VectorDB):
         state = self.__dict__.copy()
         state.pop("client", None)
         state.pop("ns", None)
+        state.pop("_ns_cache", None)
         return state
 
     def __setstate__(self, state):
         self.__dict__.update(state)
         self.client = self._create_client()
+        self._ns_cache = {}
         self.ns = None
 
     @classmethod

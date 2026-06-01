@@ -7,6 +7,7 @@ import time
 import traceback
 from collections.abc import Iterable
 from multiprocessing.queues import Queue
+from queue import Empty
 
 import numpy as np
 from hdrh.histogram import HdrHistogram
@@ -73,6 +74,21 @@ class MultiProcessingSearchRunner:
 
         self.test_data = test_data
         log.debug(f"test dataset columns: {len(test_data)}")
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state.pop("_search_func", None)
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        if self.workload_kind == WorkloadKind.FULL_TEXT_BM25:
+            self._search_func = self.db.search_documents
+        elif self.workload_kind == WorkloadKind.VECTOR:
+            self._search_func = self._search_embedding
+        else:
+            msg = f"Unsupported search workload: {self.workload_kind}"
+            raise NotImplementedError(msg)
 
     def _search_embedding(self, emb: list[float], tenant: str | None = None) -> list[int]:
         if tenant is None:
@@ -215,13 +231,22 @@ class MultiProcessingSearchRunner:
         )
 
     def _wait_for_queue_fill(self, q: Queue, size: int):
-        wait_t = 0
-        while q.qsize() < size:
+        ready_count = 0
+        wait_t = 0.0
+        while ready_count < size:
             sleep_t = size if size < 10 else 10
-            wait_t += sleep_t
-            if wait_t > self.concurrency_timeout > 0:
-                raise ConcurrencySlotTimeoutError
-            time.sleep(sleep_t)
+            if self.concurrency_timeout > 0:
+                remaining_t = self.concurrency_timeout - wait_t
+                if remaining_t <= 0:
+                    raise ConcurrencySlotTimeoutError
+                sleep_t = min(sleep_t, remaining_t)
+            try:
+                q.get(timeout=sleep_t)
+                ready_count += 1
+            except Empty:
+                wait_t += sleep_t
+                if wait_t >= self.concurrency_timeout > 0:
+                    raise ConcurrencySlotTimeoutError
 
     def run(self) -> float:
         """
@@ -296,9 +321,7 @@ class MultiProcessingSearchRunner:
                             executor.submit(self.search_by_dur, duration, self.test_data, q, cond) for i in range(conc)
                         ]
                         # Sync all processes
-                        while q.qsize() < conc:
-                            sleep_t = conc if conc < 10 else 10
-                            time.sleep(sleep_t)
+                        self._wait_for_queue_fill(q, size=conc)
 
                         with cond:
                             cond.notify_all()

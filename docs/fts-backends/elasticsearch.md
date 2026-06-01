@@ -101,12 +101,8 @@ git rev-parse --short HEAD
 The validated baseline used branch `fts`, commit `ab0f5a2`, which includes the
 Milvus runbook commit on top of FTS implementation commit `21a68b1`.
 
-The client Python environment must use `pydantic<2`. The validated EC2 client
-had Pydantic 2 globally, so it used a temporary Pydantic v1 target:
-
-```bash
-export PYTHONPATH=/tmp/vdbbench-pydantic-v1:/home/ubuntu/VectorDBBench
-```
+Current FTS draft code is aligned with Pydantic 2 APIs. Do not export the old
+temporary Pydantic v1 `PYTHONPATH` override when running this branch.
 
 Set benchmark paths and Elasticsearch endpoint:
 
@@ -194,7 +190,6 @@ mkdir -p "$RUN_DIR"
 tmux new-session -d -s "$RUN_ID" "bash -lc '
 set -o pipefail
 cd /home/ubuntu/VectorDBBench
-export PYTHONPATH=/tmp/vdbbench-pydantic-v1:/home/ubuntu/VectorDBBench
 export DATASET_LOCAL_DIR=/tmp/vectordb_bench/dataset
 export RESULTS_LOCAL_DIR=/tmp/vectordb_bench/results
 export NUM_PER_BATCH=100
@@ -337,6 +332,59 @@ conc_qps_list: [143.5116, 365.361, 672.9976, 1227.3373]
 conc_latency_p99_list: [0.03934600790089456, 0.03579974054795457, 0.037561563240014986, 0.05568320580059669]
 conc_latency_p95_list: [0.024235990742454305, 0.02974931430799188, 0.029752372499206096, 0.038332196010742337]
 conc_latency_avg_list: [0.006966784008655295, 0.013679243169195, 0.01485311984437366, 0.016281856296064438]
+```
+
+## Clean Rebench 2026-06-01
+
+Run details:
+
+- Client branch: `fts`, commit `dc90056` plus the local FTS payload-estimate
+  fix for text datasets without vector dimensions.
+- Focused Elasticsearch FTS test:
+  `python3.11 -m pytest tests/test_fts_elastic_cloud.py -q` passed with
+  `16 passed`.
+- Server cleanup before rerun:
+  `sudo docker rm -f es01`, `sudo docker volume rm esdata01`, and
+  `sudo docker volume create esdata01`.
+- Server state: only the Elasticsearch `es01` benchmark container was running
+  for this pass.
+- Elasticsearch image: `docker.elastic.co/elasticsearch/elasticsearch:8.16.0`.
+- Client command: `elasticcloudhnsw` over
+  `MS MARCO Small (100K documents)`.
+- Pydantic note: do not export the old Pydantic v1 `PYTHONPATH`; the current
+  branch uses Pydantic 2 APIs.
+- Run session: `fts_elastic_small_20260601_102358`.
+- Run log:
+  `/home/ubuntu/bench-runs/fts_elastic_small_20260601_102358/run.log`.
+- Status file:
+  `/home/ubuntu/bench-runs/fts_elastic_small_20260601_102358/status`
+  contained `EXIT_CODE=0`.
+- Result file:
+  `/tmp/vectordb_bench/results/ElasticCloud/result_20260601_fts-e2e-elastic-msmarco-small_elasticcloud.json`.
+- Run ID: `7aafed9ce5f340968952ddfe0dc406ea`.
+- Result label: `ResultLabel.NORMAL`.
+- Post-load index check: `vdb_bench_indice` had `docs.count=100000`,
+  `pri=1`, `rep=0`, and green health.
+
+Metrics:
+
+```text
+insert_duration: 29.0169s
+optimize_duration: 30.1862s
+load_duration: 59.2031s
+qps: 3100.5973
+serial_latency_p99: 0.0040s
+serial_latency_p95: 0.0031s
+recall: 0.9118
+ndcg: 0.7159
+mrr: 0.6665
+payload_profile: ids_only
+payload_estimated_bytes_per_query: 2000
+conc_num_list: [1, 5, 10, 20]
+conc_qps_list: [422.7782, 1967.8125, 2861.4449, 3100.5973]
+conc_latency_p99_list: [0.004983134255744516, 0.0051559389336034624, 0.0074622486717999, 0.019758848571218547]
+conc_latency_p95_list: [0.003716600616462528, 0.004015212471131235, 0.005788234970532359, 0.013652694411575787]
+conc_latency_avg_list: [0.002364321899725874, 0.0025393259961678325, 0.003492340989863987, 0.006445788915364328]
 ```
 
 ## Milvus Comparison From Same Test Pass

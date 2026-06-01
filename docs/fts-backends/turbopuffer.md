@@ -50,12 +50,8 @@ git rev-parse --short HEAD
 
 The validated baseline used branch `fts`, commit `1ae680f`.
 
-The client Python environment must use `pydantic<2`. The validated EC2 client
-had Pydantic 2 globally, so it used a temporary Pydantic v1 target:
-
-```bash
-export PYTHONPATH=/tmp/vdbbench-pydantic-v1:/home/ubuntu/VectorDBBench
-```
+Current FTS draft code is aligned with Pydantic 2 APIs. Do not export the old
+temporary Pydantic v1 `PYTHONPATH` override when running this branch.
 
 Set benchmark paths:
 
@@ -63,7 +59,7 @@ Set benchmark paths:
 export DATASET_LOCAL_DIR=/tmp/vectordb_bench/dataset
 export RESULTS_LOCAL_DIR=/tmp/vectordb_bench/results
 export NUM_PER_BATCH=100
-export TURBOPUFFER_API_BASE_URL="https://api.turbopuffer.com"
+export TURBOPUFFER_REGION="aws-us-east-1"
 export TURBOPUFFER_NAMESPACE="vdbbench-fts-tpuf-$(date -u +%Y%m%d-%H%M)-msmarco-small"
 ```
 
@@ -74,16 +70,16 @@ line:
 TPUF_CONFIG="$(mktemp /tmp/turbopuffer-vdbbench.XXXXXX.yml)"
 chmod 600 "$TPUF_CONFIG"
 
-python3.11 - <<'PY' "$TPUF_CONFIG" "$TURBOPUFFER_NAMESPACE" "$TURBOPUFFER_API_BASE_URL"
+python3.11 - <<'PY' "$TPUF_CONFIG" "$TURBOPUFFER_NAMESPACE" "$TURBOPUFFER_REGION"
 import getpass
 import sys
 
-path, namespace, base_url = sys.argv[1:4]
+path, namespace, region = sys.argv[1:4]
 api_key = getpass.getpass("TurboPuffer API key: ")
 with open(path, "w", encoding="utf-8") as f:
     f.write("turbopuffer:\n")
     f.write(f"  api_key: {api_key}\n")
-    f.write(f"  api_base_url: {base_url}\n")
+    f.write(f"  region: {region}\n")
     f.write(f"  namespace: {namespace}\n")
 PY
 ```
@@ -120,6 +116,7 @@ python3.11 -m vectordb_bench.cli.vectordbbench turbopuffer \
 Expected dry-run config:
 
 - `db=<DB.TurboPuffer: 'TurboPuffer'>`
+- `db_config=TurboPufferConfig(..., region='aws-us-east-1', api_base_url=None, namespace='...')`
 - `db_case_config=TurboPufferFtsConfig(time_wait_warmup=60)`
 - `case_id=<CaseType.FTSmsmarcoPerformance: 503>`
 - stages include `drop_old`, `load`, `search_serial`, `search_concurrent`
@@ -138,7 +135,6 @@ cat > "$RUN_DIR/run.sh" <<'RUN'
 #!/usr/bin/env bash
 set -o pipefail
 cd /home/ubuntu/VectorDBBench
-export PYTHONPATH=/tmp/vdbbench-pydantic-v1:/home/ubuntu/VectorDBBench
 export DATASET_LOCAL_DIR=/tmp/vectordb_bench/dataset
 export RESULTS_LOCAL_DIR=/tmp/vectordb_bench/results
 export NUM_PER_BATCH=100
@@ -194,7 +190,7 @@ import turbopuffer as tpuf
 api_key = getpass.getpass("TurboPuffer API key: ")
 client = tpuf.Turbopuffer(
     api_key=api_key,
-    base_url=os.environ.get("TURBOPUFFER_API_BASE_URL", "https://api.turbopuffer.com"),
+    region=os.environ["TURBOPUFFER_REGION"],
 )
 ns = client.namespace(os.environ["TURBOPUFFER_NAMESPACE"])
 print(ns.metadata())
@@ -220,8 +216,8 @@ python3.11 -m vectordb_bench.cli.vectordbbench turbopuffer \
 
 The VectorDBBench search runner uses multiprocessing with spawn semantics. The
 TurboPuffer SDK client contains non-picklable synchronization state, so the
-VectorDBBench TurboPuffer adapter must exclude and recreate the SDK client when
-the backend object is pickled for worker processes.
+VectorDBBench TurboPuffer adapter must exclude and recreate the SDK client and
+namespace cache when the backend object is pickled for worker processes.
 
 ## Teardown For Fresh Runs
 
@@ -238,7 +234,7 @@ namespace = os.environ["TURBOPUFFER_NAMESPACE"]
 api_key = getpass.getpass("TurboPuffer API key: ")
 client = tpuf.Turbopuffer(
     api_key=api_key,
-    base_url=os.environ.get("TURBOPUFFER_API_BASE_URL", "https://api.turbopuffer.com"),
+    region=os.environ["TURBOPUFFER_REGION"],
 )
 client.namespace(namespace).delete_all()
 print(f"deleted namespace: {namespace}")
@@ -298,3 +294,67 @@ Baseline caveats:
   completed ingest and warmup but hit the SDK-client pickling issue at search.
 - The client host was not isolated from other session work. Treat this as a
   functional/comparable first pass, not a clean isolated performance number.
+
+## Clean Rebench 2026-06-01
+
+Run details:
+
+- Client branch: `fts`, commit `dc90056` plus local FTS fixes for
+  multiprocessing readiness, TurboPuffer pickling, and text-only payload
+  estimation.
+- Focused TurboPuffer/runner FTS tests:
+  `python3.11 -m pytest tests/test_fts_turbopuffer.py tests/test_fts_runners.py tests/test_fts_cases.py -q`
+  passed with `44 passed`.
+- Server cleanup before rerun: no server Docker deployment applies because
+  TurboPuffer is managed. The server host had no benchmark containers running
+  during this pass.
+- Namespace: `vdbbench-fts-tpuf-20260601-1042-msmarco-small`.
+- Region: `aws-us-east-1`.
+- Client command: `turbopuffer` over `MS MARCO Small (100K documents)`.
+- Pydantic note: do not export the old Pydantic v1 `PYTHONPATH`; the current
+  branch uses Pydantic 2 APIs.
+- Run session: `fts_tpuf_small_20260601_112335`.
+- Run log:
+  `/home/ubuntu/bench-runs/fts_tpuf_small_20260601_112335/run.log`.
+- Status file:
+  `/home/ubuntu/bench-runs/fts_tpuf_small_20260601_112335/status`
+  contained `EXIT_CODE=0`.
+- Result file:
+  `/tmp/vectordb_bench/results/TurboPuffer/result_20260601_fts-e2e-tpuf-msmarco-small_turbopuffer.json`.
+- Run ID: `fde7338c36064402af347f4cb723e268`.
+- Result label: `ResultLabel.NORMAL`.
+
+Namespace state after load:
+
+- Rows: `100000`.
+- Approx logical bytes: `32513593`.
+- Index status: `up-to-date`.
+- Last write: `2026-06-01T11:27:43.000000000Z`.
+
+Metrics:
+
+```text
+insert_duration: 230.3344s
+optimize_duration: 60.2280s
+load_duration: 290.5625s
+qps: 257.3771
+serial_latency_p99: 0.1081s
+serial_latency_p95: 0.0840s
+recall: 0.9125
+ndcg: 0.7156
+mrr: 0.6659
+payload_profile: ids_only
+payload_estimated_bytes_per_query: 2000
+conc_num_list: [1, 5, 10, 20]
+conc_qps_list: [1.3357, 49.4967, 126.8548, 257.3771]
+conc_latency_p99_list: [1.0275259891757742, 0.8396204815921353, 0.11560565704479814, 0.10566185864154222]
+conc_latency_p95_list: [1.013812193996273, 0.12767234214115886, 0.0924412754829973, 0.08505976805463433]
+conc_latency_avg_list: [0.7478653309730495, 0.10084486337411436, 0.07866664697146289, 0.07738712627780352]
+```
+
+Rerun notes:
+
+- Two earlier same-day full runs completed ingest and warmup but stalled before
+  producing final search results because multiprocessing search workers exposed
+  pickling issues. The final run above used the readiness and pickling fixes and
+  completed from `--drop-old --load --search-serial --search-concurrent`.

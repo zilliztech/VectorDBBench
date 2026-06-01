@@ -97,12 +97,8 @@ git rev-parse --short HEAD
 The validated baseline used branch `fts`, commit `80070a5`, which includes the
 Elasticsearch runbook commit on top of the FTS implementation.
 
-The client Python environment must use `pydantic<2`. The validated EC2 client
-had Pydantic 2 globally, so it used a temporary Pydantic v1 target:
-
-```bash
-export PYTHONPATH=/tmp/vdbbench-pydantic-v1:/home/ubuntu/VectorDBBench
-```
+Current FTS draft code is aligned with Pydantic 2 APIs. Do not export the old
+temporary Pydantic v1 `PYTHONPATH` override when running this branch.
 
 Set benchmark paths and the Vespa endpoint:
 
@@ -187,7 +183,6 @@ cat > "$RUN_DIR/run.sh" <<'RUN'
 #!/usr/bin/env bash
 set -o pipefail
 cd /home/ubuntu/VectorDBBench
-export PYTHONPATH=/tmp/vdbbench-pydantic-v1:/home/ubuntu/VectorDBBench
 export DATASET_LOCAL_DIR=/tmp/vectordb_bench/dataset
 export RESULTS_LOCAL_DIR=/tmp/vectordb_bench/results
 export NUM_PER_BATCH=100
@@ -289,3 +284,53 @@ Baseline caveats:
   `make -C build -j8`.
 - Treat this result as a functional/comparable first pass, not as a clean
   isolated performance number.
+
+## Clean Rebench 2026-06-01
+
+Run details:
+
+- Client branch: `fts`, commit `dc90056` plus the local FTS payload-estimate
+  fix for text datasets without vector dimensions.
+- Focused Vespa FTS tests:
+  `python3.11 -m pytest tests/test_fts_vespa.py tests/test_fts_backend_capability.py tests/test_fts_cases.py -q`
+  passed with `30 passed`.
+- Server cleanup before rerun:
+  `docker rm -f vespa`, `sudo find /srv/vespa/var -mindepth 1 -delete`, and
+  `sudo find /srv/vespa/logs -mindepth 1 -delete`.
+- Server state: only the Vespa benchmark container was running for this pass.
+- Vespa image: `vespaengine/vespa:8.694.53`.
+- Client command: `vespa` over `MS MARCO Small (100K documents)`.
+- Pydantic note: do not export the old Pydantic v1 `PYTHONPATH`; the current
+  branch uses Pydantic 2 APIs.
+- Run session: `fts_vespa_small_20260601_103230`.
+- Run log:
+  `/home/ubuntu/bench-runs/fts_vespa_small_20260601_103230/run.log`.
+- Status file:
+  `/home/ubuntu/bench-runs/fts_vespa_small_20260601_103230/status`
+  contained `EXIT_CODE=0`.
+- Result file:
+  `/tmp/vectordb_bench/results/Vespa/result_20260601_fts-e2e-vespa-msmarco-small_vespa.json`.
+- Run ID: `01799f3c154c45269146d299179b347f`.
+- Result label: `ResultLabel.NORMAL`.
+- Post-load smoke query returned `"totalCount":100000`.
+
+Metrics:
+
+```text
+insert_duration: 81.6402s
+optimize_duration: 0.0s
+load_duration: 81.6402s
+qps: 482.1899
+serial_latency_p99: 0.0260s
+serial_latency_p95: 0.0202s
+recall: 0.9416
+ndcg: 0.7509
+mrr: 0.7015
+payload_profile: ids_only
+payload_estimated_bytes_per_query: 2000
+conc_num_list: [1, 5, 10, 20]
+conc_qps_list: [78.8898, 336.8178, 482.1899, 470.0384]
+conc_latency_p99_list: [0.027409066238906255, 0.03436350086471066, 0.04910965925082566, 0.11733379138866437]
+conc_latency_p95_list: [0.02164906209800392, 0.027666533133015033, 0.03846237703692168, 0.0902713987394236]
+conc_latency_avg_list: [0.012674093213950232, 0.014840469867348351, 0.02072369960953106, 0.042517835420612375]
+```

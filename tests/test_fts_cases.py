@@ -6,6 +6,7 @@ from vectordb_bench.backend.clients.milvus.config import MilvusFtsConfig
 from vectordb_bench.backend.clients.turbopuffer.config import TurboPufferFtsConfig, TurboPufferIndexConfig
 from vectordb_bench.backend.clients.vespa.config import VespaFtsConfig, VespaHNSWConfig
 from vectordb_bench.backend.dataset import FtsDatasetWithSizeType
+from vectordb_bench.backend.payload import PayloadProfile
 from vectordb_bench.cli.cli import CommonTypedDict, get_custom_case_config, select_cli_db_case_config
 from vectordb_bench.frontend.config.dbCaseConfigs import (
     CASE_CONFIG_MAP,
@@ -37,6 +38,14 @@ def test_fts_case_accepts_hotpotqa_medium():
     assert case.dataset.data.name == "HotpotQA"
     assert case.dataset.data.size == 1_000_000
     assert "HotpotQA Medium" in case.name
+
+
+def test_fts_case_payload_estimate_does_not_require_vector_dim():
+    case = CaseConfig(case_id=CaseType.FTSmsmarcoPerformance).case
+
+    assert not hasattr(case.dataset.data, "dim")
+    assert case.payload_profile == PayloadProfile.IDS_ONLY
+    assert case.estimated_payload_bytes_per_query(k=100) == 2_000
 
 
 def test_fts_case_items_expose_small_and_medium_by_default():

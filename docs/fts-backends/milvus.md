@@ -114,15 +114,8 @@ git rev-parse --short HEAD
 
 The validated baseline used branch `fts`, commit `21a68b1`.
 
-The client Python environment must use `pydantic<2`. The validated EC2 client
-already had Pydantic 2 globally, so it used a temporary Pydantic v1 target:
-
-```bash
-export PYTHONPATH=/tmp/vdbbench-pydantic-v1:/home/ubuntu/VectorDBBench
-```
-
-In a clean environment, prefer installing the project dependencies so this
-workaround is unnecessary.
+Current FTS draft code is aligned with Pydantic 2 APIs. Do not export the old
+temporary Pydantic v1 `PYTHONPATH` override when running this branch.
 
 Set benchmark paths and Milvus URI:
 
@@ -205,7 +198,6 @@ mkdir -p "$RUN_DIR"
 tmux new-session -d -s "$RUN_ID" "bash -lc '
 set -o pipefail
 cd /home/ubuntu/VectorDBBench
-export PYTHONPATH=/tmp/vdbbench-pydantic-v1:/home/ubuntu/VectorDBBench
 export DATASET_LOCAL_DIR=/tmp/vectordb_bench/dataset
 export RESULTS_LOCAL_DIR=/tmp/vectordb_bench/results
 export NUM_PER_BATCH=100
@@ -365,14 +357,63 @@ conc_latency_p95_list: [0.01070283028820995, 0.029407395451562467, 0.02895582300
 conc_latency_avg_list: [0.003831698230199239, 0.01397923275509955, 0.013673856742792125, 0.01998730334608544]
 ```
 
+## Clean Rebench 2026-06-01
+
+Run details:
+
+- Client branch: `fts`, commit `dc90056` plus the local FTS payload-estimate
+  fix for text datasets without vector dimensions.
+- Focused FTS tests before rerun:
+  `python3.11 -m pytest tests/test_fts_dataset.py tests/test_fts_cases.py tests/test_fts_runners.py tests/test_fts_backend_capability.py tests/test_fts_milvus.py tests/test_fts_format_results.py -q`
+  passed with `46 passed`.
+- Server cleanup before rerun:
+  `sudo docker compose down -v --remove-orphans` and `sudo rm -rf volumes`,
+  followed by `sudo docker compose up -d`.
+- Server state: only the Milvus standalone stack was running for this pass.
+- Server image: `milvusdb/milvus:v2.6.17`.
+- Client command: `milvusfts` over `MS MARCO Small (100K documents)`.
+- Pydantic note: do not export the old Pydantic v1 `PYTHONPATH`; the current
+  branch uses Pydantic 2 APIs.
+- Run session: `fts_milvus_small_20260601_100900`.
+- Run log:
+  `/home/ubuntu/bench-runs/fts_milvus_small_20260601_100900/run.log`.
+- Status file:
+  `/home/ubuntu/bench-runs/fts_milvus_small_20260601_100900/status`
+  contained `EXIT_CODE=0`.
+- Result file:
+  `/tmp/vectordb_bench/results/Milvus/result_20260601_fts-e2e-milvus-msmarco-small_milvus.json`.
+- Run ID: `6a330e8d3fd14fd9852193322e19de8d`.
+- Result label: `ResultLabel.NORMAL`.
+
+Metrics:
+
+```text
+insert_duration: 216.5893s
+optimize_duration: 10.5344s
+load_duration: 227.1237s
+qps: 4098.1460
+serial_latency_p99: 0.0027s
+serial_latency_p95: 0.0022s
+recall: 0.9157
+ndcg: 0.7157
+mrr: 0.6653
+payload_profile: ids_only
+payload_estimated_bytes_per_query: 2000
+conc_num_list: [1, 5, 10, 20]
+conc_qps_list: [567.2801, 2331.7462, 3494.7072, 4098.146]
+conc_latency_p99_list: [0.0026880667638033615, 0.0035670675651635992, 0.005668817160185418, 0.01087720695184544]
+conc_latency_p95_list: [0.00221023999620229, 0.0027692234027199445, 0.0041898298542946575, 0.008188851265003901]
+conc_latency_avg_list: [0.0017611498639764328, 0.0021415530623254057, 0.002856634355362644, 0.004868861634112188]
+```
+
 ## Troubleshooting
 
 Pydantic import errors:
 
-- Symptom: model validation/import errors because the environment uses
-  Pydantic 2.
-- Fix: install project dependencies with `pydantic<2` or use a temporary
-  Pydantic v1 target in `PYTHONPATH`.
+- Symptom: import errors such as missing `field_validator` or `model_validator`
+  when the old temporary Pydantic v1 `PYTHONPATH` target is exported.
+- Fix: unset the temporary Pydantic v1 `PYTHONPATH` override and run with the
+  current branch dependencies.
 
 Client disk pressure:
 
