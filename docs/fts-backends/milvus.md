@@ -406,6 +406,52 @@ conc_latency_p95_list: [0.00221023999620229, 0.0027692234027199445, 0.0041898298
 conc_latency_avg_list: [0.0017611498639764328, 0.0021415530623254057, 0.002856634355362644, 0.004868861634112188]
 ```
 
+## Stability Rerun 2026-06-01
+
+The clean result above was repeated once with the same fresh teardown procedure:
+`sudo docker compose down -v --remove-orphans`, `sudo rm -rf volumes`, and a
+fresh `sudo docker compose up -d`.
+
+Run details:
+
+- Run session: `fts_milvus_small_stability_20260601_115836`.
+- Run log:
+  `/home/ubuntu/bench-runs/fts_milvus_small_stability_20260601_115836/run.log`.
+- Status file:
+  `/home/ubuntu/bench-runs/fts_milvus_small_stability_20260601_115836/status`
+  contained `EXIT_CODE=0`.
+- Result file:
+  `/tmp/vectordb_bench/results/Milvus/result_20260601_fts-e2e-milvus-msmarco-small-stability_milvus.json`.
+- Run ID: `1981d8ea3c7f4282b430c7b3ef1c7115`.
+- Result label: `ResultLabel.NORMAL`.
+
+Metrics:
+
+```text
+insert_duration: 215.9478s
+optimize_duration: 17.5679s
+load_duration: 233.5157s
+qps: 4135.7169
+serial_latency_p99: 0.0027s
+serial_latency_p95: 0.0022s
+recall: 0.9157
+ndcg: 0.7157
+mrr: 0.6653
+payload_profile: ids_only
+payload_estimated_bytes_per_query: 2000
+conc_num_list: [1, 5, 10, 20]
+conc_qps_list: [566.9304, 2317.6759, 3526.9488, 4135.7169]
+conc_latency_p99_list: [0.0027008821396157156, 0.003622065201634541, 0.005597269621212032, 0.010705483118072156]
+conc_latency_p95_list: [0.0022123721195384857, 0.0027939058432821184, 0.004106056515593081, 0.008097446372266857]
+conc_latency_avg_list: [0.001762315369339218, 0.0021546111395611333, 0.002830934044328618, 0.004825849693942325]
+```
+
+Stability observation:
+
+- Best QPS changed from `4098.1460` to `4135.7169`, about `+0.92%`.
+- Recall, NDCG, MRR, p99, and p95 matched the clean run after rounding.
+- This confirms the clean Milvus result is stable for this MS MARCO Small setup.
+
 ## Troubleshooting
 
 Pydantic import errors:

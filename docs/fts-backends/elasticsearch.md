@@ -387,6 +387,55 @@ conc_latency_p95_list: [0.003716600616462528, 0.004015212471131235, 0.0057882349
 conc_latency_avg_list: [0.002364321899725874, 0.0025393259961678325, 0.003492340989863987, 0.006445788915364328]
 ```
 
+## Stability Rerun 2026-06-01
+
+The clean result above was repeated once with the same fresh teardown procedure:
+`sudo docker rm -f es01`, `sudo docker volume rm esdata01`, creation of a new
+`esdata01` volume, and a fresh Elasticsearch container.
+
+Run details:
+
+- Run session: `fts_elastic_small_stability_20260601_120906`.
+- Run log:
+  `/home/ubuntu/bench-runs/fts_elastic_small_stability_20260601_120906/run.log`.
+- Status file:
+  `/home/ubuntu/bench-runs/fts_elastic_small_stability_20260601_120906/status`
+  contained `EXIT_CODE=0`.
+- Result file:
+  `/tmp/vectordb_bench/results/ElasticCloud/result_20260601_fts-e2e-elastic-msmarco-small-stability_elasticcloud.json`.
+- Run ID: `cfd9036f8cd844549b938d03949e86c1`.
+- Result label: `ResultLabel.NORMAL`.
+- Post-load index check: `vdb_bench_indice` had `docs.count=100000`,
+  `pri=1`, `rep=0`, and green health.
+
+Metrics:
+
+```text
+insert_duration: 28.7339s
+optimize_duration: 30.1874s
+load_duration: 58.9212s
+qps: 3113.2707
+serial_latency_p99: 0.0039s
+serial_latency_p95: 0.0031s
+recall: 0.9118
+ndcg: 0.7159
+mrr: 0.6665
+payload_profile: ids_only
+payload_estimated_bytes_per_query: 2000
+conc_num_list: [1, 5, 10, 20]
+conc_qps_list: [416.5153, 1991.3322, 2823.6226, 3113.2707]
+conc_latency_p99_list: [0.005101826833561052, 0.005167710601817814, 0.007752721479628233, 0.01918513192795215]
+conc_latency_p95_list: [0.0038121613906696426, 0.003975166706368327, 0.005961113364901393, 0.013519063941203058]
+conc_latency_avg_list: [0.0023998908056704882, 0.002509365707190424, 0.003539186006160276, 0.006419208822364445]
+```
+
+Stability observation:
+
+- Best QPS changed from `3100.5973` to `3113.2707`, about `+0.41%`.
+- Recall, NDCG, MRR, p95, and load duration were effectively unchanged.
+- This confirms the clean Elasticsearch result is stable for this MS MARCO
+  Small setup.
+
 ## Milvus Comparison From Same Test Pass
 
 The matching Milvus MS MARCO Small result from the same test pass:
