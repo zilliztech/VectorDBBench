@@ -1,5 +1,6 @@
 import inspect
 import pickle
+from types import SimpleNamespace
 
 import pytest
 from turbopuffer.resources.namespaces import NamespacesResource
@@ -22,8 +23,10 @@ def make_vector_db(with_scalar_labels=False):
     db._scalar_id_field = "id"
     db._vector_field = "vector"
     db._scalar_label_field = "label"
+    db._scalar_payload_label_field = "label"
     db.metric = "cosine_distance"
     db.with_scalar_labels = with_scalar_labels
+    db.db_case_config = SimpleNamespace(disable_backpressure=False)
     return db
 
 
@@ -141,6 +144,7 @@ def test_turbopuffer_insert_embeddings_without_labels_uses_upsert_columns():
             "vector": [[0.1, 0.2]],
         },
         "distance_metric": "cosine_distance",
+        "disable_backpressure": False,
     }
 
 
@@ -162,6 +166,7 @@ def test_turbopuffer_insert_embeddings_with_labels_uses_upsert_columns():
             "label": ["a"],
         },
         "distance_metric": "cosine_distance",
+        "disable_backpressure": False,
     }
 
 

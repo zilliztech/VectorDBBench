@@ -28,10 +28,14 @@ class FakeDB:
     def need_normalize_cosine(self):
         return False
 
+    def supports_payload_profile(self, payload_profile):
+        return True
+
 
 class FakeInsertRunner:
-    def __init__(self, *args):
+    def __init__(self, *args, **kwargs):
         self.args = args
+        self.kwargs = kwargs
 
     def run(self):
         return None
@@ -145,13 +149,17 @@ def test_fts_run_routes_to_shared_perf_case():
 def test_vector_load_train_data_is_not_individually_timed(monkeypatch):
     from vectordb_bench.backend import task_runner
 
-    monkeypatch.setattr(task_runner, "SerialInsertRunner", FakeInsertRunner)
+    monkeypatch.setattr(task_runner, "ConcurrentInsertRunner", FakeInsertRunner)
     runner = CaseRunner.construct(
         db=FakeDB(),
+        config=SimpleNamespace(load_concurrency=0),
         ca=SimpleNamespace(
+            label=CaseLabel.Performance,
             dataset=SimpleNamespace(data=SimpleNamespace(metric_type=None)),
             filters="filters",
+            is_multitenant=False,
             load_timeout=1,
+            with_scalar_labels=False,
         ),
     )
 

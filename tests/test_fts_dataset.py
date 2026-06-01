@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import ClassVar
 
 import pytest
 
@@ -10,6 +11,7 @@ from vectordb_bench.backend.dataset import (
     HotpotQATranslator,
     MSMarcoFts,
     MSMarcoTranslator,
+    SizeLabel,
 )
 
 
@@ -61,13 +63,15 @@ class FakeDatasetWithMissingQrel(FakeDataset):
 
 
 def make_tiny_msmarco_manager(size: int = 3) -> FtsDatasetManager:
-    manager = FtsDatasetManager(data=MSMarcoFts(size=100_000))
-    small_label = manager.data._size_label[100_000]
-    manager.data._size_label = {
-        **manager.data._size_label,
-        size: small_label._replace(size=size),
-    }
-    manager.data.size = size
+    small_label = MSMarcoFts._size_label[100_000]
+
+    class TinyMSMarcoFts(MSMarcoFts):
+        _size_label: ClassVar[dict[int, SizeLabel]] = {
+            **MSMarcoFts._size_label,
+            size: small_label._replace(size=size),
+        }
+
+    manager = FtsDatasetManager(data=TinyMSMarcoFts(size=size))
     return manager
 
 

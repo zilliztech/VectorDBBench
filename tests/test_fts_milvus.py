@@ -3,6 +3,27 @@ from vectordb_bench.backend.clients.milvus.config import MilvusFtsConfig
 from vectordb_bench.backend.clients.milvus.milvus import Milvus
 
 
+class FakeSchema:
+    def __init__(self, fields):
+        self.fields = fields
+
+    def add_field(self, name, dtype, **kwargs):
+        field = {"name": name, "dtype": dtype, **kwargs}
+        self.fields.append(field)
+        return field
+
+    def add_function(self, function):
+        self.function = function
+
+
+class FakeIndexParams:
+    def __init__(self):
+        self.calls = []
+
+    def add_index(self, **kwargs):
+        self.calls.append(kwargs)
+
+
 def test_milvus_fts_config_uses_analyzer_max_token_length():
     config = MilvusFtsConfig(
         analyzer_tokenizer="standard",
@@ -26,35 +47,36 @@ def test_milvus_declares_full_text_support():
 
 def test_milvus_fts_text_field_receives_configured_analyzer_params(monkeypatch):
     fields = []
+    index_params = FakeIndexParams()
 
-    def fake_field_schema(*args, **kwargs):
-        field = {
-            "name": kwargs.get("name", args[0] if args else None),
-            "analyzer_params": kwargs.get("analyzer_params"),
-        }
-        fields.append(field)
-        return field
-
-    class FakeCollection:
+    class FakeMilvusClient:
         def __init__(self, *args, **kwargs):
+            pass
+
+        @staticmethod
+        def create_schema():
+            return FakeSchema(fields)
+
+        @staticmethod
+        def prepare_index_params():
+            return index_params
+
+        def has_collection(self, collection_name):
+            return False
+
+        def create_collection(self, *args, **kwargs):
             pass
 
         def create_index(self, *args, **kwargs):
             pass
 
-        def load(self, *args, **kwargs):
+        def load_collection(self, *args, **kwargs):
             pass
 
-    monkeypatch.setattr(milvus_module, "FieldSchema", fake_field_schema)
-    monkeypatch.setattr(milvus_module, "CollectionSchema", lambda *args, **kwargs: {"args": args, "kwargs": kwargs})
-    monkeypatch.setattr(milvus_module, "Function", lambda *args, **kwargs: {"args": args, "kwargs": kwargs})
-    monkeypatch.setattr(milvus_module, "Collection", FakeCollection)
-    monkeypatch.setattr(milvus_module.utility, "has_collection", lambda collection_name: False)
+        def close(self):
+            pass
 
-    import pymilvus
-
-    monkeypatch.setattr(pymilvus.connections, "connect", lambda *args, **kwargs: None)
-    monkeypatch.setattr(pymilvus.connections, "disconnect", lambda *args, **kwargs: None)
+    monkeypatch.setattr(milvus_module, "MilvusClient", FakeMilvusClient)
 
     config = MilvusFtsConfig(
         analyzer_tokenizer="standard",
@@ -75,16 +97,12 @@ def test_milvus_fts_text_field_receives_configured_analyzer_params(monkeypatch):
 
 
 def test_milvus_fts_sparse_index_params_exclude_analyzer_params(monkeypatch):
-    create_index_calls = []
-
-    class FakeCollection:
-        def __init__(self, *args, **kwargs):
-            pass
-
-        def create_index(self, *args, **kwargs):
-            create_index_calls.append({"args": args, "kwargs": kwargs})
-
-    monkeypatch.setattr(milvus_module, "Collection", FakeCollection)
+    index_params = FakeIndexParams()
+    monkeypatch.setattr(
+        milvus_module.MilvusClient,
+        "prepare_index_params",
+        staticmethod(lambda: index_params),
+    )
 
     config = MilvusFtsConfig()
     db = object.__new__(milvus_module.Milvus)
@@ -97,8 +115,15 @@ def test_milvus_fts_sparse_index_params_exclude_analyzer_params(monkeypatch):
     db._sort_index_name = "doc_id_sort_idx"
     db.with_scalar_labels = False
 
-    db.create_index()
+    db._build_index_params()
 
-    sparse_index_params = create_index_calls[0]["kwargs"]["index_params"]
-    assert sparse_index_params == config.sparse_index_param()
-    assert "analyzer_params" not in sparse_index_params
+    sparse_index_params = index_params.calls[0]
+    expected = config.sparse_index_param()
+    assert sparse_index_params == {
+        "field_name": "sparse_vector",
+        "index_name": "sparse_vector_idx",
+        "index_type": expected["index_type"],
+        "metric_type": expected["metric_type"],
+        "params": expected["params"],
+    }
+    assert "analyzer_params" not in sparse_index_params["params"]

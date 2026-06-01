@@ -4,37 +4,49 @@ from vectordb_bench.backend.clients.milvus.config import MilvusFtsConfig
 
 def test_milvus_fts_primary_field_uses_varchar(monkeypatch):
     fields = []
+    index_calls = []
 
-    def fake_field_schema(*args, **kwargs):
-        field = {
-            "name": kwargs.get("name", args[0] if args else None),
-            "dtype": kwargs.get("dtype", args[1] if len(args) > 1 else None),
-            "max_length": kwargs.get("max_length"),
-            "is_primary": kwargs.get("is_primary", False),
-        }
-        fields.append(field)
-        return field
+    class FakeSchema:
+        def add_field(self, name, dtype, **kwargs):
+            field = {"name": name, "dtype": dtype, **kwargs}
+            fields.append(field)
+            return field
 
-    class FakeCollection:
+        def add_function(self, function):
+            self.function = function
+
+    class FakeIndexParams:
+        def add_index(self, **kwargs):
+            index_calls.append(kwargs)
+
+    class FakeMilvusClient:
         def __init__(self, *args, **kwargs):
+            pass
+
+        @staticmethod
+        def create_schema():
+            return FakeSchema()
+
+        @staticmethod
+        def prepare_index_params():
+            return FakeIndexParams()
+
+        def has_collection(self, collection_name):
+            return False
+
+        def create_collection(self, *args, **kwargs):
             pass
 
         def create_index(self, *args, **kwargs):
             pass
 
-        def load(self, *args, **kwargs):
+        def load_collection(self, *args, **kwargs):
             pass
 
-    monkeypatch.setattr(milvus_module, "FieldSchema", fake_field_schema)
-    monkeypatch.setattr(milvus_module, "CollectionSchema", lambda *args, **kwargs: {"args": args, "kwargs": kwargs})
-    monkeypatch.setattr(milvus_module, "Function", lambda *args, **kwargs: {"args": args, "kwargs": kwargs})
-    monkeypatch.setattr(milvus_module, "Collection", FakeCollection)
-    monkeypatch.setattr(milvus_module.utility, "has_collection", lambda collection_name: False)
+        def close(self):
+            pass
 
-    import pymilvus
-
-    monkeypatch.setattr(pymilvus.connections, "connect", lambda *args, **kwargs: None)
-    monkeypatch.setattr(pymilvus.connections, "disconnect", lambda *args, **kwargs: None)
+    monkeypatch.setattr(milvus_module, "MilvusClient", FakeMilvusClient)
 
     milvus_module.Milvus(
         dim=0,
@@ -58,15 +70,17 @@ def test_milvus_fts_insert_documents_stores_string_ids():
     class FakeInsertResult:
         primary_keys = ["123"]
 
-    class FakeCollection:
-        def insert(self, inserted_rows):
+    class FakeClient:
+        def insert(self, collection_name, inserted_rows):
+            assert collection_name == "test_fts"
             rows.extend(inserted_rows)
-            return FakeInsertResult()
+            return {"insert_count": len(inserted_rows), "primary_keys": FakeInsertResult.primary_keys}
 
     db = object.__new__(milvus_module.Milvus)
     db.name = "Milvus"
     db._is_fts = True
-    db.col = FakeCollection()
+    db.client = FakeClient()
+    db.collection_name = "test_fts"
     db.batch_size = 1000
     db._primary_field = "doc_id"
     db._text_field = "text"
@@ -80,17 +94,11 @@ def test_milvus_fts_insert_documents_stores_string_ids():
 
 
 def test_milvus_fts_search_documents_returns_string_ids():
-    class FakeEntity:
-        def get(self, field_name):
-            assert field_name == "doc_id"
-            return 123
-
-    class FakeHit:
-        entity = FakeEntity()
-
-    class FakeCollection:
+    class FakeClient:
         def search(self, **kwargs):
-            return [[FakeHit()]]
+            assert kwargs["collection_name"] == "test_fts"
+            assert kwargs["anns_field"] == "sparse_vector"
+            return [[{"entity": {"doc_id": 123}}]]
 
     class FakeCaseConfig:
         def search_param(self):
@@ -98,7 +106,8 @@ def test_milvus_fts_search_documents_returns_string_ids():
 
     db = object.__new__(milvus_module.Milvus)
     db._is_fts = True
-    db.col = FakeCollection()
+    db.client = FakeClient()
+    db.collection_name = "test_fts"
     db._primary_field = "doc_id"
     db._sparse_field = "sparse_vector"
     db.case_config = FakeCaseConfig()
