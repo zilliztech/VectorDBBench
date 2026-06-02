@@ -17,6 +17,10 @@ Use `.gitkeep` only when `raw_results/` is otherwise empty. Commit every raw
 VectorDBBench JSON that supports a reported result before or with the report
 change. Do not summarize a run unless its raw JSON is present in `raw_results/`.
 
+The root `fts_results/report.md` is the cross-backend master comparison report.
+It is intentionally not a backend/dataset leaf report and does not use the
+backend-specific report template below.
+
 ## Required Report Structure
 
 Every `report.md` must keep these top-level sections in this exact order and
