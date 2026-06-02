@@ -4,7 +4,8 @@
 
 - Backend: Vespa single-node container.
 - Dataset family: HotpotQA.
-- Current committed raw results: none.
+- Current committed raw results: `HotpotQA Medium (1M documents)` on the `r7i.4xlarge` server.
+- Run dates represented here: 2026-06-02.
 - Source runbook: `docs/fts-backends/vespa.md`.
 - Raw result directory: `raw_results/`.
 - The current FTS CLI uses `FTSmsmarcoPerformance` as the generic FTS case type; the dataset is selected by `--dataset-with-size-type`.
@@ -22,17 +23,25 @@ Client machine:
 
 Server machine:
 
-- EC2 type: `m5d.2xlarge`.
+- EC2 type: `r7i.4xlarge`.
 - OS: Amazon Linux 2023, Linux `6.1.55-75.123.amzn2023.x86_64`, `x86_64`.
-- CPU: 8 vCPU, Intel Xeon Platinum 8175M, 4 physical cores, 2 threads per core.
-- Memory: about 30 GiB usable RAM plus 31 GiB swap.
-- Disk quota: root XFS filesystem 500 GiB total with 451 GiB available at last check; additional 279 GiB NVMe mounted at `/data`.
-- Docker: overlay2 under `/var/lib/docker` on the root filesystem.
+- CPU: 16 vCPU, Intel Xeon Platinum 8488C, 8 physical cores, 2 threads per core.
+- Memory: about 123 GiB RAM, no swap.
+- Disk quota: root filesystem 500 GiB total with 491 GiB available after teardown.
+- Docker: Docker `24.0.5`, Docker Compose `v2.27.0`.
 - Role: runs the Vespa container and `/srv/vespa` state directories.
 
 ## Server Setup
 
-Use the same Vespa setup as `../msmarco/report.md`: image `vespaengine/vespa:8.694.53`, container `vespa`, `/srv/vespa/var`, `/srv/vespa/logs`, and a fresh directory cleanup before each run.
+Validated deployment:
+
+- Vespa image: `vespaengine/vespa:8.694.53`.
+- Container name: `vespa`.
+- Hostname: `vespa-container`.
+- Persistent host directories: `/srv/vespa/var` and `/srv/vespa/logs`.
+- Ports: `8080` for feed/query and `19071` for config/deploy.
+
+Reproducible fresh-deploy script:
 
 ```bash
 #!/usr/bin/env bash
@@ -41,12 +50,12 @@ set -euo pipefail
 sudo mkdir -p /srv/vespa/var /srv/vespa/logs
 sudo chown -R 1000:1000 /srv/vespa/var /srv/vespa/logs
 
-docker rm -f vespa >/dev/null 2>&1 || true
+sudo docker rm -f vespa >/dev/null 2>&1 || true
 sudo find /srv/vespa/var -mindepth 1 -delete
 sudo find /srv/vespa/logs -mindepth 1 -delete
-docker pull vespaengine/vespa:8.694.53
+sudo docker pull vespaengine/vespa:8.694.53
 
-docker run -d --name vespa --user vespa:vespa --hostname vespa-container \
+sudo docker run -d --name vespa --user vespa:vespa --hostname vespa-container \
   --ulimit nofile=262144:262144 --pids-limit=-1 \
   -v /srv/vespa/var:/opt/vespa/var \
   -v /srv/vespa/logs:/opt/vespa/logs \
@@ -58,9 +67,22 @@ docker run -d --name vespa --user vespa:vespa --hostname vespa-container \
 curl -fsS http://127.0.0.1:19071/state/v1/health
 ```
 
+Fresh teardown script used after the run:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+sudo docker rm -f vespa >/dev/null 2>&1 || true
+sudo find /srv/vespa/var -mindepth 1 -delete
+sudo find /srv/vespa/logs -mindepth 1 -delete
+sudo docker ps -a
+sudo docker volume ls
+```
+
 ## VDBBench Running
 
-Reproducible client script for the planned HotpotQA Medium run:
+Exact client script for the committed HotpotQA Medium run:
 
 ```bash
 #!/usr/bin/env bash
@@ -75,7 +97,7 @@ export SERVER_HOST="<server-private-host-or-dns>"
 python3.11 -m vectordb_bench.cli.vectordbbench vespa \
   --uri "http://${SERVER_HOST}" \
   --port "8080" \
-  --task-label "fts-e2e-vespa-hotpotqa-medium" \
+  --task-label "fts-e2e-vespa-hotpotqa-medium-r7i" \
   --case-type FTSmsmarcoPerformance \
   --dataset-with-size-type "HotpotQA Medium (1M documents)" \
   --drop-old --load --search-serial --search-concurrent \
@@ -85,8 +107,10 @@ python3.11 -m vectordb_bench.cli.vectordbbench vespa \
   --concurrency-timeout 3600
 ```
 
-Expected Vespa FTS case config: no backend-specific case fields are set. The VDBBench Vespa adapter deploys the application package through port `19071` and queries through port `8080`.
+Effective Vespa FTS case config from the raw JSON: no backend-specific case fields are set. The VDBBench Vespa adapter deploys the application package through port `19071` and queries through port `8080`.
 
 ## Result
 
-No HotpotQA Vespa raw result JSON has been committed yet.
+| Raw JSON | Task label | Dataset size | Load s | QPS | Recall | NDCG | MRR | p95 s | p99 s | Concurrent QPS at 1/5/10/20 |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| `result_20260602_fts-e2e-vespa-hotpotqa-medium-r7i_vespa.json` | `fts-e2e-vespa-hotpotqa-medium-r7i` | 1M | 575.5304 | 80.0872 | 0.8309 | 0.7208 | 0.8500 | 0.2647 | 0.3261 | 6.4907 / 33.8533 / 57.9060 / 80.0872 |

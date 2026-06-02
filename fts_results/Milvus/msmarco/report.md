@@ -4,7 +4,7 @@
 
 - Backend: Milvus standalone.
 - Dataset family: MS MARCO.
-- Current committed raw results: `MS MARCO Small (100K documents)` on the original `m5d.2xlarge` server and the later `r7i.4xlarge` server.
+- Current committed raw results: `MS MARCO Small (100K documents)` and `MS MARCO Medium (1M documents)` on the original `m5d.2xlarge` server and the later `r7i.4xlarge` server.
 - Run dates represented here: 2026-05-28, 2026-06-01, and 2026-06-02.
 - Source runbook: `docs/fts-backends/milvus.md`.
 - Raw result directory: `raw_results/`.
@@ -125,6 +125,7 @@ python3.11 -m vectordb_bench.cli.vectordbbench milvusfts \
 
 The stability rerun used the same command with task label `fts-e2e-milvus-msmarco-small-stability`.
 The `r7i.4xlarge` rerun used the same command with task label `fts-e2e-milvus-msmarco-small-r7i`.
+The `r7i.4xlarge` medium run used the same command with task label `fts-e2e-milvus-msmarco-medium-r7i` and dataset size `MS MARCO Medium (1M documents)`.
 
 Effective Milvus FTS case config from the raw JSON:
 
@@ -147,6 +148,7 @@ Effective Milvus FTS case config from the raw JSON:
 | `result_20260601_fts-e2e-milvus-msmarco-small_milvus.json` | `fts-e2e-milvus-msmarco-small` | 100K | 227.1237 | 4098.1460 | 0.9157 | 0.7157 | 0.6653 | 0.0022 | 0.0027 | 567.2801 / 2331.7462 / 3494.7072 / 4098.1460 |
 | `result_20260601_fts-e2e-milvus-msmarco-small-stability_milvus.json` | `fts-e2e-milvus-msmarco-small-stability` | 100K | 233.5157 | 4135.7169 | 0.9157 | 0.7157 | 0.6653 | 0.0022 | 0.0027 | 566.9304 / 2317.6759 / 3526.9488 / 4135.7169 |
 | `result_20260602_fts-e2e-milvus-msmarco-small-r7i_milvus.json` | `fts-e2e-milvus-msmarco-small-r7i` | 100K | 230.3305 | 9359.8351 | 0.9157 | 0.7157 | 0.6653 | 0.0026 | 0.0029 | 528.3714 / 3129.5306 / 5750.1304 / 9359.8351 |
+| `result_20260602_fts-e2e-milvus-msmarco-medium-r7i_milvus.json` | `fts-e2e-milvus-msmarco-medium-r7i` | 1M | 2042.1265 | 3857.7069 | 0.8048 | 0.5174 | 0.4458 | 0.0056 | 0.0074 | 284.4606 / 1608.7846 / 2858.1176 / 3857.7069 |
 
 Latest `r7i.4xlarge` rerun vs previous `m5d.2xlarge` stability run:
 

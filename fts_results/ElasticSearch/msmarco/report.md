@@ -4,7 +4,7 @@
 
 - Backend: Elasticsearch single-node container, invoked through VectorDBBench `elasticcloudhnsw`.
 - Dataset family: MS MARCO.
-- Current committed raw results: `MS MARCO Small (100K documents)` on the original `m5d.2xlarge` server and the later `r7i.4xlarge` server.
+- Current committed raw results: `MS MARCO Small (100K documents)` and `MS MARCO Medium (1M documents)` on the original `m5d.2xlarge` server and the later `r7i.4xlarge` server.
 - Run dates represented here: 2026-05-28, 2026-06-01, and 2026-06-02.
 - Source runbook: `docs/fts-backends/elasticsearch.md`.
 - Raw result directory: `raw_results/`.
@@ -120,6 +120,7 @@ python3.11 -m vectordb_bench.cli.vectordbbench elasticcloudhnsw \
 
 The stability rerun used the same command with task label `fts-e2e-elastic-msmarco-small-stability`.
 The `r7i.4xlarge` rerun used the same command with task label `fts-e2e-elastic-msmarco-small-r7i`.
+The `r7i.4xlarge` medium run used the same command with task label `fts-e2e-elastic-msmarco-medium-r7i` and dataset size `MS MARCO Medium (1M documents)`.
 
 Effective Elasticsearch FTS case config from the raw JSON:
 
@@ -138,6 +139,7 @@ Effective Elasticsearch FTS case config from the raw JSON:
 | `result_20260601_fts-e2e-elastic-msmarco-small_elasticcloud.json` | `fts-e2e-elastic-msmarco-small` | 100K | 59.2031 | 3100.5973 | 0.9118 | 0.7159 | 0.6665 | 0.0031 | 0.0040 | 422.7782 / 1967.8125 / 2861.4449 / 3100.5973 |
 | `result_20260601_fts-e2e-elastic-msmarco-small-stability_elasticcloud.json` | `fts-e2e-elastic-msmarco-small-stability` | 100K | 58.9212 | 3113.2707 | 0.9118 | 0.7159 | 0.6665 | 0.0031 | 0.0039 | 416.5153 / 1991.3322 / 2823.6226 / 3113.2707 |
 | `result_20260602_fts-e2e-elastic-msmarco-small-r7i_elasticcloud.json` | `fts-e2e-elastic-msmarco-small-r7i` | 100K | 59.4276 | 8689.3499 | 0.9118 | 0.7159 | 0.6665 | 0.0030 | 0.0035 | 396.5015 / 2534.0129 / 5536.5659 / 8689.3499 |
+| `result_20260602_fts-e2e-elastic-msmarco-medium-r7i_elasticcloud.json` | `fts-e2e-elastic-msmarco-medium-r7i` | 1M | 148.5277 | 3986.3734 | 0.8028 | 0.5222 | 0.4526 | 0.0065 | 0.0089 | 240.5419 / 1348.5987 / 2719.8093 / 3986.3734 |
 
 Latest `r7i.4xlarge` rerun vs previous `m5d.2xlarge` stability run:
 

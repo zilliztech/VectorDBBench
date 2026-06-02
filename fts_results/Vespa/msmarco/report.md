@@ -4,7 +4,7 @@
 
 - Backend: Vespa single-node container.
 - Dataset family: MS MARCO.
-- Current committed raw results: `MS MARCO Small (100K documents)` on the original `m5d.2xlarge` server and the later `r7i.4xlarge` server.
+- Current committed raw results: `MS MARCO Small (100K documents)` and `MS MARCO Medium (1M documents)` on the original `m5d.2xlarge` server and the later `r7i.4xlarge` server.
 - Run dates represented here: 2026-05-28, 2026-06-01, and 2026-06-02.
 - Source runbook: `docs/fts-backends/vespa.md`.
 - Raw result directory: `raw_results/`.
@@ -118,6 +118,7 @@ python3.11 -m vectordb_bench.cli.vectordbbench vespa \
 ```
 
 The `r7i.4xlarge` rerun used the same command with task label `fts-e2e-vespa-msmarco-small-r7i`.
+The `r7i.4xlarge` medium run used the same command with task label `fts-e2e-vespa-msmarco-medium-r7i` and dataset size `MS MARCO Medium (1M documents)`.
 
 Effective Vespa FTS case config from the raw JSON: no backend-specific case fields are set. The VDBBench Vespa adapter deploys the application package through port `19071` and queries through port `8080`.
 
@@ -128,6 +129,7 @@ Effective Vespa FTS case config from the raw JSON: no backend-specific case fiel
 | `result_20260528_fts-e2e-vespa-msmarco-small_vespa.json` | `fts-e2e-vespa-msmarco-small` | 100K | 171.9693 | 478.5384 | 0.9416 | 0.7509 | 0.7015 | 0.0212 | 0.0269 | 63.4393 / 146.3972 / 428.5583 / 478.5384 |
 | `result_20260601_fts-e2e-vespa-msmarco-small_vespa.json` | `fts-e2e-vespa-msmarco-small` | 100K | 81.6402 | 482.1899 | 0.9416 | 0.7509 | 0.7015 | 0.0202 | 0.0260 | 78.8898 / 336.8178 / 482.1899 / 470.0384 |
 | `result_20260602_fts-e2e-vespa-msmarco-small-r7i_vespa.json` | `fts-e2e-vespa-msmarco-small-r7i` | 100K | 79.2473 | 734.5241 | 0.9416 | 0.7509 | 0.7015 | 0.0184 | 0.0230 | 91.7244 / 512.5352 / 347.9730 / 734.5241 |
+| `result_20260602_fts-e2e-vespa-msmarco-medium-r7i_vespa.json` | `fts-e2e-vespa-msmarco-medium-r7i` | 1M | 585.7496 | 196.8213 | 0.8409 | 0.5499 | 0.4767 | 0.1268 | 0.1744 | 17.3137 / 85.2530 / 139.2205 / 196.8213 |
 
 Latest `r7i.4xlarge` rerun vs previous `m5d.2xlarge` run:
 

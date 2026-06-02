@@ -1,0 +1,124 @@
+{
+  "run_id": "b3690559d1084e2c9ab4c10ff4406491",
+  "task_label": "fts-e2e-milvus-hotpotqa-medium-r7i",
+  "results": [
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 2023.3583,
+        "optimize_duration": 7.9213,
+        "load_duration": 2031.2796,
+        "qps": 1596.634,
+        "serial_latency_p99": 0.017,
+        "serial_latency_p95": 0.0123,
+        "recall": 0.8378,
+        "ndcg": 0.7246,
+        "mrr": 0.8561,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20
+        ],
+        "conc_qps_list": [
+          146.0629,
+          726.2209,
+          1273.338,
+          1596.634
+        ],
+        "conc_latency_p99_list": [
+          0.01744907630491071,
+          0.018662270973436534,
+          0.021340096415951842,
+          0.03229395827511324
+        ],
+        "conc_latency_p95_list": [
+          0.01223775193793699,
+          0.01324735302478075,
+          0.01514158898498863,
+          0.023196331516373903
+        ],
+        "conc_latency_avg_list": [
+          0.0068431783283083025,
+          0.006880063857162712,
+          0.007844633698710975,
+          0.012498899564660207
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 0,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {},
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Milvus",
+        "db_config": {
+          "db_label": "2026-06-02T11:26:22.647995",
+          "version": "",
+          "note": "",
+          "uri": "**********",
+          "user": null,
+          "password": null,
+          "num_shards": 1,
+          "replica_number": 1
+        },
+        "db_case_config": {
+          "index_type": "SPARSE_INVERTED_INDEX",
+          "metric_type": "BM25",
+          "inverted_index_algo": "DAAT_MAXSCORE",
+          "bm25_k1": 1.5,
+          "bm25_b": 0.75,
+          "analyzer_tokenizer": "standard",
+          "analyzer_enable_lowercase": true,
+          "analyzer_max_token_length": 40,
+          "analyzer_stop_words": null,
+          "drop_ratio_search": null
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "HotpotQA Medium (1M documents)"
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    }
+  ],
+  "file_fmt": "result_{}_{}_{}.json",
+  "timestamp": 1780358400.0
+}

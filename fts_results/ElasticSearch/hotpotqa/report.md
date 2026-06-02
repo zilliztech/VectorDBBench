@@ -4,7 +4,8 @@
 
 - Backend: Elasticsearch single-node container, invoked through VectorDBBench `elasticcloudhnsw`.
 - Dataset family: HotpotQA.
-- Current committed raw results: none.
+- Current committed raw results: `HotpotQA Medium (1M documents)` on the `r7i.4xlarge` server.
+- Run dates represented here: 2026-06-02.
 - Source runbook: `docs/fts-backends/elasticsearch.md`.
 - Raw result directory: `raw_results/`.
 - The current FTS CLI uses `FTSmsmarcoPerformance` as the generic FTS case type; the dataset is selected by `--dataset-with-size-type`.
@@ -22,17 +23,27 @@ Client machine:
 
 Server machine:
 
-- EC2 type: `m5d.2xlarge`.
+- EC2 type: `r7i.4xlarge`.
 - OS: Amazon Linux 2023, Linux `6.1.55-75.123.amzn2023.x86_64`, `x86_64`.
-- CPU: 8 vCPU, Intel Xeon Platinum 8175M, 4 physical cores, 2 threads per core.
-- Memory: about 30 GiB usable RAM plus 31 GiB swap.
-- Disk quota: root XFS filesystem 500 GiB total with 451 GiB available at last check; additional 279 GiB NVMe mounted at `/data`.
-- Docker: overlay2 under `/var/lib/docker` on the root filesystem.
+- CPU: 16 vCPU, Intel Xeon Platinum 8488C, 8 physical cores, 2 threads per core.
+- Memory: about 123 GiB RAM, no swap.
+- Disk quota: root filesystem 500 GiB total with 491 GiB available after teardown.
+- Docker: Docker `24.0.5`, Docker Compose `v2.27.0`.
 - Role: runs the Elasticsearch container.
 
 ## Server Setup
 
-Use the same Elasticsearch setup as `../msmarco/report.md`: image `docker.elastic.co/elasticsearch/elasticsearch:8.16.0`, container `es01`, Docker memory limit `-m 8g`, no explicit `ES_JAVA_OPTS`, and a fresh `esdata01` volume before each run.
+Validated deployment:
+
+- Elasticsearch image: `docker.elastic.co/elasticsearch/elasticsearch:8.16.0`.
+- Container name: `es01`.
+- Docker memory limit: `-m 8g`.
+- JVM heap: no explicit `ES_JAVA_OPTS` is set in the current baseline; Elasticsearch 8 auto-sizes from the container limit.
+- JVM heap confirmed on the `r7i` run: `-Xms4096m -Xmx4096m`.
+- Docker volume: `esdata01`.
+- Security: disabled for isolated private benchmark networking.
+
+Reproducible fresh-deploy script:
 
 ```bash
 #!/usr/bin/env bash
@@ -57,9 +68,21 @@ sudo docker run -d --name es01 \
 curl -fsS "http://127.0.0.1:9200/_cluster/health?pretty&wait_for_status=yellow&timeout=90s"
 ```
 
+Fresh teardown script used after the run:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+sudo docker rm -f es01
+sudo docker volume rm esdata01
+sudo docker ps -a
+sudo docker volume ls
+```
+
 ## VDBBench Running
 
-Reproducible client script for the planned HotpotQA Medium run:
+Exact client script for the committed HotpotQA Medium run:
 
 ```bash
 #!/usr/bin/env bash
@@ -74,7 +97,7 @@ export SERVER_HOST="<server-private-host-or-dns>"
 python3.11 -m vectordb_bench.cli.vectordbbench elasticcloudhnsw \
   --host "${SERVER_HOST}" \
   --port "9200" \
-  --task-label "fts-e2e-elastic-hotpotqa-medium" \
+  --task-label "fts-e2e-elastic-hotpotqa-medium-r7i" \
   --case-type FTSmsmarcoPerformance \
   --dataset-with-size-type "HotpotQA Medium (1M documents)" \
   --drop-old --load --search-serial --search-concurrent \
@@ -84,7 +107,7 @@ python3.11 -m vectordb_bench.cli.vectordbbench elasticcloudhnsw \
   --concurrency-timeout 3600
 ```
 
-Expected Elasticsearch FTS case config:
+Effective Elasticsearch FTS case config from the raw JSON:
 
 - `number_of_shards=1`
 - `number_of_replicas=0`
@@ -95,4 +118,6 @@ Expected Elasticsearch FTS case config:
 
 ## Result
 
-No HotpotQA Elasticsearch raw result JSON has been committed yet.
+| Raw JSON | Task label | Dataset size | Load s | QPS | Recall | NDCG | MRR | p95 s | p99 s | Concurrent QPS at 1/5/10/20 |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| `result_20260602_fts-e2e-elastic-hotpotqa-medium-r7i_elasticcloud.json` | `fts-e2e-elastic-hotpotqa-medium-r7i` | 1M | 142.0589 | 1410.3787 | 0.8378 | 0.7287 | 0.8598 | 0.0159 | 0.0224 | 111.5252 / 558.2304 / 1034.1176 / 1410.3787 |
