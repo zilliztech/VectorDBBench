@@ -18,18 +18,15 @@ fts_results/
     hotpotqa/
 ```
 
-Each benchmark run should be stored as a timestamped run bundle under the matching backend and dataset directory:
+Each backend/dataset leaf directory should store a single report and the raw result files that support it:
 
 ```text
-fts_results/<backend>/<dataset>/<YYYYMMDD-HHMMSS>-<dataset-size>/
-  metadata.yaml
-  server-deployment.md
-  client-command.txt
-  result.json
-  run.log
-  notes.md
+fts_results/<backend>/<dataset>/
+  report.md
+  raw_results/
+    <VectorDBBench result JSON files>
 ```
 
-Use `metadata.yaml` for machine class, backend version, dataset size, benchmark label, git revision, and whether the server was freshly torn down before the run. Store raw VectorDBBench result JSON as `result.json`; keep `notes.md` for caveats such as competing processes, disk pressure, failed retries, or non-default backend tuning.
+Follow `fts_results/AGENTS.md` for the exact report structure. The raw JSON files in `raw_results/` are the source of truth; each `report.md` summarizes those files and records the reproducible server setup plus VDBBench command.
 
 Do not commit credentials, API tokens, private addresses, SSH keys, or `hosts.yaml`.
