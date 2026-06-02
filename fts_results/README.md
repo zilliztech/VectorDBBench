@@ -4,7 +4,7 @@ This directory stores full-text-search end-to-end benchmark artifacts. The layou
 
 ```text
 fts_results/
-  milvus/
+  Milvus/
     msmarco/
     hotpotqa/
   ElasticSearch/
