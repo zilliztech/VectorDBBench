@@ -4,7 +4,8 @@
 
 - Backend: Elasticsearch single-node container, invoked through VectorDBBench `elasticcloudhnsw`.
 - Dataset family: MS MARCO.
-- Current committed raw results: `MS MARCO Small (100K documents)`.
+- Current committed raw results: `MS MARCO Small (100K documents)` on the original `m5d.2xlarge` server and the later `r7i.4xlarge` server.
+- Run dates represented here: 2026-05-28, 2026-06-01, and 2026-06-02.
 - Source runbook: `docs/fts-backends/elasticsearch.md`.
 - Raw result directory: `raw_results/`.
 - Current result JSONs have connection fields masked by VectorDBBench.
@@ -20,7 +21,7 @@ Client machine:
 - Disk quota: `/dev/root` ext4, 485 GiB total, 102 GiB available at last check.
 - Role: runs VectorDBBench from `/home/ubuntu/VectorDBBench`.
 
-Server machine:
+Original server machine:
 
 - EC2 type: `m5d.2xlarge`.
 - OS: Amazon Linux 2023, Linux `6.1.55-75.123.amzn2023.x86_64`, `x86_64`.
@@ -30,6 +31,16 @@ Server machine:
 - Docker: overlay2 under `/var/lib/docker` on the root filesystem.
 - Role: runs the Elasticsearch container.
 
+Rerun server machine:
+
+- EC2 type: `r7i.4xlarge`.
+- OS: Amazon Linux 2023, Linux `6.1.55-75.123.amzn2023.x86_64`, `x86_64`.
+- CPU: 16 vCPU, Intel Xeon Platinum 8488C, 8 physical cores, 2 threads per core.
+- Memory: about 123 GiB RAM, no swap.
+- Disk quota: root filesystem 500 GiB total with 491 GiB available after teardown.
+- Docker: Docker `24.0.5`, Docker Compose `v2.27.0`.
+- Role: runs the Elasticsearch container for the `r7i` rerun.
+
 ## Server Setup
 
 Validated deployment:
@@ -38,6 +49,7 @@ Validated deployment:
 - Container name: `es01`.
 - Docker memory limit: `-m 8g`.
 - JVM heap: no explicit `ES_JAVA_OPTS` is set in the current baseline; Elasticsearch 8 auto-sizes from the container limit.
+- JVM heap confirmed on the `r7i` rerun: `-Xms4096m -Xmx4096m`.
 - Docker volume: `esdata01`.
 - Security: disabled for isolated private benchmark networking.
 
@@ -65,6 +77,18 @@ sudo docker run -d --name es01 \
   docker.elastic.co/elasticsearch/elasticsearch:8.16.0
 
 curl -fsS "http://127.0.0.1:9200/_cluster/health?pretty&wait_for_status=yellow&timeout=90s"
+```
+
+Fresh teardown script used after the `r7i` rerun:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+sudo docker rm -f es01
+sudo docker volume rm esdata01
+sudo docker ps -a
+sudo docker volume ls
 ```
 
 ## VDBBench Running
@@ -95,6 +119,7 @@ python3.11 -m vectordb_bench.cli.vectordbbench elasticcloudhnsw \
 ```
 
 The stability rerun used the same command with task label `fts-e2e-elastic-msmarco-small-stability`.
+The `r7i.4xlarge` rerun used the same command with task label `fts-e2e-elastic-msmarco-small-r7i`.
 
 Effective Elasticsearch FTS case config from the raw JSON:
 
@@ -112,3 +137,11 @@ Effective Elasticsearch FTS case config from the raw JSON:
 | `result_20260528_fts-e2e-elastic-msmarco-small_elasticcloud.json` | `fts-e2e-elastic-msmarco-small` | 100K | 72.4312 | 1227.3373 | 0.9116 | 0.7159 | 0.6665 | 0.0050 | 0.0098 | 143.5116 / 365.3610 / 672.9976 / 1227.3373 |
 | `result_20260601_fts-e2e-elastic-msmarco-small_elasticcloud.json` | `fts-e2e-elastic-msmarco-small` | 100K | 59.2031 | 3100.5973 | 0.9118 | 0.7159 | 0.6665 | 0.0031 | 0.0040 | 422.7782 / 1967.8125 / 2861.4449 / 3100.5973 |
 | `result_20260601_fts-e2e-elastic-msmarco-small-stability_elasticcloud.json` | `fts-e2e-elastic-msmarco-small-stability` | 100K | 58.9212 | 3113.2707 | 0.9118 | 0.7159 | 0.6665 | 0.0031 | 0.0039 | 416.5153 / 1991.3322 / 2823.6226 / 3113.2707 |
+| `result_20260602_fts-e2e-elastic-msmarco-small-r7i_elasticcloud.json` | `fts-e2e-elastic-msmarco-small-r7i` | 100K | 59.4276 | 8689.3499 | 0.9118 | 0.7159 | 0.6665 | 0.0030 | 0.0035 | 396.5015 / 2534.0129 / 5536.5659 / 8689.3499 |
+
+Latest `r7i.4xlarge` rerun vs previous `m5d.2xlarge` stability run:
+
+- QPS increased from `3113.2707` to `8689.3499` (+179.1%).
+- Load duration changed from `58.9212s` to `59.4276s` (+0.9%).
+- Recall stayed unchanged at `0.9118`.
+- p95 changed from `0.0031s` to `0.0030s`; p99 changed from `0.0039s` to `0.0035s`.
