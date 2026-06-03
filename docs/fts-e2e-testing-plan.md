@@ -160,13 +160,13 @@ Each E2E run should include:
 --search-concurrent
 --k 100
 --concurrency-duration 30
---num-concurrency "1,5,10,20"
+--num-concurrency "1,10,20,40,60,80"
 --concurrency-timeout 3600
 ```
 
-The default VDBBench concurrency list is larger (`1,5,10,20,30,40,60,80`).
-For the first functional E2E pass, `1,5,10,20` is enough to exercise concurrent
-search without turning validation into a full leaderboard run.
+Do not rely on the global VDBBench concurrency default for FTS E2E runs.
+Pass `--num-concurrency "1,10,20,40,60,80"` explicitly so the run has a
+reasonable chance to reach the backend saturation point.
 
 ## Standalone Backend Deployment
 
@@ -484,7 +484,7 @@ python3.11 -m vectordb_bench.cli.vectordbbench milvusfts \
   --case-type FTSmsmarcoPerformance \
   --dataset-with-size-type "MS MARCO Small (100K documents)" \
   --drop-old --load --search-serial --search-concurrent \
-  --k 100 --concurrency-duration 30 --num-concurrency "1,5,10,20" --concurrency-timeout 3600
+  --k 100 --concurrency-duration 30 --num-concurrency "1,10,20,40,60,80" --concurrency-timeout 3600
 
 python3.11 -m vectordb_bench.cli.vectordbbench milvusfts \
   --uri "$MILVUS_URI" \
@@ -494,7 +494,7 @@ python3.11 -m vectordb_bench.cli.vectordbbench milvusfts \
   --case-type FTSmsmarcoPerformance \
   --dataset-with-size-type "MS MARCO Medium (1M documents)" \
   --drop-old --load --search-serial --search-concurrent \
-  --k 100 --concurrency-duration 30 --num-concurrency "1,5,10,20" --concurrency-timeout 3600
+  --k 100 --concurrency-duration 30 --num-concurrency "1,10,20,40,60,80" --concurrency-timeout 3600
 
 python3.11 -m vectordb_bench.cli.vectordbbench milvusfts \
   --uri "$MILVUS_URI" \
@@ -504,7 +504,7 @@ python3.11 -m vectordb_bench.cli.vectordbbench milvusfts \
   --case-type FTSmsmarcoPerformance \
   --dataset-with-size-type "HotpotQA Small (100K documents)" \
   --drop-old --load --search-serial --search-concurrent \
-  --k 100 --concurrency-duration 30 --num-concurrency "1,5,10,20" --concurrency-timeout 3600
+  --k 100 --concurrency-duration 30 --num-concurrency "1,10,20,40,60,80" --concurrency-timeout 3600
 
 python3.11 -m vectordb_bench.cli.vectordbbench milvusfts \
   --uri "$MILVUS_URI" \
@@ -514,7 +514,7 @@ python3.11 -m vectordb_bench.cli.vectordbbench milvusfts \
   --case-type FTSmsmarcoPerformance \
   --dataset-with-size-type "HotpotQA Medium (1M documents)" \
   --drop-old --load --search-serial --search-concurrent \
-  --k 100 --concurrency-duration 30 --num-concurrency "1,5,10,20" --concurrency-timeout 3600
+  --k 100 --concurrency-duration 30 --num-concurrency "1,10,20,40,60,80" --concurrency-timeout 3600
 ```
 
 ## ElasticCloud Matrix
@@ -533,7 +533,7 @@ python3.11 -m vectordb_bench.cli.vectordbbench elasticcloudhnsw \
   --case-type FTSmsmarcoPerformance \
   --dataset-with-size-type "MS MARCO Small (100K documents)" \
   --drop-old --load --search-serial --search-concurrent \
-  --k 100 --concurrency-duration 30 --num-concurrency "1,5,10,20" --concurrency-timeout 3600
+  --k 100 --concurrency-duration 30 --num-concurrency "1,10,20,40,60,80" --concurrency-timeout 3600
 
 python3.11 -m vectordb_bench.cli.vectordbbench elasticcloudhnsw \
   --host "$ELASTIC_HOST" \
@@ -542,7 +542,7 @@ python3.11 -m vectordb_bench.cli.vectordbbench elasticcloudhnsw \
   --case-type FTSmsmarcoPerformance \
   --dataset-with-size-type "MS MARCO Medium (1M documents)" \
   --drop-old --load --search-serial --search-concurrent \
-  --k 100 --concurrency-duration 30 --num-concurrency "1,5,10,20" --concurrency-timeout 3600
+  --k 100 --concurrency-duration 30 --num-concurrency "1,10,20,40,60,80" --concurrency-timeout 3600
 
 python3.11 -m vectordb_bench.cli.vectordbbench elasticcloudhnsw \
   --host "$ELASTIC_HOST" \
@@ -551,7 +551,7 @@ python3.11 -m vectordb_bench.cli.vectordbbench elasticcloudhnsw \
   --case-type FTSmsmarcoPerformance \
   --dataset-with-size-type "HotpotQA Small (100K documents)" \
   --drop-old --load --search-serial --search-concurrent \
-  --k 100 --concurrency-duration 30 --num-concurrency "1,5,10,20" --concurrency-timeout 3600
+  --k 100 --concurrency-duration 30 --num-concurrency "1,10,20,40,60,80" --concurrency-timeout 3600
 
 python3.11 -m vectordb_bench.cli.vectordbbench elasticcloudhnsw \
   --host "$ELASTIC_HOST" \
@@ -560,7 +560,7 @@ python3.11 -m vectordb_bench.cli.vectordbbench elasticcloudhnsw \
   --case-type FTSmsmarcoPerformance \
   --dataset-with-size-type "HotpotQA Medium (1M documents)" \
   --drop-old --load --search-serial --search-concurrent \
-  --k 100 --concurrency-duration 30 --num-concurrency "1,5,10,20" --concurrency-timeout 3600
+  --k 100 --concurrency-duration 30 --num-concurrency "1,10,20,40,60,80" --concurrency-timeout 3600
 ```
 
 Elastic Cloud alternate:
@@ -573,7 +573,7 @@ python3.11 -m vectordb_bench.cli.vectordbbench elasticcloudhnsw \
   --case-type FTSmsmarcoPerformance \
   --dataset-with-size-type "MS MARCO Small (100K documents)" \
   --drop-old --load --search-serial --search-concurrent \
-  --k 100 --concurrency-duration 30 --num-concurrency "1,5,10,20" --concurrency-timeout 3600
+  --k 100 --concurrency-duration 30 --num-concurrency "1,10,20,40,60,80" --concurrency-timeout 3600
 ```
 
 ## Vespa Matrix
@@ -586,7 +586,7 @@ python3.11 -m vectordb_bench.cli.vectordbbench vespa \
   --case-type FTSmsmarcoPerformance \
   --dataset-with-size-type "MS MARCO Small (100K documents)" \
   --drop-old --load --search-serial --search-concurrent \
-  --k 100 --concurrency-duration 30 --num-concurrency "1,5,10,20" --concurrency-timeout 3600
+  --k 100 --concurrency-duration 30 --num-concurrency "1,10,20,40,60,80" --concurrency-timeout 3600
 
 python3.11 -m vectordb_bench.cli.vectordbbench vespa \
   --uri "$VESPA_URI" \
@@ -595,7 +595,7 @@ python3.11 -m vectordb_bench.cli.vectordbbench vespa \
   --case-type FTSmsmarcoPerformance \
   --dataset-with-size-type "MS MARCO Medium (1M documents)" \
   --drop-old --load --search-serial --search-concurrent \
-  --k 100 --concurrency-duration 30 --num-concurrency "1,5,10,20" --concurrency-timeout 3600
+  --k 100 --concurrency-duration 30 --num-concurrency "1,10,20,40,60,80" --concurrency-timeout 3600
 
 python3.11 -m vectordb_bench.cli.vectordbbench vespa \
   --uri "$VESPA_URI" \
@@ -604,7 +604,7 @@ python3.11 -m vectordb_bench.cli.vectordbbench vespa \
   --case-type FTSmsmarcoPerformance \
   --dataset-with-size-type "HotpotQA Small (100K documents)" \
   --drop-old --load --search-serial --search-concurrent \
-  --k 100 --concurrency-duration 30 --num-concurrency "1,5,10,20" --concurrency-timeout 3600
+  --k 100 --concurrency-duration 30 --num-concurrency "1,10,20,40,60,80" --concurrency-timeout 3600
 
 python3.11 -m vectordb_bench.cli.vectordbbench vespa \
   --uri "$VESPA_URI" \
@@ -613,7 +613,7 @@ python3.11 -m vectordb_bench.cli.vectordbbench vespa \
   --case-type FTSmsmarcoPerformance \
   --dataset-with-size-type "HotpotQA Medium (1M documents)" \
   --drop-old --load --search-serial --search-concurrent \
-  --k 100 --concurrency-duration 30 --num-concurrency "1,5,10,20" --concurrency-timeout 3600
+  --k 100 --concurrency-duration 30 --num-concurrency "1,10,20,40,60,80" --concurrency-timeout 3600
 ```
 
 ## TurboPuffer Matrix
@@ -629,7 +629,7 @@ python3.11 -m vectordb_bench.cli.vectordbbench turbopuffer \
   --case-type FTSmsmarcoPerformance \
   --dataset-with-size-type "MS MARCO Small (100K documents)" \
   --drop-old --load --search-serial --search-concurrent \
-  --k 100 --concurrency-duration 30 --num-concurrency "1,5,10,20" --concurrency-timeout 3600
+  --k 100 --concurrency-duration 30 --num-concurrency "1,10,20,40,60,80" --concurrency-timeout 3600
 
 python3.11 -m vectordb_bench.cli.vectordbbench turbopuffer \
   --api-key "$TURBOPUFFER_API_KEY" \
@@ -639,7 +639,7 @@ python3.11 -m vectordb_bench.cli.vectordbbench turbopuffer \
   --case-type FTSmsmarcoPerformance \
   --dataset-with-size-type "MS MARCO Medium (1M documents)" \
   --drop-old --load --search-serial --search-concurrent \
-  --k 100 --concurrency-duration 30 --num-concurrency "1,5,10,20" --concurrency-timeout 3600
+  --k 100 --concurrency-duration 30 --num-concurrency "1,10,20,40,60,80" --concurrency-timeout 3600
 
 python3.11 -m vectordb_bench.cli.vectordbbench turbopuffer \
   --api-key "$TURBOPUFFER_API_KEY" \
@@ -649,7 +649,7 @@ python3.11 -m vectordb_bench.cli.vectordbbench turbopuffer \
   --case-type FTSmsmarcoPerformance \
   --dataset-with-size-type "HotpotQA Small (100K documents)" \
   --drop-old --load --search-serial --search-concurrent \
-  --k 100 --concurrency-duration 30 --num-concurrency "1,5,10,20" --concurrency-timeout 3600
+  --k 100 --concurrency-duration 30 --num-concurrency "1,10,20,40,60,80" --concurrency-timeout 3600
 
 python3.11 -m vectordb_bench.cli.vectordbbench turbopuffer \
   --api-key "$TURBOPUFFER_API_KEY" \
@@ -659,7 +659,7 @@ python3.11 -m vectordb_bench.cli.vectordbbench turbopuffer \
   --case-type FTSmsmarcoPerformance \
   --dataset-with-size-type "HotpotQA Medium (1M documents)" \
   --drop-old --load --search-serial --search-concurrent \
-  --k 100 --concurrency-duration 30 --num-concurrency "1,5,10,20" --concurrency-timeout 3600
+  --k 100 --concurrency-duration 30 --num-concurrency "1,10,20,40,60,80" --concurrency-timeout 3600
 ```
 
 ## Validation After Each Run

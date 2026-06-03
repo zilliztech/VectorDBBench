@@ -152,7 +152,7 @@ python3.11 -m vectordb_bench.cli.vectordbbench vespa \
   --dataset-with-size-type "MS MARCO Small (100K documents)" \
   --drop-old --load --search-serial --search-concurrent \
   --k 100 --concurrency-duration 30 \
-  --num-concurrency "1,5,10,20" \
+  --num-concurrency "1,10,20,40,60,80" \
   --concurrency-timeout 3600
 ```
 
@@ -195,7 +195,7 @@ python3.11 -m vectordb_bench.cli.vectordbbench vespa \
   --dataset-with-size-type "MS MARCO Small (100K documents)" \
   --drop-old --load --search-serial --search-concurrent \
   --k 100 --concurrency-duration 30 \
-  --num-concurrency "1,5,10,20" \
+  --num-concurrency "1,10,20,40,60,80" \
   --concurrency-timeout 3600
 
 rc=$?

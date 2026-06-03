@@ -58,6 +58,10 @@ are updated together.
   from the client. Use placeholders for private hosts, credentials, tokens, and
   key paths. The command must include task label, case type, dataset-with-size
   type, stages, k, concurrency list, duration, and timeout.
+- For new FTS E2E runs, explicitly use
+  `--num-concurrency "1,10,20,40,60,80"` to probe the saturation point. Keep
+  historical report commands unchanged when documenting already-committed raw
+  results.
 - `Result`: include a Markdown table summarizing every committed raw result in
   `raw_results/`. At minimum include raw JSON filename, task label, dataset
   size, load duration, QPS, recall, NDCG, MRR, p95, p99, and concurrent QPS.
