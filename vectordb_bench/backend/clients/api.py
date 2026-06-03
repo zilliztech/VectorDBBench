@@ -244,6 +244,16 @@ class VectorDB(ABC):
     def supports_payload_profile(self, payload_profile: PayloadProfile) -> bool:
         return payload_profile == PayloadProfile.IDS_ONLY
 
+    def has_text_field(self) -> bool:
+        return False
+
+    def supports_document_payload_profile(self, payload_profile: PayloadProfile) -> bool:
+        if payload_profile == PayloadProfile.IDS_ONLY:
+            return True
+        if payload_profile == PayloadProfile.TEXT:
+            return self.has_text_field()
+        return False
+
     def poll_insert_readiness(self, expected_count: int) -> dict:
         return {"fully_searchable": True, "fully_indexed": True, "additional_parameters": {}}
 
@@ -273,6 +283,7 @@ class VectorDB(ABC):
         self,
         query: str,
         k: int = 100,
+        payload_profile: PayloadProfile = PayloadProfile.IDS_ONLY,
         **kwargs,
     ) -> list[str]:
         msg = f"{self.name or self.__class__.__name__} does not support full-text document search"

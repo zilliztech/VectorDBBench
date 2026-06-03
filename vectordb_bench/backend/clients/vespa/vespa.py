@@ -7,6 +7,8 @@ from contextlib import contextmanager
 
 from vespa import application
 
+from vectordb_bench.backend.payload import PayloadProfile
+
 from ..api import VectorDB
 from . import util
 from .config import VespaFtsConfig, VespaHNSWConfig
@@ -58,6 +60,7 @@ class Vespa(VectorDB):
         self.case_config = db_case_config or VespaHNSWConfig()
         self._is_fts = isinstance(self.case_config, VespaFtsConfig)
         self.schema_name = collection_name
+        self._text_field = "text"
 
         client = self.deploy_http()
         client.wait_for_application_up()
@@ -91,6 +94,9 @@ class Vespa(VectorDB):
     @classmethod
     def supports_full_text_search(cls) -> bool:
         return True
+
+    def has_text_field(self) -> bool:
+        return bool(getattr(self, "_is_fts", False) and getattr(self, "_text_field", None))
 
     def need_normalize_cosine(self) -> bool:
         """Wheather this database need to normalize dataset to support COSINE"""
@@ -208,14 +214,21 @@ class Vespa(VectorDB):
         self,
         query: str,
         k: int = 100,
+        payload_profile: PayloadProfile = PayloadProfile.IDS_ONLY,
         **kwargs,
     ) -> list[str]:
         if not self._is_fts:
             msg = "Vespa full-text search requires VespaFtsConfig"
             raise RuntimeError(msg)
+        if not self.supports_document_payload_profile(payload_profile):
+            msg = f"Vespa does not support document payload_profile={payload_profile.value}"
+            raise NotImplementedError(msg)
         assert self.client is not None
 
-        yql = f"select id from {self.schema_name} where userQuery()"  # noqa: S608
+        selected_fields = "id"
+        if payload_profile == PayloadProfile.TEXT:
+            selected_fields = f"id, {self._text_field}"
+        yql = f"select {selected_fields} from {self.schema_name} where userQuery()"  # noqa: S608
         result = self.client.query(
             {
                 "yql": yql,
@@ -223,7 +236,7 @@ class Vespa(VectorDB):
                 "type": "any",
                 "ranking": "bm25",
                 "hits": k,
-                "default-index": "text",
+                "default-index": self._text_field,
             }
         )
         children = result.get_json().get("root", {}).get("children", []) or []

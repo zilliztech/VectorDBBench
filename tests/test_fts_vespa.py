@@ -3,12 +3,14 @@ import pytest
 from vectordb_bench.backend.clients.vespa.config import VespaFtsConfig
 from vectordb_bench.backend.clients.vespa import vespa as vespa_module
 from vectordb_bench.backend.clients.vespa.vespa import Vespa
+from vectordb_bench.backend.payload import PayloadProfile
 
 
 def make_fts_db():
     db = Vespa.__new__(Vespa)
     db.schema_name = "docs"
     db._is_fts = True
+    db._text_field = "text"
     db.client = object()
     return db
 
@@ -45,6 +47,25 @@ def test_vespa_search_documents_uses_user_query():
     assert calls["ranking"] == "bm25"
     assert calls["hits"] == 4
     assert calls["default-index"] == "text"
+
+
+def test_vespa_search_documents_requests_text_payload():
+    db = make_fts_db()
+    calls = {}
+
+    class Result:
+        def get_json(self):
+            return {"root": {"children": [{"fields": {"id": "d1", "text": "hello"}}]}}
+
+    class Client:
+        def query(self, query):
+            calls.update(query)
+            return Result()
+
+    db.client = Client()
+
+    assert db.search_documents("hello world", k=4, payload_profile=PayloadProfile.TEXT) == ["d1"]
+    assert calls["yql"] == "select id, text from docs where userQuery()"
 
 
 def test_vespa_search_documents_skips_malformed_hits_and_falls_back_to_document_id():

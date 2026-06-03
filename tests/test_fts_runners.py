@@ -6,25 +6,27 @@ import time
 import pytest
 
 from vectordb_bench.backend.cases import CaseLabel
+from vectordb_bench.backend.payload import PayloadProfile
 from vectordb_bench.backend.runner.mp_runner import MultiProcessingSearchRunner
 from vectordb_bench.backend.runner.serial_runner import SerialFtsInsertRunner, SerialSearchRunner
 from vectordb_bench.backend.task_runner import CaseRunner
 from vectordb_bench.backend.workload import WorkloadKind
-from vectordb_bench.models import ConcurrencySlotTimeoutError, LoadTimeoutError, PerformanceTimeoutError
+from vectordb_bench.models import ConcurrencySlotTimeoutError, LoadTimeoutError, PerformanceTimeoutError, TaskStage
 
 
 class FakeDB:
     name = "FakeDB"
 
-    def __init__(self):
+    def __init__(self, has_text_field=True):
         self.calls = []
+        self._has_text_field = has_text_field
 
     def search_embedding(self, query, k=100):
         self.calls.append(("vector", query, k))
         return ["1"]
 
-    def search_documents(self, query, k=100):
-        self.calls.append(("fts", query, k))
+    def search_documents(self, query, k=100, **kwargs):
+        self.calls.append(("fts", query, k, kwargs))
         return ["doc-1"]
 
     def need_normalize_cosine(self):
@@ -32,6 +34,16 @@ class FakeDB:
 
     def supports_payload_profile(self, payload_profile):
         return True
+
+    def has_text_field(self):
+        return self._has_text_field
+
+    def supports_document_payload_profile(self, payload_profile):
+        if payload_profile == PayloadProfile.IDS_ONLY:
+            return True
+        if payload_profile == PayloadProfile.TEXT:
+            return self.has_text_field()
+        return False
 
 
 class FakeInsertRunner:
@@ -66,8 +78,34 @@ def test_serial_runner_uses_explicit_fts_workload():
     )
 
     assert runner._get_db_search_res("alpha") == ["doc-1"]
-    assert db.calls == [("fts", "alpha", 5)]
+    assert db.calls == [("fts", "alpha", 5, {})]
     assert runner._use_fts_metrics is True
+
+
+def test_serial_runner_passes_text_payload_for_fts_workload():
+    db = FakeDB()
+    runner = SerialSearchRunner(
+        db=db,
+        test_data=["alpha"],
+        ground_truth=[["doc-1"]],
+        k=5,
+        payload_profile=PayloadProfile.TEXT,
+        workload_kind=WorkloadKind.FULL_TEXT_BM25,
+    )
+
+    assert runner._get_db_search_res("alpha") == ["doc-1"]
+    assert db.calls == [("fts", "alpha", 5, {"payload_profile": PayloadProfile.TEXT})]
+
+
+def test_serial_runner_rejects_text_payload_when_fts_backend_has_no_text_field():
+    with pytest.raises(NotImplementedError, match="document payload_profile=text"):
+        SerialSearchRunner(
+            db=FakeDB(has_text_field=False),
+            test_data=["alpha"],
+            ground_truth=[["doc-1"]],
+            payload_profile=PayloadProfile.TEXT,
+            workload_kind=WorkloadKind.FULL_TEXT_BM25,
+        )
 
 
 def test_mp_runner_uses_explicit_fts_workload():
@@ -80,6 +118,41 @@ def test_mp_runner_uses_explicit_fts_workload():
     )
 
     assert runner._search_func("alpha", 5) == ["doc-1"]
+
+
+def test_mp_runner_passes_text_payload_for_fts_workload():
+    db = FakeDB()
+    runner = MultiProcessingSearchRunner(
+        db=db,
+        test_data=["alpha"],
+        k=5,
+        payload_profile=PayloadProfile.TEXT,
+        workload_kind=WorkloadKind.FULL_TEXT_BM25,
+    )
+
+    assert runner._search_once("alpha") == ["doc-1"]
+    assert db.calls == [("fts", "alpha", 5, {"payload_profile": PayloadProfile.TEXT})]
+
+
+def test_mp_runner_rejects_text_payload_when_fts_backend_has_no_text_field():
+    with pytest.raises(NotImplementedError, match="document payload_profile=text"):
+        MultiProcessingSearchRunner(
+            db=FakeDB(has_text_field=False),
+            test_data=["alpha"],
+            payload_profile=PayloadProfile.TEXT,
+            workload_kind=WorkloadKind.FULL_TEXT_BM25,
+        )
+
+
+def test_fts_runners_reject_vector_payload_for_document_search():
+    with pytest.raises(NotImplementedError, match="document payload_profile=vector"):
+        SerialSearchRunner(
+            db=FakeDB(),
+            test_data=["alpha"],
+            ground_truth=[["doc-1"]],
+            payload_profile=PayloadProfile.VECTOR,
+            workload_kind=WorkloadKind.FULL_TEXT_BM25,
+        )
 
 
 def test_fts_and_vector_perf_paths_use_same_orchestration_methods():
@@ -135,6 +208,48 @@ def test_vector_init_search_runners_dispatches_to_vector_initializer():
     runner._init_search_runners()
 
     assert calls == ["vector"]
+
+
+def test_fts_init_search_runner_passes_payload_profile(monkeypatch):
+    from vectordb_bench.backend import task_runner
+
+    captured = {}
+
+    class CaptureRunner:
+        def __init__(self, **kwargs):
+            captured.setdefault(kwargs["workload_kind"], []).append(kwargs)
+
+    monkeypatch.setattr(task_runner, "SerialSearchRunner", CaptureRunner)
+    monkeypatch.setattr(task_runner, "MultiProcessingSearchRunner", CaptureRunner)
+
+    runner = CaseRunner.construct(
+        db=FakeDB(),
+        ca=SimpleNamespace(
+            dataset=SimpleNamespace(
+                queries_data=[SimpleNamespace(query_id="q1", text="alpha")],
+                qrels_data={"q1": ["doc-1"]},
+            ),
+            filters="filters",
+            payload_profile=PayloadProfile.TEXT,
+        ),
+        config=SimpleNamespace(
+            stages=[TaskStage.SEARCH_SERIAL, TaskStage.SEARCH_CONCURRENT],
+            case_config=SimpleNamespace(
+                k=7,
+                concurrency_search_config=SimpleNamespace(
+                    num_concurrency=[1],
+                    concurrency_duration=2,
+                    concurrency_timeout=3,
+                ),
+            ),
+        ),
+    )
+
+    runner._init_fts_search_runner()
+
+    serial_kwargs, concurrent_kwargs = captured[WorkloadKind.FULL_TEXT_BM25]
+    assert serial_kwargs["payload_profile"] == PayloadProfile.TEXT
+    assert concurrent_kwargs["payload_profile"] == PayloadProfile.TEXT
 
 
 def test_fts_run_routes_to_shared_perf_case():

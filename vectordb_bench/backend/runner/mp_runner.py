@@ -68,6 +68,12 @@ class MultiProcessingSearchRunner:
         if self.workload_kind == WorkloadKind.VECTOR and not self.db.supports_payload_profile(self.payload_profile):
             msg = f"{self.db.name} does not support payload_profile={self.payload_profile.value}"
             raise NotImplementedError(msg)
+        if (
+            self.workload_kind == WorkloadKind.FULL_TEXT_BM25
+            and not self.db.supports_document_payload_profile(self.payload_profile)
+        ):
+            msg = f"{self.db.name} does not support document payload_profile={self.payload_profile.value}"
+            raise NotImplementedError(msg)
         self.concurrencies = concurrencies
         self.duration = duration
         self.concurrency_timeout = concurrency_timeout
@@ -101,7 +107,9 @@ class MultiProcessingSearchRunner:
 
     def _search_once(self, query: list[float] | str, tenant_rng: random.Random | None = None):
         if self.workload_kind == WorkloadKind.FULL_TEXT_BM25:
-            return self._search_func(query, self.k)
+            if self.payload_profile == PayloadProfile.IDS_ONLY:
+                return self._search_func(query, self.k)
+            return self._search_func(query, self.k, payload_profile=self.payload_profile)
         tenant = (
             self.tenant_labels[tenant_rng.randrange(len(self.tenant_labels))]
             if tenant_rng is not None and self.tenant_labels

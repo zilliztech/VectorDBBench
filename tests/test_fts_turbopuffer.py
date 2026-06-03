@@ -7,6 +7,7 @@ from turbopuffer.resources.namespaces import NamespacesResource
 
 from vectordb_bench.backend.clients.turbopuffer.config import TurboPufferFtsConfig
 from vectordb_bench.backend.clients.turbopuffer.turbopuffer import TurboPuffer
+from vectordb_bench.backend.payload import PayloadProfile
 
 
 def make_fts_db():
@@ -102,6 +103,28 @@ def test_turbopuffer_search_documents_uses_bm25_rank_by():
     assert db.search_documents("hello", k=7) == ["d1"]
     assert calls["rank_by"] == ("text", "BM25", "hello")
     assert calls["top_k"] == 7
+
+
+def test_turbopuffer_search_documents_requests_text_payload():
+    db = make_fts_db()
+    calls = {}
+
+    class Row:
+        def __init__(self, id):
+            self.id = id
+
+    class Result:
+        rows = [Row("d1")]
+
+    class Namespace:
+        def query(self, **kwargs):
+            calls.update(kwargs)
+            return Result()
+
+    db.ns = Namespace()
+
+    assert db.search_documents("hello", k=7, payload_profile=PayloadProfile.TEXT) == ["d1"]
+    assert calls["include_attributes"] == ["text"]
 
 
 def test_turbopuffer_insert_documents_writes_text_schema():

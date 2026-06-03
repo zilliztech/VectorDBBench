@@ -1,5 +1,6 @@
 from vectordb_bench.backend.clients.milvus import milvus as milvus_module
 from vectordb_bench.backend.clients.milvus.config import MilvusFtsConfig
+from vectordb_bench.backend.payload import PayloadProfile
 
 
 def test_milvus_fts_primary_field_uses_varchar(monkeypatch):
@@ -94,8 +95,11 @@ def test_milvus_fts_insert_documents_stores_string_ids():
 
 
 def test_milvus_fts_search_documents_returns_string_ids():
+    calls = {}
+
     class FakeClient:
         def search(self, **kwargs):
+            calls.update(kwargs)
             assert kwargs["collection_name"] == "test_fts"
             assert kwargs["anns_field"] == "sparse_vector"
             return [[{"entity": {"doc_id": 123}}]]
@@ -109,7 +113,35 @@ def test_milvus_fts_search_documents_returns_string_ids():
     db.client = FakeClient()
     db.collection_name = "test_fts"
     db._primary_field = "doc_id"
+    db._text_field = "text"
     db._sparse_field = "sparse_vector"
     db.case_config = FakeCaseConfig()
 
     assert db.search_documents(query="hello", k=10) == ["123"]
+    assert calls["output_fields"] == ["doc_id"]
+
+
+def test_milvus_fts_search_documents_requests_text_payload():
+    calls = {}
+
+    class FakeClient:
+        def search(self, **kwargs):
+            calls.update(kwargs)
+            return [[{"entity": {"doc_id": 123, "text": "hello"}}]]
+
+    class FakeCaseConfig:
+        def search_param(self):
+            return {}
+
+    db = object.__new__(milvus_module.Milvus)
+    db.name = "Milvus"
+    db._is_fts = True
+    db.client = FakeClient()
+    db.collection_name = "test_fts"
+    db._primary_field = "doc_id"
+    db._text_field = "text"
+    db._sparse_field = "sparse_vector"
+    db.case_config = FakeCaseConfig()
+
+    assert db.search_documents(query="hello", k=10, payload_profile=PayloadProfile.TEXT) == ["123"]
+    assert calls["output_fields"] == ["doc_id", "text"]

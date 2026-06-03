@@ -197,6 +197,9 @@ class TurboPuffer(VectorDB):
     def supports_full_text_search(cls) -> bool:
         return True
 
+    def has_text_field(self) -> bool:
+        return bool(getattr(self, "_is_fts", False) and getattr(self, "_text_field", None))
+
     @contextmanager
     def init(self):
         self.client = self._create_client()
@@ -424,17 +427,24 @@ class TurboPuffer(VectorDB):
         self,
         query: str,
         k: int = 100,
+        payload_profile: PayloadProfile = PayloadProfile.IDS_ONLY,
         **kwargs,
     ) -> list[str]:
         if not getattr(self, "_is_fts", False):
             msg = "TurboPuffer full-text search requires TurboPufferFtsConfig"
             raise RuntimeError(msg)
+        if not self.supports_document_payload_profile(payload_profile):
+            msg = f"TurboPuffer does not support document payload_profile={payload_profile.value}"
+            raise NotImplementedError(msg)
         assert self.ns is not None, "should self.init() first"
 
-        res = self.ns.query(
-            rank_by=(self._text_field, "BM25", query),
-            top_k=k,
-        )
+        query_kwargs = {
+            "rank_by": (self._text_field, "BM25", query),
+            "top_k": k,
+        }
+        if payload_profile == PayloadProfile.TEXT:
+            query_kwargs["include_attributes"] = [self._text_field]
+        res = self.ns.query(**query_kwargs)
         rows = getattr(res, "rows", None) or []
         return [str(row.id) for row in rows if getattr(row, "id", None) is not None]
 

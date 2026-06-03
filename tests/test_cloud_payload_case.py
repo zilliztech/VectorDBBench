@@ -32,6 +32,7 @@ class FakeDB:
 def test_payload_profile_estimates_response_bytes():
     assert PayloadProfile.IDS_ONLY.estimated_bytes_per_query(k=10, dim=768) == 200
     assert PayloadProfile.VECTOR.estimated_bytes_per_query(k=10, dim=768) == 30_920
+    assert PayloadProfile.TEXT.estimated_bytes_per_query(k=10, dim=0) == 5_320
 
 
 def test_cloud_payload_case_defaults_to_laion_100m():

@@ -344,6 +344,12 @@ class SerialSearchRunner:
         if self.workload_kind == WorkloadKind.VECTOR and not self.db.supports_payload_profile(self.payload_profile):
             msg = f"{self.db.name} does not support payload_profile={self.payload_profile.value}"
             raise NotImplementedError(msg)
+        if (
+            self.workload_kind == WorkloadKind.FULL_TEXT_BM25
+            and not self.db.supports_document_payload_profile(self.payload_profile)
+        ):
+            msg = f"{self.db.name} does not support document payload_profile={self.payload_profile.value}"
+            raise NotImplementedError(msg)
 
         if isinstance(test_data[0], np.ndarray):
             self.test_data = [query.tolist() for query in test_data]
@@ -368,7 +374,10 @@ class SerialSearchRunner:
     ) -> list[int]:
         try:
             if self.workload_kind == WorkloadKind.FULL_TEXT_BM25:
-                results = self._search_func(query, self.k)
+                if self.payload_profile == PayloadProfile.IDS_ONLY:
+                    results = self._search_func(query, self.k)
+                else:
+                    results = self._search_func(query, self.k, payload_profile=self.payload_profile)
             else:
                 results = self._search_func(query, tenant=tenant)
         except Exception as e:

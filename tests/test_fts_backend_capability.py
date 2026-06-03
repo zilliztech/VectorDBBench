@@ -8,6 +8,7 @@ from vectordb_bench.backend.clients.elastic_cloud.config import ElasticCloudFtsC
 from vectordb_bench.backend.clients.milvus.config import MilvusFtsConfig
 from vectordb_bench.backend.clients.turbopuffer.config import TurboPufferFtsConfig
 from vectordb_bench.backend.clients.vespa.config import VespaFtsConfig
+from vectordb_bench.backend.payload import PayloadProfile
 from vectordb_bench.backend.workload import WorkloadKind
 from vectordb_bench.models import CaseConfig, TaskConfig
 
@@ -41,6 +42,11 @@ class FakeVectorDB(VectorDB):
 
 def test_default_document_methods_fail_fast():
     db = FakeVectorDB(dim=0, db_config={}, db_case_config=None, collection_name="test")
+
+    assert db.has_text_field() is False
+    assert db.supports_document_payload_profile(PayloadProfile.IDS_ONLY) is True
+    assert db.supports_document_payload_profile(PayloadProfile.TEXT) is False
+    assert db.supports_document_payload_profile(PayloadProfile.VECTOR) is False
 
     with pytest.raises(NotImplementedError, match="does not support full-text document insert"):
         db.insert_documents(texts=["hello"], doc_ids=["doc-1"])

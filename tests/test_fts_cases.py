@@ -48,6 +48,16 @@ def test_fts_case_payload_estimate_does_not_require_vector_dim():
     assert case.estimated_payload_bytes_per_query(k=100) == 2_000
 
 
+def test_fts_case_accepts_text_payload_profile():
+    case = CaseConfig(
+        case_id=CaseType.FTSmsmarcoPerformance,
+        custom_case={"payload_profile": PayloadProfile.TEXT.value},
+    ).case
+
+    assert case.payload_profile == PayloadProfile.TEXT
+    assert case.estimated_payload_bytes_per_query(k=10) == 5_320
+
+
 def test_fts_case_items_expose_small_and_medium_by_default():
     case_items = get_fts_case_items()
     dataset_values = [
@@ -117,11 +127,13 @@ def test_cli_custom_case_config_passes_fts_dataset_with_size_type():
         {
             "case_type": "FTSmsmarcoPerformance",
             "dataset_with_size_type": FtsDatasetWithSizeType.HotpotQAMedium.value,
+            "payload_profile": "text",
         }
     )
 
     assert custom_case_config == {
         "dataset_with_size_type": FtsDatasetWithSizeType.HotpotQAMedium.value,
+        "payload_profile": "text",
     }
 
 
@@ -135,6 +147,7 @@ def test_cli_custom_case_config_defaults_to_msmarco_small_for_fts():
 
     assert custom_case_config == {
         "dataset_with_size_type": FtsDatasetWithSizeType.MSMarcoSmall.value,
+        "payload_profile": "ids_only",
     }
 
 

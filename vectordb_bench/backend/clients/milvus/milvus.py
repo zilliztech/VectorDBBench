@@ -32,6 +32,9 @@ class Milvus(VectorDB):
     def supports_full_text_search(cls) -> bool:
         return True
 
+    def has_text_field(self) -> bool:
+        return bool(getattr(self, "_is_fts", False) and getattr(self, "_text_field", None))
+
     def __init__(
         self,
         dim: int,
@@ -494,12 +497,20 @@ class Milvus(VectorDB):
         query: str,
         k: int = 100,
         timeout: int | None = None,
+        payload_profile: PayloadProfile = PayloadProfile.IDS_ONLY,
     ) -> list[str]:
         """Search a Milvus BM25 full-text collection and return document IDs."""
         if not self._is_fts:
             msg = "search_documents only valid in FTS mode"
             raise RuntimeError(msg)
+        if not self.supports_document_payload_profile(payload_profile):
+            msg = f"{getattr(self, 'name', 'Milvus')} does not support document payload_profile={payload_profile.value}"
+            raise NotImplementedError(msg)
         assert self.client is not None
+
+        output_fields = [self._primary_field]
+        if payload_profile == PayloadProfile.TEXT:
+            output_fields.append(self._text_field)
 
         res = self.client.search(
             collection_name=self.collection_name,
@@ -507,7 +518,7 @@ class Milvus(VectorDB):
             anns_field=self._sparse_field,
             search_params=self.case_config.search_param(),
             limit=k,
-            output_fields=[self._primary_field],
+            output_fields=output_fields,
         )
 
         hits = res[0] if res else []

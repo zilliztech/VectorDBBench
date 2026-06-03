@@ -5,6 +5,7 @@ from vectordb_bench.backend.clients.elastic_cloud.config import ElasticCloudConf
 from vectordb_bench.backend.clients.elastic_cloud import elastic_cloud as elastic_cloud_module
 from vectordb_bench.backend.clients.elastic_cloud.cli import build_elastic_config
 from vectordb_bench.backend.clients.elastic_cloud.elastic_cloud import ElasticCloud
+from vectordb_bench.backend.payload import PayloadProfile
 
 
 def make_fts_db():
@@ -130,6 +131,26 @@ def test_elastic_cloud_search_documents_builds_match_query(monkeypatch):
     assert calls["query"] == {"match": {"text": "hello world"}}
     assert calls["size"] == 3
     assert calls["filter_path"] == ["hits.hits._id", "hits.hits.fields.doc_id"]
+
+
+def test_elastic_cloud_search_documents_requests_text_payload(monkeypatch):
+    db = make_fts_db()
+    calls = {}
+
+    class Client:
+        def search(self, **kwargs):
+            calls.update(kwargs)
+            return {"hits": {"hits": [{"_id": "d1", "_source": {"text": "hello"}}]}}
+
+    db.client = Client()
+
+    assert db.search_documents("hello world", k=3, payload_profile=PayloadProfile.TEXT) == ["d1"]
+    assert calls["_source"] == ["text"]
+    assert calls["filter_path"] == [
+        "hits.hits._id",
+        "hits.hits.fields.doc_id",
+        "hits.hits._source.text",
+    ]
 
 
 def test_elastic_cloud_insert_documents_builds_bulk_actions(monkeypatch):

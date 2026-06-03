@@ -6,6 +6,7 @@ from contextlib import contextmanager
 from elasticsearch.helpers import bulk
 
 from vectordb_bench.backend.filter import Filter, FilterOp
+from vectordb_bench.backend.payload import PayloadProfile
 
 from ..api import VectorDB
 from .config import ElasticCloudFtsConfig, ElasticCloudIndexConfig
@@ -66,6 +67,9 @@ class ElasticCloud(VectorDB):
     @classmethod
     def supports_full_text_search(cls) -> bool:
         return True
+
+    def has_text_field(self) -> bool:
+        return bool(getattr(self, "_is_fts", False) and getattr(self, "text_col_name", None))
 
     @contextmanager
     def init(self) -> None:
@@ -262,20 +266,28 @@ class ElasticCloud(VectorDB):
         self,
         query: str,
         k: int = 100,
+        payload_profile: PayloadProfile = PayloadProfile.IDS_ONLY,
         **kwargs,
     ) -> list[str]:
         if not getattr(self, "_is_fts", False):
             msg = "ElasticCloud full-text search requires ElasticCloudFtsConfig"
             raise RuntimeError(msg)
+        if not self.supports_document_payload_profile(payload_profile):
+            msg = f"ElasticCloud does not support document payload_profile={payload_profile.value}"
+            raise NotImplementedError(msg)
         assert self.client is not None, "should self.init() first"
+        source = [self.text_col_name] if payload_profile == PayloadProfile.TEXT else False
+        filter_path = ["hits.hits._id", f"hits.hits.fields.{self.id_col_name}"]
+        if payload_profile == PayloadProfile.TEXT:
+            filter_path.append(f"hits.hits._source.{self.text_col_name}")
         res = self.client.search(
             index=self.indice,
             query={"match": {self.text_col_name: query}},
             size=k,
-            _source=False,
+            _source=source,
             docvalue_fields=[self.id_col_name],
             stored_fields="_none_",
-            filter_path=["hits.hits._id", f"hits.hits.fields.{self.id_col_name}"],
+            filter_path=filter_path,
         )
         doc_ids = []
         for hit in res.get("hits", {}).get("hits", []):

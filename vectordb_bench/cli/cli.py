@@ -20,6 +20,7 @@ from .. import config
 from ..backend.clients import DB
 from ..backend.clients.api import IndexType, MetricType
 from ..backend.dataset import DatasetWithSizeType, FtsDatasetWithSizeType
+from ..backend.payload import PayloadProfile
 from ..interface import benchmark_runner
 from ..models import (
     CaseConfig,
@@ -256,6 +257,7 @@ def get_custom_case_config(parameters: dict) -> dict:
             dataset_with_size_type = FtsDatasetWithSizeType.MSMarcoSmall.value
         custom_case_config = {
             "dataset_with_size_type": dataset_with_size_type,
+            "payload_profile": parameters.get("payload_profile", PayloadProfile.IDS_ONLY.value),
         }
     return custom_case_config
 
@@ -545,8 +547,8 @@ class CommonTypedDict(TypedDict):
         str,
         click.option(
             "--payload-profile",
-            type=click.Choice(["ids_only", "vector", "scalar_label"]),
-            help="Response payload profile for CloudPayloadSearchCase and CloudColdLatencyCase",
+            type=click.Choice([profile.value for profile in PayloadProfile]),
+            help="Response payload profile for payload and FTS cases",
             default="ids_only",
             show_default=True,
         ),

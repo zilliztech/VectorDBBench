@@ -635,6 +635,7 @@ class CaseRunner(BaseModel):
                 ground_truth=ground_truth,
                 filters=self.ca.filters,
                 k=self.config.case_config.k,
+                payload_profile=self.ca.payload_profile,
                 workload_kind=WorkloadKind.FULL_TEXT_BM25,
             )
         if TaskStage.SEARCH_CONCURRENT in self.config.stages:
@@ -646,6 +647,7 @@ class CaseRunner(BaseModel):
                 duration=self.config.case_config.concurrency_search_config.concurrency_duration,
                 concurrency_timeout=self.config.case_config.concurrency_search_config.concurrency_timeout,
                 k=self.config.case_config.k,
+                payload_profile=self.ca.payload_profile,
                 workload_kind=WorkloadKind.FULL_TEXT_BM25,
             )
 
