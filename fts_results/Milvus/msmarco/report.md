@@ -5,7 +5,7 @@
 - Backend: Milvus standalone.
 - Dataset family: MS MARCO.
 - Current committed raw results: `MS MARCO Small (100K documents)` and `MS MARCO Medium (1M documents)` on the original `m5d.2xlarge` server and the later `r7i.4xlarge` server.
-- Run dates represented here: 2026-05-28, 2026-06-01, and 2026-06-02.
+- Run dates represented here: 2026-05-28, 2026-06-01, 2026-06-02, and 2026-06-03.
 - Source runbook: `docs/fts-backends/milvus.md`.
 - Raw result directory: `raw_results/`.
 - Current result JSONs have connection fields masked by VectorDBBench.
@@ -127,6 +127,29 @@ The stability rerun used the same command with task label `fts-e2e-milvus-msmarc
 The `r7i.4xlarge` rerun used the same command with task label `fts-e2e-milvus-msmarco-small-r7i`.
 The `r7i.4xlarge` medium run used the same command with task label `fts-e2e-milvus-msmarco-medium-r7i` and dataset size `MS MARCO Medium (1M documents)`.
 
+Exact client script for the `r7i.4xlarge` MS MARCO Small text-payload run:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd /home/ubuntu/VectorDBBench
+export DATASET_LOCAL_DIR=/tmp/vectordb_bench/dataset
+export RESULTS_LOCAL_DIR=/tmp/vectordb_bench/results
+export NUM_PER_BATCH=100
+
+python3.11 -m vectordb_bench.cli.vectordbbench milvusfts \
+  --uri http://10.15.9.94:19530 \
+  --task-label fts-e2e-milvus-msmarco-small-text-r7i-rerun \
+  --case-type FTSmsmarcoPerformance \
+  --dataset-with-size-type "MS MARCO Small (100K documents)" \
+  --payload-profile text \
+  --drop-old --load --search-serial --search-concurrent \
+  --k 100 --concurrency-duration 30 \
+  --num-concurrency "1,10,20,40,60,80" \
+  --concurrency-timeout 3600
+```
+
 Effective Milvus FTS case config from the raw JSON:
 
 - `index_type=SPARSE_INVERTED_INDEX`
@@ -156,3 +179,15 @@ Latest `r7i.4xlarge` rerun vs previous `m5d.2xlarge` stability run:
 - Load duration changed from `233.5157s` to `230.3305s` (-1.4%).
 - Recall stayed unchanged at `0.9157`.
 - p95 changed from `0.0022s` to `0.0026s`; p99 changed from `0.0027s` to `0.0029s`.
+
+Text payload rerun on `r7i.4xlarge`:
+
+| Raw JSON | Task label | Load s | QPS | Recall | NDCG | MRR | p95 s | p99 s | Concurrent QPS at 1/10/20/40/60/80 |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---|
+| `result_20260603_fts-e2e-milvus-msmarco-small-text-r7i-rerun_milvus.json` | `fts-e2e-milvus-msmarco-small-text-r7i-rerun` | 230.4392 | 9569.0676 | 0.9157 | 0.7157 | 0.6653 | 0.0029 | 0.0032 | 468.2255 / 4857.3898 / 8011.723 / 9279.3577 / 9569.0676 / 9266.8844 |
+
+Text payload details:
+
+- `payload_profile=text`.
+- Returned fields: `doc_id` and `text`.
+- Estimated payload bytes per query from VectorDBBench: `53200`.

@@ -5,7 +5,7 @@
 - Backend: Vespa single-node container.
 - Dataset family: MS MARCO.
 - Current committed raw results: `MS MARCO Small (100K documents)` and `MS MARCO Medium (1M documents)` on the original `m5d.2xlarge` server and the later `r7i.4xlarge` server.
-- Run dates represented here: 2026-05-28, 2026-06-01, and 2026-06-02.
+- Run dates represented here: 2026-05-28, 2026-06-01, 2026-06-02, and 2026-06-03.
 - Source runbook: `docs/fts-backends/vespa.md`.
 - Raw result directory: `raw_results/`.
 - Current result JSONs have connection fields masked by VectorDBBench.
@@ -120,6 +120,30 @@ python3.11 -m vectordb_bench.cli.vectordbbench vespa \
 The `r7i.4xlarge` rerun used the same command with task label `fts-e2e-vespa-msmarco-small-r7i`.
 The `r7i.4xlarge` medium run used the same command with task label `fts-e2e-vespa-msmarco-medium-r7i` and dataset size `MS MARCO Medium (1M documents)`.
 
+Exact client script for the `r7i.4xlarge` MS MARCO Small text-payload run:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd /home/ubuntu/VectorDBBench
+export DATASET_LOCAL_DIR=/tmp/vectordb_bench/dataset
+export RESULTS_LOCAL_DIR=/tmp/vectordb_bench/results
+export NUM_PER_BATCH=100
+
+python3.11 -m vectordb_bench.cli.vectordbbench vespa \
+  --uri http://10.15.9.94 \
+  --port 8080 \
+  --task-label fts-e2e-vespa-msmarco-small-text-r7i \
+  --case-type FTSmsmarcoPerformance \
+  --dataset-with-size-type "MS MARCO Small (100K documents)" \
+  --payload-profile text \
+  --drop-old --load --search-serial --search-concurrent \
+  --k 100 --concurrency-duration 30 \
+  --num-concurrency "1,10,20,40,60,80" \
+  --concurrency-timeout 3600
+```
+
 Effective Vespa FTS case config from the raw JSON: no backend-specific case fields are set. The VDBBench Vespa adapter deploys the application package through port `19071` and queries through port `8080`.
 
 ## Result
@@ -137,3 +161,16 @@ Latest `r7i.4xlarge` rerun vs previous `m5d.2xlarge` run:
 - Load duration changed from `81.6402s` to `79.2473s` (-2.9%).
 - Recall stayed unchanged at `0.9416`.
 - p95 changed from `0.0202s` to `0.0184s`; p99 changed from `0.0260s` to `0.0230s`.
+
+Text payload rerun on `r7i.4xlarge`:
+
+| Raw JSON | Task label | Load s | QPS | Recall | NDCG | MRR | p95 s | p99 s | Concurrent QPS at 1/10/20/40/60/80 |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---|
+| `result_20260603_fts-e2e-vespa-msmarco-small-text-r7i_vespa.json` | `fts-e2e-vespa-msmarco-small-text-r7i` | 78.8999 | 788.0555 | 0.9416 | 0.7509 | 0.7015 | 0.0193 | 0.0236 | 64.6508 / 786.3064 / 131.0499 / 788.0555 / 422.9538 / 365.3142 |
+
+Text payload details:
+
+- `payload_profile=text`.
+- Returned fields: `id` and `text`.
+- Estimated payload bytes per query from VectorDBBench: `53200`.
+- The concurrency 20, 60, and 80 stages produced request-send warnings and lower QPS, so the peak came from concurrency 40.

@@ -5,7 +5,7 @@
 - Backend: Elasticsearch single-node container, invoked through VectorDBBench `elasticcloudhnsw`.
 - Dataset family: MS MARCO.
 - Current committed raw results: `MS MARCO Small (100K documents)` and `MS MARCO Medium (1M documents)` on the original `m5d.2xlarge` server and the later `r7i.4xlarge` server.
-- Run dates represented here: 2026-05-28, 2026-06-01, and 2026-06-02.
+- Run dates represented here: 2026-05-28, 2026-06-01, 2026-06-02, and 2026-06-03.
 - Source runbook: `docs/fts-backends/elasticsearch.md`.
 - Raw result directory: `raw_results/`.
 - Current result JSONs have connection fields masked by VectorDBBench.
@@ -122,6 +122,30 @@ The stability rerun used the same command with task label `fts-e2e-elastic-msmar
 The `r7i.4xlarge` rerun used the same command with task label `fts-e2e-elastic-msmarco-small-r7i`.
 The `r7i.4xlarge` medium run used the same command with task label `fts-e2e-elastic-msmarco-medium-r7i` and dataset size `MS MARCO Medium (1M documents)`.
 
+Exact client script for the `r7i.4xlarge` MS MARCO Small text-payload run:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd /home/ubuntu/VectorDBBench
+export DATASET_LOCAL_DIR=/tmp/vectordb_bench/dataset
+export RESULTS_LOCAL_DIR=/tmp/vectordb_bench/results
+export NUM_PER_BATCH=100
+
+python3.11 -m vectordb_bench.cli.vectordbbench elasticcloudhnsw \
+  --host 10.15.9.94 \
+  --port 9200 \
+  --task-label fts-e2e-elastic-msmarco-small-text-r7i \
+  --case-type FTSmsmarcoPerformance \
+  --dataset-with-size-type "MS MARCO Small (100K documents)" \
+  --payload-profile text \
+  --drop-old --load --search-serial --search-concurrent \
+  --k 100 --concurrency-duration 30 \
+  --num-concurrency "1,10,20,40,60,80" \
+  --concurrency-timeout 3600
+```
+
 Effective Elasticsearch FTS case config from the raw JSON:
 
 - `number_of_shards=1`
@@ -147,3 +171,15 @@ Latest `r7i.4xlarge` rerun vs previous `m5d.2xlarge` stability run:
 - Load duration changed from `58.9212s` to `59.4276s` (+0.9%).
 - Recall stayed unchanged at `0.9118`.
 - p95 changed from `0.0031s` to `0.0030s`; p99 changed from `0.0039s` to `0.0035s`.
+
+Text payload rerun on `r7i.4xlarge`:
+
+| Raw JSON | Task label | Load s | QPS | Recall | NDCG | MRR | p95 s | p99 s | Concurrent QPS at 1/10/20/40/60/80 |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---|
+| `result_20260603_fts-e2e-elastic-msmarco-small-text-r7i_elasticcloud.json` | `fts-e2e-elastic-msmarco-small-text-r7i` | 57.8052 | 4177.1357 | 0.9118 | 0.7159 | 0.6665 | 0.0046 | 0.0051 | 242.0833 / 2599.9459 / 3941.7042 / 4158.8964 / 4177.1357 / 4155.8592 |
+
+Text payload details:
+
+- `payload_profile=text`.
+- Returned fields: document ID fields plus `_source.text`.
+- Estimated payload bytes per query from VectorDBBench: `53200`.

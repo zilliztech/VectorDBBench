@@ -130,6 +130,7 @@ def test_elastic_cloud_search_documents_builds_match_query(monkeypatch):
     assert calls["index"] == "idx"
     assert calls["query"] == {"match": {"text": "hello world"}}
     assert calls["size"] == 3
+    assert calls["stored_fields"] == "_none_"
     assert calls["filter_path"] == ["hits.hits._id", "hits.hits.fields.doc_id"]
 
 
@@ -146,6 +147,7 @@ def test_elastic_cloud_search_documents_requests_text_payload(monkeypatch):
 
     assert db.search_documents("hello world", k=3, payload_profile=PayloadProfile.TEXT) == ["d1"]
     assert calls["_source"] == ["text"]
+    assert "stored_fields" not in calls
     assert calls["filter_path"] == [
         "hits.hits._id",
         "hits.hits.fields.doc_id",

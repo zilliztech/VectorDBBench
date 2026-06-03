@@ -280,15 +280,17 @@ class ElasticCloud(VectorDB):
         filter_path = ["hits.hits._id", f"hits.hits.fields.{self.id_col_name}"]
         if payload_profile == PayloadProfile.TEXT:
             filter_path.append(f"hits.hits._source.{self.text_col_name}")
-        res = self.client.search(
-            index=self.indice,
-            query={"match": {self.text_col_name: query}},
-            size=k,
-            _source=source,
-            docvalue_fields=[self.id_col_name],
-            stored_fields="_none_",
-            filter_path=filter_path,
-        )
+        search_kwargs = {
+            "index": self.indice,
+            "query": {"match": {self.text_col_name: query}},
+            "size": k,
+            "_source": source,
+            "docvalue_fields": [self.id_col_name],
+            "filter_path": filter_path,
+        }
+        if payload_profile != PayloadProfile.TEXT:
+            search_kwargs["stored_fields"] = "_none_"
+        res = self.client.search(**search_kwargs)
         doc_ids = []
         for hit in res.get("hits", {}).get("hits", []):
             if hit.get("_id") is not None:

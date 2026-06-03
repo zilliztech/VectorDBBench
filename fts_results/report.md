@@ -2,7 +2,7 @@
 
 This report compares the latest committed representative result for each backend and dataset configuration. Backend-specific historical reruns remain in each leaf `report.md`; this master view is for cross-backend comparison.
 
-All local-server rows use the `r7i.4xlarge` server unless marked otherwise. TurboPuffer is a managed external backend, so its row is not directly comparable on server hardware. `Load s` is the VectorDBBench load duration. `QPS`, `p95 s`, and `p99 s` are from the search result in the raw JSON. Concurrent QPS is shown at concurrency `1 / 5 / 10 / 20`.
+All local-server rows use the `r7i.4xlarge` server unless marked otherwise. TurboPuffer is a managed external backend, so its row is not directly comparable on server hardware. `Load s` is the VectorDBBench load duration. `QPS`, `p95 s`, and `p99 s` are from the search result in the raw JSON. Historical rows show concurrent QPS at concurrency `1 / 5 / 10 / 20`; text-payload rows show `1 / 10 / 20 / 40 / 60 / 80`.
 
 ## MS MARCO Small (100K documents)
 
@@ -12,6 +12,16 @@ All local-server rows use the `r7i.4xlarge` server unless marked otherwise. Turb
 | ElasticSearch | `r7i.4xlarge` | `ElasticSearch/msmarco/raw_results/result_20260602_fts-e2e-elastic-msmarco-small-r7i_elasticcloud.json` | 59.4276 | 8689.3499 | 0.9118 | 0.7159 | 0.6665 | 0.0030 | 0.0035 | 396.5015 / 2534.0129 / 5536.5659 / 8689.3499 |
 | Vespa | `r7i.4xlarge` | `Vespa/msmarco/raw_results/result_20260602_fts-e2e-vespa-msmarco-small-r7i_vespa.json` | 79.2473 | 734.5241 | 0.9416 | 0.7509 | 0.7015 | 0.0184 | 0.0230 | 91.7244 / 512.5352 / 347.9730 / 734.5241 |
 | TurboPuffer | managed backend | `Turbopuffer/msmarco/raw_results/result_20260601_fts-e2e-tpuf-msmarco-small_turbopuffer.json` | 290.5625 | 257.3771 | 0.9125 | 0.7156 | 0.6659 | 0.0840 | 0.1081 | 1.3357 / 49.4967 / 126.8548 / 257.3771 |
+
+## MS MARCO Small (100K documents), Text Payload
+
+These runs used `payload_profile=text`, `k=100`, `concurrency_duration=30`, and explicit concurrency `1,10,20,40,60,80`. Local-server rows used the same `r7i.4xlarge` server host `10.15.9.94`.
+
+| Backend | Context | Raw JSON | Load s | QPS | Recall | NDCG | MRR | p95 s | p99 s | Concurrent QPS 1/10/20/40/60/80 |
+|---|---|---|---:|---:|---:|---:|---:|---:|---:|---|
+| Milvus | `r7i.4xlarge`, text payload | `Milvus/msmarco/raw_results/result_20260603_fts-e2e-milvus-msmarco-small-text-r7i-rerun_milvus.json` | 230.4392 | 9569.0676 | 0.9157 | 0.7157 | 0.6653 | 0.0029 | 0.0032 | 468.2255 / 4857.3898 / 8011.723 / 9279.3577 / 9569.0676 / 9266.8844 |
+| ElasticSearch | `r7i.4xlarge`, text payload | `ElasticSearch/msmarco/raw_results/result_20260603_fts-e2e-elastic-msmarco-small-text-r7i_elasticcloud.json` | 57.8052 | 4177.1357 | 0.9118 | 0.7159 | 0.6665 | 0.0046 | 0.0051 | 242.0833 / 2599.9459 / 3941.7042 / 4158.8964 / 4177.1357 / 4155.8592 |
+| Vespa | `r7i.4xlarge`, text payload | `Vespa/msmarco/raw_results/result_20260603_fts-e2e-vespa-msmarco-small-text-r7i_vespa.json` | 78.8999 | 788.0555 | 0.9416 | 0.7509 | 0.7015 | 0.0193 | 0.0236 | 64.6508 / 786.3064 / 131.0499 / 788.0555 / 422.9538 / 365.3142 |
 
 ## MS MARCO Medium (1M documents)
 
