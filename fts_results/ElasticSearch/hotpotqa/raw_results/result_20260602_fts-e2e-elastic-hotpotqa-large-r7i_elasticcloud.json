@@ -1,0 +1,120 @@
+{
+  "run_id": "2074f053fdd045fca0f37f52be68145a",
+  "task_label": "fts-e2e-elastic-hotpotqa-large-r7i",
+  "results": [
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 490.0485,
+        "optimize_duration": 60.5679,
+        "load_duration": 550.6164,
+        "qps": 476.261,
+        "serial_latency_p99": 0.0755,
+        "serial_latency_p95": 0.0503,
+        "recall": 0.7637,
+        "ndcg": 0.6243,
+        "mrr": 0.7549,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20
+        ],
+        "conc_qps_list": [
+          41.0129,
+          202.7703,
+          356.3845,
+          476.261
+        ],
+        "conc_latency_p99_list": [
+          0.08632404748001145,
+          0.08373943476937709,
+          0.10022266772575684,
+          0.13865401871618802
+        ],
+        "conc_latency_p95_list": [
+          0.055083698400994766,
+          0.05716667103115466,
+          0.0657665885228198,
+          0.09483928810223004
+        ],
+        "conc_latency_avg_list": [
+          0.02438049640184474,
+          0.02464109270072004,
+          0.028038569460532497,
+          0.04191443354202008
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 0,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {},
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ElasticCloud",
+        "db_config": {
+          "db_label": "2026-06-02T16:32:35.955052",
+          "version": "",
+          "note": "",
+          "cloud_id": null,
+          "host": "**********",
+          "port": 9200,
+          "user_name": null,
+          "password": null,
+          "use_ssl": false,
+          "verify_certs": true
+        },
+        "db_case_config": {
+          "number_of_shards": 1,
+          "number_of_replicas": 0,
+          "refresh_interval": "30s",
+          "use_force_merge": true
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "HotpotQA Large (5.2M documents)"
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    }
+  ],
+  "file_fmt": "result_{}_{}_{}.json",
+  "timestamp": 1780358400.0
+}

@@ -4,7 +4,7 @@
 
 - Backend: Milvus standalone.
 - Dataset family: HotpotQA.
-- Current committed raw results: `HotpotQA Medium (1M documents)` on the `r7i.4xlarge` server.
+- Current committed raw results: `HotpotQA Medium (1M documents)` and `HotpotQA Large (5.2M documents)` on the `r7i.4xlarge` server.
 - Run dates represented here: 2026-06-02.
 - Source runbook: `docs/fts-backends/milvus.md`.
 - Raw result directory: `raw_results/`.
@@ -89,7 +89,7 @@ sudo docker volume ls
 
 ## VDBBench Running
 
-Exact client script for the committed HotpotQA Medium run:
+Exact client script for the committed HotpotQA runs:
 
 ```bash
 #!/usr/bin/env bash
@@ -113,6 +113,8 @@ python3.11 -m vectordb_bench.cli.vectordbbench milvusfts \
   --concurrency-timeout 3600
 ```
 
+The committed HotpotQA Large run used the same command with task label `fts-e2e-milvus-hotpotqa-large-r7i` and dataset size `HotpotQA Large (5.2M documents)`.
+
 Effective Milvus FTS case config from the raw JSON:
 
 - `index_type=SPARSE_INVERTED_INDEX`
@@ -131,3 +133,4 @@ Effective Milvus FTS case config from the raw JSON:
 | Raw JSON | Task label | Dataset size | Load s | QPS | Recall | NDCG | MRR | p95 s | p99 s | Concurrent QPS at 1/5/10/20 |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|---|
 | `result_20260602_fts-e2e-milvus-hotpotqa-medium-r7i_milvus.json` | `fts-e2e-milvus-hotpotqa-medium-r7i` | 1M | 2031.2796 | 1596.6340 | 0.8378 | 0.7246 | 0.8561 | 0.0123 | 0.0170 | 146.0629 / 726.2209 / 1273.3380 / 1596.6340 |
+| `result_20260602_fts-e2e-milvus-hotpotqa-large-r7i_milvus.json` | `fts-e2e-milvus-hotpotqa-large-r7i` | 5.2M | 10583.8485 | 394.4417 | 0.7573 | 0.6129 | 0.7410 | 0.0212 | 0.0299 | 88.1695 / 336.8579 / 388.2553 / 394.4417 |

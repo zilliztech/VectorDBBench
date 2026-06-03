@@ -4,7 +4,7 @@
 
 - Backend: Elasticsearch single-node container, invoked through VectorDBBench `elasticcloudhnsw`.
 - Dataset family: HotpotQA.
-- Current committed raw results: `HotpotQA Medium (1M documents)` on the `r7i.4xlarge` server.
+- Current committed raw results: `HotpotQA Medium (1M documents)` and `HotpotQA Large (5.2M documents)` on the `r7i.4xlarge` server.
 - Run dates represented here: 2026-06-02.
 - Source runbook: `docs/fts-backends/elasticsearch.md`.
 - Raw result directory: `raw_results/`.
@@ -82,7 +82,7 @@ sudo docker volume ls
 
 ## VDBBench Running
 
-Exact client script for the committed HotpotQA Medium run:
+Exact client script for the committed HotpotQA runs:
 
 ```bash
 #!/usr/bin/env bash
@@ -107,6 +107,8 @@ python3.11 -m vectordb_bench.cli.vectordbbench elasticcloudhnsw \
   --concurrency-timeout 3600
 ```
 
+The committed HotpotQA Large run used the same command with task label `fts-e2e-elastic-hotpotqa-large-r7i` and dataset size `HotpotQA Large (5.2M documents)`.
+
 Effective Elasticsearch FTS case config from the raw JSON:
 
 - `number_of_shards=1`
@@ -121,3 +123,4 @@ Effective Elasticsearch FTS case config from the raw JSON:
 | Raw JSON | Task label | Dataset size | Load s | QPS | Recall | NDCG | MRR | p95 s | p99 s | Concurrent QPS at 1/5/10/20 |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|---|
 | `result_20260602_fts-e2e-elastic-hotpotqa-medium-r7i_elasticcloud.json` | `fts-e2e-elastic-hotpotqa-medium-r7i` | 1M | 142.0589 | 1410.3787 | 0.8378 | 0.7287 | 0.8598 | 0.0159 | 0.0224 | 111.5252 / 558.2304 / 1034.1176 / 1410.3787 |
+| `result_20260602_fts-e2e-elastic-hotpotqa-large-r7i_elasticcloud.json` | `fts-e2e-elastic-hotpotqa-large-r7i` | 5.2M | 550.6164 | 476.2610 | 0.7637 | 0.6243 | 0.7549 | 0.0503 | 0.0755 | 41.0129 / 202.7703 / 356.3845 / 476.2610 |

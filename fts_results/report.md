@@ -39,4 +39,8 @@ No committed raw result yet.
 
 ## HotpotQA Large (5.2M documents)
 
-No committed raw result yet. This is the next full-corpus dataset to run for Milvus, ElasticSearch, and Vespa.
+| Backend | Context | Raw JSON | Load s | QPS | Recall | NDCG | MRR | p95 s | p99 s | Concurrent QPS 1/5/10/20 |
+|---|---|---|---:|---:|---:|---:|---:|---:|---:|---|
+| ElasticSearch | `r7i.4xlarge` | `ElasticSearch/hotpotqa/raw_results/result_20260602_fts-e2e-elastic-hotpotqa-large-r7i_elasticcloud.json` | 550.6164 | 476.2610 | 0.7637 | 0.6243 | 0.7549 | 0.0503 | 0.0755 | 41.0129 / 202.7703 / 356.3845 / 476.2610 |
+| Milvus | `r7i.4xlarge` | `Milvus/hotpotqa/raw_results/result_20260602_fts-e2e-milvus-hotpotqa-large-r7i_milvus.json` | 10583.8485 | 394.4417 | 0.7573 | 0.6129 | 0.7410 | 0.0212 | 0.0299 | 88.1695 / 336.8579 / 388.2553 / 394.4417 |
+| Vespa | `r7i.4xlarge` | `Vespa/hotpotqa/raw_results/result_20260602_fts-e2e-vespa-hotpotqa-large-r7i_vespa.json` | 2954.2589 | 46.3472 | 0.6754 | 0.5460 | 0.6640 | 0.4460 | 0.4465 | 3.3531 / 13.1559 / 24.4787 / 46.3472 |

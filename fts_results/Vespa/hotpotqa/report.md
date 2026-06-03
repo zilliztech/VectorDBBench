@@ -4,7 +4,7 @@
 
 - Backend: Vespa single-node container.
 - Dataset family: HotpotQA.
-- Current committed raw results: `HotpotQA Medium (1M documents)` on the `r7i.4xlarge` server.
+- Current committed raw results: `HotpotQA Medium (1M documents)` and `HotpotQA Large (5.2M documents)` on the `r7i.4xlarge` server.
 - Run dates represented here: 2026-06-02.
 - Source runbook: `docs/fts-backends/vespa.md`.
 - Raw result directory: `raw_results/`.
@@ -82,7 +82,7 @@ sudo docker volume ls
 
 ## VDBBench Running
 
-Exact client script for the committed HotpotQA Medium run:
+Exact client script for the committed HotpotQA runs:
 
 ```bash
 #!/usr/bin/env bash
@@ -107,6 +107,8 @@ python3.11 -m vectordb_bench.cli.vectordbbench vespa \
   --concurrency-timeout 3600
 ```
 
+The committed HotpotQA Large run used the same command with task label `fts-e2e-vespa-hotpotqa-large-r7i` and dataset size `HotpotQA Large (5.2M documents)`.
+
 Effective Vespa FTS case config from the raw JSON: no backend-specific case fields are set. The VDBBench Vespa adapter deploys the application package through port `19071` and queries through port `8080`.
 
 ## Result
@@ -114,3 +116,4 @@ Effective Vespa FTS case config from the raw JSON: no backend-specific case fiel
 | Raw JSON | Task label | Dataset size | Load s | QPS | Recall | NDCG | MRR | p95 s | p99 s | Concurrent QPS at 1/5/10/20 |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|---|
 | `result_20260602_fts-e2e-vespa-hotpotqa-medium-r7i_vespa.json` | `fts-e2e-vespa-hotpotqa-medium-r7i` | 1M | 575.5304 | 80.0872 | 0.8309 | 0.7208 | 0.8500 | 0.2647 | 0.3261 | 6.4907 / 33.8533 / 57.9060 / 80.0872 |
+| `result_20260602_fts-e2e-vespa-hotpotqa-large-r7i_vespa.json` | `fts-e2e-vespa-hotpotqa-large-r7i` | 5.2M | 2954.2589 | 46.3472 | 0.6754 | 0.5460 | 0.6640 | 0.4460 | 0.4465 | 3.3531 / 13.1559 / 24.4787 / 46.3472 |
