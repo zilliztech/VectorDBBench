@@ -2,7 +2,7 @@
 
 This report compares the latest committed representative result for each backend and dataset configuration. Backend-specific historical reruns remain in each leaf `report.md`; this master view is for cross-backend comparison.
 
-All local-server rows use the `r7i.4xlarge` server unless marked otherwise. TurboPuffer is a managed external backend, so its row is not directly comparable on server hardware. `Load s` is the VectorDBBench load duration. `QPS`, `p95 s`, and `p99 s` are from the search result in the raw JSON. Historical rows show concurrent QPS at concurrency `1 / 5 / 10 / 20`; text-payload rows show `1 / 10 / 20 / 40 / 60 / 80`.
+All local-server rows use the `r7i.4xlarge` server unless marked otherwise. TurboPuffer is a managed external backend, so its row is not directly comparable on server hardware. `Load s` is the VectorDBBench load duration. `QPS`, `p95 s`, and `p99 s` are from the search result in the raw JSON. Historical rows show concurrent QPS at concurrency `1 / 5 / 10 / 20`; newer matrix rows state their concurrency list explicitly.
 
 ## MS MARCO Small (100K documents)
 
@@ -15,7 +15,7 @@ All local-server rows use the `r7i.4xlarge` server unless marked otherwise. Turb
 
 ## MS MARCO Small (100K documents), Text Payload
 
-These runs used `payload_profile=text`, `k=100`, `concurrency_duration=30`, and explicit concurrency `1,10,20,40,60,80`. Local-server rows used the same `r7i.4xlarge` server host `10.15.9.94`.
+These runs used `payload_profile=text`, `k=100`, `concurrency_duration=30`, and explicit concurrency `1,10,20,40,60,80`. Local-server rows used the same `r7i.4xlarge` server host, recorded outside the repo in the local host config.
 
 | Backend | Context | Raw JSON | Load s | QPS | Recall | NDCG | MRR | p95 s | p99 s | Concurrent QPS 1/10/20/40/60/80 |
 |---|---|---|---:|---:|---:|---:|---:|---:|---:|---|
@@ -39,6 +39,8 @@ These runs used `payload_profile=text`, `k=100`, `concurrency_duration=30`, and 
 | ElasticSearch | `r7i.4xlarge` | `ElasticSearch/hotpotqa/raw_results/result_20260602_fts-e2e-elastic-hotpotqa-medium-r7i_elasticcloud.json` | 142.0589 | 1410.3787 | 0.8378 | 0.7287 | 0.8598 | 0.0159 | 0.0224 | 111.5252 / 558.2304 / 1034.1176 / 1410.3787 |
 | Vespa | `r7i.4xlarge` | `Vespa/hotpotqa/raw_results/result_20260602_fts-e2e-vespa-hotpotqa-medium-r7i_vespa.json` | 575.5304 | 80.0872 | 0.8309 | 0.7208 | 0.8500 | 0.2647 | 0.3261 | 6.4907 / 33.8533 / 57.9060 / 80.0872 |
 
+Excluded milestone run: `vespa/hotpotqa-medium/text` with concurrency `20,40,80` failed during concurrency 40 after completing concurrency 20 at `72.8836 QPS`. VDBBench emitted only a zero-metric placeholder JSON, so no raw result is committed or compared.
+
 ## HotpotQA Small (100K documents)
 
 No committed raw result yet.
@@ -54,3 +56,15 @@ No committed raw result yet.
 | ElasticSearch | `r7i.4xlarge` | `ElasticSearch/hotpotqa/raw_results/result_20260602_fts-e2e-elastic-hotpotqa-large-r7i_elasticcloud.json` | 550.6164 | 476.2610 | 0.7637 | 0.6243 | 0.7549 | 0.0503 | 0.0755 | 41.0129 / 202.7703 / 356.3845 / 476.2610 |
 | Milvus | `r7i.4xlarge` | `Milvus/hotpotqa/raw_results/result_20260602_fts-e2e-milvus-hotpotqa-large-r7i_milvus.json` | 10583.8485 | 394.4417 | 0.7573 | 0.6129 | 0.7410 | 0.0212 | 0.0299 | 88.1695 / 336.8579 / 388.2553 / 394.4417 |
 | Vespa | `r7i.4xlarge` | `Vespa/hotpotqa/raw_results/result_20260602_fts-e2e-vespa-hotpotqa-large-r7i_vespa.json` | 2954.2589 | 46.3472 | 0.6754 | 0.5460 | 0.6640 | 0.4460 | 0.4465 | 3.3531 / 13.1559 / 24.4787 / 46.3472 |
+
+## HotpotQA Large (5.2M documents), Matrix c20/40/80
+
+These milestone rows used explicit concurrency `20,40,80`, `k=100`, and `concurrency_duration=30`. Payload `ids_only` returns ids only; payload `text` returns ids plus text payload.
+
+| Backend | Payload | Context | Raw JSON | Load s | QPS | Recall | NDCG | MRR | p95 s | p99 s | Concurrent QPS 20/40/80 |
+|---|---|---|---|---:|---:|---:|---:|---:|---:|---:|---|
+| Milvus | ids_only | `r7i.4xlarge` | `Milvus/hotpotqa/raw_results/result_20260603_fts-matrix-milvus-hotpotqa-large-ids-c20-40-80-r7i-20260603T061706Z_milvus.json` | 10583.8402 | 411.7323 | 0.7573 | 0.6129 | 0.7410 | 0.0211 | 0.0305 | 400.7550 / 407.1847 / 411.7323 |
+| Milvus | text | `r7i.4xlarge` | `Milvus/hotpotqa/raw_results/result_20260603_fts-matrix-milvus-hotpotqa-large-text-c20-40-80-r7i-20260603T061706Z_milvus.json` | 10583.7873 | 409.4366 | 0.7573 | 0.6129 | 0.7410 | 0.0214 | 0.0308 | 395.3148 / 407.5527 / 409.4366 |
+| ElasticSearch | text | `r7i.4xlarge` | `ElasticSearch/hotpotqa/raw_results/result_20260604_fts-matrix-elastic-hotpotqa-large-text-c20-40-80-r7i-20260603T061706Z_elasticcloud.json` | 554.4492 | 435.1027 | 0.7637 | 0.6243 | 0.7549 | 0.0518 | 0.0766 | 402.3090 / 435.1027 / 434.3993 |
+
+Excluded milestone run: `elastic/hotpotqa-large/ids` with concurrency `20,40,80` loaded successfully (`545.7043s`) and completed concurrency 20/40 (`447.5993 / 480.0184 QPS`), then hung after starting concurrency 80. VDBBench emitted only a zero-metric placeholder JSON, so no raw result is committed or compared.

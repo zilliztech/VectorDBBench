@@ -5,7 +5,7 @@
 - Backend: Vespa single-node container.
 - Dataset family: HotpotQA.
 - Current committed raw results: `HotpotQA Medium (1M documents)` and `HotpotQA Large (5.2M documents)` on the `r7i.4xlarge` server.
-- Run dates represented here: 2026-06-02.
+- Run dates represented here: 2026-06-02, with an excluded failed matrix run observed on 2026-06-03.
 - Source runbook: `docs/fts-backends/vespa.md`.
 - Raw result directory: `raw_results/`.
 - The current FTS CLI uses `FTSmsmarcoPerformance` as the generic FTS case type; the dataset is selected by `--dataset-with-size-type`.
@@ -113,7 +113,9 @@ Effective Vespa FTS case config from the raw JSON: no backend-specific case fiel
 
 ## Result
 
-| Raw JSON | Task label | Dataset size | Load s | QPS | Recall | NDCG | MRR | p95 s | p99 s | Concurrent QPS at 1/5/10/20 |
-|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---|
-| `result_20260602_fts-e2e-vespa-hotpotqa-medium-r7i_vespa.json` | `fts-e2e-vespa-hotpotqa-medium-r7i` | 1M | 575.5304 | 80.0872 | 0.8309 | 0.7208 | 0.8500 | 0.2647 | 0.3261 | 6.4907 / 33.8533 / 57.9060 / 80.0872 |
-| `result_20260602_fts-e2e-vespa-hotpotqa-large-r7i_vespa.json` | `fts-e2e-vespa-hotpotqa-large-r7i` | 5.2M | 2954.2589 | 46.3472 | 0.6754 | 0.5460 | 0.6640 | 0.4460 | 0.4465 | 3.3531 / 13.1559 / 24.4787 / 46.3472 |
+The text-payload matrix run `fts-matrix-vespa-hotpotqa-medium-text-c20-40-80-r7i-20260603T061706Z` is intentionally excluded from the result table because VDBBench emitted only a zero-metric failure placeholder JSON. Log evidence shows the run loaded successfully (`load_duration=580.4292s`) and completed concurrency 20 (`72.8836 QPS`), then hung during concurrency 40 with repeated Vespa `Summary data is incomplete` timeout warnings and was terminated with `RUN_FAILED_143`.
+
+| Raw JSON | Task label | Dataset size | Payload | Load s | QPS | Recall | NDCG | MRR | p95 s | p99 s | Concurrency | Concurrent QPS |
+|---|---|---:|---|---:|---:|---:|---:|---:|---:|---:|---|---|
+| `result_20260602_fts-e2e-vespa-hotpotqa-medium-r7i_vespa.json` | `fts-e2e-vespa-hotpotqa-medium-r7i` | 1M | ids_only | 575.5304 | 80.0872 | 0.8309 | 0.7208 | 0.8500 | 0.2647 | 0.3261 | 1/5/10/20 | 6.4907 / 33.8533 / 57.9060 / 80.0872 |
+| `result_20260602_fts-e2e-vespa-hotpotqa-large-r7i_vespa.json` | `fts-e2e-vespa-hotpotqa-large-r7i` | 5.2M | ids_only | 2954.2589 | 46.3472 | 0.6754 | 0.5460 | 0.6640 | 0.4460 | 0.4465 | 1/5/10/20 | 3.3531 / 13.1559 / 24.4787 / 46.3472 |

@@ -4,8 +4,8 @@
 
 - Backend: Elasticsearch single-node container, invoked through VectorDBBench `elasticcloudhnsw`.
 - Dataset family: HotpotQA.
-- Current committed raw results: `HotpotQA Medium (1M documents)` and `HotpotQA Large (5.2M documents)` on the `r7i.4xlarge` server.
-- Run dates represented here: 2026-06-02.
+- Current committed raw results: `HotpotQA Medium (1M documents)`, historical `HotpotQA Large (5.2M documents)`, and a `HotpotQA Large (5.2M documents)` text-payload matrix run on the `r7i.4xlarge` server.
+- Run dates represented here: 2026-06-02 through 2026-06-04.
 - Source runbook: `docs/fts-backends/elasticsearch.md`.
 - Raw result directory: `raw_results/`.
 - The current FTS CLI uses `FTSmsmarcoPerformance` as the generic FTS case type; the dataset is selected by `--dataset-with-size-type`.
@@ -109,6 +109,32 @@ python3.11 -m vectordb_bench.cli.vectordbbench elasticcloudhnsw \
 
 The committed HotpotQA Large run used the same command with task label `fts-e2e-elastic-hotpotqa-large-r7i` and dataset size `HotpotQA Large (5.2M documents)`.
 
+Exact client script for the 2026-06-04 HotpotQA Large text-payload matrix run:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd /home/ubuntu/VectorDBBench
+export DATASET_LOCAL_DIR=/tmp/vectordb_bench/dataset
+export RESULTS_LOCAL_DIR=/tmp/vectordb_bench/results
+export NUM_PER_BATCH=100
+export SERVER_HOST="<server-private-host-or-dns>"
+
+python3.11 -m vectordb_bench.cli.vectordbbench elasticcloudhnsw \
+  --host "${SERVER_HOST}" \
+  --port "9200" \
+  --task-label "fts-matrix-elastic-hotpotqa-large-text-c20-40-80-r7i-20260603T061706Z" \
+  --case-type FTSmsmarcoPerformance \
+  --dataset-with-size-type "HotpotQA Large (5.2M documents)" \
+  --payload-profile text \
+  --drop-old --load --search-serial --search-concurrent \
+  --k 100 \
+  --concurrency-duration 30 \
+  --num-concurrency "20,40,80" \
+  --concurrency-timeout 3600
+```
+
 Effective Elasticsearch FTS case config from the raw JSON:
 
 - `number_of_shards=1`
@@ -120,7 +146,10 @@ Effective Elasticsearch FTS case config from the raw JSON:
 
 ## Result
 
-| Raw JSON | Task label | Dataset size | Load s | QPS | Recall | NDCG | MRR | p95 s | p99 s | Concurrent QPS at 1/5/10/20 |
-|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---|
-| `result_20260602_fts-e2e-elastic-hotpotqa-medium-r7i_elasticcloud.json` | `fts-e2e-elastic-hotpotqa-medium-r7i` | 1M | 142.0589 | 1410.3787 | 0.8378 | 0.7287 | 0.8598 | 0.0159 | 0.0224 | 111.5252 / 558.2304 / 1034.1176 / 1410.3787 |
-| `result_20260602_fts-e2e-elastic-hotpotqa-large-r7i_elasticcloud.json` | `fts-e2e-elastic-hotpotqa-large-r7i` | 5.2M | 550.6164 | 476.2610 | 0.7637 | 0.6243 | 0.7549 | 0.0503 | 0.0755 | 41.0129 / 202.7703 / 356.3845 / 476.2610 |
+The ids-only matrix run `fts-matrix-elastic-hotpotqa-large-ids-c20-40-80-r7i-20260603T061706Z` is intentionally excluded from the result table because VDBBench emitted only a zero-metric failure placeholder JSON. Log evidence shows the run loaded successfully (`load_duration=545.7043s`) and completed concurrency 20/40 (`447.5993 / 480.0184 QPS`), but the parent process hung after starting concurrency 80 and was terminated with `RUN_FAILED_143`.
+
+| Raw JSON | Task label | Dataset size | Payload | Load s | QPS | Recall | NDCG | MRR | p95 s | p99 s | Concurrency | Concurrent QPS |
+|---|---|---:|---|---:|---:|---:|---:|---:|---:|---:|---|---|
+| `result_20260602_fts-e2e-elastic-hotpotqa-medium-r7i_elasticcloud.json` | `fts-e2e-elastic-hotpotqa-medium-r7i` | 1M | ids_only | 142.0589 | 1410.3787 | 0.8378 | 0.7287 | 0.8598 | 0.0159 | 0.0224 | 1/5/10/20 | 111.5252 / 558.2304 / 1034.1176 / 1410.3787 |
+| `result_20260602_fts-e2e-elastic-hotpotqa-large-r7i_elasticcloud.json` | `fts-e2e-elastic-hotpotqa-large-r7i` | 5.2M | ids_only | 550.6164 | 476.2610 | 0.7637 | 0.6243 | 0.7549 | 0.0503 | 0.0755 | 1/5/10/20 | 41.0129 / 202.7703 / 356.3845 / 476.2610 |
+| `result_20260604_fts-matrix-elastic-hotpotqa-large-text-c20-40-80-r7i-20260603T061706Z_elasticcloud.json` | `fts-matrix-elastic-hotpotqa-large-text-c20-40-80-r7i-20260603T061706Z` | 5.2M | text | 554.4492 | 435.1027 | 0.7637 | 0.6243 | 0.7549 | 0.0518 | 0.0766 | 20/40/80 | 402.3090 / 435.1027 / 434.3993 |

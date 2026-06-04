@@ -4,8 +4,8 @@
 
 - Backend: Milvus standalone.
 - Dataset family: HotpotQA.
-- Current committed raw results: `HotpotQA Medium (1M documents)` and `HotpotQA Large (5.2M documents)` on the `r7i.4xlarge` server.
-- Run dates represented here: 2026-06-02.
+- Current committed raw results: `HotpotQA Medium (1M documents)`, historical `HotpotQA Large (5.2M documents)`, and `HotpotQA Large (5.2M documents)` matrix runs with ids-only and text payloads on the `r7i.4xlarge` server.
+- Run dates represented here: 2026-06-02 and 2026-06-03.
 - Source runbook: `docs/fts-backends/milvus.md`.
 - Raw result directory: `raw_results/`.
 - The current FTS CLI uses `FTSmsmarcoPerformance` as the generic FTS case type; the dataset is selected by `--dataset-with-size-type`.
@@ -115,6 +115,42 @@ python3.11 -m vectordb_bench.cli.vectordbbench milvusfts \
 
 The committed HotpotQA Large run used the same command with task label `fts-e2e-milvus-hotpotqa-large-r7i` and dataset size `HotpotQA Large (5.2M documents)`.
 
+Exact client script for the 2026-06-03 HotpotQA Large matrix runs:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd /home/ubuntu/VectorDBBench
+export DATASET_LOCAL_DIR=/tmp/vectordb_bench/dataset
+export RESULTS_LOCAL_DIR=/tmp/vectordb_bench/results
+export NUM_PER_BATCH=100
+export SERVER_HOST="<server-private-host-or-dns>"
+
+python3.11 -m vectordb_bench.cli.vectordbbench milvusfts \
+  --uri "http://${SERVER_HOST}:19530" \
+  --task-label "fts-matrix-milvus-hotpotqa-large-ids-c20-40-80-r7i-20260603T061706Z" \
+  --case-type FTSmsmarcoPerformance \
+  --dataset-with-size-type "HotpotQA Large (5.2M documents)" \
+  --drop-old --load --search-serial --search-concurrent \
+  --k 100 \
+  --concurrency-duration 30 \
+  --num-concurrency "20,40,80" \
+  --concurrency-timeout 3600
+
+python3.11 -m vectordb_bench.cli.vectordbbench milvusfts \
+  --uri "http://${SERVER_HOST}:19530" \
+  --task-label "fts-matrix-milvus-hotpotqa-large-text-c20-40-80-r7i-20260603T061706Z" \
+  --case-type FTSmsmarcoPerformance \
+  --dataset-with-size-type "HotpotQA Large (5.2M documents)" \
+  --payload-profile text \
+  --drop-old --load --search-serial --search-concurrent \
+  --k 100 \
+  --concurrency-duration 30 \
+  --num-concurrency "20,40,80" \
+  --concurrency-timeout 3600
+```
+
 Effective Milvus FTS case config from the raw JSON:
 
 - `index_type=SPARSE_INVERTED_INDEX`
@@ -130,7 +166,9 @@ Effective Milvus FTS case config from the raw JSON:
 
 ## Result
 
-| Raw JSON | Task label | Dataset size | Load s | QPS | Recall | NDCG | MRR | p95 s | p99 s | Concurrent QPS at 1/5/10/20 |
-|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---|
-| `result_20260602_fts-e2e-milvus-hotpotqa-medium-r7i_milvus.json` | `fts-e2e-milvus-hotpotqa-medium-r7i` | 1M | 2031.2796 | 1596.6340 | 0.8378 | 0.7246 | 0.8561 | 0.0123 | 0.0170 | 146.0629 / 726.2209 / 1273.3380 / 1596.6340 |
-| `result_20260602_fts-e2e-milvus-hotpotqa-large-r7i_milvus.json` | `fts-e2e-milvus-hotpotqa-large-r7i` | 5.2M | 10583.8485 | 394.4417 | 0.7573 | 0.6129 | 0.7410 | 0.0212 | 0.0299 | 88.1695 / 336.8579 / 388.2553 / 394.4417 |
+| Raw JSON | Task label | Dataset size | Payload | Load s | QPS | Recall | NDCG | MRR | p95 s | p99 s | Concurrency | Concurrent QPS |
+|---|---|---:|---|---:|---:|---:|---:|---:|---:|---:|---|---|
+| `result_20260602_fts-e2e-milvus-hotpotqa-medium-r7i_milvus.json` | `fts-e2e-milvus-hotpotqa-medium-r7i` | 1M | ids_only | 2031.2796 | 1596.6340 | 0.8378 | 0.7246 | 0.8561 | 0.0123 | 0.0170 | 1/5/10/20 | 146.0629 / 726.2209 / 1273.3380 / 1596.6340 |
+| `result_20260602_fts-e2e-milvus-hotpotqa-large-r7i_milvus.json` | `fts-e2e-milvus-hotpotqa-large-r7i` | 5.2M | ids_only | 10583.8485 | 394.4417 | 0.7573 | 0.6129 | 0.7410 | 0.0212 | 0.0299 | 1/5/10/20 | 88.1695 / 336.8579 / 388.2553 / 394.4417 |
+| `result_20260603_fts-matrix-milvus-hotpotqa-large-ids-c20-40-80-r7i-20260603T061706Z_milvus.json` | `fts-matrix-milvus-hotpotqa-large-ids-c20-40-80-r7i-20260603T061706Z` | 5.2M | ids_only | 10583.8402 | 411.7323 | 0.7573 | 0.6129 | 0.7410 | 0.0211 | 0.0305 | 20/40/80 | 400.7550 / 407.1847 / 411.7323 |
+| `result_20260603_fts-matrix-milvus-hotpotqa-large-text-c20-40-80-r7i-20260603T061706Z_milvus.json` | `fts-matrix-milvus-hotpotqa-large-text-c20-40-80-r7i-20260603T061706Z` | 5.2M | text | 10583.7873 | 409.4366 | 0.7573 | 0.6129 | 0.7410 | 0.0214 | 0.0308 | 20/40/80 | 395.3148 / 407.5527 / 409.4366 |
