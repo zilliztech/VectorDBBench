@@ -29,11 +29,16 @@ Text-payload rows used `payload_profile=text`, `k=100`, `concurrency_duration=30
 
 ## MS MARCO Medium (1M documents)
 
+Rows below are the 2026-06-04 six-concurrency rerun using explicit concurrency `1,10,20,40,60,80`. Older ids-only `1,5,10,20` baselines remain in the backend-specific reports for stability comparison.
+
 | Backend | Payload | Context | Raw JSON | Load s | QPS | Recall | NDCG | MRR | p95 s | p99 s | Concurrency | Concurrent QPS |
 |---|---|---|---|---:|---:|---:|---:|---:|---:|---:|---|---|
-| ElasticSearch | ids_only | `r7i.4xlarge` | `ElasticSearch/msmarco/raw_results/result_20260602_fts-e2e-elastic-msmarco-medium-r7i_elasticcloud.json` | 148.5277 | 3986.3734 | 0.8028 | 0.5222 | 0.4526 | 0.0065 | 0.0089 | 1/5/10/20 | 240.5419 / 1348.5987 / 2719.8093 / 3986.3734 |
-| Milvus | ids_only | `r7i.4xlarge` | `Milvus/msmarco/raw_results/result_20260602_fts-e2e-milvus-msmarco-medium-r7i_milvus.json` | 2042.1265 | 3857.7069 | 0.8048 | 0.5174 | 0.4458 | 0.0056 | 0.0074 | 1/5/10/20 | 284.4606 / 1608.7846 / 2858.1176 / 3857.7069 |
-| Vespa | ids_only | `r7i.4xlarge` | `Vespa/msmarco/raw_results/result_20260602_fts-e2e-vespa-msmarco-medium-r7i_vespa.json` | 585.7496 | 196.8213 | 0.8409 | 0.5499 | 0.4767 | 0.1268 | 0.1744 | 1/5/10/20 | 17.3137 / 85.2530 / 139.2205 / 196.8213 |
+| Milvus | ids_only | `r7i.4xlarge` | `Milvus/msmarco/raw_results/result_20260604_fts-msmarco-medium-milvus-ids-c1-10-20-40-60-80-r7i-20260604T041648Z_milvus.json` | 2048.1231 | 5139.5920 | 0.8048 | 0.5174 | 0.4458 | 0.0053 | 0.0071 | 1/10/20/40/60/80 | 433.1311 / 2976.3670 / 3973.3733 / 4750.5123 / 5053.7822 / 5139.5920 |
+| Milvus | text | `r7i.4xlarge` | `Milvus/msmarco/raw_results/result_20260604_fts-msmarco-medium-milvus-text-c1-10-20-40-60-80-r7i-20260604T041648Z_milvus.json` | 2048.2360 | 4677.4078 | 0.8048 | 0.5174 | 0.4458 | 0.0057 | 0.0075 | 1/10/20/40/60/80 | 378.3115 / 2732.7863 / 3656.8277 / 4353.0352 / 4602.9011 / 4677.4078 |
+| ElasticSearch | ids_only | `r7i.4xlarge` | `ElasticSearch/msmarco/raw_results/result_20260604_fts-msmarco-medium-elastic-ids-c1-10-20-40-60-80-r7i-20260604T041648Z_elasticcloud.json` | 140.1544 | 4473.8674 | 0.8028 | 0.5222 | 0.4526 | 0.0063 | 0.0086 | 1/10/20/40/60/80 | 260.6360 / 2883.9739 / 4166.7860 / 4405.5505 / 4473.8674 / 4458.2345 |
+| ElasticSearch | text | `r7i.4xlarge` | `ElasticSearch/msmarco/raw_results/result_20260604_fts-msmarco-medium-elastic-text-c1-10-20-40-60-80-r7i-20260604T041648Z_elasticcloud.json` | 139.6663 | 2696.5048 | 0.8028 | 0.5222 | 0.4526 | 0.0079 | 0.0101 | 1/10/20/40/60/80 | 178.1539 / 1787.4005 / 2605.4203 / 2688.4985 / 2680.9282 / 2696.5048 |
+| Vespa | ids_only | `r7i.4xlarge` | `Vespa/msmarco/raw_results/result_20260604_fts-msmarco-medium-vespa-ids-c1-10-20-40-60-80-r7i-20260604T041648Z_vespa.json` | 581.5774 | 257.0647 | 0.8409 | 0.5499 | 0.4767 | 0.1231 | 0.1688 | 1/10/20/40/60/80 | 17.2619 / 153.1753 / 217.6157 / 230.2074 / 238.9556 / 257.0647 |
+| Vespa | text | `r7i.4xlarge` | `Vespa/msmarco/raw_results/result_20260604_fts-msmarco-medium-vespa-text-c1-10-20-40-60-80-r7i-20260604T041648Z_vespa.json` | 581.4244 | 251.4636 | 0.8409 | 0.5499 | 0.4767 | 0.1248 | 0.1702 | 1/10/20/40/60/80 | 15.0937 / 133.4407 / 199.3716 / 209.5499 / 234.2022 / 251.4636 |
 
 ## MS MARCO Large (8.8M documents)
 

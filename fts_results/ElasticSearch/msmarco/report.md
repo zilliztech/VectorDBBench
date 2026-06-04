@@ -5,7 +5,7 @@
 - Backend: Elasticsearch single-node container, invoked through VectorDBBench `elasticcloudhnsw`.
 - Dataset family: MS MARCO.
 - Current committed raw results: `MS MARCO Small (100K documents)` and `MS MARCO Medium (1M documents)` on the original `m5d.2xlarge` server and the later `r7i.4xlarge` server.
-- Run dates represented here: 2026-05-28, 2026-06-01, 2026-06-02, and 2026-06-03.
+- Run dates represented here: 2026-05-28, 2026-06-01, 2026-06-02, 2026-06-03, and 2026-06-04.
 - Source runbook: `docs/fts-backends/elasticsearch.md`.
 - Raw result directory: `raw_results/`.
 - Current result JSONs have connection fields masked by VectorDBBench.
@@ -132,9 +132,10 @@ cd /home/ubuntu/VectorDBBench
 export DATASET_LOCAL_DIR=/tmp/vectordb_bench/dataset
 export RESULTS_LOCAL_DIR=/tmp/vectordb_bench/results
 export NUM_PER_BATCH=100
+export SERVER_HOST="<server-private-host-or-dns>"
 
 python3.11 -m vectordb_bench.cli.vectordbbench elasticcloudhnsw \
-  --host 10.15.9.94 \
+  --host "${SERVER_HOST}" \
   --port 9200 \
   --task-label fts-e2e-elastic-msmarco-small-text-r7i \
   --case-type FTSmsmarcoPerformance \
@@ -144,6 +145,40 @@ python3.11 -m vectordb_bench.cli.vectordbbench elasticcloudhnsw \
   --k 100 --concurrency-duration 30 \
   --num-concurrency "1,10,20,40,60,80" \
   --concurrency-timeout 3600
+```
+
+Exact client script for the `r7i.4xlarge` MS MARCO Medium ids-only and text-payload matrix:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd /home/ubuntu/VectorDBBench
+export DATASET_LOCAL_DIR=/tmp/vectordb_bench/dataset
+export RESULTS_LOCAL_DIR=/tmp/vectordb_bench/results
+export NUM_PER_BATCH=100
+export SERVER_HOST="<server-private-host-or-dns>"
+export RUN_TAG="20260604T041648Z"
+
+for PAYLOAD_PROFILE in ids_only text; do
+  if [[ "${PAYLOAD_PROFILE}" == "ids_only" ]]; then
+    LABEL_PAYLOAD="ids"
+  else
+    LABEL_PAYLOAD="text"
+  fi
+
+  python3.11 -m vectordb_bench.cli.vectordbbench elasticcloudhnsw \
+    --host "${SERVER_HOST}" \
+    --port 9200 \
+    --task-label "fts-msmarco-medium-elastic-${LABEL_PAYLOAD}-c1-10-20-40-60-80-r7i-${RUN_TAG}" \
+    --case-type FTSmsmarcoPerformance \
+    --dataset-with-size-type "MS MARCO Medium (1M documents)" \
+    --payload-profile "${PAYLOAD_PROFILE}" \
+    --drop-old --load --search-serial --search-concurrent \
+    --k 100 --concurrency-duration 30 \
+    --num-concurrency "1,10,20,40,60,80" \
+    --concurrency-timeout 3600
+done
 ```
 
 Effective Elasticsearch FTS case config from the raw JSON:
@@ -172,7 +207,7 @@ Latest `r7i.4xlarge` rerun vs previous `m5d.2xlarge` stability run:
 - Recall stayed unchanged at `0.9118`.
 - p95 changed from `0.0031s` to `0.0030s`; p99 changed from `0.0039s` to `0.0035s`.
 
-Text payload rerun on `r7i.4xlarge`:
+MS MARCO Small text payload rerun on `r7i.4xlarge`:
 
 | Raw JSON | Task label | Load s | QPS | Recall | NDCG | MRR | p95 s | p99 s | Concurrent QPS at 1/10/20/40/60/80 |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---|
@@ -183,3 +218,17 @@ Text payload details:
 - `payload_profile=text`.
 - Returned fields: document ID fields plus `_source.text`.
 - Estimated payload bytes per query from VectorDBBench: `53200`.
+
+MS MARCO Medium six-concurrency rerun on `r7i.4xlarge`:
+
+| Raw JSON | Payload | Task label | Load s | QPS | Recall | NDCG | MRR | p95 s | p99 s | Concurrent QPS at 1/10/20/40/60/80 |
+|---|---|---|---:|---:|---:|---:|---:|---:|---:|---|
+| `result_20260604_fts-msmarco-medium-elastic-ids-c1-10-20-40-60-80-r7i-20260604T041648Z_elasticcloud.json` | `ids_only` | `fts-msmarco-medium-elastic-ids-c1-10-20-40-60-80-r7i-20260604T041648Z` | 140.1544 | 4473.8674 | 0.8028 | 0.5222 | 0.4526 | 0.0063 | 0.0086 | 260.6360 / 2883.9739 / 4166.7860 / 4405.5505 / 4473.8674 / 4458.2345 |
+| `result_20260604_fts-msmarco-medium-elastic-text-c1-10-20-40-60-80-r7i-20260604T041648Z_elasticcloud.json` | `text` | `fts-msmarco-medium-elastic-text-c1-10-20-40-60-80-r7i-20260604T041648Z` | 139.6663 | 2696.5048 | 0.8028 | 0.5222 | 0.4526 | 0.0079 | 0.0101 | 178.1539 / 1787.4005 / 2605.4203 / 2688.4985 / 2680.9282 / 2696.5048 |
+
+MS MARCO Medium stability comparison against the previous `r7i.4xlarge` ids-only run:
+
+- QPS increased from `3986.3734` to `4473.8674` (+12.2%).
+- Load duration changed from `148.5277s` to `140.1544s` (-5.6%).
+- Recall stayed unchanged at `0.8028`.
+- Text payload QPS was `2696.5048`, which is 39.7% below the new ids-only rerun at the same concurrency list.
