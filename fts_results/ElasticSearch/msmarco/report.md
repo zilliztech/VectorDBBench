@@ -228,7 +228,8 @@ MS MARCO Medium six-concurrency rerun on `r7i.4xlarge`:
 
 MS MARCO Medium stability comparison against the previous `r7i.4xlarge` ids-only run:
 
-- QPS increased from `3986.3734` to `4473.8674` (+12.2%).
+- At the shared concurrency level `20`, QPS changed from `3986.3734` to `4166.7860` (+4.5%).
+- The new six-concurrency run reached a higher peak QPS of `4473.8674` at concurrency `60` (+12.2% vs the previous peak at concurrency `20`).
 - Load duration changed from `148.5277s` to `140.1544s` (-5.6%).
 - Recall stayed unchanged at `0.8028`.
 - Text payload QPS was `2696.5048`, which is 39.7% below the new ids-only rerun at the same concurrency list.
