@@ -63,6 +63,7 @@ class DB(Enum):
     PolarDB = "PolarDB"
     Pinot = "Pinot"
     SeekDB = "SeekDB"
+    VolcanoMilvus = "VolcanoMilvus"
 
     @property
     def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901, PLR0915
@@ -263,6 +264,11 @@ class DB(Enum):
             from .pinot.pinot import Pinot
 
             return Pinot
+
+        if self == DB.VolcanoMilvus:
+            from .volcano_milvus.volcano_milvus import VolcanoMilvus
+
+            return VolcanoMilvus
 
         if self == DB.SeekDB:
             from .seekdb.seekdb import SeekDB
@@ -472,6 +478,11 @@ class DB(Enum):
 
             return PinotConfig
 
+        if self == DB.VolcanoMilvus:
+            from .volcano_milvus.config import VolcanoMilvusConfig
+
+            return VolcanoMilvusConfig
+
         if self == DB.SeekDB:
             from .seekdb.config import SeekDBConfig
 
@@ -661,6 +672,11 @@ class DB(Enum):
                 IndexType.IVFFlat: PinotIVFFlatConfig,
                 IndexType.IVFPQ: PinotIVFPQConfig,
             }.get(index_type, PinotHNSWConfig)
+
+        if self == DB.VolcanoMilvus:
+            from .volcano_milvus.config import _volcano_milvus_case_config
+
+            return _volcano_milvus_case_config.get(index_type)
 
         if self == DB.SeekDB:
             from .seekdb.config import _seekdb_case_config

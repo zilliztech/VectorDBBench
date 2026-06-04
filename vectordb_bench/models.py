@@ -51,6 +51,7 @@ class CaseConfigParamType(Enum):
     ef_construction = "ef_construction"
     EF = "ef"
     SearchList = "search_list"
+    BuildSearchList = "build_search_list"
     ef_search = "ef_search"
     Nlist = "nlist"
     Nprobe = "nprobe"
@@ -137,6 +138,16 @@ class CaseConfigParamType(Enum):
     oversample_factor = "oversample_factor"
     confidence_interval = "confidence_interval"
     clip = "clip"
+
+    # Volcano parameters
+    max_degree = "max_degree"
+    legacy = "legacy"
+    store_strategy = "store_strategy"
+    quant_type = "quant_type"
+    num_threads = "num_threads"
+    distance_strategy = "distance_strategy"
+    enable_prefetch = "enable_prefetch"
+    enable_thp = "enable_thp"
 
     # OceanBase IVF parameters
     sample_per_nlist = "sample_per_nlist"

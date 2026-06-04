@@ -2168,6 +2168,124 @@ MilvusPerformanceConfig = [
     CaseConfigParamInput_Milvus_use_partition_key,
 ]
 
+# ---- VolcanoMilvus ----
+# Reuse Milvus UI configs for all index types except DISKANN, where
+# Volcano-specific parameters are shown in addition to Milvus's SearchList.
+# Append Volcano-specific CaseConfigInput items below when adding new fields
+# to VolcanoMilvusDISKANNConfig.
+
+CaseConfigParamInput_IndexType_VolcanoMilvus = CaseConfigInput(
+    label=CaseConfigParamType.IndexType,
+    inputType=InputType.Option,
+    inputHelp="VolcanoMilvus currently supports DISKANN only",
+    inputConfig={
+        "options": [IndexType.DISKANN.value],
+    },
+)
+
+CaseConfigParamInput_Volcano_max_degree = CaseConfigInput(
+    label=CaseConfigParamType.max_degree,
+    inputType=InputType.Number,
+    inputConfig={"min": 1, "max": 65536, "value": 56},
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.DISKANN.value,
+)
+
+CaseConfigParamInput_Volcano_legacy = CaseConfigInput(
+    label=CaseConfigParamType.legacy,
+    inputType=InputType.Bool,
+    displayLabel="Legacy",
+    inputHelp="Use legacy Volcano DISKANN behavior",
+    inputConfig={"value": False},
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.DISKANN.value,
+)
+
+CaseConfigParamInput_Volcano_store_strategy = CaseConfigInput(
+    label=CaseConfigParamType.store_strategy,
+    inputType=InputType.Option,
+    inputConfig={"options": ["MEMORY", "DISK"], "value": "MEMORY"},
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.DISKANN.value,
+)
+
+CaseConfigParamInput_Volcano_quant_type = CaseConfigInput(
+    label=CaseConfigParamType.quant_type,
+    inputType=InputType.Option,
+    inputConfig={"options": ["RABITQ", "PQ"], "value": "RABITQ"},
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.DISKANN.value,
+)
+
+CaseConfigParamInput_Volcano_num_threads = CaseConfigInput(
+    label=CaseConfigParamType.num_threads,
+    inputType=InputType.Number,
+    inputConfig={"min": 1, "max": 1024, "value": 4},
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.DISKANN.value,
+)
+
+CaseConfigParamInput_Volcano_distance_strategy = CaseConfigInput(
+    label=CaseConfigParamType.distance_strategy,
+    inputType=InputType.Option,
+    inputConfig={
+        "options": ["FULL", "SINGLE QUANT", "QUANT THEN FULL", "QUANT THEN MORE BITS"],
+        "value": "QUANT THEN MORE BITS",
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.DISKANN.value,
+)
+
+CaseConfigParamInput_Volcano_enable_prefetch = CaseConfigInput(
+    label=CaseConfigParamType.enable_prefetch,
+    inputType=InputType.Bool,
+    displayLabel="Enable Prefetch",
+    inputHelp="Enable Volcano DISKANN prefetch during search",
+    inputConfig={"value": False},
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.DISKANN.value,
+)
+
+CaseConfigParamInput_Volcano_enable_thp = CaseConfigInput(
+    label=CaseConfigParamType.enable_thp,
+    inputType=InputType.Bool,
+    displayLabel="Enable THP",
+    inputHelp="Enable Volcano DISKANN transparent huge pages on collection load",
+    inputConfig={"value": False},
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.DISKANN.value,
+)
+
+CaseConfigParamInput_Volcano_BuildSearchList = CaseConfigInput(
+    label=CaseConfigParamType.BuildSearchList,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": MAX_STREAMLIT_INT,
+        "value": 200,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.DISKANN.value,
+)
+
+VolcanoMilvusLoadConfig = [
+    CaseConfigParamInput_IndexType_VolcanoMilvus,
+    *MilvusLoadConfig[1:],
+    CaseConfigParamInput_Volcano_max_degree,
+    CaseConfigParamInput_Volcano_legacy,
+    CaseConfigParamInput_Volcano_store_strategy,
+    CaseConfigParamInput_Volcano_quant_type,
+    CaseConfigParamInput_Volcano_num_threads,
+    CaseConfigParamInput_Volcano_distance_strategy,
+    CaseConfigParamInput_Volcano_enable_prefetch,
+    CaseConfigParamInput_Volcano_enable_thp,
+    CaseConfigParamInput_Volcano_BuildSearchList,
+]
+VolcanoMilvusPerformanceConfig = [
+    CaseConfigParamInput_IndexType_VolcanoMilvus,
+    *MilvusPerformanceConfig[1:],
+    CaseConfigParamInput_Volcano_max_degree,
+    CaseConfigParamInput_Volcano_legacy,
+    CaseConfigParamInput_Volcano_store_strategy,
+    CaseConfigParamInput_Volcano_quant_type,
+    CaseConfigParamInput_Volcano_num_threads,
+    CaseConfigParamInput_Volcano_distance_strategy,
+    CaseConfigParamInput_Volcano_enable_prefetch,
+    CaseConfigParamInput_Volcano_enable_thp,
+    CaseConfigParamInput_Volcano_BuildSearchList,
+]
+
 WeaviateLoadConfig = [
     CaseConfigParamInput_MaxConnections,
     CaseConfigParamInput_EFConstruction_Weaviate,
@@ -3063,6 +3181,11 @@ CASE_CONFIG_MAP = {
     DB.PolarDB: {
         CaseLabel.Load: PolarDBConfig,
         CaseLabel.Performance: PolarDBConfig,
+    },
+    DB.VolcanoMilvus: {
+        CaseLabel.Load: VolcanoMilvusLoadConfig,
+        CaseLabel.Performance: VolcanoMilvusPerformanceConfig,
+        CaseLabel.Streaming: VolcanoMilvusPerformanceConfig,
     },
 }
 
