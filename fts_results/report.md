@@ -50,13 +50,18 @@ No committed raw result yet.
 
 ## HotpotQA Medium (1M documents)
 
+Rows below are the 2026-06-04 six-concurrency rerun using explicit concurrency `1,10,20,40,60,80`. Older ids-only `1,5,10,20` baselines and the previous failed Vespa text-payload attempt remain in the backend-specific reports.
+
 | Backend | Payload | Context | Raw JSON | Load s | QPS | Recall | NDCG | MRR | p95 s | p99 s | Concurrency | Concurrent QPS |
 |---|---|---|---|---:|---:|---:|---:|---:|---:|---:|---|---|
-| Milvus | ids_only | `r7i.4xlarge` | `Milvus/hotpotqa/raw_results/result_20260602_fts-e2e-milvus-hotpotqa-medium-r7i_milvus.json` | 2031.2796 | 1596.6340 | 0.8378 | 0.7246 | 0.8561 | 0.0123 | 0.0170 | 1/5/10/20 | 146.0629 / 726.2209 / 1273.3380 / 1596.6340 |
-| ElasticSearch | ids_only | `r7i.4xlarge` | `ElasticSearch/hotpotqa/raw_results/result_20260602_fts-e2e-elastic-hotpotqa-medium-r7i_elasticcloud.json` | 142.0589 | 1410.3787 | 0.8378 | 0.7287 | 0.8598 | 0.0159 | 0.0224 | 1/5/10/20 | 111.5252 / 558.2304 / 1034.1176 / 1410.3787 |
-| Vespa | ids_only | `r7i.4xlarge` | `Vespa/hotpotqa/raw_results/result_20260602_fts-e2e-vespa-hotpotqa-medium-r7i_vespa.json` | 575.5304 | 80.0872 | 0.8309 | 0.7208 | 0.8500 | 0.2647 | 0.3261 | 1/5/10/20 | 6.4907 / 33.8533 / 57.9060 / 80.0872 |
+| Milvus | ids_only | `r7i.4xlarge` | `Milvus/hotpotqa/raw_results/result_20260604_fts-hotpotqa-medium-milvus-ids-c1-10-20-40-60-80-r7i-20260604T074646Z_milvus.json` | 2040.9336 | 1865.4681 | 0.8378 | 0.7246 | 0.8561 | 0.0122 | 0.0170 | 1/10/20/40/60/80 | 255.0087 / 1364.3522 / 1378.9975 / 1702.7745 / 1851.3955 / 1865.4681 |
+| Milvus | text | `r7i.4xlarge` | `Milvus/hotpotqa/raw_results/result_20260604_fts-hotpotqa-medium-milvus-text-c1-10-20-40-60-80-r7i-20260604T074646Z_milvus.json` | 2033.2594 | 1714.0357 | 0.8378 | 0.7246 | 0.8561 | 0.0124 | 0.0170 | 1/10/20/40/60/80 | 223.9828 / 1224.1637 / 1558.9074 / 1669.1467 / 1687.2785 / 1714.0357 |
+| ElasticSearch | ids_only | `r7i.4xlarge` | `ElasticSearch/hotpotqa/raw_results/result_20260604_fts-hotpotqa-medium-elastic-ids-c1-10-20-40-60-80-r7i-20260604T074646Z_elasticcloud.json` | 139.2256 | 1581.7165 | 0.8378 | 0.7287 | 0.8598 | 0.0150 | 0.0212 | 1/10/20/40/60/80 | 119.3122 / 1106.0982 / 1552.4142 / 1581.7165 / 1574.0491 / 1579.6451 |
+| ElasticSearch | text | `r7i.4xlarge` | `ElasticSearch/hotpotqa/raw_results/result_20260604_fts-hotpotqa-medium-elastic-text-c1-10-20-40-60-80-r7i-20260604T074646Z_elasticcloud.json` | 140.1574 | 1238.7840 | 0.8378 | 0.7287 | 0.8598 | 0.0171 | 0.0237 | 1/10/20/40/60/80 | 94.8516 / 870.2786 / 1203.6183 / 1230.3996 / 1238.7840 / 1229.2721 |
+| Vespa | ids_only | `r7i.4xlarge` | `Vespa/hotpotqa/raw_results/result_20260604_fts-hotpotqa-medium-vespa-ids-c1-10-20-40-60-80-r7i-20260604T074646Z_vespa.json` | 579.2518 | 181.5240 | 0.8309 | 0.7208 | 0.8500 | 0.2628 | 0.3223 | 1/10/20/40/60/80 | 6.6652 / 58.1128 / 81.3796 / 104.5544 / 140.9124 / 181.5240 |
+| Vespa | text | `r7i.4xlarge` | `Vespa/hotpotqa/raw_results/result_20260604_fts-hotpotqa-medium-vespa-text-c1-10-20-40-60-80-r7i-20260604T074646Z_vespa.json` | 579.3951 | 177.2947 | 0.8309 | 0.7208 | 0.8500 | 0.2683 | 0.3313 | 1/10/20/40/60/80 | 5.2029 / 55.8888 / 79.5598 / 100.9787 / 138.3337 / 177.2947 |
 
-Excluded milestone run: `vespa/hotpotqa-medium/text` with concurrency `20,40,80` failed during concurrency 40 after completing concurrency 20 at `72.8836 QPS`. VDBBench emitted only a zero-metric placeholder JSON, so no raw result is committed or compared.
+Vespa text completed in the 2026-06-04 rerun, but emitted backend timeout warnings during concurrency 60 and 80. The raw JSON is valid and included.
 
 ## HotpotQA Large (5.2M documents)
 

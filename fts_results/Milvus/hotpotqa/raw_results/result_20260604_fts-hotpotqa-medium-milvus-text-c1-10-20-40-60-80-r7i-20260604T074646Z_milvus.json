@@ -1,0 +1,137 @@
+{
+  "run_id": "10fca54a3c6140eaaaed2cd68ec915b6",
+  "task_label": "fts-hotpotqa-medium-milvus-text-c1-10-20-40-60-80-r7i-20260604T074646Z",
+  "results": [
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 2022.3176,
+        "optimize_duration": 10.9418,
+        "load_duration": 2033.2594,
+        "qps": 1714.0357,
+        "serial_latency_p99": 0.017,
+        "serial_latency_p95": 0.0124,
+        "recall": 0.8378,
+        "ndcg": 0.7246,
+        "mrr": 0.8561,
+        "conc_num_list": [
+          1,
+          10,
+          20,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          223.9828,
+          1224.1637,
+          1558.9074,
+          1669.1467,
+          1687.2785,
+          1714.0357
+        ],
+        "conc_latency_p99_list": [
+          0.009763975436799225,
+          0.0220669093669858,
+          0.03382668353151529,
+          0.04843877974781208,
+          0.0603515834652353,
+          0.07281672147801146
+        ],
+        "conc_latency_p95_list": [
+          0.00727336840936914,
+          0.015430017217295248,
+          0.024143372318940228,
+          0.03885346226161346,
+          0.05190709726302884,
+          0.06268739625811577
+        ],
+        "conc_latency_avg_list": [
+          0.004462204246152019,
+          0.008161005107373524,
+          0.012806669171417874,
+          0.023801539723950188,
+          0.03514789531356855,
+          0.04585465389917437
+        ],
+        "payload_profile": "text",
+        "payload_estimated_bytes_per_query": 53200,
+        "inserted_count": 0,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {},
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Milvus",
+        "db_config": {
+          "db_label": "2026-06-04T08:26:02.002505",
+          "version": "",
+          "note": "",
+          "uri": "**********",
+          "user": null,
+          "password": null,
+          "num_shards": 1,
+          "replica_number": 1
+        },
+        "db_case_config": {
+          "index_type": "SPARSE_INVERTED_INDEX",
+          "metric_type": "BM25",
+          "inverted_index_algo": "DAAT_MAXSCORE",
+          "bm25_k1": 1.5,
+          "bm25_b": 0.75,
+          "analyzer_tokenizer": "standard",
+          "analyzer_enable_lowercase": true,
+          "analyzer_max_token_length": 40,
+          "analyzer_stop_words": null,
+          "drop_ratio_search": null
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "HotpotQA Medium (1M documents)",
+            "payload_profile": "text"
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              10,
+              20,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    }
+  ],
+  "file_fmt": "result_{}_{}_{}.json",
+  "timestamp": 1780531200.0
+}

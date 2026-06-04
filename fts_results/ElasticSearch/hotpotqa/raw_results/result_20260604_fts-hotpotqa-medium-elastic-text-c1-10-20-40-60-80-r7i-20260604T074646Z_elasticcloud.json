@@ -1,0 +1,133 @@
+{
+  "run_id": "fc840640bea94f2990b0194d446c8683",
+  "task_label": "fts-hotpotqa-medium-elastic-text-c1-10-20-40-60-80-r7i-20260604T074646Z",
+  "results": [
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 109.2296,
+        "optimize_duration": 30.9278,
+        "load_duration": 140.1574,
+        "qps": 1238.784,
+        "serial_latency_p99": 0.0237,
+        "serial_latency_p95": 0.0171,
+        "recall": 0.8378,
+        "ndcg": 0.7287,
+        "mrr": 0.8598,
+        "conc_num_list": [
+          1,
+          10,
+          20,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          94.8516,
+          870.2786,
+          1203.6183,
+          1230.3996,
+          1238.784,
+          1229.2721
+        ],
+        "conc_latency_p99_list": [
+          0.02581564159481787,
+          0.02989356219535694,
+          0.042432678147452,
+          0.08184271664358679,
+          0.09720308150164784,
+          0.11407953314017512
+        ],
+        "conc_latency_p95_list": [
+          0.01860455027781427,
+          0.0214310766023118,
+          0.030986886442406103,
+          0.06021075414028011,
+          0.07750119159463793,
+          0.09536101298872378
+        ],
+        "conc_latency_avg_list": [
+          0.010541191044352223,
+          0.011485203075434698,
+          0.016605392576562097,
+          0.03247244409661832,
+          0.04836721546941977,
+          0.06498077592077982
+        ],
+        "payload_profile": "text",
+        "payload_estimated_bytes_per_query": 53200,
+        "inserted_count": 0,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {},
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ElasticCloud",
+        "db_config": {
+          "db_label": "2026-06-04T09:12:35.770963",
+          "version": "",
+          "note": "",
+          "cloud_id": null,
+          "host": "**********",
+          "port": 9200,
+          "user_name": null,
+          "password": null,
+          "use_ssl": false,
+          "verify_certs": true
+        },
+        "db_case_config": {
+          "number_of_shards": 1,
+          "number_of_replicas": 0,
+          "refresh_interval": "30s",
+          "use_force_merge": true
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "HotpotQA Medium (1M documents)",
+            "payload_profile": "text"
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              10,
+              20,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    }
+  ],
+  "file_fmt": "result_{}_{}_{}.json",
+  "timestamp": 1780531200.0
+}

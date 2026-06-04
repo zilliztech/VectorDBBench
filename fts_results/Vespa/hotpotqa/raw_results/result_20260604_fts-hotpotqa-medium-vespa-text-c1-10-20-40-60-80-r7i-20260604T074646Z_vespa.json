@@ -1,0 +1,123 @@
+{
+  "run_id": "7c4b2e895f904d1787a6c5503e6cfc3b",
+  "task_label": "fts-hotpotqa-medium-vespa-text-c1-10-20-40-60-80-r7i-20260604T074646Z",
+  "results": [
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 579.3951,
+        "optimize_duration": 0.0,
+        "load_duration": 579.3951,
+        "qps": 177.2947,
+        "serial_latency_p99": 0.3313,
+        "serial_latency_p95": 0.2683,
+        "recall": 0.8309,
+        "ndcg": 0.7208,
+        "mrr": 0.85,
+        "conc_num_list": [
+          1,
+          10,
+          20,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          5.2029,
+          55.8888,
+          79.5598,
+          100.9787,
+          138.3337,
+          177.2947
+        ],
+        "conc_latency_p99_list": [
+          0.3337919437466189,
+          0.3536427867843302,
+          0.43920454556820915,
+          0.4784315022965893,
+          0.4891812240239233,
+          0.4914912944647949
+        ],
+        "conc_latency_p95_list": [
+          0.3081897988216951,
+          0.31242835493176235,
+          0.42315882118418807,
+          0.468050979252439,
+          0.47528011386748403,
+          0.4772917832888197
+        ],
+        "conc_latency_avg_list": [
+          0.19219083789139868,
+          0.17797466223161165,
+          0.2503957944742424,
+          0.3929568467736441,
+          0.42991350463432865,
+          0.44525716205393406
+        ],
+        "payload_profile": "text",
+        "payload_estimated_bytes_per_query": 53200,
+        "inserted_count": 0,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {},
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Vespa",
+        "db_config": {
+          "db_label": "",
+          "version": "",
+          "note": "",
+          "url": "**********",
+          "port": 8080
+        },
+        "db_case_config": {},
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "HotpotQA Medium (1M documents)",
+            "payload_profile": "text"
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              10,
+              20,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    }
+  ],
+  "file_fmt": "result_{}_{}_{}.json",
+  "timestamp": 1780531200.0
+}
