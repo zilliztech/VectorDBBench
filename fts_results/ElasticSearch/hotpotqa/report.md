@@ -43,6 +43,32 @@ Validated deployment:
 - Docker volume: `esdata01`.
 - Security: disabled for isolated private benchmark networking.
 
+### FTS Index, Analyzer, And Ranking Configuration
+
+Elasticsearch used a plain text mapping for FTS. VDBBench explicitly configured the mapping and index-level settings, but did not configure a custom analyzer, search analyzer, similarity, stopword list, or analysis block.
+
+Effective mapping:
+
+- `doc_id`: `keyword`.
+- `text`: `text`.
+
+Effective index settings:
+
+- `number_of_shards=1`.
+- `number_of_replicas=0`.
+- `refresh_interval=30s`.
+- force merge enabled by VDBBench after load.
+
+Inherited Elasticsearch product defaults:
+
+- default analyzer for `text`: `standard`.
+- standard analyzer behavior: standard tokenizer, lowercase filter, stop filter disabled by default.
+- default similarity: BM25.
+- BM25 defaults: `k1=1.2`, `b=0.75`, `discount_overlaps=true`.
+- FTS query shape: `match` query against the `text` field; the query text is analyzed with the field analyzer.
+
+The `elasticcloudhnsw` CLI command name is misleading for these FTS results. When `--case-type FTSmsmarcoPerformance` is selected, VDBBench replaces the vector/HNSW case config with `ElasticCloudFtsConfig`, so HNSW parameters such as `m`, `ef_construction`, and vector `num_candidates` were not used for FTS. The relevant code paths are `ElasticCloudFtsConfig` in `vectordb_bench/backend/clients/elastic_cloud/config.py`, index creation in `vectordb_bench/backend/clients/elastic_cloud/elastic_cloud.py`, and FTS search via Elasticsearch `match` query in the same client.
+
 Reproducible fresh-deploy script:
 
 ```bash

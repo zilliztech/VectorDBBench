@@ -51,6 +51,35 @@ Validated deployment:
 - Persistent host directories: `/srv/vespa/var` and `/srv/vespa/logs`.
 - Ports: `8080` for feed/query and `19071` for config/deploy.
 
+### FTS Index, Analyzer, And Ranking Configuration
+
+Vespa did not use an unconfigured product-default text schema. VDBBench explicitly deployed a Vespa application schema for FTS and explicitly queried it with a BM25 rank profile.
+
+Effective schema:
+
+- schema: `VectorDBBenchCollection`.
+- `id`: `string`, indexed as `summary` and `attribute`.
+- `text`: `string`, indexed as `index` and `summary`.
+- `text` index setting: `enable-bm25`.
+- rank profile: `bm25`, inheriting `default`, with first phase `bm25(text)`.
+
+Effective query settings:
+
+- query expression: `select id from VectorDBBenchCollection where userQuery()` for ids-only runs.
+- query expression: `select id, text from VectorDBBenchCollection where userQuery()` for text-payload runs.
+- `ranking=bm25`.
+- `default-index=text`.
+- `type=any`.
+- `hits=k`.
+
+Inherited Vespa product defaults where VDBBench did not override:
+
+- BM25 rank feature parameters: `k1=1.2`, `b=0.75`.
+- string index text processing, including tokenized text matching and normalization.
+- stemming default: `best`.
+
+`VespaFtsConfig` has no extra tunable index or search parameters, so Vespa raw results record `db_case_config={}`. Payload profile only changes returned fields; it does not change the Vespa index or rank profile. The relevant code paths are the Vespa application package/schema construction and query construction in `vectordb_bench/backend/clients/vespa/vespa.py`, plus empty `VespaFtsConfig` in `vectordb_bench/backend/clients/vespa/config.py`.
+
 Reproducible fresh-deploy script:
 
 ```bash

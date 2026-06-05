@@ -6,12 +6,27 @@ All local-server rows use the `r7i.4xlarge` server unless marked otherwise. Turb
 
 ## Table of Contents
 
+- [FTS Index And Ranking Configuration](#fts-index-and-ranking-configuration)
 - [MS MARCO Small (100K documents)](#ms-marco-small-100k-documents)
 - [MS MARCO Medium (1M documents)](#ms-marco-medium-1m-documents)
 - [MS MARCO Large (8.8M documents)](#ms-marco-large-88m-documents)
 - [HotpotQA Small (100K documents)](#hotpotqa-small-100k-documents)
 - [HotpotQA Medium (1M documents)](#hotpotqa-medium-1m-documents)
 - [HotpotQA Large (5.2M documents)](#hotpotqa-large-52m-documents)
+
+## FTS Index And Ranking Configuration
+
+The FTS runs did not use one uniform "backend default" configuration. Milvus and Vespa used explicit VDBBench FTS schemas/indexes. Elasticsearch used a plain text mapping with VDBBench index settings, then inherited Elasticsearch analyzer and BM25 defaults.
+
+| Backend | Was Product Default? | Indexed Field | Index / Mapping | Analyzer / Linguistics | Ranking / Similarity | Explicit Args |
+|---|---|---|---|---|---|---|
+| Milvus | No. VDBBench explicitly configured the FTS sparse index and BM25 parameters. | Analyzer-enabled `text` field feeds generated `sparse_vector`. | `SPARSE_INVERTED_INDEX` on `sparse_vector`; BM25 function maps `text` to `sparse_vector`. | `standard` tokenizer, lowercase enabled, max token length `40`, stop words `null`. | `metric_type=BM25`; `bm25_k1=1.5`; `bm25_b=0.75`. | `inverted_index_algo=DAAT_MAXSCORE`; `drop_ratio_search=null`. |
+| ElasticSearch | Partly. VDBBench explicitly configured mapping and index settings; analyzer and similarity were Elasticsearch defaults. | `text`. | Mapping: `doc_id: keyword`, `text: text`; standard Lucene inverted index for `text`. | Default `standard` analyzer: standard tokenizer, lowercase filter, stop filter disabled by default. | Default BM25 similarity: `k1=1.2`, `b=0.75`, `discount_overlaps=true`. | `number_of_shards=1`, `number_of_replicas=0`, `refresh_interval=30s`, force merge enabled. No HNSW/vector index settings were used for FTS. |
+| Vespa | No. VDBBench explicitly deployed an FTS Vespa schema and rank profile. | `text`. | `text` is `string` with `index` and `summary`, plus `index: enable-bm25`; `id` is `summary` and `attribute`. | Vespa default string index text processing where not overridden, including tokenized text matching, normalization, and default stemming `best`. | Explicit rank profile `bm25` with first phase `bm25(text)`; BM25 parameters use Vespa defaults `k1=1.2`, `b=0.75`. | Query uses `userQuery()`, `ranking=bm25`, `default-index=text`, `type=any`; `VespaFtsConfig` has no extra index/search args, so raw JSON records `db_case_config={}`. |
+
+Code references: Milvus FTS config is in `vectordb_bench/backend/clients/milvus/config.py` and index/search execution is in `vectordb_bench/backend/clients/milvus/milvus.py`. Elasticsearch FTS mapping/settings are in `vectordb_bench/backend/clients/elastic_cloud/config.py` and FTS search uses a `match` query in `vectordb_bench/backend/clients/elastic_cloud/elastic_cloud.py`. Vespa FTS schema and query construction are in `vectordb_bench/backend/clients/vespa/vespa.py`, with empty FTS case config in `vectordb_bench/backend/clients/vespa/config.py`.
+
+Official docs used for product defaults: Milvus full text search, Elasticsearch standard analyzer and similarity docs, and Vespa BM25/schema/linguistics docs.
 
 ## MS MARCO Small (100K documents)
 

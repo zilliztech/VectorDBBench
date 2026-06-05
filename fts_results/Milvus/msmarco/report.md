@@ -52,6 +52,28 @@ Validated deployment:
 - MQ config: `MQ_TYPE=woodpecker` from the official `v2.6.17` compose file.
 - Persistent data: `~/milvus-standalone/volumes`.
 
+### FTS Index, Analyzer, And Ranking Configuration
+
+Milvus did not use an implicit product-selected default index in these FTS runs. VDBBench explicitly created an analyzer-enabled `text` field, a generated `sparse_vector` field, and a Milvus BM25 function from `text` to `sparse_vector`. The searchable index was then created on `sparse_vector`.
+
+Effective FTS index configuration:
+
+- `index_type=SPARSE_INVERTED_INDEX`.
+- `metric_type=BM25`.
+- `inverted_index_algo=DAAT_MAXSCORE`.
+- `bm25_k1=1.5`.
+- `bm25_b=0.75`.
+- `drop_ratio_search=null`, so no search-time sparse-vector drop ratio was applied.
+
+Effective analyzer configuration:
+
+- tokenizer: `standard`.
+- lowercase: enabled.
+- token length filter: max token length `40`.
+- stop words: `null`.
+
+This is a VDBBench-explicit FTS default, not a Milvus product default chosen by omission. The Milvus docs describe the same BM25 FTS shape, using a text field, BM25 function, sparse vector field, and sparse/BM25 index; `DAAT_MAXSCORE` is documented as the default inverted-index algorithm, but this benchmark still sent it explicitly. The relevant code paths are `MilvusFtsConfig` in `vectordb_bench/backend/clients/milvus/config.py`, collection/index creation in `vectordb_bench/backend/clients/milvus/milvus.py`, and search on `anns_field="sparse_vector"` with raw text queries.
+
 Reproducible fresh-deploy script:
 
 ```bash
