@@ -4,8 +4,8 @@
 
 - Backend: Vespa single-node container.
 - Dataset family: MS MARCO.
-- Current committed raw results: `MS MARCO Small (100K documents)` and `MS MARCO Medium (1M documents)` on the original `m5d.2xlarge` server and the later `r7i.4xlarge` server.
-- Run dates represented here: 2026-05-28, 2026-06-01, 2026-06-02, 2026-06-03, and 2026-06-04.
+- Current committed raw results: `MS MARCO Small (100K documents)`, `MS MARCO Medium (1M documents)`, and `MS MARCO Large (8.8M documents)` on the original `m5d.2xlarge` server and the later `r7i.4xlarge` server.
+- Run dates represented here: 2026-05-28, 2026-06-01, 2026-06-02, 2026-06-03, 2026-06-04, and 2026-06-05.
 - Source runbook: `docs/fts-backends/vespa.md`.
 - Raw result directory: `raw_results/`.
 - Current result JSONs have connection fields masked by VectorDBBench.
@@ -208,6 +208,42 @@ for PAYLOAD_PROFILE in ids_only text; do
 done
 ```
 
+Exact client script for the `r7i.4xlarge` MS MARCO Large ids-only and text-payload matrix:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd /home/ubuntu/VectorDBBench_fts_ver1_run
+export DATASET_LOCAL_DIR=/tmp/vectordb_bench/dataset
+export RESULTS_LOCAL_DIR=/tmp/vectordb_bench/results
+export NUM_PER_BATCH=100
+export SERVER_HOST="<server-private-host-or-dns>"
+export RUN_TAG="20260604T113624Z"
+
+for PAYLOAD_PROFILE in ids_only text; do
+  if [[ "${PAYLOAD_PROFILE}" == "ids_only" ]]; then
+    LABEL_PAYLOAD="ids"
+    PAYLOAD_ARGS=()
+  else
+    LABEL_PAYLOAD="text"
+    PAYLOAD_ARGS=(--payload-profile text)
+  fi
+
+  python3.11 -m vectordb_bench.cli.vectordbbench vespa \
+    --uri "http://${SERVER_HOST}" \
+    --port 8080 \
+    --task-label "fts-msmarco-large-vespa-${LABEL_PAYLOAD}-c1-10-20-40-60-80-r7i-${RUN_TAG}" \
+    --case-type FTSmsmarcoPerformance \
+    --dataset-with-size-type "MS MARCO Large (8.8M documents)" \
+    "${PAYLOAD_ARGS[@]}" \
+    --drop-old --load --search-serial --search-concurrent \
+    --k 100 --concurrency-duration 30 \
+    --num-concurrency "1,10,20,40,60,80" \
+    --concurrency-timeout 3600
+done
+```
+
 Effective Vespa FTS case config from the raw JSON: no backend-specific case fields are set. The VDBBench Vespa adapter deploys the application package through port `19071` and queries through port `8080`.
 
 ## Result
@@ -253,3 +289,16 @@ MS MARCO Medium stability comparison against the previous `r7i.4xlarge` ids-only
 - Load duration changed from `585.7496s` to `581.5774s` (-0.7%).
 - Recall stayed unchanged at `0.8409`.
 - Text payload QPS was `251.4636`, which is 2.2% below the new ids-only rerun at the same concurrency list.
+
+MS MARCO Large six-concurrency run on `r7i.4xlarge`:
+
+| Raw JSON | Payload | Task label | Load s | QPS | Recall | NDCG | MRR | p95 s | p99 s | Concurrent QPS at 1/10/20/40/60/80 |
+|---|---|---|---:|---:|---:|---:|---:|---:|---:|---|
+| `result_20260605_fts-msmarco-large-vespa-ids-c1-10-20-40-60-80-r7i-20260604T113624Z_vespa.json` | `ids_only` | `fts-msmarco-large-vespa-ids-c1-10-20-40-60-80-r7i-20260604T113624Z` | 4987.2328 | 192.5008 | 0.5689 | 0.2475 | 0.1673 | 0.4454 | 0.4460 | 4.1287 / 30.7389 / 56.8053 / 103.6033 / 149.3731 / 192.5008 |
+| `result_20260605_fts-msmarco-large-vespa-text-c1-10-20-40-60-80-r7i-20260604T113624Z_vespa.json` | `text` | `fts-msmarco-large-vespa-text-c1-10-20-40-60-80-r7i-20260604T113624Z` | 4989.0550 | 187.5886 | 0.5687 | 0.2475 | 0.1674 | 0.4525 | 0.4537 | 3.3315 / 22.3210 / 53.0334 / 100.4980 / 140.6589 / 187.5886 |
+
+MS MARCO Large observations:
+
+- Both Vespa rows peaked at concurrency `80`.
+- Text-payload QPS was `187.5886`, which is 2.6% below ids-only at the same concurrency list.
+- Vespa text emitted timeout/docsum warnings at high concurrency but completed and produced a valid raw JSON.

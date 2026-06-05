@@ -4,8 +4,8 @@
 
 - Backend: Milvus standalone.
 - Dataset family: MS MARCO.
-- Current committed raw results: `MS MARCO Small (100K documents)` and `MS MARCO Medium (1M documents)` on the original `m5d.2xlarge` server and the later `r7i.4xlarge` server.
-- Run dates represented here: 2026-05-28, 2026-06-01, 2026-06-02, 2026-06-03, and 2026-06-04.
+- Current committed raw results: `MS MARCO Small (100K documents)`, `MS MARCO Medium (1M documents)`, and `MS MARCO Large (8.8M documents)` on the original `m5d.2xlarge` server and the later `r7i.4xlarge` server.
+- Run dates represented here: 2026-05-28, 2026-06-01, 2026-06-02, 2026-06-03, 2026-06-04, and 2026-06-05.
 - Source runbook: `docs/fts-backends/milvus.md`.
 - Raw result directory: `raw_results/`.
 - Current result JSONs have connection fields masked by VectorDBBench.
@@ -206,6 +206,41 @@ for PAYLOAD_PROFILE in ids_only text; do
 done
 ```
 
+Exact client script for the `r7i.4xlarge` MS MARCO Large ids-only and text-payload matrix:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd /home/ubuntu/VectorDBBench_fts_ver1_run
+export DATASET_LOCAL_DIR=/tmp/vectordb_bench/dataset
+export RESULTS_LOCAL_DIR=/tmp/vectordb_bench/results
+export NUM_PER_BATCH=100
+export SERVER_HOST="<server-private-host-or-dns>"
+export RUN_TAG="20260604T113624Z"
+
+for PAYLOAD_PROFILE in ids_only text; do
+  if [[ "${PAYLOAD_PROFILE}" == "ids_only" ]]; then
+    LABEL_PAYLOAD="ids"
+    PAYLOAD_ARGS=()
+  else
+    LABEL_PAYLOAD="text"
+    PAYLOAD_ARGS=(--payload-profile text)
+  fi
+
+  python3.11 -m vectordb_bench.cli.vectordbbench milvusfts \
+    --uri "http://${SERVER_HOST}:19530" \
+    --task-label "fts-msmarco-large-milvus-${LABEL_PAYLOAD}-c1-10-20-40-60-80-r7i-${RUN_TAG}" \
+    --case-type FTSmsmarcoPerformance \
+    --dataset-with-size-type "MS MARCO Large (8.8M documents)" \
+    "${PAYLOAD_ARGS[@]}" \
+    --drop-old --load --search-serial --search-concurrent \
+    --k 100 --concurrency-duration 30 \
+    --num-concurrency "1,10,20,40,60,80" \
+    --concurrency-timeout 3600
+done
+```
+
 Effective Milvus FTS case config from the raw JSON:
 
 - `index_type=SPARSE_INVERTED_INDEX`
@@ -262,3 +297,16 @@ MS MARCO Medium stability comparison against the previous `r7i.4xlarge` ids-only
 - Load duration changed from `2042.1265s` to `2048.1231s` (+0.3%).
 - Recall stayed unchanged at `0.8048`.
 - Text payload QPS was `4677.4078`, which is 9.0% below the new ids-only rerun at the same concurrency list.
+
+MS MARCO Large six-concurrency run on `r7i.4xlarge`:
+
+| Raw JSON | Payload | Task label | Load s | QPS | Recall | NDCG | MRR | p95 s | p99 s | Concurrent QPS at 1/10/20/40/60/80 |
+|---|---|---|---:|---:|---:|---:|---:|---:|---:|---|
+| `result_20260604_fts-msmarco-large-milvus-ids-c1-10-20-40-60-80-r7i-20260604T113624Z_milvus.json` | `ids_only` | `fts-msmarco-large-milvus-ids-c1-10-20-40-60-80-r7i-20260604T113624Z` | 17874.1539 | 738.2857 | 0.6206 | 0.2695 | 0.1824 | 0.0091 | 0.0133 | 203.7730 / 701.5716 / 707.9453 / 722.6776 / 735.3773 / 738.2857 |
+| `result_20260604_fts-msmarco-large-milvus-text-c1-10-20-40-60-80-r7i-20260604T113624Z_milvus.json` | `text` | `fts-msmarco-large-milvus-text-c1-10-20-40-60-80-r7i-20260604T113624Z` | 17864.1118 | 743.7173 | 0.6206 | 0.2695 | 0.1824 | 0.0099 | 0.0140 | 189.9733 / 700.0473 / 692.9175 / 730.2865 / 735.8742 / 743.7173 |
+
+MS MARCO Large observations:
+
+- The large Milvus ids-only and text-payload runs both peaked at concurrency `80`.
+- Text payload QPS was `743.7173`, which is 0.7% above ids-only in this run; this is within the range where run-to-run variance can dominate the payload effect.
+- Recall stayed unchanged at `0.6206`.

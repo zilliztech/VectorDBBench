@@ -4,7 +4,7 @@
 
 - Backend: Elasticsearch single-node container, invoked through VectorDBBench `elasticcloudhnsw`.
 - Dataset family: MS MARCO.
-- Current committed raw results: `MS MARCO Small (100K documents)` and `MS MARCO Medium (1M documents)` on the original `m5d.2xlarge` server and the later `r7i.4xlarge` server.
+- Current committed raw results: `MS MARCO Small (100K documents)`, `MS MARCO Medium (1M documents)`, and `MS MARCO Large (8.8M documents)` on the original `m5d.2xlarge` server and the later `r7i.4xlarge` server.
 - Run dates represented here: 2026-05-28, 2026-06-01, 2026-06-02, 2026-06-03, and 2026-06-04.
 - Source runbook: `docs/fts-backends/elasticsearch.md`.
 - Raw result directory: `raw_results/`.
@@ -207,6 +207,42 @@ for PAYLOAD_PROFILE in ids_only text; do
 done
 ```
 
+Exact client script for the `r7i.4xlarge` MS MARCO Large ids-only and text-payload matrix:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd /home/ubuntu/VectorDBBench_fts_ver1_run
+export DATASET_LOCAL_DIR=/tmp/vectordb_bench/dataset
+export RESULTS_LOCAL_DIR=/tmp/vectordb_bench/results
+export NUM_PER_BATCH=100
+export SERVER_HOST="<server-private-host-or-dns>"
+export RUN_TAG="20260604T113624Z"
+
+for PAYLOAD_PROFILE in ids_only text; do
+  if [[ "${PAYLOAD_PROFILE}" == "ids_only" ]]; then
+    LABEL_PAYLOAD="ids"
+    PAYLOAD_ARGS=()
+  else
+    LABEL_PAYLOAD="text"
+    PAYLOAD_ARGS=(--payload-profile text)
+  fi
+
+  python3.11 -m vectordb_bench.cli.vectordbbench elasticcloudhnsw \
+    --host "${SERVER_HOST}" \
+    --port 9200 \
+    --task-label "fts-msmarco-large-elastic-${LABEL_PAYLOAD}-c1-10-20-40-60-80-r7i-${RUN_TAG}" \
+    --case-type FTSmsmarcoPerformance \
+    --dataset-with-size-type "MS MARCO Large (8.8M documents)" \
+    "${PAYLOAD_ARGS[@]}" \
+    --drop-old --load --search-serial --search-concurrent \
+    --k 100 --concurrency-duration 30 \
+    --num-concurrency "1,10,20,40,60,80" \
+    --concurrency-timeout 3600
+done
+```
+
 Effective Elasticsearch FTS case config from the raw JSON:
 
 - `number_of_shards=1`
@@ -259,3 +295,16 @@ MS MARCO Medium stability comparison against the previous `r7i.4xlarge` ids-only
 - Load duration changed from `148.5277s` to `140.1544s` (-5.6%).
 - Recall stayed unchanged at `0.8028`.
 - Text payload QPS was `2696.5048`, which is 39.7% below the new ids-only rerun at the same concurrency list.
+
+MS MARCO Large six-concurrency run on `r7i.4xlarge`:
+
+| Raw JSON | Payload | Task label | Load s | QPS | Recall | NDCG | MRR | p95 s | p99 s | Concurrent QPS at 1/10/20/40/60/80 |
+|---|---|---|---:|---:|---:|---:|---:|---:|---:|---|
+| `result_20260604_fts-msmarco-large-elastic-ids-c1-10-20-40-60-80-r7i-20260604T113624Z_elasticcloud.json` | `ids_only` | `fts-msmarco-large-elastic-ids-c1-10-20-40-60-80-r7i-20260604T113624Z` | 991.9284 | 1279.2869 | 0.6230 | 0.2733 | 0.1862 | 0.0243 | 0.0389 | 92.4571 / 899.7783 / 1217.7168 / 1279.2869 / 1240.2423 / 1202.4733 |
+| `result_20260604_fts-msmarco-large-elastic-text-c1-10-20-40-60-80-r7i-20260604T113624Z_elasticcloud.json` | `text` | `fts-msmarco-large-elastic-text-c1-10-20-40-60-80-r7i-20260604T113624Z` | 966.5160 | 952.0335 | 0.6230 | 0.2733 | 0.1862 | 0.0278 | 0.0432 | 11.7464 / 311.8365 / 942.3865 / 952.0335 / 947.4759 / 921.7487 |
+
+MS MARCO Large observations:
+
+- ElasticSearch ids-only peaked at concurrency `40`; higher concurrency reduced QPS slightly.
+- Text-payload QPS was `952.0335`, which is 25.6% below ids-only at the same concurrency list.
+- Recall stayed unchanged at `0.6230`.

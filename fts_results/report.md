@@ -57,7 +57,18 @@ Rows below are the 2026-06-04 six-concurrency rerun using explicit concurrency `
 
 ## MS MARCO Large (8.8M documents)
 
-No committed raw result yet.
+Rows below are the 2026-06-04/2026-06-05 six-concurrency run using explicit concurrency `1,10,20,40,60,80`. All rows used `k=100` and `concurrency_duration=30`.
+
+| Backend | Payload | Context | Raw JSON | Load s | QPS | Recall | NDCG | MRR | p95 s | p99 s | Concurrency | Concurrent QPS |
+|---|---|---|---|---:|---:|---:|---:|---:|---:|---:|---|---|
+| Milvus | ids_only | `r7i.4xlarge` | `Milvus/msmarco/raw_results/result_20260604_fts-msmarco-large-milvus-ids-c1-10-20-40-60-80-r7i-20260604T113624Z_milvus.json` | 17874.1539 | 738.2857 | 0.6206 | 0.2695 | 0.1824 | 0.0091 | 0.0133 | 1/10/20/40/60/80 | 203.7730 / 701.5716 / 707.9453 / 722.6776 / 735.3773 / 738.2857 |
+| Milvus | text | `r7i.4xlarge` | `Milvus/msmarco/raw_results/result_20260604_fts-msmarco-large-milvus-text-c1-10-20-40-60-80-r7i-20260604T113624Z_milvus.json` | 17864.1118 | 743.7173 | 0.6206 | 0.2695 | 0.1824 | 0.0099 | 0.0140 | 1/10/20/40/60/80 | 189.9733 / 700.0473 / 692.9175 / 730.2865 / 735.8742 / 743.7173 |
+| ElasticSearch | ids_only | `r7i.4xlarge` | `ElasticSearch/msmarco/raw_results/result_20260604_fts-msmarco-large-elastic-ids-c1-10-20-40-60-80-r7i-20260604T113624Z_elasticcloud.json` | 991.9284 | 1279.2869 | 0.6230 | 0.2733 | 0.1862 | 0.0243 | 0.0389 | 1/10/20/40/60/80 | 92.4571 / 899.7783 / 1217.7168 / 1279.2869 / 1240.2423 / 1202.4733 |
+| ElasticSearch | text | `r7i.4xlarge` | `ElasticSearch/msmarco/raw_results/result_20260604_fts-msmarco-large-elastic-text-c1-10-20-40-60-80-r7i-20260604T113624Z_elasticcloud.json` | 966.5160 | 952.0335 | 0.6230 | 0.2733 | 0.1862 | 0.0278 | 0.0432 | 1/10/20/40/60/80 | 11.7464 / 311.8365 / 942.3865 / 952.0335 / 947.4759 / 921.7487 |
+| Vespa | ids_only | `r7i.4xlarge` | `Vespa/msmarco/raw_results/result_20260605_fts-msmarco-large-vespa-ids-c1-10-20-40-60-80-r7i-20260604T113624Z_vespa.json` | 4987.2328 | 192.5008 | 0.5689 | 0.2475 | 0.1673 | 0.4454 | 0.4460 | 1/10/20/40/60/80 | 4.1287 / 30.7389 / 56.8053 / 103.6033 / 149.3731 / 192.5008 |
+| Vespa | text | `r7i.4xlarge` | `Vespa/msmarco/raw_results/result_20260605_fts-msmarco-large-vespa-text-c1-10-20-40-60-80-r7i-20260604T113624Z_vespa.json` | 4989.0550 | 187.5886 | 0.5687 | 0.2475 | 0.1674 | 0.4525 | 0.4537 | 1/10/20/40/60/80 | 3.3315 / 22.3210 / 53.0334 / 100.4980 / 140.6589 / 187.5886 |
+
+Vespa text completed but emitted timeout/docsum warnings at concurrency 60 and 80. The raw JSON is valid and included.
 
 ## HotpotQA Small (100K documents)
 
