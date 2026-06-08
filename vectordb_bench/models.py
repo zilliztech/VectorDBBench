@@ -51,6 +51,7 @@ class CaseConfigParamType(Enum):
     ef_construction = "ef_construction"
     EF = "ef"
     SearchList = "search_list"
+    BuildSearchList = "build_search_list"
     ef_search = "ef_search"
     Nlist = "nlist"
     Nprobe = "nprobe"
@@ -174,6 +175,20 @@ class CaseConfigParamType(Enum):
     k_expand_scope = "k_expand_scope"
     exbits = "exbits"
     number_of_regions = "number_of_regions"
+
+    # AliyunMilvus DISKANN parameters
+    max_degree = "max_degree"
+    legacy = "legacy"
+    store_strategy = "store_strategy"
+    quant_type = "quant_type"
+    num_threads = "num_threads"
+    distance_strategy = "distance_strategy"
+    enable_prefetch = "enable_prefetch"
+    enable_thp = "enable_thp"
+    # AliyunMilvus DISKANN search-time parameters
+    rerank_topk_multiplier = "rerank_topk_multiplier"
+    early_termination_threshold = "early_termination_threshold"
+    cross_segment_rerank = "cross_segment_rerank"
 
 
 class CustomizedCase(BaseModel):

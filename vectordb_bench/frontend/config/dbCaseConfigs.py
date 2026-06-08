@@ -2168,6 +2168,157 @@ MilvusPerformanceConfig = [
     CaseConfigParamInput_Milvus_use_partition_key,
 ]
 
+# ---- AliyunMilvus ----
+# Reuse Milvus UI configs for all index types except DISKANN, where
+# Aliyun-specific build params and the three search-time knobs
+# (rerank_topk_multiplier / early_termination_threshold / cross_segment_rerank)
+# are shown in addition to Milvus's SearchList.
+
+CaseConfigParamInput_IndexType_AliyunMilvus = CaseConfigInput(
+    label=CaseConfigParamType.IndexType,
+    inputType=InputType.Option,
+    inputHelp="AliyunMilvus currently supports DISKANN only",
+    inputConfig={
+        "options": [IndexType.DISKANN.value],
+    },
+)
+
+CaseConfigParamInput_Aliyun_max_degree = CaseConfigInput(
+    label=CaseConfigParamType.max_degree,
+    inputType=InputType.Number,
+    inputConfig={"min": 1, "max": 65536, "value": 56},
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.DISKANN.value,
+)
+
+CaseConfigParamInput_Aliyun_legacy = CaseConfigInput(
+    label=CaseConfigParamType.legacy,
+    inputType=InputType.Bool,
+    displayLabel="Legacy",
+    inputHelp="Use legacy Aliyun DISKANN behavior",
+    inputConfig={"value": False},
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.DISKANN.value,
+)
+
+CaseConfigParamInput_Aliyun_store_strategy = CaseConfigInput(
+    label=CaseConfigParamType.store_strategy,
+    inputType=InputType.Option,
+    inputConfig={"options": ["MEMORY", "DISK"], "value": "MEMORY"},
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.DISKANN.value,
+)
+
+CaseConfigParamInput_Aliyun_quant_type = CaseConfigInput(
+    label=CaseConfigParamType.quant_type,
+    inputType=InputType.Option,
+    inputConfig={"options": ["RABITQ", "PQ"], "value": "RABITQ"},
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.DISKANN.value,
+)
+
+CaseConfigParamInput_Aliyun_num_threads = CaseConfigInput(
+    label=CaseConfigParamType.num_threads,
+    inputType=InputType.Number,
+    inputConfig={"min": 1, "max": 1024, "value": 4},
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.DISKANN.value,
+)
+
+CaseConfigParamInput_Aliyun_distance_strategy = CaseConfigInput(
+    label=CaseConfigParamType.distance_strategy,
+    inputType=InputType.Option,
+    inputConfig={
+        "options": ["FULL", "SINGLE QUANT", "QUANT THEN FULL", "QUANT THEN MORE BITS"],
+        "value": "QUANT THEN MORE BITS",
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.DISKANN.value,
+)
+
+CaseConfigParamInput_Aliyun_enable_prefetch = CaseConfigInput(
+    label=CaseConfigParamType.enable_prefetch,
+    inputType=InputType.Bool,
+    displayLabel="Enable Prefetch",
+    inputHelp="Enable Aliyun DISKANN prefetch during search",
+    inputConfig={"value": False},
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.DISKANN.value,
+)
+
+CaseConfigParamInput_Aliyun_enable_thp = CaseConfigInput(
+    label=CaseConfigParamType.enable_thp,
+    inputType=InputType.Bool,
+    displayLabel="Enable THP",
+    inputHelp="Enable Aliyun DISKANN transparent huge pages on collection load",
+    inputConfig={"value": False},
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.DISKANN.value,
+)
+
+CaseConfigParamInput_Aliyun_BuildSearchList = CaseConfigInput(
+    label=CaseConfigParamType.BuildSearchList,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": MAX_STREAMLIT_INT,
+        "value": 200,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.DISKANN.value,
+)
+
+# The three search-time knobs default to "unset" -> the param is NOT sent to the
+# server (it keeps its own default). For Number inputs a negative value (-1) is
+# the "unset" sentinel; for the bool, "DEFAULT" is the "unset" sentinel. The
+# backend config normalizes these to None (note: 0 is a real, meaningful value).
+CaseConfigParamInput_Aliyun_rerank_topk_multiplier = CaseConfigInput(
+    label=CaseConfigParamType.rerank_topk_multiplier,
+    inputType=InputType.Number,
+    displayLabel="Rerank TopK Multiplier",
+    inputHelp="Search param: multiplier of topk for rerank budget (0 disables rerank read). -1 = not specified (omit).",
+    inputConfig={"min": -1, "max": MAX_STREAMLIT_INT, "value": -1},
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.DISKANN.value,
+)
+
+CaseConfigParamInput_Aliyun_early_termination_threshold = CaseConfigInput(
+    label=CaseConfigParamType.early_termination_threshold,
+    inputType=InputType.Number,
+    displayLabel="Early Termination Threshold",
+    inputHelp="Search param: early termination threshold (0 disables). -1 = not specified (omit).",
+    inputConfig={"min": -1, "max": MAX_STREAMLIT_INT, "value": -1},
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.DISKANN.value,
+)
+
+CaseConfigParamInput_Aliyun_cross_segment_rerank = CaseConfigInput(
+    label=CaseConfigParamType.cross_segment_rerank,
+    inputType=InputType.Option,
+    displayLabel="Cross Segment Rerank",
+    inputHelp="Search param: enable cross-segment rerank. DEFAULT = not specified (omit).",
+    inputConfig={"options": ["DEFAULT", "True", "False"]},
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.DISKANN.value,
+)
+
+_AliyunMilvusDiskannBuildParams = [
+    CaseConfigParamInput_Aliyun_max_degree,
+    CaseConfigParamInput_Aliyun_legacy,
+    CaseConfigParamInput_Aliyun_store_strategy,
+    CaseConfigParamInput_Aliyun_quant_type,
+    CaseConfigParamInput_Aliyun_num_threads,
+    CaseConfigParamInput_Aliyun_distance_strategy,
+    CaseConfigParamInput_Aliyun_enable_prefetch,
+    CaseConfigParamInput_Aliyun_enable_thp,
+    CaseConfigParamInput_Aliyun_BuildSearchList,
+]
+_AliyunMilvusDiskannSearchParams = [
+    CaseConfigParamInput_Aliyun_rerank_topk_multiplier,
+    CaseConfigParamInput_Aliyun_early_termination_threshold,
+    CaseConfigParamInput_Aliyun_cross_segment_rerank,
+]
+
+AliyunMilvusLoadConfig = [
+    CaseConfigParamInput_IndexType_AliyunMilvus,
+    *MilvusLoadConfig[1:],
+    *_AliyunMilvusDiskannBuildParams,
+]
+AliyunMilvusPerformanceConfig = [
+    CaseConfigParamInput_IndexType_AliyunMilvus,
+    *MilvusPerformanceConfig[1:],
+    *_AliyunMilvusDiskannBuildParams,
+    *_AliyunMilvusDiskannSearchParams,
+]
+
 WeaviateLoadConfig = [
     CaseConfigParamInput_MaxConnections,
     CaseConfigParamInput_EFConstruction_Weaviate,
@@ -3063,6 +3214,11 @@ CASE_CONFIG_MAP = {
     DB.PolarDB: {
         CaseLabel.Load: PolarDBConfig,
         CaseLabel.Performance: PolarDBConfig,
+    },
+    DB.AliyunMilvus: {
+        CaseLabel.Load: AliyunMilvusLoadConfig,
+        CaseLabel.Performance: AliyunMilvusPerformanceConfig,
+        CaseLabel.Streaming: AliyunMilvusPerformanceConfig,
     },
 }
 

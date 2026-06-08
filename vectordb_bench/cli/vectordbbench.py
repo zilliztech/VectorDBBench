@@ -1,4 +1,5 @@
 from ..backend.clients.alisql.cli import AliSQLHNSW
+from ..backend.clients.aliyun_milvus.cli import AliyunMilvusDISKANN
 from ..backend.clients.alloydb.cli import AlloyDBScaNN
 from ..backend.clients.aws_opensearch.cli import AWSOpenSearch
 from ..backend.clients.chroma.cli import Chroma
@@ -98,6 +99,7 @@ cli.add_command(PolarDBHNSWFlat)
 cli.add_command(PolarDBHNSWPQ)
 cli.add_command(PolarDBHNSWSQ)
 cli.add_command(SeekDBHNSW)
+cli.add_command(AliyunMilvusDISKANN)
 
 
 if __name__ == "__main__":
