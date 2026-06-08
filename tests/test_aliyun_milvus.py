@@ -53,6 +53,29 @@ def test_aliyun_milvus_zero_is_a_meaningful_value_not_unset():
     assert case_config.search_param()["params"]["rerank_topk_multiplier"] == 0
 
 
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("true", True),
+        ("True", True),
+        ("1", True),
+        ("yes", True),
+        ("on", True),
+        ("false", False),
+        ("0", False),
+        ("anything", False),
+        (1, True),
+        (0, False),
+    ],
+)
+def test_aliyun_milvus_cross_segment_rerank_normalizes_non_bool_inputs(raw, expected):
+    """CLI/UI may pass strings or ints for the bool knob; coerce them consistently."""
+    case_config = _diskann_config_cls()(search_list=200, cross_segment_rerank=raw)
+
+    assert case_config.cross_segment_rerank is expected
+    assert case_config.search_param()["params"]["cross_segment_rerank"] is expected
+
+
 def test_aliyun_milvus_ui_sentinels_normalize_to_unset():
     """UI 'unset' sentinels (-1 for numbers, 'DEFAULT' for the bool) -> None -> omitted."""
     case_config = _diskann_config_cls()(
