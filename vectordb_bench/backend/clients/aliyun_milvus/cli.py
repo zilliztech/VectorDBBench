@@ -10,7 +10,7 @@ from vectordb_bench.cli.cli import (
     run,
 )
 
-from ..milvus.cli import MilvusDISKANNTypedDict
+from ..milvus.cli import MilvusDISKANNTypedDict, _with_partition_key
 
 DBTYPE = DB.AliyunMilvus
 
@@ -68,12 +68,15 @@ def AliyunMilvusDISKANN(**parameters: Unpack[AliyunMilvusDISKANNTypedDict]):
             num_shards=int(parameters["num_shards"]),
             replica_number=int(parameters["replica_number"]),
         ),
-        db_case_config=AliyunMilvusDISKANNConfig(
-            search_list=parameters["search_list"],
-            # Pass through as-is; None means "not specified" -> omitted from search params.
-            rerank_topk_multiplier=parameters["rerank_topk_multiplier"],
-            early_termination_threshold=parameters["early_termination_threshold"],
-            cross_segment_rerank=parameters["cross_segment_rerank"],
+        db_case_config=_with_partition_key(
+            AliyunMilvusDISKANNConfig(
+                search_list=parameters["search_list"],
+                # Pass through as-is; None means "not specified" -> omitted from search params.
+                rerank_topk_multiplier=parameters["rerank_topk_multiplier"],
+                early_termination_threshold=parameters["early_termination_threshold"],
+                cross_segment_rerank=parameters["cross_segment_rerank"],
+            ),
+            parameters,
         ),
         **parameters,
     )
