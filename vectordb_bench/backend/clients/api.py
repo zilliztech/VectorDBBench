@@ -183,6 +183,18 @@ class VectorDB(ABC):
     # init() per thread instead of sharing the parent connection.
     thread_safe: bool = True
 
+    # Run serial search in the parent process instead of a subprocess.
+    serial_search_in_process: bool = False
+
+    # Derive a case-specific collection/table name in CaseRunner.init_db().
+    case_unique_collection_name: bool = False
+
+    # Pass case filters to __init__ (e.g. index DDL keyed on filter columns).
+    case_filters_at_init: bool = False
+
+    # Run optimize via spawn + a picklable module-level worker (gRPC-safe).
+    optimize_via_picklable_worker: bool = False
+
     @classmethod
     def filter_supported(cls, filters: Filter) -> bool:
         """Ensure that the filters are supported before testing filtering cases."""

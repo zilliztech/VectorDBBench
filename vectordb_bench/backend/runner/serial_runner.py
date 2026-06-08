@@ -232,6 +232,9 @@ class SerialSearchRunner:
         return (avg_recall, avg_ndcg, p99, p95)
 
     def _run_in_subprocess(self) -> tuple[float, float, float, float]:
+        if getattr(self.db, "serial_search_in_process", False):
+            return self.search((self.test_data, self.ground_truth))
+
         with concurrent.futures.ProcessPoolExecutor(max_workers=1) as executor:
             future = executor.submit(self.search, (self.test_data, self.ground_truth))
             return future.result()

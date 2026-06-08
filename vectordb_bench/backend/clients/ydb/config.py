@@ -89,28 +89,6 @@ class YDBConfig(DBConfig):
         return result
 
 
-def compute_kmeans_tree_params(
-    data_size: int,
-    levels: int | None = None,
-    clusters: int | None = None,
-) -> tuple[int, int]:
-    """Pick index shape so leaf clusters stay small (see YDB kmeans-tree docs)."""
-    if levels is None:
-        if data_size < 100_000:
-            levels = 1
-        elif data_size < 1_000_000:
-            levels = 2
-        else:
-            levels = 3
-
-    if clusters is None:
-        target_leaf_size = 512
-        clusters = int(round((max(data_size, 1) / target_leaf_size) ** (1.0 / levels)))
-        clusters = max(20, min(512, clusters))
-
-    return levels, clusters
-
-
 def index_on_columns(filters: Filter, *, with_scalar_labels: bool = False) -> tuple[str, ...]:
     if filters.type == FilterOp.NumGE:
         return ("id", "embedding")
@@ -126,8 +104,8 @@ class YDBIndexConfig(BaseModel, DBCaseConfig):
     create_index_after_load: bool = True
     level: int | None = Field(default=None, alias="levels")
     nlist: int | None = Field(default=None, alias="clusters")
-    num_leaves_to_search: int = Field(default=10, alias="kmeans_tree_search_top_size")
-    overlap_clusters: int = 3
+    num_leaves_to_search: int = Field(default=40, alias="kmeans_tree_search_top_size")
+    overlap_clusters: int | None = 3
     cover_embedding: bool = True
 
     @field_validator("level", "nlist", mode="before")
@@ -142,8 +120,8 @@ class YDBIndexConfig(BaseModel, DBCaseConfig):
     def drop_empty_optional_numbers(cls, data: object) -> object:
         if not isinstance(data, dict):
             return data
-        for key in ("level", "levels", "nlist", "clusters"):
-            if data.get(key) in ("", None):
+        for key in ("level", "levels", "nlist", "clusters", "overlap_clusters"):
+            if key in data and data.get(key) in ("", 0, None):
                 data[key] = None
         return data
 
@@ -168,12 +146,6 @@ class YDBIndexConfig(BaseModel, DBCaseConfig):
             return "DESC"
         return "DESC"
 
-    def resolved_index_params(self, data_size: int | None) -> tuple[int, int]:
-        size = data_size or 1
-        if self.level is not None and self.nlist is not None:
-            return self.level, self.nlist
-        return compute_kmeans_tree_params(size, self.level, self.nlist)
-
     def index_on_columns(self, filters: Filter = non_filter, *, with_scalar_labels: bool = False) -> tuple[str, ...]:
         return index_on_columns(filters, with_scalar_labels=with_scalar_labels)
 
@@ -183,12 +155,11 @@ class YDBIndexConfig(BaseModel, DBCaseConfig):
         return ""
 
     def index_param(self, filters: Filter = non_filter, *, with_scalar_labels: bool = False) -> dict:
-        levels, clusters = self.resolved_index_params(None)
         on_columns = self.index_on_columns(filters, with_scalar_labels=with_scalar_labels)
         return {
             "strategy": self.index_strategy(),
-            "levels": levels,
-            "clusters": clusters,
+            "levels": self.level,
+            "clusters": self.nlist,
             "overlap_clusters": self.overlap_clusters,
             "on_columns": on_columns,
             "cover_clause": self.cover_clause(with_scalar_labels=with_scalar_labels),

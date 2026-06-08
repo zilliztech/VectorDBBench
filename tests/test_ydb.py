@@ -10,7 +10,6 @@ from vectordb_bench.backend.filter import FilterOp
 from vectordb_bench.backend.clients.ydb.config import (
     YDBConfig,
     YDBIndexConfig,
-    compute_kmeans_tree_params,
 )
 from vectordb_bench.backend.clients.ydb.ydb_client import YDB
 from vectordb_bench.backend.filter import IntFilter, non_filter
@@ -25,20 +24,19 @@ def _integration_db_config() -> dict:
 
 
 class TestYDBConfig:
-    def test_compute_kmeans_tree_params_small_dataset(self):
-        levels, clusters = compute_kmeans_tree_params(50_000)
-        assert levels == 1
-        assert 20 <= clusters <= 512
+    def test_index_param_omits_unset_kmeans_options(self):
+        cfg = YDBIndexConfig()
+        params = cfg.index_param()
+        assert params["levels"] is None
+        assert params["clusters"] is None
+        assert params["overlap_clusters"] == 3
 
-    def test_compute_kmeans_tree_params_medium_dataset(self):
-        levels, clusters = compute_kmeans_tree_params(500_000)
-        assert levels == 2
-        assert clusters >= 20
-
-    def test_compute_kmeans_tree_params_large_dataset(self):
-        levels, clusters = compute_kmeans_tree_params(10_000_000)
-        assert levels == 3
-        assert clusters >= 20
+    def test_index_param_passes_explicit_values(self):
+        cfg = YDBIndexConfig(levels=2, clusters=64, overlap_clusters=5)
+        params = cfg.index_param()
+        assert params["levels"] == 2
+        assert params["clusters"] == 64
+        assert params["overlap_clusters"] == 5
 
     def test_metric_mapping(self):
         cosine = YDBIndexConfig(metric_type=MetricType.COSINE)
@@ -55,8 +53,8 @@ class TestYDBConfig:
 
     def test_default_search_top_size(self):
         cfg = YDBIndexConfig()
-        assert cfg.num_leaves_to_search == 10
-        assert cfg.search_param()["kmeans_tree_search_top_size"] == 10
+        assert cfg.num_leaves_to_search == 40
+        assert cfg.search_param()["kmeans_tree_search_top_size"] == 40
 
     def test_index_on_columns(self):
         from vectordb_bench.backend.filter import IntFilter, LabelFilter, non_filter
@@ -77,9 +75,10 @@ class TestYDBConfig:
         assert YDBIndexConfig(cover_embedding=False).cover_clause() == ""
 
     def test_zero_means_auto_for_index_shape(self):
-        cfg = YDBIndexConfig(level=0, nlist=0)
+        cfg = YDBIndexConfig(level=0, nlist=0, overlap_clusters=0)
         assert cfg.level is None
         assert cfg.nlist is None
+        assert cfg.overlap_clusters is None
 
     def test_auto_partitioning_defaults(self):
         cfg = YDBConfig()
@@ -100,6 +99,32 @@ class TestYDBConfig:
         cfg = YDBConfig(table_name="")
         assert cfg.table_name == ""
 
+    def test_table_name_from_db_config_overrides_collection_name(self):
+        client = YDB(
+            dim=4,
+            db_config=YDBConfig(table_name="explicit_table").to_dict(),
+            db_case_config=YDBIndexConfig(),
+            collection_name="generated_name",
+            drop_old=False,
+        )
+        assert client.table_name == "explicit_table"
+
+    def test_collection_name_used_when_table_name_unset(self):
+        client = YDB(
+            dim=4,
+            db_config=YDBConfig().to_dict(),
+            db_case_config=YDBIndexConfig(),
+            collection_name="generated_name",
+            drop_old=False,
+        )
+        assert client.table_name == "generated_name"
+
+    def test_runner_capability_flags(self):
+        assert YDB.serial_search_in_process is True
+        assert YDB.case_unique_collection_name is True
+        assert YDB.case_filters_at_init is True
+        assert YDB.optimize_via_picklable_worker is True
+
     def test_auto_partitioning_bounds_validation(self):
         with pytest.raises(ValueError, match="auto_partitioning_min_partitions_count"):
             YDBConfig(
@@ -116,7 +141,7 @@ class TestYDBTableDDL:
             auto_partitioning_max_partitions_count=1100,
         ).to_dict()
         client.table_name = "bench_table"
-        client.index_name = "bench_table_vector_idx"
+        client.index_name = "vector_idx"
         client.filters = non_filter
         client.with_scalar_labels = False
         return client
@@ -135,15 +160,15 @@ class TestYDBTableDDL:
         client.case_config = YDBIndexConfig(cover_embedding=True)
         client.filters = non_filter
         assert client._index_impl_table_paths() == [
-            "bench_table/bench_table_vector_idx/indexImplLevelTable",
-            "bench_table/bench_table_vector_idx/indexImplPostingTable",
+            "bench_table/vector_idx/indexImplLevelTable",
+            "bench_table/vector_idx/indexImplPostingTable",
         ]
 
     def test_index_impl_tables_without_cover(self):
         client = self._make_client()
         client.case_config = YDBIndexConfig(cover_embedding=False)
         assert client._index_impl_table_paths() == [
-            "bench_table/bench_table_vector_idx/indexImplLevelTable",
+            "bench_table/vector_idx/indexImplLevelTable",
         ]
 
     def test_index_impl_tables_with_filter_prefix(self):
@@ -151,9 +176,9 @@ class TestYDBTableDDL:
         client.case_config = YDBIndexConfig(cover_embedding=True)
         client.filters = IntFilter(int_value=100, filter_rate=0.01)
         assert client._index_impl_table_paths() == [
-            "bench_table/bench_table_vector_idx/indexImplLevelTable",
-            "bench_table/bench_table_vector_idx/indexImplPostingTable",
-            "bench_table/bench_table_vector_idx/indexImplPrefixTable",
+            "bench_table/vector_idx/indexImplLevelTable",
+            "bench_table/vector_idx/indexImplPostingTable",
+            "bench_table/vector_idx/indexImplPrefixTable",
         ]
 
     def test_index_on_sql_for_label_table(self):
@@ -179,9 +204,9 @@ class TestYDBTableDDL:
         client.filters = LabelFilter(label_percentage=0.01)
         client.case_config = YDBIndexConfig(cover_embedding=True)
         assert client._index_impl_table_paths() == [
-            "bench_table/bench_table_vector_idx/indexImplLevelTable",
-            "bench_table/bench_table_vector_idx/indexImplPostingTable",
-            "bench_table/bench_table_vector_idx/indexImplPrefixTable",
+            "bench_table/vector_idx/indexImplLevelTable",
+            "bench_table/vector_idx/indexImplPostingTable",
+            "bench_table/vector_idx/indexImplPrefixTable",
         ]
 
     def test_configure_index_table_partitioning_sql(self):
@@ -190,6 +215,166 @@ class TestYDBTableDDL:
         settings = client._index_partitioning_settings_sql()
         assert "AUTO_PARTITIONING_PARTITION_SIZE_MB = 1000" in settings
         assert "AUTO_PARTITIONING_MIN_PARTITIONS_COUNT = 1000" in settings
+
+    def _capture_add_index_sql(self, client: YDB) -> str:
+        import sys
+
+        captured: dict[str, str] = {}
+
+        class _Pool:
+            def execute_with_retries(self, query, *args, **kwargs):
+                if "ADD INDEX" in query:
+                    captured["query"] = query
+
+        client.dim = 4
+        client.driver = MagicMock()
+        mock_ydb = MagicMock()
+        mock_ydb.RetrySettings = lambda **kwargs: kwargs
+        with patch.dict(sys.modules, {"ydb": mock_ydb}), patch.object(
+            YDB, "_operation_settings", return_value=MagicMock()
+        ), patch.object(YDB, "_try_index_search", return_value=False):
+            client._add_vector_index(_Pool())
+        return captured["query"]
+
+    def test_add_vector_index_uses_fixed_index_name(self):
+        client = self._make_client()
+        client.case_config = YDBIndexConfig(metric_type=MetricType.COSINE)
+        sql = self._capture_add_index_sql(client)
+        assert "ADD INDEX vector_idx" in sql
+        assert "__temp" not in sql
+
+    def test_add_vector_index_treats_path_exist_as_build_in_progress(self):
+        client = self._make_client()
+        client.dim = 4
+        client.case_config = YDBIndexConfig(metric_type=MetricType.COSINE)
+        attempts = {"count": 0}
+
+        class _Pool:
+            def execute_with_retries(self, query, *args, **kwargs):
+                if "ADD INDEX" in query:
+                    attempts["count"] += 1
+                    raise RuntimeError("path exist for vector_idx")
+
+        with patch.object(YDB, "_operation_settings", return_value=MagicMock()), patch.object(
+            YDB, "_try_index_search", return_value=False
+        ), patch.object(YDB, "_drop_vector_indexes"):
+            client._add_vector_index(_Pool())
+
+        assert attempts["count"] == 1
+
+    def test_add_vector_index_treats_transient_error_as_build_in_progress(self):
+        client = self._make_client()
+        client.dim = 4
+        client.case_config = YDBIndexConfig(metric_type=MetricType.COSINE)
+        attempts = {"count": 0}
+
+        class _Pool:
+            def execute_with_retries(self, query, *args, **kwargs):
+                if "ADD INDEX" in query:
+                    attempts["count"] += 1
+                    raise RuntimeError(
+                        'Unavailable: message: "Connection to tablet was lost." severity: 1 (server_code: 400050)'
+                    )
+
+        with patch.object(YDB, "_operation_settings", return_value=MagicMock()), patch.object(
+            YDB, "_try_index_search", return_value=False
+        ), patch.object(YDB, "_drop_vector_indexes"), patch.object(YDB, "_reconnect") as mock_reconnect:
+            client._add_vector_index(_Pool())
+
+        assert attempts["count"] == 1
+        mock_reconnect.assert_called_once()
+
+    def test_is_transient_ydb_error_detects_tablet_connection_loss(self):
+        exc = RuntimeError('Unavailable: message: "Connection to tablet was lost." severity: 1 (server_code: 400050)')
+        assert YDB._is_transient_ydb_error(exc) is True
+        assert YDB._is_index_build_in_progress_error(exc) is True
+
+    def test_wait_for_index_reconnects_on_transient_probe_errors(self):
+        client = self._make_client()
+        client.dim = 4
+        client.case_config = YDBIndexConfig(metric_type=MetricType.COSINE)
+        client._index_ready = False
+        statuses = iter(["connection_error", "ready"])
+
+        with patch.object(YDB, "_probe_index_status", side_effect=lambda pool: next(statuses)), patch.object(
+            YDB, "_reconnect"
+        ) as mock_reconnect, patch("vectordb_bench.backend.clients.ydb.ydb_client.time.sleep"):
+            client._wait_for_index(MagicMock())
+
+        assert client._index_ready is True
+        mock_reconnect.assert_called_once()
+
+    def test_add_vector_index_skips_create_when_already_searchable(self):
+        client = self._make_client()
+        client.case_config = YDBIndexConfig(metric_type=MetricType.COSINE)
+        attempts = {"count": 0}
+
+        class _Pool:
+            def execute_with_retries(self, query, *args, **kwargs):
+                attempts["count"] += 1
+
+        with patch.object(YDB, "_try_index_search", return_value=True):
+            client._add_vector_index(_Pool())
+
+        assert attempts["count"] == 0
+        assert client._index_ready is True
+
+    def test_ddl_retry_settings_disable_internal_retries(self):
+        client = self._make_client()
+        settings = client._ddl_retry_settings()
+        assert settings.max_retries == 0
+
+    def test_driver_wait_timeout_is_extended(self):
+        from vectordb_bench.backend.clients.ydb.ydb_client import YDB_DRIVER_WAIT_SECONDS
+
+        assert YDB_DRIVER_WAIT_SECONDS >= 30
+
+    def test_drop_vector_indexes_issues_drop_for_final_and_legacy_temp(self):
+        client = self._make_client()
+        client.case_config = YDBIndexConfig(metric_type=MetricType.COSINE)
+        queries: list[str] = []
+
+        class _Pool:
+            def execute_with_retries(self, query, *args, **kwargs):
+                queries.append(query)
+
+        with patch.object(YDB, "_operation_settings", return_value=MagicMock()):
+            client._drop_vector_indexes(_Pool())
+        assert len(queries) == 4
+        assert "DROP INDEX `vector_idx`" in queries[0]
+        assert "DROP INDEX `vector_idx__temp`" in queries[1]
+        assert "DROP INDEX `bench_table_vector_idx`" in queries[2]
+        assert "DROP INDEX `bench_table_vector_idx__temp`" in queries[3]
+
+    def test_add_vector_index_omits_unset_kmeans_options(self):
+        client = self._make_client()
+        client.case_config = YDBIndexConfig(metric_type=MetricType.COSINE)
+        sql = self._capture_add_index_sql(client)
+        assert "levels=" not in sql
+        assert "\n                clusters=" not in sql
+        assert "overlap_clusters=3" in sql
+        assert "vector_dimension=4" in sql
+
+    def test_add_vector_index_includes_explicit_kmeans_options(self):
+        client = self._make_client()
+        client.case_config = YDBIndexConfig(
+            metric_type=MetricType.COSINE,
+            levels=2,
+            clusters=64,
+            overlap_clusters=5,
+        )
+        sql = self._capture_add_index_sql(client)
+        assert "levels=2" in sql
+        assert "clusters=64" in sql
+        assert "overlap_clusters=5" in sql
+
+    def test_add_vector_index_partial_kmeans_options(self):
+        client = self._make_client()
+        client.case_config = YDBIndexConfig(metric_type=MetricType.COSINE, levels=3)
+        sql = self._capture_add_index_sql(client)
+        assert "levels=3" in sql
+        assert "\n                clusters=" not in sql
+        assert "overlap_clusters=3" in sql
 
 
 class TestYDBUIConfig:
@@ -209,7 +394,7 @@ class TestYDBUIConfig:
         }
         inst = DB.YDB.case_config_cls(None)(**ui_cfg)
         assert inst.overlap_clusters == 3
-        assert inst.num_leaves_to_search == 10
+        assert inst.num_leaves_to_search == 40
         assert inst.level is None
         assert inst.nlist is None
 
@@ -345,6 +530,41 @@ class TestYDBFilters:
     def test_supported_filter_types(self):
         assert FilterOp.NumGE in YDB.supported_filter_types
         assert FilterOp.StrEqual in YDB.supported_filter_types
+
+
+class TestYDBPickle:
+    def _make_client(self) -> YDB:
+        client = YDB.__new__(YDB)
+        client.name = "YDB"
+        client.db_config = YDBConfig().to_dict()
+        client.case_config = YDBIndexConfig()
+        client.table_name = "bench_table"
+        client.index_name = "vector_idx"
+        client.dim = 768
+        client.filters = non_filter
+        client.with_scalar_labels = False
+        client._where_clause = ""
+        client._label_filter_value = None
+        client._index_ready = False
+        client.driver = object()
+        client.pool = object()
+        return client
+
+    def test_db_picklable_without_live_session(self):
+        import pickle
+
+        client = self._make_client()
+        restored = pickle.loads(pickle.dumps(client))  # noqa: S301
+        assert restored.driver is None
+        assert restored.pool is None
+        assert restored.dim == 768
+        assert restored.table_name == "bench_table"
+
+    def test_getstate_strips_live_session(self):
+        client = self._make_client()
+        state = client.__getstate__()
+        assert state["driver"] is None
+        assert state["pool"] is None
 
 
 @pytest.mark.integration

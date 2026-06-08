@@ -25,12 +25,16 @@ YDB_CREDENTIAL_ENV_KEYS = (
 YDB_LABEL_FIELD = "labels"
 YDB_INDEX_WAIT_POLL_SECONDS = 5
 YDB_INDEX_WAIT_TIMEOUT_SECONDS = 7200
+YDB_DRIVER_WAIT_SECONDS = 30
 YDB_DEFAULT_TABLE_PARTITION_SIZE_MB = 1000
 YDB_DEFAULT_INDEX_PARTITION_SIZE_MB = 1000
 YDB_DEFAULT_OPERATION_TIMEOUT_SECONDS = 24 * 3600
 YDB_INDEX_IMPL_LEVEL_TABLE = "indexImplLevelTable"
 YDB_INDEX_IMPL_POSTING_TABLE = "indexImplPostingTable"
 YDB_INDEX_IMPL_PREFIX_TABLE = "indexImplPrefixTable"
+YDB_VECTOR_INDEX_NAME = "vector_idx"
+YDB_TRANSIENT_OP_MAX_ATTEMPTS = 5
+YDB_TRANSIENT_OP_BACKOFF_SECONDS = 5
 
 
 def convert_vector_to_bytes(vector: list[float]) -> bytes:
@@ -48,6 +52,10 @@ class YDB(VectorDB):
         FilterOp.StrEqual,
     ]
     thread_safe = True
+    serial_search_in_process = True
+    case_unique_collection_name = True
+    case_filters_at_init = True
+    optimize_via_picklable_worker = True
 
     def __init__(
         self,
@@ -63,8 +71,9 @@ class YDB(VectorDB):
         self.name = "YDB"
         self.db_config = db_config
         self.case_config = db_case_config
-        self.table_name = collection_name
-        self.index_name = f"{collection_name}_vector_idx"
+        table_from_config = db_config.get("table_name") or ""
+        self.table_name = table_from_config or collection_name
+        self.index_name = YDB_VECTOR_INDEX_NAME
         self.dim = dim
         self.filters = filters
         self.with_scalar_labels = with_scalar_labels or filters.type == FilterOp.StrEqual
@@ -79,6 +88,19 @@ class YDB(VectorDB):
             with self._session_pool() as pool:
                 self._drop_table(pool)
                 self._create_table(pool)
+
+    def __getstate__(self) -> dict[str, Any]:
+        # YDB driver/session pool hold gRPC/protobuf objects that cannot be pickled.
+        # ProcessPoolExecutor(spawn) sends the DB wrapper to load/optimize subprocesses.
+        state = self.__dict__.copy()
+        state["driver"] = None
+        state["pool"] = None
+        return state
+
+    def __setstate__(self, state: dict[str, Any]) -> None:
+        self.__dict__.update(state)
+        self.driver = None
+        self.pool = None
 
     @staticmethod
     def _resolve_login(db_config: dict) -> tuple[str, str]:
@@ -172,6 +194,14 @@ class YDB(VectorDB):
             .with_cancel_after(timeout)
         )
 
+    @staticmethod
+    def _wait_for_driver(driver, *, context: str) -> None:
+        try:
+            driver.wait(timeout=YDB_DRIVER_WAIT_SECONDS, fail_fast=True)
+        except TimeoutError as exc:
+            msg = f"YDB driver failed to connect within {YDB_DRIVER_WAIT_SECONDS}s ({context})"
+            raise TimeoutError(msg) from exc
+
     @contextmanager
     def _session_pool(self):
         import ydb
@@ -180,7 +210,7 @@ class YDB(VectorDB):
         driver = ydb.Driver(driver_config=self._driver_config(self.db_config, credentials))
         pool = None
         try:
-            driver.wait(timeout=5, fail_fast=True)
+            self._wait_for_driver(driver, context="session pool")
             pool = ydb.QuerySessionPool(driver)
             yield pool
         finally:
@@ -190,21 +220,40 @@ class YDB(VectorDB):
 
     @contextmanager
     def init(self):
-        import ydb
-
-        credentials = self._build_credentials(self.db_config)
-        self.driver = ydb.Driver(driver_config=self._driver_config(self.db_config, credentials))
-        self.driver.wait(timeout=5, fail_fast=True)
-        self.pool = ydb.QuerySessionPool(self.driver)
+        self._open_connection()
         try:
             yield
         finally:
-            if self.pool is not None:
+            self._close_connection()
+
+    def _open_connection(self) -> None:
+        import ydb
+
+        if self.pool is not None:
+            return
+
+        credentials = self._build_credentials(self.db_config)
+        self.driver = ydb.Driver(driver_config=self._driver_config(self.db_config, credentials))
+        self._wait_for_driver(self.driver, context="client init")
+        self.pool = ydb.QuerySessionPool(self.driver)
+
+    def _close_connection(self) -> None:
+        if self.pool is not None:
+            try:
                 self.pool.stop()
-                self.pool = None
-            if self.driver is not None:
+            except Exception as exc:
+                log.debug("Error stopping YDB session pool: %s", exc)
+            self.pool = None
+        if self.driver is not None:
+            try:
                 self.driver.stop()
-                self.driver = None
+            except Exception as exc:
+                log.debug("Error stopping YDB driver: %s", exc)
+            self.driver = None
+
+    def _reconnect(self) -> None:
+        self._close_connection()
+        self._open_connection()
 
     def _drop_table(self, pool) -> None:
         pool.execute_with_retries(
@@ -264,16 +313,32 @@ class YDB(VectorDB):
     def _configure_index_table_partitioning(self, pool) -> None:
         settings_sql = self._index_partitioning_settings_sql()
         for table_path in self._index_impl_table_paths():
-            pool.execute_with_retries(
-                f"""
-                ALTER TABLE `{table_path}`
-                SET (
-                    {settings_sql}
-                );
-                """,
-                settings=self._operation_settings(self.db_config),
-            )
-            log.info("Configured auto partitioning for YDB index table %s", table_path)
+            for attempt in range(1, YDB_TRANSIENT_OP_MAX_ATTEMPTS + 1):
+                try:
+                    self.pool.execute_with_retries(
+                        f"""
+                        ALTER TABLE `{table_path}`
+                        SET (
+                            {settings_sql}
+                        );
+                        """,
+                        settings=self._operation_settings(self.db_config),
+                    )
+                    log.info("Configured auto partitioning for YDB index table %s", table_path)
+                    break
+                except Exception as exc:
+                    if self._is_transient_ydb_error(exc) and attempt < YDB_TRANSIENT_OP_MAX_ATTEMPTS:
+                        log.warning(
+                            "Transient YDB error configuring index table %s (%s/%s): %s",
+                            table_path,
+                            attempt,
+                            YDB_TRANSIENT_OP_MAX_ATTEMPTS,
+                            exc,
+                        )
+                        time.sleep(YDB_TRANSIENT_OP_BACKOFF_SECONDS)
+                        self._reconnect()
+                        continue
+                    raise
 
     def _create_table(self, pool) -> None:
         label_column = f",\n                {YDB_LABEL_FIELD} Utf8" if self.with_scalar_labels else ""
@@ -302,66 +367,114 @@ class YDB(VectorDB):
     def _index_on_sql(self) -> str:
         return ", ".join(self._resolved_index_on_columns())
 
-    def _add_vector_index(self, pool, levels: int, clusters: int) -> None:
+    def _index_names_to_drop(self) -> tuple[str, ...]:
+        legacy_index_name = f"{self.table_name}_vector_idx"
+        return tuple(
+            dict.fromkeys(
+                (
+                    self.index_name,
+                    f"{self.index_name}__temp",
+                    legacy_index_name,
+                    f"{legacy_index_name}__temp",
+                ),
+            ),
+        )
+
+    def _drop_index_if_exists(self, pool, index_name: str) -> None:
+        try:
+            pool.execute_with_retries(
+                f"ALTER TABLE `{self.table_name}` DROP INDEX `{index_name}`;",
+                settings=self._operation_settings(self.db_config),
+            )
+            log.info("Dropped YDB vector index %s on %s", index_name, self.table_name)
+        except Exception as exc:
+            log.debug("Skip dropping YDB index %s on %s: %s", index_name, self.table_name, exc)
+
+    def _drop_vector_indexes(self, pool) -> None:
+        """Drop final/temp vector indexes so rebuilds do not hit stale scheme paths."""
+        for index_name in self._index_names_to_drop():
+            self._drop_index_if_exists(pool, index_name)
+
+    @staticmethod
+    def _is_index_path_exists_error(exc: Exception) -> bool:
+        message = str(exc).lower()
+        return "path exist" in message or "already exists" in message
+
+    @staticmethod
+    def _is_transient_ydb_error(exc: Exception) -> bool:
+        message = str(exc).lower()
+        exc_name = type(exc).__name__.lower()
+        markers = (
+            "unavailable",
+            "connection to tablet was lost",
+            "connection reset",
+            "connection refused",
+            "transport",
+            "deadline exceeded",
+            "socket",
+            "broken pipe",
+            "server overload",
+            "cluster discovery",
+            "400050",
+        )
+        if any(marker in message for marker in markers):
+            return True
+        return "unavailable" in exc_name or "timeout" in exc_name
+
+    @classmethod
+    def _is_index_build_in_progress_error(cls, exc: Exception) -> bool:
+        return cls._is_index_path_exists_error(exc) or cls._is_transient_ydb_error(exc)
+
+    def _ddl_retry_settings(self):
         import ydb
 
+        # ADD INDEX must not be retried internally: a successful first attempt creates
+        # the scheme path immediately, and a transparent retry fails with "path exist".
+        return ydb.RetrySettings(max_retries=0)
+
+    def _build_vector_index_ddl(self, index_name: str) -> str:
         index_param = self.case_config.index_param(self.filters, with_scalar_labels=self.with_scalar_labels)
         strategy = index_param["strategy"]
-        temp_index_name = f"{self.index_name}__temp"
-        overlap_clusters = index_param.get("overlap_clusters", 3)
         on_sql = self._index_on_sql()
         cover_clause = index_param.get("cover_clause", "")
         cover_sql = f" {cover_clause}" if cover_clause else ""
 
-        ddl_settings = self._operation_settings(self.db_config)
-        pool.execute_with_retries(
-            f"""
+        kmeans_options: list[str] = []
+        for key in ("levels", "clusters", "overlap_clusters"):
+            value = index_param.get(key)
+            if value is not None:
+                kmeans_options.append(f"{key}={value}")
+        kmeans_options_sql = (
+            ",\n                " + ",\n                ".join(kmeans_options) if kmeans_options else ""
+        )
+
+        return f"""
             ALTER TABLE `{self.table_name}`
-            ADD INDEX {temp_index_name}
+            ADD INDEX {index_name}
             GLOBAL USING vector_kmeans_tree
             ON ({on_sql}){cover_sql}
             WITH (
                 {strategy},
                 vector_type="float",
-                vector_dimension={self.dim},
-                levels={levels},
-                clusters={clusters},
-                overlap_clusters={overlap_clusters}
+                vector_dimension={self.dim}{kmeans_options_sql}
             );
-            """,
+            """
+
+    def _create_vector_index(self, pool, index_name: str) -> None:
+        ddl_settings = self._operation_settings(self.db_config)
+        pool.execute_with_retries(
+            self._build_vector_index_ddl(index_name),
             settings=ddl_settings,
+            retry_settings=self._ddl_retry_settings(),
         )
 
-        table_path = f"{self.driver._driver_config.database}/{self.table_name}"
-        self.driver.table_client.alter_table(
-            table_path,
-            rename_indexes=[
-                ydb.RenameIndexItem(
-                    source_name=temp_index_name,
-                    destination_name=self.index_name,
-                    replace_destination=True,
-                ),
-            ],
-            settings=ddl_settings,
-        )
-        log.info(
-            "Created vector index %s on %s ON (%s)%s (levels=%d, clusters=%d)",
-            self.index_name,
-            self.table_name,
-            on_sql,
-            cover_sql,
-            levels,
-            clusters,
-        )
-
-    def _wait_for_index(self, pool) -> None:
+    def _index_probe_query(self) -> tuple[str, dict]:
         import ydb
 
         search_param = self.case_config.search_param()
         knn_function = search_param["knn_function"]
         sort_order = search_param["sort_order"]
         probe_vector = convert_vector_to_bytes([0.0] * self.dim)
-        deadline = time.monotonic() + YDB_INDEX_WAIT_TIMEOUT_SECONDS
         query = f"""
         PRAGMA ydb.KMeansTreeSearchTopSize = "1";
         DECLARE $embedding AS String;
@@ -372,16 +485,86 @@ class YDB(VectorDB):
         LIMIT 1;
         """
         params = {"$embedding": (probe_vector, ydb.PrimitiveType.String)}
+        return query, params
 
+    def _probe_index_status(self, pool) -> str:
+        query, params = self._index_probe_query()
+        try:
+            pool.execute_with_retries(query, params)
+            return "ready"
+        except Exception as exc:
+            if self._is_transient_ydb_error(exc):
+                return "connection_error"
+            return "building"
+
+    def _try_index_search(self, pool) -> bool:
+        return self._probe_index_status(pool) == "ready"
+
+    def _add_vector_index(self, pool) -> None:
+        if self._try_index_search(pool):
+            self._index_ready = True
+            log.info(
+                "Vector index %s is already searchable on %s",
+                self.index_name,
+                self.table_name,
+            )
+            return
+
+        index_param = self.case_config.index_param(self.filters, with_scalar_labels=self.with_scalar_labels)
+        on_sql = self._index_on_sql()
+        cover_clause = index_param.get("cover_clause", "")
+        cover_sql = f" {cover_clause}" if cover_clause else ""
+        kmeans_options: list[str] = []
+        for key in ("levels", "clusters", "overlap_clusters"):
+            value = index_param.get(key)
+            if value is not None:
+                kmeans_options.append(f"{key}={value}")
+
+        self._drop_vector_indexes(pool)
+        try:
+            self._create_vector_index(pool, self.index_name)
+            log.info(
+                "Created vector index %s on %s ON (%s)%s (kmeans_tree options: %s)",
+                self.index_name,
+                self.table_name,
+                on_sql,
+                cover_sql,
+                ", ".join(kmeans_options) if kmeans_options else "server defaults",
+            )
+        except Exception as exc:
+            if self._is_index_build_in_progress_error(exc):
+                log.warning(
+                    "YDB index build may still be in progress for %s on %s; waiting instead of failing: %s",
+                    self.index_name,
+                    self.table_name,
+                    exc,
+                )
+                if self._is_transient_ydb_error(exc):
+                    self._reconnect()
+                return
+            raise
+
+    def _wait_for_index(self, pool) -> None:
+        if self._index_ready:
+            return
+
+        deadline = time.monotonic() + YDB_INDEX_WAIT_TIMEOUT_SECONDS
         while time.monotonic() < deadline:
-            try:
-                pool.execute_with_retries(query, params)
+            active_pool = getattr(self, "pool", None) or pool
+            status = self._probe_index_status(active_pool)
+            if status == "ready":
                 self._index_ready = True
                 log.info("Vector index %s is ready", self.index_name)
                 return
-            except Exception as exc:
-                log.info("Waiting for vector index %s: %s", self.index_name, exc)
-                time.sleep(YDB_INDEX_WAIT_POLL_SECONDS)
+            if status == "connection_error":
+                log.warning(
+                    "Lost YDB connection while waiting for vector index %s; reconnecting",
+                    self.index_name,
+                )
+                self._reconnect()
+            else:
+                log.info("Waiting for vector index %s to become searchable", self.index_name)
+            time.sleep(YDB_INDEX_WAIT_POLL_SECONDS)
 
         msg = f"Timed out waiting for YDB vector index {self.index_name} after {YDB_INDEX_WAIT_TIMEOUT_SECONDS}s"
         raise TimeoutError(msg)
@@ -391,14 +574,14 @@ class YDB(VectorDB):
             log.info("Skipping vector index build (create_index_after_load=False)")
             return
 
-        levels, clusters = self.case_config.resolved_index_params(data_size)
         log.info(
-            "Building YDB vector index for %d rows: levels=%d, clusters=%d",
+            "Building YDB vector index for %d rows: levels=%s, clusters=%s, overlap_clusters=%s",
             data_size or 0,
-            levels,
-            clusters,
+            self.case_config.level,
+            self.case_config.nlist,
+            self.case_config.overlap_clusters,
         )
-        self._add_vector_index(self.pool, levels=levels, clusters=clusters)
+        self._add_vector_index(self.pool)
         self._wait_for_index(self.pool)
         self._configure_index_table_partitioning(self.pool)
 

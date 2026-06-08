@@ -378,8 +378,7 @@ Example:
 ```shell
 vectordbbench ydb \
   --case-type Performance768D1M \
-  --load --search-serial --search-concurrent \
-  --kmeans-tree-search-top-size 10
+  --load --search-serial --search-concurrent
 ```
 
 YDB-specific behaviour:
@@ -387,7 +386,8 @@ YDB-specific behaviour:
 - Vector index type: `vector_kmeans_tree` (built **after** data load, not on an empty table).
 - Filtered cases use index keys `ON (id, embedding)` or `ON (labels, embedding)`; see [YDB vector indexes](https://ydb.tech/docs/ru/dev/vector-indexes).
 - Covering index `COVER (embedding)` is enabled by default (`--cover-embedding`) for better search latency.
-- `PRAGMA ydb.KMeansTreeSearchTopSize` defaults to **10** (`--kmeans-tree-search-top-size`).
+- `PRAGMA ydb.KMeansTreeSearchTopSize` defaults to **40** (`--kmeans-tree-search-top-size`).
+- `overlap_clusters` defaults to **3** (`--overlap-clusters`; use `0` to omit from DDL).
 - After index build, the client waits until a probe query against `VIEW index` succeeds.
 
 ```shell

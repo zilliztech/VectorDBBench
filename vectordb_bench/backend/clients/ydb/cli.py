@@ -79,7 +79,7 @@ class YDBTypedDict(CommonTypedDict):
             "--levels",
             type=int,
             default=None,
-            help="vector_kmeans_tree levels (auto if omitted)",
+            help="vector_kmeans_tree levels (omitted from DDL if not set; server default applies)",
         ),
     ]
     clusters: Annotated[
@@ -88,7 +88,7 @@ class YDBTypedDict(CommonTypedDict):
             "--clusters",
             type=int,
             default=None,
-            help="vector_kmeans_tree clusters per level (auto if omitted)",
+            help="vector_kmeans_tree clusters per level (omitted from DDL if not set; server default applies)",
         ),
     ]
     kmeans_tree_search_top_size: Annotated[
@@ -96,19 +96,19 @@ class YDBTypedDict(CommonTypedDict):
         click.option(
             "--kmeans-tree-search-top-size",
             type=int,
-            default=10,
+            default=40,
             show_default=True,
             help="PRAGMA ydb.KMeansTreeSearchTopSize for search completeness",
         ),
     ]
     overlap_clusters: Annotated[
-        int,
+        int | None,
         click.option(
             "--overlap-clusters",
             type=int,
             default=3,
             show_default=True,
-            help="vector_kmeans_tree overlap_clusters (higher = better recall, larger index)",
+            help="vector_kmeans_tree overlap_clusters (0 = omit from DDL; server default applies)",
         ),
     ]
     cover_embedding: Annotated[

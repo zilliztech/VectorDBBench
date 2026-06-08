@@ -14,6 +14,7 @@ log = logging.getLogger(__name__)
 
 class Doris(VectorDB):
     thread_safe: bool = False
+    case_unique_collection_name: bool = True
 
     def __init__(
         self,
