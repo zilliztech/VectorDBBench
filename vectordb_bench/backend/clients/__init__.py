@@ -271,9 +271,11 @@ class DB(Enum):
             return SeekDB
 
         if self == DB.AliyunMilvus:
-            from .aliyun_milvus.aliyun_milvus import AliyunMilvus
+            # AliyunMilvus reuses the upstream Milvus client; only the DISKANN
+            # case config differs (three opt-in search params).
+            from .milvus.milvus import Milvus
 
-            return AliyunMilvus
+            return Milvus
 
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
@@ -484,9 +486,9 @@ class DB(Enum):
             return SeekDBConfig
 
         if self == DB.AliyunMilvus:
-            from .aliyun_milvus.config import AliyunMilvusConfig
+            from .milvus.config import MilvusConfig
 
-            return AliyunMilvusConfig
+            return MilvusConfig
 
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
