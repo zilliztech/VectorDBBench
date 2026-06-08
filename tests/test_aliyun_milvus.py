@@ -156,3 +156,28 @@ def test_aliyun_milvus_cli_passes_knobs_when_specified(monkeypatch: pytest.Monke
     assert case_config.rerank_topk_multiplier == 0
     assert case_config.early_termination_threshold == 0
     assert case_config.cross_segment_rerank is True
+
+
+def test_aliyun_milvus_cli_no_cross_segment_rerank_sends_false(monkeypatch: pytest.MonkeyPatch):
+    """--no-cross-segment-rerank explicitly disables it: send False, not omit."""
+    captured = {}
+
+    monkeypatch.setattr(aliyun_milvus_cli, "run", lambda **kwargs: captured.update(kwargs))
+
+    runner = CliRunner()
+    result = runner.invoke(
+        aliyun_milvus_cli.AliyunMilvusDISKANN,
+        [
+            "--uri", "http://localhost:19530",
+            "--search-list", "200",
+            "--no-cross-segment-rerank",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    case_config = captured["db_case_config"]
+    assert case_config.cross_segment_rerank is False
+    assert case_config.search_param()["params"] == {
+        "search_list": 200,
+        "cross_segment_rerank": False,
+    }
