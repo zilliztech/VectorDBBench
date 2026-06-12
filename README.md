@@ -61,6 +61,7 @@ All the database client supported
 | zvec                     | `pip install vectordb-bench[zvec]`          |
 | endee                    | `pip install vectordb-bench[endee]`         |
 | lindorm                  | `pip install vectordb-bench[lindorm]`       |
+| adbpg                    | `pip install vectordb-bench[adbpg]`         |
 
 ### Run
 
@@ -548,6 +549,44 @@ To list the options for Lindorm, execute `vectordbbench lindormhnsw --help`, The
   --m INTEGER                     hnsw m  [required]
   --ef-construction INTEGER       hnsw ef-construction  [required]
   --ef-search INTEGER             hnsw ef-search  [required]
+```
+
+### Run ADBPG (Aliyun AnalyticDB for PostgreSQL) from command line
+
+ADBPG Nova uses the fastann/Nova vector index engine with `USING ann` syntax.
+
+**Example: Run novamr index benchmark (BioASQ 1M, 1024-dim)**
+
+```shell
+vectordbbench adbpgnova --case-type Performance1024D1M --k 10 \
+--host <adbpg_host> --port 5432 --db-name postgres \
+--user-name <username> --password <password> \
+--algorithm novamr --hnsw-m 48 --ef-construction 600 \
+--ef-search 130 --max-scan-points 5000 --quantize-rescore-amp 2.0
+```
+
+**Example: Run from config file**
+
+```shell
+vectordbbench adbpgnova --config-file adbpg_bioasq1m_novamr.yml
+```
+
+To list the options for ADBPG, execute `vectordbbench adbpgnova --help`. The following are some ADBPG-specific command-line options.
+
+```text
+  --user-name TEXT                Db username  [required]
+  --password TEXT                 Postgres database password  [$POSTGRES_PASSWORD]
+  --host TEXT                     Db host  [required]
+  --port INTEGER                  Postgres database port  [default: 5432]
+  --db-name TEXT                  Db name  [required]
+  --algorithm TEXT                algorithm  [default: novamr]
+  --hnsw-m INTEGER                hnsw_m  [default: 16]
+  --ef-construction INTEGER       ef_construction  [default: 200]
+  --ef-search INTEGER             ef_search  [default: 100]
+  --max-scan-points INTEGER       max scan points  [default: 2000]
+  --quantize-rescore-amp FLOAT    fastann.quantize_rescore_amp  [default: 1.0]
+  --nova-adaptive-gamma FLOAT     fastann.nova_adaptive_gamma  [default: 0.0]
+  --auto-reduction/--no-auto-reduction  Index WITH auto_reduction=on  [default: False]
 ```
 
 ### Run PolarDB from command line

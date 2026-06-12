@@ -173,6 +173,15 @@ class CaseConfigParamType(Enum):
     exbits = "exbits"
     number_of_regions = "number_of_regions"
 
+    # ADBPG parameters
+    hnsw_m = "hnsw_m"
+    algorithm = "algorithm"
+    rabitq_bits = "rabitq_bits"
+    quantize_rescore_amp = "quantize_rescore_amp"
+    nova_adaptive_gamma = "nova_adaptive_gamma"
+    max_scan_points = "max_scan_points"
+    auto_reduction = "auto_reduction"
+
 
 class CustomizedCase(BaseModel):
     pass
@@ -346,9 +355,7 @@ class TestResult(BaseModel):
                 task_config = case_result.get("task_config")
                 case_config = task_config.get("case_config")
                 db = DB(task_config.get("db"))
-
                 task_config["db_config"] = db.config_cls(**task_config["db_config"])
-
                 # Safely instantiate DBCaseConfig (fallback to EmptyDBCaseConfig on None)
                 raw_case_cfg = task_config.get("db_case_config") or {}
                 index_value = raw_case_cfg.get("index", None)
