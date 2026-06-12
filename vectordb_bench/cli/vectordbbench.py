@@ -1,3 +1,4 @@
+from ..backend.clients.adbpg.cli import AdbpgNova
 from ..backend.clients.alisql.cli import AliSQLHNSW
 from ..backend.clients.alloydb.cli import AlloyDBScaNN
 from ..backend.clients.aws_opensearch.cli import AWSOpenSearch
@@ -48,6 +49,7 @@ from ..backend.clients.zvec.cli import Zvec
 from .batch_cli import BatchCli
 from .cli import cli
 
+cli.add_command(AdbpgNova)
 cli.add_command(PgVectorHNSW)
 cli.add_command(PgVectoRSHNSW)
 cli.add_command(PgVectoRSIVFFlat)

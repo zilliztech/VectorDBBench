@@ -3131,6 +3131,122 @@ PolarDBConfig = [
     CaseConfigParamInput_SQType_PolarDB,
 ]
 
+# ADBPG (Aliyun AnalyticDB for PostgreSQL) configs
+CaseConfigParamInput_Algorithm_Adbpg = CaseConfigInput(
+    label=CaseConfigParamType.algorithm,
+    inputHelp="Select Nova algorithm variant",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": ["novamr", "novad"],
+    },
+)
+
+CaseConfigParamInput_HnswM_Adbpg = CaseConfigInput(
+    label=CaseConfigParamType.hnsw_m,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 256,
+        "value": 16,
+    },
+    inputHelp="HNSW M parameter",
+)
+
+CaseConfigParamInput_EFConstruction_Adbpg = CaseConfigInput(
+    label=CaseConfigParamType.ef_construction,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 2000,
+        "value": 200,
+    },
+    inputHelp="HNSW ef_construction",
+)
+
+CaseConfigParamInput_RabitqBits_Adbpg = CaseConfigInput(
+    label=CaseConfigParamType.rabitq_bits,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 8,
+        "value": 7,
+    },
+    inputHelp="RaBitQ quantization bits",
+)
+
+CaseConfigParamInput_AutoReduction_Adbpg = CaseConfigInput(
+    label=CaseConfigParamType.auto_reduction,
+    inputType=InputType.Bool,
+    inputConfig={"value": False},
+    inputHelp="Enable auto_reduction=on for index build",
+)
+
+CaseConfigParamInput_EFSearch_Adbpg = CaseConfigInput(
+    label=CaseConfigParamType.ef_search,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 2000,
+        "value": 100,
+    },
+    inputHelp="fastann.hnsw_ef_search",
+)
+
+CaseConfigParamInput_MaxScanPoints_Adbpg = CaseConfigInput(
+    label=CaseConfigParamType.max_scan_points,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 100000,
+        "value": 2000,
+    },
+    inputHelp="fastann.hnsw_max_scan_points",
+)
+
+CaseConfigParamInput_QuantizeRescoreAmp_Adbpg = CaseConfigInput(
+    label=CaseConfigParamType.quantize_rescore_amp,
+    inputType=InputType.Float,
+    inputConfig={
+        "min": 0.0,
+        "max": 100.0,
+        "value": 1.0,
+        "step": 0.1,
+    },
+    inputHelp="fastann.quantize_rescore_amp",
+)
+
+CaseConfigParamInput_NovaAdaptiveGamma_Adbpg = CaseConfigInput(
+    label=CaseConfigParamType.nova_adaptive_gamma,
+    inputType=InputType.Float,
+    inputConfig={
+        "min": 0.0,
+        "max": 1.0,
+        "value": 0.0,
+        "step": 0.05,
+    },
+    inputHelp="fastann.nova_adaptive_gamma",
+)
+
+AdbpgLoadConfig = [
+    CaseConfigParamInput_Algorithm_Adbpg,
+    CaseConfigParamInput_HnswM_Adbpg,
+    CaseConfigParamInput_EFConstruction_Adbpg,
+    CaseConfigParamInput_RabitqBits_Adbpg,
+    CaseConfigParamInput_AutoReduction_Adbpg,
+]
+
+AdbpgPerformanceConfig = [
+    CaseConfigParamInput_Algorithm_Adbpg,
+    CaseConfigParamInput_HnswM_Adbpg,
+    CaseConfigParamInput_EFConstruction_Adbpg,
+    CaseConfigParamInput_RabitqBits_Adbpg,
+    CaseConfigParamInput_AutoReduction_Adbpg,
+    CaseConfigParamInput_EFSearch_Adbpg,
+    CaseConfigParamInput_MaxScanPoints_Adbpg,
+    CaseConfigParamInput_QuantizeRescoreAmp_Adbpg,
+    CaseConfigParamInput_NovaAdaptiveGamma_Adbpg,
+]
+
 # Map DB to config
 CASE_CONFIG_MAP = {
     DB.Milvus: {
@@ -3231,6 +3347,10 @@ CASE_CONFIG_MAP = {
     },
     DB.TurboPuffer: {
         CaseLabel.FullTextSearchPerformance: TurboPufferFtsConfig,
+    },
+    DB.Adbpg: {
+        CaseLabel.Load: AdbpgLoadConfig,
+        CaseLabel.Performance: AdbpgPerformanceConfig,
     },
 }
 
