@@ -95,12 +95,11 @@ def isLowerIsBetterMetric(metric: str) -> bool:
 
 
 def calc_recall(count: int, ground_truth: list[int], got: list[int]) -> float:
-    recalls = np.zeros(count)
-    for i, result in enumerate(got):
-        if result in ground_truth:
-            recalls[i] = 1
-
-    return np.mean(recalls)
+    if count <= 0:
+        return 0.0
+    ground_truth_set = set(ground_truth)
+    hits = sum(1 for result in got if result in ground_truth_set)
+    return min(hits, count) / count
 
 
 def get_ideal_dcg(k: int):
@@ -120,11 +119,9 @@ def calc_ndcg(ground_truth: list[int], got: list[int], ideal_dcg: float) -> floa
             dcg += 1 / np.log2(idx + 2)
     return dcg / ideal_dcg
 
+
 def calc_recall_fts(k: int, ground_truth: list[int], got: list[int]) -> float:
-    if not ground_truth or k == 0:
+    if not ground_truth or k <= 0:
         return 0.0
     gt_set = set(ground_truth)
-    retrieved_top_k = set(got[:k])
-    if not gt_set:
-        return 0.0
-    return len(gt_set & retrieved_top_k) / len(gt_set)
+    return calc_recall(len(gt_set), gt_set, set(got[:k]))
