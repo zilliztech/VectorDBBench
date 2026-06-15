@@ -30,19 +30,26 @@ class SerialInsertRunner:
     def __init__(
         self,
         db: api.VectorDB,
-        dataset: DatasetManager,
-        normalize: bool,
+        dataset: DatasetManager | FtsDatasetManager,
+        normalize: bool = False,
         filters: Filter = non_filter,
         timeout: float | None = None,
+        workload_kind: WorkloadKind = WorkloadKind.VECTOR,
     ):
         self.timeout = timeout if isinstance(timeout, int | float) else None
         self.dataset = dataset
         self.db = db
         self.normalize = normalize
         self.filters = filters
+        self.workload_kind = workload_kind
+
+    def _insert_batch(self, db: api.VectorDB, **kwargs):
+        if self.workload_kind == WorkloadKind.FULL_TEXT_BM25:
+            return db.insert_documents(**kwargs)
+        return db.insert_embeddings(**kwargs)
 
     def retry_insert(self, db: api.VectorDB, retry_idx: int = 0, **kwargs):
-        _, error = db.insert_embeddings(**kwargs)
+        _, error = self._insert_batch(db, **kwargs)
         if error is not None:
             log.warning(f"Insert Failed, try_idx={retry_idx}, Exception: {error}")
             retry_idx += 1
@@ -54,6 +61,11 @@ class SerialInsertRunner:
                 raise RuntimeError(msg) from None
 
     def task(self) -> int:
+        if self.workload_kind == WorkloadKind.FULL_TEXT_BM25:
+            return self._task_documents()
+        return self._task_embeddings()
+
+    def _task_embeddings(self) -> int:
         count = 0
         with self.db.init():
             log.info(f"({mp.current_process().name:16}) Start inserting embeddings in batch {config.NUM_PER_BATCH}")
@@ -97,6 +109,34 @@ class SerialInsertRunner:
 
             log.info(
                 f"({mp.current_process().name:16}) Finish loading all dataset into VectorDB, "
+                f"dur={time.perf_counter() - start}"
+            )
+            return count
+
+    def _task_documents(self) -> int:
+        count = 0
+        with self.db.init():
+            log.info(f"({mp.current_process().name:16}) Start inserting FTS documents in batch {config.NUM_PER_BATCH}")
+            start = time.perf_counter()
+            for batch in self.dataset:
+                doc_ids = []
+                texts = []
+                for doc in batch:
+                    doc_ids.append(doc.doc_id if hasattr(doc, "doc_id") else str(doc["doc_id"]))
+                    texts.append(doc.text if hasattr(doc, "text") else doc["text"])
+
+                insert_count, error = self.db.insert_documents(texts=texts, doc_ids=doc_ids)
+                if error is not None:
+                    self.retry_insert(self.db, texts=texts, doc_ids=doc_ids)
+                    insert_count = len(doc_ids)
+
+                assert insert_count == len(doc_ids)
+                count += insert_count
+                if count % 100_000 == 0:
+                    log.info(f"({mp.current_process().name:16}) Loaded {count} FTS documents into VectorDB")
+
+            log.info(
+                f"({mp.current_process().name:16}) Finish loading all FTS dataset into VectorDB, "
                 f"dur={time.perf_counter() - start}"
             )
             return count
@@ -153,6 +193,8 @@ class SerialInsertRunner:
     @utils.time_it
     def _insert_all_batches(self) -> int:
         """Performance case only"""
+        if self.workload_kind == WorkloadKind.FULL_TEXT_BM25:
+            return self.task()
         with concurrent.futures.ProcessPoolExecutor(
             mp_context=mp.get_context("spawn"),
             max_workers=1,
@@ -208,108 +250,25 @@ class SerialInsertRunner:
             raise LoadTimeoutError(self.timeout)
 
     def run(self) -> int:
+        if self.workload_kind == WorkloadKind.FULL_TEXT_BM25:
+            with utils.timeout(self.timeout, lambda: LoadTimeoutError(self.timeout)):
+                count, _ = self._insert_all_batches()
+            return count
         count, _ = self._insert_all_batches()
         return count
 
 
-class SerialFtsInsertRunner:
-    """Simple serial FTS document insertion runner, similar to SerialInsertRunner.
+class SerialFtsInsertRunner(SerialInsertRunner):
+    """Compatibility wrapper for callers that still import the old FTS runner."""
 
-    Inserts FTS documents sequentially in batches without rate control.
-    """
-
-    def __init__(
-        self,
-        db: api.VectorDB,
-        dataset: FtsDatasetManager,
-        timeout: float | None = None,
-    ):
-        self.timeout = timeout if isinstance(timeout, int | float) else None
-        self.dataset = dataset
-        self.db = db
-
-    def retry_insert(self, db: api.VectorDB, texts: list[str], doc_ids: list[int], retry_idx: int = 0):
-        """Retry FTS insert with exponential backoff."""
-        _, error = db.insert_documents(texts=texts, doc_ids=doc_ids)
-        if error is not None:
-            log.warning(f"FTS Insert Failed, try_idx={retry_idx}, Exception: {error}")
-            retry_idx += 1
-            if retry_idx <= config.MAX_INSERT_RETRY:
-                time.sleep(retry_idx)
-                self.retry_insert(db, texts=texts, doc_ids=doc_ids, retry_idx=retry_idx)
-            else:
-                msg = f"FTS Insert failed and retried more than {config.MAX_INSERT_RETRY} times"
-                raise RuntimeError(msg) from None
-
-    def task(self) -> int:
-        """Insert all FTS documents sequentially with buffered batch insertion.
-
-        Processes documents row by row, but accumulates them in a buffer
-        and inserts in batches for better performance.
-        """
-        count = 0
-        buffer_size = config.NUM_PER_BATCH  # Use same batch size as dataset iterator
-        insert_buffer: list[tuple[int, str]] = []  # List of (doc_id, text) tuples
-
-        def flush_buffer() -> int:
-            """Insert all documents in buffer and return count."""
-            if not insert_buffer:
-                return 0
-
-            doc_ids = [doc_id for doc_id, _ in insert_buffer]
-            texts = [text for _, text in insert_buffer]
-
-            insert_count, error = self.db.insert_documents(texts=texts, doc_ids=doc_ids)
-            if error is not None:
-                self.retry_insert(self.db, texts=texts, doc_ids=doc_ids)
-                insert_count = len(doc_ids)  # Assume all inserted after retry success
-
-            assert insert_count == len(doc_ids)
-            insert_buffer.clear()
-            return insert_count
-
-        with self.db.init():
-            log.info(f"Start inserting FTS documents with batch size {buffer_size}")
-            start = time.perf_counter()
-
-            # Process documents row by row
-            for batch in self.dataset:
-                for doc in batch:
-                    # Extract doc_id and text from FtsDocument object
-                    doc_id = doc.doc_id if hasattr(doc, "doc_id") else int(doc["doc_id"])
-                    text = doc.text if hasattr(doc, "text") else doc["text"]
-
-                    # Add to buffer
-                    insert_buffer.append((doc_id, text))
-
-                    # Flush buffer when it reaches batch size
-                    if len(insert_buffer) >= buffer_size:
-                        count += flush_buffer()
-                        if count % 100_000 == 0:
-                            log.info(f"Loaded {count} FTS documents into VectorDB")
-
-            # Insert remaining documents in buffer
-            if insert_buffer:
-                count += flush_buffer()
-
-            log.info(f"Finish loading all FTS dataset into VectorDB, dur={time.perf_counter() - start:.2f}s")
-            return count
-
-    @utils.time_it
-    def _insert_all_batches(self) -> int:
-        """Insert FTS documents directly in main process.
-
-        Note: Cannot use ProcessPoolExecutor because ir_datasets objects
-        contain lambda functions that cannot be pickled.
-        """
-        # Execute directly in main process to avoid pickle issues with ir_datasets
-        return self.task()
-
-    def run(self) -> int:
-        """Run FTS insertion and return total count."""
-        with utils.timeout(self.timeout, lambda: LoadTimeoutError(self.timeout)):
-            count, _ = self._insert_all_batches()
-        return count
+    def __init__(self, db: api.VectorDB, dataset: FtsDatasetManager, timeout: float | None = None):
+        super().__init__(
+            db=db,
+            dataset=dataset,
+            normalize=False,
+            timeout=timeout,
+            workload_kind=WorkloadKind.FULL_TEXT_BM25,
+        )
 
 
 class SerialSearchRunner:

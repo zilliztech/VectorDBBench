@@ -19,15 +19,16 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from vectordb_bench.backend.filter import Filter, FilterOp, non_filter
-from vectordb_bench.backend.utils import kill_proc_tree, time_it
+from vectordb_bench.backend.utils import kill_proc_tree, time_it, timeout
+from vectordb_bench.backend.workload import WorkloadKind
 
 from ... import config
-from ...models import PerformanceTimeoutError
+from ...models import LoadTimeoutError, PerformanceTimeoutError
 from .executor import AsyncExecutor, ThreadExecutor
 
 if TYPE_CHECKING:
     from vectordb_bench.backend.clients import api
-    from vectordb_bench.backend.dataset import DatasetManager
+    from vectordb_bench.backend.dataset import DatasetManager, FtsDatasetManager
 
     from .executor import TaskExecutor
 
@@ -68,9 +69,10 @@ class ConcurrentInsertRunner:
         duration: float | None = None,
         with_scalar_labels: bool = False,
         tenant_case=None,  # noqa: ANN001
+        workload_kind: WorkloadKind = WorkloadKind.VECTOR,
     ):
         self.timeout = timeout if isinstance(timeout, int | float) else None
-        self.dataset: DatasetManager = dataset
+        self.dataset: DatasetManager | FtsDatasetManager = dataset
         self.db = db
         self.normalize = normalize
         self.filters = filters
@@ -79,6 +81,7 @@ class ConcurrentInsertRunner:
         self.duration = duration if isinstance(duration, int | float) else None
         self.with_scalar_labels = with_scalar_labels
         self.tenant_case = tenant_case
+        self.workload_kind = workload_kind
 
         effective_workers = max_workers or min(mp.cpu_count(), 4)
         if not db.thread_safe:
@@ -115,21 +118,14 @@ class ConcurrentInsertRunner:
     def _insert_batch_with_retry(
         self,
         db: api.VectorDB,
-        embeddings: list[list[float]],
-        metadata: list[int],
-        labels_data: list[str] | None = None,
-        tenant_labels_data: list[str] | None = None,
         retry_idx: int = 0,
+        **insert_kwargs,
     ) -> int:
         """Insert a single batch with retry logic. Returns inserted count."""
-        insert_kwargs = {
-            "embeddings": embeddings,
-            "metadata": metadata,
-            "labels_data": labels_data,
-        }
-        if tenant_labels_data is not None:
-            insert_kwargs["tenant_labels_data"] = tenant_labels_data
-        insert_count, error = db.insert_embeddings(**insert_kwargs)
+        if getattr(self, "workload_kind", WorkloadKind.VECTOR) == WorkloadKind.FULL_TEXT_BM25:
+            insert_count, error = db.insert_documents(**insert_kwargs)
+        else:
+            insert_count, error = db.insert_embeddings(**insert_kwargs)
         if error is not None:
             log.warning(f"Insert failed, try_idx={retry_idx}, Exception: {error}")
             if getattr(error, "non_retryable", False):
@@ -140,28 +136,24 @@ class ConcurrentInsertRunner:
                 time.sleep(retry_idx)
                 return self._insert_batch_with_retry(
                     db,
-                    embeddings,
-                    metadata,
-                    labels_data,
-                    tenant_labels_data,
                     retry_idx,
+                    **insert_kwargs,
                 )
             msg = f"Insert failed and retried more than {config.MAX_INSERT_RETRY} times"
             raise RuntimeError(msg)
         return insert_count
 
-    def _worker_insert(
-        self,
-        embeddings: list[list[float]],
-        metadata: list[int],
-        labels_data: list[str] | None = None,
-        tenant_labels_data: list[str] | None = None,
-    ) -> int:
+    def _worker_insert(self, **insert_kwargs) -> int:
         """Worker function: insert a batch with retry."""
         db = self._get_thread_db()
-        return self._insert_batch_with_retry(db, embeddings, metadata, labels_data, tenant_labels_data)
+        return self._insert_batch_with_retry(db, **insert_kwargs)
 
-    def _next_batch(self) -> tuple[list[list[float]], list[int], list[str] | None, list[str] | None] | None:
+    def _next_batch(self) -> dict | None:
+        if getattr(self, "workload_kind", WorkloadKind.VECTOR) == WorkloadKind.FULL_TEXT_BM25:
+            return self._next_fts_batch()
+        return self._next_vector_batch()
+
+    def _next_vector_batch(self) -> dict | None:
         """Pull the next batch from the shared dataset iterator.
 
         Thread-safe: only one thread reads from the iterator at a time.
@@ -201,7 +193,36 @@ class ConcurrentInsertRunner:
         if self.tenant_case is not None and getattr(self.tenant_case, "is_multitenant", False):
             tenant_labels_data = self.tenant_case.tenant_labels_for_ids(all_metadata)
 
-        return all_embeddings, all_metadata, labels_data, tenant_labels_data
+        insert_kwargs = {
+            "embeddings": all_embeddings,
+            "metadata": all_metadata,
+            "labels_data": labels_data,
+        }
+        if tenant_labels_data is not None:
+            insert_kwargs["tenant_labels_data"] = tenant_labels_data
+        return insert_kwargs
+
+    def _next_fts_batch(self) -> dict | None:
+        stop_event = getattr(self, "_stop_event", None)
+        if stop_event is not None and stop_event.is_set():
+            return None
+        if self._deadline is not None and time.perf_counter() >= self._deadline:
+            return None
+        with self._iter_lock:
+            stop_event = getattr(self, "_stop_event", None)
+            if stop_event is not None and stop_event.is_set():
+                return None
+            try:
+                batch = next(self._dataset_iter)
+            except StopIteration:
+                return None
+
+        doc_ids = []
+        texts = []
+        for doc in batch:
+            doc_ids.append(doc.doc_id if hasattr(doc, "doc_id") else str(doc["doc_id"]))
+            texts.append(doc.text if hasattr(doc, "text") else doc["text"])
+        return {"texts": texts, "doc_ids": doc_ids}
 
     def _worker_loop(self) -> int:
         """Worker loop: pull batches from the shared iterator and insert them."""
@@ -211,8 +232,7 @@ class ConcurrentInsertRunner:
                 batch = self._next_batch()
                 if batch is None:
                     break
-                embeddings, metadata, labels_data, tenant_labels_data = batch
-                total += self._worker_insert(embeddings, metadata, labels_data, tenant_labels_data)
+                total += self._worker_insert(**batch)
         except Exception:
             stop_event = getattr(self, "_stop_event", None)
             if stop_event is not None:
@@ -226,12 +246,15 @@ class ConcurrentInsertRunner:
         self._iter_lock = threading.Lock()
         self._stop_event = threading.Event()
         self._deadline = None if self.duration is None else time.perf_counter() + self.duration
-        self._dataset_iter = self.dataset.iter_batches(self.batch_size)
+        if getattr(self, "workload_kind", WorkloadKind.VECTOR) == WorkloadKind.FULL_TEXT_BM25:
+            self._dataset_iter = iter(self.dataset)
+        else:
+            self._dataset_iter = self.dataset.iter_batches(self.batch_size)
 
         with self.db.init():
             log.info(
                 f"({mp.current_process().name:16}) Start concurrent insert, "
-                f"batch_size={self.batch_size}, max_workers={self.max_workers}"
+                f"batch_size={self.batch_size}, max_workers={self.max_workers}, workload={self.workload_kind}"
             )
             start = time.perf_counter()
 
@@ -259,6 +282,13 @@ class ConcurrentInsertRunner:
     @time_it
     def _insert_all_batches(self) -> int:
         """Performance case only: run task() in subprocess with timeout."""
+        if getattr(self, "workload_kind", WorkloadKind.VECTOR) == WorkloadKind.FULL_TEXT_BM25:
+            # FTS datasets come from ir_datasets, whose loaded objects may contain
+            # lambdas or handles that cannot be pickled by ProcessPoolExecutor.
+            # Keep FTS loading in this process and use threads to overlap the
+            # I/O-bound insert RPCs instead of Python CPU-bound work.
+            with timeout(self.timeout, lambda: LoadTimeoutError(self.timeout)):
+                return self.task()
         with concurrent.futures.ProcessPoolExecutor(
             mp_context=mp.get_context("spawn"),
             max_workers=1,

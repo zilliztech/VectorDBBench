@@ -20,7 +20,6 @@ from .runner import (
     ConcurrentInsertRunner,
     MultiProcessingSearchRunner,
     ReadWriteRunner,
-    SerialFtsInsertRunner,
     SerialInsertRunner,
     SerialSearchRunner,
 )
@@ -172,7 +171,7 @@ class CaseRunner(BaseModel):
 
     @property
     def workload_kind(self) -> WorkloadKind:
-        if self.ca.label == CaseLabel.FullTextSearchPerformance:
+        if getattr(self.ca, "label", None) == CaseLabel.FullTextSearchPerformance:
             return WorkloadKind.FULL_TEXT_BM25
         return WorkloadKind.VECTOR
 
@@ -472,26 +471,10 @@ class CaseRunner(BaseModel):
 
     @utils.time_it
     def _load_data(self):
-        if self.is_fts:
-            return self._load_fts_data()
         return self._load_train_data()
 
-    def _load_fts_data(self):
-        """Insert FTS documents and get insert duration."""
-        try:
-            runner = SerialFtsInsertRunner(
-                self.db,
-                self.ca.dataset,
-                self.ca.load_timeout,
-            )
-            runner.run()
-        except Exception as e:
-            raise e from None
-        finally:
-            runner = None
-
     def _load_train_data(self):
-        """Insert train data concurrently and get the insert_duration"""
+        """Insert vector or FTS train data concurrently and get insert duration."""
         try:
             runner_kwargs = {}
             if self.ca.is_multitenant:
@@ -504,6 +487,7 @@ class CaseRunner(BaseModel):
                 self.ca.load_timeout,
                 max_workers=self.config.load_concurrency or None,
                 with_scalar_labels=self.ca.with_scalar_labels,
+                workload_kind=self.workload_kind,
                 **runner_kwargs,
             )
             runner.run()
