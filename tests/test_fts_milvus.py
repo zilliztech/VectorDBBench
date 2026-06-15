@@ -41,6 +41,20 @@ def test_milvus_fts_config_uses_analyzer_max_token_length():
     assert {"type": "stop", "stop_words": ["the", "and"]} in params["filter"]
 
 
+def test_milvus_fts_uses_product_default_bm25_params_by_default():
+    params = MilvusFtsConfig().sparse_index_param()["params"]
+
+    assert "bm25_k1" not in params
+    assert "bm25_b" not in params
+
+
+def test_milvus_fts_allows_explicit_bm25_params():
+    params = MilvusFtsConfig(bm25_k1=1.5, bm25_b=0.75).sparse_index_param()["params"]
+
+    assert params["bm25_k1"] == 1.5
+    assert params["bm25_b"] == 0.75
+
+
 def test_milvus_declares_full_text_support():
     assert Milvus.supports_full_text_search() is True
 
