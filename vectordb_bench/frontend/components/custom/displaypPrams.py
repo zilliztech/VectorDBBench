@@ -1,6 +1,5 @@
 def displayParams(st):
-    st.markdown(
-        """
+    st.markdown("""
 - `Folder Path` - The path to the folder containing all the files. Please ensure that all files in the folder are in the `Parquet` format.
   - Vectors data files: The file should have two kinds of columns: `id` as an incrementing `int` and `emb` as an array of `float32`. The name of two columns could be defined on your own.
   - Query test vectors: The file could be named on your own and should have two kinds of columns: `id` as an incrementing `int` and `emb` as an array of `float32`. The `id` column must be named as `id`, and `emb` column could be defined on your own.  
@@ -14,8 +13,7 @@ def displayParams(st):
 
 - `Label percentages` - If you have filter file, please input label percentage you want to real run and `split with ','` when it's `more than one`. If you `don't have` filter file, than `keep the text vacant.`
 
-"""
-    )
+""")
     st.caption(
         """We recommend limiting the number of test query vectors, like 1,000.""",
         help="""
