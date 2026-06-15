@@ -58,7 +58,7 @@ class MultiProcessingSearchRunner:
         self.workload_kind = workload_kind
         self.payload_profile = payload_profile
         self.tenant_labels = tenant_labels or []
-        if self.workload_kind == WorkloadKind.FULL_TEXT_BM25:
+        if self.workload_kind == WorkloadKind.FULL_TEXT:
             self._search_func = self.db.search_documents
         elif self.workload_kind == WorkloadKind.VECTOR:
             self._search_func = self._search_embedding
@@ -69,7 +69,7 @@ class MultiProcessingSearchRunner:
             msg = f"{self.db.name} does not support payload_profile={self.payload_profile.value}"
             raise NotImplementedError(msg)
         if (
-            self.workload_kind == WorkloadKind.FULL_TEXT_BM25
+            self.workload_kind == WorkloadKind.FULL_TEXT
             and not self.db.supports_document_payload_profile(self.payload_profile)
         ):
             msg = f"{self.db.name} does not support document payload_profile={self.payload_profile.value}"
@@ -88,7 +88,7 @@ class MultiProcessingSearchRunner:
 
     def __setstate__(self, state):
         self.__dict__.update(state)
-        if self.workload_kind == WorkloadKind.FULL_TEXT_BM25:
+        if self.workload_kind == WorkloadKind.FULL_TEXT:
             self._search_func = self.db.search_documents
         elif self.workload_kind == WorkloadKind.VECTOR:
             self._search_func = self._search_embedding
@@ -106,7 +106,7 @@ class MultiProcessingSearchRunner:
         return self.db.search_embedding(emb, self.k, payload_profile=self.payload_profile, tenant=tenant)
 
     def _search_once(self, query: list[float] | str, tenant_rng: random.Random | None = None):
-        if self.workload_kind == WorkloadKind.FULL_TEXT_BM25:
+        if self.workload_kind == WorkloadKind.FULL_TEXT:
             if self.payload_profile == PayloadProfile.IDS_ONLY:
                 return self._search_func(query, self.k)
             return self._search_func(query, self.k, payload_profile=self.payload_profile)

@@ -122,7 +122,7 @@ class ConcurrentInsertRunner:
         **insert_kwargs,
     ) -> int:
         """Insert a single batch with retry logic. Returns inserted count."""
-        if getattr(self, "workload_kind", WorkloadKind.VECTOR) == WorkloadKind.FULL_TEXT_BM25:
+        if getattr(self, "workload_kind", WorkloadKind.VECTOR) == WorkloadKind.FULL_TEXT:
             insert_count, error = db.insert_documents(**insert_kwargs)
         else:
             insert_count, error = db.insert_embeddings(**insert_kwargs)
@@ -149,7 +149,7 @@ class ConcurrentInsertRunner:
         return self._insert_batch_with_retry(db, **insert_kwargs)
 
     def _next_batch(self) -> dict | None:
-        if getattr(self, "workload_kind", WorkloadKind.VECTOR) == WorkloadKind.FULL_TEXT_BM25:
+        if getattr(self, "workload_kind", WorkloadKind.VECTOR) == WorkloadKind.FULL_TEXT:
             return self._next_fts_batch()
         return self._next_vector_batch()
 
@@ -246,7 +246,7 @@ class ConcurrentInsertRunner:
         self._iter_lock = threading.Lock()
         self._stop_event = threading.Event()
         self._deadline = None if self.duration is None else time.perf_counter() + self.duration
-        if getattr(self, "workload_kind", WorkloadKind.VECTOR) == WorkloadKind.FULL_TEXT_BM25:
+        if getattr(self, "workload_kind", WorkloadKind.VECTOR) == WorkloadKind.FULL_TEXT:
             self._dataset_iter = iter(self.dataset)
         else:
             self._dataset_iter = self.dataset.iter_batches(self.batch_size)
@@ -282,7 +282,7 @@ class ConcurrentInsertRunner:
     @time_it
     def _insert_all_batches(self) -> int:
         """Performance case only: run task() in subprocess with timeout."""
-        if getattr(self, "workload_kind", WorkloadKind.VECTOR) == WorkloadKind.FULL_TEXT_BM25:
+        if getattr(self, "workload_kind", WorkloadKind.VECTOR) == WorkloadKind.FULL_TEXT:
             # FTS datasets come from ir_datasets, whose loaded objects may contain
             # lambdas or handles that cannot be pickled by ProcessPoolExecutor.
             # Keep FTS loading in this process and use threads to overlap the

@@ -186,7 +186,7 @@ def get_fts_case_items(include_advanced: bool = False) -> list[UICaseItem]:
             label=f"FTS BM25 Performance - {dataset_with_size_type.value}",
             description=(
                 f"This case tests native BM25 full-text search performance on {dataset_with_size_type.value}. "
-                "It measures index building time, recall, NDCG, MRR, serial latency, and search QPS."
+                "It measures index building time, recall, serial latency, and search QPS."
             ),
             cases=[generate_fts_case(dataset_with_size_type)],
             caseLabel=CaseLabel.FullTextSearchPerformance,
@@ -552,7 +552,7 @@ CaseConfigParamInput_reranking_metric_PgDiskANN = CaseConfigInput(
     displayLabel="Reranking Metric",
     inputType=InputType.Option,
     inputConfig={
-        "options": [metric.value for metric in MetricType if metric.value not in ["HAMMING", "JACCARD", "DP"]],
+        "options": [metric.value for metric in MetricType if metric.value not in ["HAMMING", "JACCARD", "DP", "BM25"]],
     },
     isDisplayed=lambda config: config.get(CaseConfigParamType.reranking, False),
 )
@@ -1502,7 +1502,7 @@ CaseConfigParamInput_reranking_metric_PgVector = CaseConfigInput(
     label=CaseConfigParamType.rerankingMetric,
     inputType=InputType.Option,
     inputConfig={
-        "options": [metric.value for metric in MetricType if metric.value not in ["HAMMING", "JACCARD"]],
+        "options": [metric.value for metric in MetricType if metric.value not in ["HAMMING", "JACCARD", "BM25"]],
     },
     isDisplayed=lambda config: config.get(CaseConfigParamType.quantizationType, None) == "bit"
     and config.get(CaseConfigParamType.reranking, False),

@@ -145,10 +145,10 @@ class CaseRunner(BaseModel):
             "name": True,
             "size": True,
             "label": True,
+            "metric_type": True,
         }
         if self.ca.label != CaseLabel.FullTextSearchPerformance:
             dataset_include["dim"] = True
-            dataset_include["metric_type"] = True
         c_dict = self.ca.dict(
             include={
                 "label": True,
@@ -172,12 +172,12 @@ class CaseRunner(BaseModel):
     @property
     def workload_kind(self) -> WorkloadKind:
         if getattr(self.ca, "label", None) == CaseLabel.FullTextSearchPerformance:
-            return WorkloadKind.FULL_TEXT_BM25
+            return WorkloadKind.FULL_TEXT
         return WorkloadKind.VECTOR
 
     @property
     def is_fts(self) -> bool:
-        return self.workload_kind == WorkloadKind.FULL_TEXT_BM25
+        return self.workload_kind == WorkloadKind.FULL_TEXT
 
     def init_db(self, drop_old: bool = True) -> None:
         db_cls = self.config.db.init_cls
@@ -619,7 +619,7 @@ class CaseRunner(BaseModel):
                 filters=self.ca.filters,
                 k=self.config.case_config.k,
                 payload_profile=self.ca.payload_profile,
-                workload_kind=WorkloadKind.FULL_TEXT_BM25,
+                workload_kind=WorkloadKind.FULL_TEXT,
             )
         if TaskStage.SEARCH_CONCURRENT in self.config.stages:
             self.search_runner = MultiProcessingSearchRunner(
@@ -631,7 +631,7 @@ class CaseRunner(BaseModel):
                 concurrency_timeout=self.config.case_config.concurrency_search_config.concurrency_timeout,
                 k=self.config.case_config.k,
                 payload_profile=self.ca.payload_profile,
-                workload_kind=WorkloadKind.FULL_TEXT_BM25,
+                workload_kind=WorkloadKind.FULL_TEXT,
             )
 
     def _init_read_write_runner(self):

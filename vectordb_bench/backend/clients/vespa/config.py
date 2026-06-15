@@ -52,6 +52,8 @@ class VespaHNSWConfig(BaseModel, DBCaseConfig):
 
 
 class VespaFtsConfig(BaseModel, DBCaseConfig):
+    metric_type: MetricType = MetricType.BM25
+
     def index_param(self) -> dict:
         return {}
 

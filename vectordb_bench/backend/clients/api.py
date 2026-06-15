@@ -14,6 +14,7 @@ class MetricType(StrEnum):
     COSINE = "COSINE"
     IP = "IP"
     DP = "DP"
+    BM25 = "BM25"
     HAMMING = "HAMMING"
     JACCARD = "JACCARD"
 

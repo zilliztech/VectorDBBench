@@ -660,12 +660,13 @@ class FtsBaseDataset(BaseModel):
     """Base class for FTS datasets - completely independent from BaseDataset.
 
     FTS datasets are text-based and use TSV files instead of parquet files.
-    They don't have vector dimensions or metric types.
+    They don't have vector dimensions; native full-text search uses BM25.
 
     """
 
     name: str
     size: int
+    metric_type: MetricType = MetricType.BM25
     with_gt: bool = True
     with_remote_resource: bool = False
 

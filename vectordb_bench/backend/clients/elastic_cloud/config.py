@@ -141,6 +141,7 @@ class ElasticCloudFtsConfig(BaseModel, DBCaseConfig):
     number_of_replicas: int = 0
     refresh_interval: str = "30s"
     use_force_merge: bool = True
+    metric_type: MetricType = MetricType.BM25
 
     def index_param(self) -> dict:
         return {

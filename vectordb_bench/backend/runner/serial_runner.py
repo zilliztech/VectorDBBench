@@ -44,7 +44,7 @@ class SerialInsertRunner:
         self.workload_kind = workload_kind
 
     def _insert_batch(self, db: api.VectorDB, **kwargs):
-        if self.workload_kind == WorkloadKind.FULL_TEXT_BM25:
+        if self.workload_kind == WorkloadKind.FULL_TEXT:
             return db.insert_documents(**kwargs)
         return db.insert_embeddings(**kwargs)
 
@@ -61,7 +61,7 @@ class SerialInsertRunner:
                 raise RuntimeError(msg) from None
 
     def task(self) -> int:
-        if self.workload_kind == WorkloadKind.FULL_TEXT_BM25:
+        if self.workload_kind == WorkloadKind.FULL_TEXT:
             return self._task_documents()
         return self._task_embeddings()
 
@@ -193,7 +193,7 @@ class SerialInsertRunner:
     @utils.time_it
     def _insert_all_batches(self) -> int:
         """Performance case only"""
-        if self.workload_kind == WorkloadKind.FULL_TEXT_BM25:
+        if self.workload_kind == WorkloadKind.FULL_TEXT:
             return self.task()
         with concurrent.futures.ProcessPoolExecutor(
             mp_context=mp.get_context("spawn"),
@@ -250,7 +250,7 @@ class SerialInsertRunner:
             raise LoadTimeoutError(self.timeout)
 
     def run(self) -> int:
-        if self.workload_kind == WorkloadKind.FULL_TEXT_BM25:
+        if self.workload_kind == WorkloadKind.FULL_TEXT:
             with utils.timeout(self.timeout, lambda: LoadTimeoutError(self.timeout)):
                 count, _ = self._insert_all_batches()
             return count
@@ -267,7 +267,7 @@ class SerialFtsInsertRunner(SerialInsertRunner):
             dataset=dataset,
             normalize=False,
             timeout=timeout,
-            workload_kind=WorkloadKind.FULL_TEXT_BM25,
+            workload_kind=WorkloadKind.FULL_TEXT,
         )
 
 
@@ -291,7 +291,7 @@ class SerialSearchRunner:
         self.payload_profile = payload_profile
         self.tenant_labels = tenant_labels or []
         self.measure_recall = measure_recall
-        if workload_kind == WorkloadKind.FULL_TEXT_BM25:
+        if workload_kind == WorkloadKind.FULL_TEXT:
             self._search_func = self.db.search_documents
             self._use_fts_metrics = True
         elif workload_kind == WorkloadKind.VECTOR:
@@ -304,7 +304,7 @@ class SerialSearchRunner:
             msg = f"{self.db.name} does not support payload_profile={self.payload_profile.value}"
             raise NotImplementedError(msg)
         if (
-            self.workload_kind == WorkloadKind.FULL_TEXT_BM25
+            self.workload_kind == WorkloadKind.FULL_TEXT
             and not self.db.supports_document_payload_profile(self.payload_profile)
         ):
             msg = f"{self.db.name} does not support document payload_profile={self.payload_profile.value}"
@@ -332,7 +332,7 @@ class SerialSearchRunner:
         retry_idx: int = 0,
     ) -> list[int]:
         try:
-            if self.workload_kind == WorkloadKind.FULL_TEXT_BM25:
+            if self.workload_kind == WorkloadKind.FULL_TEXT:
                 if self.payload_profile == PayloadProfile.IDS_ONLY:
                     results = self._search_func(query, self.k)
                 else:

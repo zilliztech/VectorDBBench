@@ -943,7 +943,7 @@ class FTSmsmarcoPerformance(FtsPerformanceCase):
         name = f"FTS BM25 Performance - {dataset_with_size_type.value}"
         description = (
             f"This case tests native BM25 full-text search performance on {dataset_with_size_type.value}. "
-            "It measures index building time, recall, NDCG, MRR, serial latency, and search QPS."
+            "It measures index building time, recall, serial latency, and search QPS."
         )
         super().__init__(
             name=name,

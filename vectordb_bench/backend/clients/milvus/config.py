@@ -525,7 +525,7 @@ class MilvusFtsConfig(BaseModel, DBCaseConfig):
     """
 
     index_type: str = "SPARSE_INVERTED_INDEX"
-    metric_type: str = "BM25"
+    metric_type: MetricType = MetricType.BM25
     inverted_index_algo: str = "DAAT_MAXSCORE"  # DAAT_MAXSCORE | DAAT_WAND | TAAT_NAIVE
     bm25_k1: float | None = None
     bm25_b: float | None = None
@@ -568,7 +568,7 @@ class MilvusFtsConfig(BaseModel, DBCaseConfig):
 
         return {
             "index_type": self.index_type,
-            "metric_type": self.metric_type,
+            "metric_type": self.metric_type.value,
             "params": params,
         }
 
@@ -581,7 +581,7 @@ class MilvusFtsConfig(BaseModel, DBCaseConfig):
         if self.drop_ratio_search is not None:
             params["drop_ratio_search"] = self.drop_ratio_search
         return {
-            "metric_type": self.metric_type,
+            "metric_type": self.metric_type.value,
             "params": params,
         }
 
