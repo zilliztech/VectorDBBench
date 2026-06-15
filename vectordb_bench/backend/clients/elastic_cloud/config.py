@@ -7,11 +7,15 @@ from ..api import DBCaseConfig, DBConfig, IndexType, MetricType
 
 
 class ElasticCloudConfig(DBConfig, BaseModel):
-    _extra_empty_skip: ClassVar[frozenset[str]] = frozenset({"cloud_id", "host", "user_name", "password"})
+    _extra_empty_skip: ClassVar[frozenset[str]] = frozenset(
+        {"cloud_id", "scheme", "host", "user", "user_name", "password"}
+    )
 
     cloud_id: SecretStr | None = None
+    scheme: str | None = None
     host: SecretStr | None = None
     port: int = 9200
+    user: str | None = None
     user_name: str | None = None
     password: SecretStr | None = None
     use_ssl: bool = False
@@ -25,6 +29,9 @@ class ElasticCloudConfig(DBConfig, BaseModel):
             raise ValueError(msg)
         return self
 
+    def _auth_user(self) -> str:
+        return self.user_name or self.user or "elastic"
+
     def to_dict(self) -> dict:
         if self.cloud_id and self.cloud_id.get_secret_value():
             if not self.password:
@@ -32,7 +39,7 @@ class ElasticCloudConfig(DBConfig, BaseModel):
                 raise ValueError(msg)
             return {
                 "cloud_id": self.cloud_id.get_secret_value(),
-                "basic_auth": (self.user_name or "elastic", self.password.get_secret_value()),
+                "basic_auth": (self._auth_user(), self.password.get_secret_value()),
             }
 
         if not self.host:
@@ -43,7 +50,7 @@ class ElasticCloudConfig(DBConfig, BaseModel):
         if host.startswith(("http://", "https://")):
             url = host
         else:
-            scheme = "https" if self.use_ssl else "http"
+            scheme = self.scheme or ("https" if self.use_ssl else "http")
             url = f"{scheme}://{host}:{self.port}"
 
         config = {
@@ -51,8 +58,8 @@ class ElasticCloudConfig(DBConfig, BaseModel):
             "verify_certs": self.verify_certs,
         }
         if self.password:
-            config["basic_auth"] = (self.user_name or "elastic", self.password.get_secret_value())
-        elif self.user_name:
+            config["basic_auth"] = (self._auth_user(), self.password.get_secret_value())
+        elif self.user_name or (self.user and self.user != "elastic"):
             msg = "password is required when user_name is set"
             raise ValueError(msg)
         return config

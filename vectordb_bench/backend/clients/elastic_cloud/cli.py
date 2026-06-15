@@ -16,42 +16,61 @@ DBTYPE = DB.ElasticCloud
 
 class ElasticCloudTypedDict(TypedDict):
     cloud_id: Annotated[
-        str | None,
-        click.option("--cloud-id", type=str, help="Elastic Cloud ID"),
+        str,
+        click.option(
+            "--cloud-id",
+            type=str,
+            help="Elastic Cloud ID. Omit when connecting to a self-hosted ES via --host.",
+            required=False,
+            default="",
+        ),
+    ]
+    scheme: Annotated[
+        str,
+        click.option(
+            "--scheme",
+            type=click.Choice(["http", "https"], case_sensitive=False),
+            help="Scheme for host-based connection.",
+            required=False,
+            default="https",
+            show_default=True,
+        ),
     ]
     host: Annotated[
-        str | None,
-        click.option("--host", type=str, help="Self-hosted Elasticsearch host or URL"),
+        str,
+        click.option(
+            "--host",
+            type=str,
+            help="Elasticsearch host (for self-hosted ES; alternative to --cloud-id).",
+            required=False,
+            default="",
+        ),
     ]
     port: Annotated[
         int,
-        click.option("--port", type=int, help="Self-hosted Elasticsearch port", default=9200, show_default=True),
+        click.option(
+            "--port",
+            type=int,
+            help="Elasticsearch port (for host-based connection).",
+            required=False,
+            default=9200,
+            show_default=True,
+        ),
     ]
-    user_name: Annotated[
-        str | None,
-        click.option("--user-name", type=str, help="Elasticsearch username"),
+    user: Annotated[
+        str,
+        click.option(
+            "--user",
+            type=str,
+            help="Elasticsearch user.",
+            required=False,
+            default="elastic",
+            show_default=True,
+        ),
     ]
     password: Annotated[
-        str | None,
-        click.option("--password", type=str, help="Elastic Cloud or Elasticsearch password"),
-    ]
-    use_ssl: Annotated[
-        bool,
-        click.option(
-            "--use-ssl/--no-use-ssl",
-            help="Use HTTPS for self-hosted host:port",
-            default=False,
-            show_default=True,
-        ),
-    ]
-    verify_certs: Annotated[
-        bool,
-        click.option(
-            "--verify-certs/--no-verify-certs",
-            help="Verify TLS certificates for self-hosted Elasticsearch",
-            default=True,
-            show_default=True,
-        ),
+        str,
+        click.option("--password", type=str, help="Elasticsearch password", required=True),
     ]
     number_of_shards: Annotated[
         int,
@@ -143,21 +162,6 @@ class ElasticCloudTypedDict(TypedDict):
     ]
 
 
-def build_elastic_config(parameters: dict):
-    from .config import ElasticCloudConfig
-
-    return ElasticCloudConfig(
-        db_label=parameters["db_label"],
-        cloud_id=SecretStr(parameters["cloud_id"]) if parameters.get("cloud_id") else None,
-        host=SecretStr(parameters["host"]) if parameters.get("host") else None,
-        port=parameters["port"],
-        user_name=parameters.get("user_name"),
-        password=SecretStr(parameters["password"]) if parameters.get("password") else None,
-        use_ssl=parameters["use_ssl"],
-        verify_certs=parameters["verify_certs"],
-    )
-
-
 class ElasticCloudHNSWTypedDict(CommonTypedDict, ElasticCloudTypedDict):
     m: Annotated[
         int,
@@ -209,11 +213,19 @@ class ElasticCloudHNSWTypedDict(CommonTypedDict, ElasticCloudTypedDict):
 @click_parameter_decorators_from_typed_dict(ElasticCloudHNSWTypedDict)
 def ElasticCloudHNSW(**parameters: Unpack[ElasticCloudHNSWTypedDict]):
     from ..api import IndexType
-    from .config import ElasticCloudIndexConfig, ESElementType
+    from .config import ElasticCloudConfig, ElasticCloudIndexConfig, ESElementType
 
     run(
         db=DBTYPE,
-        db_config=build_elastic_config(parameters),
+        db_config=ElasticCloudConfig(
+            db_label=parameters["db_label"],
+            cloud_id=SecretStr(parameters["cloud_id"]) if parameters["cloud_id"] else None,
+            scheme=parameters["scheme"],
+            host=parameters["host"],
+            port=parameters["port"],
+            user=parameters["user"],
+            password=SecretStr(parameters["password"]),
+        ),
         db_case_config=ElasticCloudIndexConfig(
             index=IndexType.ES_HNSW,
             M=parameters["m"],
@@ -237,11 +249,19 @@ def ElasticCloudHNSW(**parameters: Unpack[ElasticCloudHNSWTypedDict]):
 @click_parameter_decorators_from_typed_dict(ElasticCloudHNSWTypedDict)
 def ElasticCloudHNSWInt8(**parameters: Unpack[ElasticCloudHNSWTypedDict]):
     from ..api import IndexType
-    from .config import ElasticCloudIndexConfig, ESElementType
+    from .config import ElasticCloudConfig, ElasticCloudIndexConfig, ESElementType
 
     run(
         db=DBTYPE,
-        db_config=build_elastic_config(parameters),
+        db_config=ElasticCloudConfig(
+            db_label=parameters["db_label"],
+            cloud_id=SecretStr(parameters["cloud_id"]) if parameters["cloud_id"] else None,
+            scheme=parameters["scheme"],
+            host=parameters["host"],
+            port=parameters["port"],
+            user=parameters["user"],
+            password=SecretStr(parameters["password"]),
+        ),
         db_case_config=ElasticCloudIndexConfig(
             index=IndexType.ES_HNSW_INT8,
             M=parameters["m"],
@@ -265,11 +285,19 @@ def ElasticCloudHNSWInt8(**parameters: Unpack[ElasticCloudHNSWTypedDict]):
 @click_parameter_decorators_from_typed_dict(ElasticCloudHNSWTypedDict)
 def ElasticCloudHNSWInt4(**parameters: Unpack[ElasticCloudHNSWTypedDict]):
     from ..api import IndexType
-    from .config import ElasticCloudIndexConfig, ESElementType
+    from .config import ElasticCloudConfig, ElasticCloudIndexConfig, ESElementType
 
     run(
         db=DBTYPE,
-        db_config=build_elastic_config(parameters),
+        db_config=ElasticCloudConfig(
+            db_label=parameters["db_label"],
+            cloud_id=SecretStr(parameters["cloud_id"]) if parameters["cloud_id"] else None,
+            scheme=parameters["scheme"],
+            host=parameters["host"],
+            port=parameters["port"],
+            user=parameters["user"],
+            password=SecretStr(parameters["password"]),
+        ),
         db_case_config=ElasticCloudIndexConfig(
             index=IndexType.ES_HNSW_INT4,
             M=parameters["m"],
@@ -293,11 +321,19 @@ def ElasticCloudHNSWInt4(**parameters: Unpack[ElasticCloudHNSWTypedDict]):
 @click_parameter_decorators_from_typed_dict(ElasticCloudHNSWTypedDict)
 def ElasticCloudHNSWBBQ(**parameters: Unpack[ElasticCloudHNSWTypedDict]):
     from ..api import IndexType
-    from .config import ElasticCloudIndexConfig, ESElementType
+    from .config import ElasticCloudConfig, ElasticCloudIndexConfig, ESElementType
 
     run(
         db=DBTYPE,
-        db_config=build_elastic_config(parameters),
+        db_config=ElasticCloudConfig(
+            db_label=parameters["db_label"],
+            cloud_id=SecretStr(parameters["cloud_id"]) if parameters["cloud_id"] else None,
+            scheme=parameters["scheme"],
+            host=parameters["host"],
+            port=parameters["port"],
+            user=parameters["user"],
+            password=SecretStr(parameters["password"]),
+        ),
         db_case_config=ElasticCloudIndexConfig(
             index=IndexType.ES_HNSW_BBQ,
             M=parameters["m"],
