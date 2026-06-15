@@ -302,8 +302,8 @@ class Milvus(VectorDB):
         try:
             self.client.flush(self.collection_name)
 
-            if self._is_fts or self.case_config.is_gpu_index:
-                log.debug("skip force merge compaction for FTS or gpu index type.")
+            if getattr(self.case_config, "is_gpu_index", False):
+                log.debug("skip force merge compaction for gpu index type.")
             else:
                 try:
                     # wait for sort, index, compact
