@@ -65,8 +65,10 @@ class Milvus(VectorDB):
             self._primary_field = "doc_id"
             self._text_field = "text"
             self._sparse_field = "sparse_vector"
-            self._main_index_name = "sparse_vector_idx"
-            self._sort_index_name = "doc_id_sort_idx"
+            self._sparse_index_name = "sparse_vector_idx"
+            self._doc_id_sort_index_name = "doc_id_sort_idx"
+            self._main_index_name = self._sparse_index_name
+            self._sort_index_name = self._doc_id_sort_index_name
             self._sort_index_field = self._primary_field
         else:
             self.batch_size = int(MILVUS_LOAD_REQS_SIZE / (dim * 4))
@@ -449,7 +451,7 @@ class Milvus(VectorDB):
         self.client.flush(self.collection_name)
         stats = self.client.get_collection_stats(self.collection_name)
         count = int(stats.get("row_count", stats.get("num_entities", 0)))
-        progress = self.client.describe_index(self.collection_name, self._vector_index_name)
+        progress = self.client.describe_index(self.collection_name, self._main_index_name)
         return {
             "fully_searchable": count >= expected_count,
             "fully_indexed": progress.get("pending_index_rows", -1) == 0,
