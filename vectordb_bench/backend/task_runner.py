@@ -339,9 +339,7 @@ class CaseRunner(BaseModel):
                 if TaskStage.SEARCH_SERIAL in self.config.stages:
                     search_results = self._serial_search()
                     if self.is_fts:
-                        m.recall, m.ndcg, m.mrr, m.serial_latency_p99, m.serial_latency_p95 = search_results
-                    elif len(search_results) > 4:
-                        m.recall, m.ndcg, m.mrr, m.serial_latency_p99, m.serial_latency_p95 = search_results
+                        m.recall, m.serial_latency_p99, m.serial_latency_p95 = search_results
                     else:
                         m.recall, m.ndcg, m.serial_latency_p99, m.serial_latency_p95 = search_results
             if hasattr(self.ca, "payload_profile"):
@@ -496,12 +494,13 @@ class CaseRunner(BaseModel):
         finally:
             runner = None
 
-    def _serial_search(self) -> tuple[float, float, float, float]:
+    def _serial_search(self) -> tuple[float, ...]:
         """Performance serial tests, search the entire test data once,
         calculate the recall, serial_latency_p99, serial_latency_p95
 
         Returns:
-            tuple[float, float, float, float]: recall, ndcg, serial_latency_p99, serial_latency_p95
+            tuple[float, ...]: vector cases return recall, ndcg, p99, p95;
+                FTS cases return recall, p99, p95.
         """
         try:
             results, _ = self.serial_search_runner.run()

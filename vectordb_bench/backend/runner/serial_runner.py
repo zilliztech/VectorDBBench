@@ -15,7 +15,7 @@ from vectordb_bench.backend.payload import PayloadProfile
 from vectordb_bench.backend.workload import WorkloadKind
 
 from ... import config
-from ...metric import calc_mrr, calc_ndcg, calc_ndcg_fts, calc_recall, calc_recall_fts, get_ideal_dcg
+from ...metric import calc_ndcg, calc_recall, calc_recall_fts, get_ideal_dcg
 from ...models import LoadTimeoutError, PerformanceTimeoutError
 from .. import utils
 from ..clients import api
@@ -349,7 +349,7 @@ class SerialSearchRunner:
 
         return results
 
-    def search(self, args: tuple[list, list[list[int]]]) -> tuple[float, float, float, float, float]:
+    def search(self, args: tuple[list, list[list[int]]]) -> tuple[float, ...]:
         log.info(f"{mp.current_process().name:14} start search the entire test_data to get recall and latency")
         with self.db.init():
             self.db.prepare_filter(self.filters)
@@ -359,7 +359,7 @@ class SerialSearchRunner:
             log.debug(f"test dataset size: {len(test_data)}")
             log.debug(f"ground truth size: {len(ground_truth) if ground_truth is not None else 0}")
 
-            latencies, recalls, ndcgs, mrrs = [], [], [], []
+            latencies, recalls, ndcgs = [], [], []
             tenant_rng = random.Random(0)
             for idx, emb in enumerate(test_data):
                 tenant = (
@@ -380,16 +380,13 @@ class SerialSearchRunner:
                     gt = ground_truth[idx]
                     if self._use_fts_metrics:
                         recalls.append(calc_recall_fts(self.k, gt, results))
-                        ndcgs.append(calc_ndcg_fts(self.k, gt, results))
-                        mrrs.append(calc_mrr(gt, results))
                     else:
                         recalls.append(calc_recall(self.k, gt[: self.k], results))
                         ndcgs.append(calc_ndcg(gt[: self.k], results, ideal_dcg))
-                        mrrs.append(calc_mrr(gt[: self.k], results))
                 else:
                     recalls.append(0)
-                    ndcgs.append(0)
-                    mrrs.append(0)
+                    if not self._use_fts_metrics:
+                        ndcgs.append(0)
 
                 if len(latencies) % 100 == 0:
                     log.debug(
@@ -399,31 +396,41 @@ class SerialSearchRunner:
 
         avg_latency = round(np.mean(latencies), 4)
         avg_recall = round(np.mean(recalls), 4)
-        avg_ndcg = round(np.mean(ndcgs), 4)
-        avg_mrr = round(np.mean(mrrs), 4)
         cost = round(np.sum(latencies), 4)
         p99 = round(np.percentile(latencies, 99), 4)
         p95 = round(np.percentile(latencies, 95), 4)
+        if self._use_fts_metrics:
+            log.info(
+                f"{mp.current_process().name:14} search entire test_data: "
+                f"cost={cost}s, "
+                f"queries={len(latencies)}, "
+                f"avg_recall={avg_recall}, "
+                f"avg_latency={avg_latency}, "
+                f"p99={p99}, "
+                f"p95={p95}"
+            )
+            return (avg_recall, p99, p95)
+
+        avg_ndcg = round(np.mean(ndcgs), 4)
         log.info(
             f"{mp.current_process().name:14} search entire test_data: "
             f"cost={cost}s, "
             f"queries={len(latencies)}, "
             f"avg_recall={avg_recall}, "
             f"avg_ndcg={avg_ndcg}, "
-            f"avg_mrr={avg_mrr}, "
             f"avg_latency={avg_latency}, "
             f"p99={p99}, "
             f"p95={p95}"
         )
-        return (avg_recall, avg_ndcg, avg_mrr, p99, p95)
+        return (avg_recall, avg_ndcg, p99, p95)
 
-    def _run_in_subprocess(self) -> tuple[float, float, float, float, float]:
+    def _run_in_subprocess(self) -> tuple[float, ...]:
         with concurrent.futures.ProcessPoolExecutor(max_workers=1) as executor:
             future = executor.submit(self.search, (self.test_data, self.ground_truth))
             return future.result()
 
     @utils.time_it
-    def run(self) -> tuple[float, float, float, float, float]:
+    def run(self) -> tuple[float, ...]:
         log.info(f"{mp.current_process().name:14} start serial search")
         if self.test_data is None:
             msg = "empty test_data"
@@ -432,12 +439,11 @@ class SerialSearchRunner:
         return self._run_in_subprocess()
 
     @utils.time_it
-    def run_with_cost(self) -> tuple[tuple[float, float, float, float, float], float]:
+    def run_with_cost(self) -> tuple[tuple[float, ...], float]:
         """
         Search all test data in serial.
         Returns:
-            tuple[tuple[float, float, float, float, float], float]:
-            (avg_recall, avg_ndcg, avg_mrr, p99_latency, p95_latency), cost
+            tuple[tuple[float, ...], float]: search metrics and cost
         """
         log.info(f"{mp.current_process().name:14} start serial search")
         if self.test_data is None:
