@@ -23,6 +23,7 @@ class MilvusConfig(DBConfig):
             "replica_number": self.replica_number,
         }
 
+
 class MilvusIndexConfig(BaseModel):
     """Base config for milvus"""
 

@@ -185,10 +185,7 @@ class ElasticCloud(VectorDB):
         assert self.client is not None, "should self.init() first"
         docs = list(texts)
         if len(docs) != len(doc_ids):
-            msg = (
-                f"Mismatch between texts ({len(docs)}) and doc_ids "
-                f"({len(doc_ids)}) lengths"
-            )
+            msg = f"Mismatch between texts ({len(docs)}) and doc_ids " f"({len(doc_ids)}) lengths"
             raise ValueError(msg)
         actions = [
             {

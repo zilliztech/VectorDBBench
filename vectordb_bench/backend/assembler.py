@@ -25,10 +25,7 @@ class Assembler:
         c_cls = task.case_config.case_id.case_cls
 
         c = c_cls(task.case_config.custom_case)
-        if (
-            c.label == CaseLabel.FullTextSearchPerformance
-            and not task.db.init_cls.supports_full_text_search()
-        ):
+        if c.label == CaseLabel.FullTextSearchPerformance and not task.db.init_cls.supports_full_text_search():
             msg = f"{task.db.value} does not support full-text search"
             raise ValueError(msg)
 

@@ -67,9 +67,8 @@ class MultiProcessingSearchRunner:
         if self.workload_kind == WorkloadKind.VECTOR and not self.db.supports_payload_profile(self.payload_profile):
             msg = f"{self.db.name} does not support payload_profile={self.payload_profile.value}"
             raise NotImplementedError(msg)
-        if (
-            self.workload_kind == WorkloadKind.FULL_TEXT
-            and not self.db.supports_document_payload_profile(self.payload_profile)
+        if self.workload_kind == WorkloadKind.FULL_TEXT and not self.db.supports_document_payload_profile(
+            self.payload_profile
         ):
             msg = f"{self.db.name} does not support document payload_profile={self.payload_profile.value}"
             raise NotImplementedError(msg)

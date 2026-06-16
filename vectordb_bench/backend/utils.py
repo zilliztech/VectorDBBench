@@ -94,7 +94,11 @@ def time_it(func: any):
 
 @contextmanager
 def timeout(timeout_seconds: float | int | None, exc_factory: Callable[[], Exception]):
-    if timeout_seconds is None or not hasattr(signal, "SIGALRM") or threading.current_thread() is not threading.main_thread():
+    if (
+        timeout_seconds is None
+        or not hasattr(signal, "SIGALRM")
+        or threading.current_thread() is not threading.main_thread()
+    ):
         yield
         return
 
