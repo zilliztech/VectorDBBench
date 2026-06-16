@@ -7,7 +7,6 @@ import time
 import traceback
 from collections.abc import Iterable
 from multiprocessing.queues import Queue
-from queue import Empty
 
 import numpy as np
 from hdrh.histogram import HdrHistogram
@@ -239,22 +238,13 @@ class MultiProcessingSearchRunner:
         )
 
     def _wait_for_queue_fill(self, q: Queue, size: int):
-        ready_count = 0
-        wait_t = 0.0
-        while ready_count < size:
+        wait_t = 0
+        while q.qsize() < size:
             sleep_t = size if size < 10 else 10
-            if self.concurrency_timeout > 0:
-                remaining_t = self.concurrency_timeout - wait_t
-                if remaining_t <= 0:
-                    raise ConcurrencySlotTimeoutError
-                sleep_t = min(sleep_t, remaining_t)
-            try:
-                q.get(timeout=sleep_t)
-                ready_count += 1
-            except Empty:
-                wait_t += sleep_t
-                if wait_t >= self.concurrency_timeout > 0:
-                    raise ConcurrencySlotTimeoutError
+            wait_t += sleep_t
+            if wait_t > self.concurrency_timeout > 0:
+                raise ConcurrencySlotTimeoutError
+            time.sleep(sleep_t)
 
     def run(self) -> float:
         """
@@ -329,7 +319,9 @@ class MultiProcessingSearchRunner:
                             executor.submit(self.search_by_dur, duration, self.test_data, q, cond) for i in range(conc)
                         ]
                         # Sync all processes
-                        self._wait_for_queue_fill(q, size=conc)
+                        while q.qsize() < conc:
+                            sleep_t = conc if conc < 10 else 10
+                            time.sleep(sleep_t)
 
                         with cond:
                             cond.notify_all()
