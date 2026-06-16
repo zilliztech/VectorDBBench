@@ -7,16 +7,15 @@ import time
 import traceback
 
 import numpy as np
-import psutil
 
-from vectordb_bench.backend.dataset import DatasetManager, FtsDatasetManager
-from vectordb_bench.backend.filter import Filter, FilterOp, non_filter
+from vectordb_bench.backend.dataset import DatasetManager
+from vectordb_bench.backend.filter import Filter, non_filter
 from vectordb_bench.backend.payload import PayloadProfile
 from vectordb_bench.backend.workload import WorkloadKind
 
 from ... import config
 from ...metric import calc_ndcg, calc_recall, calc_recall_fts, get_ideal_dcg
-from ...models import LoadTimeoutError, PerformanceTimeoutError
+from ...models import LoadTimeoutError
 from .. import utils
 from ..clients import api
 
@@ -27,119 +26,22 @@ log = logging.getLogger(__name__)
 
 
 class SerialInsertRunner:
+    # FTS insert is intentionally not implemented here. FTS performance loading
+    # goes through ConcurrentInsertRunner; serial FTS insert can be added later
+    # if a capacity or serial-load FTS case needs it.
     def __init__(
         self,
         db: api.VectorDB,
-        dataset: DatasetManager | FtsDatasetManager,
-        normalize: bool = False,
+        dataset: DatasetManager,
+        normalize: bool,
         filters: Filter = non_filter,
         timeout: float | None = None,
-        workload_kind: WorkloadKind = WorkloadKind.VECTOR,
     ):
         self.timeout = timeout if isinstance(timeout, int | float) else None
         self.dataset = dataset
         self.db = db
         self.normalize = normalize
         self.filters = filters
-        self.workload_kind = workload_kind
-
-    def _insert_batch(self, db: api.VectorDB, **kwargs):
-        if self.workload_kind == WorkloadKind.FULL_TEXT:
-            return db.insert_documents(**kwargs)
-        return db.insert_embeddings(**kwargs)
-
-    def retry_insert(self, db: api.VectorDB, retry_idx: int = 0, **kwargs):
-        _, error = self._insert_batch(db, **kwargs)
-        if error is not None:
-            log.warning(f"Insert Failed, try_idx={retry_idx}, Exception: {error}")
-            retry_idx += 1
-            if retry_idx <= config.MAX_INSERT_RETRY:
-                time.sleep(retry_idx)
-                self.retry_insert(db, retry_idx=retry_idx, **kwargs)
-            else:
-                msg = f"Insert failed and retried more than {config.MAX_INSERT_RETRY} times"
-                raise RuntimeError(msg) from None
-
-    def task(self) -> int:
-        if self.workload_kind == WorkloadKind.FULL_TEXT:
-            return self._task_documents()
-        return self._task_embeddings()
-
-    def _task_embeddings(self) -> int:
-        count = 0
-        with self.db.init():
-            log.info(f"({mp.current_process().name:16}) Start inserting embeddings in batch {config.NUM_PER_BATCH}")
-            start = time.perf_counter()
-            for data_df in self.dataset:
-                all_metadata = data_df[self.dataset.data.train_id_field].tolist()
-
-                emb_np = np.stack(data_df[self.dataset.data.train_vector_field])
-                if self.normalize:
-                    log.debug("normalize the 100k train data")
-                    all_embeddings = (emb_np / np.linalg.norm(emb_np, axis=1)[:, np.newaxis]).tolist()
-                else:
-                    all_embeddings = emb_np.tolist()
-                del emb_np
-                log.debug(f"batch dataset size: {len(all_embeddings)}, {len(all_metadata)}")
-
-                labels_data = None
-                if self.filters.type == FilterOp.StrEqual:
-                    if self.dataset.data.scalar_labels_file_separated:
-                        labels_data = self.dataset.scalar_labels[self.filters.label_field][all_metadata].to_list()
-                    else:
-                        labels_data = data_df[self.filters.label_field].tolist()
-
-                insert_count, error = self.db.insert_embeddings(
-                    embeddings=all_embeddings,
-                    metadata=all_metadata,
-                    labels_data=labels_data,
-                )
-                if error is not None:
-                    self.retry_insert(
-                        self.db,
-                        embeddings=all_embeddings,
-                        metadata=all_metadata,
-                        labels_data=labels_data,
-                    )
-
-                assert insert_count == len(all_metadata)
-                count += insert_count
-                if count % 100_000 == 0:
-                    log.info(f"({mp.current_process().name:16}) Loaded {count} embeddings into VectorDB")
-
-            log.info(
-                f"({mp.current_process().name:16}) Finish loading all dataset into VectorDB, "
-                f"dur={time.perf_counter() - start}"
-            )
-            return count
-
-    def _task_documents(self) -> int:
-        count = 0
-        with self.db.init():
-            log.info(f"({mp.current_process().name:16}) Start inserting FTS documents in batch {config.NUM_PER_BATCH}")
-            start = time.perf_counter()
-            for batch in self.dataset:
-                doc_ids = []
-                texts = []
-                for doc in batch:
-                    doc_ids.append(doc.doc_id if hasattr(doc, "doc_id") else str(doc["doc_id"]))
-                    texts.append(doc.text if hasattr(doc, "text") else doc["text"])
-
-                insert_count, error = self.db.insert_documents(texts=texts, doc_ids=doc_ids)
-                if error is not None:
-                    self.retry_insert(self.db, texts=texts, doc_ids=doc_ids)
-                    insert_count = len(doc_ids)
-
-                assert insert_count == len(doc_ids)
-                count += insert_count
-                if count % 100_000 == 0:
-                    log.info(f"({mp.current_process().name:16}) Loaded {count} FTS documents into VectorDB")
-
-            log.info(
-                f"({mp.current_process().name:16}) Finish loading all FTS dataset into VectorDB, "
-                f"dur={time.perf_counter() - start}"
-            )
-            return count
 
     def endless_insert_data(self, all_embeddings: list, all_metadata: list, left_id: int = 0) -> int:
         with self.db.init():
@@ -190,30 +92,6 @@ class SerialInsertRunner:
             )
         return count
 
-    @utils.time_it
-    def _insert_all_batches(self) -> int:
-        """Performance case only"""
-        if self.workload_kind == WorkloadKind.FULL_TEXT:
-            return self.task()
-        with concurrent.futures.ProcessPoolExecutor(
-            mp_context=mp.get_context("spawn"),
-            max_workers=1,
-        ) as executor:
-            future = executor.submit(self.task)
-            try:
-                count = future.result(timeout=self.timeout)
-            except TimeoutError as e:
-                msg = f"VectorDB load dataset timeout in {self.timeout}"
-                log.warning(msg)
-                for pid, _ in executor._processes.items():
-                    psutil.Process(pid).kill()
-                raise PerformanceTimeoutError(msg) from e
-            except Exception as e:
-                log.warning(f"VectorDB load dataset error: {e}")
-                raise e from e
-            else:
-                return count
-
     def run_endlessness(self) -> int:
         """run forever util DB raises exception or crash"""
         # datasets for load tests are quite small, can fit into memory
@@ -249,13 +127,6 @@ class SerialInsertRunner:
         else:
             raise LoadTimeoutError(self.timeout)
 
-    def run(self) -> int:
-        if self.workload_kind == WorkloadKind.FULL_TEXT:
-            with utils.timeout(self.timeout, lambda: LoadTimeoutError(self.timeout)):
-                count, _ = self._insert_all_batches()
-            return count
-        count, _ = self._insert_all_batches()
-        return count
 
 class SerialSearchRunner:
     def __init__(
