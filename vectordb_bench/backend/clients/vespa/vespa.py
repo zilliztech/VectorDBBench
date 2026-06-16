@@ -4,6 +4,7 @@ import math
 import threading
 from collections.abc import Generator
 from contextlib import contextmanager
+from typing import Any
 
 from vespa import application
 
@@ -16,7 +17,7 @@ from .config import VespaFtsConfig, VespaHNSWConfig
 log = logging.getLogger(__name__)
 
 
-def _is_successful_response(response) -> bool:
+def _is_successful_response(response: Any) -> bool:
     if hasattr(response, "is_successful"):
         return response.is_successful()
     if hasattr(response, "get_status_code"):
@@ -24,7 +25,7 @@ def _is_successful_response(response) -> bool:
     return getattr(response, "status_code", None) == 200
 
 
-def _response_json(response) -> dict:
+def _response_json(response: Any) -> dict:
     if hasattr(response, "get_json"):
         return response.get_json()
     return getattr(response, "json", {})
@@ -149,7 +150,7 @@ class Vespa(VectorDB):
         failures: list[str] = []
         lock = threading.Lock()
 
-        def callback(response, doc_id):
+        def callback(response: Any, doc_id: str):
             nonlocal successful_count
             with lock:
                 if _is_successful_response(response):
@@ -228,7 +229,7 @@ class Vespa(VectorDB):
         selected_fields = "id"
         if payload_profile == PayloadProfile.TEXT:
             selected_fields = f"id, {self._text_field}"
-        yql = f"select {selected_fields} from {self.schema_name} where userQuery()"  # noqa: S608
+        yql = f"select {selected_fields} from {self.schema_name} where userQuery()"
         result = self.client.query(
             {
                 "yql": yql,

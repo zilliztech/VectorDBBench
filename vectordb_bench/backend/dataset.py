@@ -748,7 +748,7 @@ class FtsDatasetManager(BaseModel):
             self._translator = HotpotQATranslator()
         else:
             msg = f"No translator available for dataset: {self.data.name}"
-            raise ValueError(msg)
+            raise TypeError(msg)
 
     def __eq__(self, obj: any):
         if isinstance(obj, FtsDatasetManager):
@@ -925,7 +925,7 @@ class FtsDocumentIterator:
                     self._finished = True
                     if batch:
                         return batch
-                    raise StopIteration
+                    raise StopIteration  # noqa: TRY301
                 try:
                     while True:
                         doc = next(self._docs_iter)

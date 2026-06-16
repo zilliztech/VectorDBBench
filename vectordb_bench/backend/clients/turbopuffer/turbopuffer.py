@@ -187,7 +187,7 @@ class TurboPuffer(VectorDB):
         state.pop("_ns_cache", None)
         return state
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: dict):
         self.__dict__.update(state)
         self.client = self._create_client()
         self._ns_cache = {}

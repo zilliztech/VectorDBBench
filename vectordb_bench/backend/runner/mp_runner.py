@@ -84,7 +84,7 @@ class MultiProcessingSearchRunner:
         state.pop("_search_func", None)
         return state
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: dict):
         self.__dict__.update(state)
         if self.workload_kind == WorkloadKind.FULL_TEXT:
             self._search_func = self.db.search_documents

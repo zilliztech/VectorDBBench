@@ -35,7 +35,7 @@ class Milvus(VectorDB):
     def has_text_field(self) -> bool:
         return bool(getattr(self, "_is_fts", False) and getattr(self, "_text_field", None))
 
-    def __init__(
+    def __init__(  # noqa: PLR0915
         self,
         dim: int,
         db_config: dict,

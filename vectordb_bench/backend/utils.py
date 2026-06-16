@@ -1,11 +1,10 @@
 import contextlib
 import logging
 import signal
-import time
-import signal
 import threading
-from contextlib import contextmanager
+import time
 from collections.abc import Callable
+from contextlib import contextmanager
 from functools import wraps
 
 import psutil
@@ -93,7 +92,7 @@ def time_it(func: any):
 
 
 @contextmanager
-def timeout(timeout_seconds: float | int | None, exc_factory: Callable[[], Exception]):
+def timeout(timeout_seconds: float | None, exc_factory: Callable[[], Exception]):
     if (
         timeout_seconds is None
         or not hasattr(signal, "SIGALRM")
