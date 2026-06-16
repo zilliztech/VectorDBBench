@@ -257,20 +257,6 @@ class SerialInsertRunner:
         count, _ = self._insert_all_batches()
         return count
 
-
-class SerialFtsInsertRunner(SerialInsertRunner):
-    """Compatibility wrapper for callers that still import the old FTS runner."""
-
-    def __init__(self, db: api.VectorDB, dataset: FtsDatasetManager, timeout: float | None = None):
-        super().__init__(
-            db=db,
-            dataset=dataset,
-            normalize=False,
-            timeout=timeout,
-            workload_kind=WorkloadKind.FULL_TEXT,
-        )
-
-
 class SerialSearchRunner:
     def __init__(
         self,
