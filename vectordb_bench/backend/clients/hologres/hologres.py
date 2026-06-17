@@ -2,6 +2,7 @@
 
 import json
 import logging
+import struct
 from collections.abc import Generator
 from contextlib import contextmanager
 from io import StringIO
@@ -9,11 +10,42 @@ from typing import Any
 
 import psycopg
 from psycopg import Connection, Cursor, sql
+from psycopg.adapt import Dumper
+from psycopg.pq import Format
 
 from ..api import VectorDB
 from .config import HologresConfig, HologresIndexConfig
 
 log = logging.getLogger(__name__)
+
+
+class HoloFloat4Array:
+    """Lightweight wrapper for float arrays - 1 object per query instead of 768 Float4 wrappers."""
+
+    __slots__ = ("data",)
+
+    def __init__(self, data: list[float]):
+        self.data = data
+
+
+class HoloFloat4ArrayDumper(Dumper):
+    """Custom Dumper that serializes float arrays to PostgreSQL binary float4[] format."""
+
+    format = Format.BINARY
+    oid = 1021  # PostgreSQL OID for float4[] (_float4)
+
+    def dump(self, obj: HoloFloat4Array) -> bytes:
+        # PostgreSQL binary array format:
+        # Header: ndim(4) + has_null(4) + OID elemtype(4) + dim_size(4) + lower_bound(4) = 20 bytes
+        # For each element: itemlen(4) + float32(4) = 8 bytes per element
+        header = struct.pack(">iiIii", 1, 0, 700, len(obj.data), 1)
+        return header + b"".join(struct.pack(">if", 4, x) for x in obj.data)
+
+
+# Register HoloFloat4ArrayDumper globally so it's available for all connections and cursors.
+# This must happen at module load time, before any connections/cursors are created,
+# because psycopg cursors snapshot the adapter map at creation time.
+psycopg.adapters.register_dumper(HoloFloat4Array, HoloFloat4ArrayDumper)
 
 
 class Hologres(VectorDB):
@@ -98,6 +130,31 @@ class Hologres(VectorDB):
         self.conn, self.cursor = self._create_connection(**self.db_config)
 
         self._set_search_guc()
+
+        self._search_query_no_filter = sql.SQL("""
+            SELECT id
+            FROM {table_name}
+            ORDER BY {distance_function}(embedding, %b)
+            {order_direction}
+            LIMIT %s;
+            """).format(
+            table_name=sql.Identifier(self.table_name),
+            distance_function=sql.SQL(self.case_config.distance_function()),
+            order_direction=sql.SQL(self.case_config.order_direction()),
+        )
+
+        self._search_query_with_filter = sql.SQL("""
+            SELECT id
+            FROM {table_name}
+            WHERE id >= %s
+            ORDER BY {distance_function}(embedding, %b)
+            {order_direction}
+            LIMIT %s;
+            """).format(
+            table_name=sql.Identifier(self.table_name),
+            distance_function=sql.SQL(self.case_config.distance_function()),
+            order_direction=sql.SQL(self.case_config.order_direction()),
+        )
 
         try:
             yield
@@ -329,34 +386,6 @@ class Hologres(VectorDB):
             log.warning(f"Failed to insert data into table ({self.table_name}), error: {e}")
             return 0, e
 
-    def _compose_query_and_params(self, vec: list[float], topk: int, ge_id: int | None = None):
-        params = []
-
-        where_clause = sql.SQL("")
-        if ge_id is not None:
-            where_clause = sql.SQL(" WHERE id >= %s ")
-            params.append(ge_id)
-
-        vec_float4 = [psycopg._wrappers.Float4(i) for i in vec]
-        params.append(vec_float4)
-        params.append(topk)
-
-        query = sql.SQL("""
-            SELECT id
-            FROM {table_name}
-            {where_clause}
-            ORDER BY {distance_function}(embedding, %b)
-            {order_direction}
-            LIMIT %s;
-            """).format(
-            table_name=sql.Identifier(self.table_name),
-            distance_function=sql.SQL(self.case_config.distance_function()),
-            where_clause=where_clause,
-            order_direction=sql.SQL(self.case_config.order_direction()),
-        )
-
-        return query, params
-
     def search_embedding(
         self,
         query: list[float],
@@ -368,6 +397,13 @@ class Hologres(VectorDB):
         assert self.cursor is not None, "Cursor is not initialized"
 
         ge = filters.get("id") if filters else None
-        q, params = self._compose_query_and_params(query, k, ge)
-        result = self.cursor.execute(q, params, prepare=True, binary=True)
+        q = HoloFloat4Array(query)
+
+        if ge is not None:
+            params = (ge, q, k)
+            result = self.cursor.execute(self._search_query_with_filter, params, prepare=True, binary=True)
+        else:
+            params = (q, k)
+            result = self.cursor.execute(self._search_query_no_filter, params, prepare=True, binary=True)
+
         return [int(i[0]) for i in result.fetchall()]
