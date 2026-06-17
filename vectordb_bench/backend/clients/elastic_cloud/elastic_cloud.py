@@ -92,6 +92,9 @@ class ElasticCloud(VectorDB):
                     "refresh_interval": self.case_config.refresh_interval,
                 }
             }
+            similarity = self.case_config.similarity_param()
+            if similarity:
+                settings["index"]["similarity"] = similarity
             client.indices.create(index=self.indice, mappings=mappings, settings=settings)
             return
 

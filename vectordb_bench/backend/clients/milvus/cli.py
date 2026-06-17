@@ -800,6 +800,26 @@ def MilvusGPUCAGRA(**parameters: Unpack[MilvusGPUCAGRATypedDict]):
 class MilvusFTSTypedDict(CommonTypedDict, MilvusTypedDict):
     """TypedDict for Milvus FTS command parameters."""
 
+    bm25_k1: Annotated[
+        float | None,
+        click.option(
+            "--bm25-k1",
+            type=float,
+            help="BM25 k1. Omit to use the Milvus product default.",
+            required=False,
+            default=None,
+        ),
+    ]
+    bm25_b: Annotated[
+        float | None,
+        click.option(
+            "--bm25-b",
+            type=float,
+            help="BM25 b. Omit to use the Milvus product default.",
+            required=False,
+            default=None,
+        ),
+    ]
     drop_ratio_search: Annotated[
         float | None,
         click.option(
@@ -836,6 +856,8 @@ def MilvusFTS(**parameters: Unpack[MilvusFTSTypedDict]):
             replica_number=int(parameters["replica_number"]),
         ),
         db_case_config=MilvusFtsConfig(
+            bm25_k1=parameters.get("bm25_k1"),
+            bm25_b=parameters.get("bm25_b"),
             drop_ratio_search=parameters.get("drop_ratio_search"),
         ),
         **parameters,

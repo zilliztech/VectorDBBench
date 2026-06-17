@@ -23,7 +23,24 @@ def test_elastic_cloud_fts_config_defaults():
 
     assert config.index_param()["properties"]["doc_id"] == {"type": "keyword"}
     assert config.index_param()["properties"]["text"]["type"] == "text"
+    assert config.similarity_param() == {}
     assert config.search_param() == {}
+
+
+def test_elastic_cloud_fts_config_supports_custom_bm25():
+    config = ElasticCloudFtsConfig(bm25_k1=1.2, bm25_b=0.75)
+
+    assert config.index_param()["properties"]["text"] == {
+        "type": "text",
+        "similarity": "custom_bm25",
+    }
+    assert config.similarity_param() == {
+        "custom_bm25": {
+            "type": "BM25",
+            "k1": 1.2,
+            "b": 0.75,
+        },
+    }
 
 
 def test_elastic_cloud_config_supports_cloud_id():
@@ -271,5 +288,34 @@ def test_elastic_cloud_create_indice_fts_uses_text_mappings_and_settings():
                 "number_of_replicas": 1,
                 "refresh_interval": "10s",
             }
+        },
+    }
+
+
+def test_elastic_cloud_create_indice_fts_can_set_custom_bm25_similarity():
+    db = ElasticCloud.__new__(ElasticCloud)
+    db._is_fts = True
+    db.case_config = ElasticCloudFtsConfig(bm25_k1=1.2, bm25_b=0.75)
+    db.indice = "idx"
+    calls = {}
+
+    class Indices:
+        def create(self, **kwargs):
+            calls.update(kwargs)
+
+    class Client:
+        indices = Indices()
+
+    db._create_indice(Client())
+
+    assert calls["mappings"]["properties"]["text"] == {
+        "type": "text",
+        "similarity": "custom_bm25",
+    }
+    assert calls["settings"]["index"]["similarity"] == {
+        "custom_bm25": {
+            "type": "BM25",
+            "k1": 1.2,
+            "b": 0.75,
         },
     }

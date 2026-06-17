@@ -127,3 +127,21 @@ def test_milvus_fts_sparse_index_params_exclude_analyzer_params(monkeypatch):
         "params": expected["params"],
     }
     assert "analyzer_params" not in sparse_index_params["params"]
+
+
+def test_milvus_fts_config_omits_bm25_params_by_default():
+    config = MilvusFtsConfig()
+
+    assert config.sparse_index_param()["params"] == {
+        "inverted_index_algo": "DAAT_MAXSCORE",
+    }
+
+
+def test_milvus_fts_config_includes_explicit_bm25_params():
+    config = MilvusFtsConfig(bm25_k1=1.2, bm25_b=0.75)
+
+    assert config.sparse_index_param()["params"] == {
+        "inverted_index_algo": "DAAT_MAXSCORE",
+        "bm25_k1": 1.2,
+        "bm25_b": 0.75,
+    }

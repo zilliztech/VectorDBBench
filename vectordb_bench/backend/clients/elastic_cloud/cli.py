@@ -141,6 +141,26 @@ class ElasticCloudTypedDict(TypedDict):
             show_default=True,
         ),
     ]
+    bm25_k1: Annotated[
+        float | None,
+        click.option(
+            "--bm25-k1",
+            type=float,
+            help="FTS BM25 k1. Omit to use the Elasticsearch product default.",
+            required=False,
+            default=None,
+        ),
+    ]
+    bm25_b: Annotated[
+        float | None,
+        click.option(
+            "--bm25-b",
+            type=float,
+            help="FTS BM25 b. Omit to use the Elasticsearch product default.",
+            required=False,
+            default=None,
+        ),
+    ]
 
 
 def build_elastic_config(parameters: dict):
@@ -209,12 +229,19 @@ class ElasticCloudHNSWTypedDict(CommonTypedDict, ElasticCloudTypedDict):
 @click_parameter_decorators_from_typed_dict(ElasticCloudHNSWTypedDict)
 def ElasticCloudHNSW(**parameters: Unpack[ElasticCloudHNSWTypedDict]):
     from ..api import IndexType
-    from .config import ElasticCloudIndexConfig, ESElementType
+    from .config import ElasticCloudFtsConfig, ElasticCloudIndexConfig, ESElementType
 
-    run(
-        db=DBTYPE,
-        db_config=build_elastic_config(parameters),
-        db_case_config=ElasticCloudIndexConfig(
+    if parameters.get("case_type") == "FTSmsmarcoPerformance":
+        db_case_config = ElasticCloudFtsConfig(
+            number_of_shards=parameters["number_of_shards"],
+            number_of_replicas=parameters["number_of_replicas"],
+            refresh_interval=parameters["refresh_interval"],
+            use_force_merge=parameters["use_force_merge"],
+            bm25_k1=parameters.get("bm25_k1"),
+            bm25_b=parameters.get("bm25_b"),
+        )
+    else:
+        db_case_config = ElasticCloudIndexConfig(
             index=IndexType.ES_HNSW,
             M=parameters["m"],
             efConstruction=parameters["ef_construction"],
@@ -228,7 +255,12 @@ def ElasticCloudHNSW(**parameters: Unpack[ElasticCloudHNSWTypedDict]):
             use_routing=parameters["use_routing"],
             use_rescore=parameters["use_rescore"],
             oversample_ratio=parameters["oversample_ratio"],
-        ),
+        )
+
+    run(
+        db=DBTYPE,
+        db_config=build_elastic_config(parameters),
+        db_case_config=db_case_config,
         **parameters,
     )
 

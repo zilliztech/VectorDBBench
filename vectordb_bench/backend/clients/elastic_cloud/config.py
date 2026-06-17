@@ -134,12 +134,32 @@ class ElasticCloudFtsConfig(BaseModel, DBCaseConfig):
     number_of_replicas: int = 0
     refresh_interval: str = "30s"
     use_force_merge: bool = True
+    bm25_k1: float | None = None
+    bm25_b: float | None = None
+
+    @property
+    def uses_custom_bm25(self) -> bool:
+        return self.bm25_k1 is not None or self.bm25_b is not None
+
+    def similarity_param(self) -> dict:
+        if not self.uses_custom_bm25:
+            return {}
+
+        custom_bm25 = {"type": "BM25"}
+        if self.bm25_k1 is not None:
+            custom_bm25["k1"] = self.bm25_k1
+        if self.bm25_b is not None:
+            custom_bm25["b"] = self.bm25_b
+        return {"custom_bm25": custom_bm25}
 
     def index_param(self) -> dict:
+        text_mapping = {"type": "text"}
+        if self.uses_custom_bm25:
+            text_mapping["similarity"] = "custom_bm25"
         return {
             "properties": {
                 "doc_id": {"type": "keyword"},
-                "text": {"type": "text"},
+                "text": text_mapping,
             },
         }
 

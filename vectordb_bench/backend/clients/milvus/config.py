@@ -438,13 +438,15 @@ class MilvusFtsConfig(BaseModel, DBCaseConfig):
        - "DAAT_MAXSCORE" (default): Suitable for high k values or queries with many terms, balanced performance
        - "DAAT_WAND": Suitable for small k values or short queries, faster
        - "TAAT_NAIVE": Dynamically adapts to collection changes (e.g., avgdl), but slower
-    2. bm25_k1: BM25 term frequency saturation control [1.2, 2.0], default 1.5
+    2. bm25_k1: BM25 term frequency saturation control [1.2, 2.0], default None
        - Higher values: Increase importance of term frequency in document ranking
        - Recommended range: 1.2-1.8, adjust based on query characteristics
-    3. bm25_b: BM25 document length normalization control [0.0, 1.0], default 0.75
+       - None: Do not send the parameter; Milvus uses its product default
+    3. bm25_b: BM25 document length normalization control [0.0, 1.0], default None
        - 1.0: No length normalization, longer documents have advantage
        - 0.0: Full normalization, shorter documents have advantage
        - 0.75: Balanced length normalization, commonly used default
+       - None: Do not send the parameter; Milvus uses its product default
     4. analyzer_tokenizer: Tokenizer type, default "standard"
        - "standard": Standard tokenizer, suitable for English text
        - "whitespace": Split by whitespace characters
@@ -466,8 +468,8 @@ class MilvusFtsConfig(BaseModel, DBCaseConfig):
     index_type: str = "SPARSE_INVERTED_INDEX"
     metric_type: str = "BM25"
     inverted_index_algo: str = "DAAT_MAXSCORE"  # DAAT_MAXSCORE | DAAT_WAND | TAAT_NAIVE
-    bm25_k1: float = 1.5
-    bm25_b: float = 0.75
+    bm25_k1: float | None = None
+    bm25_b: float | None = None
     analyzer_tokenizer: str = "standard"
     analyzer_enable_lowercase: bool = True
     analyzer_max_token_length: int | None = 40
