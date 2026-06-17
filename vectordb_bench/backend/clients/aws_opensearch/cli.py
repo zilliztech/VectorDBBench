@@ -25,8 +25,12 @@ def optional_secret_str(value: str | None) -> SecretStr | None:
 class AWSOpenSearchTypedDict(TypedDict):
     host: Annotated[str, click.option("--host", type=str, help="Db host", required=True)]
     port: Annotated[int, click.option("--port", type=int, default=80, help="Db Port")]
-    user: Annotated[str | None, click.option("--user", type=str, help="Db User")]
-    password: Annotated[str | None, click.option("--password", type=str, help="Db password")]
+    user: Annotated[str | None, click.option("--user", type=str, help="Db User (not needed for Serverless)")]
+    password: Annotated[str | None, click.option("--password", type=str, help="Db password (not needed for Serverless)")]
+    is_serverless: Annotated[bool, click.option("--serverless", is_flag=True, help="Use OpenSearch Serverless")]
+    aws_region: Annotated[
+        str, click.option("--aws-region", type=str, default="us-east-1", help="AWS region for Serverless")
+    ]
     number_of_shards: Annotated[
         int,
         click.option("--number-of-shards", type=int, help="Number of primary shards for the index", default=1),
@@ -172,6 +176,12 @@ class AWSOpenSearchHNSWTypedDict(CommonTypedDict, AWSOpenSearchTypedDict, HNSWFl
 def AWSOpenSearch(**parameters: Unpack[AWSOpenSearchHNSWTypedDict]):
     from .config import AWSOpenSearchConfig, AWSOpenSearchIndexConfig
 
+    is_serverless = parameters.get("serverless", False)
+    log.info(f"Is Serverless: {is_serverless}")
+
+    if not is_serverless and not parameters.get("user"):
+        log.warning("Standard OpenSearch mode requires user and password.")
+
     # Set default values for HNSW parameters if not provided and not using s3vector
     engine = AWSOS_Engine(parameters["engine"])
     ef_construction = parameters.get("ef_construction")
@@ -192,8 +202,10 @@ def AWSOpenSearch(**parameters: Unpack[AWSOpenSearchHNSWTypedDict]):
         db_config=AWSOpenSearchConfig(
             host=parameters["host"],
             port=parameters["port"],
-            user=parameters["user"],
-            password=optional_secret_str(parameters["password"]),
+            user=parameters.get("user"),
+            password=optional_secret_str(parameters.get("password")),
+            is_serverless=is_serverless,
+            aws_region=parameters.get("aws_region", "us-east-1"),
         ),
         db_case_config=AWSOpenSearchIndexConfig(
             number_of_shards=parameters["number_of_shards"],
