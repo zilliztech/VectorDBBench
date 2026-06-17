@@ -175,6 +175,11 @@ class CaseConfigParamType(Enum):
     exbits = "exbits"
     number_of_regions = "number_of_regions"
 
+    # AliyunMilvus DISKANN opt-in search-time parameters
+    rerank_topk_multiplier = "rerank_topk_multiplier"
+    early_termination_threshold = "early_termination_threshold"
+    cross_segment_rerank = "cross_segment_rerank"
+
 
 class CustomizedCase(BaseModel):
     pass

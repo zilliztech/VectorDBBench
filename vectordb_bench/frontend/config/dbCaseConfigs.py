@@ -2168,6 +2168,64 @@ MilvusPerformanceConfig = [
     CaseConfigParamInput_Milvus_use_partition_key,
 ]
 
+# ---- AliyunMilvus ----
+# Same as Milvus DISKANN, plus three opt-in search-time knobs. They default to
+# "unset" -> the param is NOT sent to the server (it keeps its own default).
+# For Number inputs a negative value (-1) is the "unset" sentinel; for the bool,
+# "DEFAULT" is the "unset" sentinel. The backend config normalizes these to None
+# (note: 0 is a real, meaningful value).
+CaseConfigParamInput_IndexType_AliyunMilvus = CaseConfigInput(
+    label=CaseConfigParamType.IndexType,
+    inputType=InputType.Option,
+    inputHelp="AliyunMilvus currently supports DISKANN only",
+    inputConfig={
+        "options": [IndexType.DISKANN.value],
+    },
+)
+
+CaseConfigParamInput_Aliyun_rerank_topk_multiplier = CaseConfigInput(
+    label=CaseConfigParamType.rerank_topk_multiplier,
+    inputType=InputType.Number,
+    displayLabel="Rerank TopK Multiplier",
+    inputHelp="Search param: multiplier of topk for rerank budget (0 disables rerank read). -1 = not specified (omit).",
+    inputConfig={"min": -1, "max": MAX_STREAMLIT_INT, "value": -1},
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.DISKANN.value,
+)
+
+CaseConfigParamInput_Aliyun_early_termination_threshold = CaseConfigInput(
+    label=CaseConfigParamType.early_termination_threshold,
+    inputType=InputType.Number,
+    displayLabel="Early Termination Threshold",
+    inputHelp="Search param: early termination threshold (0 disables). -1 = not specified (omit).",
+    inputConfig={"min": -1, "max": MAX_STREAMLIT_INT, "value": -1},
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.DISKANN.value,
+)
+
+CaseConfigParamInput_Aliyun_cross_segment_rerank = CaseConfigInput(
+    label=CaseConfigParamType.cross_segment_rerank,
+    inputType=InputType.Option,
+    displayLabel="Cross Segment Rerank",
+    inputHelp="Search param: enable cross-segment rerank. DEFAULT = not specified (omit).",
+    inputConfig={"options": ["DEFAULT", "True", "False"]},
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.DISKANN.value,
+)
+
+_AliyunMilvusDiskannSearchParams = [
+    CaseConfigParamInput_Aliyun_rerank_topk_multiplier,
+    CaseConfigParamInput_Aliyun_early_termination_threshold,
+    CaseConfigParamInput_Aliyun_cross_segment_rerank,
+]
+
+AliyunMilvusLoadConfig = [
+    CaseConfigParamInput_IndexType_AliyunMilvus,
+    *MilvusLoadConfig[1:],
+]
+AliyunMilvusPerformanceConfig = [
+    CaseConfigParamInput_IndexType_AliyunMilvus,
+    *MilvusPerformanceConfig[1:],
+    *_AliyunMilvusDiskannSearchParams,
+]
+
 WeaviateLoadConfig = [
     CaseConfigParamInput_MaxConnections,
     CaseConfigParamInput_EFConstruction_Weaviate,
@@ -3063,6 +3121,11 @@ CASE_CONFIG_MAP = {
     DB.PolarDB: {
         CaseLabel.Load: PolarDBConfig,
         CaseLabel.Performance: PolarDBConfig,
+    },
+    DB.AliyunMilvus: {
+        CaseLabel.Load: AliyunMilvusLoadConfig,
+        CaseLabel.Performance: AliyunMilvusPerformanceConfig,
+        CaseLabel.Streaming: AliyunMilvusPerformanceConfig,
     },
 }
 
