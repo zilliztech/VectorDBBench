@@ -116,6 +116,15 @@ def test_fts_iterator_preserves_qrel_docs_before_filler():
     assert "d4" in docs
 
 
+def test_fts_iterator_uses_requested_batch_size():
+    manager = make_tiny_msmarco_manager()
+    manager._ir_dataset = FakeDataset()
+
+    batches = list(manager.iter_batches(batch_size=2))
+
+    assert [len(batch) for batch in batches] == [2, 1]
+
+
 def test_fts_cap_rejects_required_qrel_docs_missing_from_corpus():
     manager = make_tiny_msmarco_manager()
     manager._ir_dataset = FakeDataset()

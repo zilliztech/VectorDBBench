@@ -7,6 +7,7 @@ import pytest
 
 from vectordb_bench.backend.cases import CaseLabel
 from vectordb_bench.backend.payload import PayloadProfile
+from vectordb_bench.backend.runner.concurrent_runner import ConcurrentFtsInsertRunner
 from vectordb_bench.backend.runner.mp_runner import MultiProcessingSearchRunner
 from vectordb_bench.backend.runner.serial_runner import SerialFtsInsertRunner, SerialSearchRunner
 from vectordb_bench.backend.task_runner import CaseRunner
@@ -16,6 +17,7 @@ from vectordb_bench.models import ConcurrencySlotTimeoutError, LoadTimeoutError,
 
 class FakeDB:
     name = "FakeDB"
+    thread_safe = True
 
     def __init__(self, has_text_field=True):
         self.calls = []
@@ -44,6 +46,19 @@ class FakeDB:
         if payload_profile == PayloadProfile.TEXT:
             return self.has_text_field()
         return False
+
+    def init(self):
+        return self
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        return None
+
+    def insert_documents(self, texts, doc_ids):
+        self.calls.append(("insert_documents", list(texts), list(doc_ids)))
+        return len(doc_ids), None
 
 
 class FakeInsertRunner:
@@ -334,9 +349,10 @@ def test_vector_load_train_data_is_not_individually_timed(monkeypatch):
 def test_fts_load_fts_data_is_not_individually_timed(monkeypatch):
     from vectordb_bench.backend import task_runner
 
-    monkeypatch.setattr(task_runner, "SerialFtsInsertRunner", FakeInsertRunner)
+    monkeypatch.setattr(task_runner, "ConcurrentFtsInsertRunner", FakeInsertRunner)
     runner = CaseRunner.construct(
         db=FakeDB(),
+        config=SimpleNamespace(load_concurrency=0),
         ca=SimpleNamespace(dataset="dataset", load_timeout=1),
     )
 
@@ -346,15 +362,62 @@ def test_fts_load_fts_data_is_not_individually_timed(monkeypatch):
 def test_fts_load_data_gets_single_timing_boundary(monkeypatch):
     from vectordb_bench.backend import task_runner
 
-    monkeypatch.setattr(task_runner, "SerialFtsInsertRunner", FakeInsertRunner)
+    monkeypatch.setattr(task_runner, "ConcurrentFtsInsertRunner", FakeInsertRunner)
     runner = CaseRunner.construct(
         db=FakeDB(),
+        config=SimpleNamespace(load_concurrency=0),
         ca=SimpleNamespace(label=CaseLabel.FullTextSearchPerformance, dataset="dataset", load_timeout=1),
     )
 
     result, _ = runner._load_data()
 
     assert result is None
+
+
+def test_fts_load_data_passes_load_concurrency(monkeypatch):
+    from vectordb_bench.backend import task_runner
+
+    captured = {}
+
+    class CaptureRunner(FakeInsertRunner):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            captured["args"] = args
+            captured["kwargs"] = kwargs
+
+    monkeypatch.setattr(task_runner, "ConcurrentFtsInsertRunner", CaptureRunner)
+    runner = CaseRunner.construct(
+        db=FakeDB(),
+        config=SimpleNamespace(load_concurrency=7),
+        ca=SimpleNamespace(label=CaseLabel.FullTextSearchPerformance, dataset="dataset", load_timeout=1),
+    )
+
+    runner._load_fts_data()
+
+    assert captured["kwargs"]["max_workers"] == 7
+
+
+def test_concurrent_fts_insert_runner_uses_dataset_batch_size():
+    docs = [
+        SimpleNamespace(doc_id="d1", text="alpha"),
+        SimpleNamespace(doc_id="d2", text="beta"),
+        SimpleNamespace(doc_id="d3", text="gamma"),
+    ]
+
+    class Dataset:
+        def iter_batches(self, batch_size):
+            self.batch_size = batch_size
+            for offset in range(0, len(docs), batch_size):
+                yield docs[offset : offset + batch_size]
+
+    db = FakeDB()
+    dataset = Dataset()
+    runner = ConcurrentFtsInsertRunner(db=db, dataset=dataset, max_workers=2, batch_size=2)
+
+    assert runner.task() == 3
+    assert dataset.batch_size == 2
+    inserted_ids = [doc_id for call in db.calls for doc_id in call[2]]
+    assert sorted(inserted_ids) == ["d1", "d2", "d3"]
 
 
 def test_fts_insert_runner_enforces_load_timeout(monkeypatch):

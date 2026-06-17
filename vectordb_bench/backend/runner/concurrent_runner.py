@@ -19,15 +19,15 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from vectordb_bench.backend.filter import Filter, FilterOp, non_filter
-from vectordb_bench.backend.utils import kill_proc_tree, time_it
+from vectordb_bench.backend.utils import kill_proc_tree, time_it, timeout as run_timeout
 
 from ... import config
-from ...models import PerformanceTimeoutError
+from ...models import LoadTimeoutError, PerformanceTimeoutError
 from .executor import AsyncExecutor, ThreadExecutor
 
 if TYPE_CHECKING:
     from vectordb_bench.backend.clients import api
-    from vectordb_bench.backend.dataset import DatasetManager
+    from vectordb_bench.backend.dataset import DatasetManager, FtsDatasetManager
 
     from .executor import TaskExecutor
 
@@ -280,4 +280,158 @@ class ConcurrentInsertRunner:
     def run(self) -> int:
         """Insert full dataset concurrently. Returns total inserted count."""
         count, _ = self._insert_all_batches()
+        return count
+
+
+class ConcurrentFtsInsertRunner:
+    """Concurrent FTS document insert runner.
+
+    This mirrors ConcurrentInsertRunner's threading model, but streams FTS
+    documents and calls VectorDB.insert_documents() instead of insert_embeddings().
+    The task runs in the current process because ir_datasets objects are not
+    reliably picklable under spawn.
+    """
+
+    def __init__(
+        self,
+        db: api.VectorDB,
+        dataset: FtsDatasetManager,
+        timeout: float | None = None,
+        max_workers: int | None = None,
+        backend: ExecutorBackend = ExecutorBackend.THREADING,
+        batch_size: int = config.NUM_PER_BATCH,
+    ):
+        self.timeout = timeout if isinstance(timeout, int | float) else None
+        self.dataset = dataset
+        self.db = db
+        self.backend = backend
+        self.batch_size = batch_size
+
+        effective_workers = max_workers or min(mp.cpu_count(), 4)
+        if not db.thread_safe:
+            log.info(f"DB {db.name} is not thread-safe, falling back to max_workers=1")
+            effective_workers = 1
+        self.max_workers = effective_workers
+        assert db.thread_safe or self.max_workers == 1, "Non-thread-safe DBs must use max_workers=1"
+
+    def _create_executor(self) -> TaskExecutor:
+        if self.backend == ExecutorBackend.ASYNC:
+            return AsyncExecutor(max_workers=self.max_workers)
+        return ThreadExecutor(max_workers=self.max_workers)
+
+    def _get_thread_db(self) -> api.VectorDB:
+        return self.db
+
+    def _insert_batch_with_retry(
+        self,
+        db: api.VectorDB,
+        texts: list[str],
+        doc_ids: list[str],
+        retry_idx: int = 0,
+    ) -> int:
+        insert_count, error = db.insert_documents(texts=texts, doc_ids=doc_ids)
+        if error is not None:
+            log.warning(f"FTS insert failed, try_idx={retry_idx}, Exception: {error}")
+            if getattr(error, "non_retryable", False):
+                msg = f"Non-retryable FTS insert failure after {insert_count} inserted rows: {error}"
+                raise RuntimeError(msg) from error
+            retry_idx += 1
+            if retry_idx <= config.MAX_INSERT_RETRY:
+                time.sleep(retry_idx)
+                return self._insert_batch_with_retry(db, texts, doc_ids, retry_idx)
+            msg = f"FTS insert failed and retried more than {config.MAX_INSERT_RETRY} times"
+            raise RuntimeError(msg)
+        return insert_count
+
+    def _worker_insert(self, texts: list[str], doc_ids: list[str]) -> int:
+        db = self._get_thread_db()
+        return self._insert_batch_with_retry(db, texts, doc_ids)
+
+    def _record_insert_progress(self, insert_count: int) -> None:
+        with self._count_lock:
+            self._inserted_count += insert_count
+            while self._inserted_count >= self._next_log_count:
+                log.info(f"Loaded {self._next_log_count} FTS documents into VectorDB")
+                self._next_log_count += 100_000
+
+    def _next_batch(self) -> tuple[list[str], list[str]] | None:
+        stop_event = getattr(self, "_stop_event", None)
+        if stop_event is not None and stop_event.is_set():
+            return None
+
+        with self._iter_lock:
+            stop_event = getattr(self, "_stop_event", None)
+            if stop_event is not None and stop_event.is_set():
+                return None
+            try:
+                batch = next(self._dataset_iter)
+            except StopIteration:
+                return None
+
+        doc_ids: list[str] = []
+        texts: list[str] = []
+        for doc in batch:
+            doc_ids.append(str(doc.doc_id if hasattr(doc, "doc_id") else doc["doc_id"]))
+            texts.append(doc.text if hasattr(doc, "text") else doc["text"])
+        return texts, doc_ids
+
+    def _worker_loop(self) -> int:
+        total = 0
+        try:
+            while True:
+                batch = self._next_batch()
+                if batch is None:
+                    break
+                texts, doc_ids = batch
+                inserted = self._worker_insert(texts, doc_ids)
+                total += inserted
+                self._record_insert_progress(inserted)
+        except Exception:
+            stop_event = getattr(self, "_stop_event", None)
+            if stop_event is not None:
+                stop_event.set()
+            raise
+        return total
+
+    def task(self) -> int:
+        count = 0
+        self._iter_lock = threading.Lock()
+        self._count_lock = threading.Lock()
+        self._stop_event = threading.Event()
+        self._inserted_count = 0
+        self._next_log_count = 100_000
+        self._dataset_iter = self.dataset.iter_batches(self.batch_size)
+
+        with self.db.init():
+            log.info(
+                f"Start concurrent FTS insert, batch_size={self.batch_size}, max_workers={self.max_workers}"
+            )
+            start = time.perf_counter()
+
+            with self._create_executor() as executor:
+                for _ in range(self.max_workers):
+                    executor.submit(self._worker_loop)
+
+                batch_results = executor.wait_all()
+
+            errors = [r.error for r in batch_results if r.error is not None]
+            if errors:
+                for err in errors:
+                    log.warning(f"FTS batch insert error: {err}")
+                raise errors[0]
+
+            count = sum(r.value for r in batch_results)
+
+            log.info(
+                f"Finish concurrent FTS insert, count={count}, dur={time.perf_counter() - start:.2f}s"
+            )
+        return count
+
+    @time_it
+    def _insert_all_batches(self) -> int:
+        return self.task()
+
+    def run(self) -> int:
+        with run_timeout(self.timeout, lambda: LoadTimeoutError(self.timeout)):
+            count, _ = self._insert_all_batches()
         return count

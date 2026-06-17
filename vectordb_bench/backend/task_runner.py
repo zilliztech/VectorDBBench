@@ -17,10 +17,10 @@ from .clients import DB, MetricType, api
 from .data_source import DatasetSource
 from .runner import (
     ColdWarmSearchRunner,
+    ConcurrentFtsInsertRunner,
     ConcurrentInsertRunner,
     MultiProcessingSearchRunner,
     ReadWriteRunner,
-    SerialFtsInsertRunner,
     SerialInsertRunner,
     SerialSearchRunner,
 )
@@ -479,10 +479,11 @@ class CaseRunner(BaseModel):
     def _load_fts_data(self):
         """Insert FTS documents and get insert duration."""
         try:
-            runner = SerialFtsInsertRunner(
+            runner = ConcurrentFtsInsertRunner(
                 self.db,
                 self.ca.dataset,
                 self.ca.load_timeout,
+                max_workers=self.config.load_concurrency or None,
             )
             runner.run()
         except Exception as e:
