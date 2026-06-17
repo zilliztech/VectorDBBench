@@ -13,7 +13,7 @@ from pydantic import SecretStr
 from vectordb_bench.backend.cases import CaseType
 from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.clients.api import IndexType
-from vectordb_bench.backend.clients.milvus.config import MilvusConfig
+from vectordb_bench.backend.clients.milvus.config import MilvusConfig, MilvusFtsConfig
 from vectordb_bench.backend.clients.milvus.milvus import MILVUS_FORCE_MERGE_TARGET_SIZE_MB, Milvus
 from vectordb_bench.backend.payload import PayloadProfile
 from vectordb_bench.interface import BenchMarkRunner
@@ -63,6 +63,24 @@ class TestMilvusOptimize:
 
         assert exc_info.value is error
         milvus.client.refresh_load.assert_not_called()
+
+    def test_optimize_compacts_fts_by_default(self):
+        milvus = self._milvus()
+        milvus.case_config = MilvusFtsConfig()
+
+        milvus._optimize()
+
+        milvus.client.compact.assert_called_once_with("test_collection", target_size=MILVUS_FORCE_MERGE_TARGET_SIZE_MB)
+        milvus.client.refresh_load.assert_called_once_with("test_collection")
+
+    def test_optimize_can_skip_fts_force_merge(self):
+        milvus = self._milvus()
+        milvus.case_config = MilvusFtsConfig(use_force_merge=False)
+
+        milvus._optimize()
+
+        milvus.client.compact.assert_not_called()
+        milvus.client.refresh_load.assert_called_once_with("test_collection")
 
 
 @pytest.mark.integration

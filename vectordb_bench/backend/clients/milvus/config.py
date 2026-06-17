@@ -463,6 +463,9 @@ class MilvusFtsConfig(BaseModel, DBCaseConfig):
     8. drop_ratio_search: Ratio of minimum values to ignore during search [0.0, 1.0], default None
        - 0.0: Keep all values, highest recall
        - 0.1-0.3: Improve search speed by 10-20%, slight impact on recall
+    9. use_force_merge: Whether to compact sealed segments before search, default True
+       - True: Prefer fully optimized search measurements
+       - False: Keep the historical FTS behavior of flush + wait index + refresh load only
     """
 
     index_type: str = "SPARSE_INVERTED_INDEX"
@@ -475,6 +478,7 @@ class MilvusFtsConfig(BaseModel, DBCaseConfig):
     analyzer_max_token_length: int | None = 40
     analyzer_stop_words: str | None = None
     drop_ratio_search: float | None = None
+    use_force_merge: bool = True
 
     def analyzer_param(self) -> dict:
         analyzer_params = {}

@@ -830,6 +830,17 @@ class MilvusFTSTypedDict(CommonTypedDict, MilvusTypedDict):
             default=None,
         ),
     ]
+    use_force_merge: Annotated[
+        bool,
+        click.option(
+            "--use-force-merge/--no-use-force-merge",
+            type=bool,
+            help="Compact sealed Milvus segments before FTS search.",
+            required=False,
+            default=True,
+            show_default=True,
+        ),
+    ]
 
 
 @cli.command()
@@ -859,6 +870,7 @@ def MilvusFTS(**parameters: Unpack[MilvusFTSTypedDict]):
             bm25_k1=parameters.get("bm25_k1"),
             bm25_b=parameters.get("bm25_b"),
             drop_ratio_search=parameters.get("drop_ratio_search"),
+            use_force_merge=parameters["use_force_merge"],
         ),
         **parameters,
     )
