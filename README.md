@@ -424,7 +424,8 @@ Execute tests for the index types: HGraph.
 NUM_PER_BATCH=10000 vectordbbench hologreshgraph --host Hologres_Endpoint --port 80 \
 --user ACCESS_ID --password ACCESS_KEY --database DATABASE_NAME \
 --m 64 --ef-construction 400 --case-type Performance768D10M \
---index-type HGraph --ef-search 400 --k 10 --num-concurrency 1,60,70,75,80,90,95,100,110,120
+--index-type HGraph --ef-search 400 --k 10 --num-concurrency 1,60,70,75,80,90,95,100,105,110,115,120,125,130 \
+--serial-cooldown 3
 ```
 
 To list the options for Hologres, execute `vectordbbench hologreshgraph --help`, The following are some Hologres-specific command-line options.

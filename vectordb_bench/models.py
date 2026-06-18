@@ -184,6 +184,7 @@ class ConcurrencySearchConfig(BaseModel):
     num_concurrency: list[int] = config.NUM_CONCURRENCY
     concurrency_duration: int = config.CONCURRENCY_DURATION
     concurrency_timeout: int = config.CONCURRENCY_TIMEOUT
+    serial_cooldown: float = config.SERIAL_COOLDOWN
 
 
 class CaseConfig(BaseModel):
