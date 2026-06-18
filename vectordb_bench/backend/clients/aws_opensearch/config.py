@@ -31,9 +31,7 @@ class AWSOpenSearchConfig(DBConfig, BaseModel):
         try:
             import boto3
         except ImportError as e:
-            raise ImportError(
-                "boto3 is required for OpenSearch Serverless. Install with: pip install boto3"
-            ) from e
+            raise ImportError("boto3 is required for OpenSearch Serverless. Install with: pip install boto3") from e
 
         try:
             from opensearchpy import RequestsHttpConnection

@@ -26,7 +26,9 @@ class AWSOpenSearchTypedDict(TypedDict):
     host: Annotated[str, click.option("--host", type=str, help="Db host", required=True)]
     port: Annotated[int, click.option("--port", type=int, default=80, help="Db Port")]
     user: Annotated[str | None, click.option("--user", type=str, help="Db User (not needed for Serverless)")]
-    password: Annotated[str | None, click.option("--password", type=str, help="Db password (not needed for Serverless)")]
+    password: Annotated[
+        str | None, click.option("--password", type=str, help="Db password (not needed for Serverless)")
+    ]
     is_serverless: Annotated[bool, click.option("--serverless", is_flag=True, help="Use OpenSearch Serverless")]
     aws_region: Annotated[
         str, click.option("--aws-region", type=str, default="us-east-1", help="AWS region for Serverless")
