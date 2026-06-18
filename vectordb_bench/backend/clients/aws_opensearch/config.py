@@ -67,7 +67,7 @@ class AWSOpenSearchConfig(DBConfig, BaseModel):
             "timeout": 600,
             "max_retries": 3,
             "retry_on_timeout": True,
-            "http_compress": True,
+            "http_compress": False,
         }
 
     def _standard_config(self) -> dict:
