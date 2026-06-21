@@ -312,8 +312,9 @@ class CaseRunner(BaseModel):
             m = Metric()
             if drop_old:
                 if TaskStage.LOAD in self.config.stages:
-                    _, load_dur = self._load_data()
+                    count, load_dur = self._load_data()
                     build_dur = self._optimize()
+                    m.inserted_count = count
                     m.insert_duration = round(load_dur, 4)
                     m.optimize_duration = round(build_dur, 4)
                     m.load_duration = round(load_dur + build_dur, 4)
