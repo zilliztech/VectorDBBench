@@ -557,8 +557,6 @@ class FtsDocument:
     text: str
 
 
-FtsGroundTruth = dict[str, list[str]]
-
 FTS_GT_FILE = "neighbors.parquet"
 FTS_MATH_GT_FILES = (FTS_GT_FILE, "build_manifest.json", "manifest.json")
 
@@ -586,14 +584,6 @@ class FtsDatasetTranslator(ABC):
     def translate_document(self, ir_doc: typing.Any) -> FtsDocument:
         """Convert ir_datasets document to internal FtsDocument format."""
 
-    @abstractmethod
-    def load_ground_truth(self, dataset: typing.Any) -> FtsGroundTruth:
-        """Load ground truth data from ir_datasets.
-
-        Returns:
-            dict mapping query_id to list of relevant doc_ids
-        """
-
     def load(self) -> typing.Any:
         """Load ir_datasets dataset."""
         return ir_datasets.load(self.ir_datasets_name)
@@ -609,18 +599,6 @@ class FtsDatasetTranslator(ABC):
             yield self.translate_document(doc)
 
 
-def _load_positive_qrels(dataset: typing.Any) -> FtsGroundTruth:
-    gt: FtsGroundTruth = {}
-    for qrel in dataset.qrels_iter():
-        relevance = int(getattr(qrel, "relevance", 1))
-        if relevance <= 0:
-            continue
-        query_id = str(qrel.query_id)
-        doc_id = str(qrel.doc_id)
-        gt.setdefault(query_id, []).append(doc_id)
-    return gt
-
-
 class MSMarcoTranslator(FtsDatasetTranslator):
     """Translator for MS MARCO passage retrieval dataset."""
 
@@ -634,9 +612,6 @@ class MSMarcoTranslator(FtsDatasetTranslator):
     def translate_document(self, ir_doc: typing.Any) -> FtsDocument:
         clean_text = ir_doc.text.replace("\t", " ").replace("\n", " ")
         return FtsDocument(doc_id=str(ir_doc.doc_id), text=clean_text)
-
-    def load_ground_truth(self, dataset: typing.Any) -> FtsGroundTruth:
-        return _load_positive_qrels(dataset)
 
 
 class HotpotQATranslator(FtsDatasetTranslator):
@@ -654,9 +629,6 @@ class HotpotQATranslator(FtsDatasetTranslator):
         text = getattr(ir_doc, "text", "") or ""
         clean_text = f"{title} {text}".replace("\t", " ").replace("\n", " ").strip()
         return FtsDocument(doc_id=str(ir_doc.doc_id), text=clean_text)
-
-    def load_ground_truth(self, dataset: typing.Any) -> FtsGroundTruth:
-        return _load_positive_qrels(dataset)
 
 
 class FtsBaseDataset(BaseModel):
@@ -743,8 +715,6 @@ class FtsDatasetManager(BaseModel):
 
     queries_data: list[FtsQuery] | None = None
     gt_data: list[list[str]] | None = None
-    required_doc_ids: set[str] | None = None
-    selected_doc_ids: set[str] | None = None
     _ir_dataset: typing.Any = PrivateAttr(default=None)
 
     def __init__(self, **data):
@@ -774,44 +744,6 @@ class FtsDatasetManager(BaseModel):
             self.data.name.lower(),
             self.data.dir_name,
         )
-
-    def _validate_cap(self, required_doc_ids: set[str], target_size: int) -> None:
-        if len(required_doc_ids) > target_size:
-            msg = f"{self.data.full_name} cap {target_size} requires {len(required_doc_ids)} qrel documents"
-            raise ValueError(msg)
-
-    def _build_required_doc_ids(self) -> set[str]:
-        if not self.gt_data:
-            return set()
-        return {doc_id for doc_ids in self.gt_data for doc_id in doc_ids}
-
-    def _build_selected_doc_ids(self) -> set[str] | None:
-        if self._is_large():
-            return None
-        required_doc_ids = self.required_doc_ids or set()
-        self._validate_cap(required_doc_ids, self.data.size)
-        selected_doc_ids: set[str] = set(required_doc_ids)
-        found_required_doc_ids: set[str] = set()
-        for ir_doc in self._ir_dataset.docs_iter():
-            doc_id = str(ir_doc.doc_id)
-            if doc_id in required_doc_ids:
-                found_required_doc_ids.add(doc_id)
-            if len(selected_doc_ids) < self.data.size:
-                selected_doc_ids.add(doc_id)
-            if len(selected_doc_ids) >= self.data.size and found_required_doc_ids == required_doc_ids:
-                break
-        missing_required_doc_ids = required_doc_ids - found_required_doc_ids
-        if missing_required_doc_ids:
-            missing = ", ".join(sorted(missing_required_doc_ids)[:10])
-            msg = f"{self.data.full_name} required qrel documents are missing from corpus: {missing}"
-            raise ValueError(msg)
-        if len(selected_doc_ids) < self.data.size:
-            msg = f"{self.data.full_name} only selected {len(selected_doc_ids)} documents for cap {self.data.size}"
-            raise ValueError(msg)
-        return selected_doc_ids
-
-    def _is_large(self) -> bool:
-        return self.data.label == "LARGE"
 
     def _download_math_gt_files(self) -> None:
         DatasetSource.S3.reader().read(
@@ -862,7 +794,7 @@ class FtsDatasetManager(BaseModel):
             self._ir_dataset = self._translator.load()
             log.info(f"Successfully loaded ir_datasets dataset: {self._translator.ir_datasets_name}")
 
-            # Load queries and ground truth using translator and math GT artifacts
+            # Load queries from ir_datasets and mathematical ground truth artifacts by row order.
             if self.data.with_gt:
                 # Load queries using translator
                 self.queries_data = list(self._translator.iter_queries(self._ir_dataset))
@@ -877,8 +809,6 @@ class FtsDatasetManager(BaseModel):
                     )
                     raise ValueError(msg)
                 log.info(f"Loaded mathematical ground truth for {len(self.gt_data)} queries into memory")
-                self.required_doc_ids = None
-                self.selected_doc_ids = None
 
         except ValueError:
             log.exception("Invalid FTS dataset configuration")
@@ -956,11 +886,7 @@ class FtsDocumentIterator:
                         return batch
                     raise StopIteration  # noqa: TRY301
                 try:
-                    while True:
-                        doc = next(self._docs_iter)
-                        selected_doc_ids = self._ds.selected_doc_ids
-                        if selected_doc_ids is None or doc.doc_id in selected_doc_ids:
-                            break
+                    doc = next(self._docs_iter)
                     doc.doc_id = str(self._doc_count)
                     batch.append(doc)
                     self._doc_count += 1
