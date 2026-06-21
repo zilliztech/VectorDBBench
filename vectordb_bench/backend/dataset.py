@@ -559,6 +559,9 @@ class FtsDocument:
 
 FtsGroundTruth = dict[str, list[str]]
 
+FTS_GT_FILE = "neighbors.parquet"
+FTS_MATH_GT_FILES = (FTS_GT_FILE, "build_manifest.json", "manifest.json")
+
 
 class FtsDatasetTranslator(ABC):
     """Abstract base class for converting ir_datasets schema to internal format.
@@ -669,6 +672,7 @@ class FtsBaseDataset(BaseModel):
     metric_type: MetricType = MetricType.BM25
     with_gt: bool = True
     with_remote_resource: bool = False
+    gt_neighbors_field: str = "neighbors_id"
 
     _size_label: ClassVar[dict[int, SizeLabel]]
 
@@ -705,6 +709,10 @@ class MSMarcoFts(FtsBaseDataset):
         8_841_823: SizeLabel(8_841_823, "LARGE", 1),
     }
 
+    @property
+    def dir_name(self) -> str:
+        return f"msmarco_{self.label}_{utils.numerize(self.size)}".lower()
+
 
 class HotpotQAFts(FtsBaseDataset):
     name: str = "HotpotQA"
@@ -725,7 +733,7 @@ class FtsDatasetManager(BaseModel):
 
     Similar to DatasetManager, but for text-based FTS datasets:
     - queries_data: loaded queries (similar to test_data in vectors)
-    - qrels_data: loaded ground truth (similar to gt_data in vectors)
+    - gt_data: loaded ground truth (similar to gt_data in vectors)
     - translator: dataset-specific translator for schema conversion
     - _ir_dataset: ir_datasets dataset object for direct access
     """
@@ -734,7 +742,7 @@ class FtsDatasetManager(BaseModel):
     _translator: typing.Any = PrivateAttr()
 
     queries_data: list[FtsQuery] | None = None
-    qrels_data: FtsGroundTruth | None = None
+    gt_data: list[list[str]] | None = None
     required_doc_ids: set[str] | None = None
     selected_doc_ids: set[str] | None = None
     _ir_dataset: typing.Any = PrivateAttr(default=None)
@@ -773,9 +781,9 @@ class FtsDatasetManager(BaseModel):
             raise ValueError(msg)
 
     def _build_required_doc_ids(self) -> set[str]:
-        if not self.qrels_data:
+        if not self.gt_data:
             return set()
-        return {doc_id for doc_ids in self.qrels_data.values() for doc_id in doc_ids}
+        return {doc_id for doc_ids in self.gt_data for doc_id in doc_ids}
 
     def _build_selected_doc_ids(self) -> set[str] | None:
         if self._is_large():
@@ -805,6 +813,21 @@ class FtsDatasetManager(BaseModel):
     def _is_large(self) -> bool:
         return self.data.label == "LARGE"
 
+    def _download_math_gt_files(self) -> None:
+        DatasetSource.S3.reader().read(
+            dataset=self.data.dir_name.lower(),
+            files=list(FTS_MATH_GT_FILES),
+            local_ds_root=self.data_dir,
+        )
+
+    def _load_math_gt_data(self) -> list[list[str]]:
+        p = pathlib.Path(self.data_dir, FTS_GT_FILE)
+        if not p.exists():
+            msg = f"No such file: {p}"
+            raise FileNotFoundError(msg)
+        gt_rows = pl.read_parquet(p)[self.data.gt_neighbors_field].to_list()
+        return [[str(doc_id) for doc_id in row] for row in gt_rows]
+
     def prepare(
         self,
         source: DatasetSource | None = None,
@@ -815,7 +838,7 @@ class FtsDatasetManager(BaseModel):
         Directly uses ir_datasets API without generating TSV files:
         1. Downloads dataset using ir_datasets (if needed)
         2. Loads dataset object using translator
-        3. Loads queries and qrels data into memory using translator
+        3. Loads queries from ir_datasets and mathematical ground truth from S3
 
         Args:
             source: Data source to download from (should be IR_DATASETS for FTS)
@@ -839,17 +862,23 @@ class FtsDatasetManager(BaseModel):
             self._ir_dataset = self._translator.load()
             log.info(f"Successfully loaded ir_datasets dataset: {self._translator.ir_datasets_name}")
 
-            # Load queries and qrels using translator
+            # Load queries and ground truth using translator and math GT artifacts
             if self.data.with_gt:
                 # Load queries using translator
                 self.queries_data = list(self._translator.iter_queries(self._ir_dataset))
                 log.info(f"Loaded {len(self.queries_data)} queries into memory")
 
-                # Load ground truth using translator
-                self.qrels_data = self._translator.load_ground_truth(self._ir_dataset)
-                log.info(f"Loaded ground truth for {len(self.qrels_data)} queries into memory")
-                self.required_doc_ids = self._build_required_doc_ids()
-                self.selected_doc_ids = self._build_selected_doc_ids()
+                self._download_math_gt_files()
+                self.gt_data = self._load_math_gt_data()
+                if len(self.queries_data) != len(self.gt_data):
+                    msg = (
+                        f"{self.data.full_name} query count {len(self.queries_data)} "
+                        f"does not match ground truth row count {len(self.gt_data)}"
+                    )
+                    raise ValueError(msg)
+                log.info(f"Loaded mathematical ground truth for {len(self.gt_data)} queries into memory")
+                self.required_doc_ids = None
+                self.selected_doc_ids = None
 
         except ValueError:
             log.exception("Invalid FTS dataset configuration")

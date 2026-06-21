@@ -598,15 +598,14 @@ class CaseRunner(BaseModel):
     def _init_fts_search_runner(self):
         fts_dataset = self.ca.dataset
 
-        test_texts: list[str] = []
-        ground_truth: list[list[str]] = []
-
-        for q in fts_dataset.queries_data:
-            qid = q.query_id
-            if qid not in fts_dataset.qrels_data:
-                continue
-            test_texts.append(q.text)
-            ground_truth.append(fts_dataset.qrels_data[qid])
+        if fts_dataset.queries_data is None or fts_dataset.gt_data is None:
+            msg = "FTS dataset is missing queries or ground truth. Call prepare() before initializing search."
+            raise ValueError(msg)
+        test_texts = [q.text for q in fts_dataset.queries_data]
+        ground_truth = fts_dataset.gt_data
+        if len(test_texts) != len(ground_truth):
+            msg = f"FTS query count {len(test_texts)} does not match ground truth row count {len(ground_truth)}"
+            raise ValueError(msg)
 
         log.info(f"FTS test will use {len(test_texts)} queries for testing")
         self.test_texts = test_texts
