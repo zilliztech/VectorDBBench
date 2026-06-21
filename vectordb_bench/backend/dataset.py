@@ -961,6 +961,7 @@ class FtsDocumentIterator:
                         selected_doc_ids = self._ds.selected_doc_ids
                         if selected_doc_ids is None or doc.doc_id in selected_doc_ids:
                             break
+                    doc.doc_id = str(self._doc_count)
                     batch.append(doc)
                     self._doc_count += 1
                 except StopIteration:
