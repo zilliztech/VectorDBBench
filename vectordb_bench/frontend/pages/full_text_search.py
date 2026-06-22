@@ -116,19 +116,16 @@ def _filter_data(st, data: pd.DataFrame) -> pd.DataFrame:
             [dataset for dataset in DATASET_ORDER if dataset in set(data["dataset"].astype(str))],
             default=[dataset for dataset in DATASET_ORDER if dataset in set(data["dataset"].astype(str))],
         )
-        selected_backends = st.multiselect(
-            "Backend",
-            [backend for backend in BACKEND_ORDER if backend in set(data["backend"].astype(str))],
-            default=[backend for backend in BACKEND_ORDER if backend in set(data["backend"].astype(str))],
-        )
+        backend_options = [backend for backend in BACKEND_ORDER if backend in set(data["backend"].astype(str))]
+        selected_backend = st.selectbox("Backend", ["All", *backend_options])
         payloads = sorted(data["payload"].dropna().unique().tolist())
         selected_payloads = st.multiselect("Payload", payloads, default=payloads)
 
-    return data[
-        data["dataset"].astype(str).isin(selected_datasets)
-        & data["backend"].astype(str).isin(selected_backends)
-        & data["payload"].isin(selected_payloads)
-    ].copy()
+    filters = data["dataset"].astype(str).isin(selected_datasets) & data["payload"].isin(selected_payloads)
+    if selected_backend != "All":
+        filters &= data["backend"].astype(str) == selected_backend
+
+    return data[filters].copy()
 
 
 def _draw_summary_table(st, data: pd.DataFrame) -> None:
