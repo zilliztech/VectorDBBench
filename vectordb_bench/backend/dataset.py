@@ -821,6 +821,10 @@ class FtsDatasetManager(BaseModel):
             log.info(f"FTS dataset preparation completed: {self.data.full_name}")
             return True
 
+    def iter_batches(self, batch_size: int = config.NUM_PER_BATCH):
+        """Return an iterator for streaming FTS document batches."""
+        return FtsDocumentIterator(self, batch_size=batch_size)
+
     def __iter__(self):
         """Return iterator for streaming document batches.
 
@@ -833,7 +837,7 @@ class FtsDatasetManager(BaseModel):
             >>> for batch in manager:
             >>>     print(f"Processing {len(batch)} documents")
         """
-        return FtsDocumentIterator(self)
+        return self.iter_batches()
 
 
 class FtsDocumentIterator:
@@ -844,9 +848,9 @@ class FtsDocumentIterator:
     processing of large datasets.
     """
 
-    def __init__(self, dataset: FtsDatasetManager):
+    def __init__(self, dataset: FtsDatasetManager, batch_size: int = config.NUM_PER_BATCH):
         self._ds = dataset
-        self._batch_size = config.NUM_PER_BATCH
+        self._batch_size = batch_size
         self._finished = False
         self._doc_count = 0  # Track total documents processed
         self._docs_iter = None

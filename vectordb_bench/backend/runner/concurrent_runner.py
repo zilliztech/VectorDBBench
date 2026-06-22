@@ -246,10 +246,7 @@ class ConcurrentInsertRunner:
         self._iter_lock = threading.Lock()
         self._stop_event = threading.Event()
         self._deadline = None if self.duration is None else time.perf_counter() + self.duration
-        if getattr(self, "workload_kind", WorkloadKind.VECTOR) == WorkloadKind.FULL_TEXT:
-            self._dataset_iter = iter(self.dataset)
-        else:
-            self._dataset_iter = self.dataset.iter_batches(self.batch_size)
+        self._dataset_iter = self.dataset.iter_batches(self.batch_size)
 
         with self.db.init():
             log.info(
