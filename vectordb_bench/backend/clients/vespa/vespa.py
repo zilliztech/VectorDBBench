@@ -292,7 +292,12 @@ class Vespa(VectorDB):
                         self.schema_name,
                         Document(fields),
                         rank_profiles=[
-                            RankProfile(name="bm25", first_phase="bm25(text)", inherits="default"),
+                            RankProfile(
+                                name="bm25",
+                                first_phase="bm25(text)",
+                                inherits="default",
+                                rank_properties=self.case_config.rank_properties(),
+                            ),
                         ],
                     )
                 ],

@@ -85,13 +85,13 @@ class ElasticCloud(VectorDB):
     def _create_indice(self, client: any) -> None:
         if self._is_fts:
             mappings = self.case_config.index_param()
-            settings = {
-                "index": {
-                    "number_of_shards": self.case_config.number_of_shards,
-                    "number_of_replicas": self.case_config.number_of_replicas,
-                    "refresh_interval": self.case_config.refresh_interval,
-                }
+            index_settings = {
+                "number_of_shards": self.case_config.number_of_shards,
+                "number_of_replicas": self.case_config.number_of_replicas,
+                "refresh_interval": self.case_config.refresh_interval,
             }
+            index_settings.update(self.case_config.similarity_settings())
+            settings = {"index": index_settings}
             client.indices.create(index=self.indice, mappings=mappings, settings=settings)
             return
 

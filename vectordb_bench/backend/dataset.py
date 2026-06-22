@@ -4,6 +4,7 @@ Usage:
     >>> Dataset.Cohere.get(100_000)
 """
 
+import json
 import logging
 import pathlib
 import types
@@ -18,6 +19,7 @@ import ir_datasets
 import pandas as pd
 import polars as pl
 from pyarrow.parquet import ParquetFile
+from pydantic import Field as PydanticField
 from pydantic import PrivateAttr, field_validator
 
 from vectordb_bench import config
@@ -558,7 +560,8 @@ class FtsDocument:
 
 
 FTS_GT_FILE = "neighbors.parquet"
-FTS_MATH_GT_FILES = (FTS_GT_FILE, "build_manifest.json", "manifest.json")
+FTS_BUILD_MANIFEST_FILE = "build_manifest.json"
+FTS_MATH_GT_FILES = (FTS_GT_FILE, FTS_BUILD_MANIFEST_FILE, "manifest.json")
 
 
 class FtsDatasetTranslator(ABC):
@@ -715,6 +718,8 @@ class FtsDatasetManager(BaseModel):
 
     queries_data: list[FtsQuery] | None = None
     gt_data: list[list[str]] | None = None
+    bm25_params: dict[str, float] = PydanticField(default_factory=dict)
+    analyzer_params: dict[str, typing.Any] = PydanticField(default_factory=dict)
     _ir_dataset: typing.Any = PrivateAttr(default=None)
 
     def __init__(self, **data):
@@ -760,6 +765,28 @@ class FtsDatasetManager(BaseModel):
         gt_rows = pl.read_parquet(p)[self.data.gt_neighbors_field].to_list()
         return [[str(doc_id) for doc_id in row] for row in gt_rows]
 
+    def _load_build_manifest(self) -> dict[str, typing.Any]:
+        p = pathlib.Path(self.data_dir, FTS_BUILD_MANIFEST_FILE)
+        if not p.exists():
+            msg = f"No such file: {p}"
+            raise FileNotFoundError(msg)
+        manifest = json.loads(p.read_text(encoding="utf-8"))
+        if not isinstance(manifest, dict):
+            msg = f"Invalid FTS build manifest: {p}"
+            raise ValueError(msg)
+        return manifest
+
+    def _load_manifest_params(self) -> None:
+        manifest = self._load_build_manifest()
+        bm25 = manifest.get("bm25") or {}
+        analyzer = manifest.get("analyzer") or {}
+        self.bm25_params = {
+            key: float(bm25[key])
+            for key in ("k1", "b", "avgdl")
+            if key in bm25 and bm25[key] is not None
+        }
+        self.analyzer_params = analyzer if isinstance(analyzer, dict) else {}
+
     def prepare(
         self,
         source: DatasetSource | None = None,
@@ -801,6 +828,7 @@ class FtsDatasetManager(BaseModel):
                 log.info(f"Loaded {len(self.queries_data)} queries into memory")
 
                 self._download_math_gt_files()
+                self._load_manifest_params()
                 self.gt_data = self._load_math_gt_data()
                 if len(self.queries_data) != len(self.gt_data):
                     msg = (

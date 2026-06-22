@@ -210,6 +210,93 @@ class CaseRunner(BaseModel):
             **extra_db_kwargs,
         )
 
+    @staticmethod
+    def _filter_list(analyzer_params: dict) -> list:
+        filters = analyzer_params.get("filter") or []
+        if isinstance(filters, list):
+            return filters
+        return [filters]
+
+    def _milvus_analyzer_manifest_updates(self, analyzer_params: dict) -> dict:
+        if not analyzer_params:
+            return {}
+
+        updates = {}
+        tokenizer = analyzer_params.get("tokenizer")
+        if tokenizer:
+            updates["analyzer_tokenizer"] = tokenizer
+
+        filters = self._filter_list(analyzer_params)
+        updates["analyzer_enable_lowercase"] = "lowercase" in filters
+
+        length_max = None
+        stop_words = None
+        for item in filters:
+            if not isinstance(item, dict):
+                continue
+            if item.get("type") == "length":
+                length_max = item.get("max")
+            elif item.get("type") == "stop":
+                configured_stop_words = item.get("stop_words")
+                if isinstance(configured_stop_words, list):
+                    stop_words = ",".join(str(word) for word in configured_stop_words)
+                elif configured_stop_words:
+                    stop_words = str(configured_stop_words)
+
+        updates["analyzer_max_token_length"] = length_max
+        updates["analyzer_stop_words"] = stop_words
+        return updates
+
+    def _apply_fts_manifest_params(self) -> None:
+        bm25_params = getattr(self.ca.dataset, "bm25_params", {}) or {}
+        analyzer_params = getattr(self.ca.dataset, "analyzer_params", {}) or {}
+        updates = {}
+
+        if self.config.db == DB.Milvus:
+            if "k1" in bm25_params:
+                updates["bm25_k1"] = bm25_params["k1"]
+            if "b" in bm25_params:
+                updates["bm25_b"] = bm25_params["b"]
+            updates.update(self._milvus_analyzer_manifest_updates(analyzer_params))
+        elif self.config.db == DB.ElasticCloud:
+            if "k1" in bm25_params:
+                updates["bm25_k1"] = bm25_params["k1"]
+            if "b" in bm25_params:
+                updates["bm25_b"] = bm25_params["b"]
+        elif self.config.db == DB.Vespa:
+            if "k1" in bm25_params:
+                updates["bm25_k1"] = bm25_params["k1"]
+            if "b" in bm25_params:
+                updates["bm25_b"] = bm25_params["b"]
+            if "avgdl" in bm25_params:
+                updates["bm25_avgdl"] = bm25_params["avgdl"]
+
+        if updates:
+            self.config.db_case_config = self.config.db_case_config.model_copy(update=updates)
+
+    def _fts_manifest_additional_parameters(self) -> dict:
+        bm25_params = dict(getattr(self.ca.dataset, "bm25_params", {}) or {})
+        analyzer_params = dict(getattr(self.ca.dataset, "analyzer_params", {}) or {})
+
+        applied_keys: set[str]
+        if self.config.db in {DB.Milvus, DB.ElasticCloud}:
+            applied_keys = {"k1", "b"}
+        elif self.config.db == DB.Vespa:
+            applied_keys = {"k1", "b", "avgdl"}
+        else:
+            applied_keys = set()
+
+        return {
+            "fts_manifest": {
+                "bm25": bm25_params,
+                "analyzer": analyzer_params,
+            },
+            "applied_bm25_params": {k: v for k, v in bm25_params.items() if k in applied_keys},
+            "unapplied_bm25_params": {k: v for k, v in bm25_params.items() if k not in applied_keys},
+            "applied_analyzer_params": analyzer_params if self.config.db == DB.Milvus else {},
+            "unapplied_analyzer_params": {} if self.config.db == DB.Milvus else analyzer_params,
+        }
+
     def _pre_run(self, drop_old: bool = True):
         try:
             self._validate_cloud_cold_latency_config(drop_old)
@@ -224,6 +311,13 @@ class CaseRunner(BaseModel):
             ):
                 msg = "CloudMultiTenantSearchCase requires use_partition_key=True for Milvus/ZillizCloud"
                 raise ValueError(msg)
+
+            if self.is_fts:
+                self.ca.dataset.prepare(self.dataset_source)
+                self._apply_fts_manifest_params()
+                self.init_db(drop_old)
+                return
+
             self.init_db(drop_old)
             if self.ca.is_multitenant and self.db is not None:
                 if not self.db.supports_multitenant():
@@ -232,15 +326,12 @@ class CaseRunner(BaseModel):
                 self.db.set_multitenant_context(self.ca.tenant_labels())
                 if self.config.db in {DB.Milvus, DB.ZillizCloud} and not creates_multitenant_collection:
                     self.db.validate_multitenant_schema()
-            if self.is_fts:
-                self.ca.dataset.prepare(self.dataset_source)
-            else:
-                self.ca.dataset.prepare(
-                    self.dataset_source,
-                    filters=self.ca.filters,
-                    with_train_files=TaskStage.LOAD in self.config.stages,
-                    with_scalar_labels=self.ca.with_scalar_labels,
-                )
+            self.ca.dataset.prepare(
+                self.dataset_source,
+                filters=self.ca.filters,
+                with_train_files=TaskStage.LOAD in self.config.stages,
+                with_scalar_labels=self.ca.with_scalar_labels,
+            )
         except ModuleNotFoundError as e:
             log.warning(f"pre run case error: please install client for db: {self.config.db}, error={e}")
             raise e from None
@@ -355,6 +446,8 @@ class CaseRunner(BaseModel):
                 m.payload_estimated_bytes_per_query = self.ca.estimated_payload_bytes_per_query(
                     self.config.case_config.k
                 )
+            if self.is_fts:
+                m.additional_parameters.update(self._fts_manifest_additional_parameters())
 
         except Exception as e:
             log.warning(f"Failed to run performance case, reason = {e}")
