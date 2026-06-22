@@ -1,0 +1,124 @@
+{
+  "run_id": "45e350b3d0d649b381371853f378977c",
+  "task_label": "fts-matrix-vespa-msmarco-medium-ids-mathgt-20260621T150656Z",
+  "results": [
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 225.0491,
+        "optimize_duration": 0.0,
+        "load_duration": 225.0491,
+        "qps": 305.7255,
+        "serial_latency_p99": 0.1413,
+        "serial_latency_p95": 0.1068,
+        "recall": 0.7298,
+        "ndcg": 0.0,
+        "conc_num_list": [
+          1,
+          10,
+          20,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          19.0626,
+          199.0932,
+          292.6319,
+          296.4212,
+          305.7255,
+          302.4968
+        ],
+        "conc_latency_p99_list": [
+          0.1412131382944062,
+          0.13724460296332816,
+          0.18572497408837063,
+          0.35468540405854665,
+          0.44849930707365276,
+          0.46234557749703525
+        ],
+        "conc_latency_p95_list": [
+          0.10513922991231084,
+          0.10537531296722591,
+          0.1390042420243844,
+          0.28572921594604855,
+          0.40897183225024475,
+          0.4536830693250522
+        ],
+        "conc_latency_avg_list": [
+          0.052455427223601594,
+          0.050132895243557817,
+          0.06819274627400247,
+          0.13454124862496955,
+          0.19554938262510493,
+          0.2633732677884791
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": null,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {},
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Vespa",
+        "db_config": {
+          "db_label": "",
+          "version": "",
+          "note": "",
+          "url": "**********",
+          "port": 8080
+        },
+        "db_case_config": {
+          "metric_type": "BM25"
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "MS MARCO Medium (1M documents)",
+            "payload_profile": "ids_only"
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              10,
+              20,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    }
+  ],
+  "file_fmt": "result_{}_{}_{}.json",
+  "timestamp": 1782000000.0
+}
