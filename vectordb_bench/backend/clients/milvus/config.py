@@ -532,7 +532,7 @@ class MilvusFtsConfig(BaseModel, DBCaseConfig):
     bm25_b: float | None = None
     analyzer_tokenizer: str = "standard"
     analyzer_enable_lowercase: bool = True
-    analyzer_max_token_length: int | None = 40
+    analyzer_max_token_length: int | None = None
     analyzer_stop_words: str | None = None
     drop_ratio_search: float | None = None
 

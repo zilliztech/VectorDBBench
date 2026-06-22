@@ -489,7 +489,7 @@ class CaseRunner(BaseModel):
                 workload_kind=self.workload_kind,
                 **runner_kwargs,
             )
-            runner.run()
+            return runner.run()
         except Exception as e:
             raise e from None
         finally:
