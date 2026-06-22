@@ -2226,7 +2226,7 @@ CaseConfigParamInput_FTS_analyzer_max_token_length = CaseConfigInput(
     inputHelp="Maximum length of individual tokens (optional, leave empty to disable).",
     inputType=InputType.Number,
     inputConfig={
-        "value": 40,
+        "value": None,
         "min": 1,
         "max": 100,
     },
