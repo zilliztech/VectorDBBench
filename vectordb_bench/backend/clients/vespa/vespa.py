@@ -283,7 +283,13 @@ class Vespa(VectorDB):
         if self._is_fts:
             fields = [
                 Field("id", "string", indexing=["summary", "attribute"]),
-                Field("text", "string", indexing=["index", "summary"], index="enable-bm25"),
+                Field(
+                    "text",
+                    "string",
+                    indexing=["index", "summary"],
+                    index="enable-bm25",
+                    stemming="none",
+                ),
             ]
             return ApplicationPackage(
                 "vectordbbench",
