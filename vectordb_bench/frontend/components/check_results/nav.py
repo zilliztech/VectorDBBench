@@ -24,6 +24,7 @@ def NavToPages(st):
         {"name": "Run Test", "link": "run_test"},
         {"name": "Results", "link": "results"},
         {"name": "Qps & Recall", "link": "qps_recall"},
+        {"name": "Full Text Search", "link": "full_text_search"},
         {"name": "Quries Per Dollar", "link": "quries_per_dollar"},
         {"name": "Concurrent", "link": "concurrent"},
         {"name": "Label Filter", "link": "label_filter"},
