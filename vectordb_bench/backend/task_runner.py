@@ -8,6 +8,7 @@ from enum import Enum, auto
 
 import numpy as np
 
+from .. import config
 from ..base import BaseModel
 from ..metric import Metric
 from ..models import PerformanceTimeoutError, TaskConfig, TaskStage
@@ -318,6 +319,12 @@ class CaseRunner(BaseModel):
                     m.insert_duration = round(load_dur, 4)
                     m.optimize_duration = round(build_dur, 4)
                     m.load_duration = round(load_dur + build_dur, 4)
+                    m.additional_parameters.update(
+                        {
+                            "num_per_batch": config.NUM_PER_BATCH,
+                            "load_concurrency": self.config.load_concurrency,
+                        }
+                    )
                     log.info(
                         f"Finish loading the entire dataset into VectorDB,"
                         f" insert_duration={load_dur}, optimize_duration={build_dur}"
