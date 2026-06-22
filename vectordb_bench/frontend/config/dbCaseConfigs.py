@@ -175,12 +175,8 @@ def generate_fts_case(dataset_with_size_type: FtsDatasetWithSizeType) -> CaseCon
     )
 
 
-def get_fts_case_items(include_advanced: bool = False) -> list[UICaseItem]:
-    dataset_with_size_types = [
-        dataset_with_size_type
-        for dataset_with_size_type in FtsDatasetWithSizeType
-        if include_advanced or not dataset_with_size_type.is_advanced
-    ]
+def get_fts_case_items() -> list[UICaseItem]:
+    dataset_with_size_types = list(FtsDatasetWithSizeType)
     return [
         UICaseItem(
             label=f"FTS BM25 Performance - {dataset_with_size_type.value}",
