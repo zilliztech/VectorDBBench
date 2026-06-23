@@ -1,0 +1,167 @@
+{
+  "run_id": "9d400803e25547698f8a680b3dc71de6",
+  "task_label": "fts-elastic-hotpotqa-medium-ids_only-20260622T180209Z",
+  "results": [
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 19.2019,
+        "optimize_duration": 34.7377,
+        "load_duration": 53.9396,
+        "qps": 2077.2598,
+        "serial_latency_p99": 0.0238,
+        "serial_latency_p95": 0.0165,
+        "recall": 0.862,
+        "ndcg": 0.0,
+        "conc_num_list": [
+          1,
+          10,
+          20,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          122.9789,
+          1230.5603,
+          1925.3033,
+          2076.5566,
+          2073.5841,
+          2077.2598
+        ],
+        "conc_latency_p99_list": [
+          0.024566106637939802,
+          0.0242184684379026,
+          0.028535963995382198,
+          0.04939745589625092,
+          0.059690512185916283,
+          0.06983485491946352
+        ],
+        "conc_latency_p95_list": [
+          0.016412759898230433,
+          0.016490911529399455,
+          0.020323351048864412,
+          0.03537941875401881,
+          0.04496306511573491,
+          0.059248854871839285
+        ],
+        "conc_latency_avg_list": [
+          0.008130252774980447,
+          0.008122565803205953,
+          0.010380803500132952,
+          0.019243201818635838,
+          0.028902377950277103,
+          0.03847141356042311
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 1000000,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "num_per_batch": 1000,
+          "load_concurrency": 0,
+          "fts_manifest": {
+            "bm25": {
+              "k1": 1.2,
+              "b": 0.75,
+              "avgdl": 55.803761
+            },
+            "analyzer": {
+              "filter": [
+                "lowercase"
+              ],
+              "tokenizer": "standard"
+            }
+          },
+          "applied_bm25_params": {
+            "k1": 1.2,
+            "b": 0.75
+          },
+          "unapplied_bm25_params": {
+            "avgdl": 55.803761
+          },
+          "applied_analyzer_params": {},
+          "unapplied_analyzer_params": {
+            "filter": [
+              "lowercase"
+            ],
+            "tokenizer": "standard"
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ElasticCloud",
+        "db_config": {
+          "db_label": "2026-06-22T18:02:09.641940",
+          "version": "",
+          "note": "",
+          "cloud_id": null,
+          "scheme": "http",
+          "host": "**********",
+          "port": 9200,
+          "user": "elastic",
+          "user_name": null,
+          "password": "**********",
+          "use_ssl": false,
+          "verify_certs": true
+        },
+        "db_case_config": {
+          "number_of_shards": 1,
+          "number_of_replicas": 0,
+          "refresh_interval": "30s",
+          "use_force_merge": true,
+          "metric_type": "BM25",
+          "bm25_k1": 1.2,
+          "bm25_b": 0.75
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "HotpotQA Medium (1M documents)",
+            "payload_profile": "ids_only"
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              10,
+              20,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    }
+  ],
+  "file_fmt": "result_{}_{}_{}.json",
+  "timestamp": 1782086400.0
+}

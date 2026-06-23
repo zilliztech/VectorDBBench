@@ -1,4 +1,5 @@
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -46,6 +47,24 @@ def _dataset_parts(dataset_label: str) -> tuple[str, str, str]:
     return family, size, f"{family} {size}".strip()
 
 
+def _dataset_doc_count(dataset_label: str) -> str:
+    match = re.search(r"\(([^)]+)\)", dataset_label)
+    return match.group(1) if match else ""
+
+
+def _dataset_axis_label(dataset: str, doc_count: str) -> str:
+    return f"{dataset}<br>{doc_count}" if doc_count else dataset
+
+
+def _dataset_axis_order(data: pd.DataFrame) -> list[str]:
+    labels = []
+    for dataset in DATASET_ORDER:
+        matches = data[data["dataset"].astype(str) == dataset]
+        if not matches.empty:
+            labels.append(matches["dataset_axis_label"].iloc[0])
+    return labels
+
+
 def _run_context(task_label: str) -> str:
     if "mathgt" in task_label:
         return "Math GT"
@@ -65,6 +84,8 @@ def _parse_result_file(result_file: Path) -> list[dict[str, Any]]:
         custom_case = case_config.get("custom_case") or {}
         dataset_label = custom_case.get("dataset_with_size_type", "")
         dataset_family, dataset_size, dataset_key = _dataset_parts(dataset_label)
+        dataset_doc_count = _dataset_doc_count(dataset_label)
+        dataset_axis_label = _dataset_axis_label(dataset_key, dataset_doc_count)
         backend = _normalize_backend(task_config.get("db", ""), result_file)
         payload = metrics.get("payload_profile") or custom_case.get("payload_profile") or "ids_only"
 
@@ -74,6 +95,8 @@ def _parse_result_file(result_file: Path) -> list[dict[str, Any]]:
                 "dataset_family": dataset_family,
                 "dataset_size": dataset_size,
                 "dataset": dataset_key,
+                "dataset_doc_count": dataset_doc_count,
+                "dataset_axis_label": dataset_axis_label,
                 "payload": payload,
                 "context": _run_context(task_label),
                 "task_label": task_label,
@@ -157,22 +180,36 @@ def _draw_summary_table(st, data: pd.DataFrame) -> None:
 def _draw_metric_chart(st, data: pd.DataFrame, metric: str, title: str) -> None:
     fig = px.bar(
         data,
-        x="dataset",
+        x="dataset_axis_label",
         y=metric,
         color="backend",
         pattern_shape="payload",
         barmode="group",
-        category_orders={"dataset": DATASET_ORDER, "backend": BACKEND_ORDER},
-        hover_data=["payload", "context", "task_label"],
+        category_orders={"dataset_axis_label": _dataset_axis_order(data), "backend": BACKEND_ORDER},
+        hover_data=["dataset_doc_count", "payload", "context", "task_label"],
         text_auto=".4g",
         title=title,
     )
+    for trace in fig.data:
+        if trace.name.endswith(", text"):
+            trace.showlegend = False
+
     fig.update_layout(
         margin=dict(l=0, r=0, t=48, b=12, pad=8),
         legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="right", x=1, title=""),
         xaxis_title="",
+        xaxis=dict(tickfont=dict(size=12)),
     )
     st.plotly_chart(fig, width="stretch", key=f"fts-{metric}")
+
+
+def _select_payload_for_tab(st, data: pd.DataFrame, key: str) -> pd.DataFrame:
+    payloads = sorted(data["payload"].dropna().unique().tolist())
+    if len(payloads) <= 1:
+        return data
+
+    selected_payload = st.selectbox("Payload", payloads, key=key)
+    return data[data["payload"] == selected_payload].copy()
 
 
 def _concurrency_rows(data: pd.DataFrame) -> pd.DataFrame:
@@ -182,6 +219,8 @@ def _concurrency_rows(data: pd.DataFrame) -> pd.DataFrame:
             rows.append(
                 {
                     "dataset": row["dataset"],
+                    "dataset_axis_label": row["dataset_axis_label"],
+                    "dataset_doc_count": row["dataset_doc_count"],
                     "backend": row["backend"],
                     "payload": row["payload"],
                     "context": row["context"],
@@ -203,11 +242,11 @@ def _draw_concurrency_chart(st, data: pd.DataFrame) -> None:
         x="concurrency",
         y="qps",
         color="backend",
-        line_dash="dataset",
+        line_dash="dataset_axis_label",
         symbol="payload",
         markers=True,
-        category_orders={"dataset": DATASET_ORDER, "backend": BACKEND_ORDER},
-        hover_data=["payload", "context", "task_label"],
+        category_orders={"dataset_axis_label": _dataset_axis_order(data), "backend": BACKEND_ORDER},
+        hover_data=["dataset", "dataset_doc_count", "payload", "context", "task_label"],
         title="Concurrent Search QPS",
     )
     fig.update_layout(
@@ -247,13 +286,16 @@ def main():
     _draw_summary_table(st, shown_data)
     chart_tabs = st.tabs(["QPS", "Recall", "Load", "Concurrency"])
     with chart_tabs[0]:
-        _draw_metric_chart(st, shown_data, "qps", "Search QPS")
+        qps_data = _select_payload_for_tab(st, shown_data, "fts-qps-payload")
+        _draw_metric_chart(st, qps_data, "qps", "Search QPS")
     with chart_tabs[1]:
-        _draw_metric_chart(st, shown_data, "recall", "Math-GT Recall")
+        recall_data = shown_data[shown_data["payload"] == "ids_only"]
+        _draw_metric_chart(st, recall_data, "recall", "Math-GT Recall")
     with chart_tabs[2]:
         _draw_metric_chart(st, shown_data, "load_s", "Load Duration")
     with chart_tabs[3]:
-        _draw_concurrency_chart(st, shown_data)
+        concurrency_data = _select_payload_for_tab(st, shown_data, "fts-concurrency-payload")
+        _draw_concurrency_chart(st, concurrency_data)
 
     footer(st.container())
 

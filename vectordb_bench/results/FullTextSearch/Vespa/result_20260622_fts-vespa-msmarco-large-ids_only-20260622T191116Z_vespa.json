@@ -1,0 +1,156 @@
+{
+  "run_id": "8796cc8836fc45e0adfbbe7111fb72af",
+  "task_label": "fts-vespa-msmarco-large-ids_only-20260622T191116Z",
+  "results": [
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 2569.5762,
+        "optimize_duration": 0.0,
+        "load_duration": 2569.5762,
+        "qps": 200.0456,
+        "serial_latency_p99": 0.4448,
+        "serial_latency_p95": 0.4444,
+        "recall": 0.888,
+        "ndcg": 0.0,
+        "conc_num_list": [
+          1,
+          10,
+          20,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          3.7784,
+          35.2395,
+          63.9719,
+          111.1972,
+          154.4082,
+          200.0456
+        ],
+        "conc_latency_p99_list": [
+          0.35497755077201876,
+          0.44194130454212427,
+          0.4496633768547326,
+          0.4577239221520722,
+          0.46484867110848427,
+          0.47263345872052015
+        ],
+        "conc_latency_p95_list": [
+          0.3508848157245666,
+          0.4408560099080205,
+          0.4472912878263742,
+          0.45393087910488245,
+          0.4593201340176165,
+          0.4641510620713234
+        ],
+        "conc_latency_avg_list": [
+          0.2646487927913927,
+          0.2815528449465645,
+          0.3104509433950628,
+          0.3568216800847898,
+          0.385780105949751,
+          0.39689805528506494
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 8841823,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "num_per_batch": 1000,
+          "load_concurrency": 0,
+          "fts_manifest": {
+            "bm25": {
+              "k1": 1.2,
+              "b": 0.75,
+              "avgdl": 57.83363736188793
+            },
+            "analyzer": {
+              "filter": [
+                "lowercase"
+              ],
+              "tokenizer": "standard"
+            }
+          },
+          "applied_bm25_params": {
+            "k1": 1.2,
+            "b": 0.75,
+            "avgdl": 57.83363736188793
+          },
+          "unapplied_bm25_params": {},
+          "applied_analyzer_params": {},
+          "unapplied_analyzer_params": {
+            "filter": [
+              "lowercase"
+            ],
+            "tokenizer": "standard"
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Vespa",
+        "db_config": {
+          "db_label": "",
+          "version": "",
+          "note": "",
+          "url": "**********",
+          "port": 8080
+        },
+        "db_case_config": {
+          "metric_type": "BM25",
+          "bm25_k1": 1.2,
+          "bm25_b": 0.75,
+          "bm25_avgdl": 57.83363736188793
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "MS MARCO Large (8.8M documents)",
+            "payload_profile": "ids_only"
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              10,
+              20,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    }
+  ],
+  "file_fmt": "result_{}_{}_{}.json",
+  "timestamp": 1782086400.0
+}

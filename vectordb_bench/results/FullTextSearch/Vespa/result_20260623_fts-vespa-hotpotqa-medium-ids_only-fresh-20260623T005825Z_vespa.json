@@ -1,66 +1,75 @@
 {
-  "run_id": "99a04bfddcd148fda0c2da484651960b",
-  "task_label": "fts-matrix-vespa-hotpotqa-large-ids-mathgt-20260621T150656Z",
+  "run_id": "c87b3ccbb04e4d73b045e90d5737e7a9",
+  "task_label": "fts-vespa-hotpotqa-medium-ids_only-fresh-20260623T005825Z",
   "results": [
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 1187.6098,
-        "optimize_duration": 0.0,
-        "load_duration": 1187.6098,
-        "qps": 176.2716,
-        "serial_latency_p99": 0.445,
-        "serial_latency_p95": 0.4443,
-        "recall": 0.5727,
+        "insert_duration": 304.2303,
+        "optimize_duration": 0.0099,
+        "load_duration": 304.2401,
+        "qps": 187.1359,
+        "serial_latency_p99": 0.2701,
+        "serial_latency_p95": 0.2193,
+        "recall": 0.8511,
         "ndcg": 0.0,
         "conc_num_list": [
-          1,
-          10,
-          20,
           40,
-          60,
           80
         ],
         "conc_qps_list": [
-          2.4158,
-          25.1704,
-          48.4437,
-          90.4134,
-          132.7175,
-          176.2716
+          134.8012,
+          187.1359
         ],
         "conc_latency_p99_list": [
-          0.440032354965806,
-          0.44443154040258376,
-          0.4510067899432033,
-          0.4594652317883447,
-          0.4732768634334206,
-          0.48133815333247176
+          0.45341038340702655,
+          0.4714316352270544
         ],
         "conc_latency_p95_list": [
-          0.43861016873270275,
-          0.44404731756076216,
-          0.4484230390517041,
-          0.4551384276244789,
-          0.4644045978784561,
-          0.4664673440158367
+          0.4487580843269825,
+          0.4639653532067314
         ],
         "conc_latency_avg_list": [
-          0.4139193833282549,
-          0.39432823652930615,
-          0.40978971722010105,
-          0.43900539559568685,
-          0.4489229953464326,
-          0.4497421700603746
+          0.2951982247750888,
+          0.42380526266829244
         ],
         "payload_profile": "ids_only",
         "payload_estimated_bytes_per_query": 2000,
-        "inserted_count": null,
+        "inserted_count": 1000000,
         "insert_rows_per_second": 0.0,
         "insert_completion_seconds": 0.0,
         "searchable_after_insert_seconds": 0.0,
         "indexed_after_searchable_seconds": 0.0,
-        "additional_parameters": {},
+        "additional_parameters": {
+          "num_per_batch": 1000,
+          "load_concurrency": 0,
+          "fts_manifest": {
+            "bm25": {
+              "k1": 1.2,
+              "b": 0.75,
+              "avgdl": 55.803761
+            },
+            "analyzer": {
+              "filter": [
+                "lowercase"
+              ],
+              "tokenizer": "standard"
+            }
+          },
+          "applied_bm25_params": {
+            "k1": 1.2,
+            "b": 0.75,
+            "avgdl": 55.803761
+          },
+          "unapplied_bm25_params": {},
+          "applied_analyzer_params": {},
+          "unapplied_analyzer_params": {
+            "filter": [
+              "lowercase"
+            ],
+            "tokenizer": "standard"
+          }
+        },
         "st_ideal_insert_duration": 0,
         "st_search_stage_list": [],
         "st_search_time_list": [],
@@ -86,22 +95,21 @@
           "port": 8080
         },
         "db_case_config": {
-          "metric_type": "BM25"
+          "metric_type": "BM25",
+          "bm25_k1": 1.2,
+          "bm25_b": 0.75,
+          "bm25_avgdl": 55.803761
         },
         "case_config": {
           "case_id": 503,
           "custom_case": {
-            "dataset_with_size_type": "HotpotQA Large (5.2M documents)",
+            "dataset_with_size_type": "HotpotQA Medium (1M documents)",
             "payload_profile": "ids_only"
           },
           "k": 100,
           "concurrency_search_config": {
             "num_concurrency": [
-              1,
-              10,
-              20,
               40,
-              60,
               80
             ],
             "concurrency_duration": 30,
@@ -120,5 +128,5 @@
     }
   ],
   "file_fmt": "result_{}_{}_{}.json",
-  "timestamp": 1782000000.0
+  "timestamp": 1782172800.0
 }

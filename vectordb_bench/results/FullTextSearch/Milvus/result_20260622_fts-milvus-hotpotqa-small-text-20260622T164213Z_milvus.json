@@ -1,17 +1,17 @@
 {
-  "run_id": "5091195b0eb74213af476cdce11aa428",
-  "task_label": "fts-matrix-milvus-msmarco-large-ids-mathgt-20260621T150656Z",
+  "run_id": "030b84fa18d14c3380b575644c5347a0",
+  "task_label": "fts-milvus-hotpotqa-small-text-20260622T164213Z",
   "results": [
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 221.3709,
-        "optimize_duration": 273.753,
-        "load_duration": 495.1239,
-        "qps": 1351.2833,
-        "serial_latency_p99": 0.0269,
-        "serial_latency_p95": 0.0176,
-        "recall": 0.991,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 8742.5076,
+        "serial_latency_p99": 0.0032,
+        "serial_latency_p95": 0.0027,
+        "recall": 0.9219,
         "ndcg": 0.0,
         "conc_num_list": [
           1,
@@ -22,45 +22,73 @@
           80
         ],
         "conc_qps_list": [
-          124.6555,
-          1045.9747,
-          1226.9505,
-          1289.91,
-          1343.4557,
-          1351.2833
+          491.5099,
+          4477.2196,
+          7372.4748,
+          8460.4122,
+          8742.5076,
+          8702.3282
         ],
         "conc_latency_p99_list": [
-          0.027932612318545557,
-          0.030228449748829024,
-          0.03967889286577704,
-          0.06688718903809787,
-          0.07879215717315677,
-          0.10023865520022807
+          0.003222138173878193,
+          0.0036890770774334666,
+          0.00499577336013317,
+          0.010358568369410931,
+          0.01531135236844421,
+          0.0196785810776055
         ],
         "conc_latency_p95_list": [
-          0.018055981025099754,
-          0.019960545003414154,
-          0.0282418264541775,
-          0.04811744662001728,
-          0.06250391500070694,
-          0.0789393164915964
+          0.002693959884345531,
+          0.002972182212397456,
+          0.003912024665623903,
+          0.007944503822363912,
+          0.011479334905743597,
+          0.014595811907201986
         ],
         "conc_latency_avg_list": [
-          0.008018845995871684,
-          0.009549422648109967,
-          0.016257733297843247,
-          0.03078752484986836,
-          0.044141090984518544,
-          0.05818282956592634
+          0.0020328822178860844,
+          0.00222958629924326,
+          0.0027051642822663326,
+          0.004688489182281206,
+          0.006768751644884463,
+          0.008984981240464986
         ],
-        "payload_profile": "ids_only",
-        "payload_estimated_bytes_per_query": 2000,
-        "inserted_count": null,
+        "payload_profile": "text",
+        "payload_estimated_bytes_per_query": 53200,
+        "inserted_count": 0,
         "insert_rows_per_second": 0.0,
         "insert_completion_seconds": 0.0,
         "searchable_after_insert_seconds": 0.0,
         "indexed_after_searchable_seconds": 0.0,
-        "additional_parameters": {},
+        "additional_parameters": {
+          "fts_manifest": {
+            "bm25": {
+              "k1": 1.2,
+              "b": 0.75,
+              "avgdl": 56.88413
+            },
+            "analyzer": {
+              "filter": [
+                "lowercase"
+              ],
+              "tokenizer": "standard"
+            }
+          },
+          "applied_bm25_params": {
+            "k1": 1.2,
+            "b": 0.75
+          },
+          "unapplied_bm25_params": {
+            "avgdl": 56.88413
+          },
+          "applied_analyzer_params": {
+            "filter": [
+              "lowercase"
+            ],
+            "tokenizer": "standard"
+          },
+          "unapplied_analyzer_params": {}
+        },
         "st_ideal_insert_duration": 0,
         "st_search_stage_list": [],
         "st_search_time_list": [],
@@ -79,7 +107,7 @@
       "task_config": {
         "db": "Milvus",
         "db_config": {
-          "db_label": "2026-06-21T15:18:20.882459",
+          "db_label": "2026-06-22T16:42:14.386057",
           "version": "",
           "note": "",
           "uri": "**********",
@@ -92,19 +120,19 @@
           "index_type": "SPARSE_INVERTED_INDEX",
           "metric_type": "BM25",
           "inverted_index_algo": "DAAT_MAXSCORE",
-          "bm25_k1": null,
-          "bm25_b": null,
+          "bm25_k1": 1.2,
+          "bm25_b": 0.75,
           "analyzer_tokenizer": "standard",
           "analyzer_enable_lowercase": true,
-          "analyzer_max_token_length": 40,
+          "analyzer_max_token_length": null,
           "analyzer_stop_words": null,
           "drop_ratio_search": null
         },
         "case_config": {
           "case_id": 503,
           "custom_case": {
-            "dataset_with_size_type": "MS MARCO Large (8.8M documents)",
-            "payload_profile": "ids_only"
+            "dataset_with_size_type": "HotpotQA Small (100K documents)",
+            "payload_profile": "text"
           },
           "k": 100,
           "concurrency_search_config": {
@@ -121,8 +149,6 @@
           }
         },
         "stages": [
-          "drop_old",
-          "load",
           "search_serial",
           "search_concurrent"
         ],
@@ -132,5 +158,5 @@
     }
   ],
   "file_fmt": "result_{}_{}_{}.json",
-  "timestamp": 1782000000.0
+  "timestamp": 1782086400.0
 }

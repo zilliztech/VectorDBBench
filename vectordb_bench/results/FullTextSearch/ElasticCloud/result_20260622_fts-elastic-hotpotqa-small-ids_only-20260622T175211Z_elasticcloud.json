@@ -1,17 +1,17 @@
 {
-  "run_id": "d235416f151e4e34aeb34f71877b508a",
-  "task_label": "fts-matrix-elastic-hotpotqa-large-ids-mathgt-20260621T150656Z",
+  "run_id": "4918393a0dad45a2a655dffcfe384930",
+  "task_label": "fts-elastic-hotpotqa-small-ids_only-20260622T175211Z",
   "results": [
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 194.9027,
-        "optimize_duration": 61.7311,
-        "load_duration": 256.6338,
-        "qps": 659.248,
-        "serial_latency_p99": 0.0851,
-        "serial_latency_p95": 0.057,
-        "recall": 0.8553,
+        "insert_duration": 1.8087,
+        "optimize_duration": 30.7446,
+        "load_duration": 32.5532,
+        "qps": 6434.6558,
+        "serial_latency_p99": 0.0057,
+        "serial_latency_p95": 0.0046,
+        "recall": 0.8754,
         "ndcg": 0.0,
         "conc_num_list": [
           1,
@@ -22,45 +22,75 @@
           80
         ],
         "conc_qps_list": [
-          38.6843,
-          408.835,
-          622.3226,
-          659.1277,
-          656.1379,
-          659.248
+          364.6285,
+          3408.7043,
+          5299.2105,
+          6347.5969,
+          6431.511,
+          6434.6558
         ],
         "conc_latency_p99_list": [
-          0.09539984529837975,
-          0.08384481541812416,
-          0.10703951056115336,
-          0.17269682684913265,
-          0.2131439147051424,
-          0.25519853461533787
+          0.0055571802100166726,
+          0.0060503649897873405,
+          0.007851235847920161,
+          0.014526817863807068,
+          0.0186891415156424,
+          0.022525362297892558
         ],
         "conc_latency_p95_list": [
-          0.061062366398982715,
-          0.05600346522405742,
-          0.07246535068843514,
-          0.11992671089246873,
-          0.16345619251951576,
-          0.18702890155836938
+          0.004449965222738681,
+          0.004766305955126879,
+          0.006235672160983086,
+          0.011401808424852791,
+          0.014887633849866688,
+          0.018678565975278616
         ],
         "conc_latency_avg_list": [
-          0.025848300462723316,
-          0.024445144463094738,
-          0.03209480363295543,
-          0.060560097839697756,
-          0.09125835983454955,
-          0.12110942571818806
+          0.002741420014303389,
+          0.002931117033979589,
+          0.0037693898054794706,
+          0.006291876662483108,
+          0.009311983302361063,
+          0.01240520104481288
         ],
         "payload_profile": "ids_only",
         "payload_estimated_bytes_per_query": 2000,
-        "inserted_count": null,
+        "inserted_count": 100000,
         "insert_rows_per_second": 0.0,
         "insert_completion_seconds": 0.0,
         "searchable_after_insert_seconds": 0.0,
         "indexed_after_searchable_seconds": 0.0,
-        "additional_parameters": {},
+        "additional_parameters": {
+          "num_per_batch": 1000,
+          "load_concurrency": 0,
+          "fts_manifest": {
+            "bm25": {
+              "k1": 1.2,
+              "b": 0.75,
+              "avgdl": 56.88413
+            },
+            "analyzer": {
+              "filter": [
+                "lowercase"
+              ],
+              "tokenizer": "standard"
+            }
+          },
+          "applied_bm25_params": {
+            "k1": 1.2,
+            "b": 0.75
+          },
+          "unapplied_bm25_params": {
+            "avgdl": 56.88413
+          },
+          "applied_analyzer_params": {},
+          "unapplied_analyzer_params": {
+            "filter": [
+              "lowercase"
+            ],
+            "tokenizer": "standard"
+          }
+        },
         "st_ideal_insert_duration": 0,
         "st_search_stage_list": [],
         "st_search_time_list": [],
@@ -79,7 +109,7 @@
       "task_config": {
         "db": "ElasticCloud",
         "db_config": {
-          "db_label": "2026-06-21T16:29:48.871727",
+          "db_label": "2026-06-22T17:52:11.555610",
           "version": "",
           "note": "",
           "cloud_id": null,
@@ -97,12 +127,14 @@
           "number_of_replicas": 0,
           "refresh_interval": "30s",
           "use_force_merge": true,
-          "metric_type": "BM25"
+          "metric_type": "BM25",
+          "bm25_k1": 1.2,
+          "bm25_b": 0.75
         },
         "case_config": {
           "case_id": 503,
           "custom_case": {
-            "dataset_with_size_type": "HotpotQA Large (5.2M documents)",
+            "dataset_with_size_type": "HotpotQA Small (100K documents)",
             "payload_profile": "ids_only"
           },
           "k": 100,
@@ -131,5 +163,5 @@
     }
   ],
   "file_fmt": "result_{}_{}_{}.json",
-  "timestamp": 1782000000.0
+  "timestamp": 1782086400.0
 }

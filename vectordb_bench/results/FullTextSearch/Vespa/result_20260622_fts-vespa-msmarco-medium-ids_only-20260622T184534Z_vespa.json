@@ -1,17 +1,17 @@
 {
-  "run_id": "30987b6856ee41f6b046b30117269969",
-  "task_label": "fts-matrix-vespa-msmarco-small-ids-mathgt-20260621T150656Z",
+  "run_id": "045a52786e904230b6cfc6140b603d92",
+  "task_label": "fts-vespa-msmarco-medium-ids_only-20260622T184534Z",
   "results": [
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 27.6829,
+        "insert_duration": 299.9679,
         "optimize_duration": 0.0,
-        "load_duration": 27.6829,
-        "qps": 735.358,
-        "serial_latency_p99": 0.0196,
-        "serial_latency_p95": 0.0159,
-        "recall": 0.7466,
+        "load_duration": 299.968,
+        "qps": 317.5281,
+        "serial_latency_p99": 0.1396,
+        "serial_latency_p95": 0.1061,
+        "recall": 0.9776,
         "ndcg": 0.0,
         "conc_num_list": [
           1,
@@ -22,45 +22,74 @@
           80
         ],
         "conc_qps_list": [
-          104.8972,
-          735.358,
-          514.5597,
-          387.6114,
-          676.5868,
-          623.4075
+          17.3262,
+          193.3113,
+          298.8967,
+          311.5203,
+          303.5014,
+          317.5281
         ],
         "conc_latency_p99_list": [
-          0.020012372578494246,
-          0.019583099316805574,
-          0.023421749286353568,
-          0.045736593184992666,
-          0.07084677145816386,
-          3.099466525558391
+          0.14583056075032752,
+          0.13707477040588859,
+          0.18777107212692495,
+          0.35407259650062683,
+          0.4484963387809695,
+          0.4612226397776976
         ],
         "conc_latency_p95_list": [
-          0.016486565396189687,
-          0.015820657927542923,
-          0.018135571386665106,
-          0.035580812767148015,
-          0.05221501451451331,
-          0.062138610985130044
+          0.11157830809243023,
+          0.10356776677072047,
+          0.1377767294179648,
+          0.2800252571236342,
+          0.4131680995225905,
+          0.45248237675987185
         ],
         "conc_latency_avg_list": [
-          0.00953137453880961,
-          0.01288056809763324,
-          0.03642765182250224,
-          0.07388235336426241,
-          0.08079302885079216,
-          0.11994650623197001
+          0.0577126414130012,
+          0.05163609537961868,
+          0.0667519492197438,
+          0.128049226002607,
+          0.1969584420530163,
+          0.2509886348160603
         ],
         "payload_profile": "ids_only",
         "payload_estimated_bytes_per_query": 2000,
-        "inserted_count": null,
+        "inserted_count": 1000000,
         "insert_rows_per_second": 0.0,
         "insert_completion_seconds": 0.0,
         "searchable_after_insert_seconds": 0.0,
         "indexed_after_searchable_seconds": 0.0,
-        "additional_parameters": {},
+        "additional_parameters": {
+          "num_per_batch": 1000,
+          "load_concurrency": 0,
+          "fts_manifest": {
+            "bm25": {
+              "k1": 1.2,
+              "b": 0.75,
+              "avgdl": 57.242324
+            },
+            "analyzer": {
+              "filter": [
+                "lowercase"
+              ],
+              "tokenizer": "standard"
+            }
+          },
+          "applied_bm25_params": {
+            "k1": 1.2,
+            "b": 0.75,
+            "avgdl": 57.242324
+          },
+          "unapplied_bm25_params": {},
+          "applied_analyzer_params": {},
+          "unapplied_analyzer_params": {
+            "filter": [
+              "lowercase"
+            ],
+            "tokenizer": "standard"
+          }
+        },
         "st_ideal_insert_duration": 0,
         "st_search_stage_list": [],
         "st_search_time_list": [],
@@ -86,12 +115,15 @@
           "port": 8080
         },
         "db_case_config": {
-          "metric_type": "BM25"
+          "metric_type": "BM25",
+          "bm25_k1": 1.2,
+          "bm25_b": 0.75,
+          "bm25_avgdl": 57.242324
         },
         "case_config": {
           "case_id": 503,
           "custom_case": {
-            "dataset_with_size_type": "MS MARCO Small (100K documents)",
+            "dataset_with_size_type": "MS MARCO Medium (1M documents)",
             "payload_profile": "ids_only"
           },
           "k": 100,
@@ -120,5 +152,5 @@
     }
   ],
   "file_fmt": "result_{}_{}_{}.json",
-  "timestamp": 1782000000.0
+  "timestamp": 1782086400.0
 }
