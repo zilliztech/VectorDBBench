@@ -2,6 +2,7 @@ import datetime
 import logging
 import math
 import threading
+import time
 from collections.abc import Generator
 from contextlib import contextmanager
 from typing import Any
@@ -15,6 +16,9 @@ from . import util
 from .config import VespaFtsConfig, VespaHNSWConfig
 
 log = logging.getLogger(__name__)
+
+VESPA_DOC_COUNT_POLL_INTERVAL_SEC = 2
+VESPA_DOC_COUNT_TIMEOUT_SEC = 1800
 
 
 def _is_successful_response(response: Any) -> bool:
@@ -70,8 +74,13 @@ class Vespa(VectorDB):
             try:
                 client.delete_all_docs("vectordbbench_content", self.schema_name)
             except Exception:
+                if self._is_fts:
+                    raise
                 drop_old = False
                 log.exception(f"Vespa client drop_old schema: {self.schema_name}")
+            else:
+                if self._is_fts:
+                    self._wait_for_document_count(client, 0, "drop_old")
 
     @contextmanager
     def init(self) -> Generator[None, None, None]:
@@ -259,6 +268,35 @@ class Vespa(VectorDB):
         Time(insert the dataset) + Time(optimize) will be recorded as "load_duration" metric
         Optimize's execution time is limited, the limited time is based on cases.
         """
+        if self._is_fts and data_size is not None:
+            assert self.client is not None
+            self._wait_for_document_count(self.client, data_size, "post_insert")
+
+    def _document_count(self, client: application.Vespa) -> int:
+        result = client.query({"yql": f"select id from {self.schema_name} where true", "hits": 0})
+        root = result.get_json().get("root", {})
+        fields = root.get("fields", {})
+        if "totalCount" not in fields:
+            msg = f"Vespa count query did not return totalCount for schema {self.schema_name}: {root}"
+            raise RuntimeError(msg)
+        return int(fields["totalCount"])
+
+    def _wait_for_document_count(self, client: application.Vespa, expected_count: int, stage: str) -> None:
+        deadline = time.monotonic() + VESPA_DOC_COUNT_TIMEOUT_SEC
+        last_count = None
+        while True:
+            last_count = self._document_count(client)
+            if last_count == expected_count:
+                log.info("Vespa %s document count reached %d", stage, expected_count)
+                return
+            if time.monotonic() >= deadline:
+                msg = (
+                    f"Timed out waiting for Vespa {stage} document count to reach "
+                    f"{expected_count}; last_count={last_count}"
+                )
+                raise TimeoutError(msg)
+            log.info("Waiting for Vespa %s document count: current=%d expected=%d", stage, last_count, expected_count)
+            time.sleep(VESPA_DOC_COUNT_POLL_INTERVAL_SEC)
 
     @property
     def application_package(self):
