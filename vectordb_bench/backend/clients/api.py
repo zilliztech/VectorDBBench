@@ -34,7 +34,7 @@ class IndexType(StrEnum):
     IVF_RABITQ = "IVF_RABITQ"
     Flat = "FLAT"
     AUTOINDEX = "AUTOINDEX"
-    FTS_AUTOINDEX = "FTS_AUTOINDEX"
+    FTS = "FTS"
     ES_HNSW = "hnsw"
     ES_HNSW_INT8 = "int8_hnsw"
     ES_HNSW_INT4 = "int4_hnsw"

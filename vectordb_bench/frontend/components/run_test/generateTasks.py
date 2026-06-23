@@ -14,7 +14,7 @@ def generate_tasks(activedDbList: list[DB], dbConfigs, activedCaseList: list[Cas
             if case.case.label == CaseLabel.FullTextSearchPerformance:
                 from vectordb_bench.backend.clients.api import IndexType
 
-                index_type = IndexType.FTS_AUTOINDEX
+                index_type = IndexType.FTS
             elif index_type is None:
                 # Default to AUTOINDEX for cases without specific index type
                 from vectordb_bench.backend.clients.api import IndexType

@@ -589,7 +589,7 @@ class MilvusFtsConfig(BaseModel, DBCaseConfig):
 
 _milvus_case_config = {
     IndexType.AUTOINDEX: AutoIndexConfig,
-    IndexType.FTS_AUTOINDEX: MilvusFtsConfig,
+    IndexType.FTS: MilvusFtsConfig,
     IndexType.HNSW: HNSWConfig,
     IndexType.HNSW_SQ: HNSWSQConfig,
     IndexType.HNSW_PQ: HNSWPQConfig,

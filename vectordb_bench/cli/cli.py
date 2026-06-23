@@ -266,7 +266,7 @@ def select_cli_db_case_config(db: DB, db_case_config: DBCaseConfig, case_type: s
     if case_type != CaseType.FTSmsmarcoPerformance.name:
         return db_case_config
 
-    fts_case_config_cls = db.case_config_cls(IndexType.FTS_AUTOINDEX)
+    fts_case_config_cls = db.case_config_cls(IndexType.FTS)
     if isinstance(db_case_config, fts_case_config_cls):
         return db_case_config
     return fts_case_config_cls()

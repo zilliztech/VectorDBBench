@@ -2156,7 +2156,7 @@ CaseConfigParamInput_IndexType_FTS = CaseConfigInput(
     inputType=InputType.Option,
     inputConfig={
         "options": [
-            IndexType.FTS_AUTOINDEX.value,
+            IndexType.FTS.value,
         ],
     },
     isDisplayed=lambda config: False,  # Hidden since FTS only has one index type currently
@@ -2317,6 +2317,11 @@ MilvusFtsConfig = [
     CaseConfigParamInput_FTS_analyzer_max_token_length,
     CaseConfigParamInput_FTS_analyzer_stop_words,
     CaseConfigParamInput_FTS_drop_ratio_search,
+]
+
+ZillizCloudFtsConfig = [
+    CaseConfigParamInput_IndexType_FTS,
+    CaseConfigParamInput_ZillizLevel,
 ]
 
 ElasticCloudFtsConfig = []
@@ -3135,6 +3140,7 @@ CASE_CONFIG_MAP = {
     },
     DB.ZillizCloud: {
         CaseLabel.Performance: ZillizCloudPerformanceConfig,
+        CaseLabel.FullTextSearchPerformance: ZillizCloudFtsConfig,
     },
     DB.WeaviateCloud: {
         CaseLabel.Load: WeaviateLoadConfig,
