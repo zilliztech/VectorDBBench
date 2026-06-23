@@ -1,6 +1,10 @@
 import datetime
+import json
 import logging
 import math
+import shutil
+import subprocess
+import tempfile
 import threading
 import time
 from collections.abc import Generator
@@ -19,20 +23,7 @@ log = logging.getLogger(__name__)
 
 VESPA_DOC_COUNT_POLL_INTERVAL_SEC = 2
 VESPA_DOC_COUNT_TIMEOUT_SEC = 1800
-
-
-def _is_successful_response(response: Any) -> bool:
-    if hasattr(response, "is_successful"):
-        return response.is_successful()
-    if hasattr(response, "get_status_code"):
-        return response.get_status_code() == 200
-    return getattr(response, "status_code", None) == 200
-
-
-def _response_json(response: Any) -> dict:
-    if hasattr(response, "get_json"):
-        return response.get_json()
-    return getattr(response, "json", {})
+VESPA_FEED_OUTPUT_TAIL_CHARS = 4000
 
 
 def _document_id_from_hit(hit: dict) -> str | None:
@@ -48,6 +39,10 @@ def _document_id_from_hit(hit: dict) -> str | None:
     if document_id.startswith("id:") and "::" in document_id:
         return document_id.rsplit("::", 1)[-1]
     return document_id
+
+
+def _tail_text(value: str, limit: int = VESPA_FEED_OUTPUT_TAIL_CHARS) -> str:
+    return value[-limit:] if len(value) > limit else value
 
 
 class Vespa(VectorDB):
@@ -98,8 +93,13 @@ class Vespa(VectorDB):
             >>>     self.insert_embeddings()
         """
         self.client = application.Vespa(self.db_config["url"], port=self.db_config["port"])
-        yield
-        self.client = None
+        self._reset_fts_feed_client()
+        try:
+            yield
+            self._finish_fts_feed_client()
+        finally:
+            self._cleanup_fts_feed_client()
+            self.client = None
 
     @classmethod
     def supports_full_text_search(cls) -> bool:
@@ -150,36 +150,150 @@ class Vespa(VectorDB):
             msg = f"Mismatch between texts ({len(texts)}) and doc_ids ({len(doc_ids)}) lengths"
             raise ValueError(msg)
 
-        data = (
-            {"id": str(doc_id), "fields": {"id": str(doc_id), "text": text}}
-            for doc_id, text in zip(doc_ids, texts, strict=True)
-        )
-
-        successful_count = 0
-        failures: list[str] = []
-        lock = threading.Lock()
-
-        def callback(response: Any, doc_id: str):
-            nonlocal successful_count
-            with lock:
-                if _is_successful_response(response):
-                    successful_count += 1
-                    return
-                failures.append(f"{doc_id}: {_response_json(response)}")
-
         try:
-            self.client.feed_iterable(data, self.schema_name, callback=callback)
+            self._write_fts_feed_batch(texts, doc_ids)
         except Exception as exc:
             log.warning("Vespa feed failed for schema %s", self.schema_name, exc_info=True)
-            return successful_count, exc
-
-        if failures:
-            msg = f"Vespa feed failed for {len(failures)} documents in schema {self.schema_name}: {failures[:3]}"
-            err = RuntimeError(msg)
-            log.warning(msg)
-            return successful_count, err
+            return 0, exc
 
         return len(texts), None
+
+    def _reset_fts_feed_client(self) -> None:
+        self._feed_proc = None
+        self._feed_stdout_file = None
+        self._feed_stderr_file = None
+        self._feed_written_count = 0
+        self._feed_lock = threading.Lock()
+
+    def _ensure_fts_feed_client(self) -> subprocess.Popen:
+        if self._feed_proc is not None:
+            return self._feed_proc
+        command = self.case_config.feed_client_command
+        if shutil.which(command) is None:
+            msg = (
+                f"Vespa feed client command {command!r} was not found. "
+                "Install the Vespa CLI or set VespaFtsConfig.feed_client_command."
+            )
+            raise RuntimeError(msg)
+
+        connections = self.case_config.feed_client_connections or 8
+        cmd = [
+            command,
+            "feed",
+            "-",
+            "--target",
+            self._feed_target(),
+            "--connections",
+            str(connections),
+            "--inflight",
+            "0",
+            "--progress",
+            "0",
+        ]
+        log.info("Start Vespa feed client: %s", " ".join(cmd))
+
+        self._feed_stdout_file = tempfile.TemporaryFile(mode="w+", encoding="utf-8")
+        self._feed_stderr_file = tempfile.TemporaryFile(mode="w+", encoding="utf-8")
+        self._feed_proc = subprocess.Popen(
+            cmd,
+            stdin=subprocess.PIPE,
+            stdout=self._feed_stdout_file,
+            stderr=self._feed_stderr_file,
+            text=True,
+        )
+        return self._feed_proc
+
+    def _write_fts_feed_batch(self, texts: list[str], doc_ids: list[str]) -> None:
+        lines = []
+        for doc_id, text in zip(doc_ids, texts, strict=True):
+            operation = {
+                "put": self._vespa_document_id(str(doc_id)),
+                "fields": {"id": str(doc_id), "text": text},
+            }
+            lines.append(json.dumps(operation, ensure_ascii=False, separators=(",", ":")))
+
+        with self._feed_lock:
+            proc = self._ensure_fts_feed_client()
+            returncode = proc.poll()
+            if returncode is not None:
+                msg = f"Vespa feed client exited before all documents were written: returncode={returncode}"
+                raise RuntimeError(msg)
+            assert proc.stdin is not None
+            proc.stdin.write("\n".join(lines))
+            proc.stdin.write("\n")
+            proc.stdin.flush()
+            self._feed_written_count += len(lines)
+
+    def _finish_fts_feed_client(self) -> None:
+        if self._feed_proc is None:
+            return
+        with self._feed_lock:
+            proc = self._feed_proc
+            if proc.stdin is not None and not proc.stdin.closed:
+                proc.stdin.close()
+            returncode = proc.wait()
+            assert self._feed_stdout_file is not None
+            assert self._feed_stderr_file is not None
+            self._feed_stdout_file.seek(0)
+            self._feed_stderr_file.seek(0)
+            stdout = self._feed_stdout_file.read()
+            stderr = self._feed_stderr_file.read()
+
+        count = self._feed_written_count
+        metrics = self._parse_feed_metrics(stdout)
+        ok_count = int(metrics.get("feeder.ok.count", count)) if metrics else count
+        error_count = int(metrics.get("feeder.error.count", 0)) if metrics else 0
+        response_error_count = int(metrics.get("http.response.error.count", 0)) if metrics else 0
+
+        if returncode != 0 or error_count or response_error_count or ok_count != count:
+            msg = (
+                "Vespa feed client failed "
+                f"returncode={returncode}, written={count}, ok={ok_count}, "
+                f"feed_errors={error_count}, response_errors={response_error_count}, "
+                f"stdout_tail={_tail_text(stdout)!r}, stderr_tail={_tail_text(stderr)!r}"
+            )
+            raise RuntimeError(msg)
+
+        log.info("Vespa feed client inserted %d docs; metrics=%s", ok_count, metrics)
+        self._feed_proc = None
+
+    def _cleanup_fts_feed_client(self) -> None:
+        proc = getattr(self, "_feed_proc", None)
+        if proc is not None and proc.poll() is None:
+            proc.kill()
+            proc.wait()
+        for file_attr in ("_feed_stdout_file", "_feed_stderr_file"):
+            file_obj = getattr(self, file_attr, None)
+            if file_obj is not None:
+                file_obj.close()
+                setattr(self, file_attr, None)
+        self._feed_proc = None
+
+    def _vespa_document_id(self, doc_id: str) -> str:
+        return f"id:{self.schema_name}:{self.schema_name}::{doc_id}"
+
+    def _feed_target(self) -> str:
+        target = str(self.db_config["url"]).rstrip("/")
+        port = self.db_config.get("port")
+        if port is not None and f":{port}" not in target.rsplit("/", 1)[-1]:
+            target = f"{target}:{port}"
+        return target
+
+    def _parse_feed_metrics(self, output: str) -> dict[str, Any]:
+        text = output.strip()
+        if not text:
+            return {}
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError:
+            start = text.rfind("\n{")
+            if start >= 0:
+                try:
+                    return json.loads(text[start + 1 :])
+                except json.JSONDecodeError:
+                    pass
+        log.warning("Failed to parse Vespa feed client metrics: %s", _tail_text(output))
+        return {}
 
     def search_embedding(
         self,

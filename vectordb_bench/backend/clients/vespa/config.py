@@ -56,6 +56,8 @@ class VespaFtsConfig(BaseModel, DBCaseConfig):
     bm25_k1: float | None = None
     bm25_b: float | None = None
     bm25_avgdl: float | None = None
+    feed_client_command: str = "vespa"
+    feed_client_connections: int | None = None
 
     def index_param(self) -> dict:
         return {}
