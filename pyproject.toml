@@ -82,6 +82,7 @@ zvec            = [ "zvec" ]
 endee           = [ "endee==0.1.10" ]
 lindorm         = [ "opensearch-py" ]
 seekdb          = [ "mysql-connector-python" ]
+volc_mysql      = [ "mysql-connector-python" ]
 pinot           = [ "requests" ]
 
 [project.urls]
