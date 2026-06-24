@@ -82,6 +82,7 @@ class ConcurrentInsertRunner:
         self.with_scalar_labels = with_scalar_labels
         self.tenant_case = tenant_case
         self.workload_kind = workload_kind
+        self._prefetched_fts_batch = None
 
         effective_workers = max_workers or min(mp.cpu_count(), 4)
         if not db.thread_safe:
@@ -212,10 +213,14 @@ class ConcurrentInsertRunner:
             stop_event = getattr(self, "_stop_event", None)
             if stop_event is not None and stop_event.is_set():
                 return None
-            try:
-                batch = next(self._dataset_iter)
-            except StopIteration:
-                return None
+            batch = self._prefetched_fts_batch
+            if batch is not None:
+                self._prefetched_fts_batch = None
+            else:
+                try:
+                    batch = next(self._dataset_iter)
+                except StopIteration:
+                    return None
 
         doc_ids = []
         texts = []
@@ -247,6 +252,9 @@ class ConcurrentInsertRunner:
         self._stop_event = threading.Event()
         self._deadline = None if self.duration is None else time.perf_counter() + self.duration
         self._dataset_iter = self.dataset.iter_batches(self.batch_size)
+        if getattr(self, "workload_kind", WorkloadKind.VECTOR) == WorkloadKind.FULL_TEXT:
+            # Prime lazy ir_datasets document preparation before timed backend inserts.
+            self._prefetched_fts_batch = next(self._dataset_iter, None)
 
         with self.db.init():
             log.info(
