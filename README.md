@@ -16,6 +16,11 @@ Prepare to delve into the world of VDBBench, and let it guide you in uncovering 
 VDBBench is sponsored by Zilliz，the leading opensource vectorDB company behind Milvus. Choose smarter with VDBBench - start your free test on [zilliz cloud](https://zilliz.com/) today!
 
 **Leaderboard:** https://zilliz.com/benchmark
+
+## 🎈 Announcement 🎈
+
+**June 2026 update:** Full Text Search has landed in VectorDBBench. We now benchmark BM25-style retrieval across supported backends, with datasets, payload profiles, recall, QPS, and load metrics ready to compare. See the [VectorDBBench Full Text Search Release Note](docs/release/2026-06-full-text-search.md) for the full rollout details and caveats.
+
 ## Quick Start
 ### Prerequirement
 ``` shell
