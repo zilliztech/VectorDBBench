@@ -12,6 +12,7 @@ from ..backend.clients.elastic_cloud.cli import (
     ElasticCloudHNSWInt8,
 )
 from ..backend.clients.endee.cli import Endee
+from ..backend.clients.garnet.cli import Garnet
 from ..backend.clients.hologres.cli import HologresHGraph
 from ..backend.clients.lancedb.cli import LanceDB
 from ..backend.clients.lindorm.cli import LindormHNSW, LindormIVFBQ, LindormIVFPQ
@@ -98,6 +99,7 @@ cli.add_command(PolarDBHNSWFlat)
 cli.add_command(PolarDBHNSWPQ)
 cli.add_command(PolarDBHNSWSQ)
 cli.add_command(SeekDBHNSW)
+cli.add_command(Garnet)
 
 
 if __name__ == "__main__":
