@@ -101,6 +101,25 @@ class Vespa(VectorDB):
             self._cleanup_fts_feed_client()
             self.client = None
 
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        # Multiprocessing search uses spawn, so DB instances are pickled before
+        # workers run. Vespa client and feed-client handles are process-local.
+        state.pop("client", None)
+        state.pop("_feed_proc", None)
+        state.pop("_feed_stdout_file", None)
+        state.pop("_feed_stderr_file", None)
+        state.pop("_feed_lock", None)
+        return state
+
+    def __setstate__(self, state: dict):
+        self.__dict__.update(state)
+        self.client = None
+        self._feed_proc = None
+        self._feed_stdout_file = None
+        self._feed_stderr_file = None
+        self._feed_lock = threading.Lock()
+
     @classmethod
     def supports_full_text_search(cls) -> bool:
         return True
@@ -245,7 +264,7 @@ class Vespa(VectorDB):
         error_count = int(metrics.get("feeder.error.count", 0)) if metrics else 0
         response_error_count = int(metrics.get("http.response.error.count", 0)) if metrics else 0
 
-        if returncode != 0 or error_count or response_error_count or ok_count != count:
+        if returncode != 0 or error_count or ok_count != count:
             msg = (
                 "Vespa feed client failed "
                 f"returncode={returncode}, written={count}, ok={ok_count}, "
@@ -253,6 +272,12 @@ class Vespa(VectorDB):
                 f"stdout_tail={_tail_text(stdout)!r}, stderr_tail={_tail_text(stderr)!r}"
             )
             raise RuntimeError(msg)
+        if response_error_count:
+            log.warning(
+                "Vespa feed client reported %d HTTP response errors, but all %d documents were accepted",
+                response_error_count,
+                ok_count,
+            )
 
         log.info("Vespa feed client inserted %d docs; metrics=%s", ok_count, metrics)
         self._feed_proc = None
