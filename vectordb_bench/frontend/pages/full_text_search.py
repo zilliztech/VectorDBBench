@@ -159,7 +159,6 @@ def _draw_summary_table(st: Any, data: pd.DataFrame) -> None:
         "dataset",
         "backend",
         "payload",
-        "context",
         "load_s",
         "qps",
         "recall",
@@ -281,7 +280,6 @@ def main():
     NavToPages(st)
 
     st.title("Full Text Search")
-    st.caption("Math-GT benchmark results from committed `vectordb_bench/results/FullTextSearch` JSONs.")
 
     data = load_full_text_search_rows()
     if data.empty:
@@ -296,7 +294,7 @@ def main():
         return
 
     _draw_summary_table(st, shown_data)
-    chart_tabs = st.tabs(["QPS", "Recall", "Load", "Concurrency"])
+    chart_tabs = st.tabs(["QPS", "Recall", "Load"])
     with chart_tabs[0]:
         qps_data = _select_payload_for_tab(st, shown_data, "fts-qps-payload")
         _draw_metric_chart(st, qps_data, "qps", "Search QPS")
@@ -306,9 +304,6 @@ def main():
     with chart_tabs[2]:
         load_data = shown_data[shown_data["payload"] == "ids_only"]
         _draw_metric_chart(st, load_data, "load_s", "Load Duration")
-    with chart_tabs[3]:
-        concurrency_data = _select_payload_for_tab(st, shown_data, "fts-concurrency-payload")
-        _draw_concurrency_chart(st, concurrency_data)
 
     footer(st.container())
 
