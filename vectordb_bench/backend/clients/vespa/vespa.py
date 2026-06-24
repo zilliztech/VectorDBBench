@@ -211,8 +211,9 @@ class Vespa(VectorDB):
         ]
         log.info("Start Vespa feed client: %s", " ".join(cmd))
 
-        self._feed_stdout_file = tempfile.TemporaryFile(mode="w+", encoding="utf-8")
-        self._feed_stderr_file = tempfile.TemporaryFile(mode="w+", encoding="utf-8")
+        # These files must stay open until the feed client exits; Popen writes to them after this method returns.
+        self._feed_stdout_file = tempfile.TemporaryFile(mode="w+", encoding="utf-8")  # noqa: SIM115
+        self._feed_stderr_file = tempfile.TemporaryFile(mode="w+", encoding="utf-8")  # noqa: SIM115
         self._feed_proc = subprocess.Popen(
             cmd,
             stdin=subprocess.PIPE,

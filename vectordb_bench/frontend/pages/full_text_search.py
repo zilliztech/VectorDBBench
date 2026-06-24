@@ -13,7 +13,6 @@ from vectordb_bench.frontend.components.check_results.headerIcon import drawHead
 from vectordb_bench.frontend.components.check_results.nav import NavToPages
 from vectordb_bench.frontend.config.styles import FAVICON
 
-
 RESULT_DIR = config.RESULTS_LOCAL_DIR / "FullTextSearch"
 DATASET_ORDER = [
     "MS MARCO Small",
@@ -135,7 +134,7 @@ def load_full_text_search_rows(result_dir: Path = RESULT_DIR) -> pd.DataFrame:
     return data.sort_values(["dataset", "backend", "payload"]).reset_index(drop=True)
 
 
-def _filter_data(st, data: pd.DataFrame) -> pd.DataFrame:
+def _filter_data(st: Any, data: pd.DataFrame) -> pd.DataFrame:
     with st.sidebar:
         st.header("Filters")
         selected_datasets = st.multiselect(
@@ -155,7 +154,7 @@ def _filter_data(st, data: pd.DataFrame) -> pd.DataFrame:
     return data[filters].copy()
 
 
-def _draw_summary_table(st, data: pd.DataFrame) -> None:
+def _draw_summary_table(st: Any, data: pd.DataFrame) -> None:
     columns = [
         "dataset",
         "backend",
@@ -181,7 +180,7 @@ def _draw_summary_table(st, data: pd.DataFrame) -> None:
     )
 
 
-def _draw_metric_chart(st, data: pd.DataFrame, metric: str, title: str) -> None:
+def _draw_metric_chart(st: Any, data: pd.DataFrame, metric: str, title: str) -> None:
     fig = px.bar(
         data,
         x="dataset_axis_label",
@@ -203,20 +202,20 @@ def _draw_metric_chart(st, data: pd.DataFrame, metric: str, title: str) -> None:
         texttemplate=text_template,
         textposition="outside",
         textangle=0,
-        textfont=dict(size=11),
+        textfont={"size": 11},
         cliponaxis=False,
     )
     fig.update_layout(
-        margin=dict(l=0, r=0, t=56, b=12, pad=8),
-        legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="right", x=1, title=""),
+        margin={"l": 0, "r": 0, "t": 56, "b": 12, "pad": 8},
+        legend={"orientation": "h", "yanchor": "bottom", "y": 1, "xanchor": "right", "x": 1, "title": ""},
         xaxis_title="",
-        xaxis=dict(tickfont=dict(size=12)),
-        uniformtext=dict(minsize=10, mode="show"),
+        xaxis={"tickfont": {"size": 12}},
+        uniformtext={"minsize": 10, "mode": "show"},
     )
     st.plotly_chart(fig, width="stretch", key=f"fts-{metric}")
 
 
-def _select_payload_for_tab(st, data: pd.DataFrame, key: str) -> pd.DataFrame:
+def _select_payload_for_tab(st: Any, data: pd.DataFrame, key: str) -> pd.DataFrame:
     payloads = sorted(data["payload"].dropna().unique().tolist())
     if len(payloads) <= 1:
         return data
@@ -228,7 +227,7 @@ def _select_payload_for_tab(st, data: pd.DataFrame, key: str) -> pd.DataFrame:
 def _concurrency_rows(data: pd.DataFrame) -> pd.DataFrame:
     rows = []
     for row in data.to_dict("records"):
-        for concurrency, qps in zip(row["concurrency"], row["concurrent_qps"]):
+        for concurrency, qps in zip(row["concurrency"], row["concurrent_qps"], strict=True):
             rows.append(
                 {
                     "dataset": row["dataset"],
@@ -245,7 +244,7 @@ def _concurrency_rows(data: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def _draw_concurrency_chart(st, data: pd.DataFrame) -> None:
+def _draw_concurrency_chart(st: Any, data: pd.DataFrame) -> None:
     concurrency_data = _concurrency_rows(data)
     if concurrency_data.empty:
         return
@@ -263,8 +262,8 @@ def _draw_concurrency_chart(st, data: pd.DataFrame) -> None:
         title="Concurrent Search QPS",
     )
     fig.update_layout(
-        margin=dict(l=0, r=0, t=48, b=12, pad=8),
-        legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="right", x=1, title=""),
+        margin={"l": 0, "r": 0, "t": 48, "b": 12, "pad": 8},
+        legend={"orientation": "h", "yanchor": "bottom", "y": 1, "xanchor": "right", "x": 1, "title": ""},
     )
     fig.update_xaxes(title_text="Concurrency")
     fig.update_yaxes(title_text="QPS")

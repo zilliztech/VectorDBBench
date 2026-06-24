@@ -773,7 +773,7 @@ class FtsDatasetManager(BaseModel):
         manifest = json.loads(p.read_text(encoding="utf-8"))
         if not isinstance(manifest, dict):
             msg = f"Invalid FTS build manifest: {p}"
-            raise ValueError(msg)
+            raise TypeError(msg)
         return manifest
 
     def _load_manifest_params(self) -> None:
@@ -781,9 +781,7 @@ class FtsDatasetManager(BaseModel):
         bm25 = manifest.get("bm25") or {}
         analyzer = manifest.get("analyzer") or {}
         self.bm25_params = {
-            key: float(bm25[key])
-            for key in ("k1", "b", "avgdl")
-            if key in bm25 and bm25[key] is not None
+            key: float(bm25[key]) for key in ("k1", "b", "avgdl") if key in bm25 and bm25[key] is not None
         }
         self.analyzer_params = analyzer if isinstance(analyzer, dict) else {}
 
@@ -835,10 +833,10 @@ class FtsDatasetManager(BaseModel):
                         f"{self.data.full_name} query count {len(self.queries_data)} "
                         f"does not match ground truth row count {len(self.gt_data)}"
                     )
-                    raise ValueError(msg)
+                    raise ValueError(msg)  # noqa: TRY301
                 log.info(f"Loaded mathematical ground truth for {len(self.gt_data)} queries into memory")
 
-        except ValueError:
+        except (TypeError, ValueError):
             log.exception("Invalid FTS dataset configuration")
             raise
         except Exception:
