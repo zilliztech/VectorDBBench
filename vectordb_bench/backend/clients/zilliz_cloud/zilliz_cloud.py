@@ -24,9 +24,3 @@ class ZillizCloud(Milvus):
             name=name,
             **kwargs,
         )
-
-    def optimize(self, data_size: int | None = None):
-        assert self.client, "Please call self.init() before"
-        self.client.flush(self.collection_name)
-        self._wait_for_index()
-        self.client.refresh_load(self.collection_name)
