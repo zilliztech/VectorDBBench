@@ -22,7 +22,7 @@ DATASET_ORDER = [
     "HotpotQA Medium",
     "HotpotQA Large",
 ]
-BACKEND_ORDER = ["ZillizCloud", "ElasticSearch", "Vespa"]
+BACKEND_ORDER = ["ZillizCloud", "ElasticSearch", "Vespa", "TurboPuffer"]
 SIZE_ORDER = ["Small", "Medium", "Large"]
 
 

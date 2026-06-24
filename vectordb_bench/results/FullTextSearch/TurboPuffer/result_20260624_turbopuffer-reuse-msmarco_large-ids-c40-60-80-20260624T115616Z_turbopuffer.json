@@ -1,0 +1,145 @@
+{
+  "run_id": "98050f5c3bac4bc094d86adf65bc8ed7",
+  "task_label": "turbopuffer-reuse-msmarco_large-ids-c40-60-80-20260624T115616Z",
+  "results": [
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 1139.0622,
+        "optimize_duration": 60.0494,
+        "load_duration": 1199.1117,
+        "qps": 1316.9277,
+        "serial_latency_p99": 0.042,
+        "serial_latency_p95": 0.026,
+        "recall": 0.9395,
+        "ndcg": 0.0,
+        "conc_num_list": [
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          1316.9277,
+          1297.3733,
+          1284.6661
+        ],
+        "conc_latency_p99_list": [
+          1.0073482914027407,
+          1.0495113781692633,
+          1.0606270659984147
+        ],
+        "conc_latency_p95_list": [
+          0.035672420999617316,
+          0.04159055870040899,
+          0.04908532199988258
+        ],
+        "conc_latency_avg_list": [
+          0.03006028460855096,
+          0.045569930162918985,
+          0.061195468189531976
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 8841823,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "fts_manifest": {
+            "bm25": {
+              "k1": 1.2,
+              "b": 0.75,
+              "avgdl": 57.83363736188793
+            },
+            "analyzer": {
+              "filter": [
+                "lowercase"
+              ],
+              "tokenizer": "standard"
+            }
+          },
+          "applied_bm25_params": {},
+          "unapplied_bm25_params": {
+            "k1": 1.2,
+            "b": 0.75,
+            "avgdl": 57.83363736188793
+          },
+          "applied_analyzer_params": {},
+          "unapplied_analyzer_params": {
+            "filter": [
+              "lowercase"
+            ],
+            "tokenizer": "standard"
+          },
+          "num_per_batch": 1000,
+          "load_concurrency": 0,
+          "load_metrics_source_result_json": "/home/ubuntu/bench-runs/turbopuffer_msmarco_large_c20_b1000_cli_sdkretry_20260624T094413Z/runtime_results/TurboPuffer/result_20260624_turbopuffer-msmarco-large-c20-b1000-sdkretry-20260624T094413Z_turbopuffer.json"
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "TurboPuffer",
+        "db_config": {
+          "db_label": "2026-06-24T12:05:15.433938",
+          "version": "",
+          "note": "",
+          "api_key": "**********",
+          "region": "aws-us-west-2",
+          "api_base_url": null,
+          "namespace": "vdbbench-fts-tpuf-msmarco-large-c20-b1000-sdkretry-20260624T094413Z",
+          "multitenant_namespace_prefix": "vdbbench_mt_",
+          "scalar_payload_label_field": "label",
+          "pin_namespace": false,
+          "pin_namespace_requested": false,
+          "pin_replicas": 1,
+          "pin_timeout": 2700,
+          "pin_target_namespace_count": 0
+        },
+        "db_case_config": {
+          "metric_type": "BM25",
+          "time_wait_warmup": 60,
+          "disable_backpressure": false
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "MS MARCO Large (8.8M documents)",
+            "payload_profile": "ids_only"
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    }
+  ],
+  "file_fmt": "result_{}_{}_{}.json",
+  "timestamp": 1782259200.0
+}

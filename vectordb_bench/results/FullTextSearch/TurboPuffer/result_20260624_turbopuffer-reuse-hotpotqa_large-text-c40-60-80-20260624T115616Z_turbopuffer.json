@@ -1,0 +1,144 @@
+{
+  "run_id": "15527b9765da4423a9f3635bb854f2e8",
+  "task_label": "turbopuffer-reuse-hotpotqa_large-text-c40-60-80-20260624T115616Z",
+  "results": [
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 1464.6515,
+        "optimize_duration": 60.0477,
+        "load_duration": 1524.6993,
+        "qps": 979.5781,
+        "serial_latency_p99": 0.0,
+        "serial_latency_p95": 0.0,
+        "recall": 0.0,
+        "ndcg": 0.0,
+        "conc_num_list": [
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          979.5781,
+          969.5597,
+          964.3595
+        ],
+        "conc_latency_p99_list": [
+          1.035232208402449,
+          1.0622234767588816,
+          1.068804296057642
+        ],
+        "conc_latency_p95_list": [
+          0.047188996000477344,
+          0.054698529998131545,
+          1.008040709995839
+        ],
+        "conc_latency_avg_list": [
+          0.04051427541809371,
+          0.06074978477290257,
+          0.08095703978218151
+        ],
+        "payload_profile": "text",
+        "payload_estimated_bytes_per_query": 53200,
+        "inserted_count": 5233329,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "fts_manifest": {
+            "bm25": {
+              "k1": 1.2,
+              "b": 0.75,
+              "avgdl": 47.43239876568051
+            },
+            "analyzer": {
+              "filter": [
+                "lowercase"
+              ],
+              "tokenizer": "standard"
+            }
+          },
+          "applied_bm25_params": {},
+          "unapplied_bm25_params": {
+            "k1": 1.2,
+            "b": 0.75,
+            "avgdl": 47.43239876568051
+          },
+          "applied_analyzer_params": {},
+          "unapplied_analyzer_params": {
+            "filter": [
+              "lowercase"
+            ],
+            "tokenizer": "standard"
+          },
+          "num_per_batch": 1000,
+          "load_concurrency": 0,
+          "load_metrics_source_result_json": "/home/ubuntu/bench-runs/turbopuffer_hotpotqa_c20_b1000_cli_sdkretry_20260624T105757Z/hotpotqa_large/runtime_results/TurboPuffer/result_20260624_turbopuffer-hotpotqa-large-c20-b1000-sdkretry-20260624T105757Z_turbopuffer.json"
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "TurboPuffer",
+        "db_config": {
+          "db_label": "2026-06-24T12:43:28.084741",
+          "version": "",
+          "note": "",
+          "api_key": "**********",
+          "region": "aws-us-west-2",
+          "api_base_url": null,
+          "namespace": "vdbbench-hotpotqa-large-c20-b1000-20260624T105757Z",
+          "multitenant_namespace_prefix": "vdbbench_mt_",
+          "scalar_payload_label_field": "label",
+          "pin_namespace": false,
+          "pin_namespace_requested": false,
+          "pin_replicas": 1,
+          "pin_timeout": 2700,
+          "pin_target_namespace_count": 0
+        },
+        "db_case_config": {
+          "metric_type": "BM25",
+          "time_wait_warmup": 60,
+          "disable_backpressure": false
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "HotpotQA Large (5.2M documents)",
+            "payload_profile": "text"
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    }
+  ],
+  "file_fmt": "result_{}_{}_{}.json",
+  "timestamp": 1782259200.0
+}
