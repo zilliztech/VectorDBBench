@@ -5,10 +5,10 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 19.1458,
-        "optimize_duration": 140.8581,
-        "load_duration": 160.0039,
-        "qps": 4468.446,
+        "insert_duration": 29.3029,
+        "optimize_duration": 522.3638,
+        "load_duration": 551.6667,
+        "qps": 5024.8673,
         "serial_latency_p99": 0.0099,
         "serial_latency_p95": 0.0074,
         "recall": 0.9348,
@@ -18,8 +18,8 @@
           80
         ],
         "conc_qps_list": [
-          4150.2246,
-          4468.446
+          4539.6507,
+          5024.8673
         ],
         "conc_latency_p99_list": [
           0.02007044190080706,
