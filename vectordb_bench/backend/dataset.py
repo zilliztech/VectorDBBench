@@ -819,6 +819,11 @@ class FtsDatasetManager(BaseModel):
             self._ir_dataset = self._translator.load()
             log.info(f"Successfully loaded ir_datasets dataset: {self._translator.ir_datasets_name}")
 
+            # Force ir_datasets lazy document cache work before timed insert.
+            for idx, _ in enumerate(self._translator.iter_documents(self._ir_dataset), start=1):
+                if idx >= self.data.size:
+                    break
+
             # Load queries from ir_datasets and mathematical ground truth artifacts by row order.
             if self.data.with_gt:
                 # Load queries using translator
