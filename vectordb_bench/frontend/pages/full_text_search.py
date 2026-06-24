@@ -23,7 +23,7 @@ DATASET_ORDER = [
     "HotpotQA Medium",
     "HotpotQA Large",
 ]
-BACKEND_ORDER = ["Milvus", "ZillizCloud", "ElasticSearch", "Vespa"]
+BACKEND_ORDER = ["ZillizCloud", "ElasticSearch", "Vespa"]
 SIZE_ORDER = ["Small", "Medium", "Large"]
 
 
@@ -125,6 +125,10 @@ def load_full_text_search_rows(result_dir: Path = RESULT_DIR) -> pd.DataFrame:
     if data.empty:
         return data
 
+    data = data[data["backend"] != "Milvus"].copy()
+    if data.empty:
+        return data
+
     data["dataset"] = pd.Categorical(data["dataset"], DATASET_ORDER, ordered=True)
     data["backend"] = pd.Categorical(data["backend"], BACKEND_ORDER, ordered=True)
     data["dataset_size"] = pd.Categorical(data["dataset_size"], SIZE_ORDER, ordered=True)
@@ -194,11 +198,20 @@ def _draw_metric_chart(st, data: pd.DataFrame, metric: str, title: str) -> None:
         if trace.name.endswith(", text"):
             trace.showlegend = False
 
+    text_template = "%{y:.4f}" if metric == "recall" else "%{y:.1f}"
+    fig.update_traces(
+        texttemplate=text_template,
+        textposition="outside",
+        textangle=0,
+        textfont=dict(size=11),
+        cliponaxis=False,
+    )
     fig.update_layout(
-        margin=dict(l=0, r=0, t=48, b=12, pad=8),
+        margin=dict(l=0, r=0, t=56, b=12, pad=8),
         legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="right", x=1, title=""),
         xaxis_title="",
         xaxis=dict(tickfont=dict(size=12)),
+        uniformtext=dict(minsize=10, mode="show"),
     )
     st.plotly_chart(fig, width="stretch", key=f"fts-{metric}")
 
@@ -292,7 +305,8 @@ def main():
         recall_data = shown_data[shown_data["payload"] == "ids_only"]
         _draw_metric_chart(st, recall_data, "recall", "Math-GT Recall")
     with chart_tabs[2]:
-        _draw_metric_chart(st, shown_data, "load_s", "Load Duration")
+        load_data = shown_data[shown_data["payload"] == "ids_only"]
+        _draw_metric_chart(st, load_data, "load_s", "Load Duration")
     with chart_tabs[3]:
         concurrency_data = _select_payload_for_tab(st, shown_data, "fts-concurrency-payload")
         _draw_concurrency_chart(st, concurrency_data)
