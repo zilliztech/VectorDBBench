@@ -269,7 +269,10 @@ def select_cli_db_case_config(db: DB, db_case_config: DBCaseConfig, case_type: s
     fts_case_config_cls = db.case_config_cls(IndexType.FTS)
     if isinstance(db_case_config, fts_case_config_cls):
         return db_case_config
-    return fts_case_config_cls()
+    fts_db_case_config = fts_case_config_cls()
+    if hasattr(db_case_config, "disable_backpressure") and hasattr(fts_db_case_config, "disable_backpressure"):
+        fts_db_case_config.disable_backpressure = db_case_config.disable_backpressure
+    return fts_db_case_config
 
 
 log = logging.getLogger(__name__)

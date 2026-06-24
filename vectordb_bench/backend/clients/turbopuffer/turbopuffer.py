@@ -1,6 +1,7 @@
 """Wrapper around the TurboPuffer vector database over VectorDB"""
 
 import logging
+import os
 import time
 from contextlib import contextmanager
 from json import dumps, loads
@@ -141,6 +142,9 @@ class TurboPuffer(VectorDB):
 
     def _create_client(self) -> tpuf.Turbopuffer:
         client_kwargs = {"api_key": self.api_key, "region": self.region}
+        max_retries = os.getenv("TURBOPUFFER_MAX_RETRIES")
+        if max_retries is not None:
+            client_kwargs["max_retries"] = int(max_retries)
         if self.api_base_url:
             client_kwargs["base_url"] = self.api_base_url
         return tpuf.Turbopuffer(**client_kwargs)
@@ -397,6 +401,7 @@ class TurboPuffer(VectorDB):
                         "full_text_search": True,
                     }
                 },
+                disable_backpressure=self.db_case_config.disable_backpressure,
             )
         except Exception as e:
             log.warning(f"Failed to insert FTS docs. Error: {e}")
