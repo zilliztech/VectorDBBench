@@ -64,6 +64,20 @@ def _dataset_axis_order(data: pd.DataFrame) -> list[str]:
     return labels
 
 
+def _backend_metric_order(data: pd.DataFrame, metric: str, ascending: bool) -> list[str]:
+    if data.empty or metric not in data:
+        return BACKEND_ORDER
+
+    metric_data = data[["backend", metric]].dropna().copy()
+    if metric_data.empty:
+        return BACKEND_ORDER
+
+    metric_data["backend"] = metric_data["backend"].astype(str)
+    scores = metric_data.groupby("backend")[metric].mean()
+    ordered = scores.sort_values(ascending=ascending).index.tolist()
+    return ordered + [backend for backend in BACKEND_ORDER if backend not in ordered]
+
+
 def _run_context(task_label: str) -> str:
     if "mathgt" in task_label:
         return "Math GT"
@@ -179,7 +193,16 @@ def _draw_summary_table(st: Any, data: pd.DataFrame) -> None:
     )
 
 
-def _draw_metric_chart(st: Any, data: pd.DataFrame, metric: str, title: str) -> None:
+def _draw_metric_chart(
+    st: Any,
+    data: pd.DataFrame,
+    metric: str,
+    title: str,
+    backend_order: list[str] | None = None,
+) -> None:
+    if backend_order is None:
+        backend_order = BACKEND_ORDER
+
     fig = px.bar(
         data,
         x="dataset_axis_label",
@@ -187,7 +210,7 @@ def _draw_metric_chart(st: Any, data: pd.DataFrame, metric: str, title: str) -> 
         color="backend",
         pattern_shape="payload",
         barmode="group",
-        category_orders={"dataset_axis_label": _dataset_axis_order(data), "backend": BACKEND_ORDER},
+        category_orders={"dataset_axis_label": _dataset_axis_order(data), "backend": backend_order},
         hover_data=["dataset_doc_count", "payload", "context", "task_label"],
         text_auto=".4g",
         title=title,
@@ -297,13 +320,31 @@ def main():
     chart_tabs = st.tabs(["QPS", "Recall", "Load"])
     with chart_tabs[0]:
         qps_data = _select_payload_for_tab(st, shown_data, "fts-qps-payload")
-        _draw_metric_chart(st, qps_data, "qps", "Search QPS")
+        _draw_metric_chart(
+            st,
+            qps_data,
+            "qps",
+            "Search QPS",
+            _backend_metric_order(qps_data, "qps", ascending=False),
+        )
     with chart_tabs[1]:
         recall_data = shown_data[shown_data["payload"] == "ids_only"]
-        _draw_metric_chart(st, recall_data, "recall", "Math-GT Recall")
+        _draw_metric_chart(
+            st,
+            recall_data,
+            "recall",
+            "Math-GT Recall",
+            _backend_metric_order(recall_data, "recall", ascending=False),
+        )
     with chart_tabs[2]:
         load_data = shown_data[shown_data["payload"] == "ids_only"]
-        _draw_metric_chart(st, load_data, "load_s", "Load Duration")
+        _draw_metric_chart(
+            st,
+            load_data,
+            "load_s",
+            "Load Duration",
+            _backend_metric_order(load_data, "load_s", ascending=True),
+        )
 
     footer(st.container())
 
