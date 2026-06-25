@@ -536,6 +536,68 @@ class MilvusFtsConfig(BaseModel, DBCaseConfig):
     analyzer_stop_words: str | None = None
     drop_ratio_search: float | None = None
 
+    @staticmethod
+    def _manifest_filter_list(analyzer_params: dict) -> list:
+        filters = analyzer_params.get("filter") or []
+        if isinstance(filters, list):
+            return filters
+        return [filters]
+
+    def _analyzer_manifest_updates(self, analyzer_params: dict) -> dict:
+        if not analyzer_params:
+            return {}
+
+        updates = {}
+        tokenizer = analyzer_params.get("tokenizer")
+        if tokenizer:
+            updates["analyzer_tokenizer"] = tokenizer
+
+        filters = self._manifest_filter_list(analyzer_params)
+        updates["analyzer_enable_lowercase"] = "lowercase" in filters
+
+        length_max = None
+        stop_words = None
+        for item in filters:
+            if not isinstance(item, dict):
+                continue
+            if item.get("type") == "length":
+                length_max = item.get("max")
+            elif item.get("type") == "stop":
+                configured_stop_words = item.get("stop_words")
+                if isinstance(configured_stop_words, list):
+                    stop_words = ",".join(str(word) for word in configured_stop_words)
+                elif configured_stop_words:
+                    stop_words = str(configured_stop_words)
+
+        updates["analyzer_max_token_length"] = length_max
+        updates["analyzer_stop_words"] = stop_words
+        return updates
+
+    def apply_fts_manifest(
+        self,
+        bm25_params: dict[str, float],
+        analyzer_params: dict,
+    ) -> tuple[DBCaseConfig, dict]:
+        updates = {}
+        applied_bm25_params = {}
+
+        if "k1" in bm25_params:
+            updates["bm25_k1"] = bm25_params["k1"]
+            applied_bm25_params["k1"] = bm25_params["k1"]
+        if "b" in bm25_params:
+            updates["bm25_b"] = bm25_params["b"]
+            applied_bm25_params["b"] = bm25_params["b"]
+        updates.update(self._analyzer_manifest_updates(analyzer_params))
+
+        return self.model_copy(update=updates), {
+            "applied_bm25_params": applied_bm25_params,
+            "unapplied_bm25_params": {
+                k: v for k, v in bm25_params.items() if k not in applied_bm25_params
+            },
+            "applied_analyzer_params": dict(analyzer_params),
+            "unapplied_analyzer_params": {},
+        }
+
     def analyzer_param(self) -> dict:
         analyzer_params = {}
         if self.analyzer_tokenizer:

@@ -7,6 +7,7 @@ import traceback
 from enum import Enum, auto
 
 import numpy as np
+from pydantic import PrivateAttr
 
 from .. import config
 from ..base import BaseModel
@@ -62,6 +63,8 @@ class CaseRunner(BaseModel):
     final_search_runner: MultiProcessingSearchRunner | None = None
     read_write_runner: ReadWriteRunner | None = None
     cold_warm_search_runner: ColdWarmSearchRunner | None = None
+
+    _fts_manifest_report: dict = PrivateAttr(default_factory=dict)
 
     def __eq__(self, obj: any):
         if isinstance(obj, CaseRunner):
@@ -210,92 +213,23 @@ class CaseRunner(BaseModel):
             **extra_db_kwargs,
         )
 
-    @staticmethod
-    def _filter_list(analyzer_params: dict) -> list:
-        filters = analyzer_params.get("filter") or []
-        if isinstance(filters, list):
-            return filters
-        return [filters]
-
-    def _milvus_analyzer_manifest_updates(self, analyzer_params: dict) -> dict:
-        if not analyzer_params:
-            return {}
-
-        updates = {}
-        tokenizer = analyzer_params.get("tokenizer")
-        if tokenizer:
-            updates["analyzer_tokenizer"] = tokenizer
-
-        filters = self._filter_list(analyzer_params)
-        updates["analyzer_enable_lowercase"] = "lowercase" in filters
-
-        length_max = None
-        stop_words = None
-        for item in filters:
-            if not isinstance(item, dict):
-                continue
-            if item.get("type") == "length":
-                length_max = item.get("max")
-            elif item.get("type") == "stop":
-                configured_stop_words = item.get("stop_words")
-                if isinstance(configured_stop_words, list):
-                    stop_words = ",".join(str(word) for word in configured_stop_words)
-                elif configured_stop_words:
-                    stop_words = str(configured_stop_words)
-
-        updates["analyzer_max_token_length"] = length_max
-        updates["analyzer_stop_words"] = stop_words
-        return updates
-
     def _apply_fts_manifest_params(self) -> None:
-        bm25_params = getattr(self.ca.dataset, "bm25_params", {}) or {}
-        analyzer_params = getattr(self.ca.dataset, "analyzer_params", {}) or {}
-        updates = {}
-
-        if self.config.db == DB.Milvus:
-            if "k1" in bm25_params:
-                updates["bm25_k1"] = bm25_params["k1"]
-            if "b" in bm25_params:
-                updates["bm25_b"] = bm25_params["b"]
-            updates.update(self._milvus_analyzer_manifest_updates(analyzer_params))
-        elif self.config.db == DB.ElasticCloud:
-            if "k1" in bm25_params:
-                updates["bm25_k1"] = bm25_params["k1"]
-            if "b" in bm25_params:
-                updates["bm25_b"] = bm25_params["b"]
-        elif self.config.db == DB.Vespa:
-            if "k1" in bm25_params:
-                updates["bm25_k1"] = bm25_params["k1"]
-            if "b" in bm25_params:
-                updates["bm25_b"] = bm25_params["b"]
-            if "avgdl" in bm25_params:
-                updates["bm25_avgdl"] = bm25_params["avgdl"]
-
-        if updates:
-            self.config.db_case_config = self.config.db_case_config.model_copy(update=updates)
-
-    def _fts_manifest_additional_parameters(self) -> dict:
         bm25_params = dict(getattr(self.ca.dataset, "bm25_params", {}) or {})
         analyzer_params = dict(getattr(self.ca.dataset, "analyzer_params", {}) or {})
-
-        applied_keys: set[str]
-        if self.config.db in {DB.Milvus, DB.ElasticCloud}:
-            applied_keys = {"k1", "b"}
-        elif self.config.db == DB.Vespa:
-            applied_keys = {"k1", "b", "avgdl"}
-        else:
-            applied_keys = set()
-
-        return {
+        self.config.db_case_config, manifest_report = self.config.db_case_config.apply_fts_manifest(
+            bm25_params=bm25_params,
+            analyzer_params=analyzer_params,
+        )
+        self._fts_manifest_report = {
             "fts_manifest": {
                 "bm25": bm25_params,
                 "analyzer": analyzer_params,
             },
-            "applied_bm25_params": {k: v for k, v in bm25_params.items() if k in applied_keys},
-            "unapplied_bm25_params": {k: v for k, v in bm25_params.items() if k not in applied_keys},
-            "applied_analyzer_params": analyzer_params if self.config.db == DB.Milvus else {},
-            "unapplied_analyzer_params": {} if self.config.db == DB.Milvus else analyzer_params,
+            **manifest_report,
         }
+
+    def _fts_manifest_additional_parameters(self) -> dict:
+        return dict(self._fts_manifest_report)
 
     def _pre_run(self, drop_old: bool = True):
         try:

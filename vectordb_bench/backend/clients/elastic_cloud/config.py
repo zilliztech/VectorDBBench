@@ -145,6 +145,30 @@ class ElasticCloudFtsConfig(BaseModel, DBCaseConfig):
     bm25_k1: float | None = None
     bm25_b: float | None = None
 
+    def apply_fts_manifest(
+        self,
+        bm25_params: dict[str, float],
+        analyzer_params: dict,
+    ) -> tuple[DBCaseConfig, dict]:
+        updates = {}
+        applied_bm25_params = {}
+
+        if "k1" in bm25_params:
+            updates["bm25_k1"] = bm25_params["k1"]
+            applied_bm25_params["k1"] = bm25_params["k1"]
+        if "b" in bm25_params:
+            updates["bm25_b"] = bm25_params["b"]
+            applied_bm25_params["b"] = bm25_params["b"]
+
+        return self.model_copy(update=updates), {
+            "applied_bm25_params": applied_bm25_params,
+            "unapplied_bm25_params": {
+                k: v for k, v in bm25_params.items() if k not in applied_bm25_params
+            },
+            "applied_analyzer_params": {},
+            "unapplied_analyzer_params": dict(analyzer_params),
+        }
+
     def index_param(self) -> dict:
         text_mapping = {"type": "text"}
         if self.bm25_k1 is not None or self.bm25_b is not None:

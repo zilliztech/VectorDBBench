@@ -59,6 +59,33 @@ class VespaFtsConfig(BaseModel, DBCaseConfig):
     feed_client_command: str = "vespa"
     feed_client_connections: int | None = None
 
+    def apply_fts_manifest(
+        self,
+        bm25_params: dict[str, float],
+        analyzer_params: dict,
+    ) -> tuple[DBCaseConfig, dict]:
+        updates = {}
+        applied_bm25_params = {}
+
+        if "k1" in bm25_params:
+            updates["bm25_k1"] = bm25_params["k1"]
+            applied_bm25_params["k1"] = bm25_params["k1"]
+        if "b" in bm25_params:
+            updates["bm25_b"] = bm25_params["b"]
+            applied_bm25_params["b"] = bm25_params["b"]
+        if "avgdl" in bm25_params:
+            updates["bm25_avgdl"] = bm25_params["avgdl"]
+            applied_bm25_params["avgdl"] = bm25_params["avgdl"]
+
+        return self.model_copy(update=updates), {
+            "applied_bm25_params": applied_bm25_params,
+            "unapplied_bm25_params": {
+                k: v for k, v in bm25_params.items() if k not in applied_bm25_params
+            },
+            "applied_analyzer_params": {},
+            "unapplied_analyzer_params": dict(analyzer_params),
+        }
+
     def index_param(self) -> dict:
         return {}
 
