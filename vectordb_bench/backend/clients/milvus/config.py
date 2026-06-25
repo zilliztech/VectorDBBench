@@ -591,9 +591,7 @@ class MilvusFtsConfig(BaseModel, DBCaseConfig):
 
         return self.model_copy(update=updates), {
             "applied_bm25_params": applied_bm25_params,
-            "unapplied_bm25_params": {
-                k: v for k, v in bm25_params.items() if k not in applied_bm25_params
-            },
+            "unapplied_bm25_params": {k: v for k, v in bm25_params.items() if k not in applied_bm25_params},
             "applied_analyzer_params": dict(analyzer_params),
             "unapplied_analyzer_params": {},
         }
