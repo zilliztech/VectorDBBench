@@ -22,6 +22,7 @@ DATASET_ORDER = [
     "HotpotQA Medium",
     "HotpotQA Large",
 ]
+# Published FTS results currently cover this cloud/service backend subset.
 BACKEND_ORDER = ["ZillizCloud", "ElasticSearch", "Vespa", "TurboPuffer"]
 BACKEND_COLORS = {
     "ZillizCloud": "#0D6EFD",
@@ -302,7 +303,7 @@ def _draw_concurrency_chart(st: Any, data: pd.DataFrame) -> None:
 
 def main():
     st.set_page_config(
-        page_title="Full Text Search",
+        page_title="Full Text Search Cloud Results",
         page_icon=FAVICON,
         layout="wide",
     )
@@ -310,7 +311,8 @@ def main():
     drawHeaderIcon(st)
     NavToPages(st)
 
-    st.title("Full Text Search")
+    st.title("Full Text Search Cloud Results")
+    st.caption("Published FTS results for Zilliz Cloud, ElasticSearch, Vespa, and TurboPuffer.")
 
     data = load_full_text_search_rows()
     if data.empty:
