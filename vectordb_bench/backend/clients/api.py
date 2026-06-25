@@ -269,6 +269,11 @@ class VectorDB(ABC):
 
     @classmethod
     def supports_full_text_search(cls) -> bool:
+        """Return whether this client implements the full-text search API.
+
+        Backends that return True must implement insert_documents and
+        search_documents for raw text documents.
+        """
         return False
 
     def insert_documents(
@@ -277,6 +282,18 @@ class VectorDB(ABC):
         doc_ids: list[str],
         **kwargs,
     ) -> tuple[int, Exception | None]:
+        """Insert raw text documents for full-text search cases.
+
+        Args:
+            texts(list[str]): raw text documents to index.
+            doc_ids(list[str]): stable document IDs aligned with texts.
+            **kwargs(Any): backend or runner specific insert parameters.
+
+        Returns:
+            tuple[int, Exception | None]: inserted document count and an optional
+            error. Implementations should return the count of successfully
+            inserted documents even when reporting a partial failure.
+        """
         msg = f"{self.name or self.__class__.__name__} does not support full-text document insert"
         raise NotImplementedError(msg)
 
@@ -287,6 +304,19 @@ class VectorDB(ABC):
         payload_profile: PayloadProfile = PayloadProfile.IDS_ONLY,
         **kwargs,
     ) -> list[str]:
+        """Search full-text documents and return ranked document IDs.
+
+        Args:
+            query(str): raw query text.
+            k(int): number of nearest documents to return. Defaults to 100.
+            payload_profile(PayloadProfile): response payload shape requested by
+                the benchmark. The API still returns document IDs only; use
+                supports_document_payload_profile to reject unsupported profiles.
+            **kwargs(Any): backend or runner specific search parameters.
+
+        Returns:
+            list[str]: ranked document IDs for the query.
+        """
         msg = f"{self.name or self.__class__.__name__} does not support full-text document search"
         raise NotImplementedError(msg)
 
