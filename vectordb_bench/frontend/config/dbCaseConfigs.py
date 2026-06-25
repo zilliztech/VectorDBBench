@@ -170,7 +170,7 @@ def generate_normal_cases(case_id: CaseType, custom_case: dict | None = None) ->
 
 def generate_fts_case(dataset_with_size_type: FtsDatasetWithSizeType) -> CaseConfig:
     return CaseConfig(
-        case_id=CaseType.FTSmsmarcoPerformance,
+        case_id=CaseType.FTSBm25Performance,
         custom_case={"dataset_with_size_type": dataset_with_size_type.value},
     )
 
@@ -411,7 +411,7 @@ DISPLAY_CASE_ORDER: list[CaseType] = [
     CaseType.Performance1024D10M,
     CaseType.CapacityDim960,
     CaseType.CapacityDim128,
-    CaseType.FTSmsmarcoPerformance,
+    CaseType.FTSBm25Performance,
 ]
 CASE_NAME_ORDER = [case.case_cls().name for case in DISPLAY_CASE_ORDER]
 

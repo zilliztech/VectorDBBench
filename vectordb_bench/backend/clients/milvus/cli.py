@@ -823,7 +823,7 @@ def MilvusFTS(**parameters: Unpack[MilvusFTSTypedDict]):
 
     # Set default case_type to large dataset if not specified
     if parameters.get("case_type") == "Performance1536D50K":  # Default from CommonTypedDict
-        parameters["case_type"] = "FTSmsmarcoPerformance"
+        parameters["case_type"] = "FTSBm25Performance"
 
     run(
         db=DBTYPE,

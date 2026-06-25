@@ -429,7 +429,7 @@ class TestResult(BaseModel):
                 index_value = raw_case_cfg.get("index", None)
 
                 # Handle FTS cases
-                if case_config.get("case_id") == CaseType.FTSmsmarcoPerformance.value:
+                if case_config.get("case_id") == CaseType.FTSBm25Performance.value:
                     index_value = IndexType.FTS
                 try:
                     task_config["db_case_config"] = db.case_config_cls(index_type=index_value)(**raw_case_cfg)

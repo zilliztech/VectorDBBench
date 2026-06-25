@@ -65,7 +65,7 @@ class CaseType(Enum):
 
     NewIntFilterPerformanceCase = 400
     CloudPayloadSearchCase = 500
-    FTSmsmarcoPerformance = 503
+    FTSBm25Performance = 503
     CloudInsertCase = 600
     CloudColdLatencyCase = 700
     CloudMultiTenantSearchCase = 800
@@ -928,8 +928,8 @@ class FtsPerformanceCase(Case):
         return self.payload_profile.estimated_bytes_per_query(k=k, dim=0)
 
 
-class FTSmsmarcoPerformance(FtsPerformanceCase):
-    case_id: CaseType = CaseType.FTSmsmarcoPerformance
+class FTSBm25Performance(FtsPerformanceCase):
+    case_id: CaseType = CaseType.FTSBm25Performance
     dataset_with_size_type: FtsDatasetWithSizeType = FtsDatasetWithSizeType.MSMarcoSmall
 
     def __init__(
@@ -981,7 +981,7 @@ type2case = {
     CaseType.NewIntFilterPerformanceCase: NewIntFilterPerformanceCase,
     CaseType.LabelFilterPerformanceCase: LabelFilterPerformanceCase,
     CaseType.CloudPayloadSearchCase: CloudPayloadSearchCase,
-    CaseType.FTSmsmarcoPerformance: FTSmsmarcoPerformance,
+    CaseType.FTSBm25Performance: FTSBm25Performance,
     CaseType.CloudInsertCase: CloudInsertCase,
     CaseType.CloudColdLatencyCase: CloudColdLatencyCase,
     CaseType.CloudMultiTenantSearchCase: CloudMultiTenantSearchCase,

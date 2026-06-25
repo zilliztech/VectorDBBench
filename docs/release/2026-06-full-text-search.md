@@ -36,7 +36,7 @@ Example: run MS MARCO small on Milvus with IDs-only responses.
 
 ```bash
 vectordbbench milvusfts \
-  --case-type FTSmsmarcoPerformance \
+  --case-type FTSBm25Performance \
   --dataset-with-size-type "MS MARCO Small (100K documents)" \
   --uri "$MILVUS_URI" \
   --payload-profile ids_only \
@@ -55,7 +55,7 @@ Example: use a larger dataset while keeping the same FTS case type.
 
 ```bash
 vectordbbench elasticcloudhnsw \
-  --case-type FTSmsmarcoPerformance \
+  --case-type FTSBm25Performance \
   --dataset-with-size-type "HotpotQA Medium (1M documents)" \
   --host "$ELASTIC_HOST" \
   --port "$ELASTIC_PORT" \
@@ -76,7 +76,7 @@ Example: run Vespa with text payload responses and concurrent search only.
 
 ```bash
 vectordbbench vespa \
-  --case-type FTSmsmarcoPerformance \
+  --case-type FTSBm25Performance \
   --dataset-with-size-type "MS MARCO Medium (1M documents)" \
   --uri "$VESPA_URI" \
   --port "$VESPA_PORT" \
