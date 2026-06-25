@@ -765,7 +765,7 @@ class FtsDatasetManager(BaseModel):
         gt_rows = pl.read_parquet(p)[self.data.gt_neighbors_field].to_list()
         # FTS math GT stores dense document row IDs, not original ir_datasets doc IDs.
         # FtsDocumentIterator assigns these same row IDs during insertion.
-        return [[str(doc_id) for doc_id in row] for row in gt_rows]
+        return [[str(doc_id) for doc_id in row if str(doc_id) != "-1"] for row in gt_rows]
 
     def _load_build_manifest(self) -> dict[str, typing.Any]:
         p = pathlib.Path(self.data_dir, FTS_BUILD_MANIFEST_FILE)
