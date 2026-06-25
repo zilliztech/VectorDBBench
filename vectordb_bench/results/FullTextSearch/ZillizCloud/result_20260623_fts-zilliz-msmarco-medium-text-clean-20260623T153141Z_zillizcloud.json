@@ -5,9 +5,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 18.6088,
-        "optimize_duration": 230.1878,
-        "load_duration": 248.7966,
+        "insert_duration": 20.5452,
+        "optimize_duration": 119.3876,
+        "load_duration": 139.9328,
         "qps": 7477.8788,
         "serial_latency_p99": 0.0,
         "serial_latency_p95": 0.0,

@@ -5,9 +5,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 1139.0622,
+        "insert_duration": 832.0622,
         "optimize_duration": 60.0494,
-        "load_duration": 1199.1117,
+        "load_duration": 892.1117,
         "qps": 1316.9277,
         "serial_latency_p99": 0.042,
         "serial_latency_p95": 0.026,
@@ -41,7 +41,7 @@
         "payload_profile": "ids_only",
         "payload_estimated_bytes_per_query": 2000,
         "inserted_count": 8841823,
-        "insert_rows_per_second": 0.0,
+        "insert_rows_per_second": 10626.3967,
         "insert_completion_seconds": 0.0,
         "searchable_after_insert_seconds": 0.0,
         "indexed_after_searchable_seconds": 0.0,
