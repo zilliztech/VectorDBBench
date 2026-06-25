@@ -23,6 +23,12 @@ DATASET_ORDER = [
     "HotpotQA Large",
 ]
 BACKEND_ORDER = ["ZillizCloud", "ElasticSearch", "Vespa", "TurboPuffer"]
+BACKEND_COLORS = {
+    "ZillizCloud": "#0D6EFD",
+    "ElasticSearch": "#04D6C8",
+    "Vespa": "#61D790",
+    "TurboPuffer": "#FF6B2C",
+}
 SIZE_ORDER = ["Small", "Medium", "Large"]
 
 
@@ -211,6 +217,7 @@ def _draw_metric_chart(
         pattern_shape="payload",
         barmode="group",
         category_orders={"dataset_axis_label": _dataset_axis_order(data), "backend": backend_order},
+        color_discrete_map=BACKEND_COLORS,
         hover_data=["dataset_doc_count", "payload", "context", "task_label"],
         text_auto=".4g",
         title=title,
@@ -280,6 +287,7 @@ def _draw_concurrency_chart(st: Any, data: pd.DataFrame) -> None:
         symbol="payload",
         markers=True,
         category_orders={"dataset_axis_label": _dataset_axis_order(data), "backend": BACKEND_ORDER},
+        color_discrete_map=BACKEND_COLORS,
         hover_data=["dataset", "dataset_doc_count", "payload", "context", "task_label"],
         title="Concurrent Search QPS",
     )
