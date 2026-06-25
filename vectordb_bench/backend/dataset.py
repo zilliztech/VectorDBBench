@@ -763,6 +763,8 @@ class FtsDatasetManager(BaseModel):
             msg = f"No such file: {p}"
             raise FileNotFoundError(msg)
         gt_rows = pl.read_parquet(p)[self.data.gt_neighbors_field].to_list()
+        # FTS math GT stores dense document row IDs, not original ir_datasets doc IDs.
+        # FtsDocumentIterator assigns these same row IDs during insertion.
         return [[str(doc_id) for doc_id in row] for row in gt_rows]
 
     def _load_build_manifest(self) -> dict[str, typing.Any]:
@@ -776,8 +778,34 @@ class FtsDatasetManager(BaseModel):
             raise TypeError(msg)
         return manifest
 
+    def _validate_build_manifest(self, manifest: dict[str, typing.Any]) -> None:
+        source_ir_dataset = manifest.get("source_ir_dataset")
+        if source_ir_dataset is not None and source_ir_dataset != self._translator.ir_datasets_name:
+            msg = (
+                f"{self.data.full_name} manifest source_ir_dataset={source_ir_dataset!r} "
+                f"does not match {self._translator.ir_datasets_name!r}"
+            )
+            raise ValueError(msg)
+
+        for field_name in ("doc_limit", "indexed_doc_count"):
+            value = manifest.get(field_name)
+            if value is None:
+                continue
+            if int(value) != self.data.size:
+                msg = f"{self.data.full_name} manifest {field_name}={value} does not match size={self.data.size}"
+                raise ValueError(msg)
+
+        query_count = manifest.get("query_count")
+        if query_count is not None and self.queries_data is not None and int(query_count) != len(self.queries_data):
+            msg = (
+                f"{self.data.full_name} manifest query_count={query_count} "
+                f"does not match loaded query count={len(self.queries_data)}"
+            )
+            raise ValueError(msg)
+
     def _load_manifest_params(self) -> None:
         manifest = self._load_build_manifest()
+        self._validate_build_manifest(manifest)
         bm25 = manifest.get("bm25") or {}
         analyzer = manifest.get("analyzer") or {}
         self.bm25_params = {
