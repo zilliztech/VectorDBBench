@@ -164,13 +164,16 @@ def _filter_data(st: Any, data: pd.DataFrame) -> pd.DataFrame:
             default=[dataset for dataset in DATASET_ORDER if dataset in set(data["dataset"].astype(str))],
         )
         backend_options = [backend for backend in BACKEND_ORDER if backend in set(data["backend"].astype(str))]
-        selected_backend = st.selectbox("Backend", ["All", *backend_options])
+        selected_backends = st.multiselect("Backend", backend_options, default=backend_options)
         payloads = sorted(data["payload"].dropna().unique().tolist())
-        selected_payloads = st.multiselect("Payload", payloads, default=payloads)
+        default_payloads = ["ids_only"] if "ids_only" in payloads else payloads
+        selected_payloads = st.multiselect("Payload", payloads, default=default_payloads)
 
-    filters = data["dataset"].astype(str).isin(selected_datasets) & data["payload"].isin(selected_payloads)
-    if selected_backend != "All":
-        filters &= data["backend"].astype(str) == selected_backend
+    filters = (
+        data["dataset"].astype(str).isin(selected_datasets)
+        & data["backend"].astype(str).isin(selected_backends)
+        & data["payload"].isin(selected_payloads)
+    )
 
     return data[filters].copy()
 
@@ -189,7 +192,7 @@ def _draw_summary_table(st: Any, data: pd.DataFrame) -> None:
     st.dataframe(
         data[columns],
         hide_index=True,
-        use_container_width=True,
+        width="stretch",
         column_config={
             "load_s": st.column_config.NumberColumn("Load s", format="%.4f"),
             "qps": st.column_config.NumberColumn("QPS", format="%.4f"),
@@ -210,6 +213,7 @@ def _draw_metric_chart(
     if backend_order is None:
         backend_order = BACKEND_ORDER
 
+    show_text = data["payload"].nunique() <= 1
     fig = px.bar(
         data,
         x="dataset_axis_label",
@@ -220,21 +224,18 @@ def _draw_metric_chart(
         category_orders={"dataset_axis_label": _dataset_axis_order(data), "backend": backend_order},
         color_discrete_map=BACKEND_COLORS,
         hover_data=["dataset_doc_count", "payload", "context", "task_label"],
-        text_auto=".4g",
+        text_auto=".4g" if show_text else False,
         title=title,
     )
-    for trace in fig.data:
-        if trace.name.endswith(", text"):
-            trace.showlegend = False
-
-    text_template = "%{y:.4f}" if metric == "recall" else "%{y:.1f}"
-    fig.update_traces(
-        texttemplate=text_template,
-        textposition="outside",
-        textangle=0,
-        textfont={"size": 11},
-        cliponaxis=False,
-    )
+    if show_text:
+        text_template = "%{y:.4f}" if metric == "recall" else "%{y:.1f}"
+        fig.update_traces(
+            texttemplate=text_template,
+            textposition="outside",
+            textangle=0,
+            textfont={"size": 11},
+            cliponaxis=False,
+        )
     fig.update_layout(
         margin={"l": 0, "r": 0, "t": 56, "b": 12, "pad": 8},
         legend={"orientation": "h", "yanchor": "bottom", "y": 1, "xanchor": "right", "x": 1, "title": ""},
@@ -244,14 +245,6 @@ def _draw_metric_chart(
     )
     st.plotly_chart(fig, width="stretch", key=f"fts-{metric}")
 
-
-def _select_payload_for_tab(st: Any, data: pd.DataFrame, key: str) -> pd.DataFrame:
-    payloads = sorted(data["payload"].dropna().unique().tolist())
-    if len(payloads) <= 1:
-        return data
-
-    selected_payload = st.selectbox("Payload", payloads, key=key)
-    return data[data["payload"] == selected_payload].copy()
 
 
 def _concurrency_rows(data: pd.DataFrame) -> pd.DataFrame:
@@ -329,7 +322,7 @@ def main():
     _draw_summary_table(st, shown_data)
     chart_tabs = st.tabs(["QPS", "Recall", "Load"])
     with chart_tabs[0]:
-        qps_data = _select_payload_for_tab(st, shown_data, "fts-qps-payload")
+        qps_data = shown_data
         _draw_metric_chart(
             st,
             qps_data,

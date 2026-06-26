@@ -29,6 +29,7 @@ dependencies = [
     "pyyaml",
     "pytz",
     "streamlit>=1.47,<2",  # 1.47 fixes streamlit#11660
+    "tornado>=6.0",
     "tqdm",
     "s3fs",
     "oss2",
