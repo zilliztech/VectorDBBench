@@ -1,0 +1,1622 @@
+{
+  "run_id": "fts_standard_zillizcloud",
+  "task_label": "fts_standard",
+  "results": [
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 92.5443,
+        "optimize_duration": 81.9515,
+        "load_duration": 174.4958,
+        "qps": 1291.365,
+        "serial_latency_p99": 0.02,
+        "serial_latency_p95": 0.0136,
+        "recall": 0.9935,
+        "ndcg": 0.0,
+        "conc_num_list": [
+          40,
+          80
+        ],
+        "conc_qps_list": [
+          1291.365,
+          1163.3626
+        ],
+        "conc_latency_p99_list": [
+          0.04671075918056886,
+          0.09800235276106833
+        ],
+        "conc_latency_p95_list": [
+          0.038866160500401745,
+          0.08286118600008194
+        ],
+        "conc_latency_avg_list": [
+          0.027654020284034526,
+          0.06254546518180665
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 5233329,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "num_per_batch": 1000,
+          "load_concurrency": 0,
+          "fts_manifest": {
+            "bm25": {
+              "k1": 1.2,
+              "b": 0.75,
+              "avgdl": 47.43239876568051
+            },
+            "analyzer": {
+              "filter": [
+                "lowercase"
+              ],
+              "tokenizer": "standard"
+            }
+          },
+          "applied_bm25_params": {},
+          "unapplied_bm25_params": {
+            "k1": 1.2,
+            "b": 0.75,
+            "avgdl": 47.43239876568051
+          },
+          "applied_analyzer_params": {},
+          "unapplied_analyzer_params": {
+            "filter": [
+              "lowercase"
+            ],
+            "tokenizer": "standard"
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "2026-06-23T16:12:30.162495",
+          "version": "",
+          "note": "",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********",
+          "token": "",
+          "num_shards": 1,
+          "collection_name": "ZillizCloudFTSBench"
+        },
+        "db_case_config": {
+          "index_type": "AUTOINDEX",
+          "metric_type": "BM25",
+          "inverted_index_algo": "DAAT_MAXSCORE",
+          "bm25_k1": null,
+          "bm25_b": null,
+          "analyzer_tokenizer": "standard",
+          "analyzer_enable_lowercase": true,
+          "analyzer_max_token_length": null,
+          "analyzer_stop_words": null,
+          "drop_ratio_search": null,
+          "level": 1
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "HotpotQA Large (5.2M documents)",
+            "payload_profile": "ids_only"
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              40,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 92.5443,
+        "optimize_duration": 81.9515,
+        "load_duration": 174.4958,
+        "qps": 1311.121,
+        "serial_latency_p99": 0.0,
+        "serial_latency_p95": 0.0,
+        "recall": 0.0,
+        "ndcg": 0.0,
+        "conc_num_list": [
+          40,
+          80
+        ],
+        "conc_qps_list": [
+          1252.5852,
+          1311.121
+        ],
+        "conc_latency_p99_list": [
+          0.04848522670017702,
+          0.08333016816090094
+        ],
+        "conc_latency_p95_list": [
+          0.04233008824876378,
+          0.0747867592010152
+        ],
+        "conc_latency_avg_list": [
+          0.03172382021377068,
+          0.05988630893483264
+        ],
+        "payload_profile": "text",
+        "payload_estimated_bytes_per_query": 53200,
+        "inserted_count": 5233329,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "num_per_batch": 1000,
+          "load_concurrency": 0,
+          "fts_manifest": {
+            "bm25": {
+              "k1": 1.2,
+              "b": 0.75,
+              "avgdl": 47.43239876568051
+            },
+            "analyzer": {
+              "filter": [
+                "lowercase"
+              ],
+              "tokenizer": "standard"
+            }
+          },
+          "applied_bm25_params": {},
+          "unapplied_bm25_params": {
+            "k1": 1.2,
+            "b": 0.75,
+            "avgdl": 47.43239876568051
+          },
+          "applied_analyzer_params": {},
+          "unapplied_analyzer_params": {
+            "filter": [
+              "lowercase"
+            ],
+            "tokenizer": "standard"
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "2026-06-23T16:21:46.167469",
+          "version": "",
+          "note": "",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********",
+          "token": "",
+          "num_shards": 1,
+          "collection_name": "ZillizCloudFTSBench"
+        },
+        "db_case_config": {
+          "index_type": "AUTOINDEX",
+          "metric_type": "BM25",
+          "inverted_index_algo": "DAAT_MAXSCORE",
+          "bm25_k1": null,
+          "bm25_b": null,
+          "analyzer_tokenizer": "standard",
+          "analyzer_enable_lowercase": true,
+          "analyzer_max_token_length": null,
+          "analyzer_stop_words": null,
+          "drop_ratio_search": null,
+          "level": 1
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "HotpotQA Large (5.2M documents)",
+            "payload_profile": "text"
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              40,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 19.2043,
+        "optimize_duration": 84.4117,
+        "load_duration": 103.616,
+        "qps": 5024.8673,
+        "serial_latency_p99": 0.0099,
+        "serial_latency_p95": 0.0074,
+        "recall": 0.9348,
+        "ndcg": 0.0,
+        "conc_num_list": [
+          40,
+          80
+        ],
+        "conc_qps_list": [
+          4539.6507,
+          5024.8673
+        ],
+        "conc_latency_p99_list": [
+          0.02007044190080706,
+          0.03161907671967124
+        ],
+        "conc_latency_p95_list": [
+          0.015511998999681963,
+          0.02536790084959648
+        ],
+        "conc_latency_avg_list": [
+          0.009547202163125637,
+          0.01752803334968866
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 1000000,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "num_per_batch": 1000,
+          "load_concurrency": 0,
+          "fts_manifest": {
+            "bm25": {
+              "k1": 1.2,
+              "b": 0.75,
+              "avgdl": 55.803761
+            },
+            "analyzer": {
+              "filter": [
+                "lowercase"
+              ],
+              "tokenizer": "standard"
+            }
+          },
+          "applied_bm25_params": {},
+          "unapplied_bm25_params": {
+            "k1": 1.2,
+            "b": 0.75,
+            "avgdl": 55.803761
+          },
+          "applied_analyzer_params": {},
+          "unapplied_analyzer_params": {
+            "filter": [
+              "lowercase"
+            ],
+            "tokenizer": "standard"
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "2026-06-23T16:04:10.277433",
+          "version": "",
+          "note": "",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********",
+          "token": "",
+          "num_shards": 1,
+          "collection_name": "ZillizCloudFTSBench"
+        },
+        "db_case_config": {
+          "index_type": "AUTOINDEX",
+          "metric_type": "BM25",
+          "inverted_index_algo": "DAAT_MAXSCORE",
+          "bm25_k1": null,
+          "bm25_b": null,
+          "analyzer_tokenizer": "standard",
+          "analyzer_enable_lowercase": true,
+          "analyzer_max_token_length": null,
+          "analyzer_stop_words": null,
+          "drop_ratio_search": null,
+          "level": 1
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "HotpotQA Medium (1M documents)",
+            "payload_profile": "ids_only"
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              40,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 19.2043,
+        "optimize_duration": 84.4117,
+        "load_duration": 103.616,
+        "qps": 4094.1935,
+        "serial_latency_p99": 0.0,
+        "serial_latency_p95": 0.0,
+        "recall": 0.0,
+        "ndcg": 0.0,
+        "conc_num_list": [
+          40,
+          80
+        ],
+        "conc_qps_list": [
+          3772.8914,
+          4094.1935
+        ],
+        "conc_latency_p99_list": [
+          0.021262989360184278,
+          0.03570330930069758
+        ],
+        "conc_latency_p95_list": [
+          0.01692326859993045,
+          0.028539174500110676
+        ],
+        "conc_latency_avg_list": [
+          0.010518937966150272,
+          0.01910471804373547
+        ],
+        "payload_profile": "text",
+        "payload_estimated_bytes_per_query": 53200,
+        "inserted_count": 1000000,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "num_per_batch": 1000,
+          "load_concurrency": 0,
+          "fts_manifest": {
+            "bm25": {
+              "k1": 1.2,
+              "b": 0.75,
+              "avgdl": 55.803761
+            },
+            "analyzer": {
+              "filter": [
+                "lowercase"
+              ],
+              "tokenizer": "standard"
+            }
+          },
+          "applied_bm25_params": {},
+          "unapplied_bm25_params": {
+            "k1": 1.2,
+            "b": 0.75,
+            "avgdl": 55.803761
+          },
+          "applied_analyzer_params": {},
+          "unapplied_analyzer_params": {
+            "filter": [
+              "lowercase"
+            ],
+            "tokenizer": "standard"
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "2026-06-23T16:09:07.352737",
+          "version": "",
+          "note": "",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********",
+          "token": "",
+          "num_shards": 1,
+          "collection_name": "ZillizCloudFTSBench"
+        },
+        "db_case_config": {
+          "index_type": "AUTOINDEX",
+          "metric_type": "BM25",
+          "inverted_index_algo": "DAAT_MAXSCORE",
+          "bm25_k1": null,
+          "bm25_b": null,
+          "analyzer_tokenizer": "standard",
+          "analyzer_enable_lowercase": true,
+          "analyzer_max_token_length": null,
+          "analyzer_stop_words": null,
+          "drop_ratio_search": null,
+          "level": 1
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "HotpotQA Medium (1M documents)",
+            "payload_profile": "text"
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              40,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 1.9379,
+        "optimize_duration": 25.6039,
+        "load_duration": 27.5418,
+        "qps": 11840.6594,
+        "serial_latency_p99": 0.0036,
+        "serial_latency_p95": 0.0031,
+        "recall": 0.9987,
+        "ndcg": 0.0,
+        "conc_num_list": [
+          40,
+          80
+        ],
+        "conc_qps_list": [
+          9511.1365,
+          11840.6594
+        ],
+        "conc_latency_p99_list": [
+          0.00816284980028285,
+          0.014502515860076526
+        ],
+        "conc_latency_p95_list": [
+          0.006357606800520441,
+          0.01137593650018971
+        ],
+        "conc_latency_avg_list": [
+          0.004235700703938657,
+          0.007192490032664778
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 100000,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "num_per_batch": 1000,
+          "load_concurrency": 0,
+          "fts_manifest": {
+            "bm25": {
+              "k1": 1.2,
+              "b": 0.75,
+              "avgdl": 56.88413
+            },
+            "analyzer": {
+              "filter": [
+                "lowercase"
+              ],
+              "tokenizer": "standard"
+            }
+          },
+          "applied_bm25_params": {},
+          "unapplied_bm25_params": {
+            "k1": 1.2,
+            "b": 0.75,
+            "avgdl": 56.88413
+          },
+          "applied_analyzer_params": {},
+          "unapplied_analyzer_params": {
+            "filter": [
+              "lowercase"
+            ],
+            "tokenizer": "standard"
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "2026-06-23T15:59:30.355088",
+          "version": "",
+          "note": "",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********",
+          "token": "",
+          "num_shards": 1,
+          "collection_name": "ZillizCloudFTSBench"
+        },
+        "db_case_config": {
+          "index_type": "AUTOINDEX",
+          "metric_type": "BM25",
+          "inverted_index_algo": "DAAT_MAXSCORE",
+          "bm25_k1": null,
+          "bm25_b": null,
+          "analyzer_tokenizer": "standard",
+          "analyzer_enable_lowercase": true,
+          "analyzer_max_token_length": null,
+          "analyzer_stop_words": null,
+          "drop_ratio_search": null,
+          "level": 1
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "HotpotQA Small (100K documents)",
+            "payload_profile": "ids_only"
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              40,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 1.9379,
+        "optimize_duration": 25.6039,
+        "load_duration": 27.5418,
+        "qps": 8475.056,
+        "serial_latency_p99": 0.0,
+        "serial_latency_p95": 0.0,
+        "recall": 0.0,
+        "ndcg": 0.0,
+        "conc_num_list": [
+          40,
+          80
+        ],
+        "conc_qps_list": [
+          7722.3517,
+          8475.056
+        ],
+        "conc_latency_p99_list": [
+          0.009759001410220668,
+          0.018094878880474424
+        ],
+        "conc_latency_p95_list": [
+          0.007649297249099612,
+          0.013853047499105738
+        ],
+        "conc_latency_avg_list": [
+          0.005133058755745676,
+          0.009210371172970354
+        ],
+        "payload_profile": "text",
+        "payload_estimated_bytes_per_query": 53200,
+        "inserted_count": 100000,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "num_per_batch": 1000,
+          "load_concurrency": 0,
+          "fts_manifest": {
+            "bm25": {
+              "k1": 1.2,
+              "b": 0.75,
+              "avgdl": 56.88413
+            },
+            "analyzer": {
+              "filter": [
+                "lowercase"
+              ],
+              "tokenizer": "standard"
+            }
+          },
+          "applied_bm25_params": {},
+          "unapplied_bm25_params": {
+            "k1": 1.2,
+            "b": 0.75,
+            "avgdl": 56.88413
+          },
+          "applied_analyzer_params": {},
+          "unapplied_analyzer_params": {
+            "filter": [
+              "lowercase"
+            ],
+            "tokenizer": "standard"
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "2026-06-23T16:02:03.206355",
+          "version": "",
+          "note": "",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********",
+          "token": "",
+          "num_shards": 1,
+          "collection_name": "ZillizCloudFTSBench"
+        },
+        "db_case_config": {
+          "index_type": "AUTOINDEX",
+          "metric_type": "BM25",
+          "inverted_index_algo": "DAAT_MAXSCORE",
+          "bm25_k1": null,
+          "bm25_b": null,
+          "analyzer_tokenizer": "standard",
+          "analyzer_enable_lowercase": true,
+          "analyzer_max_token_length": null,
+          "analyzer_stop_words": null,
+          "drop_ratio_search": null,
+          "level": 1
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "HotpotQA Small (100K documents)",
+            "payload_profile": "text"
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              40,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 183.6571,
+        "optimize_duration": 98.8113,
+        "load_duration": 282.4684,
+        "qps": 2859.4474,
+        "serial_latency_p99": 0.008,
+        "serial_latency_p95": 0.0058,
+        "recall": 0.9636,
+        "ndcg": 0.0,
+        "conc_num_list": [
+          40,
+          80
+        ],
+        "conc_qps_list": [
+          2397.9818,
+          2859.4474
+        ],
+        "conc_latency_p99_list": [
+          0.025391751239949356,
+          0.038862020799206254
+        ],
+        "conc_latency_p95_list": [
+          0.02053890500028501,
+          0.032976875500025926
+        ],
+        "conc_latency_avg_list": [
+          0.013524379689949012,
+          0.02457546268064057
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 8841823,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "num_per_batch": 1000,
+          "load_concurrency": 0,
+          "fts_manifest": {
+            "bm25": {
+              "k1": 1.2,
+              "b": 0.75,
+              "avgdl": 57.83363736188793
+            },
+            "analyzer": {
+              "filter": [
+                "lowercase"
+              ],
+              "tokenizer": "standard"
+            }
+          },
+          "applied_bm25_params": {},
+          "unapplied_bm25_params": {
+            "k1": 1.2,
+            "b": 0.75,
+            "avgdl": 57.83363736188793
+          },
+          "applied_analyzer_params": {},
+          "unapplied_analyzer_params": {
+            "filter": [
+              "lowercase"
+            ],
+            "tokenizer": "standard"
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "2026-06-23T15:37:30.224815",
+          "version": "",
+          "note": "",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********",
+          "token": "",
+          "num_shards": 1,
+          "collection_name": "ZillizCloudFTSBench"
+        },
+        "db_case_config": {
+          "index_type": "AUTOINDEX",
+          "metric_type": "BM25",
+          "inverted_index_algo": "DAAT_MAXSCORE",
+          "bm25_k1": null,
+          "bm25_b": null,
+          "analyzer_tokenizer": "standard",
+          "analyzer_enable_lowercase": true,
+          "analyzer_max_token_length": null,
+          "analyzer_stop_words": null,
+          "drop_ratio_search": null,
+          "level": 1
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "MS MARCO Large (8.8M documents)",
+            "payload_profile": "ids_only"
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              40,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 183.6571,
+        "optimize_duration": 98.8113,
+        "load_duration": 282.4684,
+        "qps": 2997.5483,
+        "serial_latency_p99": 0.0,
+        "serial_latency_p95": 0.0,
+        "recall": 0.0,
+        "ndcg": 0.0,
+        "conc_num_list": [
+          40,
+          80
+        ],
+        "conc_qps_list": [
+          2764.3614,
+          2997.5483
+        ],
+        "conc_latency_p99_list": [
+          0.027363914300149103,
+          0.0428042954213015
+        ],
+        "conc_latency_p95_list": [
+          0.022107690500342867,
+          0.03582373630015354
+        ],
+        "conc_latency_avg_list": [
+          0.014345869193528543,
+          0.026168574204900128
+        ],
+        "payload_profile": "text",
+        "payload_estimated_bytes_per_query": 53200,
+        "inserted_count": 8841823,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "num_per_batch": 1000,
+          "load_concurrency": 0,
+          "fts_manifest": {
+            "bm25": {
+              "k1": 1.2,
+              "b": 0.75,
+              "avgdl": 57.83363736188793
+            },
+            "analyzer": {
+              "filter": [
+                "lowercase"
+              ],
+              "tokenizer": "standard"
+            }
+          },
+          "applied_bm25_params": {},
+          "unapplied_bm25_params": {
+            "k1": 1.2,
+            "b": 0.75,
+            "avgdl": 57.83363736188793
+          },
+          "applied_analyzer_params": {},
+          "unapplied_analyzer_params": {
+            "filter": [
+              "lowercase"
+            ],
+            "tokenizer": "standard"
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "2026-06-23T15:50:48.791703",
+          "version": "",
+          "note": "",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********",
+          "token": "",
+          "num_shards": 1,
+          "collection_name": "ZillizCloudFTSBench"
+        },
+        "db_case_config": {
+          "index_type": "AUTOINDEX",
+          "metric_type": "BM25",
+          "inverted_index_algo": "DAAT_MAXSCORE",
+          "bm25_k1": null,
+          "bm25_b": null,
+          "analyzer_tokenizer": "standard",
+          "analyzer_enable_lowercase": true,
+          "analyzer_max_token_length": null,
+          "analyzer_stop_words": null,
+          "drop_ratio_search": null,
+          "level": 1
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "MS MARCO Large (8.8M documents)",
+            "payload_profile": "text"
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              40,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 20.5452,
+        "optimize_duration": 119.3876,
+        "load_duration": 139.9328,
+        "qps": 10440.9225,
+        "serial_latency_p99": 0.0045,
+        "serial_latency_p95": 0.0037,
+        "recall": 0.9194,
+        "ndcg": 0.0,
+        "conc_num_list": [
+          40,
+          80
+        ],
+        "conc_qps_list": [
+          8403.6721,
+          10440.9225
+        ],
+        "conc_latency_p99_list": [
+          0.010635902699323196,
+          0.01738944091935992
+        ],
+        "conc_latency_p95_list": [
+          0.008483375000650994,
+          0.01400671859992144
+        ],
+        "conc_latency_avg_list": [
+          0.005399416001780447,
+          0.00889505466866669
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 1000000,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "num_per_batch": 1000,
+          "load_concurrency": 0,
+          "fts_manifest": {
+            "bm25": {
+              "k1": 1.2,
+              "b": 0.75,
+              "avgdl": 57.242324
+            },
+            "analyzer": {
+              "filter": [
+                "lowercase"
+              ],
+              "tokenizer": "standard"
+            }
+          },
+          "applied_bm25_params": {},
+          "unapplied_bm25_params": {
+            "k1": 1.2,
+            "b": 0.75,
+            "avgdl": 57.242324
+          },
+          "applied_analyzer_params": {},
+          "unapplied_analyzer_params": {
+            "filter": [
+              "lowercase"
+            ],
+            "tokenizer": "standard"
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "2026-06-23T15:28:10.214232",
+          "version": "",
+          "note": "",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********",
+          "token": "",
+          "num_shards": 1,
+          "collection_name": "ZillizCloudFTSBench"
+        },
+        "db_case_config": {
+          "index_type": "AUTOINDEX",
+          "metric_type": "BM25",
+          "inverted_index_algo": "DAAT_MAXSCORE",
+          "bm25_k1": null,
+          "bm25_b": null,
+          "analyzer_tokenizer": "standard",
+          "analyzer_enable_lowercase": true,
+          "analyzer_max_token_length": null,
+          "analyzer_stop_words": null,
+          "drop_ratio_search": null,
+          "level": 1
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "MS MARCO Medium (1M documents)",
+            "payload_profile": "ids_only"
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              40,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 20.5452,
+        "optimize_duration": 119.3876,
+        "load_duration": 139.9328,
+        "qps": 7477.8788,
+        "serial_latency_p99": 0.0,
+        "serial_latency_p95": 0.0,
+        "recall": 0.0,
+        "ndcg": 0.0,
+        "conc_num_list": [
+          40,
+          80
+        ],
+        "conc_qps_list": [
+          6408.2792,
+          7477.8788
+        ],
+        "conc_latency_p99_list": [
+          0.012072665600589968,
+          0.02024130038942528
+        ],
+        "conc_latency_p95_list": [
+          0.009671015750882361,
+          0.01634627664943764
+        ],
+        "conc_latency_avg_list": [
+          0.006184244148888284,
+          0.01044489949882264
+        ],
+        "payload_profile": "text",
+        "payload_estimated_bytes_per_query": 53200,
+        "inserted_count": 1000000,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "num_per_batch": 1000,
+          "load_concurrency": 0,
+          "fts_manifest": {
+            "bm25": {
+              "k1": 1.2,
+              "b": 0.75,
+              "avgdl": 57.242324
+            },
+            "analyzer": {
+              "filter": [
+                "lowercase"
+              ],
+              "tokenizer": "standard"
+            }
+          },
+          "applied_bm25_params": {},
+          "unapplied_bm25_params": {
+            "k1": 1.2,
+            "b": 0.75,
+            "avgdl": 57.242324
+          },
+          "applied_analyzer_params": {},
+          "unapplied_analyzer_params": {
+            "filter": [
+              "lowercase"
+            ],
+            "tokenizer": "standard"
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "2026-06-23T15:31:42.678098",
+          "version": "",
+          "note": "",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********",
+          "token": "",
+          "num_shards": 1,
+          "collection_name": "ZillizCloudFTSBench"
+        },
+        "db_case_config": {
+          "index_type": "AUTOINDEX",
+          "metric_type": "BM25",
+          "inverted_index_algo": "DAAT_MAXSCORE",
+          "bm25_k1": null,
+          "bm25_b": null,
+          "analyzer_tokenizer": "standard",
+          "analyzer_enable_lowercase": true,
+          "analyzer_max_token_length": null,
+          "analyzer_stop_words": null,
+          "drop_ratio_search": null,
+          "level": 1
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "MS MARCO Medium (1M documents)",
+            "payload_profile": "text"
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              40,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 1.8223,
+        "optimize_duration": 18.0832,
+        "load_duration": 19.9055,
+        "qps": 14523.9158,
+        "serial_latency_p99": 0.003,
+        "serial_latency_p95": 0.0028,
+        "recall": 0.9854,
+        "ndcg": 0.0,
+        "conc_num_list": [
+          40,
+          80
+        ],
+        "conc_qps_list": [
+          11465.34,
+          14523.9158
+        ],
+        "conc_latency_p99_list": [
+          0.006605165030141507,
+          0.013721053038825629
+        ],
+        "conc_latency_p95_list": [
+          0.005089374199815211,
+          0.009782408600040073
+        ],
+        "conc_latency_avg_list": [
+          0.003510005176568982,
+          0.006679762620736736
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 100000,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "num_per_batch": 1000,
+          "load_concurrency": 0,
+          "fts_manifest": {
+            "bm25": {
+              "k1": 1.2,
+              "b": 0.75,
+              "avgdl": 55.01342
+            },
+            "analyzer": {
+              "filter": [
+                "lowercase"
+              ],
+              "tokenizer": "standard"
+            }
+          },
+          "applied_bm25_params": {},
+          "unapplied_bm25_params": {
+            "k1": 1.2,
+            "b": 0.75,
+            "avgdl": 55.01342
+          },
+          "applied_analyzer_params": {},
+          "unapplied_analyzer_params": {
+            "filter": [
+              "lowercase"
+            ],
+            "tokenizer": "standard"
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "2026-06-23T15:23:49.914938",
+          "version": "",
+          "note": "",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********",
+          "token": "",
+          "num_shards": 1,
+          "collection_name": "ZillizCloudFTSBench"
+        },
+        "db_case_config": {
+          "index_type": "AUTOINDEX",
+          "metric_type": "BM25",
+          "inverted_index_algo": "DAAT_MAXSCORE",
+          "bm25_k1": null,
+          "bm25_b": null,
+          "analyzer_tokenizer": "standard",
+          "analyzer_enable_lowercase": true,
+          "analyzer_max_token_length": null,
+          "analyzer_stop_words": null,
+          "drop_ratio_search": null,
+          "level": 1
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "MS MARCO Small (100K documents)",
+            "payload_profile": "ids_only"
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              40,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 1.8223,
+        "optimize_duration": 18.0832,
+        "load_duration": 19.9055,
+        "qps": 9382.1707,
+        "serial_latency_p99": 0.0,
+        "serial_latency_p95": 0.0,
+        "recall": 0.0,
+        "ndcg": 0.0,
+        "conc_num_list": [
+          40,
+          80
+        ],
+        "conc_qps_list": [
+          9382.1707,
+          9299.0682
+        ],
+        "conc_latency_p99_list": [
+          0.007831546979778047,
+          0.014077205400753908
+        ],
+        "conc_latency_p95_list": [
+          0.006045342150900976,
+          0.011566458601373598
+        ],
+        "conc_latency_avg_list": [
+          0.004228128073816301,
+          0.008412116105405435
+        ],
+        "payload_profile": "text",
+        "payload_estimated_bytes_per_query": 53200,
+        "inserted_count": 100000,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "num_per_batch": 1000,
+          "load_concurrency": 0,
+          "fts_manifest": {
+            "bm25": {
+              "k1": 1.2,
+              "b": 0.75,
+              "avgdl": 55.01342
+            },
+            "analyzer": {
+              "filter": [
+                "lowercase"
+              ],
+              "tokenizer": "standard"
+            }
+          },
+          "applied_bm25_params": {},
+          "unapplied_bm25_params": {
+            "k1": 1.2,
+            "b": 0.75,
+            "avgdl": 55.01342
+          },
+          "applied_analyzer_params": {},
+          "unapplied_analyzer_params": {
+            "filter": [
+              "lowercase"
+            ],
+            "tokenizer": "standard"
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "2026-06-23T15:26:11.226516",
+          "version": "",
+          "note": "",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********",
+          "token": "",
+          "num_shards": 1,
+          "collection_name": "ZillizCloudFTSBench"
+        },
+        "db_case_config": {
+          "index_type": "AUTOINDEX",
+          "metric_type": "BM25",
+          "inverted_index_algo": "DAAT_MAXSCORE",
+          "bm25_k1": null,
+          "bm25_b": null,
+          "analyzer_tokenizer": "standard",
+          "analyzer_enable_lowercase": true,
+          "analyzer_max_token_length": null,
+          "analyzer_stop_words": null,
+          "drop_ratio_search": null,
+          "level": 1
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "MS MARCO Small (100K documents)",
+            "payload_profile": "text"
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              40,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    }
+  ],
+  "file_fmt": "result_{}_{}_{}.json",
+  "timestamp": 1782172800.0
+}

@@ -1,0 +1,1514 @@
+{
+  "run_id": "fts_standard_vespa",
+  "task_label": "fts_standard",
+  "results": [
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 326.0195,
+        "optimize_duration": 0.0467,
+        "load_duration": 326.0662,
+        "qps": 178.292,
+        "serial_latency_p99": 0.445,
+        "serial_latency_p95": 0.4445,
+        "recall": 0.7532,
+        "ndcg": 0.0,
+        "conc_num_list": [
+          40,
+          80
+        ],
+        "conc_qps_list": [
+          92.1252,
+          178.292
+        ],
+        "conc_latency_p99_list": [
+          0.4649717587499981,
+          0.47357734852928834
+        ],
+        "conc_latency_p95_list": [
+          0.45766577114909524,
+          0.4641533440004423
+        ],
+        "conc_latency_avg_list": [
+          0.4314541248062237,
+          0.4440924808065595
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 5233329,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "num_per_batch": 1000,
+          "load_concurrency": 0,
+          "fts_manifest": {
+            "bm25": {
+              "k1": 1.2,
+              "b": 0.75,
+              "avgdl": 47.43239876568051
+            },
+            "analyzer": {
+              "filter": [
+                "lowercase"
+              ],
+              "tokenizer": "standard"
+            }
+          },
+          "applied_bm25_params": {
+            "k1": 1.2,
+            "b": 0.75,
+            "avgdl": 47.43239876568051
+          },
+          "unapplied_bm25_params": {},
+          "applied_analyzer_params": {},
+          "unapplied_analyzer_params": {
+            "filter": [
+              "lowercase"
+            ],
+            "tokenizer": "standard"
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Vespa",
+        "db_config": {
+          "db_label": "",
+          "version": "",
+          "note": "",
+          "url": "**********",
+          "port": 8080
+        },
+        "db_case_config": {
+          "metric_type": "BM25",
+          "bm25_k1": 1.2,
+          "bm25_b": 0.75,
+          "bm25_avgdl": 47.43239876568051,
+          "feed_client_command": "vespa",
+          "feed_client_connections": null
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "HotpotQA Large (5.2M documents)",
+            "payload_profile": "ids_only"
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              40,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 326.0195,
+        "optimize_duration": 0.0467,
+        "load_duration": 326.0662,
+        "qps": 172.1563,
+        "serial_latency_p99": 0.0,
+        "serial_latency_p95": 0.0,
+        "recall": 0.0,
+        "ndcg": 0.0,
+        "conc_num_list": [
+          40,
+          80
+        ],
+        "conc_qps_list": [
+          88.631,
+          172.1563
+        ],
+        "conc_latency_p99_list": [
+          0.4895644657585399,
+          0.4961875680503364
+        ],
+        "conc_latency_p95_list": [
+          0.4765562847500405,
+          0.4800053587003276
+        ],
+        "conc_latency_avg_list": [
+          0.44739083606485935,
+          0.45469620353127227
+        ],
+        "payload_profile": "text",
+        "payload_estimated_bytes_per_query": 53200,
+        "inserted_count": 5233329,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "num_per_batch": 1000,
+          "load_concurrency": 0,
+          "fts_manifest": {
+            "bm25": {
+              "k1": 1.2,
+              "b": 0.75,
+              "avgdl": 47.43239876568051
+            },
+            "analyzer": {
+              "filter": [
+                "lowercase"
+              ],
+              "tokenizer": "standard"
+            }
+          },
+          "applied_bm25_params": {
+            "k1": 1.2,
+            "b": 0.75,
+            "avgdl": 47.43239876568051
+          },
+          "unapplied_bm25_params": {},
+          "applied_analyzer_params": {},
+          "unapplied_analyzer_params": {
+            "filter": [
+              "lowercase"
+            ],
+            "tokenizer": "standard"
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Vespa",
+        "db_config": {
+          "db_label": "",
+          "version": "",
+          "note": "",
+          "url": "**********",
+          "port": 8080
+        },
+        "db_case_config": {
+          "metric_type": "BM25",
+          "bm25_k1": 1.2,
+          "bm25_b": 0.75,
+          "bm25_avgdl": 47.43239876568051,
+          "feed_client_command": "vespa",
+          "feed_client_connections": null
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "HotpotQA Large (5.2M documents)",
+            "payload_profile": "text"
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              40,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 87.4509,
+        "optimize_duration": 0.0146,
+        "load_duration": 87.4655,
+        "qps": 188.1674,
+        "serial_latency_p99": 0.2691,
+        "serial_latency_p95": 0.2192,
+        "recall": 0.9134,
+        "ndcg": 0.0,
+        "conc_num_list": [
+          40,
+          80
+        ],
+        "conc_qps_list": [
+          129.2045,
+          188.1674
+        ],
+        "conc_latency_p99_list": [
+          0.4561221865990228,
+          0.47219445047965564
+        ],
+        "conc_latency_p95_list": [
+          0.44640964640020686,
+          0.46283690039963404
+        ],
+        "conc_latency_avg_list": [
+          0.3080734912494232,
+          0.4224045833953113
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 1000000,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "num_per_batch": 1000,
+          "load_concurrency": 0,
+          "fts_manifest": {
+            "bm25": {
+              "k1": 1.2,
+              "b": 0.75,
+              "avgdl": 55.803761
+            },
+            "analyzer": {
+              "filter": [
+                "lowercase"
+              ],
+              "tokenizer": "standard"
+            }
+          },
+          "applied_bm25_params": {
+            "k1": 1.2,
+            "b": 0.75,
+            "avgdl": 55.803761
+          },
+          "unapplied_bm25_params": {},
+          "applied_analyzer_params": {},
+          "unapplied_analyzer_params": {
+            "filter": [
+              "lowercase"
+            ],
+            "tokenizer": "standard"
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Vespa",
+        "db_config": {
+          "db_label": "",
+          "version": "",
+          "note": "",
+          "url": "**********",
+          "port": 8080
+        },
+        "db_case_config": {
+          "metric_type": "BM25",
+          "bm25_k1": 1.2,
+          "bm25_b": 0.75,
+          "bm25_avgdl": 55.803761,
+          "feed_client_command": "vespa",
+          "feed_client_connections": null
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "HotpotQA Medium (1M documents)",
+            "payload_profile": "ids_only"
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              40,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 87.4509,
+        "optimize_duration": 0.0146,
+        "load_duration": 87.4655,
+        "qps": 184.839,
+        "serial_latency_p99": 0.0,
+        "serial_latency_p95": 0.0,
+        "recall": 0.0,
+        "ndcg": 0.0,
+        "conc_num_list": [
+          40,
+          80
+        ],
+        "conc_qps_list": [
+          124.568,
+          184.839
+        ],
+        "conc_latency_p99_list": [
+          0.470236903199766,
+          0.4859163774794434
+        ],
+        "conc_latency_p95_list": [
+          0.45786149219966316,
+          0.47220526239943866
+        ],
+        "conc_latency_avg_list": [
+          0.3197571245104845,
+          0.42871789511037967
+        ],
+        "payload_profile": "text",
+        "payload_estimated_bytes_per_query": 53200,
+        "inserted_count": 1000000,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "num_per_batch": 1000,
+          "load_concurrency": 0,
+          "fts_manifest": {
+            "bm25": {
+              "k1": 1.2,
+              "b": 0.75,
+              "avgdl": 55.803761
+            },
+            "analyzer": {
+              "filter": [
+                "lowercase"
+              ],
+              "tokenizer": "standard"
+            }
+          },
+          "applied_bm25_params": {
+            "k1": 1.2,
+            "b": 0.75,
+            "avgdl": 55.803761
+          },
+          "unapplied_bm25_params": {},
+          "applied_analyzer_params": {},
+          "unapplied_analyzer_params": {
+            "filter": [
+              "lowercase"
+            ],
+            "tokenizer": "standard"
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Vespa",
+        "db_config": {
+          "db_label": "",
+          "version": "",
+          "note": "",
+          "url": "**********",
+          "port": 8080
+        },
+        "db_case_config": {
+          "metric_type": "BM25",
+          "bm25_k1": 1.2,
+          "bm25_b": 0.75,
+          "bm25_avgdl": 55.803761,
+          "feed_client_command": "vespa",
+          "feed_client_connections": null
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "HotpotQA Medium (1M documents)",
+            "payload_profile": "text"
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              40,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 9.4358,
+        "optimize_duration": 0.0081,
+        "load_duration": 9.4439,
+        "qps": 903.9248,
+        "serial_latency_p99": 0.0311,
+        "serial_latency_p95": 0.0264,
+        "recall": 0.9262,
+        "ndcg": 0.0,
+        "conc_num_list": [
+          40,
+          80
+        ],
+        "conc_qps_list": [
+          903.9248,
+          210.3829
+        ],
+        "conc_latency_p99_list": [
+          0.10201139999971932,
+          23.7793526906097
+        ],
+        "conc_latency_p95_list": [
+          0.07956749100012528,
+          0.1337348711004779
+        ],
+        "conc_latency_avg_list": [
+          0.04422038388924561,
+          0.37968395195953486
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 100000,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "num_per_batch": 1000,
+          "load_concurrency": 0,
+          "fts_manifest": {
+            "bm25": {
+              "k1": 1.2,
+              "b": 0.75,
+              "avgdl": 56.88413
+            },
+            "analyzer": {
+              "filter": [
+                "lowercase"
+              ],
+              "tokenizer": "standard"
+            }
+          },
+          "applied_bm25_params": {
+            "k1": 1.2,
+            "b": 0.75,
+            "avgdl": 56.88413
+          },
+          "unapplied_bm25_params": {},
+          "applied_analyzer_params": {},
+          "unapplied_analyzer_params": {
+            "filter": [
+              "lowercase"
+            ],
+            "tokenizer": "standard"
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Vespa",
+        "db_config": {
+          "db_label": "",
+          "version": "",
+          "note": "",
+          "url": "**********",
+          "port": 8080
+        },
+        "db_case_config": {
+          "metric_type": "BM25",
+          "bm25_k1": 1.2,
+          "bm25_b": 0.75,
+          "bm25_avgdl": 56.88413,
+          "feed_client_command": "vespa",
+          "feed_client_connections": null
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "HotpotQA Small (100K documents)",
+            "payload_profile": "ids_only"
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              40,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 9.4358,
+        "optimize_duration": 0.0081,
+        "load_duration": 9.4439,
+        "qps": 788.0643,
+        "serial_latency_p99": 0.0,
+        "serial_latency_p95": 0.0,
+        "recall": 0.0,
+        "ndcg": 0.0,
+        "conc_num_list": [
+          40,
+          80
+        ],
+        "conc_qps_list": [
+          788.0643,
+          342.891
+        ],
+        "conc_latency_p99_list": [
+          0.116296334949675,
+          1.4236666194401957
+        ],
+        "conc_latency_p95_list": [
+          0.089655852249507,
+          0.14479435460016243
+        ],
+        "conc_latency_avg_list": [
+          0.0506907555806803,
+          0.22207524820958327
+        ],
+        "payload_profile": "text",
+        "payload_estimated_bytes_per_query": 53200,
+        "inserted_count": 100000,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "num_per_batch": 1000,
+          "load_concurrency": 0,
+          "fts_manifest": {
+            "bm25": {
+              "k1": 1.2,
+              "b": 0.75,
+              "avgdl": 56.88413
+            },
+            "analyzer": {
+              "filter": [
+                "lowercase"
+              ],
+              "tokenizer": "standard"
+            }
+          },
+          "applied_bm25_params": {
+            "k1": 1.2,
+            "b": 0.75,
+            "avgdl": 56.88413
+          },
+          "unapplied_bm25_params": {},
+          "applied_analyzer_params": {},
+          "unapplied_analyzer_params": {
+            "filter": [
+              "lowercase"
+            ],
+            "tokenizer": "standard"
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Vespa",
+        "db_config": {
+          "db_label": "",
+          "version": "",
+          "note": "",
+          "url": "**********",
+          "port": 8080
+        },
+        "db_case_config": {
+          "metric_type": "BM25",
+          "bm25_k1": 1.2,
+          "bm25_b": 0.75,
+          "bm25_avgdl": 56.88413,
+          "feed_client_command": "vespa",
+          "feed_client_connections": null
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "HotpotQA Small (100K documents)",
+            "payload_profile": "text"
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              40,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 702.0398,
+        "optimize_duration": 0.074,
+        "load_duration": 702.1138,
+        "qps": 201.2276,
+        "serial_latency_p99": 0.4449,
+        "serial_latency_p95": 0.4444,
+        "recall": 0.9057,
+        "ndcg": 0.0,
+        "conc_num_list": [
+          40,
+          80
+        ],
+        "conc_qps_list": [
+          108.7747,
+          201.2276
+        ],
+        "conc_latency_p99_list": [
+          0.46301382789988565,
+          0.47322508225033744
+        ],
+        "conc_latency_p95_list": [
+          0.45525903649968313,
+          0.4619954339998458
+        ],
+        "conc_latency_avg_list": [
+          0.36484632344246043,
+          0.39432222691413743
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 8841823,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "num_per_batch": 1000,
+          "load_concurrency": 0,
+          "fts_manifest": {
+            "bm25": {
+              "k1": 1.2,
+              "b": 0.75,
+              "avgdl": 57.83363736188793
+            },
+            "analyzer": {
+              "filter": [
+                "lowercase"
+              ],
+              "tokenizer": "standard"
+            }
+          },
+          "applied_bm25_params": {
+            "k1": 1.2,
+            "b": 0.75,
+            "avgdl": 57.83363736188793
+          },
+          "unapplied_bm25_params": {},
+          "applied_analyzer_params": {},
+          "unapplied_analyzer_params": {
+            "filter": [
+              "lowercase"
+            ],
+            "tokenizer": "standard"
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Vespa",
+        "db_config": {
+          "db_label": "",
+          "version": "",
+          "note": "",
+          "url": "**********",
+          "port": 8080
+        },
+        "db_case_config": {
+          "metric_type": "BM25",
+          "bm25_k1": 1.2,
+          "bm25_b": 0.75,
+          "bm25_avgdl": 57.83363736188793,
+          "feed_client_command": "vespa",
+          "feed_client_connections": null
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "MS MARCO Large (8.8M documents)",
+            "payload_profile": "ids_only"
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              40,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 702.0398,
+        "optimize_duration": 0.074,
+        "load_duration": 702.1138,
+        "qps": 193.9787,
+        "serial_latency_p99": 0.0,
+        "serial_latency_p95": 0.0,
+        "recall": 0.0,
+        "ndcg": 0.0,
+        "conc_num_list": [
+          40,
+          80
+        ],
+        "conc_qps_list": [
+          108.0544,
+          193.9787
+        ],
+        "conc_latency_p99_list": [
+          0.48343497323963674,
+          0.4929514833995654
+        ],
+        "conc_latency_p95_list": [
+          0.4710945042004823,
+          0.4792746837499635
+        ],
+        "conc_latency_avg_list": [
+          0.36689615236970297,
+          0.4052692454002725
+        ],
+        "payload_profile": "text",
+        "payload_estimated_bytes_per_query": 53200,
+        "inserted_count": 8841823,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "num_per_batch": 1000,
+          "load_concurrency": 0,
+          "fts_manifest": {
+            "bm25": {
+              "k1": 1.2,
+              "b": 0.75,
+              "avgdl": 57.83363736188793
+            },
+            "analyzer": {
+              "filter": [
+                "lowercase"
+              ],
+              "tokenizer": "standard"
+            }
+          },
+          "applied_bm25_params": {
+            "k1": 1.2,
+            "b": 0.75,
+            "avgdl": 57.83363736188793
+          },
+          "unapplied_bm25_params": {},
+          "applied_analyzer_params": {},
+          "unapplied_analyzer_params": {
+            "filter": [
+              "lowercase"
+            ],
+            "tokenizer": "standard"
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Vespa",
+        "db_config": {
+          "db_label": "",
+          "version": "",
+          "note": "",
+          "url": "**********",
+          "port": 8080
+        },
+        "db_case_config": {
+          "metric_type": "BM25",
+          "bm25_k1": 1.2,
+          "bm25_b": 0.75,
+          "bm25_avgdl": 57.83363736188793,
+          "feed_client_command": "vespa",
+          "feed_client_connections": null
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "MS MARCO Large (8.8M documents)",
+            "payload_profile": "text"
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              40,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 81.6544,
+        "optimize_duration": 0.0155,
+        "load_duration": 81.67,
+        "qps": 317.5358,
+        "serial_latency_p99": 0.1402,
+        "serial_latency_p95": 0.1062,
+        "recall": 0.9859,
+        "ndcg": 0.0,
+        "conc_num_list": [
+          40,
+          80
+        ],
+        "conc_qps_list": [
+          283.1602,
+          317.5358
+        ],
+        "conc_latency_p99_list": [
+          0.38076332676982494,
+          0.4561359607801206
+        ],
+        "conc_latency_p95_list": [
+          0.3054511334998549,
+          0.44553361209977993
+        ],
+        "conc_latency_avg_list": [
+          0.1408606566523405,
+          0.2508771823668165
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 1000000,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "num_per_batch": 1000,
+          "load_concurrency": 0,
+          "fts_manifest": {
+            "bm25": {
+              "k1": 1.2,
+              "b": 0.75,
+              "avgdl": 57.242324
+            },
+            "analyzer": {
+              "filter": [
+                "lowercase"
+              ],
+              "tokenizer": "standard"
+            }
+          },
+          "applied_bm25_params": {
+            "k1": 1.2,
+            "b": 0.75,
+            "avgdl": 57.242324
+          },
+          "unapplied_bm25_params": {},
+          "applied_analyzer_params": {},
+          "unapplied_analyzer_params": {
+            "filter": [
+              "lowercase"
+            ],
+            "tokenizer": "standard"
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Vespa",
+        "db_config": {
+          "db_label": "",
+          "version": "",
+          "note": "",
+          "url": "**********",
+          "port": 8080
+        },
+        "db_case_config": {
+          "metric_type": "BM25",
+          "bm25_k1": 1.2,
+          "bm25_b": 0.75,
+          "bm25_avgdl": 57.242324,
+          "feed_client_command": "vespa",
+          "feed_client_connections": null
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "MS MARCO Medium (1M documents)",
+            "payload_profile": "ids_only"
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              40,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 81.6544,
+        "optimize_duration": 0.0155,
+        "load_duration": 81.67,
+        "qps": 299.9899,
+        "serial_latency_p99": 0.0,
+        "serial_latency_p95": 0.0,
+        "recall": 0.0,
+        "ndcg": 0.0,
+        "conc_num_list": [
+          40,
+          80
+        ],
+        "conc_qps_list": [
+          276.9879,
+          299.9899
+        ],
+        "conc_latency_p99_list": [
+          0.38208317819017773,
+          0.4668930329600153
+        ],
+        "conc_latency_p95_list": [
+          0.3130642607502523,
+          0.4508931028001825
+        ],
+        "conc_latency_avg_list": [
+          0.14397322018103537,
+          0.2652584571078699
+        ],
+        "payload_profile": "text",
+        "payload_estimated_bytes_per_query": 53200,
+        "inserted_count": 1000000,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "num_per_batch": 1000,
+          "load_concurrency": 0,
+          "fts_manifest": {
+            "bm25": {
+              "k1": 1.2,
+              "b": 0.75,
+              "avgdl": 57.242324
+            },
+            "analyzer": {
+              "filter": [
+                "lowercase"
+              ],
+              "tokenizer": "standard"
+            }
+          },
+          "applied_bm25_params": {
+            "k1": 1.2,
+            "b": 0.75,
+            "avgdl": 57.242324
+          },
+          "unapplied_bm25_params": {},
+          "applied_analyzer_params": {},
+          "unapplied_analyzer_params": {
+            "filter": [
+              "lowercase"
+            ],
+            "tokenizer": "standard"
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Vespa",
+        "db_config": {
+          "db_label": "",
+          "version": "",
+          "note": "",
+          "url": "**********",
+          "port": 8080
+        },
+        "db_case_config": {
+          "metric_type": "BM25",
+          "bm25_k1": 1.2,
+          "bm25_b": 0.75,
+          "bm25_avgdl": 57.242324,
+          "feed_client_command": "vespa",
+          "feed_client_connections": null
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "MS MARCO Medium (1M documents)",
+            "payload_profile": "text"
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              40,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 8.7233,
+        "optimize_duration": 0.0095,
+        "load_duration": 8.7328,
+        "qps": 643.7175,
+        "serial_latency_p99": 0.019,
+        "serial_latency_p95": 0.0155,
+        "recall": 0.9857,
+        "ndcg": 0.0,
+        "conc_num_list": [
+          40,
+          80
+        ],
+        "conc_qps_list": [
+          643.7175,
+          553.2639
+        ],
+        "conc_latency_p99_list": [
+          0.06595422097017949,
+          0.5136447451604238
+        ],
+        "conc_latency_p95_list": [
+          0.049367965999931575,
+          0.0805305323999846
+        ],
+        "conc_latency_avg_list": [
+          0.02392549430111337,
+          0.07046851805299408
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 100000,
+        "insert_rows_per_second": 11463.5516,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "num_per_batch": 1000,
+          "load_concurrency": 0,
+          "fts_manifest": {
+            "bm25": {
+              "k1": 1.2,
+              "b": 0.75,
+              "avgdl": 55.01342
+            },
+            "analyzer": {
+              "filter": [
+                "lowercase"
+              ],
+              "tokenizer": "standard"
+            }
+          },
+          "applied_bm25_params": {
+            "k1": 1.2,
+            "b": 0.75,
+            "avgdl": 55.01342
+          },
+          "unapplied_bm25_params": {},
+          "applied_analyzer_params": {},
+          "unapplied_analyzer_params": {
+            "filter": [
+              "lowercase"
+            ],
+            "tokenizer": "standard"
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Vespa",
+        "db_config": {
+          "db_label": "",
+          "version": "",
+          "note": "",
+          "url": "**********",
+          "port": 8080
+        },
+        "db_case_config": {
+          "metric_type": "BM25",
+          "bm25_k1": 1.2,
+          "bm25_b": 0.75,
+          "bm25_avgdl": 55.01342,
+          "feed_client_command": "vespa",
+          "feed_client_connections": null
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "MS MARCO Small (100K documents)",
+            "payload_profile": "ids_only"
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              40,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 8.7233,
+        "optimize_duration": 0.0095,
+        "load_duration": 8.7328,
+        "qps": 601.592,
+        "serial_latency_p99": 0.0,
+        "serial_latency_p95": 0.0,
+        "recall": 0.0,
+        "ndcg": 0.0,
+        "conc_num_list": [
+          40,
+          80
+        ],
+        "conc_qps_list": [
+          601.592,
+          551.9681
+        ],
+        "conc_latency_p99_list": [
+          0.07571082960002969,
+          0.7508284560699189
+        ],
+        "conc_latency_p95_list": [
+          0.053776488000039535,
+          0.09836964239973439
+        ],
+        "conc_latency_avg_list": [
+          0.030178424329577746,
+          0.10644925614934629
+        ],
+        "payload_profile": "text",
+        "payload_estimated_bytes_per_query": 53200,
+        "inserted_count": 100000,
+        "insert_rows_per_second": 11463.5516,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "num_per_batch": 1000,
+          "load_concurrency": 0,
+          "fts_manifest": {
+            "bm25": {
+              "k1": 1.2,
+              "b": 0.75,
+              "avgdl": 55.01342
+            },
+            "analyzer": {
+              "filter": [
+                "lowercase"
+              ],
+              "tokenizer": "standard"
+            }
+          },
+          "applied_bm25_params": {
+            "k1": 1.2,
+            "b": 0.75,
+            "avgdl": 55.01342
+          },
+          "unapplied_bm25_params": {},
+          "applied_analyzer_params": {},
+          "unapplied_analyzer_params": {
+            "filter": [
+              "lowercase"
+            ],
+            "tokenizer": "standard"
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "Vespa",
+        "db_config": {
+          "db_label": "",
+          "version": "",
+          "note": "",
+          "url": "**********",
+          "port": 8080
+        },
+        "db_case_config": {
+          "metric_type": "BM25",
+          "bm25_k1": 1.2,
+          "bm25_b": 0.75,
+          "bm25_avgdl": 55.01342,
+          "feed_client_command": "vespa",
+          "feed_client_connections": null
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "MS MARCO Small (100K documents)",
+            "payload_profile": "text"
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              40,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    }
+  ],
+  "file_fmt": "result_{}_{}_{}.json",
+  "timestamp": 1782259200.0
+}

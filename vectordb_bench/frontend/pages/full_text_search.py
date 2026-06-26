@@ -133,12 +133,22 @@ def _parse_result_file(result_file: Path) -> list[dict[str, Any]]:
     return rows
 
 
+def _latest_backend_result_files(result_dir: Path) -> list[Path]:
+    result_files = []
+    backend_dirs = sorted(path for path in result_dir.iterdir() if path.is_dir())
+    for backend_dir in backend_dirs:
+        backend_files = sorted(backend_dir.glob("result_*.json"))
+        if backend_files:
+            result_files.append(backend_files[-1])
+    return result_files
+
+
 def load_full_text_search_rows(result_dir: Path = RESULT_DIR) -> pd.DataFrame:
     if not result_dir.exists():
         return pd.DataFrame()
 
     rows = []
-    for result_file in sorted(result_dir.rglob("result_*.json")):
+    for result_file in _latest_backend_result_files(result_dir):
         rows.extend(_parse_result_file(result_file))
 
     data = pd.DataFrame(rows)

@@ -89,7 +89,19 @@ vectordbbench vespa \
 
 ## Result artifacts
 
-Committed FTS result JSONs live under `vectordb_bench/results/FullTextSearch/<Backend>/`. The Full Text Search frontend page reads that directory directly and displays the committed benchmark matrix by backend, dataset, payload profile, load duration, QPS, recall, and latency.
+Committed FTS result JSONs live under `vectordb_bench/results/FullTextSearch/<Backend>/`. Published artifacts are consolidated so each backend directory contains one backend-level JSON with multiple case results in its `results` list, instead of a pile of one-case files. That keeps the release payload readable while preserving the per-dataset and per-payload records needed by the dashboard.
+
+Use the result collector to consolidate split FTS run outputs before committing published examples:
+
+```bash
+python -m vectordb_bench.backend.result_collector \
+  vectordb_bench/results/FullTextSearch \
+  --merge-by-db \
+  --task-label fts_standard \
+  --replace
+```
+
+The default collector behavior still groups normal benchmark files by `run_id`. The `--merge-by-db` mode is intended for curated FTS result publication, where each backend should present the latest benchmark matrix as a single artifact. The Full Text Search frontend reads the latest backend-level result file from each backend directory and displays the committed matrix by backend, dataset, payload profile, load duration, QPS, recall, and latency.
 
 ## Caveats
 
