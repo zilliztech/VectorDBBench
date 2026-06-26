@@ -1,6 +1,7 @@
 import argparse
 import logging
 import pathlib
+import sys
 from datetime import date
 from typing import Literal
 
@@ -96,7 +97,9 @@ def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Collect or consolidate VDBBench result JSON files.")
     parser.add_argument("result_dir", type=pathlib.Path)
     parser.add_argument("--merge-by-db", action="store_true", help="write one consolidated result file per backend")
-    parser.add_argument("--replace", action="store_true", help="remove source result files after merged files are written")
+    parser.add_argument(
+        "--replace", action="store_true", help="remove source result files after merged files are written"
+    )
     parser.add_argument("--task-label", default="fts_standard", help="task label used for merged result files")
     parser.add_argument("--dry-run", action="store_true", help="show planned output files without writing")
     return parser.parse_args()
@@ -114,11 +117,11 @@ def main():
             dry_run=args.dry_run,
         )
         for output_file in output_files:
-            print(output_file)
+            sys.stdout.write(f"{output_file}\n")
         return
 
     for result in ResultCollector.collect(args.result_dir):
-        print(f"{result.run_id}\t{len(result.results)}")
+        sys.stdout.write(f"{result.run_id}\t{len(result.results)}\n")
 
 
 if __name__ == "__main__":

@@ -256,7 +256,6 @@ def _draw_metric_chart(
     st.plotly_chart(fig, width="stretch", key=f"fts-{metric}")
 
 
-
 def _concurrency_rows(data: pd.DataFrame) -> pd.DataFrame:
     rows = []
     for row in data.to_dict("records"):
