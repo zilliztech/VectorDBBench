@@ -18,8 +18,9 @@ from yaml import load
 
 from .. import config
 from ..backend.clients import DB
-from ..backend.clients.api import MetricType
-from ..backend.dataset import DatasetWithSizeType
+from ..backend.clients.api import IndexType, MetricType
+from ..backend.dataset import DatasetWithSizeType, FtsDatasetWithSizeType
+from ..backend.payload import PayloadProfile
 from ..interface import benchmark_runner
 from ..models import (
     CaseConfig,
@@ -250,7 +251,28 @@ def get_custom_case_config(parameters: dict) -> dict:
             custom_case_config["filter_rate"] = parameters["cloud_filter_rate"]
         if parameters["cloud_label_percentage"] is not None:
             custom_case_config["label_percentage"] = parameters["cloud_label_percentage"]
+    elif parameters["case_type"] == "FTSBm25Performance":
+        dataset_with_size_type = parameters["dataset_with_size_type"]
+        if dataset_with_size_type not in {dataset.value for dataset in FtsDatasetWithSizeType}:
+            dataset_with_size_type = FtsDatasetWithSizeType.MSMarcoSmall.value
+        custom_case_config = {
+            "dataset_with_size_type": dataset_with_size_type,
+            "payload_profile": parameters.get("payload_profile", PayloadProfile.IDS_ONLY.value),
+        }
     return custom_case_config
+
+
+def select_cli_db_case_config(db: DB, db_case_config: DBCaseConfig, case_type: str) -> DBCaseConfig:
+    if case_type != CaseType.FTSBm25Performance.name:
+        return db_case_config
+
+    fts_case_config_cls = db.case_config_cls(IndexType.FTS)
+    if isinstance(db_case_config, fts_case_config_cls):
+        return db_case_config
+    fts_db_case_config = fts_case_config_cls()
+    if hasattr(db_case_config, "disable_backpressure") and hasattr(fts_db_case_config, "disable_backpressure"):
+        fts_db_case_config.disable_backpressure = db_case_config.disable_backpressure
+    return fts_db_case_config
 
 
 log = logging.getLogger(__name__)
@@ -499,7 +521,10 @@ class CommonTypedDict(TypedDict):
             "--dataset-with-size-type",
             help="Dataset with size type. When omitted, filter/insert cases use Medium Cohere (768dim, 1M), "
             "CloudPayloadSearchCase and CloudColdLatencyCase use LAION 100M, and CloudMultiTenantSearchCase "
-            f"uses Large Cohere (768dim, 10M). Supported values include {SUPPORTED_DATASET_WITH_SIZE_TYPES}",
+            f"uses Large Cohere (768dim, 10M). Supported vector values include "
+            f"{SUPPORTED_DATASET_WITH_SIZE_TYPES}. For FTSBm25Performance, supported default UI datasets include "
+            f"{FtsDatasetWithSizeType.MSMarcoSmall.value}|{FtsDatasetWithSizeType.MSMarcoMedium.value}|"
+            f"{FtsDatasetWithSizeType.HotpotQASmall.value}|{FtsDatasetWithSizeType.HotpotQAMedium.value}.",
             default=None,
         ),
     ]
@@ -525,8 +550,8 @@ class CommonTypedDict(TypedDict):
         str,
         click.option(
             "--payload-profile",
-            type=click.Choice(["ids_only", "vector", "scalar_label"]),
-            help="Response payload profile for CloudPayloadSearchCase and CloudColdLatencyCase",
+            type=click.Choice([profile.value for profile in PayloadProfile]),
+            help="Response payload profile for payload and FTS cases",
             default="ids_only",
             show_default=True,
         ),
@@ -797,7 +822,7 @@ def run(
     task = TaskConfig(
         db=db,
         db_config=db_config,
-        db_case_config=db_case_config,
+        db_case_config=select_cli_db_case_config(db, db_case_config, parameters["case_type"]),
         case_config=CaseConfig(
             case_id=CaseType[parameters["case_type"]],
             k=parameters["k"],

@@ -81,6 +81,16 @@ def welcomePrams(st):
             "link": "tables",
         },
         {
+            "title": "FullTextSearch Performance",
+            "description": (
+                "<span style='font-size: 17px;'>"
+                "To view BM25 full text search performance across datasets, payload modes, and backends."
+                "</span>"
+            ),
+            "image": "fig/homepage/full_text_search.png",
+            "link": "full_text_search",
+        },
+        {
             "title": "Concurrent Performance",
             "description": (
                 "<span style='font-size: 17px;'>"
@@ -148,7 +158,7 @@ def welcomePrams(st):
     for option in options:
         option["image"] = get_image_as_base64(option["image"])
 
-    for option in options[:7]:
+    for option in options[:8]:
         html_content += f"""
         <a href="/{option['link']}" target="_self" style="text-decoration: none;">
             <div class="section-card">
@@ -167,7 +177,7 @@ def welcomePrams(st):
     <div class="last-row">
     """
 
-    for option in options[7:9]:
+    for option in options[8:10]:
         html_content += f"""
         <a href="/{option['link']}" target="_self" style="text-decoration: none;">
             <div class="section-card">

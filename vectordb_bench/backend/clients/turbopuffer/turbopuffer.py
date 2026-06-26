@@ -1,6 +1,7 @@
 """Wrapper around the TurboPuffer vector database over VectorDB"""
 
 import logging
+import os
 import time
 from contextlib import contextmanager
 from json import dumps, loads
@@ -12,6 +13,7 @@ from urllib.request import Request, urlopen
 import turbopuffer as tpuf
 
 from vectordb_bench.backend.clients.turbopuffer.config import (
+    TurboPufferFtsConfig,
     TurboPufferIndexConfig,
     TurboPufferMultitenantWarmupPolicy,
 )
@@ -91,7 +93,7 @@ class TurboPuffer(VectorDB):
         self,
         dim: int,
         db_config: dict,
-        db_case_config: TurboPufferIndexConfig,
+        db_case_config: TurboPufferIndexConfig | TurboPufferFtsConfig,
         drop_old: bool = False,
         with_scalar_labels: bool = False,
         **kwargs,
@@ -109,12 +111,14 @@ class TurboPuffer(VectorDB):
         self.pin_timeout = db_config.get("pin_timeout", PINNING_TIMEOUT)
         self._pinning_applied = False
         self.db_case_config = db_case_config
-        self.metric = db_case_config.parse_metric()
+        self._is_fts = isinstance(db_case_config, TurboPufferFtsConfig)
+        self.metric = None if self._is_fts else db_case_config.parse_metric()
 
         self._vector_field = "vector"
         self._scalar_id_field = "id"
         self._scalar_label_field = "label"
         self._scalar_payload_label_field = db_config.get("scalar_payload_label_field", self._scalar_label_field)
+        self._text_field = "text"
 
         self.with_scalar_labels = with_scalar_labels
         self.expr = None
@@ -138,6 +142,9 @@ class TurboPuffer(VectorDB):
 
     def _create_client(self) -> tpuf.Turbopuffer:
         client_kwargs = {"api_key": self.api_key, "region": self.region}
+        max_retries = os.getenv("TURBOPUFFER_MAX_RETRIES")
+        if max_retries is not None:
+            client_kwargs["max_retries"] = int(max_retries)
         if self.api_base_url:
             client_kwargs["base_url"] = self.api_base_url
         return tpuf.Turbopuffer(**client_kwargs)
@@ -176,6 +183,26 @@ class TurboPuffer(VectorDB):
         if self.multitenant_tenant_labels:
             return [self._namespace_name_for_tenant(tenant) for tenant in self.multitenant_tenant_labels]
         return [self.namespace]
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state.pop("client", None)
+        state.pop("ns", None)
+        state.pop("_ns_cache", None)
+        return state
+
+    def __setstate__(self, state: dict):
+        self.__dict__.update(state)
+        self.client = self._create_client()
+        self._ns_cache = {}
+        self.ns = None
+
+    @classmethod
+    def supports_full_text_search(cls) -> bool:
+        return True
+
+    def has_text_field(self) -> bool:
+        return bool(getattr(self, "_is_fts", False) and getattr(self, "_text_field", None))
 
     @contextmanager
     def init(self):
@@ -345,6 +372,42 @@ class TurboPuffer(VectorDB):
             "additional_parameters": {"disable_backpressure": self.db_case_config.disable_backpressure},
         }
 
+    def insert_documents(
+        self,
+        texts: list[str],
+        doc_ids: list[str],
+        **kwargs,
+    ) -> tuple[int, Exception | None]:
+        if not getattr(self, "_is_fts", False):
+            msg = "TurboPuffer full-text insert requires TurboPufferFtsConfig"
+            raise RuntimeError(msg)
+        assert self.ns is not None, "should self.init() first"
+
+        docs = list(texts)
+        if len(docs) != len(doc_ids):
+            msg = f"Mismatch between texts ({len(docs)}) and doc_ids ({len(doc_ids)}) lengths"
+            raise ValueError(msg)
+
+        text_field = self._text_field
+        try:
+            self.ns.write(
+                upsert_columns={
+                    self._scalar_id_field: [str(doc_id) for doc_id in doc_ids],
+                    text_field: docs,
+                },
+                schema={
+                    text_field: {
+                        "type": "string",
+                        "full_text_search": True,
+                    }
+                },
+                disable_backpressure=self.db_case_config.disable_backpressure,
+            )
+        except Exception as e:
+            log.warning(f"Failed to insert FTS docs. Error: {e}")
+            return 0, e
+        return len(docs), None
+
     def search_embedding(
         self,
         query: list[float],
@@ -364,6 +427,31 @@ class TurboPuffer(VectorDB):
             query_kwargs["include_attributes"] = [self._scalar_payload_label_field]
         res = self._namespace_for_tenant(tenant).query(**query_kwargs)
         return [int(row.id) for row in res.rows] if res.rows is not None else []
+
+    def search_documents(
+        self,
+        query: str,
+        k: int = 100,
+        payload_profile: PayloadProfile = PayloadProfile.IDS_ONLY,
+        **kwargs,
+    ) -> list[str]:
+        if not getattr(self, "_is_fts", False):
+            msg = "TurboPuffer full-text search requires TurboPufferFtsConfig"
+            raise RuntimeError(msg)
+        if not self.supports_document_payload_profile(payload_profile):
+            msg = f"TurboPuffer does not support document payload_profile={payload_profile.value}"
+            raise NotImplementedError(msg)
+        assert self.ns is not None, "should self.init() first"
+
+        query_kwargs = {
+            "rank_by": (self._text_field, "BM25", query),
+            "top_k": k,
+        }
+        if payload_profile == PayloadProfile.TEXT:
+            query_kwargs["include_attributes"] = [self._text_field]
+        res = self.ns.query(**query_kwargs)
+        rows = getattr(res, "rows", None) or []
+        return [str(row.id) for row in rows if getattr(row, "id", None) is not None]
 
     def prepare_filter(self, filters: Filter):
         if filters.type == FilterOp.NonFilter:

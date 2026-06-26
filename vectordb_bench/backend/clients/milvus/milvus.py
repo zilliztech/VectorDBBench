@@ -6,17 +6,18 @@ from collections.abc import Iterable
 from contextlib import contextmanager
 from typing import Any
 
-from pymilvus import DataType, MilvusClient, MilvusException
+from pymilvus import DataType, Function, FunctionType, MilvusClient, MilvusException
 
 from vectordb_bench.backend.filter import Filter, FilterOp
 from vectordb_bench.backend.payload import PayloadProfile
 
 from ..api import VectorDB
-from .config import MilvusIndexConfig
+from .config import MilvusFtsConfig, MilvusIndexConfig
 
 log = logging.getLogger(__name__)
 
 MILVUS_LOAD_REQS_SIZE = 1.5 * 1024 * 1024
+MILVUS_FTS_BATCH_SIZE = 1000
 MILVUS_FORCE_MERGE_TARGET_SIZE_MB = ((1 << 63) - 1) // (1024**2)
 
 
@@ -27,15 +28,23 @@ class Milvus(VectorDB):
         FilterOp.StrEqual,
     ]
 
-    def __init__(
+    @classmethod
+    def supports_full_text_search(cls) -> bool:
+        return True
+
+    def has_text_field(self) -> bool:
+        return bool(getattr(self, "_is_fts", False) and getattr(self, "_text_field", None))
+
+    def __init__(  # noqa: PLR0915
         self,
         dim: int,
         db_config: dict,
-        db_case_config: MilvusIndexConfig,
+        db_case_config: MilvusIndexConfig | MilvusFtsConfig,
         collection_name: str = "VDBBench",
         drop_old: bool = False,
         name: str = "Milvus",
         with_scalar_labels: bool = False,
+        fts_batch_size: int | None = None,
         **kwargs,
     ):
         """Initialize wrapper around the milvus vector database."""
@@ -43,23 +52,40 @@ class Milvus(VectorDB):
         self.db_config = db_config
         self.case_config = db_case_config
         self.collection_name = collection_name
-        self.batch_size = int(MILVUS_LOAD_REQS_SIZE / (dim * 4))
         self.with_scalar_labels = with_scalar_labels
 
-        self._primary_field = "pk"
-        self._scalar_id_field = "id"
         self._scalar_label_field = "label"
         self._scalar_payload_label_field = self._scalar_label_field
         self._multitenant_partition_key_field = self._scalar_label_field
+        self._scalar_labels_index_name = "labels_idx"
+        self._is_fts = isinstance(self.case_config, MilvusFtsConfig)
+
+        if self._is_fts:
+            self.batch_size = fts_batch_size or MILVUS_FTS_BATCH_SIZE
+            self._primary_field = "doc_id"
+            self._text_field = "text"
+            self._sparse_field = "sparse_vector"
+            self._sparse_index_name = "sparse_vector_idx"
+            self._doc_id_sort_index_name = "doc_id_sort_idx"
+            self._main_index_name = self._sparse_index_name
+            self._sort_index_name = self._doc_id_sort_index_name
+            self._sort_index_field = self._primary_field
+        else:
+            self.batch_size = int(MILVUS_LOAD_REQS_SIZE / (dim * 4))
+            self._primary_field = "pk"
+            self._scalar_id_field = "id"
+            self._vector_field = "vector"
+            self._vector_index_name = "vector_idx"
+            self._scalar_id_index_name = "id_sort_idx"
+            self._main_index_name = self._vector_index_name
+            self._sort_index_name = self._scalar_id_index_name
+            self._sort_index_field = self._scalar_id_field
+
         self.multitenant_tenant_labels: list[str] = kwargs.get("multitenant_tenant_labels", [])
         if self.multitenant_tenant_labels:
             self._multitenant_partition_key_field = "labels"
             if self.with_scalar_labels:
                 self._scalar_payload_label_field = "scalar_label"
-        self._vector_field = "vector"
-        self._vector_index_name = "vector_idx"
-        self._scalar_id_index_name = "id_sort_idx"
-        self._scalar_labels_index_name = "labels_idx"
 
         client = MilvusClient(
             uri=self.db_config.get("uri"),
@@ -75,30 +101,58 @@ class Milvus(VectorDB):
 
         if not client.has_collection(self.collection_name):
             schema = MilvusClient.create_schema()
-            schema.add_field(self._primary_field, DataType.INT64, is_primary=True)
-            schema.add_field(self._scalar_id_field, DataType.INT64)
-            schema.add_field(self._vector_field, DataType.FLOAT_VECTOR, dim=dim)
-
-            if self.multitenant_tenant_labels:
-                schema.add_field(
-                    self._multitenant_partition_key_field,
-                    DataType.VARCHAR,
-                    max_length=256,
-                    is_partition_key=True,
+            if self._is_fts:
+                analyzer_params = (
+                    self.case_config.analyzer_param()
+                    if hasattr(self.case_config, "analyzer_param")
+                    else self.case_config.index_param().get("analyzer_params", {"type": "english"})
                 )
+                schema.add_field(self._primary_field, DataType.VARCHAR, max_length=512, is_primary=True)
+                schema.add_field(
+                    self._text_field,
+                    DataType.VARCHAR,
+                    max_length=65535,
+                    enable_analyzer=True,
+                    enable_match=True,
+                    analyzer_params=analyzer_params,
+                )
+                schema.add_field(self._sparse_field, DataType.SPARSE_FLOAT_VECTOR)
+                if self.with_scalar_labels:
+                    schema.add_field(self._scalar_label_field, DataType.VARCHAR, max_length=256)
+                schema.add_function(
+                    Function(
+                        name="text_bm25_emb",
+                        function_type=FunctionType.BM25,
+                        input_field_names=[self._text_field],
+                        output_field_names=[self._sparse_field],
+                        params={},
+                    )
+                )
+            else:
+                schema.add_field(self._primary_field, DataType.INT64, is_primary=True)
+                schema.add_field(self._scalar_id_field, DataType.INT64)
+                schema.add_field(self._vector_field, DataType.FLOAT_VECTOR, dim=dim)
 
-            if self.with_scalar_labels:
-                is_partition_key = db_case_config.use_partition_key
-                log.info(f"with_scalar_labels, add a new varchar field, as partition_key: {is_partition_key}")
-                if not self.multitenant_tenant_labels or (
-                    self._scalar_payload_label_field != self._multitenant_partition_key_field
-                ):
+                if self.multitenant_tenant_labels:
                     schema.add_field(
-                        self._scalar_payload_label_field,
+                        self._multitenant_partition_key_field,
                         DataType.VARCHAR,
                         max_length=256,
-                        is_partition_key=is_partition_key and not self.multitenant_tenant_labels,
+                        is_partition_key=True,
                     )
+
+                if self.with_scalar_labels:
+                    is_partition_key = db_case_config.use_partition_key
+                    log.info(f"with_scalar_labels, add a new varchar field, as partition_key: {is_partition_key}")
+                    if not self.multitenant_tenant_labels or (
+                        self._scalar_payload_label_field != self._multitenant_partition_key_field
+                    ):
+                        schema.add_field(
+                            self._scalar_payload_label_field,
+                            DataType.VARCHAR,
+                            max_length=256,
+                            is_partition_key=is_partition_key and not self.multitenant_tenant_labels,
+                        )
 
             log.info(f"{self.name} create collection: {self.collection_name}")
 
@@ -119,17 +173,31 @@ class Milvus(VectorDB):
 
     def _build_index_params(self):
         index_params = MilvusClient.prepare_index_params()
-        vec_idx = self.case_config.index_param()
+        if self._is_fts:
+            sparse_idx = (
+                self.case_config.sparse_index_param()
+                if hasattr(self.case_config, "sparse_index_param")
+                else self.case_config.index_param()
+            )
+            index_params.add_index(
+                field_name=self._sparse_field,
+                index_name=self._main_index_name,
+                index_type=sparse_idx.get("index_type", ""),
+                metric_type=sparse_idx.get("metric_type", ""),
+                params=sparse_idx.get("params", {}),
+            )
+        else:
+            vec_idx = self.case_config.index_param()
+            index_params.add_index(
+                field_name=self._vector_field,
+                index_name=self._vector_index_name,
+                index_type=vec_idx.get("index_type", ""),
+                metric_type=vec_idx.get("metric_type", ""),
+                params=vec_idx.get("params", {}),
+            )
         index_params.add_index(
-            field_name=self._vector_field,
-            index_name=self._vector_index_name,
-            index_type=vec_idx.get("index_type", ""),
-            metric_type=vec_idx.get("metric_type", ""),
-            params=vec_idx.get("params", {}),
-        )
-        index_params.add_index(
-            field_name=self._scalar_id_field,
-            index_name=self._scalar_id_index_name,
+            field_name=self._sort_index_field,
+            index_name=self._sort_index_name,
             index_type="STL_SORT",
         )
         if self.with_scalar_labels:
@@ -219,7 +287,7 @@ class Milvus(VectorDB):
 
     def _wait_for_index(self):
         while True:
-            info = self.client.describe_index(self.collection_name, self._vector_index_name)
+            info = self.client.describe_index(self.collection_name, self._main_index_name)
             if info.get("pending_index_rows", -1) == 0:
                 break
             time.sleep(5)
@@ -236,7 +304,7 @@ class Milvus(VectorDB):
         try:
             self.client.flush(self.collection_name)
 
-            if self.case_config.is_gpu_index:
+            if getattr(self.case_config, "is_gpu_index", False):
                 log.debug("skip force merge compaction for gpu index type.")
             else:
                 try:
@@ -269,6 +337,8 @@ class Milvus(VectorDB):
 
     def need_normalize_cosine(self) -> bool:
         """Wheather this database need to normalize dataset to support COSINE"""
+        if self._is_fts:
+            return False
         if self.case_config.is_gpu_index:
             log.info("current gpu_index only supports IP / L2, cosine dataset need normalize.")
             return True
@@ -309,7 +379,56 @@ class Milvus(VectorDB):
             return insert_count, e
         return insert_count, None
 
+    def insert_documents(
+        self,
+        texts: Iterable[str],
+        doc_ids: list[str],
+        **kwargs,
+    ) -> tuple[int, Exception | None]:
+        """Insert documents into a Milvus BM25 full-text collection."""
+        if not self._is_fts:
+            msg = "insert_documents is only valid in FTS mode"
+            raise RuntimeError(msg)
+        assert self.client is not None
+
+        docs = list(texts)
+        if len(docs) != len(doc_ids):
+            msg = f"Mismatch between texts ({len(docs)}) and doc_ids ({len(doc_ids)}) lengths"
+            raise ValueError(msg)
+
+        batch_size = kwargs.get("batch_size", self.batch_size)
+        labels_data = kwargs.get("labels_data")
+
+        insert_count = 0
+        try:
+            for batch_start_offset in range(0, len(docs), batch_size):
+                batch_end_offset = min(batch_start_offset + batch_size, len(docs))
+                rows = []
+                for i in range(batch_start_offset, batch_end_offset):
+                    row = {
+                        self._primary_field: str(doc_ids[i]),
+                        self._text_field: docs[i],
+                    }
+                    if self.with_scalar_labels:
+                        row[self._scalar_label_field] = labels_data[i] if labels_data is not None else ""
+                    rows.append(row)
+
+                res = self.client.insert(self.collection_name, rows)
+                insert_count += res["insert_count"]
+                if batch_start_offset // batch_size % 10 == 0:
+                    log.debug(
+                        f"{self.name} batch insert progress: {batch_end_offset}/{len(docs)} "
+                        f"({batch_end_offset / len(docs) * 100:.1f}%)"
+                    )
+        except MilvusException as e:
+            log.info(f"{self.name} insert error: {e}")
+            return insert_count, e
+        return insert_count, None
+
     def prepare_filter(self, filters: Filter):
+        if self._is_fts:
+            self.expr = ""
+            return
         if filters.type == FilterOp.NonFilter:
             self.expr = ""
         elif filters.type == FilterOp.NumGE:
@@ -332,7 +451,7 @@ class Milvus(VectorDB):
         self.client.flush(self.collection_name)
         stats = self.client.get_collection_stats(self.collection_name)
         count = int(stats.get("row_count", stats.get("num_entities", 0)))
-        progress = self.client.describe_index(self.collection_name, self._vector_index_name)
+        progress = self.client.describe_index(self.collection_name, self._main_index_name)
         return {
             "fully_searchable": count >= expected_count,
             "fully_indexed": progress.get("pending_index_rows", -1) == 0,
@@ -374,3 +493,42 @@ class Milvus(VectorDB):
         res = self.client.search(**search_kwargs)
 
         return [result[self._primary_field] for result in res[0]]
+
+    def search_documents(
+        self,
+        query: str,
+        k: int = 100,
+        timeout: int | None = None,
+        payload_profile: PayloadProfile = PayloadProfile.IDS_ONLY,
+    ) -> list[str]:
+        """Search a Milvus BM25 full-text collection and return document IDs."""
+        if not self._is_fts:
+            msg = "search_documents only valid in FTS mode"
+            raise RuntimeError(msg)
+        if not self.supports_document_payload_profile(payload_profile):
+            msg = f"{getattr(self, 'name', 'Milvus')} does not support document payload_profile={payload_profile.value}"
+            raise NotImplementedError(msg)
+        assert self.client is not None
+
+        output_fields = [self._primary_field]
+        if payload_profile == PayloadProfile.TEXT:
+            output_fields.append(self._text_field)
+
+        res = self.client.search(
+            collection_name=self.collection_name,
+            data=[str(query)],
+            anns_field=self._sparse_field,
+            search_params=self.case_config.search_param(),
+            limit=k,
+            output_fields=output_fields,
+        )
+
+        hits = res[0] if res else []
+        doc_ids = []
+        for hit in hits:
+            entity = hit.get("entity", hit) if isinstance(hit, dict) else hit
+            if isinstance(entity, dict):
+                doc_ids.append(str(entity.get(self._primary_field)))
+            else:
+                doc_ids.append(str(getattr(entity, self._primary_field)))
+        return doc_ids

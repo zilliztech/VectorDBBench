@@ -119,3 +119,11 @@ def calc_ndcg(ground_truth: list[int], got: list[int], ideal_dcg: float) -> floa
             idx = ground_truth.index(got_id)
             dcg += 1 / np.log2(idx + 2)
     return dcg / ideal_dcg
+
+
+def calc_recall_fts(k: int, ground_truth: list[int], got: list[int]) -> float:
+    if not ground_truth or k <= 0:
+        return 0.0
+    gt_set = set(ground_truth)
+    hits = gt_set & set(got[:k])
+    return calc_recall(len(gt_set), gt_set, hits)

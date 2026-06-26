@@ -1,4 +1,4 @@
-import concurrent.futures
+import concurrent
 import logging
 import math
 import multiprocessing as mp
@@ -11,9 +11,10 @@ import numpy as np
 from vectordb_bench.backend.dataset import DatasetManager
 from vectordb_bench.backend.filter import Filter, non_filter
 from vectordb_bench.backend.payload import PayloadProfile
+from vectordb_bench.backend.workload import WorkloadKind
 
 from ... import config
-from ...metric import calc_ndcg, calc_recall, get_ideal_dcg
+from ...metric import calc_ndcg, calc_recall, calc_recall_fts, get_ideal_dcg
 from ...models import LoadTimeoutError
 from .. import utils
 from ..clients import api
@@ -25,6 +26,9 @@ log = logging.getLogger(__name__)
 
 
 class SerialInsertRunner:
+    # FTS insert is intentionally not implemented here. FTS performance loading
+    # goes through ConcurrentInsertRunner; serial FTS insert can be added later
+    # if a capacity or serial-load FTS case needs it.
     def __init__(
         self,
         db: api.VectorDB,
@@ -128,22 +132,38 @@ class SerialSearchRunner:
     def __init__(
         self,
         db: api.VectorDB,
-        test_data: list[list[float]],
+        test_data: list,
         ground_truth: list[list[int]],
         k: int = 100,
         filters: Filter = non_filter,
         payload_profile: PayloadProfile = PayloadProfile.IDS_ONLY,
         tenant_labels: list[str] | None = None,
         measure_recall: bool = True,
+        workload_kind: WorkloadKind = WorkloadKind.VECTOR,
     ):
         self.db = db
         self.k = k
         self.filters = filters
+        self.workload_kind = workload_kind
         self.payload_profile = payload_profile
         self.tenant_labels = tenant_labels or []
         self.measure_recall = measure_recall
-        if not self.db.supports_payload_profile(self.payload_profile):
+        if workload_kind == WorkloadKind.FULL_TEXT:
+            self._search_func = self.db.search_documents
+            self._use_fts_metrics = True
+        elif workload_kind == WorkloadKind.VECTOR:
+            self._search_func = self._search_embedding
+            self._use_fts_metrics = False
+        else:
+            msg = f"Unsupported search workload: {workload_kind}"
+            raise NotImplementedError(msg)
+        if self.workload_kind == WorkloadKind.VECTOR and not self.db.supports_payload_profile(self.payload_profile):
             msg = f"{self.db.name} does not support payload_profile={self.payload_profile.value}"
+            raise NotImplementedError(msg)
+        if self.workload_kind == WorkloadKind.FULL_TEXT and not self.db.supports_document_payload_profile(
+            self.payload_profile
+        ):
+            msg = f"{self.db.name} does not support document payload_profile={self.payload_profile.value}"
             raise NotImplementedError(msg)
 
         if isinstance(test_data[0], np.ndarray):
@@ -161,25 +181,36 @@ class SerialSearchRunner:
             return self.db.search_embedding(emb, self.k, tenant=tenant)
         return self.db.search_embedding(emb, self.k, payload_profile=self.payload_profile, tenant=tenant)
 
-    def _get_db_search_res(self, emb: list[float], tenant: str | None = None, retry_idx: int = 0) -> list[int]:
+    def _get_db_search_res(
+        self,
+        query: list[float] | str,
+        tenant: str | None = None,
+        retry_idx: int = 0,
+    ) -> list[int]:
         try:
-            results = self._search_embedding(emb, tenant=tenant)
+            if self.workload_kind == WorkloadKind.FULL_TEXT:
+                if self.payload_profile == PayloadProfile.IDS_ONLY:
+                    results = self._search_func(query, self.k)
+                else:
+                    results = self._search_func(query, self.k, payload_profile=self.payload_profile)
+            else:
+                results = self._search_func(query, tenant=tenant)
         except Exception as e:
             log.warning(f"Serial search failed, retry_idx={retry_idx}, Exception: {e}")
             if retry_idx < config.MAX_SEARCH_RETRY:
-                return self._get_db_search_res(emb=emb, tenant=tenant, retry_idx=retry_idx + 1)
+                return self._get_db_search_res(query=query, tenant=tenant, retry_idx=retry_idx + 1)
 
             msg = f"Serial search failed and retried more than {config.MAX_SEARCH_RETRY} times"
             raise RuntimeError(msg) from e
 
         return results
 
-    def search(self, args: tuple[list, list[list[int]]]) -> tuple[float, float, float, float]:
+    def search(self, args: tuple[list, list[list[int]]]) -> tuple[float, ...]:
         log.info(f"{mp.current_process().name:14} start search the entire test_data to get recall and latency")
         with self.db.init():
             self.db.prepare_filter(self.filters)
             test_data, ground_truth = args
-            ideal_dcg = get_ideal_dcg(self.k)
+            ideal_dcg = None if self._use_fts_metrics else get_ideal_dcg(self.k)
 
             log.debug(f"test dataset size: {len(test_data)}")
             log.debug(f"ground truth size: {len(ground_truth) if ground_truth is not None else 0}")
@@ -188,7 +219,9 @@ class SerialSearchRunner:
             tenant_rng = random.Random(0)
             for idx, emb in enumerate(test_data):
                 tenant = (
-                    self.tenant_labels[tenant_rng.randrange(len(self.tenant_labels))] if self.tenant_labels else None
+                    self.tenant_labels[tenant_rng.randrange(len(self.tenant_labels))]
+                    if self.workload_kind == WorkloadKind.VECTOR and self.tenant_labels
+                    else None
                 )
                 s = time.perf_counter()
                 try:
@@ -201,11 +234,15 @@ class SerialSearchRunner:
 
                 if self.measure_recall and ground_truth is not None:
                     gt = ground_truth[idx]
-                    recalls.append(calc_recall(self.k, gt[: self.k], results))
-                    ndcgs.append(calc_ndcg(gt[: self.k], results, ideal_dcg))
+                    if self._use_fts_metrics:
+                        recalls.append(calc_recall_fts(self.k, gt, results))
+                    else:
+                        recalls.append(calc_recall(self.k, gt[: self.k], results))
+                        ndcgs.append(calc_ndcg(gt[: self.k], results, ideal_dcg))
                 else:
                     recalls.append(0)
-                    ndcgs.append(0)
+                    if not self._use_fts_metrics:
+                        ndcgs.append(0)
 
                 if len(latencies) % 100 == 0:
                     log.debug(
@@ -215,10 +252,22 @@ class SerialSearchRunner:
 
         avg_latency = round(np.mean(latencies), 4)
         avg_recall = round(np.mean(recalls), 4)
-        avg_ndcg = round(np.mean(ndcgs), 4)
         cost = round(np.sum(latencies), 4)
         p99 = round(np.percentile(latencies, 99), 4)
         p95 = round(np.percentile(latencies, 95), 4)
+        if self._use_fts_metrics:
+            log.info(
+                f"{mp.current_process().name:14} search entire test_data: "
+                f"cost={cost}s, "
+                f"queries={len(latencies)}, "
+                f"avg_recall={avg_recall}, "
+                f"avg_latency={avg_latency}, "
+                f"p99={p99}, "
+                f"p95={p95}"
+            )
+            return (avg_recall, p99, p95)
+
+        avg_ndcg = round(np.mean(ndcgs), 4)
         log.info(
             f"{mp.current_process().name:14} search entire test_data: "
             f"cost={cost}s, "
@@ -231,13 +280,13 @@ class SerialSearchRunner:
         )
         return (avg_recall, avg_ndcg, p99, p95)
 
-    def _run_in_subprocess(self) -> tuple[float, float, float, float]:
+    def _run_in_subprocess(self) -> tuple[float, ...]:
         with concurrent.futures.ProcessPoolExecutor(max_workers=1) as executor:
             future = executor.submit(self.search, (self.test_data, self.ground_truth))
             return future.result()
 
     @utils.time_it
-    def run(self) -> tuple[float, float, float, float]:
+    def run(self) -> tuple[float, ...]:
         log.info(f"{mp.current_process().name:14} start serial search")
         if self.test_data is None:
             msg = "empty test_data"
@@ -246,11 +295,11 @@ class SerialSearchRunner:
         return self._run_in_subprocess()
 
     @utils.time_it
-    def run_with_cost(self) -> tuple[tuple[float, float, float, float], float]:
+    def run_with_cost(self) -> tuple[tuple[float, ...], float]:
         """
         Search all test data in serial.
         Returns:
-            tuple[tuple[float, float, float, float], float]: (avg_recall, avg_ndcg, p99_latency, p95_latency), cost
+            tuple[tuple[float, ...], float]: search metrics and cost
         """
         log.info(f"{mp.current_process().name:14} start serial search")
         if self.test_data is None:

@@ -9,7 +9,14 @@ from vectordb_bench.backend.payload import PayloadProfile
 from vectordb_bench.base import BaseModel
 from vectordb_bench.frontend.components.custom.getCustomConfig import CustomDatasetConfig
 
-from .dataset import CustomDataset, Dataset, DatasetManager, DatasetWithSizeType
+from .dataset import (
+    CustomDataset,
+    Dataset,
+    DatasetManager,
+    DatasetWithSizeType,
+    FtsDatasetManager,
+    FtsDatasetWithSizeType,
+)
 
 log = logging.getLogger(__name__)
 
@@ -58,6 +65,7 @@ class CaseType(Enum):
 
     NewIntFilterPerformanceCase = 400
     CloudPayloadSearchCase = 500
+    FTSBm25Performance = 503
     CloudInsertCase = 600
     CloudColdLatencyCase = 700
     CloudMultiTenantSearchCase = 800
@@ -86,6 +94,7 @@ class CaseLabel(Enum):
     Streaming = auto()
     CloudInsert = auto()
     CloudColdLatency = auto()
+    FullTextSearchPerformance = auto()
 
 
 class Case(BaseModel):
@@ -901,6 +910,52 @@ class LabelFilterPerformanceCase(PerformanceCase):
         return LabelFilter(label_percentage=self.label_percentage)
 
 
+class FtsPerformanceCase(Case):
+    """Base class for full-text search BM25 performance cases."""
+
+    label: CaseLabel = CaseLabel.FullTextSearchPerformance
+    dataset: FtsDatasetManager
+
+    filter_rate: float | None = None
+
+    @property
+    def filters(self) -> Filter:
+        return non_filter
+
+    def estimated_payload_bytes_per_query(self, k: int | None) -> int:
+        if k is None:
+            k = config.K_DEFAULT
+        return self.payload_profile.estimated_bytes_per_query(k=k, dim=0)
+
+
+class FTSBm25Performance(FtsPerformanceCase):
+    case_id: CaseType = CaseType.FTSBm25Performance
+    dataset_with_size_type: FtsDatasetWithSizeType = FtsDatasetWithSizeType.MSMarcoSmall
+
+    def __init__(
+        self,
+        dataset_with_size_type: FtsDatasetWithSizeType | str = FtsDatasetWithSizeType.MSMarcoSmall,
+        **kwargs,
+    ):
+        if not isinstance(dataset_with_size_type, FtsDatasetWithSizeType):
+            dataset_with_size_type = FtsDatasetWithSizeType(dataset_with_size_type)
+        dataset = dataset_with_size_type.get_manager()
+        name = f"FTS BM25 Performance - {dataset_with_size_type.value}"
+        description = (
+            f"This case tests native BM25 full-text search performance on {dataset_with_size_type.value}. "
+            "It measures index building time, recall, serial latency, and search QPS."
+        )
+        super().__init__(
+            name=name,
+            description=description,
+            dataset=dataset,
+            dataset_with_size_type=dataset_with_size_type,
+            load_timeout=dataset_with_size_type.get_load_timeout(),
+            optimize_timeout=dataset_with_size_type.get_optimize_timeout(),
+            **kwargs,
+        )
+
+
 type2case = {
     CaseType.CapacityDim960: CapacityDim960,
     CaseType.CapacityDim128: CapacityDim128,
@@ -926,6 +981,7 @@ type2case = {
     CaseType.NewIntFilterPerformanceCase: NewIntFilterPerformanceCase,
     CaseType.LabelFilterPerformanceCase: LabelFilterPerformanceCase,
     CaseType.CloudPayloadSearchCase: CloudPayloadSearchCase,
+    CaseType.FTSBm25Performance: FTSBm25Performance,
     CaseType.CloudInsertCase: CloudInsertCase,
     CaseType.CloudColdLatencyCase: CloudColdLatencyCase,
     CaseType.CloudMultiTenantSearchCase: CloudMultiTenantSearchCase,

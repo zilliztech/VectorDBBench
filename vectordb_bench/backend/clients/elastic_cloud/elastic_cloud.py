@@ -6,9 +6,10 @@ from contextlib import contextmanager
 from elasticsearch.helpers import bulk
 
 from vectordb_bench.backend.filter import Filter, FilterOp
+from vectordb_bench.backend.payload import PayloadProfile
 
 from ..api import VectorDB
-from .config import ElasticCloudIndexConfig
+from .config import ElasticCloudFtsConfig, ElasticCloudIndexConfig
 
 for logger in ("elasticsearch", "elastic_transport"):
     logging.getLogger(logger).setLevel(logging.WARNING)
@@ -30,7 +31,7 @@ class ElasticCloud(VectorDB):
         self,
         dim: int,
         db_config: dict,
-        db_case_config: ElasticCloudIndexConfig,
+        db_case_config: ElasticCloudIndexConfig | ElasticCloudFtsConfig,
         indice: str = "vdb_bench_indice",  # must be lowercase
         id_col_name: str = "id",
         label_col_name: str = "label",
@@ -47,6 +48,10 @@ class ElasticCloud(VectorDB):
         self.label_col_name = label_col_name
         self.vector_col_name = vector_col_name
         self.with_scalar_labels = with_scalar_labels
+        self._is_fts = isinstance(db_case_config, ElasticCloudFtsConfig)
+        self.text_col_name = "text"
+        if self._is_fts:
+            self.id_col_name = "doc_id"
 
         from elasticsearch import Elasticsearch
 
@@ -58,6 +63,13 @@ class ElasticCloud(VectorDB):
             if is_existed_res.raw:
                 client.indices.delete(index=self.indice)
             self._create_indice(client)
+
+    @classmethod
+    def supports_full_text_search(cls) -> bool:
+        return True
+
+    def has_text_field(self) -> bool:
+        return bool(getattr(self, "_is_fts", False) and getattr(self, "text_col_name", None))
 
     @contextmanager
     def init(self) -> None:
@@ -71,6 +83,18 @@ class ElasticCloud(VectorDB):
         del self.client
 
     def _create_indice(self, client: any) -> None:
+        if self._is_fts:
+            mappings = self.case_config.index_param()
+            index_settings = {
+                "number_of_shards": self.case_config.number_of_shards,
+                "number_of_replicas": self.case_config.number_of_replicas,
+                "refresh_interval": self.case_config.refresh_interval,
+            }
+            index_settings.update(self.case_config.similarity_settings())
+            settings = {"index": index_settings}
+            client.indices.create(index=self.indice, mappings=mappings, settings=settings)
+            return
+
         mappings = {
             "_source": {"excludes": [self.vector_col_name]},
             "properties": {
@@ -149,6 +173,38 @@ class ElasticCloud(VectorDB):
             log.warning(f"Failed to insert data: {self.indice} error: {e!s}")
             return (0, e)
 
+    def insert_documents(
+        self,
+        texts: Iterable[str],
+        doc_ids: list[str],
+        **kwargs,
+    ) -> tuple[int, Exception | None]:
+        if not getattr(self, "_is_fts", False):
+            msg = "ElasticCloud full-text insert requires ElasticCloudFtsConfig"
+            raise RuntimeError(msg)
+        assert self.client is not None, "should self.init() first"
+        docs = list(texts)
+        if len(docs) != len(doc_ids):
+            msg = f"Mismatch between texts ({len(docs)}) and doc_ids ({len(doc_ids)}) lengths"
+            raise ValueError(msg)
+        actions = [
+            {
+                "_index": self.indice,
+                "_id": str(doc_ids[i]),
+                "_source": {
+                    self.id_col_name: str(doc_ids[i]),
+                    self.text_col_name: docs[i],
+                },
+            }
+            for i in range(len(docs))
+        ]
+        try:
+            result = bulk(self.client, actions)
+            return result[0], None
+        except Exception as e:
+            log.warning(f"Failed to insert FTS docs: {self.indice} error: {e!s}")
+            return 0, e
+
     def prepare_filter(self, filters: Filter):
         self.routing_key = None
         if filters.type == FilterOp.NonFilter:
@@ -202,6 +258,47 @@ class ElasticCloud(VectorDB):
             filter_path=[f"hits.hits.fields.{self.id_col_name}"],
         )
         return [h["fields"][self.id_col_name][0] for h in res["hits"]["hits"]]
+
+    def search_documents(
+        self,
+        query: str,
+        k: int = 100,
+        payload_profile: PayloadProfile = PayloadProfile.IDS_ONLY,
+        **kwargs,
+    ) -> list[str]:
+        if not getattr(self, "_is_fts", False):
+            msg = "ElasticCloud full-text search requires ElasticCloudFtsConfig"
+            raise RuntimeError(msg)
+        if not self.supports_document_payload_profile(payload_profile):
+            msg = f"ElasticCloud does not support document payload_profile={payload_profile.value}"
+            raise NotImplementedError(msg)
+        assert self.client is not None, "should self.init() first"
+        source = [self.text_col_name] if payload_profile == PayloadProfile.TEXT else False
+        filter_path = ["hits.hits._id", f"hits.hits.fields.{self.id_col_name}"]
+        if payload_profile == PayloadProfile.TEXT:
+            filter_path.append(f"hits.hits._source.{self.text_col_name}")
+        search_kwargs = {
+            "index": self.indice,
+            "query": {"match": {self.text_col_name: query}},
+            "size": k,
+            "_source": source,
+            "docvalue_fields": [self.id_col_name],
+            "filter_path": filter_path,
+        }
+        if payload_profile != PayloadProfile.TEXT:
+            search_kwargs["stored_fields"] = "_none_"
+        res = self.client.search(**search_kwargs)
+        doc_ids = []
+        for hit in res.get("hits", {}).get("hits", []):
+            if hit.get("_id") is not None:
+                doc_ids.append(str(hit["_id"]))
+                continue
+
+            fields = hit.get("fields", {})
+            values = fields.get(self.id_col_name, [])
+            if values:
+                doc_ids.append(str(values[0]))
+        return doc_ids
 
     def optimize(self, data_size: int | None = None):
         """optimize will be called between insertion and search in performance cases."""

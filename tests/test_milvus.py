@@ -23,11 +23,18 @@ log = logging.getLogger(__name__)
 
 
 class TestMilvusOptimize:
-    def _milvus(self, *, compact_side_effect: Exception | None = None):
+    def _milvus(
+        self,
+        *,
+        compact_side_effect: Exception | None = None,
+        is_fts: bool = False,
+        is_gpu_index: bool = False,
+    ):
         milvus = Milvus.__new__(Milvus)
         milvus.name = "Milvus"
         milvus.collection_name = "test_collection"
-        milvus.case_config = SimpleNamespace(is_gpu_index=False)
+        milvus._is_fts = is_fts
+        milvus.case_config = SimpleNamespace(is_gpu_index=is_gpu_index)
         milvus.client = MagicMock()
         milvus.client.compact.side_effect = compact_side_effect
         milvus.client.compact.return_value = 0
@@ -42,6 +49,22 @@ class TestMilvusOptimize:
         milvus._optimize()
 
         milvus.client.compact.assert_called_once_with("test_collection", target_size=MILVUS_FORCE_MERGE_TARGET_SIZE_MB)
+        milvus.client.refresh_load.assert_called_once_with("test_collection")
+
+    def test_optimize_compacts_fts_collections(self):
+        milvus = self._milvus(is_fts=True)
+
+        milvus._optimize()
+
+        milvus.client.compact.assert_called_once_with("test_collection", target_size=MILVUS_FORCE_MERGE_TARGET_SIZE_MB)
+        milvus.client.refresh_load.assert_called_once_with("test_collection")
+
+    def test_optimize_skips_gpu_index_compaction(self):
+        milvus = self._milvus(is_gpu_index=True)
+
+        milvus._optimize()
+
+        milvus.client.compact.assert_not_called()
         milvus.client.refresh_load.assert_called_once_with("test_collection")
 
     def test_optimize_skips_property_style_permission_denied(self):

@@ -490,11 +490,19 @@ class DB(Enum):
             return _milvus_case_config.get(index_type)
 
         if self == DB.ZillizCloud:
+            if index_type == IndexType.FTS:
+                from .zilliz_cloud.config import ZillizCloudFtsConfig
+
+                return ZillizCloudFtsConfig
             from .zilliz_cloud.config import AutoIndexConfig
 
             return AutoIndexConfig
 
         if self == DB.ElasticCloud:
+            if index_type == IndexType.FTS:
+                from .elastic_cloud.config import ElasticCloudFtsConfig
+
+                return ElasticCloudFtsConfig
             from .elastic_cloud.config import ElasticCloudIndexConfig
 
             return ElasticCloudIndexConfig
@@ -590,6 +598,10 @@ class DB(Enum):
             return _cockroachdb_case_config.get(index_type)
 
         if self == DB.Vespa:
+            if index_type == IndexType.FTS:
+                from .vespa.config import VespaFtsConfig
+
+                return VespaFtsConfig
             from .vespa.config import VespaHNSWConfig
 
             return VespaHNSWConfig
@@ -634,6 +646,10 @@ class DB(Enum):
             return DorisCaseConfig
 
         if self == DB.TurboPuffer:
+            if index_type == IndexType.FTS:
+                from .turbopuffer.config import TurboPufferFtsConfig
+
+                return TurboPufferFtsConfig
             from .turbopuffer.config import TurboPufferIndexConfig
 
             return TurboPufferIndexConfig

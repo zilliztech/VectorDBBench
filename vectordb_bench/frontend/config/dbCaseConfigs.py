@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from vectordb_bench.backend.cases import CaseLabel, CaseType
 from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.clients.api import IndexType, MetricType, SQType
-from vectordb_bench.backend.dataset import DatasetWithSizeType
+from vectordb_bench.backend.dataset import DatasetWithSizeType, FtsDatasetWithSizeType
 from vectordb_bench.frontend.components.custom.getCustomConfig import get_custom_configs
 
 from vectordb_bench.models import CaseConfig, CaseConfigParamType
@@ -12,6 +12,7 @@ from vectordb_bench.models import CaseConfig, CaseConfigParamType
 MAX_STREAMLIT_INT = (1 << 53) - 1
 
 DB_LIST = [d for d in DB if d != DB.Test]
+FTS_SUPPORTED_DBS = {DB.Milvus, DB.ZillizCloud, DB.ElasticCloud, DB.Vespa, DB.TurboPuffer}
 
 
 class Delimiter(Enum):
@@ -52,6 +53,7 @@ class UICaseItem(BaseModel):
     description: str = ""
     cases: list[CaseConfig] = []
     caseLabel: CaseLabel = CaseLabel.Performance
+    supportedDbs: list[DB] | None = None
     extra_custom_case_config_inputs: list[ConfigInput] = []
     tmp_custom_config: dict = dict()
 
@@ -104,10 +106,19 @@ class UICaseItem(BaseModel):
         ]
         return cases
 
+    def supports_dbs(self, dbs: list[DB]) -> bool:
+        if self.supportedDbs is None:
+            return True
+        return all(db in self.supportedDbs for db in dbs)
+
 
 class UICaseItemCluster(BaseModel):
     label: str = ""
     uiCaseItems: list[UICaseItem] = []
+
+
+def get_selectable_case_items(caseCluster: UICaseItemCluster, activedDbList: list[DB]) -> list[UICaseItem]:
+    return [uiCaseItem for uiCaseItem in caseCluster.uiCaseItems if uiCaseItem.supports_dbs(activedDbList)]
 
 
 def get_custom_case_items() -> list[UICaseItem]:
@@ -155,6 +166,30 @@ def get_custom_case_items() -> list[UICaseItem]:
 
 def generate_normal_cases(case_id: CaseType, custom_case: dict | None = None) -> list[CaseConfig]:
     return [CaseConfig(case_id=case_id, custom_case=custom_case)]
+
+
+def generate_fts_case(dataset_with_size_type: FtsDatasetWithSizeType) -> CaseConfig:
+    return CaseConfig(
+        case_id=CaseType.FTSBm25Performance,
+        custom_case={"dataset_with_size_type": dataset_with_size_type.value},
+    )
+
+
+def get_fts_case_items() -> list[UICaseItem]:
+    dataset_with_size_types = list(FtsDatasetWithSizeType)
+    return [
+        UICaseItem(
+            label=f"FTS BM25 Performance - {dataset_with_size_type.value}",
+            description=(
+                f"This case tests native BM25 full-text search performance on {dataset_with_size_type.value}. "
+                "It measures index building time, recall, serial latency, and search QPS."
+            ),
+            cases=[generate_fts_case(dataset_with_size_type)],
+            caseLabel=CaseLabel.FullTextSearchPerformance,
+            supportedDbs=list(FTS_SUPPORTED_DBS),
+        )
+        for dataset_with_size_type in dataset_with_size_types
+    ]
 
 
 def get_custom_case_cluter() -> UICaseItemCluster:
@@ -358,6 +393,10 @@ UI_CASE_CLUSTERS: list[UICaseItemCluster] = [
             )
         ],
     ),
+    UICaseItemCluster(
+        label="Full-Text Search (FTS) Test",
+        uiCaseItems=get_fts_case_items(),
+    ),
 ]
 
 # DIVIDER = "DIVIDER"
@@ -372,20 +411,12 @@ DISPLAY_CASE_ORDER: list[CaseType] = [
     CaseType.Performance1024D10M,
     CaseType.CapacityDim960,
     CaseType.CapacityDim128,
+    CaseType.FTSBm25Performance,
 ]
 CASE_NAME_ORDER = [case.case_cls().name for case in DISPLAY_CASE_ORDER]
 
 # CASE_LIST = [
 #     item for item in CASE_LIST_WITH_DIVIDER if isinstance(item, CaseType)]
-
-
-class InputType(IntEnum):
-    Text = 20001
-    Number = 20002
-    Option = 20003
-    Float = 20004
-    Bool = 20005
-    Select = 20006
 
 
 class CaseConfigInput(BaseModel):
@@ -517,7 +548,7 @@ CaseConfigParamInput_reranking_metric_PgDiskANN = CaseConfigInput(
     displayLabel="Reranking Metric",
     inputType=InputType.Option,
     inputConfig={
-        "options": [metric.value for metric in MetricType if metric.value not in ["HAMMING", "JACCARD", "DP"]],
+        "options": [metric.value for metric in MetricType if metric.value not in ["HAMMING", "JACCARD", "DP", "BM25"]],
     },
     isDisplayed=lambda config: config.get(CaseConfigParamType.reranking, False),
 )
@@ -1467,7 +1498,7 @@ CaseConfigParamInput_reranking_metric_PgVector = CaseConfigInput(
     label=CaseConfigParamType.rerankingMetric,
     inputType=InputType.Option,
     inputConfig={
-        "options": [metric.value for metric in MetricType if metric.value not in ["HAMMING", "JACCARD"]],
+        "options": [metric.value for metric in MetricType if metric.value not in ["HAMMING", "JACCARD", "BM25"]],
     },
     isDisplayed=lambda config: config.get(CaseConfigParamType.quantizationType, None) == "bit"
     and config.get(CaseConfigParamType.reranking, False),
@@ -2119,6 +2150,113 @@ CaseConfigParamInput_CLIP_OSSOpensearch = CaseConfigInput(
     ),
 )
 
+CaseConfigParamInput_IndexType_FTS = CaseConfigInput(
+    label=CaseConfigParamType.IndexType,
+    inputHelp="FTS Index Type (currently only AUTOINDEX supported)",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [
+            IndexType.FTS.value,
+        ],
+    },
+    isDisplayed=lambda config: False,  # Hidden since FTS only has one index type currently
+)
+
+CaseConfigParamInput_FTS_inverted_index_algo = CaseConfigInput(
+    label=CaseConfigParamType.inverted_index_algo,
+    displayLabel="Inverted Index Algorithm",
+    inputHelp="Algorithm for building and querying sparse inverted index.",
+    inputType=InputType.Option,
+    inputConfig={
+        "value": "DAAT_MAXSCORE",
+        "options": ["DAAT_MAXSCORE", "DAAT_WAND", "TAAT_NAIVE"],
+    },
+)
+
+CaseConfigParamInput_FTS_bm25_k1 = CaseConfigInput(
+    label=CaseConfigParamType.bm25_k1,
+    displayLabel="BM25 k1",
+    inputHelp="BM25 k1 parameter controls term frequency saturation [1.2, 2.0]. Higher values emphasize term frequency.",
+    inputType=InputType.Float,
+    inputConfig={
+        "value": 1.5,
+        "step": 0.1,
+        "min": 1.2,
+        "max": 2.0,
+    },
+)
+
+CaseConfigParamInput_FTS_bm25_b = CaseConfigInput(
+    label=CaseConfigParamType.bm25_b,
+    displayLabel="BM25 b",
+    inputHelp="BM25 b parameter controls document length normalization [0.0, 1.0]. 0.75 is commonly used.",
+    inputType=InputType.Float,
+    inputConfig={
+        "value": 0.75,
+        "step": 0.05,
+        "min": 0.0,
+        "max": 1.0,
+    },
+)
+
+CaseConfigParamInput_FTS_analyzer_tokenizer = CaseConfigInput(
+    label=CaseConfigParamType.analyzer_tokenizer,
+    displayLabel="Analyzer Tokenizer",
+    inputHelp="Text tokenizer type for BM25 analysis.",
+    inputType=InputType.Option,
+    inputConfig={
+        "value": "standard",
+        "options": ["standard", "whitespace", "keyword"],
+    },
+)
+
+CaseConfigParamInput_FTS_analyzer_enable_lowercase = CaseConfigInput(
+    label=CaseConfigParamType.analyzer_enable_lowercase,
+    displayLabel="Enable Lowercase Filter",
+    inputHelp="Convert text to lowercase during analysis.",
+    inputType=InputType.Bool,
+    inputConfig={
+        "value": True,
+    },
+)
+
+CaseConfigParamInput_FTS_analyzer_max_token_length = CaseConfigInput(
+    label=CaseConfigParamType.analyzer_max_token_length,
+    displayLabel="Max Token Length",
+    inputHelp="Maximum length of individual tokens (optional, leave empty to disable).",
+    inputType=InputType.Number,
+    inputConfig={
+        "value": None,
+        "min": 1,
+        "max": 100,
+    },
+)
+
+CaseConfigParamInput_FTS_analyzer_stop_words = CaseConfigInput(
+    label=CaseConfigParamType.analyzer_stop_words,
+    displayLabel="Stop Words",
+    inputHelp="Comma-separated list of stop words to filter out.",
+    inputType=InputType.Text,
+    inputConfig={
+        "value": "",
+        "placeholder": "of,to,the,and,or",
+    },
+)
+
+CaseConfigParamInput_FTS_drop_ratio_search = CaseConfigInput(
+    label=CaseConfigParamType.drop_ratio_search,
+    displayLabel="Drop Ratio (search)",
+    inputHelp="Search-time sparsification ratio. 0.0 keeps best recall; larger is faster.",
+    inputType=InputType.Float,
+    inputConfig={
+        "value": 0.0,
+        "step": 0.1,
+        "min": 0.0,
+        "max": 0.99,
+    },
+)
+
+
 MilvusLoadConfig = [
     CaseConfigParamInput_IndexType,
     CaseConfigParamInput_M,
@@ -2167,6 +2305,28 @@ MilvusPerformanceConfig = [
     CaseConfigParamInput_RefineK,
     CaseConfigParamInput_Milvus_use_partition_key,
 ]
+
+
+MilvusFtsConfig = [
+    CaseConfigParamInput_IndexType_FTS,
+    CaseConfigParamInput_FTS_inverted_index_algo,
+    CaseConfigParamInput_FTS_bm25_k1,
+    CaseConfigParamInput_FTS_bm25_b,
+    CaseConfigParamInput_FTS_analyzer_tokenizer,
+    CaseConfigParamInput_FTS_analyzer_enable_lowercase,
+    CaseConfigParamInput_FTS_analyzer_max_token_length,
+    CaseConfigParamInput_FTS_analyzer_stop_words,
+    CaseConfigParamInput_FTS_drop_ratio_search,
+]
+
+ZillizCloudFtsConfig = [
+    CaseConfigParamInput_IndexType_FTS,
+    CaseConfigParamInput_ZillizLevel,
+]
+
+ElasticCloudFtsConfig = []
+VespaFtsConfig = []
+TurboPufferFtsConfig = []
 
 WeaviateLoadConfig = [
     CaseConfigParamInput_MaxConnections,
@@ -2976,9 +3136,11 @@ CASE_CONFIG_MAP = {
         CaseLabel.Load: MilvusLoadConfig,
         CaseLabel.Performance: MilvusPerformanceConfig,
         CaseLabel.Streaming: MilvusPerformanceConfig,
+        CaseLabel.FullTextSearchPerformance: MilvusFtsConfig,
     },
     DB.ZillizCloud: {
         CaseLabel.Performance: ZillizCloudPerformanceConfig,
+        CaseLabel.FullTextSearchPerformance: ZillizCloudFtsConfig,
     },
     DB.WeaviateCloud: {
         CaseLabel.Load: WeaviateLoadConfig,
@@ -2987,6 +3149,7 @@ CASE_CONFIG_MAP = {
     DB.ElasticCloud: {
         CaseLabel.Load: ESLoadingConfig,
         CaseLabel.Performance: ESPerformanceConfig,
+        CaseLabel.FullTextSearchPerformance: ElasticCloudFtsConfig,
     },
     DB.AWSOpenSearch: {
         CaseLabel.Load: AWSOpensearchLoadingConfig,
@@ -3035,6 +3198,7 @@ CASE_CONFIG_MAP = {
     DB.Vespa: {
         CaseLabel.Load: VespaLoadingConfig,
         CaseLabel.Performance: VespaPerformanceConfig,
+        CaseLabel.FullTextSearchPerformance: VespaFtsConfig,
     },
     DB.LanceDB: {
         CaseLabel.Load: LanceDBLoadConfig,
@@ -3064,14 +3228,18 @@ CASE_CONFIG_MAP = {
         CaseLabel.Load: PolarDBConfig,
         CaseLabel.Performance: PolarDBConfig,
     },
+    DB.TurboPuffer: {
+        CaseLabel.FullTextSearchPerformance: TurboPufferFtsConfig,
+    },
 }
 
 
 def get_case_config_inputs(db: DB, case_label: CaseLabel) -> list[CaseConfigInput]:
-    if db not in CASE_CONFIG_MAP:
-        return []
+    db_case_config_map = CASE_CONFIG_MAP.get(db, {})
     if case_label == CaseLabel.Load:
-        return CASE_CONFIG_MAP[db][CaseLabel.Load]
-    elif case_label == CaseLabel.Performance or case_label == CaseLabel.Streaming:
-        return CASE_CONFIG_MAP[db][CaseLabel.Performance]
+        return db_case_config_map.get(CaseLabel.Load, [])
+    if case_label == CaseLabel.Performance or case_label == CaseLabel.Streaming:
+        return db_case_config_map.get(CaseLabel.Performance, [])
+    elif case_label == CaseLabel.FullTextSearchPerformance:
+        return db_case_config_map.get(CaseLabel.FullTextSearchPerformance, [])
     return []

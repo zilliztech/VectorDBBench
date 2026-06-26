@@ -7,36 +7,62 @@ from ..api import DBCaseConfig, DBConfig, IndexType, MetricType
 
 
 class ElasticCloudConfig(DBConfig, BaseModel):
-    _extra_empty_skip: ClassVar[frozenset[str]] = frozenset({"cloud_id", "host"})
+    _extra_empty_skip: ClassVar[frozenset[str]] = frozenset(
+        {"cloud_id", "scheme", "host", "user", "user_name", "password"}
+    )
 
-    # Elastic Cloud connection. Takes precedence when set.
     cloud_id: SecretStr | None = None
-    # Self-hosted / host-based connection (used when cloud_id is not provided).
-    scheme: str = "https"
-    host: str = ""
+    scheme: str | None = None
+    host: SecretStr | None = None
     port: int = 9200
-    user: str = "elastic"
-    password: SecretStr
+    user: str | None = None
+    user_name: str | None = None
+    password: SecretStr | None = None
+    use_ssl: bool = False
+    verify_certs: bool = True
 
     @model_validator(mode="after")
     def _check_connection_target(self) -> "ElasticCloudConfig":
         has_cloud_id = bool(self.cloud_id and self.cloud_id.get_secret_value())
         if not has_cloud_id and not self.host:
-            msg = "ElasticCloudConfig requires either cloud_id or host to be set."
+            msg = "Either cloud_id or host must be set"
             raise ValueError(msg)
         return self
 
+    def _auth_user(self) -> str:
+        return self.user_name or self.user or "elastic"
+
     def to_dict(self) -> dict:
-        auth = (self.user, self.password.get_secret_value())
         if self.cloud_id and self.cloud_id.get_secret_value():
+            if not self.password:
+                msg = "password is required when cloud_id is set"
+                raise ValueError(msg)
             return {
                 "cloud_id": self.cloud_id.get_secret_value(),
-                "basic_auth": auth,
+                "basic_auth": (self._auth_user(), self.password.get_secret_value()),
             }
-        return {
-            "hosts": [{"scheme": self.scheme, "host": self.host, "port": self.port}],
-            "basic_auth": auth,
+
+        if not self.host:
+            msg = "Either cloud_id or host must be set"
+            raise ValueError(msg)
+
+        host = self.host.get_secret_value()
+        if host.startswith(("http://", "https://")):
+            url = host
+        else:
+            scheme = self.scheme or ("https" if self.use_ssl else "http")
+            url = f"{scheme}://{host}:{self.port}"
+
+        config = {
+            "hosts": [url],
+            "verify_certs": self.verify_certs,
         }
+        if self.password:
+            config["basic_auth"] = (self._auth_user(), self.password.get_secret_value())
+        elif self.user_name or (self.user and self.user != "elastic"):
+            msg = "password is required when user_name is set"
+            raise ValueError(msg)
+        return config
 
 
 class ESElementType(StrEnum):
@@ -108,3 +134,60 @@ class ElasticCloudIndexConfig(BaseModel, DBCaseConfig):
         return {
             "num_candidates": self.num_candidates,
         }
+
+
+class ElasticCloudFtsConfig(BaseModel, DBCaseConfig):
+    number_of_shards: int = 1
+    number_of_replicas: int = 0
+    refresh_interval: str = "30s"
+    use_force_merge: bool = True
+    metric_type: MetricType = MetricType.BM25
+    bm25_k1: float | None = None
+    bm25_b: float | None = None
+
+    def apply_fts_manifest(
+        self,
+        bm25_params: dict[str, float],
+        analyzer_params: dict,
+    ) -> tuple[DBCaseConfig, dict]:
+        updates = {}
+        applied_bm25_params = {}
+
+        if "k1" in bm25_params:
+            updates["bm25_k1"] = bm25_params["k1"]
+            applied_bm25_params["k1"] = bm25_params["k1"]
+        if "b" in bm25_params:
+            updates["bm25_b"] = bm25_params["b"]
+            applied_bm25_params["b"] = bm25_params["b"]
+
+        return self.model_copy(update=updates), {
+            "applied_bm25_params": applied_bm25_params,
+            "unapplied_bm25_params": {k: v for k, v in bm25_params.items() if k not in applied_bm25_params},
+            "applied_analyzer_params": {},
+            "unapplied_analyzer_params": dict(analyzer_params),
+        }
+
+    def index_param(self) -> dict:
+        text_mapping = {"type": "text"}
+        if self.bm25_k1 is not None or self.bm25_b is not None:
+            text_mapping["similarity"] = "vdbbench_bm25"
+        return {
+            "properties": {
+                "doc_id": {"type": "keyword"},
+                "text": text_mapping,
+            },
+        }
+
+    def search_param(self) -> dict:
+        return {}
+
+    def similarity_settings(self) -> dict:
+        if self.bm25_k1 is None and self.bm25_b is None:
+            return {}
+
+        bm25_settings = {"type": "BM25"}
+        if self.bm25_k1 is not None:
+            bm25_settings["k1"] = self.bm25_k1
+        if self.bm25_b is not None:
+            bm25_settings["b"] = self.bm25_b
+        return {"similarity": {"vdbbench_bm25": bm25_settings}}

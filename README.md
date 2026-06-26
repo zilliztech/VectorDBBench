@@ -16,6 +16,11 @@ Prepare to delve into the world of VDBBench, and let it guide you in uncovering 
 VDBBench is sponsored by Zilliz，the leading opensource vectorDB company behind Milvus. Choose smarter with VDBBench - start your free test on [zilliz cloud](https://zilliz.com/) today!
 
 **Leaderboard:** https://zilliz.com/benchmark
+
+## 🎈 Announcement 🎈
+
+**June 2026 update:** Full Text Search has landed in VectorDBBench. We now benchmark BM25-style retrieval across supported backends, starting with MS MARCO and HotpotQA datasets, payload profiles, recall, QPS, and load metrics ready to compare. See the [VectorDBBench Full Text Search Release Note](docs/release/2026-06-full-text-search.md) for the full rollout details and caveats.
+
 ## Quick Start
 ### Prerequirement
 ``` shell
@@ -798,7 +803,7 @@ Now we can only run one task at the same time.
 ### Client
 Our client module is designed with flexibility and extensibility in mind, aiming to integrate APIs from different systems seamlessly. As of now, it supports Milvus, Zilliz Cloud, Elastic Search, Pinecone, Qdrant Cloud, Weaviate Cloud, PgVector, VectorChord, Redis, Chroma, CockroachDB, etc. Stay tuned for more options, as we are consistently working on extending our reach to other systems.
 ### Benchmark Cases
-We've developed lots of comprehensive benchmark cases to test vector databases' various capabilities, each designed to give you a different piece of the puzzle. These cases are categorized into four main types:
+We've developed lots of comprehensive benchmark cases to test vector databases' various capabilities, each designed to give you a different piece of the puzzle. These cases are categorized into several main types:
 #### Capacity Case
 - **Large Dim:** Tests the database's loading capacity by inserting large-dimension vectors (GIST 100K vectors, 960 dimensions) until fully loaded. The final number of inserted vectors is reported.
 - **Small Dim:** Similar to the Large Dim case but uses small-dimension vectors (SIFT 500K vectors, 128 dimensions).
@@ -810,6 +815,11 @@ We've developed lots of comprehensive benchmark cases to test vector databases' 
 #### Filtering Search Performance Case
 - **Int-Filter Cases:** Evaluates search performance with int-based filter expression (e.g.  "id >= 2,000").
 - **Label-Filter Cases:** Evaluates search performance with label-based filter expressions (e.g., "color == 'red'"). The test includes randomly generated labels to simulate real-world filtering scenarios.
+#### Full Text Search Performance Case
+- **FullTextSearchPerformance:** Measures BM25-style text retrieval over raw text documents. The case inserts documents, runs the backend optimization or index-readiness step, then measures recall, latency, and QPS for text queries.
+- **Datasets:** The initial FTS benchmark uses MS MARCO and HotpotQA in small, medium, and large corpus sizes.
+- **Ground truth:** Recall is computed against generated mathematical BM25 ground truth, not semantic relevance labels.
+- **Payload profiles:** FTS supports IDs-only responses and text payload responses so users can compare pure retrieval throughput against response-size overhead.
 #### Streaming Cases
 - **Insertion-Under-Load Case:** Evaluates search performance while maintaining a constant insertion workload. VDBBench applies a steady stream of insert requests at a fixed rate to simulate real-world scenarios where search operations must perform reliably under continuous data ingestion.
 

@@ -60,3 +60,15 @@ class TurboPufferIndexConfig(BaseModel, DBCaseConfig):
 
     def search_param(self) -> dict:
         return {}
+
+
+class TurboPufferFtsConfig(BaseModel, DBCaseConfig):
+    metric_type: MetricType = MetricType.BM25
+    time_wait_warmup: int = 60
+    disable_backpressure: bool = False
+
+    def index_param(self) -> dict:
+        return {}
+
+    def search_param(self) -> dict:
+        return {}
