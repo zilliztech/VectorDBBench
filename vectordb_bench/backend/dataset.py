@@ -130,6 +130,8 @@ class CustomDataset(BaseDataset):
 
     @property
     def train_files(self) -> list[str]:
+        if ("," not in self.train_file) and self.file_num > 1:
+            return utils.compose_train_files(self.file_num, self.use_shuffled)
         train_file = self.train_file
         prefix = f"{train_file}"
         train_files = []
