@@ -2691,9 +2691,10 @@ CaseConfigParamInput_ReorderFactor_Lindorm = CaseConfigInput(
     inputConfig={
         "min": 1,
         "max": 200,
-        "value": 10,
+        "value": 2,
     },
-    isDisplayed=lambda config: config[CaseConfigParamType.IndexType] == IndexType.IVFPQ.value
+    isDisplayed=lambda config: config[CaseConfigParamType.IndexType] == IndexType.HNSW.value
+    or config[CaseConfigParamType.IndexType] == IndexType.IVFPQ.value
     or config[CaseConfigParamType.IndexType] == IndexType.IVFBQ.value,
     inputHelp="Reorder factor",
 )
