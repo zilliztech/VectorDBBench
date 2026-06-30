@@ -519,7 +519,7 @@ Lindorm supports index types: hnsw, ivfpq, or ivfbq.
 ```shell
 vectordbbench lindormhnsw --case-type Performance768D10M --index-name <index_name> --k 10 \
 --host <lindorm_host> --port <lindorm_port> --user <username> --password <password> --m 32 \
---ef-construction 400 --ef-search 150
+--ef-construction 400 --ef-search 150 --reorder-factor 2
 ```
 
 **Example: Run ivfpq index test**
@@ -553,6 +553,7 @@ To list the options for Lindorm, execute `vectordbbench lindormhnsw --help`, The
   --m INTEGER                     hnsw m  [required]
   --ef-construction INTEGER       hnsw ef-construction  [required]
   --ef-search INTEGER             hnsw ef-search  [required]
+  --reorder-factor INTEGER        reorder factor
 ```
 
 ### Run PolarDB from command line

@@ -34,7 +34,10 @@ class LindormTypedDict(CommonTypedDict):
     ]
 
 
-class LindormHNSWTypedDict(CommonTypedDict, LindormTypedDict, HNSWFlavor3): ...
+class LindormHNSWTypedDict(CommonTypedDict, LindormTypedDict, HNSWFlavor3):
+    reorder_factor: Annotated[
+        int, click.option("--reorder-factor", type=int, help="reorder factor", required=False, default=2)
+    ]
 
 
 @cli.command()
@@ -56,6 +59,7 @@ def LindormHNSW(**parameters: Unpack[LindormHNSWTypedDict]):
             efConstruction=parameters["ef_construction"],
             efSearch=parameters["ef_search"],
             filter_type=parameters["filter_type"],
+            reorder_factor=parameters["reorder_factor"],
             number_of_regions=parameters["number_of_regions"],
         ),
         **parameters,
