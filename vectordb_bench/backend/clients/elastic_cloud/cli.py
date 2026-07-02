@@ -200,8 +200,8 @@ class ElasticCloudHNSWTypedDict(CommonTypedDict, ElasticCloudTypedDict):
         str,
         click.option(
             "--element-type",
-            type=click.Choice(["float", "byte"], case_sensitive=False),
-            help="Element type for vectors (float: 4 bytes, byte: 1 byte)",
+            type=click.Choice(["float", "byte", "bit"], case_sensitive=False),
+            help="Element type for vectors (float: 4 bytes, byte: 1 byte, bit: packed binary)",
             required=False,
             default="float",
             show_default=True,

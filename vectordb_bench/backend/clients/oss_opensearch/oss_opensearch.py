@@ -9,9 +9,10 @@ from packaging.version import Version
 from packaging.version import parse as parse_version
 
 from vectordb_bench.backend.filter import Filter, FilterOp
+from vectordb_bench.backend.payload import PayloadProfile
 
 from ..api import VectorDB
-from .config import OSSOpenSearchIndexConfig, OSSOS_Engine
+from .config import OSSOpenSearchFtsConfig, OSSOpenSearchIndexConfig, OSSOS_Engine
 
 log = logging.getLogger(__name__)
 
@@ -194,7 +195,7 @@ class OSSOpenSearch(VectorDB):
         self,
         dim: int,
         db_config: dict[str, Any],
-        db_case_config: OSSOpenSearchIndexConfig,
+        db_case_config: OSSOpenSearchIndexConfig | OSSOpenSearchFtsConfig,
         index_name: str = "vdb_bench_index",  # must be lowercase
         id_col_name: str = "_id",
         label_col_name: str = "label",
@@ -212,6 +213,10 @@ class OSSOpenSearch(VectorDB):
         self.label_col_name = label_col_name
         self.vector_col_name = vector_col_name
         self.with_scalar_labels = with_scalar_labels
+        self._is_fts = isinstance(db_case_config, OSSOpenSearchFtsConfig)
+        self.text_col_name = "text"
+        if self._is_fts:
+            self.id_col_name = "doc_id"
 
         # Initialize client state
         self.client: OpenSearch | None = None
@@ -236,12 +241,20 @@ class OSSOpenSearch(VectorDB):
             if not is_existed:
                 self._create_index(client)
                 log.info(f"OSS_OpenSearch client create index: {self.index_name}")
-            self._update_ef_search_before_search(client)
-            self._load_graphs_to_memory(client)
+            if not self._is_fts:
+                self._update_ef_search_before_search(client)
+                self._load_graphs_to_memory(client)
 
     def need_normalize_cosine(self) -> bool:
         """Whether this database needs to normalize dataset to support COSINE metric."""
         return True
+
+    @classmethod
+    def supports_full_text_search(cls) -> bool:
+        return True
+
+    def has_text_field(self) -> bool:
+        return bool(getattr(self, "_is_fts", False) and getattr(self, "text_col_name", None))
 
     def _get_cluster_version(self, client: OpenSearch) -> Version:
         """
@@ -307,7 +320,31 @@ class OSSOpenSearch(VectorDB):
         """Get bulk insert manager for the given client."""
         return BulkInsertManager(client, self.index_name, self.case_config)
 
+    def _create_fts_index(self, client: OpenSearch) -> None:
+        mappings = self.case_config.index_param()
+        index_settings = {
+            "number_of_shards": self.case_config.number_of_shards,
+            "number_of_replicas": self.case_config.number_of_replicas,
+            "refresh_interval": self.case_config.refresh_interval,
+        }
+        index_settings.update(self.case_config.similarity_settings())
+        settings = {"index": index_settings}
+        try:
+            log.info(f"Creating FTS index with settings: {settings}")
+            log.info(f"Creating FTS index with mappings: {mappings}")
+            client.indices.create(
+                index=self.index_name,
+                body={"settings": settings, "mappings": mappings},
+            )
+        except Exception as e:
+            log.warning(f"Failed to create FTS index: {self.index_name} error: {e!s}")
+            raise e from None
+
     def _create_index(self, client: OpenSearch) -> None:
+        if self._is_fts:
+            self._create_fts_index(client)
+            return
+
         cluster_version = self._get_cluster_version(client)
 
         if self.case_config.on_disk and cluster_version < Version("2.17"):
@@ -419,6 +456,36 @@ class OSSOpenSearch(VectorDB):
             return self._insert_with_single_client(embeddings, metadata, labels_data)
         log.info(f"Using {num_clients} parallel clients for data insertion")
         return self._insert_with_multiple_clients(embeddings, metadata, num_clients, labels_data)
+
+    def insert_documents(
+        self,
+        texts: Iterable[str],
+        doc_ids: list[str],
+        **kwargs: Any,
+    ) -> tuple[int, Exception | None]:
+        if not getattr(self, "_is_fts", False):
+            msg = "OSSOpenSearch full-text insert requires OSSOpenSearchFtsConfig"
+            raise RuntimeError(msg)
+        assert self.client is not None, "should self.init() first"
+        docs = list(texts)
+        if len(docs) != len(doc_ids):
+            msg = f"Mismatch between texts ({len(docs)}) and doc_ids ({len(doc_ids)}) lengths"
+            raise ValueError(msg)
+
+        insert_data: list[dict[str, Any]] = []
+        for i, doc in enumerate(docs):
+            doc_id = str(doc_ids[i])
+            insert_data.append({"index": {"_index": self.index_name, "_id": doc_id}})
+            insert_data.append({self.id_col_name: doc_id, self.text_col_name: doc})
+
+        try:
+            response = self.client.bulk(body=insert_data)
+            if response.get("errors"):
+                log.warning(f"FTS bulk insert had errors: {response}")
+            return len(docs), None
+        except Exception as e:
+            log.warning(f"Failed to insert FTS docs: {self.index_name} error: {e!s}")
+            return 0, e
 
     def _insert_with_single_client(
         self,
@@ -569,6 +636,47 @@ class OSSOpenSearch(VectorDB):
             log.warning(f"Failed to search: {self.index_name} error: {e!s}")
             raise e from None
 
+    def search_documents(
+        self,
+        query: str,
+        k: int = 100,
+        payload_profile: PayloadProfile = PayloadProfile.IDS_ONLY,
+        **kwargs: Any,
+    ) -> list[str]:
+        if not getattr(self, "_is_fts", False):
+            msg = "OSSOpenSearch full-text search requires OSSOpenSearchFtsConfig"
+            raise RuntimeError(msg)
+        if not self.supports_document_payload_profile(payload_profile):
+            msg = f"OSSOpenSearch does not support document payload_profile={payload_profile.value}"
+            raise NotImplementedError(msg)
+        assert self.client is not None, "should self.init() first"
+
+        source = [self.text_col_name] if payload_profile == PayloadProfile.TEXT else False
+        filter_path = ["hits.hits._id", f"hits.hits.fields.{self.id_col_name}"]
+        if payload_profile == PayloadProfile.TEXT:
+            filter_path.append(f"hits.hits._source.{self.text_col_name}")
+        search_kwargs: dict[str, Any] = {
+            "index": self.index_name,
+            "body": {"query": {"match": {self.text_col_name: query}}},
+            "size": k,
+            "_source": source,
+            "docvalue_fields": [self.id_col_name],
+            "filter_path": filter_path,
+        }
+        if payload_profile != PayloadProfile.TEXT:
+            search_kwargs["stored_fields"] = "_none_"
+        response = self.client.search(**search_kwargs)
+
+        doc_ids = []
+        for hit in response.get("hits", {}).get("hits", []):
+            if hit.get("_id") is not None:
+                doc_ids.append(str(hit["_id"]))
+                continue
+            values = hit.get("fields", {}).get(self.id_col_name, [])
+            if values:
+                doc_ids.append(str(values[0]))
+        return doc_ids
+
     def prepare_filter(self, filters: Filter) -> None:
         """Prepare filter conditions for search operations."""
         self.routing_key = None
@@ -587,6 +695,14 @@ class OSSOpenSearch(VectorDB):
 
     def optimize(self, data_size: int | None = None) -> None:
         """Optimize the index for better search performance."""
+        if self._is_fts:
+            self._refresh_index()
+            if self.case_config.force_merge_enabled:
+                self._do_fts_force_merge()
+                self._refresh_index()
+            self._update_replicas()
+            self._refresh_index()
+            return
         self._update_ef_search()
         # Call refresh first to ensure that all segments are created
         self._refresh_index()
@@ -644,6 +760,17 @@ class OSSOpenSearch(VectorDB):
                 time.sleep(WAITING_FOR_REFRESH_SEC)
                 continue
         log.debug(f"Completed refresh for index {self.index_name}")
+
+    def _do_fts_force_merge(self):
+        log.info(f"Starting FTS force merge for index {self.index_name}")
+        force_merge_endpoint = f"/{self.index_name}/_forcemerge?max_num_segments=1&wait_for_completion=false"
+        force_merge_task_id = self.client.transport.perform_request("POST", force_merge_endpoint)["task"]
+        while True:
+            time.sleep(WAITING_FOR_FORCE_MERGE_SEC)
+            task_status = self.client.tasks.get(task_id=force_merge_task_id)
+            if task_status["completed"]:
+                break
+        log.info(f"Completed FTS force merge for index {self.index_name}")
 
     def _do_force_merge(self):
         log.info(f"Updating the Index thread qty to {self.case_config.index_thread_qty_during_force_merge}.")
