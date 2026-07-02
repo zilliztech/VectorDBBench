@@ -85,6 +85,7 @@ endee           = [ "endee==0.1.10" ]
 lindorm         = [ "opensearch-py" ]
 seekdb          = [ "mysql-connector-python" ]
 pinot           = [ "requests" ]
+adbpg           = [ "psycopg", "psycopg-binary", "pgvector" ]
 
 [project.urls]
 Repository  = "https://github.com/zilliztech/VectorDBBench"
