@@ -259,6 +259,43 @@ Options:
   --quantization-type TEXT        which type of quantization to use valid values [fp32, fp16, bq]
   --help                          Show this message and exit.
   ```
+
+### Run awsopensearch serverless from command line
+
+OpenSearch Serverless (AOSS) is a serverless deployment option for Amazon OpenSearch Service. VDBBench supports AOSS with the `--serverless` flag, which uses AWS SigV4 authentication and automatically skips unsupported operations (cluster settings, force merge, manual refresh, warmup API).
+
+**Prerequisites:**
+- AWS credentials configured (via `~/.aws/credentials`, environment variables, or IAM role)
+- `requests-aws4auth` installed: `pip install requests-aws4auth`
+- IAM identity policy allowing `aoss:APIAccessAll` on the collection
+- AOSS Data Access Policy granting index/collection permissions to the IAM principal
+
+**Example: Run performance test on OpenSearch Serverless**
+
+```shell
+vectordbbench awsopensearch --db-label aoss \
+  --serverless --aws-region us-east-1 \
+  --host <collection-id>.aoss.us-east-1.on.aws --port 443 \
+  --case-type Performance768D1M \
+  --m 16 --ef-construction 200 --ef-search 40 \
+  --number-of-shards 8 --number-of-replicas 0 \
+  --engine faiss --metric-type cosine \
+  --num-concurrency 80,100,120
+```
+
+OpenSearch Serverless-specific options:
+
+| Option | Description |
+|--------|-------------|
+| `--serverless` | Enable OpenSearch Serverless mode (uses AWS SigV4 auth) |
+| `--aws-region` | AWS region for the AOSS collection (default: `us-east-1`) |
+
+> **Notes:**
+> - `--user` and `--password` are not needed for Serverless mode
+> - `--engine` is accepted but ignored internally (AOSS manages the engine)
+> - `--force-merge-enabled`, `--refresh-interval`, `--flush-threshold-size`, and `--cb-threshold` are ignored for Serverless
+> - Data insertion uses smaller batch sizes (100) for Serverless API compatibility
+
 ### Run Elastic Cloud from command line
 
 Elastic Cloud supports multiple index types: HNSW, HNSW_INT8, HNSW_INT4, and HNSW_BBQ.
