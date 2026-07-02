@@ -59,6 +59,11 @@ class Milvus(VectorDB):
         self._multitenant_partition_key_field = self._scalar_label_field
         self._scalar_labels_index_name = "labels_idx"
         self._is_fts = isinstance(self.case_config, MilvusFtsConfig)
+        metric_type = getattr(self.case_config, "metric_type", None)
+        metric_value = metric_type.value if hasattr(metric_type, "value") else metric_type
+        self._is_binary_vector = (
+            not self._is_fts and metric_value is not None and str(metric_value).upper() in {"HAMMING", "JACCARD"}
+        )
 
         if self._is_fts:
             self.batch_size = fts_batch_size or MILVUS_FTS_BATCH_SIZE
@@ -71,7 +76,8 @@ class Milvus(VectorDB):
             self._sort_index_name = self._doc_id_sort_index_name
             self._sort_index_field = self._primary_field
         else:
-            self.batch_size = int(MILVUS_LOAD_REQS_SIZE / (dim * 4))
+            vector_bytes = dim // 8 if self._is_binary_vector else dim * 4
+            self.batch_size = int(MILVUS_LOAD_REQS_SIZE / vector_bytes)
             self._primary_field = "pk"
             self._scalar_id_field = "id"
             self._vector_field = "vector"
@@ -131,7 +137,8 @@ class Milvus(VectorDB):
             else:
                 schema.add_field(self._primary_field, DataType.INT64, is_primary=True)
                 schema.add_field(self._scalar_id_field, DataType.INT64)
-                schema.add_field(self._vector_field, DataType.FLOAT_VECTOR, dim=dim)
+                vector_type = DataType.BINARY_VECTOR if self._is_binary_vector else DataType.FLOAT_VECTOR
+                schema.add_field(self._vector_field, vector_type, dim=dim)
 
                 if self.multitenant_tenant_labels:
                     schema.add_field(
@@ -345,6 +352,18 @@ class Milvus(VectorDB):
 
         return False
 
+    def _format_vector_for_insert(self, embedding: list[float] | str | bytes) -> list[float] | bytes:
+        if not self._is_binary_vector:
+            return embedding
+        if isinstance(embedding, bytes):
+            return embedding
+        if isinstance(embedding, str):
+            return bytes.fromhex(embedding)
+        return bytes(embedding)
+
+    def _format_vector_for_search(self, query: list[float] | str | bytes) -> list[float] | bytes:
+        return self._format_vector_for_insert(query)
+
     def insert_embeddings(
         self,
         embeddings: Iterable[list[float]],
@@ -365,7 +384,7 @@ class Milvus(VectorDB):
                     row = {
                         self._primary_field: metadata[i],
                         self._scalar_id_field: metadata[i],
-                        self._vector_field: embeddings[i],
+                        self._vector_field: self._format_vector_for_insert(embeddings[i]),
                     }
                     if tenant_labels_data is not None:
                         row[self._multitenant_partition_key_field] = tenant_labels_data[i]
@@ -483,7 +502,7 @@ class Milvus(VectorDB):
 
         search_kwargs = {
             "collection_name": self.collection_name,
-            "data": [query],
+            "data": [self._format_vector_for_search(query)],
             "anns_field": self._vector_field,
             "search_params": self.case_config.search_param(),
             "limit": k,
