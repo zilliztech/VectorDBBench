@@ -14,7 +14,13 @@ from ..backend.clients.elastic_cloud.cli import (
 )
 from ..backend.clients.endee.cli import Endee
 from ..backend.clients.hologres.cli import HologresHGraph
-from ..backend.clients.lancedb.cli import LanceDB
+from ..backend.clients.lancedb.cli import (
+    LanceDB,
+    LanceDBAutoIndex,
+    LanceDBIVFHNSWPQ,
+    LanceDBIVFHNSWSQ,
+    LanceDBIVFPQ,
+)
 from ..backend.clients.lindorm.cli import LindormHNSW, LindormIVFBQ, LindormIVFPQ
 from ..backend.clients.mariadb.cli import MariaDBHNSW
 from ..backend.clients.memorydb.cli import MemoryDB
@@ -73,6 +79,10 @@ cli.add_command(CockroachDBCli)
 cli.add_command(Clickhouse)
 cli.add_command(Vespa)
 cli.add_command(LanceDB)
+cli.add_command(LanceDBAutoIndex)
+cli.add_command(LanceDBIVFPQ)
+cli.add_command(LanceDBIVFHNSWSQ)
+cli.add_command(LanceDBIVFHNSWPQ)
 cli.add_command(HologresHGraph)
 cli.add_command(QdrantCloud)
 cli.add_command(QdrantLocal)
