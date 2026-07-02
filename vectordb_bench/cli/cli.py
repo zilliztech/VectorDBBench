@@ -412,6 +412,16 @@ class CommonTypedDict(TypedDict):
             "Set to a negative value to wait indefinitely.",
         ),
     ]
+    serial_cooldown: Annotated[
+        float,
+        click.option(
+            "--serial-cooldown",
+            type=float,
+            default=config.SERIAL_COOLDOWN,
+            show_default=True,
+            help="Cooldown in seconds between concurrent and serial search phases",
+        ),
+    ]
     custom_case_name: Annotated[
         str,
         click.option(
@@ -830,6 +840,7 @@ def run(
                 concurrency_duration=parameters["concurrency_duration"],
                 num_concurrency=[int(s) for s in parameters["num_concurrency"]],
                 concurrency_timeout=parameters["concurrency_timeout"],
+                serial_cooldown=parameters["serial_cooldown"],
             ),
             custom_case=get_custom_case_config(parameters),
         ),
