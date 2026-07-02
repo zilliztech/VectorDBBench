@@ -178,6 +178,12 @@ class AWSOpenSearch(VectorDB):
                 },
             }
             log.info("Using standard mappings with _source configuration for non-s3vector engines")
+
+        # Serverless stores the benchmark id in a dedicated numeric field (custom _id
+        # is not supported). Map it as a long so NumGE range filters work.
+        if self._is_serverless:
+            mappings["properties"]["id"] = {"type": "long"}
+
         return mappings
 
     def _create_opensearch_index(self, client: OpenSearch, settings: dict, mappings: dict) -> None:
@@ -230,6 +236,12 @@ class AWSOpenSearch(VectorDB):
 
         num_clients = self.case_config.number_of_indexing_clients or 1
         log.info(f"Number of indexing clients from case_config: {num_clients}")
+
+        # OpenSearch Serverless requires the single-client path: it does not support
+        # custom _id and needs the benchmark id stored in _source with small batches.
+        if self._is_serverless:
+            log.info("Using single client for data insertion (OpenSearch Serverless)")
+            return self._insert_with_single_client(embeddings, metadata, labels_data)
 
         if num_clients <= 1:
             log.info("Using single client for data insertion")
@@ -485,7 +497,10 @@ class AWSOpenSearch(VectorDB):
         if filters.type == FilterOp.NonFilter:
             self.filter = None
         elif filters.type == FilterOp.NumGE:
-            self.filter = {"range": {self.id_col_name: {"gt": filters.int_value}}}
+            # Serverless stores the benchmark id in the "id" field of _source since it
+            # does not support custom _id. Filter on that stored field instead of _id.
+            filter_field = "id" if self._is_serverless else self.id_col_name
+            self.filter = {"range": {filter_field: {"gt": filters.int_value}}}
         elif filters.type == FilterOp.StrEqual:
             self.filter = {"term": {self.label_col_name: filters.label_value}}
             if self.case_config.use_routing:

@@ -261,7 +261,7 @@ OpenSearch Serverless (AOSS) is a serverless deployment option for Amazon OpenSe
 
 **Prerequisites:**
 - AWS credentials configured (via `~/.aws/credentials`, environment variables, or IAM role)
-- `requests-aws4auth` installed: `pip install requests-aws4auth`
+- Serverless dependencies installed (included in the `opensearch` extra): `pip install 'vectordb-bench[opensearch]'`. This installs `opensearch-py`, `boto3`, and `requests-aws4auth`.
 - IAM identity policy allowing `aoss:APIAccessAll` on the collection
 - AOSS Data Access Policy granting index/collection permissions to the IAM principal
 
