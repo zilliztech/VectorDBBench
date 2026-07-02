@@ -197,7 +197,18 @@ class LanceDB(VectorDB):
         # deprecation warning ("This search specified output columns but did
         # not include `_distance`"). We only consume ``id`` downstream, so the
         # extra column adds negligible overhead.
-        q = self.table.search(query).select([self._id_field, "_distance"]).limit(k)
+        #
+        # Always pin the query metric to the case-configured metric. Otherwise
+        # the no-index path (brute-force scan) silently falls back to LanceDB's
+        # default (L2), which corrupts recall on cosine/IP datasets whose
+        # ground-truth is computed with a different metric. For indexed paths
+        # this is a no-op when the index metric already matches.
+        q = (
+            self.table.search(query)
+            .metric(self.case_config.parse_metric())
+            .select([self._id_field, "_distance"])
+            .limit(k)
+        )
 
         # apply filter
         if self.where_clause:
