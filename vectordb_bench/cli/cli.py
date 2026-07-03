@@ -262,6 +262,25 @@ def get_custom_case_config(parameters: dict) -> dict:
     return custom_case_config
 
 
+def copy_fts_compatible_db_case_fields(source: DBCaseConfig, target: DBCaseConfig) -> DBCaseConfig:
+    """Copy CLI fields that remain meaningful when routing a backend to its FTS config."""
+    preserved_fields = (
+        "number_of_shards",
+        "number_of_replicas",
+        "refresh_interval",
+        "use_force_merge",
+        "disable_backpressure",
+    )
+    updates = {
+        field: getattr(source, field)
+        for field in preserved_fields
+        if hasattr(source, field) and hasattr(target, field)
+    }
+    if not updates:
+        return target
+    return target.model_copy(update=updates)
+
+
 def select_cli_db_case_config(db: DB, db_case_config: DBCaseConfig, case_type: str) -> DBCaseConfig:
     if case_type != CaseType.FTSBm25Performance.name:
         return db_case_config
@@ -269,9 +288,7 @@ def select_cli_db_case_config(db: DB, db_case_config: DBCaseConfig, case_type: s
     fts_case_config_cls = db.case_config_cls(IndexType.FTS)
     if isinstance(db_case_config, fts_case_config_cls):
         return db_case_config
-    fts_db_case_config = fts_case_config_cls()
-    if hasattr(db_case_config, "disable_backpressure") and hasattr(fts_db_case_config, "disable_backpressure"):
-        fts_db_case_config.disable_backpressure = db_case_config.disable_backpressure
+    fts_db_case_config = copy_fts_compatible_db_case_fields(db_case_config, fts_case_config_cls())
     return fts_db_case_config
 
 
