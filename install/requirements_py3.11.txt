@@ -5,6 +5,8 @@ pinecone
 weaviate-client
 elasticsearch==8.16.0
 opensearch-py
+boto3
+requests-aws4auth
 pgvector
 pgvecto_rs[psycopg3]>=0.2.1
 sqlalchemy
