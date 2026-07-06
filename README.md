@@ -66,6 +66,7 @@ All the database client supported
 | zvec                     | `pip install vectordb-bench[zvec]`          |
 | endee                    | `pip install vectordb-bench[endee]`         |
 | lindorm                  | `pip install vectordb-bench[lindorm]`       |
+| volc_mysql               | `pip install vectordb-bench[volc_mysql]`    |
 | adbpg                    | `pip install vectordb-bench[adbpg]`         |
 
 ### Run
@@ -93,6 +94,7 @@ Commands:
   pgvectorhnsw
   pgvectorivfflat
   vectorchordrq
+  volcmysqlhnsw
   test
   weaviate
 ```
@@ -674,6 +676,45 @@ To list the options for PolarDB, execute `vectordbbench polardbhnswflat --help`.
                                    Create index after load or inline at table creation
 ```
 
+### Run VolcMySQL from command line
+
+VolcMySQL is a MySQL-compatible service with a native `VECTOR` type and an HNSW vector index (created via `SECONDARY_ENGINE_ATTRIBUTE`). Optional quantization is configurable through `--quant-algorithm` (`NONE`, `SQ`, `PQ`) and `--quant-type` (`16_bit`, `8_bit`, `4_bit`, `binary`).
+
+```shell
+vectordbbench volcmysqlhnsw \
+  --case-type Performance1536D50K \
+  --username <db_user> \
+  --password '<db_password>' \
+  --host <db_host> \
+  --port 3306 \
+  --m 16 \
+  --ef-construction 128 \
+  --ef-search 100 \
+  --quant-algorithm SQ \
+  --quant-type 16_bit \
+  --num-concurrency '10,20,40,60,80' \
+  --concurrency-duration 30 \
+  --task-label <task_label> \
+  --db-label <db_label>
+```
+
+To list the options for VolcMySQL, execute `vectordbbench volcmysqlhnsw --help`. The following are some VolcMySQL-specific command-line options.
+
+```text
+  --username TEXT                  Username  [required]
+  --password TEXT                  Password  [required]
+  --host TEXT                      Db host  [default: 127.0.0.1]
+  --port INTEGER                   DB Port  [default: 3306]
+  --m INTEGER                      M parameter in HNSW vector indexing
+  --ef-search INTEGER              Session variable loose_hnsw_ef_search
+  --ef-construction INTEGER        HNSW ef_construction
+  --quant-algorithm [NONE|SQ|PQ]   Quantization algorithm
+  --quant-type [16_bit|8_bit|4_bit|binary]
+                                   Quantization type
+```
+
+> Note: vectors are loaded and queried over the raw-binary `VECTOR` path by default; the client auto-probes server support and falls back to `to_vector()` text when unavailable. Set `VDB_BINARY_VEC=0` to force the text path or `1` to force binary.
+
 #### Using a configuration file.
 
 The vectordbbench command can optionally read some or all the options from a yaml formatted configuration file.
@@ -879,7 +920,7 @@ Now we can only run one task at the same time.
 ### Code Structure
 ![image](https://github.com/zilliztech/VectorDBBench/assets/105927039/8c06512e-5419-4381-b084-9c93aed59639)
 ### Client
-Our client module is designed with flexibility and extensibility in mind, aiming to integrate APIs from different systems seamlessly. As of now, it supports Milvus, Zilliz Cloud, Elastic Search, Pinecone, Qdrant Cloud, Weaviate Cloud, PgVector, VectorChord, Redis, Chroma, CockroachDB, etc. Stay tuned for more options, as we are consistently working on extending our reach to other systems.
+Our client module is designed with flexibility and extensibility in mind, aiming to integrate APIs from different systems seamlessly. As of now, it supports Milvus, Zilliz Cloud, Elastic Search, Pinecone, Qdrant Cloud, Weaviate Cloud, PgVector, VectorChord, Redis, Chroma, CockroachDB, VolcMySQL, etc. Stay tuned for more options, as we are consistently working on extending our reach to other systems.
 ### Benchmark Cases
 We've developed lots of comprehensive benchmark cases to test vector databases' various capabilities, each designed to give you a different piece of the puzzle. These cases are categorized into several main types:
 #### Capacity Case
