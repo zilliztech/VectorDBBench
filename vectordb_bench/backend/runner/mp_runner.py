@@ -12,6 +12,8 @@ import numpy as np
 from hdrh.histogram import HdrHistogram
 
 from vectordb_bench.backend.filter import Filter, non_filter
+from vectordb_bench.backend.payload import PayloadProfile
+from vectordb_bench.backend.workload import WorkloadKind
 
 from ... import config
 from ...models import ConcurrencySlotTimeoutError
@@ -45,16 +47,73 @@ class MultiProcessingSearchRunner:
         concurrencies: Iterable[int] = config.NUM_CONCURRENCY,
         duration: int = config.CONCURRENCY_DURATION,
         concurrency_timeout: int = config.CONCURRENCY_TIMEOUT,
+        payload_profile: PayloadProfile = PayloadProfile.IDS_ONLY,
+        tenant_labels: list[str] | None = None,
+        workload_kind: WorkloadKind = WorkloadKind.VECTOR,
     ):
         self.db = db
         self.k = k
         self.filters = filters
+        self.workload_kind = workload_kind
+        self.payload_profile = payload_profile
+        self.tenant_labels = tenant_labels or []
+        if self.workload_kind == WorkloadKind.FULL_TEXT:
+            self._search_func = self.db.search_documents
+        elif self.workload_kind == WorkloadKind.VECTOR:
+            self._search_func = self._search_embedding
+        else:
+            msg = f"Unsupported search workload: {workload_kind}"
+            raise NotImplementedError(msg)
+        if self.workload_kind == WorkloadKind.VECTOR and not self.db.supports_payload_profile(self.payload_profile):
+            msg = f"{self.db.name} does not support payload_profile={self.payload_profile.value}"
+            raise NotImplementedError(msg)
+        if self.workload_kind == WorkloadKind.FULL_TEXT and not self.db.supports_document_payload_profile(
+            self.payload_profile
+        ):
+            msg = f"{self.db.name} does not support document payload_profile={self.payload_profile.value}"
+            raise NotImplementedError(msg)
         self.concurrencies = concurrencies
         self.duration = duration
         self.concurrency_timeout = concurrency_timeout
 
         self.test_data = test_data
         log.debug(f"test dataset columns: {len(test_data)}")
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state.pop("_search_func", None)
+        return state
+
+    def __setstate__(self, state: dict):
+        self.__dict__.update(state)
+        if self.workload_kind == WorkloadKind.FULL_TEXT:
+            self._search_func = self.db.search_documents
+        elif self.workload_kind == WorkloadKind.VECTOR:
+            self._search_func = self._search_embedding
+        else:
+            msg = f"Unsupported search workload: {self.workload_kind}"
+            raise NotImplementedError(msg)
+
+    def _search_embedding(self, emb: list[float], tenant: str | None = None) -> list[int]:
+        if tenant is None:
+            if self.payload_profile == PayloadProfile.IDS_ONLY:
+                return self.db.search_embedding(emb, self.k)
+            return self.db.search_embedding(emb, self.k, payload_profile=self.payload_profile)
+        if self.payload_profile == PayloadProfile.IDS_ONLY:
+            return self.db.search_embedding(emb, self.k, tenant=tenant)
+        return self.db.search_embedding(emb, self.k, payload_profile=self.payload_profile, tenant=tenant)
+
+    def _search_once(self, query: list[float] | str, tenant_rng: random.Random | None = None):
+        if self.workload_kind == WorkloadKind.FULL_TEXT:
+            if self.payload_profile == PayloadProfile.IDS_ONLY:
+                return self._search_func(query, self.k)
+            return self._search_func(query, self.k, payload_profile=self.payload_profile)
+        tenant = (
+            self.tenant_labels[tenant_rng.randrange(len(self.tenant_labels))]
+            if tenant_rng is not None and self.tenant_labels
+            else None
+        )
+        return self._search_func(query, tenant=tenant)
 
     def search(
         self,
@@ -75,6 +134,7 @@ class MultiProcessingSearchRunner:
         with self.db.init():
             self.db.prepare_filter(self.filters)
             num, idx = len(test_data), random.randint(0, len(test_data) - 1)
+            tenant_rng = random.Random(mp.current_process().pid or 0)
 
             start_time = time.perf_counter()
             count = 0
@@ -82,7 +142,7 @@ class MultiProcessingSearchRunner:
             while time.perf_counter() < start_time + self.duration:
                 s = time.perf_counter()
                 try:
-                    self.db.search_embedding(test_data[idx], self.k)
+                    self._search_once(test_data[idx], tenant_rng=tenant_rng)
                     count += 1
                     latencies.append(time.perf_counter() - s)
                 except Exception as e:
@@ -341,7 +401,7 @@ class MultiProcessingSearchRunner:
             while time.perf_counter() < start_time + dur:
                 s = time.perf_counter()
                 try:
-                    self.db.search_embedding(test_data[idx], self.k)
+                    self._search_once(test_data[idx])
                     success_count += 1
                     latency_us = int((time.perf_counter() - s) * US_TO_SECONDS)
                     histogram.record_value(min(latency_us, HDR_HISTOGRAM_MAX_US))

@@ -31,11 +31,13 @@ class FormatResult(BaseModel):
     load_duration: int = 0
     qps: float = 0
     serial_latency_p99: float = 0
+    serial_latency_p95: float = 0
     recall: float = 0
     ndcg: float = 0
     conc_num_list: list[int] = []
     conc_qps_list: list[float] = []
     conc_latency_p99_list: list[float] = []
+    conc_latency_p95_list: list[float] = []
     conc_latency_avg_list: list[float] = []
 
 
@@ -66,7 +68,7 @@ def format_results(test_results: list[TestResult], task_label: str) -> list[dict
                         params=task_config.db_case_config.model_dump(),
                         case_name=case.name,
                         dataset=dataset.full_name,
-                        dim=dataset.dim,
+                        dim=getattr(dataset, "dim", 0),
                         filter_type=filter_.type.name,
                         filter_rate=filter_.filter_rate,
                         k=task_config.case_config.k,

@@ -8,6 +8,7 @@ from vectordb_bench.frontend.config.dbCaseConfigs import (
     get_case_config_inputs,
     get_custom_case_cluter,
     get_custom_streaming_case_cluster,
+    get_selectable_case_items,
 )
 from vectordb_bench.frontend.config.styles import (
     CASE_CONFIG_SETTING_COLUMNS,
@@ -47,7 +48,7 @@ def caseSelector(st, activedDbList: list[DB]):
 def caseClusterExpander(st, caseCluster: UICaseItemCluster, dbToCaseClusterConfigs, activedDbList: list[DB]):
     expander = st.expander(caseCluster.label, False)
     activedCases: list[CaseConfig] = []
-    for uiCaseItem in caseCluster.uiCaseItems:
+    for uiCaseItem in get_selectable_case_items(caseCluster, activedDbList):
         if uiCaseItem.isLine:
             addHorizontalLine(expander)
         else:

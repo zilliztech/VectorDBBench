@@ -5,6 +5,8 @@ pinecone
 weaviate-client
 elasticsearch==8.16.0
 opensearch-py
+boto3
+requests-aws4auth
 pgvector
 pgvecto_rs[psycopg3]>=0.2.1
 sqlalchemy
@@ -14,6 +16,7 @@ pytz
 streamlit-autorefresh
 streamlit>=1.23.0
 streamlit_extras
+tornado>=6.0
 tqdm
 s3fs
 psutil
@@ -22,10 +25,11 @@ plotly
 environs
 pydantic>=2.0,<3
 scikit-learn
-pymilvus<3.0.0
+pymilvus>=2.6.15,<3.0.0
 clickhouse_connect
 pyvespa
 mysql-connector-python
 PyMySQL
 packaging
 hdrhistogram>=0.10.1
+ir_datasets

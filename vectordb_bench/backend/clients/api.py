@@ -6,6 +6,7 @@ from typing import ClassVar
 from pydantic import BaseModel, model_validator
 
 from vectordb_bench.backend.filter import Filter, FilterOp
+from vectordb_bench.backend.payload import PayloadProfile
 
 
 class MetricType(StrEnum):
@@ -13,6 +14,7 @@ class MetricType(StrEnum):
     COSINE = "COSINE"
     IP = "IP"
     DP = "DP"
+    BM25 = "BM25"
     HAMMING = "HAMMING"
     JACCARD = "JACCARD"
 
@@ -32,6 +34,7 @@ class IndexType(StrEnum):
     IVF_RABITQ = "IVF_RABITQ"
     Flat = "FLAT"
     AUTOINDEX = "AUTOINDEX"
+    FTS = "FTS"
     ES_HNSW = "hnsw"
     ES_HNSW_INT8 = "int8_hnsw"
     ES_HNSW_INT4 = "int4_hnsw"
@@ -51,6 +54,8 @@ class IndexType(StrEnum):
     SVS_VAMANA_LEANVEC = "SVS_VAMANA_LEANVEC"
     Hologres_HGraph = "HGraph"
     Hologres_Graph = "Graph"
+    IVF_HNSW_SQ = "IVF_HNSW_SQ"
+    IVF_HNSW_PQ = "IVF_HNSW_PQ"
     NONE = "NONE"
 
 
@@ -61,6 +66,29 @@ class SQType(StrEnum):
     BF16 = "BF16"
     FP16 = "FP16"
     FP32 = "FP32"
+
+
+class NonRetryableInsertError(RuntimeError):
+    non_retryable = True
+
+
+class PartialInsertError(NonRetryableInsertError):
+    def __init__(
+        self,
+        message: str,
+        *,
+        inserted_count: int,
+        successful_tenants: dict[str, int] | None = None,
+        failed_tenant: str | None = None,
+        failed_tenant_count: int | None = None,
+        cause: Exception | None = None,
+    ):
+        super().__init__(message)
+        self.inserted_count = inserted_count
+        self.successful_tenants = successful_tenants or {}
+        self.failed_tenant = failed_tenant
+        self.failed_tenant_count = failed_tenant_count
+        self.__cause__ = cause
 
 
 class DBConfig(ABC, BaseModel):
@@ -122,6 +150,35 @@ class DBCaseConfig(ABC):
     @abstractmethod
     def search_param(self) -> dict:
         raise NotImplementedError
+
+    def apply_fts_manifest(
+        self,
+        bm25_params: dict[str, float],
+        analyzer_params: dict,
+    ) -> tuple["DBCaseConfig", dict]:
+        """Apply FTS dataset manifest parameters to this case config.
+
+        Full-text search datasets may provide BM25 and analyzer settings used to
+        build the mathematical ground truth. Backends that can reproduce those
+        settings should return an updated config with supported parameters
+        applied. Unsupported parameters must be reported in the returned metadata
+        instead of being silently ignored.
+
+        Args:
+            bm25_params(dict[str, float]): BM25 parameters from the dataset
+                manifest, such as k1, b, and avgdl.
+            analyzer_params(dict): analyzer settings from the dataset manifest.
+
+        Returns:
+            tuple[DBCaseConfig, dict]: updated config and a report describing
+            applied and unapplied BM25/analyzer parameters.
+        """
+        return self, {
+            "applied_bm25_params": {},
+            "unapplied_bm25_params": dict(bm25_params),
+            "applied_analyzer_params": {},
+            "unapplied_analyzer_params": dict(analyzer_params),
+        }
 
 
 class EmptyDBCaseConfig(BaseModel, DBCaseConfig):
@@ -216,12 +273,91 @@ class VectorDB(ABC):
         """Wheather this database need to normalize dataset to support COSINE"""
         return False
 
+    def supports_payload_profile(self, payload_profile: PayloadProfile) -> bool:
+        return payload_profile == PayloadProfile.IDS_ONLY
+
+    def has_text_field(self) -> bool:
+        return False
+
+    def supports_document_payload_profile(self, payload_profile: PayloadProfile) -> bool:
+        if payload_profile == PayloadProfile.IDS_ONLY:
+            return True
+        if payload_profile == PayloadProfile.TEXT:
+            return self.has_text_field()
+        return False
+
+    def poll_insert_readiness(self, expected_count: int) -> dict:
+        return {"fully_searchable": True, "fully_indexed": True, "additional_parameters": {}}
+
+    def set_multitenant_context(self, tenant_labels: list[str]) -> None:
+        self.multitenant_tenant_labels = tenant_labels
+
+    def supports_multitenant(self) -> bool:
+        return False
+
+    def validate_multitenant_schema(self) -> None:
+        return None
+
+    @classmethod
+    def supports_full_text_search(cls) -> bool:
+        """Return whether this client implements the full-text search API.
+
+        Backends that return True must implement insert_documents and
+        search_documents for raw text documents.
+        """
+        return False
+
+    def insert_documents(
+        self,
+        texts: list[str],
+        doc_ids: list[str],
+        **kwargs,
+    ) -> tuple[int, Exception | None]:
+        """Insert raw text documents for full-text search cases.
+
+        Args:
+            texts(list[str]): raw text documents to index.
+            doc_ids(list[str]): stable document IDs aligned with texts.
+            **kwargs(Any): backend or runner specific insert parameters.
+
+        Returns:
+            tuple[int, Exception | None]: inserted document count and an optional
+            error. Implementations should return the count of successfully
+            inserted documents even when reporting a partial failure.
+        """
+        msg = f"{self.name or self.__class__.__name__} does not support full-text document insert"
+        raise NotImplementedError(msg)
+
+    def search_documents(
+        self,
+        query: str,
+        k: int = 100,
+        payload_profile: PayloadProfile = PayloadProfile.IDS_ONLY,
+        **kwargs,
+    ) -> list[str]:
+        """Search full-text documents and return ranked document IDs.
+
+        Args:
+            query(str): raw query text.
+            k(int): number of nearest documents to return. Defaults to 100.
+            payload_profile(PayloadProfile): response payload shape requested by
+                the benchmark. The API still returns document IDs only; use
+                supports_document_payload_profile to reject unsupported profiles.
+            **kwargs(Any): backend or runner specific search parameters.
+
+        Returns:
+            list[str]: ranked document IDs for the query.
+        """
+        msg = f"{self.name or self.__class__.__name__} does not support full-text document search"
+        raise NotImplementedError(msg)
+
     @abstractmethod
     def insert_embeddings(
         self,
         embeddings: list[list[float]],
         metadata: list[int],
         labels_data: list[str] | None = None,
+        tenant_labels_data: list[str] | None = None,
         **kwargs,
     ) -> tuple[int, Exception]:
         """Insert the embeddings to the vector database. The default number of embeddings for
@@ -242,6 +378,8 @@ class VectorDB(ABC):
         self,
         query: list[float],
         k: int = 100,
+        payload_profile: PayloadProfile = PayloadProfile.IDS_ONLY,
+        tenant: str | None = None,
     ) -> list[int]:
         """Get k most similar embeddings to query vector.
 

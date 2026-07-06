@@ -64,6 +64,8 @@ class DB(Enum):
     Pinot = "Pinot"
     SeekDB = "SeekDB"
     LogosDB = "LogosDB"
+    VolcMySQL = "VolcMySQL"
+    Adbpg = "AnalyticDB for PostgreSQL"
 
     @property
     def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901, PLR0915
@@ -274,6 +276,15 @@ class DB(Enum):
             from .logosdb.logosdb import LogosDB
 
             return LogosDB
+        if self == DB.VolcMySQL:
+            from .volc_mysql.volc_mysql import VolcMySQL
+
+            return VolcMySQL
+
+        if self == DB.Adbpg:
+            from .adbpg.adbpg import Adbpg
+
+            return Adbpg
 
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
@@ -487,6 +498,15 @@ class DB(Enum):
             from .logosdb.config import LogosDBConfig
 
             return LogosDBConfig
+        if self == DB.VolcMySQL:
+            from .volc_mysql.config import VolcMySQLConfig
+
+            return VolcMySQLConfig
+
+        if self == DB.Adbpg:
+            from .adbpg.config import AdbpgConfig
+
+            return AdbpgConfig
 
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
@@ -501,11 +521,19 @@ class DB(Enum):
             return _milvus_case_config.get(index_type)
 
         if self == DB.ZillizCloud:
+            if index_type == IndexType.FTS:
+                from .zilliz_cloud.config import ZillizCloudFtsConfig
+
+                return ZillizCloudFtsConfig
             from .zilliz_cloud.config import AutoIndexConfig
 
             return AutoIndexConfig
 
         if self == DB.ElasticCloud:
+            if index_type == IndexType.FTS:
+                from .elastic_cloud.config import ElasticCloudFtsConfig
+
+                return ElasticCloudFtsConfig
             from .elastic_cloud.config import ElasticCloudIndexConfig
 
             return ElasticCloudIndexConfig
@@ -601,6 +629,10 @@ class DB(Enum):
             return _cockroachdb_case_config.get(index_type)
 
         if self == DB.Vespa:
+            if index_type == IndexType.FTS:
+                from .vespa.config import VespaFtsConfig
+
+                return VespaFtsConfig
             from .vespa.config import VespaHNSWConfig
 
             return VespaHNSWConfig
@@ -645,6 +677,10 @@ class DB(Enum):
             return DorisCaseConfig
 
         if self == DB.TurboPuffer:
+            if index_type == IndexType.FTS:
+                from .turbopuffer.config import TurboPufferFtsConfig
+
+                return TurboPufferFtsConfig
             from .turbopuffer.config import TurboPufferIndexConfig
 
             return TurboPufferIndexConfig
@@ -682,6 +718,15 @@ class DB(Enum):
             from .logosdb.config import LogosDBIndexConfig
 
             return LogosDBIndexConfig
+        if self == DB.VolcMySQL:
+            from .volc_mysql.config import _volcmysql_case_config
+
+            return _volcmysql_case_config.get(index_type)
+
+        if self == DB.Adbpg:
+            from .adbpg.config import AdbpgIndexConfig
+
+            return AdbpgIndexConfig
 
         # DB.Pinecone, DB.Redis
         return EmptyDBCaseConfig

@@ -17,7 +17,7 @@ class config:
     LOG_FILE = env.str("LOG_FILE", "logs/vectordb_bench.log")
 
     DEFAULT_DATASET_URL = env.str("DEFAULT_DATASET_URL", AWS_S3_URL)
-    DATASET_SOURCE = env.str("DATASET_SOURCE", "S3")  # Options "S3" or "AliyunOSS"
+    DATASET_SOURCE = env.str("DATASET_SOURCE", "S3")  # Options "S3", "AliyunOSS", or "IR_DATASETS"
     DATASET_LOCAL_DIR = env.path("DATASET_LOCAL_DIR", "/tmp/vectordb_bench/dataset")
     NUM_PER_BATCH = env.int("NUM_PER_BATCH", 100)
     LOAD_CONCURRENCY = env.int("LOAD_CONCURRENCY", 0)  # 0 = cpu_count
@@ -35,6 +35,9 @@ class config:
     CONCURRENCY_DURATION = 30
 
     CONCURRENCY_TIMEOUT = 3600
+    SERIAL_COOLDOWN = 0
+    CLOUD_INSERT_READINESS_TIMEOUT = env.float("CLOUD_INSERT_READINESS_TIMEOUT", None)
+    CLOUD_INSERT_READINESS_POLL_INTERVAL = env.float("CLOUD_INSERT_READINESS_POLL_INTERVAL", 5.0)
 
     RESULTS_LOCAL_DIR = env.path(
         "RESULTS_LOCAL_DIR",
