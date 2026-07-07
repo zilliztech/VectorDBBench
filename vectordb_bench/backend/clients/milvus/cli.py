@@ -62,6 +62,17 @@ class MilvusTypedDict(TypedDict):
             show_default=True,
         ),
     ]
+    collection_name: Annotated[
+        str,
+        click.option(
+            "--collection-name",
+            type=str,
+            help="Collection name for Milvus",
+            required=False,
+            default="VDBBench",
+            show_default=True,
+        ),
+    ]
     use_partition_key: Annotated[
         bool | None,
         click.option(
@@ -92,6 +103,7 @@ def MilvusAutoIndex(**parameters: Unpack[MilvusAutoIndexTypedDict]):
             password=SecretStr(parameters["password"]) if parameters["password"] else None,
             num_shards=int(parameters["num_shards"]),
             replica_number=int(parameters["replica_number"]),
+            collection_name=parameters["collection_name"],
         ),
         db_case_config=_with_partition_key(AutoIndexConfig(), parameters),
         **parameters,
@@ -112,6 +124,7 @@ def MilvusFlat(**parameters: Unpack[MilvusAutoIndexTypedDict]):
             password=SecretStr(parameters["password"]) if parameters["password"] else None,
             num_shards=int(parameters["num_shards"]),
             replica_number=int(parameters["replica_number"]),
+            collection_name=parameters["collection_name"],
         ),
         db_case_config=_with_partition_key(FLATConfig(), parameters),
         **parameters,
@@ -135,6 +148,7 @@ def MilvusHNSW(**parameters: Unpack[MilvusHNSWTypedDict]):
             password=SecretStr(parameters["password"]) if parameters["password"] else None,
             num_shards=int(parameters["num_shards"]),
             replica_number=int(parameters["replica_number"]),
+            collection_name=parameters["collection_name"],
         ),
         db_case_config=_with_partition_key(
             HNSWConfig(
@@ -203,6 +217,7 @@ def MilvusHNSWPQ(**parameters: Unpack[MilvusHNSWPQTypedDict]):
             password=SecretStr(parameters["password"]) if parameters["password"] else None,
             num_shards=int(parameters["num_shards"]),
             replica_number=int(parameters["replica_number"]),
+            collection_name=parameters["collection_name"],
         ),
         db_case_config=_with_partition_key(
             HNSWPQConfig(
@@ -250,6 +265,7 @@ def MilvusHNSWPRQ(**parameters: Unpack[MilvusHNSWPRQTypedDict]):
             password=SecretStr(parameters["password"]) if parameters["password"] else None,
             num_shards=int(parameters["num_shards"]),
             replica_number=int(parameters["replica_number"]),
+            collection_name=parameters["collection_name"],
         ),
         db_case_config=_with_partition_key(
             HNSWPRQConfig(
@@ -294,6 +310,7 @@ def MilvusHNSWSQ(**parameters: Unpack[MilvusHNSWSQTypedDict]):
             password=SecretStr(parameters["password"]) if parameters["password"] else None,
             num_shards=int(parameters["num_shards"]),
             replica_number=int(parameters["replica_number"]),
+            collection_name=parameters["collection_name"],
         ),
         db_case_config=_with_partition_key(
             HNSWSQConfig(
@@ -328,6 +345,7 @@ def MilvusIVFFlat(**parameters: Unpack[MilvusIVFFlatTypedDict]):
             password=SecretStr(parameters["password"]) if parameters["password"] else None,
             num_shards=int(parameters["num_shards"]),
             replica_number=int(parameters["replica_number"]),
+            collection_name=parameters["collection_name"],
         ),
         db_case_config=_with_partition_key(
             IVFFlatConfig(
@@ -354,6 +372,7 @@ def MilvusIVFSQ8(**parameters: Unpack[MilvusIVFFlatTypedDict]):
             password=SecretStr(parameters["password"]) if parameters["password"] else None,
             num_shards=int(parameters["num_shards"]),
             replica_number=int(parameters["replica_number"]),
+            collection_name=parameters["collection_name"],
         ),
         db_case_config=_with_partition_key(
             IVFSQ8Config(
@@ -419,6 +438,7 @@ def MilvusIVFRabitQ(**parameters: Unpack[MilvusIVFRABITQTypedDict]):
             password=SecretStr(parameters["password"]) if parameters["password"] else None,
             num_shards=int(parameters["num_shards"]),
             replica_number=int(parameters["replica_number"]),
+            collection_name=parameters["collection_name"],
         ),
         db_case_config=_with_partition_key(
             IVFRABITQConfig(
@@ -453,6 +473,7 @@ def MilvusDISKANN(**parameters: Unpack[MilvusDISKANNTypedDict]):
             password=SecretStr(parameters["password"]) if parameters["password"] else None,
             num_shards=int(parameters["num_shards"]),
             replica_number=int(parameters["replica_number"]),
+            collection_name=parameters["collection_name"],
         ),
         db_case_config=_with_partition_key(
             DISKANNConfig(
@@ -486,6 +507,7 @@ def MilvusGPUIVFFlat(**parameters: Unpack[MilvusGPUIVFTypedDict]):
             password=SecretStr(parameters["password"]) if parameters["password"] else None,
             num_shards=int(parameters["num_shards"]),
             replica_number=int(parameters["replica_number"]),
+            collection_name=parameters["collection_name"],
         ),
         db_case_config=_with_partition_key(
             GPUIVFFlatConfig(
@@ -525,6 +547,7 @@ def MilvusGPUBruteForce(**parameters: Unpack[MilvusGPUBruteForceTypedDict]):
             password=SecretStr(parameters["password"]) if parameters["password"] else None,
             num_shards=int(parameters["num_shards"]),
             replica_number=int(parameters["replica_number"]),
+            collection_name=parameters["collection_name"],
         ),
         db_case_config=_with_partition_key(
             GPUBruteForceConfig(
@@ -618,6 +641,7 @@ def MilvusSVSVamana(**parameters: Unpack[MilvusSVSVamanaTypedDict]):
             password=SecretStr(parameters["password"]) if parameters["password"] else None,
             num_shards=int(parameters["num_shards"]),
             replica_number=int(parameters["replica_number"]),
+            collection_name=parameters["collection_name"],
         ),
         db_case_config=_with_partition_key(
             SVSVamanaConfig(
@@ -648,6 +672,7 @@ def MilvusSVSVamanaLVQ(**parameters: Unpack[MilvusSVSVamanaTypedDict]):
             password=SecretStr(parameters["password"]) if parameters["password"] else None,
             num_shards=int(parameters["num_shards"]),
             replica_number=int(parameters["replica_number"]),
+            collection_name=parameters["collection_name"],
         ),
         db_case_config=_with_partition_key(
             SVSVamanaLVQConfig(
@@ -692,6 +717,7 @@ def MilvusSVSVamanaLeanVec(**parameters: Unpack[MilvusSVSVamanaLeanVecTypedDict]
             password=SecretStr(parameters["password"]) if parameters["password"] else None,
             num_shards=int(parameters["num_shards"]),
             replica_number=int(parameters["replica_number"]),
+            collection_name=parameters["collection_name"],
         ),
         db_case_config=_with_partition_key(
             SVSVamanaLeanVecConfig(
@@ -733,6 +759,7 @@ def MilvusGPUIVFPQ(**parameters: Unpack[MilvusGPUIVFPQTypedDict]):
             password=SecretStr(parameters["password"]) if parameters["password"] else None,
             num_shards=int(parameters["num_shards"]),
             replica_number=int(parameters["replica_number"]),
+            collection_name=parameters["collection_name"],
         ),
         db_case_config=_with_partition_key(
             GPUIVFPQConfig(
@@ -777,6 +804,7 @@ def MilvusGPUCAGRA(**parameters: Unpack[MilvusGPUCAGRATypedDict]):
             password=SecretStr(parameters["password"]) if parameters["password"] else None,
             num_shards=int(parameters["num_shards"]),
             replica_number=int(parameters["replica_number"]),
+            collection_name=parameters["collection_name"],
         ),
         db_case_config=_with_partition_key(
             GPUCAGRAConfig(
@@ -834,6 +862,7 @@ def MilvusFTS(**parameters: Unpack[MilvusFTSTypedDict]):
             password=SecretStr(parameters["password"]) if parameters["password"] else None,
             num_shards=int(parameters["num_shards"]),
             replica_number=int(parameters["replica_number"]),
+            collection_name=parameters["collection_name"],
         ),
         db_case_config=MilvusFtsConfig(
             drop_ratio_search=parameters.get("drop_ratio_search"),

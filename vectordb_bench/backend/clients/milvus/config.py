@@ -13,6 +13,7 @@ class MilvusConfig(DBConfig):
     password: SecretStr | None = None
     num_shards: int = 1
     replica_number: int = 1
+    collection_name: str = "VDBBench"
 
     def to_dict(self) -> dict:
         return {
@@ -21,6 +22,7 @@ class MilvusConfig(DBConfig):
             "password": self.password.get_secret_value() if self.password else None,
             "num_shards": self.num_shards,
             "replica_number": self.replica_number,
+            "collection_name": self.collection_name,
         }
 
 
