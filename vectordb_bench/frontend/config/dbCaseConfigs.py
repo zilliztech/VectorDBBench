@@ -1,12 +1,13 @@
-from enum import IntEnum, Enum
 import typing
+from enum import Enum, IntEnum
+
 from pydantic import BaseModel
-from vectordb_bench.backend.cases import CaseLabel, CaseType
+
+from vectordb_bench.backend.cases import FTS_FILTER_RATES, CaseLabel, CaseType
 from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.clients.api import IndexType, MetricType, SQType
 from vectordb_bench.backend.dataset import DatasetWithSizeType, FtsDatasetWithSizeType
 from vectordb_bench.frontend.components.custom.getCustomConfig import get_custom_configs
-
 from vectordb_bench.models import CaseConfig, CaseConfigParamType
 
 MAX_STREAMLIT_INT = (1 << 53) - 1
@@ -168,28 +169,50 @@ def generate_normal_cases(case_id: CaseType, custom_case: dict | None = None) ->
     return [CaseConfig(case_id=case_id, custom_case=custom_case)]
 
 
-def generate_fts_case(dataset_with_size_type: FtsDatasetWithSizeType) -> CaseConfig:
+def generate_fts_case(dataset_with_size_type: FtsDatasetWithSizeType, filter_rate: float | None = None) -> CaseConfig:
+    custom_case = {"dataset_with_size_type": dataset_with_size_type.value}
+    if filter_rate is not None:
+        custom_case["filter_rate"] = filter_rate
     return CaseConfig(
         case_id=CaseType.FTSBm25Performance,
-        custom_case={"dataset_with_size_type": dataset_with_size_type.value},
+        custom_case=custom_case,
     )
 
 
 def get_fts_case_items() -> list[UICaseItem]:
     dataset_with_size_types = list(FtsDatasetWithSizeType)
-    return [
-        UICaseItem(
-            label=f"FTS BM25 Performance - {dataset_with_size_type.value}",
-            description=(
-                f"This case tests native BM25 full-text search performance on {dataset_with_size_type.value}. "
-                "It measures index building time, recall, serial latency, and search QPS."
-            ),
-            cases=[generate_fts_case(dataset_with_size_type)],
-            caseLabel=CaseLabel.FullTextSearchPerformance,
-            supportedDbs=list(FTS_SUPPORTED_DBS),
+    items = []
+    for dataset_with_size_type in dataset_with_size_types:
+        base_description = (
+            f"This case tests native BM25 full-text search performance on {dataset_with_size_type.value}. "
+            "It measures index building time, recall, serial latency, and search QPS."
         )
-        for dataset_with_size_type in dataset_with_size_types
-    ]
+        items.append(
+            UICaseItem(
+                label=f"FTS BM25 Performance - {dataset_with_size_type.value}",
+                description=base_description,
+                cases=[generate_fts_case(dataset_with_size_type)],
+                caseLabel=CaseLabel.FullTextSearchPerformance,
+                supportedDbs=list(FTS_SUPPORTED_DBS),
+            )
+        )
+        if not dataset_with_size_type.is_advanced:
+            continue
+        for filter_rate in FTS_FILTER_RATES:
+            filter_label = f"{filter_rate * 100:g}%"
+            items.append(
+                UICaseItem(
+                    label=f"FTS BM25 Performance - {dataset_with_size_type.value} - Filter {filter_label}",
+                    description=(
+                        f"{base_description} This filtered FTS variant searches only documents with "
+                        f"filter_id >= int(dataset_size * {filter_rate})."
+                    ),
+                    cases=[generate_fts_case(dataset_with_size_type, filter_rate=filter_rate)],
+                    caseLabel=CaseLabel.FullTextSearchPerformance,
+                    supportedDbs=list(FTS_SUPPORTED_DBS),
+                )
+            )
+    return items
 
 
 def get_custom_case_cluter() -> UICaseItemCluster:
