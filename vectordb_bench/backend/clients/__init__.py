@@ -65,10 +65,15 @@ class DB(Enum):
     SeekDB = "SeekDB"
     VolcMySQL = "VolcMySQL"
     Adbpg = "AnalyticDB for PostgreSQL"
+    HyperspaceDB = "HyperspaceDB"
 
     @property
     def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901, PLR0915
         """Import while in use"""
+        if self == DB.HyperspaceDB:
+            from .hyperspacedb.hyperspacedb import HyperspaceDB
+            return HyperspaceDB
+
         if self == DB.Milvus:
             from .milvus.milvus import Milvus
 
@@ -287,6 +292,10 @@ class DB(Enum):
     @property
     def config_cls(self) -> type[DBConfig]:  # noqa: PLR0911, PLR0912, C901, PLR0915
         """Import while in use"""
+        if self == DB.HyperspaceDB:
+            from .hyperspacedb.config import HyperspaceDBConfig
+            return HyperspaceDBConfig
+
         if self == DB.Milvus:
             from .milvus.config import MilvusConfig
 
@@ -506,6 +515,10 @@ class DB(Enum):
         self,
         index_type: IndexType | None = None,
     ) -> type[DBCaseConfig]:
+        if self == DB.HyperspaceDB:
+            from .hyperspacedb.config import HyperspaceDBIndexConfig
+            return HyperspaceDBIndexConfig
+
         if self == DB.Milvus:
             from .milvus.config import _milvus_case_config
 
