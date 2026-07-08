@@ -8,30 +8,30 @@
         "insert_duration": 92.7146,
         "optimize_duration": 90.3815,
         "load_duration": 183.0961,
-        "qps": 674.5161,
-        "serial_latency_p99": 0.0807,
-        "serial_latency_p95": 0.054,
-        "recall": 0.9191,
-        "ndcg": 0.0,
+        "qps": 1353.3032,
+        "serial_latency_p99": 0.0303,
+        "serial_latency_p95": 0.0232,
+        "recall": 0.7637,
+        "ndcg": 0.6244,
         "conc_num_list": [
-          40,
+          60,
           80
         ],
         "conc_qps_list": [
-          646.8905,
-          674.5161
+          1344.6128,
+          1353.3032
         ],
         "conc_latency_p99_list": [
-          0.18089975638085887,
-          0.2406859093923414
+          0.08339079822006171,
+          0.09601655204241978
         ],
         "conc_latency_p95_list": [
-          0.12103873724954597,
-          0.17825506660083193
+          0.06611652700194098,
+          0.08258865799944035
         ],
         "conc_latency_avg_list": [
-          0.06169217704263551,
-          0.11838266990017098
+          0.04456428650467425,
+          0.05904593880422133
         ],
         "payload_profile": "ids_only",
         "payload_estimated_bytes_per_query": 2000,
@@ -84,7 +84,8 @@
         "st_conc_qps_list_list": [],
         "st_conc_latency_p99_list_list": [],
         "st_conc_latency_p95_list_list": [],
-        "st_conc_latency_avg_list_list": []
+        "st_conc_latency_avg_list_list": [],
+        "mrr": 0.755
       },
       "task_config": {
         "db": "ElasticCloud",
@@ -277,30 +278,30 @@
         "insert_duration": 17.887,
         "optimize_duration": 35.1281,
         "load_duration": 53.015,
-        "qps": 1985.7794,
-        "serial_latency_p99": 0.0245,
-        "serial_latency_p95": 0.0172,
-        "recall": 0.9241,
-        "ndcg": 0.0,
+        "qps": 4489.7666,
+        "serial_latency_p99": 0.0086,
+        "serial_latency_p95": 0.0067,
+        "recall": 0.8378,
+        "ndcg": 0.7287,
         "conc_num_list": [
-          40,
+          60,
           80
         ],
         "conc_qps_list": [
-          1866.3556,
-          1985.7794
+          4481.0331,
+          4489.7666
         ],
         "conc_latency_p99_list": [
-          0.06111374244974294,
-          0.07737018370979049
+          0.025020206998306094,
+          0.029247877919842704
         ],
         "conc_latency_p95_list": [
-          0.04278086074828025,
-          0.060899814298318235
+          0.02024304099904839,
+          0.02491419739963021
         ],
         "conc_latency_avg_list": [
-          0.021414252878386827,
-          0.04022542792055797
+          0.013372686260277478,
+          0.01778988601007296
         ],
         "payload_profile": "ids_only",
         "payload_estimated_bytes_per_query": 2000,
@@ -353,7 +354,8 @@
         "st_conc_qps_list_list": [],
         "st_conc_latency_p99_list_list": [],
         "st_conc_latency_p95_list_list": [],
-        "st_conc_latency_avg_list_list": []
+        "st_conc_latency_avg_list_list": [],
+        "mrr": 0.8598
       },
       "task_config": {
         "db": "ElasticCloud",
@@ -546,30 +548,30 @@
         "insert_duration": 1.9662,
         "optimize_duration": 31.09,
         "load_duration": 33.0562,
-        "qps": 6719.6031,
-        "serial_latency_p99": 0.0053,
-        "serial_latency_p95": 0.0043,
-        "recall": 0.9367,
-        "ndcg": 0.0,
+        "qps": 12590.5736,
+        "serial_latency_p99": 0.0023,
+        "serial_latency_p95": 0.002,
+        "recall": 0.9203,
+        "ndcg": 0.842,
         "conc_num_list": [
-          40,
+          60,
           80
         ],
         "conc_qps_list": [
-          6293.0808,
-          6719.6031
+          12534.1131,
+          12590.5736
         ],
         "conc_latency_p99_list": [
-          0.021160466300316292,
-          0.033499905739445265
+          0.008597700440295735,
+          0.010427862039068704
         ],
         "conc_latency_p95_list": [
-          0.014183212001444187,
-          0.024311021799803705
+          0.007032485200761586,
+          0.008721868197972072
         ],
         "conc_latency_avg_list": [
-          0.0063481626425471735,
-          0.011883786454976971
+          0.0047639834292315195,
+          0.006304263635102981
         ],
         "payload_profile": "ids_only",
         "payload_estimated_bytes_per_query": 2000,
@@ -622,7 +624,8 @@
         "st_conc_qps_list_list": [],
         "st_conc_latency_p99_list_list": [],
         "st_conc_latency_p95_list_list": [],
-        "st_conc_latency_avg_list_list": []
+        "st_conc_latency_avg_list_list": [],
+        "mrr": 0.9446
       },
       "task_config": {
         "db": "ElasticCloud",
@@ -815,30 +818,30 @@
         "insert_duration": 160.1365,
         "optimize_duration": 92.5894,
         "load_duration": 252.7259,
-        "qps": 1582.6793,
-        "serial_latency_p99": 0.0502,
-        "serial_latency_p95": 0.0306,
-        "recall": 0.9352,
-        "ndcg": 0.0,
+        "qps": 2686.9741,
+        "serial_latency_p99": 0.0222,
+        "serial_latency_p95": 0.0157,
+        "recall": 0.6228,
+        "ndcg": 0.2732,
         "conc_num_list": [
-          40,
+          60,
           80
         ],
         "conc_qps_list": [
-          1485.1078,
-          1582.6793
+          2686.9741,
+          2663.4012
         ],
         "conc_latency_p99_list": [
-          0.10130014419868526,
-          0.1204227190394886
+          0.05383890143901231,
+          0.06195318944053717
         ],
         "conc_latency_p95_list": [
-          0.06413858909909301,
-          0.08464620050290249
+          0.039473479198204584,
+          0.04770255699986588
         ],
         "conc_latency_avg_list": [
-          0.026891243904133805,
-          0.05046188340033532
+          0.02230479944928826,
+          0.029977797620890846
         ],
         "payload_profile": "ids_only",
         "payload_estimated_bytes_per_query": 2000,
@@ -891,7 +894,8 @@
         "st_conc_qps_list_list": [],
         "st_conc_latency_p99_list_list": [],
         "st_conc_latency_p95_list_list": [],
-        "st_conc_latency_avg_list_list": []
+        "st_conc_latency_avg_list_list": [],
+        "mrr": 0.1862
       },
       "task_config": {
         "db": "ElasticCloud",
@@ -1084,30 +1088,30 @@
         "insert_duration": 17.8893,
         "optimize_duration": 34.2775,
         "load_duration": 52.1668,
-        "qps": 5702.2528,
-        "serial_latency_p99": 0.0092,
-        "serial_latency_p95": 0.0065,
-        "recall": 0.9437,
-        "ndcg": 0.0,
+        "qps": 10152.153,
+        "serial_latency_p99": 0.0043,
+        "serial_latency_p95": 0.0034,
+        "recall": 0.8028,
+        "ndcg": 0.5222,
         "conc_num_list": [
-          40,
+          60,
           80
         ],
         "conc_qps_list": [
-          5383.2674,
-          5702.2528
+          10134.0539,
+          10152.153
         ],
         "conc_latency_p99_list": [
-          0.02630764468107369,
-          0.03738318958105083
+          0.014198277799223388,
+          0.016789430999779142
         ],
         "conc_latency_p95_list": [
-          0.017680951600959793,
-          0.02877839460124961
+          0.01101246209909732,
+          0.013366064998990623
         ],
         "conc_latency_avg_list": [
-          0.007422129557916056,
-          0.014006341815361298
+          0.005904385368471612,
+          0.007849020531480228
         ],
         "payload_profile": "ids_only",
         "payload_estimated_bytes_per_query": 2000,
@@ -1160,7 +1164,8 @@
         "st_conc_qps_list_list": [],
         "st_conc_latency_p99_list_list": [],
         "st_conc_latency_p95_list_list": [],
-        "st_conc_latency_avg_list_list": []
+        "st_conc_latency_avg_list_list": [],
+        "mrr": 0.4526
       },
       "task_config": {
         "db": "ElasticCloud",
@@ -1353,30 +1358,30 @@
         "insert_duration": 1.8862,
         "optimize_duration": 31.0352,
         "load_duration": 32.9214,
-        "qps": 12479.8332,
-        "serial_latency_p99": 0.0029,
-        "serial_latency_p95": 0.0023,
-        "recall": 0.9497,
-        "ndcg": 0.0,
+        "qps": 12530.9805,
+        "serial_latency_p99": 0.0016,
+        "serial_latency_p95": 0.0014,
+        "recall": 0.9116,
+        "ndcg": 0.7158,
         "conc_num_list": [
-          40,
+          60,
           80
         ],
         "conc_qps_list": [
-          11315.3177,
-          12479.8332
+          12508.8898,
+          12530.9805
         ],
         "conc_latency_p99_list": [
-          0.012597403119434608,
-          0.024557725561316985
+          0.00861286495841341,
+          0.00828596436098451
         ],
         "conc_latency_p95_list": [
-          0.00729868780035758,
-          0.01442482639795344
+          0.005912762001389639,
+          0.007557337400794491
         ],
         "conc_latency_avg_list": [
-          0.003526799491246593,
-          0.00638580620427849
+          0.004776813722617175,
+          0.006322142056532246
         ],
         "payload_profile": "ids_only",
         "payload_estimated_bytes_per_query": 2000,
@@ -1429,7 +1434,8 @@
         "st_conc_qps_list_list": [],
         "st_conc_latency_p99_list_list": [],
         "st_conc_latency_p95_list_list": [],
-        "st_conc_latency_avg_list_list": []
+        "st_conc_latency_avg_list_list": [],
+        "mrr": 0.6665
       },
       "task_config": {
         "db": "ElasticCloud",

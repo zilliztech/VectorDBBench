@@ -11,8 +11,8 @@
         "qps": 1005.2819,
         "serial_latency_p99": 0.044,
         "serial_latency_p95": 0.0329,
-        "recall": 0.8665,
-        "ndcg": 0.0,
+        "recall": 0.7745,
+        "ndcg": 0.6371,
         "conc_num_list": [
           40,
           60,
@@ -74,7 +74,7 @@
           },
           "num_per_batch": 1000,
           "load_concurrency": 0,
-          "load_metrics_source_result_json": "\/home\/ubuntu\/bench-runs\/turbopuffer_hotpotqa_c20_b1000_cli_sdkretry_20260624T105757Z\/hotpotqa_large\/runtime_results\/TurboPuffer\/result_20260624_turbopuffer-hotpotqa-large-c20-b1000-sdkretry-20260624T105757Z_turbopuffer.json"
+          "load_metrics_source_result_json": "/home/ubuntu/bench-runs/turbopuffer_hotpotqa_c20_b1000_cli_sdkretry_20260624T105757Z/hotpotqa_large/runtime_results/TurboPuffer/result_20260624_turbopuffer-hotpotqa-large-c20-b1000-sdkretry-20260624T105757Z_turbopuffer.json"
         },
         "st_ideal_insert_duration": 0,
         "st_search_stage_list": [],
@@ -89,7 +89,8 @@
         "st_conc_qps_list_list": [],
         "st_conc_latency_p99_list_list": [],
         "st_conc_latency_p95_list_list": [],
-        "st_conc_latency_avg_list_list": []
+        "st_conc_latency_avg_list_list": [],
+        "mrr": 0.7666
       },
       "task_config": {
         "db": "TurboPuffer",
@@ -211,7 +212,7 @@
           },
           "num_per_batch": 1000,
           "load_concurrency": 0,
-          "load_metrics_source_result_json": "\/home\/ubuntu\/bench-runs\/turbopuffer_hotpotqa_c20_b1000_cli_sdkretry_20260624T105757Z\/hotpotqa_large\/runtime_results\/TurboPuffer\/result_20260624_turbopuffer-hotpotqa-large-c20-b1000-sdkretry-20260624T105757Z_turbopuffer.json"
+          "load_metrics_source_result_json": "/home/ubuntu/bench-runs/turbopuffer_hotpotqa_c20_b1000_cli_sdkretry_20260624T105757Z/hotpotqa_large/runtime_results/TurboPuffer/result_20260624_turbopuffer-hotpotqa-large-c20-b1000-sdkretry-20260624T105757Z_turbopuffer.json"
         },
         "st_ideal_insert_duration": 0,
         "st_search_stage_list": [],
@@ -284,8 +285,8 @@
         "qps": 1470.4418,
         "serial_latency_p99": 0.0481,
         "serial_latency_p95": 0.0263,
-        "recall": 0.9224,
-        "ndcg": 0.0,
+        "recall": 0.8388,
+        "ndcg": 0.7277,
         "conc_num_list": [
           40,
           60,
@@ -347,7 +348,7 @@
           },
           "num_per_batch": 1000,
           "load_concurrency": 0,
-          "load_metrics_source_result_json": "\/home\/ubuntu\/bench-runs\/turbopuffer_hotpotqa_c20_b1000_cli_sdkretry_20260624T105757Z\/hotpotqa_medium\/runtime_results\/TurboPuffer\/result_20260624_turbopuffer-hotpotqa-medium-c20-b1000-sdkretry-20260624T105757Z_turbopuffer.json"
+          "load_metrics_source_result_json": "/home/ubuntu/bench-runs/turbopuffer_hotpotqa_c20_b1000_cli_sdkretry_20260624T105757Z/hotpotqa_medium/runtime_results/TurboPuffer/result_20260624_turbopuffer-hotpotqa-medium-c20-b1000-sdkretry-20260624T105757Z_turbopuffer.json"
         },
         "st_ideal_insert_duration": 0,
         "st_search_stage_list": [],
@@ -362,7 +363,8 @@
         "st_conc_qps_list_list": [],
         "st_conc_latency_p99_list_list": [],
         "st_conc_latency_p95_list_list": [],
-        "st_conc_latency_avg_list_list": []
+        "st_conc_latency_avg_list_list": [],
+        "mrr": 0.8579
       },
       "task_config": {
         "db": "TurboPuffer",
@@ -484,7 +486,7 @@
           },
           "num_per_batch": 1000,
           "load_concurrency": 0,
-          "load_metrics_source_result_json": "\/home\/ubuntu\/bench-runs\/turbopuffer_hotpotqa_c20_b1000_cli_sdkretry_20260624T105757Z\/hotpotqa_medium\/runtime_results\/TurboPuffer\/result_20260624_turbopuffer-hotpotqa-medium-c20-b1000-sdkretry-20260624T105757Z_turbopuffer.json"
+          "load_metrics_source_result_json": "/home/ubuntu/bench-runs/turbopuffer_hotpotqa_c20_b1000_cli_sdkretry_20260624T105757Z/hotpotqa_medium/runtime_results/TurboPuffer/result_20260624_turbopuffer-hotpotqa-medium-c20-b1000-sdkretry-20260624T105757Z_turbopuffer.json"
         },
         "st_ideal_insert_duration": 0,
         "st_search_stage_list": [],
@@ -557,8 +559,8 @@
         "qps": 1589.0248,
         "serial_latency_p99": 0.0413,
         "serial_latency_p95": 0.0222,
-        "recall": 0.9382,
-        "ndcg": 0.0,
+        "recall": 0.9211,
+        "ndcg": 0.8425,
         "conc_num_list": [
           40,
           60,
@@ -620,7 +622,7 @@
           },
           "num_per_batch": 1000,
           "load_concurrency": 0,
-          "load_metrics_source_result_json": "\/home\/ubuntu\/bench-runs\/turbopuffer_hotpotqa_c20_b1000_cli_sdkretry_20260624T105757Z\/hotpotqa_small\/runtime_results\/TurboPuffer\/result_20260624_turbopuffer-hotpotqa-small-c20-b1000-sdkretry-20260624T105757Z_turbopuffer.json"
+          "load_metrics_source_result_json": "/home/ubuntu/bench-runs/turbopuffer_hotpotqa_c20_b1000_cli_sdkretry_20260624T105757Z/hotpotqa_small/runtime_results/TurboPuffer/result_20260624_turbopuffer-hotpotqa-small-c20-b1000-sdkretry-20260624T105757Z_turbopuffer.json"
         },
         "st_ideal_insert_duration": 0,
         "st_search_stage_list": [],
@@ -635,7 +637,8 @@
         "st_conc_qps_list_list": [],
         "st_conc_latency_p99_list_list": [],
         "st_conc_latency_p95_list_list": [],
-        "st_conc_latency_avg_list_list": []
+        "st_conc_latency_avg_list_list": [],
+        "mrr": 0.9445
       },
       "task_config": {
         "db": "TurboPuffer",
@@ -757,7 +760,7 @@
           },
           "num_per_batch": 1000,
           "load_concurrency": 0,
-          "load_metrics_source_result_json": "\/home\/ubuntu\/bench-runs\/turbopuffer_hotpotqa_c20_b1000_cli_sdkretry_20260624T105757Z\/hotpotqa_small\/runtime_results\/TurboPuffer\/result_20260624_turbopuffer-hotpotqa-small-c20-b1000-sdkretry-20260624T105757Z_turbopuffer.json"
+          "load_metrics_source_result_json": "/home/ubuntu/bench-runs/turbopuffer_hotpotqa_c20_b1000_cli_sdkretry_20260624T105757Z/hotpotqa_small/runtime_results/TurboPuffer/result_20260624_turbopuffer-hotpotqa-small-c20-b1000-sdkretry-20260624T105757Z_turbopuffer.json"
         },
         "st_ideal_insert_duration": 0,
         "st_search_stage_list": [],
@@ -830,8 +833,8 @@
         "qps": 1316.9277,
         "serial_latency_p99": 0.042,
         "serial_latency_p95": 0.026,
-        "recall": 0.9395,
-        "ndcg": 0.0,
+        "recall": 0.6245,
+        "ndcg": 0.2747,
         "conc_num_list": [
           40,
           60,
@@ -893,7 +896,7 @@
           },
           "num_per_batch": 1000,
           "load_concurrency": 0,
-          "load_metrics_source_result_json": "\/home\/ubuntu\/bench-runs\/turbopuffer_msmarco_large_c20_b1000_cli_sdkretry_20260624T094413Z\/runtime_results\/TurboPuffer\/result_20260624_turbopuffer-msmarco-large-c20-b1000-sdkretry-20260624T094413Z_turbopuffer.json"
+          "load_metrics_source_result_json": "/home/ubuntu/bench-runs/turbopuffer_msmarco_large_c20_b1000_cli_sdkretry_20260624T094413Z/runtime_results/TurboPuffer/result_20260624_turbopuffer-msmarco-large-c20-b1000-sdkretry-20260624T094413Z_turbopuffer.json"
         },
         "st_ideal_insert_duration": 0,
         "st_search_stage_list": [],
@@ -908,7 +911,8 @@
         "st_conc_qps_list_list": [],
         "st_conc_latency_p99_list_list": [],
         "st_conc_latency_p95_list_list": [],
-        "st_conc_latency_avg_list_list": []
+        "st_conc_latency_avg_list_list": [],
+        "mrr": 0.1879
       },
       "task_config": {
         "db": "TurboPuffer",
@@ -1030,7 +1034,7 @@
           },
           "num_per_batch": 1000,
           "load_concurrency": 0,
-          "load_metrics_source_result_json": "\/home\/ubuntu\/bench-runs\/turbopuffer_msmarco_large_c20_b1000_cli_sdkretry_20260624T094413Z\/runtime_results\/TurboPuffer\/result_20260624_turbopuffer-msmarco-large-c20-b1000-sdkretry-20260624T094413Z_turbopuffer.json"
+          "load_metrics_source_result_json": "/home/ubuntu/bench-runs/turbopuffer_msmarco_large_c20_b1000_cli_sdkretry_20260624T094413Z/runtime_results/TurboPuffer/result_20260624_turbopuffer-msmarco-large-c20-b1000-sdkretry-20260624T094413Z_turbopuffer.json"
         },
         "st_ideal_insert_duration": 0,
         "st_search_stage_list": [],
@@ -1103,8 +1107,8 @@
         "qps": 1506.0323,
         "serial_latency_p99": 0.0363,
         "serial_latency_p95": 0.0227,
-        "recall": 0.9488,
-        "ndcg": 0.0,
+        "recall": 0.8038,
+        "ndcg": 0.5226,
         "conc_num_list": [
           40,
           60,
@@ -1166,7 +1170,7 @@
           },
           "num_per_batch": 1000,
           "load_concurrency": 0,
-          "load_metrics_source_result_json": "\/home\/ubuntu\/bench-runs\/turbopuffer_msmarco_medium_c20_b1000_cli_20260624T085600Z\/runtime_results\/TurboPuffer\/result_20260624_turbopuffer-msmarco-medium-c20-b1000-cli-20260624T085600Z_turbopuffer.json"
+          "load_metrics_source_result_json": "/home/ubuntu/bench-runs/turbopuffer_msmarco_medium_c20_b1000_cli_20260624T085600Z/runtime_results/TurboPuffer/result_20260624_turbopuffer-msmarco-medium-c20-b1000-cli-20260624T085600Z_turbopuffer.json"
         },
         "st_ideal_insert_duration": 0,
         "st_search_stage_list": [],
@@ -1181,7 +1185,8 @@
         "st_conc_qps_list_list": [],
         "st_conc_latency_p99_list_list": [],
         "st_conc_latency_p95_list_list": [],
-        "st_conc_latency_avg_list_list": []
+        "st_conc_latency_avg_list_list": [],
+        "mrr": 0.4529
       },
       "task_config": {
         "db": "TurboPuffer",
@@ -1303,7 +1308,7 @@
           },
           "num_per_batch": 1000,
           "load_concurrency": 0,
-          "load_metrics_source_result_json": "\/home\/ubuntu\/bench-runs\/turbopuffer_msmarco_medium_c20_b1000_cli_20260624T085600Z\/runtime_results\/TurboPuffer\/result_20260624_turbopuffer-msmarco-medium-c20-b1000-cli-20260624T085600Z_turbopuffer.json"
+          "load_metrics_source_result_json": "/home/ubuntu/bench-runs/turbopuffer_msmarco_medium_c20_b1000_cli_20260624T085600Z/runtime_results/TurboPuffer/result_20260624_turbopuffer-msmarco-medium-c20-b1000-cli-20260624T085600Z_turbopuffer.json"
         },
         "st_ideal_insert_duration": 0,
         "st_search_stage_list": [],
@@ -1376,8 +1381,8 @@
         "qps": 1588.1696,
         "serial_latency_p99": 0.0379,
         "serial_latency_p95": 0.0204,
-        "recall": 0.9537,
-        "ndcg": 0.0,
+        "recall": 0.9125,
+        "ndcg": 0.7156,
         "conc_num_list": [
           40,
           60,
@@ -1439,7 +1444,7 @@
           },
           "num_per_batch": 1000,
           "load_concurrency": 0,
-          "load_metrics_source_result_json": "\/home\/ubuntu\/bench-runs\/turbopuffer_msmarco_small_c20_b1000_cli_20260624T084228Z\/runtime_results\/TurboPuffer\/result_20260624_turbopuffer-msmarco-small-c20-b1000-cli-20260624T084228Z_turbopuffer.json"
+          "load_metrics_source_result_json": "/home/ubuntu/bench-runs/turbopuffer_msmarco_small_c20_b1000_cli_20260624T084228Z/runtime_results/TurboPuffer/result_20260624_turbopuffer-msmarco-small-c20-b1000-cli-20260624T084228Z_turbopuffer.json"
         },
         "st_ideal_insert_duration": 0,
         "st_search_stage_list": [],
@@ -1454,7 +1459,8 @@
         "st_conc_qps_list_list": [],
         "st_conc_latency_p99_list_list": [],
         "st_conc_latency_p95_list_list": [],
-        "st_conc_latency_avg_list_list": []
+        "st_conc_latency_avg_list_list": [],
+        "mrr": 0.666
       },
       "task_config": {
         "db": "TurboPuffer",
@@ -1576,7 +1582,7 @@
           },
           "num_per_batch": 1000,
           "load_concurrency": 0,
-          "load_metrics_source_result_json": "\/home\/ubuntu\/bench-runs\/turbopuffer_msmarco_small_c20_b1000_cli_20260624T084228Z\/runtime_results\/TurboPuffer\/result_20260624_turbopuffer-msmarco-small-c20-b1000-cli-20260624T084228Z_turbopuffer.json"
+          "load_metrics_source_result_json": "/home/ubuntu/bench-runs/turbopuffer_msmarco_small_c20_b1000_cli_20260624T084228Z/runtime_results/TurboPuffer/result_20260624_turbopuffer-msmarco-small-c20-b1000-cli-20260624T084228Z_turbopuffer.json"
         },
         "st_ideal_insert_duration": 0,
         "st_search_stage_list": [],
