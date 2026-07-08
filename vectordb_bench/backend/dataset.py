@@ -601,6 +601,25 @@ class FtsDatasetTranslator(ABC):
         for doc in dataset.docs_iter():
             yield self.translate_document(doc)
 
+    def load_ground_truth(self, dataset: typing.Any) -> dict[str, dict[str, int]]:
+        """Load positive semantic qrels keyed by query id.
+
+        ir_datasets qrels may contain non-positive judgments. Those are not
+        relevant documents for recall/MRR/NDCG, so they are ignored here.
+        """
+        qrels: dict[str, dict[str, int]] = {}
+        for qrel in dataset.qrels_iter():
+            relevance = int(getattr(qrel, "relevance", 0))
+            if relevance <= 0:
+                continue
+            query_id = str(qrel.query_id)
+            doc_id = str(qrel.doc_id)
+            qrels.setdefault(query_id, {})[doc_id] = max(
+                relevance,
+                qrels.get(query_id, {}).get(doc_id, 0),
+            )
+        return qrels
+
 
 class MSMarcoTranslator(FtsDatasetTranslator):
     """Translator for MS MARCO passage retrieval dataset."""
@@ -717,7 +736,10 @@ class FtsDatasetManager(BaseModel):
     _translator: typing.Any = PrivateAttr()
 
     queries_data: list[FtsQuery] | None = None
-    gt_data: list[list[str]] | None = None
+    gt_data: list[dict[str, int]] | None = None
+    qrels_data: dict[str, dict[str, int]] = PydanticField(default_factory=dict)
+    required_doc_ids: set[str] = PydanticField(default_factory=set)
+    selected_doc_ids: set[str] | None = None
     bm25_params: dict[str, float] = PydanticField(default_factory=dict)
     analyzer_params: dict[str, typing.Any] = PydanticField(default_factory=dict)
     _ir_dataset: typing.Any = PrivateAttr(default=None)
@@ -813,6 +835,47 @@ class FtsDatasetManager(BaseModel):
         }
         self.analyzer_params = analyzer if isinstance(analyzer, dict) else {}
 
+    def _validate_cap(self, required_doc_ids: set[str], target_size: int) -> None:
+        if len(required_doc_ids) > target_size:
+            msg = (
+                f"{self.data.full_name} size={target_size} is too small for semantic qrels; "
+                f"requires {len(required_doc_ids)} qrel documents"
+            )
+            raise ValueError(msg)
+
+    def _build_selected_doc_ids(self) -> set[str]:
+        """Select the capped corpus while preserving every positive qrel doc."""
+        if self._ir_dataset is None:
+            msg = "ir_datasets dataset not loaded. Call prepare() first."
+            raise RuntimeError(msg)
+
+        required_doc_ids = set(self.required_doc_ids)
+        self._validate_cap(required_doc_ids=required_doc_ids, target_size=self.data.size)
+
+        selected_doc_ids = set(required_doc_ids)
+        found_required_doc_ids: set[str] = set()
+        for doc in self._translator.iter_documents(self._ir_dataset):
+            doc_id = str(doc.doc_id)
+            if doc_id in required_doc_ids:
+                found_required_doc_ids.add(doc_id)
+
+            if doc_id not in selected_doc_ids and len(selected_doc_ids) < self.data.size:
+                selected_doc_ids.add(doc_id)
+
+            if len(selected_doc_ids) >= self.data.size and found_required_doc_ids == required_doc_ids:
+                break
+
+        missing_doc_ids = required_doc_ids - found_required_doc_ids
+        if missing_doc_ids:
+            preview = ", ".join(sorted(missing_doc_ids)[:10])
+            msg = (
+                f"{self.data.full_name} semantic qrel docs missing from corpus: {preview}"
+                f"{'...' if len(missing_doc_ids) > 10 else ''}"
+            )
+            raise ValueError(msg)
+
+        return selected_doc_ids
+
     def prepare(
         self,
         source: DatasetSource | None = None,
@@ -823,7 +886,7 @@ class FtsDatasetManager(BaseModel):
         Directly uses ir_datasets API without generating TSV files:
         1. Downloads dataset using ir_datasets (if needed)
         2. Loads dataset object using translator
-        3. Loads queries from ir_datasets and mathematical ground truth from S3
+        3. Loads queries and semantic qrels from ir_datasets
 
         Args:
             source: Data source to download from (should be IR_DATASETS for FTS)
@@ -847,27 +910,43 @@ class FtsDatasetManager(BaseModel):
             self._ir_dataset = self._translator.load()
             log.info(f"Successfully loaded ir_datasets dataset: {self._translator.ir_datasets_name}")
 
-            # Force ir_datasets lazy document cache work before timed insert.
-            for idx, _ in enumerate(self._translator.iter_documents(self._ir_dataset), start=1):
-                if idx >= self.data.size:
-                    break
+            self.bm25_params = {}
+            self.analyzer_params = {}
 
-            # Load queries from ir_datasets and mathematical ground truth artifacts by row order.
+            # Load queries from ir_datasets and semantic ground truth by query id.
             if self.data.with_gt:
-                # Load queries using translator
-                self.queries_data = list(self._translator.iter_queries(self._ir_dataset))
-                log.info(f"Loaded {len(self.queries_data)} queries into memory")
+                all_queries = list(self._translator.iter_queries(self._ir_dataset))
+                log.info(f"Loaded {len(all_queries)} queries into memory")
 
-                self._download_math_gt_files()
-                self._load_manifest_params()
-                self.gt_data = self._load_math_gt_data()
-                if len(self.queries_data) != len(self.gt_data):
-                    msg = (
-                        f"{self.data.full_name} query count {len(self.queries_data)} "
-                        f"does not match ground truth row count {len(self.gt_data)}"
+                self.qrels_data = self._translator.load_ground_truth(self._ir_dataset)
+                self.queries_data = []
+                self.gt_data = []
+                for query in all_queries:
+                    qrels = self.qrels_data.get(query.query_id)
+                    if not qrels:
+                        continue
+                    self.queries_data.append(
+                        FtsQuery(
+                            query_id=query.query_id,
+                            text=query.text,
+                        )
                     )
+                    self.gt_data.append(qrels)
+
+                if not self.queries_data:
+                    msg = f"{self.data.full_name} has no queries with positive semantic qrels"
                     raise ValueError(msg)  # noqa: TRY301
-                log.info(f"Loaded mathematical ground truth for {len(self.gt_data)} queries into memory")
+
+                self.required_doc_ids = {doc_id for qrels in self.gt_data for doc_id in qrels}
+                self.selected_doc_ids = self._build_selected_doc_ids()
+                log.info(
+                    "Loaded semantic qrels for %s queries; selected %s corpus docs including %s qrel docs",
+                    len(self.gt_data),
+                    len(self.selected_doc_ids),
+                    len(self.required_doc_ids),
+                )
+            else:
+                self.selected_doc_ids = None
 
         except (TypeError, ValueError):
             log.exception("Invalid FTS dataset configuration")
@@ -911,7 +990,7 @@ class FtsDocumentIterator:
         self._ds = dataset
         self._batch_size = batch_size
         self._finished = False
-        self._doc_count = 0  # Track total documents processed
+        self._doc_count = 0  # Track total documents emitted
         self._docs_iter = None
 
     def __iter__(self):
@@ -942,7 +1021,7 @@ class FtsDocumentIterator:
         # Read batch with proper error handling
         try:
             batch = []
-            for _ in range(self._batch_size):
+            while len(batch) < self._batch_size:
                 if self._doc_count >= self._ds.data.size:
                     self._finished = True
                     if batch:
@@ -950,7 +1029,9 @@ class FtsDocumentIterator:
                     raise StopIteration  # noqa: TRY301
                 try:
                     doc = next(self._docs_iter)
-                    doc.doc_id = str(self._doc_count)
+                    doc.doc_id = str(doc.doc_id)
+                    if self._ds.selected_doc_ids is not None and doc.doc_id not in self._ds.selected_doc_ids:
+                        continue
                     batch.append(doc)
                     self._doc_count += 1
                 except StopIteration:

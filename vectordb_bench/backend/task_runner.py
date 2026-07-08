@@ -372,7 +372,7 @@ class CaseRunner(BaseModel):
                 if TaskStage.SEARCH_SERIAL in self.config.stages:
                     search_results = self._serial_search()
                     if self.is_fts:
-                        m.recall, m.serial_latency_p99, m.serial_latency_p95 = search_results
+                        m.recall, m.ndcg, m.mrr, m.serial_latency_p99, m.serial_latency_p95 = search_results
                     else:
                         m.recall, m.ndcg, m.serial_latency_p99, m.serial_latency_p95 = search_results
             if hasattr(self.ca, "payload_profile"):
