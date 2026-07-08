@@ -206,9 +206,10 @@ class OSSOpenSearch(VectorDB):
     ) -> None:
         """Initialize the OpenSearch client."""
         self.dim = dim
-        self.db_config = db_config
+        self.db_config = dict(db_config)
+        configured_index_name = self.db_config.pop("index_name", None)
         self.case_config = db_case_config
-        self.index_name = index_name
+        self.index_name = configured_index_name or index_name
         self.id_col_name = id_col_name
         self.label_col_name = label_col_name
         self.vector_col_name = vector_col_name

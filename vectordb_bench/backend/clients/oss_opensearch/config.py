@@ -12,6 +12,7 @@ log = logging.getLogger(__name__)
 class OSSOpenSearchConfig(DBConfig, BaseModel):
     _extra_empty_skip: ClassVar[frozenset[str]] = frozenset({"user", "password", "host"})
 
+    index_name: str = "vdb_bench_index"
     host: str = ""
     port: int = 80
     user: str | None = None
@@ -25,6 +26,7 @@ class OSSOpenSearchConfig(DBConfig, BaseModel):
             else ()
         )
         return {
+            "index_name": self.index_name,
             "hosts": [{"host": self.host, "port": self.port}],
             "http_auth": http_auth,
             "use_ssl": use_ssl,
