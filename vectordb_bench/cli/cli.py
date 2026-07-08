@@ -281,15 +281,37 @@ def copy_fts_compatible_db_case_fields(source: DBCaseConfig, target: DBCaseConfi
     return target.model_copy(update=updates)
 
 
-def select_cli_db_case_config(db: DB, db_case_config: DBCaseConfig, case_type: str) -> DBCaseConfig:
+def apply_fts_cli_db_case_params(
+    db_case_config: DBCaseConfig,
+    parameters: dict[str, Any] | None,
+) -> DBCaseConfig:
+    if not parameters:
+        return db_case_config
+
+    updates = {
+        field: parameters[field]
+        for field in ("bm25_k1", "bm25_b")
+        if parameters.get(field) is not None and hasattr(db_case_config, field)
+    }
+    if not updates:
+        return db_case_config
+    return db_case_config.model_copy(update=updates)
+
+
+def select_cli_db_case_config(
+    db: DB,
+    db_case_config: DBCaseConfig,
+    case_type: str,
+    parameters: dict[str, Any] | None = None,
+) -> DBCaseConfig:
     if case_type != CaseType.FTSBm25Performance.name:
         return db_case_config
 
     fts_case_config_cls = db.case_config_cls(IndexType.FTS)
     if isinstance(db_case_config, fts_case_config_cls):
-        return db_case_config
+        return apply_fts_cli_db_case_params(db_case_config, parameters)
     fts_db_case_config = copy_fts_compatible_db_case_fields(db_case_config, fts_case_config_cls())
-    return fts_db_case_config
+    return apply_fts_cli_db_case_params(fts_db_case_config, parameters)
 
 
 log = logging.getLogger(__name__)
@@ -573,6 +595,24 @@ class CommonTypedDict(TypedDict):
             show_default=True,
         ),
     ]
+    bm25_k1: Annotated[
+        float | None,
+        click.option(
+            "--bm25-k1",
+            type=float,
+            default=None,
+            help="Optional BM25 k1 override for FTS cases. Omit to use the backend default.",
+        ),
+    ]
+    bm25_b: Annotated[
+        float | None,
+        click.option(
+            "--bm25-b",
+            type=float,
+            default=None,
+            help="Optional BM25 b override for FTS cases. Omit to use the backend default.",
+        ),
+    ]
     cloud_filter_rate: Annotated[
         float | None,
         click.option(
@@ -839,7 +879,7 @@ def run(
     task = TaskConfig(
         db=db,
         db_config=db_config,
-        db_case_config=select_cli_db_case_config(db, db_case_config, parameters["case_type"]),
+        db_case_config=select_cli_db_case_config(db, db_case_config, parameters["case_type"], parameters),
         case_config=CaseConfig(
             case_id=CaseType[parameters["case_type"]],
             k=parameters["k"],
