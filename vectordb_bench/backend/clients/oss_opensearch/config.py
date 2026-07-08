@@ -247,3 +247,37 @@ class OSSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
 
     def search_param(self) -> dict:
         return {"ef_search": self.efSearch}
+
+
+class OSSOpenSearchFtsConfig(BaseModel, DBCaseConfig):
+    number_of_shards: int = 1
+    number_of_replicas: int = 0
+    refresh_interval: str = "30s"
+    force_merge_enabled: bool = True
+    metric_type: MetricType = MetricType.BM25
+    bm25_k1: float | None = None
+    bm25_b: float | None = None
+
+    def index_param(self) -> dict:
+        text_mapping = {"type": "text"}
+        if self.bm25_k1 is not None or self.bm25_b is not None:
+            text_mapping["similarity"] = "vdbbench_bm25"
+        return {
+            "properties": {
+                "doc_id": {"type": "keyword"},
+                "text": text_mapping,
+            },
+        }
+
+    def search_param(self) -> dict:
+        return {}
+
+    def similarity_settings(self) -> dict:
+        if self.bm25_k1 is None and self.bm25_b is None:
+            return {}
+        bm25_settings = {"type": "BM25"}
+        if self.bm25_k1 is not None:
+            bm25_settings["k1"] = self.bm25_k1
+        if self.bm25_b is not None:
+            bm25_settings["b"] = self.bm25_b
+        return {"similarity": {"vdbbench_bm25": bm25_settings}}
