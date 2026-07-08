@@ -270,6 +270,7 @@ def copy_fts_compatible_db_case_fields(source: DBCaseConfig, target: DBCaseConfi
         "refresh_interval",
         "use_force_merge",
         "disable_backpressure",
+        "level",
     )
     updates = {
         field: getattr(source, field)
