@@ -216,6 +216,7 @@ class OSSOpenSearch(VectorDB):
         self.with_scalar_labels = with_scalar_labels
         self._is_fts = isinstance(db_case_config, OSSOpenSearchFtsConfig)
         self.text_col_name = "text"
+        self.filter_id_col_name = "filter_id"
         if self._is_fts:
             self.id_col_name = "doc_id"
 
@@ -472,12 +473,19 @@ class OSSOpenSearch(VectorDB):
         if len(docs) != len(doc_ids):
             msg = f"Mismatch between texts ({len(docs)}) and doc_ids ({len(doc_ids)}) lengths"
             raise ValueError(msg)
+        filter_ids = kwargs.get("filter_ids")
+        if filter_ids is not None and len(filter_ids) != len(docs):
+            msg = f"Mismatch between texts ({len(docs)}) and filter_ids ({len(filter_ids)}) lengths"
+            raise ValueError(msg)
 
         insert_data: list[dict[str, Any]] = []
         for i, doc in enumerate(docs):
             doc_id = str(doc_ids[i])
+            source = {self.id_col_name: doc_id, self.text_col_name: doc}
+            if filter_ids is not None:
+                source[self.filter_id_col_name] = int(filter_ids[i])
             insert_data.append({"index": {"_index": self.index_name, "_id": doc_id}})
-            insert_data.append({self.id_col_name: doc_id, self.text_col_name: doc})
+            insert_data.append(source)
 
         try:
             response = self.client.bulk(body=insert_data)
@@ -656,9 +664,12 @@ class OSSOpenSearch(VectorDB):
         filter_path = ["hits.hits._id", f"hits.hits.fields.{self.id_col_name}"]
         if payload_profile == PayloadProfile.TEXT:
             filter_path.append(f"hits.hits._source.{self.text_col_name}")
+        query_clause: dict[str, Any] = {"match": {self.text_col_name: query}}
+        if self.filter:
+            query_clause = {"bool": {"must": query_clause, "filter": self.filter}}
         search_kwargs: dict[str, Any] = {
             "index": self.index_name,
-            "body": {"query": {"match": {self.text_col_name: query}}},
+            "body": {"query": query_clause},
             "size": k,
             "_source": source,
             "docvalue_fields": [self.id_col_name],
@@ -684,8 +695,17 @@ class OSSOpenSearch(VectorDB):
         if filters.type == FilterOp.NonFilter:
             self.filter = None
         elif filters.type == FilterOp.NumGE:
-            self.filter = {"range": {self.id_col_name: {"gt": filters.int_value}}}
+            if self._is_fts:
+                if getattr(filters, "int_field", None) != self.filter_id_col_name:
+                    msg = f"OSSOpenSearch FTS filters only support int_field='{self.filter_id_col_name}'"
+                    raise ValueError(msg)
+                self.filter = {"range": {self.filter_id_col_name: {"gte": filters.int_value}}}
+            else:
+                self.filter = {"range": {self.id_col_name: {"gt": filters.int_value}}}
         elif filters.type == FilterOp.StrEqual:
+            if self._is_fts:
+                msg = f"Not support Filter for OSSOpenSearch FTS - {filters}"
+                raise ValueError(msg)
             self.filter = {"term": {self.label_col_name: filters.label_value}}
             if self.case_config.use_routing:
                 self.routing_key = filters.label_value
