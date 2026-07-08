@@ -68,6 +68,7 @@ All the database client supported
 | lindorm                  | `pip install vectordb-bench[lindorm]`       |
 | volc_mysql               | `pip install vectordb-bench[volc_mysql]`    |
 | adbpg                    | `pip install vectordb-bench[adbpg]`         |
+| hyperspacedb             | `pip install vectordb-bench[hyperspacedb]`  |
 
 ### Run
 
