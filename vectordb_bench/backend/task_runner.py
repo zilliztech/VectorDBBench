@@ -226,7 +226,7 @@ class CaseRunner(BaseModel):
                 raise ValueError(msg)
 
             if self.is_fts:
-                self.ca.dataset.prepare(self.dataset_source)
+                self.ca.dataset.prepare(self.dataset_source, filters=self.ca.filters)
                 self.init_db(drop_old)
                 return
 
@@ -314,6 +314,8 @@ class CaseRunner(BaseModel):
         log.info("Start performance case")
         try:
             m = Metric()
+            if self.is_fts and getattr(self.ca.dataset, "filter_stats", None):
+                m.additional_parameters["fts_filter"] = dict(self.ca.dataset.filter_stats)
             if drop_old:
                 if TaskStage.LOAD in self.config.stages:
                     count, load_dur = self._load_data()
