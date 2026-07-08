@@ -818,7 +818,7 @@ We've developed lots of comprehensive benchmark cases to test vector databases' 
 #### Full Text Search Performance Case
 - **FullTextSearchPerformance:** Measures BM25-style text retrieval over raw text documents. The case inserts documents, runs the backend optimization or index-readiness step, then measures recall, latency, and QPS for text queries.
 - **Datasets:** The initial FTS benchmark uses MS MARCO and HotpotQA in small, medium, and large corpus sizes.
-- **Ground truth:** Recall is computed against generated mathematical BM25 ground truth, not semantic relevance labels.
+- **Ground truth:** Recall, MRR, and NDCG are computed against positive semantic relevance labels from `ir_datasets`.
 - **Payload profiles:** FTS supports IDs-only responses and text payload responses so users can compare pure retrieval throughput against response-size overhead.
 #### Streaming Cases
 - **Insertion-Under-Load Case:** Evaluates search performance while maintaining a constant insertion workload. VDBBench applies a steady stream of insert requests at a fixed rate to simulate real-world scenarios where search operations must perform reliably under continuous data ingestion.

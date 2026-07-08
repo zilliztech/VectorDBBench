@@ -7,7 +7,6 @@ import traceback
 from enum import Enum, auto
 
 import numpy as np
-from pydantic import PrivateAttr
 
 from .. import config
 from ..base import BaseModel
@@ -63,8 +62,6 @@ class CaseRunner(BaseModel):
     final_search_runner: MultiProcessingSearchRunner | None = None
     read_write_runner: ReadWriteRunner | None = None
     cold_warm_search_runner: ColdWarmSearchRunner | None = None
-
-    _fts_manifest_report: dict = PrivateAttr(default_factory=dict)
 
     def __eq__(self, obj: any):
         if isinstance(obj, CaseRunner):
@@ -213,24 +210,6 @@ class CaseRunner(BaseModel):
             **extra_db_kwargs,
         )
 
-    def _apply_fts_manifest_params(self) -> None:
-        bm25_params = dict(getattr(self.ca.dataset, "bm25_params", {}) or {})
-        analyzer_params = dict(getattr(self.ca.dataset, "analyzer_params", {}) or {})
-        self.config.db_case_config, manifest_report = self.config.db_case_config.apply_fts_manifest(
-            bm25_params=bm25_params,
-            analyzer_params=analyzer_params,
-        )
-        self._fts_manifest_report = {
-            "fts_manifest": {
-                "bm25": bm25_params,
-                "analyzer": analyzer_params,
-            },
-            **manifest_report,
-        }
-
-    def _fts_manifest_additional_parameters(self) -> dict:
-        return dict(self._fts_manifest_report)
-
     def _pre_run(self, drop_old: bool = True):
         try:
             self._validate_cloud_cold_latency_config(drop_old)
@@ -248,7 +227,6 @@ class CaseRunner(BaseModel):
 
             if self.is_fts:
                 self.ca.dataset.prepare(self.dataset_source)
-                self._apply_fts_manifest_params()
                 self.init_db(drop_old)
                 return
 
@@ -380,9 +358,6 @@ class CaseRunner(BaseModel):
                 m.payload_estimated_bytes_per_query = self.ca.estimated_payload_bytes_per_query(
                     self.config.case_config.k
                 )
-            if self.is_fts:
-                m.additional_parameters.update(self._fts_manifest_additional_parameters())
-
         except Exception as e:
             log.warning(f"Failed to run performance case, reason = {e}")
             traceback.print_exc()

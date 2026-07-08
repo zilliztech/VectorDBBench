@@ -4,7 +4,6 @@ Usage:
     >>> Dataset.Cohere.get(100_000)
 """
 
-import json
 import logging
 import pathlib
 import types
@@ -559,11 +558,6 @@ class FtsDocument:
     text: str
 
 
-FTS_GT_FILE = "neighbors.parquet"
-FTS_BUILD_MANIFEST_FILE = "build_manifest.json"
-FTS_MATH_GT_FILES = (FTS_GT_FILE, FTS_BUILD_MANIFEST_FILE, "manifest.json")
-
-
 class FtsDatasetTranslator(ABC):
     """Abstract base class for converting ir_datasets schema to internal format.
 
@@ -740,8 +734,6 @@ class FtsDatasetManager(BaseModel):
     qrels_data: dict[str, dict[str, int]] = PydanticField(default_factory=dict)
     required_doc_ids: set[str] = PydanticField(default_factory=set)
     selected_doc_ids: set[str] | None = None
-    bm25_params: dict[str, float] = PydanticField(default_factory=dict)
-    analyzer_params: dict[str, typing.Any] = PydanticField(default_factory=dict)
     _ir_dataset: typing.Any = PrivateAttr(default=None)
 
     def __init__(self, **data):
@@ -771,69 +763,6 @@ class FtsDatasetManager(BaseModel):
             self.data.name.lower(),
             self.data.dir_name,
         )
-
-    def _download_math_gt_files(self) -> None:
-        DatasetSource.S3.reader().read(
-            dataset=self.data.dir_name.lower(),
-            files=list(FTS_MATH_GT_FILES),
-            local_ds_root=self.data_dir,
-        )
-
-    def _load_math_gt_data(self) -> list[list[str]]:
-        p = pathlib.Path(self.data_dir, FTS_GT_FILE)
-        if not p.exists():
-            msg = f"No such file: {p}"
-            raise FileNotFoundError(msg)
-        gt_rows = pl.read_parquet(p)[self.data.gt_neighbors_field].to_list()
-        # FTS math GT stores dense document row IDs, not original ir_datasets doc IDs.
-        # FtsDocumentIterator assigns these same row IDs during insertion.
-        return [[str(doc_id) for doc_id in row if str(doc_id) != "-1"] for row in gt_rows]
-
-    def _load_build_manifest(self) -> dict[str, typing.Any]:
-        p = pathlib.Path(self.data_dir, FTS_BUILD_MANIFEST_FILE)
-        if not p.exists():
-            msg = f"No such file: {p}"
-            raise FileNotFoundError(msg)
-        manifest = json.loads(p.read_text(encoding="utf-8"))
-        if not isinstance(manifest, dict):
-            msg = f"Invalid FTS build manifest: {p}"
-            raise TypeError(msg)
-        return manifest
-
-    def _validate_build_manifest(self, manifest: dict[str, typing.Any]) -> None:
-        source_ir_dataset = manifest.get("source_ir_dataset")
-        if source_ir_dataset is not None and source_ir_dataset != self._translator.ir_datasets_name:
-            msg = (
-                f"{self.data.full_name} manifest source_ir_dataset={source_ir_dataset!r} "
-                f"does not match {self._translator.ir_datasets_name!r}"
-            )
-            raise ValueError(msg)
-
-        for field_name in ("doc_limit", "indexed_doc_count"):
-            value = manifest.get(field_name)
-            if value is None:
-                continue
-            if int(value) != self.data.size:
-                msg = f"{self.data.full_name} manifest {field_name}={value} does not match size={self.data.size}"
-                raise ValueError(msg)
-
-        query_count = manifest.get("query_count")
-        if query_count is not None and self.queries_data is not None and int(query_count) != len(self.queries_data):
-            msg = (
-                f"{self.data.full_name} manifest query_count={query_count} "
-                f"does not match loaded query count={len(self.queries_data)}"
-            )
-            raise ValueError(msg)
-
-    def _load_manifest_params(self) -> None:
-        manifest = self._load_build_manifest()
-        self._validate_build_manifest(manifest)
-        bm25 = manifest.get("bm25") or {}
-        analyzer = manifest.get("analyzer") or {}
-        self.bm25_params = {
-            key: float(bm25[key]) for key in ("k1", "b", "avgdl") if key in bm25 and bm25[key] is not None
-        }
-        self.analyzer_params = analyzer if isinstance(analyzer, dict) else {}
 
     def _validate_cap(self, required_doc_ids: set[str], target_size: int) -> None:
         if len(required_doc_ids) > target_size:
@@ -909,9 +838,6 @@ class FtsDatasetManager(BaseModel):
             # Load dataset using translator
             self._ir_dataset = self._translator.load()
             log.info(f"Successfully loaded ir_datasets dataset: {self._translator.ir_datasets_name}")
-
-            self.bm25_params = {}
-            self.analyzer_params = {}
 
             # Load queries from ir_datasets and semantic ground truth by query id.
             if self.data.with_gt:

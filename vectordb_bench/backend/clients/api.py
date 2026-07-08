@@ -149,35 +149,6 @@ class DBCaseConfig(ABC):
     def search_param(self) -> dict:
         raise NotImplementedError
 
-    def apply_fts_manifest(
-        self,
-        bm25_params: dict[str, float],
-        analyzer_params: dict,
-    ) -> tuple["DBCaseConfig", dict]:
-        """Apply FTS dataset manifest parameters to this case config.
-
-        Full-text search datasets may provide BM25 and analyzer settings used to
-        build the mathematical ground truth. Backends that can reproduce those
-        settings should return an updated config with supported parameters
-        applied. Unsupported parameters must be reported in the returned metadata
-        instead of being silently ignored.
-
-        Args:
-            bm25_params(dict[str, float]): BM25 parameters from the dataset
-                manifest, such as k1, b, and avgdl.
-            analyzer_params(dict): analyzer settings from the dataset manifest.
-
-        Returns:
-            tuple[DBCaseConfig, dict]: updated config and a report describing
-            applied and unapplied BM25/analyzer parameters.
-        """
-        return self, {
-            "applied_bm25_params": {},
-            "unapplied_bm25_params": dict(bm25_params),
-            "applied_analyzer_params": {},
-            "unapplied_analyzer_params": dict(analyzer_params),
-        }
-
 
 class EmptyDBCaseConfig(BaseModel, DBCaseConfig):
     """EmptyDBCaseConfig will be used if the vector database has no case specific configs"""
