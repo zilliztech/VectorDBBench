@@ -27,7 +27,7 @@ class HyperspaceDB(VectorDB):
         host = db_config.get("host", "localhost:50051")
         api_key = db_config.get("api_key")
         
-        client = HyperspaceClient(host, api_key=api_key)
+        client = HyperspaceClient(host, api_key=api_key, pool_size=64)
         
         if drop_old:
             try:
@@ -59,13 +59,17 @@ class HyperspaceDB(VectorDB):
     def init(self):
         host = self.db_config.get("host", "localhost:50051")
         api_key = self.db_config.get("api_key")
-        self.client = HyperspaceClient(host, api_key=api_key)
+        self.client = HyperspaceClient(host, api_key=api_key, pool_size=64)
         yield
         self.client.close()
         self.client = None
         
     def ready_to_search(self) -> bool:
         pass
+
+    def need_normalize_cosine(self) -> bool:
+        """Whether this database needs to normalize dataset to support COSINE"""
+        return True
         
     def optimize(self, data_size: int | None = None):
         # Apply search param config
