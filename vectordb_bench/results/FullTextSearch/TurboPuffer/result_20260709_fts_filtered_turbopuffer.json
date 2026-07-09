@@ -1,0 +1,1168 @@
+{
+  "run_id": "fts-filtered-turbopuffer-20260709",
+  "task_label": "fts-filtered-turbopuffer-20260709",
+  "results": [
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 39.6647,
+        "serial_latency_p99": 0.0,
+        "serial_latency_p95": 0.0,
+        "recall": 0.0,
+        "ndcg": 0.0,
+        "mrr": 0.0,
+        "conc_num_list": [
+          40
+        ],
+        "conc_qps_list": [
+          39.6647
+        ],
+        "conc_latency_p99_list": [
+          6.523280780638741
+        ],
+        "conc_latency_p95_list": [
+          2.9588601028968697
+        ],
+        "conc_latency_avg_list": [
+          0.9191676534237776
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 0,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "fts_filter": {
+            "filter_type": "NumGE",
+            "filter_field": "filter_id",
+            "filter_value": 2616664,
+            "filter_rate": 0.5,
+            "matched_doc_count": 2616665,
+            "matched_doc_ratio": 0.5,
+            "original_query_count": 7405,
+            "filtered_query_count": 3099,
+            "filtered_query_ratio": 0.418501,
+            "original_relevant_doc_count": 13783,
+            "filtered_relevant_doc_count": 3504
+          },
+          "fts_recall": {
+            "skipped": false,
+            "reason": null,
+            "serial_query_count": 3099,
+            "full_query_count": 7405
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "TurboPuffer",
+        "db_config": {
+          "db_label": "turbopuffer-aws-us-west-2-existing-filter-c40-concurrent-only",
+          "version": "",
+          "note": "",
+          "api_key": "**********",
+          "region": "aws-us-west-2",
+          "api_base_url": null,
+          "namespace": "vdbbench-fts-filter-tpuf-20260709024837-hotpotqa-large",
+          "multitenant_namespace_prefix": "vdbbench_mt_",
+          "scalar_payload_label_field": "label",
+          "pin_namespace": false,
+          "pin_namespace_requested": false,
+          "pin_replicas": 1,
+          "pin_timeout": 2700,
+          "pin_target_namespace_count": 0
+        },
+        "db_case_config": {
+          "metric_type": "BM25",
+          "time_wait_warmup": 60,
+          "disable_backpressure": false
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "HotpotQA Large (5.2M documents)",
+            "payload_profile": "ids_only",
+            "filter_rate": 0.5
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              40
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 179.2908,
+        "serial_latency_p99": 0.0,
+        "serial_latency_p95": 0.0,
+        "recall": 0.0,
+        "ndcg": 0.0,
+        "mrr": 0.0,
+        "conc_num_list": [
+          40
+        ],
+        "conc_qps_list": [
+          179.2908
+        ],
+        "conc_latency_p99_list": [
+          2.3012516029994003
+        ],
+        "conc_latency_p95_list": [
+          1.0983043629967142
+        ],
+        "conc_latency_avg_list": [
+          0.21593618854427632
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 0,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "fts_filter": {
+            "filter_type": "NumGE",
+            "filter_field": "filter_id",
+            "filter_value": 3924996,
+            "filter_rate": 0.75,
+            "matched_doc_count": 1308333,
+            "matched_doc_ratio": 0.25,
+            "original_query_count": 7405,
+            "filtered_query_count": 1597,
+            "filtered_query_ratio": 0.215665,
+            "original_relevant_doc_count": 13783,
+            "filtered_relevant_doc_count": 1741
+          },
+          "fts_recall": {
+            "skipped": false,
+            "reason": null,
+            "serial_query_count": 1597,
+            "full_query_count": 7405
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "TurboPuffer",
+        "db_config": {
+          "db_label": "turbopuffer-aws-us-west-2-existing-filter-c40-concurrent-only",
+          "version": "",
+          "note": "",
+          "api_key": "**********",
+          "region": "aws-us-west-2",
+          "api_base_url": null,
+          "namespace": "vdbbench-fts-filter-tpuf-20260709024837-hotpotqa-large",
+          "multitenant_namespace_prefix": "vdbbench_mt_",
+          "scalar_payload_label_field": "label",
+          "pin_namespace": false,
+          "pin_namespace_requested": false,
+          "pin_replicas": 1,
+          "pin_timeout": 2700,
+          "pin_target_namespace_count": 0
+        },
+        "db_case_config": {
+          "metric_type": "BM25",
+          "time_wait_warmup": 60,
+          "disable_backpressure": false
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "HotpotQA Large (5.2M documents)",
+            "payload_profile": "ids_only",
+            "filter_rate": 0.75
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              40
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 605.6396,
+        "serial_latency_p99": 0.0,
+        "serial_latency_p95": 0.0,
+        "recall": 0.0,
+        "ndcg": 0.0,
+        "mrr": 0.0,
+        "conc_num_list": [
+          40
+        ],
+        "conc_qps_list": [
+          605.6396
+        ],
+        "conc_latency_p99_list": [
+          1.0646645859209822
+        ],
+        "conc_latency_p95_list": [
+          0.0689100417977896
+        ],
+        "conc_latency_avg_list": [
+          0.06530560026482407
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 0,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "fts_filter": {
+            "filter_type": "NumGE",
+            "filter_field": "filter_id",
+            "filter_value": 4709996,
+            "filter_rate": 0.9,
+            "matched_doc_count": 523333,
+            "matched_doc_ratio": 0.1,
+            "original_query_count": 7405,
+            "filtered_query_count": 633,
+            "filtered_query_ratio": 0.085483,
+            "original_relevant_doc_count": 13783,
+            "filtered_relevant_doc_count": 663
+          },
+          "fts_recall": {
+            "skipped": false,
+            "reason": null,
+            "serial_query_count": 633,
+            "full_query_count": 7405
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "TurboPuffer",
+        "db_config": {
+          "db_label": "turbopuffer-aws-us-west-2-existing-filter-c40-concurrent-only",
+          "version": "",
+          "note": "",
+          "api_key": "**********",
+          "region": "aws-us-west-2",
+          "api_base_url": null,
+          "namespace": "vdbbench-fts-filter-tpuf-20260709024837-hotpotqa-large",
+          "multitenant_namespace_prefix": "vdbbench_mt_",
+          "scalar_payload_label_field": "label",
+          "pin_namespace": false,
+          "pin_namespace_requested": false,
+          "pin_replicas": 1,
+          "pin_timeout": 2700,
+          "pin_target_namespace_count": 0
+        },
+        "db_case_config": {
+          "metric_type": "BM25",
+          "time_wait_warmup": 60,
+          "disable_backpressure": false
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "HotpotQA Large (5.2M documents)",
+            "payload_profile": "ids_only",
+            "filter_rate": 0.9
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              40
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 1022.5083,
+        "serial_latency_p99": 0.0,
+        "serial_latency_p95": 0.0,
+        "recall": 0.0,
+        "ndcg": 0.0,
+        "mrr": 0.0,
+        "conc_num_list": [
+          40
+        ],
+        "conc_qps_list": [
+          1022.5083
+        ],
+        "conc_latency_p99_list": [
+          1.035286795234424
+        ],
+        "conc_latency_p95_list": [
+          0.04140156349458248
+        ],
+        "conc_latency_avg_list": [
+          0.03876182861026025
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 0,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "fts_filter": {
+            "filter_type": "NumGE",
+            "filter_field": "filter_id",
+            "filter_value": 4971662,
+            "filter_rate": 0.95,
+            "matched_doc_count": 261667,
+            "matched_doc_ratio": 0.05,
+            "original_query_count": 7405,
+            "filtered_query_count": 348,
+            "filtered_query_ratio": 0.046995,
+            "original_relevant_doc_count": 13783,
+            "filtered_relevant_doc_count": 355
+          },
+          "fts_recall": {
+            "skipped": false,
+            "reason": null,
+            "serial_query_count": 348,
+            "full_query_count": 7405
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "TurboPuffer",
+        "db_config": {
+          "db_label": "turbopuffer-aws-us-west-2-existing-filter-c40-concurrent-only",
+          "version": "",
+          "note": "",
+          "api_key": "**********",
+          "region": "aws-us-west-2",
+          "api_base_url": null,
+          "namespace": "vdbbench-fts-filter-tpuf-20260709024837-hotpotqa-large",
+          "multitenant_namespace_prefix": "vdbbench_mt_",
+          "scalar_payload_label_field": "label",
+          "pin_namespace": false,
+          "pin_namespace_requested": false,
+          "pin_replicas": 1,
+          "pin_timeout": 2700,
+          "pin_target_namespace_count": 0
+        },
+        "db_case_config": {
+          "metric_type": "BM25",
+          "time_wait_warmup": 60,
+          "disable_backpressure": false
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "HotpotQA Large (5.2M documents)",
+            "payload_profile": "ids_only",
+            "filter_rate": 0.95
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              40
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 1690.8445,
+        "serial_latency_p99": 0.0,
+        "serial_latency_p95": 0.0,
+        "recall": 0.0,
+        "ndcg": 0.0,
+        "mrr": 0.0,
+        "conc_num_list": [
+          40
+        ],
+        "conc_qps_list": [
+          1690.8445
+        ],
+        "conc_latency_p99_list": [
+          0.11762083500216297
+        ],
+        "conc_latency_p95_list": [
+          0.02519284475783934
+        ],
+        "conc_latency_avg_list": [
+          0.023448610897699514
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 0,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "fts_filter": {
+            "filter_type": "NumGE",
+            "filter_field": "filter_id",
+            "filter_value": 5180995,
+            "filter_rate": 0.99,
+            "matched_doc_count": 52334,
+            "matched_doc_ratio": 0.01,
+            "original_query_count": 7405,
+            "filtered_query_count": 71,
+            "filtered_query_ratio": 0.009588,
+            "original_relevant_doc_count": 13783,
+            "filtered_relevant_doc_count": 68
+          },
+          "fts_recall": {
+            "skipped": false,
+            "reason": null,
+            "serial_query_count": 71,
+            "full_query_count": 7405
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "TurboPuffer",
+        "db_config": {
+          "db_label": "turbopuffer-aws-us-west-2-existing-filter-c40-concurrent-only",
+          "version": "",
+          "note": "",
+          "api_key": "**********",
+          "region": "aws-us-west-2",
+          "api_base_url": null,
+          "namespace": "vdbbench-fts-filter-tpuf-20260709024837-hotpotqa-large",
+          "multitenant_namespace_prefix": "vdbbench_mt_",
+          "scalar_payload_label_field": "label",
+          "pin_namespace": false,
+          "pin_namespace_requested": false,
+          "pin_replicas": 1,
+          "pin_timeout": 2700,
+          "pin_target_namespace_count": 0
+        },
+        "db_case_config": {
+          "metric_type": "BM25",
+          "time_wait_warmup": 60,
+          "disable_backpressure": false
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "HotpotQA Large (5.2M documents)",
+            "payload_profile": "ids_only",
+            "filter_rate": 0.99
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              40
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 6.5382,
+        "serial_latency_p99": 0.0,
+        "serial_latency_p95": 0.0,
+        "recall": 0.0,
+        "ndcg": 0.0,
+        "mrr": 0.0,
+        "conc_num_list": [
+          40
+        ],
+        "conc_qps_list": [
+          6.5382
+        ],
+        "conc_latency_p99_list": [
+          11.167552173393778
+        ],
+        "conc_latency_p95_list": [
+          8.434095275995787
+        ],
+        "conc_latency_avg_list": [
+          3.8442244942319825
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 0,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "fts_filter": {
+            "filter_type": "NumGE",
+            "filter_field": "filter_id",
+            "filter_value": 4420911,
+            "filter_rate": 0.5,
+            "matched_doc_count": 4420912,
+            "matched_doc_ratio": 0.5,
+            "original_query_count": 6980,
+            "filtered_query_count": 6269,
+            "filtered_query_ratio": 0.898138,
+            "original_relevant_doc_count": 7433,
+            "filtered_relevant_doc_count": 6627
+          },
+          "fts_recall": {
+            "skipped": false,
+            "reason": null,
+            "serial_query_count": 6269,
+            "full_query_count": 6980
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "TurboPuffer",
+        "db_config": {
+          "db_label": "turbopuffer-aws-us-west-2-existing-filter-c40-concurrent-only",
+          "version": "",
+          "note": "",
+          "api_key": "**********",
+          "region": "aws-us-west-2",
+          "api_base_url": null,
+          "namespace": "vdbbench-fts-filter-tpuf-20260709021809-msmarco-large",
+          "multitenant_namespace_prefix": "vdbbench_mt_",
+          "scalar_payload_label_field": "label",
+          "pin_namespace": false,
+          "pin_namespace_requested": false,
+          "pin_replicas": 1,
+          "pin_timeout": 2700,
+          "pin_target_namespace_count": 0
+        },
+        "db_case_config": {
+          "metric_type": "BM25",
+          "time_wait_warmup": 60,
+          "disable_backpressure": false
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "MS MARCO Large (8.8M documents)",
+            "payload_profile": "ids_only",
+            "filter_rate": 0.5
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              40
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 11.8492,
+        "serial_latency_p99": 0.0,
+        "serial_latency_p95": 0.0,
+        "recall": 0.0,
+        "ndcg": 0.0,
+        "mrr": 0.0,
+        "conc_num_list": [
+          40
+        ],
+        "conc_qps_list": [
+          11.8492
+        ],
+        "conc_latency_p99_list": [
+          7.943760685115705
+        ],
+        "conc_latency_p95_list": [
+          6.766021355053088
+        ],
+        "conc_latency_avg_list": [
+          2.3053187863410183
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 0,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "fts_filter": {
+            "filter_type": "NumGE",
+            "filter_field": "filter_id",
+            "filter_value": 6631367,
+            "filter_rate": 0.75,
+            "matched_doc_count": 2210456,
+            "matched_doc_ratio": 0.25,
+            "original_query_count": 6980,
+            "filtered_query_count": 6068,
+            "filtered_query_ratio": 0.869341,
+            "original_relevant_doc_count": 7433,
+            "filtered_relevant_doc_count": 6402
+          },
+          "fts_recall": {
+            "skipped": false,
+            "reason": null,
+            "serial_query_count": 6068,
+            "full_query_count": 6980
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "TurboPuffer",
+        "db_config": {
+          "db_label": "turbopuffer-aws-us-west-2-existing-filter-c40-concurrent-only",
+          "version": "",
+          "note": "",
+          "api_key": "**********",
+          "region": "aws-us-west-2",
+          "api_base_url": null,
+          "namespace": "vdbbench-fts-filter-tpuf-20260709021809-msmarco-large",
+          "multitenant_namespace_prefix": "vdbbench_mt_",
+          "scalar_payload_label_field": "label",
+          "pin_namespace": false,
+          "pin_namespace_requested": false,
+          "pin_replicas": 1,
+          "pin_timeout": 2700,
+          "pin_target_namespace_count": 0
+        },
+        "db_case_config": {
+          "metric_type": "BM25",
+          "time_wait_warmup": 60,
+          "disable_backpressure": false
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "MS MARCO Large (8.8M documents)",
+            "payload_profile": "ids_only",
+            "filter_rate": 0.75
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              40
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 126.4761,
+        "serial_latency_p99": 0.0,
+        "serial_latency_p95": 0.0,
+        "recall": 0.0,
+        "ndcg": 0.0,
+        "mrr": 0.0,
+        "conc_num_list": [
+          40
+        ],
+        "conc_qps_list": [
+          126.4761
+        ],
+        "conc_latency_p99_list": [
+          2.35267191814346
+        ],
+        "conc_latency_p95_list": [
+          1.2111680258014523
+        ],
+        "conc_latency_avg_list": [
+          0.30630094983213285
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 0,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "fts_filter": {
+            "filter_type": "NumGE",
+            "filter_field": "filter_id",
+            "filter_value": 7957640,
+            "filter_rate": 0.9,
+            "matched_doc_count": 884183,
+            "matched_doc_ratio": 0.1,
+            "original_query_count": 6980,
+            "filtered_query_count": 291,
+            "filtered_query_ratio": 0.041691,
+            "original_relevant_doc_count": 7433,
+            "filtered_relevant_doc_count": 304
+          },
+          "fts_recall": {
+            "skipped": false,
+            "reason": null,
+            "serial_query_count": 291,
+            "full_query_count": 6980
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "TurboPuffer",
+        "db_config": {
+          "db_label": "turbopuffer-aws-us-west-2-existing-filter-c40-concurrent-only",
+          "version": "",
+          "note": "",
+          "api_key": "**********",
+          "region": "aws-us-west-2",
+          "api_base_url": null,
+          "namespace": "vdbbench-fts-filter-tpuf-20260709021809-msmarco-large",
+          "multitenant_namespace_prefix": "vdbbench_mt_",
+          "scalar_payload_label_field": "label",
+          "pin_namespace": false,
+          "pin_namespace_requested": false,
+          "pin_replicas": 1,
+          "pin_timeout": 2700,
+          "pin_target_namespace_count": 0
+        },
+        "db_case_config": {
+          "metric_type": "BM25",
+          "time_wait_warmup": 60,
+          "disable_backpressure": false
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "MS MARCO Large (8.8M documents)",
+            "payload_profile": "ids_only",
+            "filter_rate": 0.9
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              40
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 355.0671,
+        "serial_latency_p99": 0.0,
+        "serial_latency_p95": 0.0,
+        "recall": 0.0,
+        "ndcg": 0.0,
+        "mrr": 0.0,
+        "conc_num_list": [
+          40
+        ],
+        "conc_qps_list": [
+          355.0671
+        ],
+        "conc_latency_p99_list": [
+          1.0803971975146844
+        ],
+        "conc_latency_p95_list": [
+          0.6173247563929164
+        ],
+        "conc_latency_avg_list": [
+          0.11083062269909648
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 0,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "fts_filter": {
+            "filter_type": "NumGE",
+            "filter_field": "filter_id",
+            "filter_value": 8399731,
+            "filter_rate": 0.95,
+            "matched_doc_count": 442092,
+            "matched_doc_ratio": 0.05,
+            "original_query_count": 6980,
+            "filtered_query_count": 0,
+            "filtered_query_ratio": 0.0,
+            "original_relevant_doc_count": 7433,
+            "filtered_relevant_doc_count": 0
+          },
+          "fts_recall": {
+            "skipped": true,
+            "reason": "no_positive_qrels_after_filter",
+            "serial_query_count": 0,
+            "full_query_count": 6980
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "TurboPuffer",
+        "db_config": {
+          "db_label": "turbopuffer-aws-us-west-2-existing-filter-c40-concurrent-only",
+          "version": "",
+          "note": "",
+          "api_key": "**********",
+          "region": "aws-us-west-2",
+          "api_base_url": null,
+          "namespace": "vdbbench-fts-filter-tpuf-20260709021809-msmarco-large",
+          "multitenant_namespace_prefix": "vdbbench_mt_",
+          "scalar_payload_label_field": "label",
+          "pin_namespace": false,
+          "pin_namespace_requested": false,
+          "pin_replicas": 1,
+          "pin_timeout": 2700,
+          "pin_target_namespace_count": 0
+        },
+        "db_case_config": {
+          "metric_type": "BM25",
+          "time_wait_warmup": 60,
+          "disable_backpressure": false
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "MS MARCO Large (8.8M documents)",
+            "payload_profile": "ids_only",
+            "filter_rate": 0.95
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              40
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 1527.663,
+        "serial_latency_p99": 0.0,
+        "serial_latency_p95": 0.0,
+        "recall": 0.0,
+        "ndcg": 0.0,
+        "mrr": 0.0,
+        "conc_num_list": [
+          40
+        ],
+        "conc_qps_list": [
+          1527.663
+        ],
+        "conc_latency_p99_list": [
+          0.15897869967972003
+        ],
+        "conc_latency_p95_list": [
+          0.03222810559964269
+        ],
+        "conc_latency_avg_list": [
+          0.025937369060332446
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 0,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "fts_filter": {
+            "filter_type": "NumGE",
+            "filter_field": "filter_id",
+            "filter_value": 8753404,
+            "filter_rate": 0.99,
+            "matched_doc_count": 88419,
+            "matched_doc_ratio": 0.01,
+            "original_query_count": 6980,
+            "filtered_query_count": 0,
+            "filtered_query_ratio": 0.0,
+            "original_relevant_doc_count": 7433,
+            "filtered_relevant_doc_count": 0
+          },
+          "fts_recall": {
+            "skipped": true,
+            "reason": "no_positive_qrels_after_filter",
+            "serial_query_count": 0,
+            "full_query_count": 6980
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "TurboPuffer",
+        "db_config": {
+          "db_label": "turbopuffer-aws-us-west-2-existing-filter-c40-concurrent-only",
+          "version": "",
+          "note": "",
+          "api_key": "**********",
+          "region": "aws-us-west-2",
+          "api_base_url": null,
+          "namespace": "vdbbench-fts-filter-tpuf-20260709021809-msmarco-large",
+          "multitenant_namespace_prefix": "vdbbench_mt_",
+          "scalar_payload_label_field": "label",
+          "pin_namespace": false,
+          "pin_namespace_requested": false,
+          "pin_replicas": 1,
+          "pin_timeout": 2700,
+          "pin_target_namespace_count": 0
+        },
+        "db_case_config": {
+          "metric_type": "BM25",
+          "time_wait_warmup": 60,
+          "disable_backpressure": false
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "MS MARCO Large (8.8M documents)",
+            "payload_profile": "ids_only",
+            "filter_rate": 0.99
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              40
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600
+          }
+        },
+        "stages": [
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    }
+  ],
+  "file_fmt": "result_{}_{}_{}.json",
+  "timestamp": 1783555200.0
+}
