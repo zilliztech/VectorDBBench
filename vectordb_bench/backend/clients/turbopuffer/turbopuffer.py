@@ -400,15 +400,21 @@ class TurboPuffer(VectorDB):
         }
         if filter_ids is not None:
             upsert_columns[self._filter_id_field] = [int(filter_id) for filter_id in filter_ids]
+        schema = {
+            text_field: {
+                "type": "string",
+                "full_text_search": True,
+            }
+        }
+        if filter_ids is not None:
+            schema[self._filter_id_field] = {
+                "type": "int",
+                "filterable": True,
+            }
         try:
             self.ns.write(
                 upsert_columns=upsert_columns,
-                schema={
-                    text_field: {
-                        "type": "string",
-                        "full_text_search": True,
-                    }
-                },
+                schema=schema,
                 disable_backpressure=self.db_case_config.disable_backpressure,
             )
         except Exception as e:
