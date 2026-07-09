@@ -3247,6 +3247,19 @@ AdbpgPerformanceConfig = [
     CaseConfigParamInput_NovaAdaptiveGamma_Adbpg,
 ]
 
+HyperspaceDBLoadConfig = [
+    CaseConfigParamInput_IndexType,
+    CaseConfigParamInput_m,
+    CaseConfigParamInput_EFConstruction_Adbpg,
+]
+
+HyperspaceDBPerformanceConfig = [
+    CaseConfigParamInput_IndexType,
+    CaseConfigParamInput_m,
+    CaseConfigParamInput_EFConstruction_Adbpg,
+    CaseConfigParamInput_EFSearch_PgVectoRS,
+]
+
 # Map DB to config
 CASE_CONFIG_MAP = {
     DB.Milvus: {
@@ -3351,6 +3364,11 @@ CASE_CONFIG_MAP = {
     DB.Adbpg: {
         CaseLabel.Load: AdbpgLoadConfig,
         CaseLabel.Performance: AdbpgPerformanceConfig,
+    },
+    DB.HyperspaceDB: {
+        CaseLabel.Load: HyperspaceDBLoadConfig,
+        CaseLabel.Performance: HyperspaceDBPerformanceConfig,
+        CaseLabel.Streaming: HyperspaceDBPerformanceConfig,
     },
 }
 

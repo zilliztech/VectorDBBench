@@ -18,7 +18,7 @@ class HyperspaceDBIndexConfig(BaseModel, DBCaseConfig):
     index: IndexType = IndexType.HNSW
     metric_type: MetricType = MetricType.COSINE
     m: int = 16
-    ef_construction: int = 100
+    ef_construction: int = 200
     ef_search: int = 100
     
     def parse_metric(self) -> str:

@@ -71,11 +71,31 @@ class HyperspaceDB(VectorDB):
         # Apply search param config
         try:
             self.client.configure(
+                collection=self.collection_name,
                 ef_search=self.case_config.ef_search,
-                collection=self.collection_name
+                ef_construction=self.case_config.ef_construction,
             )
         except Exception as e:
             log.warning(f"Optimize configure error: {e}")
+            
+        # Wait for background indexing to complete using gRPC stats
+        start_time = time.time()
+        timeout = 3600  # 1 hour max
+        while True:
+            if time.time() - start_time > timeout:
+                log.warning("Indexing timeout reached during optimize")
+                break
+            try:
+                stats = self.client.get_collection_stats(self.collection_name)
+                queue = stats.get("indexing_queue", 0)
+                count = stats.get("count", 0)
+                if queue == 0 and count > 0:
+                    break
+            except Exception as e:
+                log.warning(f"Error getting collection stats: {e}")
+                time.sleep(5)
+                break
+            time.sleep(1.0)
             
     def insert_embeddings(
         self,
