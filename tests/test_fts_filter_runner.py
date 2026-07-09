@@ -2,7 +2,9 @@ import threading
 
 from vectordb_bench.backend.cases import CaseLabel
 from vectordb_bench.backend.data_source import DatasetSource
-from vectordb_bench.backend.dataset import FtsDocument
+from vectordb_bench.backend.dataset import FtsDocument, FtsQuery
+from vectordb_bench.backend.filter import non_filter
+from vectordb_bench.backend.payload import PayloadProfile
 from vectordb_bench.backend.runner.concurrent_runner import ConcurrentInsertRunner
 from vectordb_bench.backend.task_runner import CaseRunner
 from vectordb_bench.models import TaskStage
@@ -75,3 +77,98 @@ def test_fts_perf_metric_includes_dataset_filter_stats():
     metric = runner._run_perf_case(drop_old=False)
 
     assert metric.additional_parameters["fts_filter"] == Dataset.filter_stats
+
+
+class DummyDb:
+    name = "dummy"
+
+    def supports_payload_profile(self, payload_profile):
+        return True
+
+    def supports_document_payload_profile(self, payload_profile):
+        return True
+
+    def search_documents(self, query, k, payload_profile=None):
+        return []
+
+
+class FtsConcurrencyConfig:
+    num_concurrency = [60, 80]
+    concurrency_duration = 30
+    concurrency_timeout = 300
+
+
+class FtsCaseConfig:
+    k = 10
+    concurrency_search_config = FtsConcurrencyConfig()
+
+
+def test_fts_search_runners_use_full_queries_for_concurrency_and_filtered_queries_for_recall():
+    class Dataset:
+        queries_data = [
+            FtsQuery(query_id="q1", text="full query one"),
+            FtsQuery(query_id="q2", text="full query two"),
+        ]
+        gt_data = [{"d1": 1}, {"d2": 1}]
+        recall_queries_data = [FtsQuery(query_id="q2", text="full query two")]
+        recall_gt_data = [{"d2": 1}]
+        recall_skipped = False
+        recall_skip_reason = None
+
+    class Case:
+        label = CaseLabel.FullTextSearchPerformance
+        dataset = Dataset()
+        filters = non_filter
+        payload_profile = PayloadProfile.IDS_ONLY
+
+    config_obj = type(
+        "Config",
+        (),
+        {
+            "stages": [TaskStage.SEARCH_SERIAL, TaskStage.SEARCH_CONCURRENT],
+            "case_config": FtsCaseConfig(),
+        },
+    )()
+    runner = CaseRunner.construct(ca=Case(), config=config_obj, db=DummyDb())
+
+    runner._init_fts_search_runner()
+
+    assert runner.search_runner.test_data == ["full query one", "full query two"]
+    assert runner.serial_search_runner.test_data == ["full query two"]
+    assert runner.serial_search_runner.ground_truth == [{"d2": 1}]
+
+
+def test_fts_perf_metric_marks_recall_skipped_without_blocking_case(monkeypatch):
+    class Dataset:
+        filter_stats = {
+            "filter_field": "filter_id",
+            "filter_value": 99,
+            "filtered_query_count": 0,
+        }
+        queries_data = [
+            FtsQuery(query_id="q1", text="full query one"),
+            FtsQuery(query_id="q2", text="full query two"),
+        ]
+        recall_queries_data = []
+        recall_skipped = True
+        recall_skip_reason = "no_positive_qrels_after_filter"
+
+    class Case:
+        label = CaseLabel.FullTextSearchPerformance
+        dataset = Dataset()
+
+    config_obj = type("Config", (), {"stages": [TaskStage.SEARCH_SERIAL]})()
+    runner = CaseRunner.construct(ca=Case(), config=config_obj)
+    monkeypatch.setattr(CaseRunner, "_init_search_runners", lambda self: None)
+
+    metric = runner._run_perf_case(drop_old=False)
+
+    assert metric.recall == 0.0
+    assert metric.ndcg == 0.0
+    assert metric.mrr == 0.0
+    assert metric.additional_parameters["fts_recall"] == {
+        "skipped": True,
+        "reason": "no_positive_qrels_after_filter",
+        "serial_query_count": 0,
+        "full_query_count": 2,
+    }

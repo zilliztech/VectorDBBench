@@ -723,6 +723,8 @@ class FtsDatasetManager(BaseModel):
     Similar to DatasetManager, but for text-based FTS datasets:
     - queries_data: loaded queries (similar to test_data in vectors)
     - gt_data: loaded ground truth (similar to gt_data in vectors)
+    - recall_queries_data: recall-valid queries after optional FTS filter
+    - recall_gt_data: recall-valid ground truth after optional FTS filter
     - translator: dataset-specific translator for schema conversion
     - _ir_dataset: ir_datasets dataset object for direct access
     """
@@ -732,6 +734,10 @@ class FtsDatasetManager(BaseModel):
 
     queries_data: list[FtsQuery] | None = None
     gt_data: list[dict[str, int]] | None = None
+    recall_queries_data: list[FtsQuery] | None = None
+    recall_gt_data: list[dict[str, int]] | None = None
+    recall_skipped: bool = False
+    recall_skip_reason: str | None = None
     qrels_data: dict[str, dict[str, int]] = PydanticField(default_factory=dict)
     required_doc_ids: set[str] = PydanticField(default_factory=set)
     selected_doc_ids: set[str] | None = None
@@ -870,10 +876,6 @@ class FtsDatasetManager(BaseModel):
             filtered_queries.append(query)
             filtered_gt.append(filtered_qrels)
 
-        if not filtered_queries:
-            msg = f"{self.data.full_name} has no queries with positive semantic qrels after applying FTS filter"
-            raise ValueError(msg)
-
         matched_doc_count = self.data.size - filter_value
         filtered_relevant_doc_ids = {doc_id for qrels in filtered_gt for doc_id in qrels}
         self.filter_stats = {
@@ -898,6 +900,9 @@ class FtsDatasetManager(BaseModel):
             len(filtered_relevant_doc_ids),
             len(self.required_doc_ids),
         )
+        if not filtered_queries:
+            self.recall_skipped = True
+            self.recall_skip_reason = "no_positive_qrels_after_filter"
         return filtered_queries, filtered_gt
 
     def _apply_filters_to_qrels(
@@ -908,6 +913,8 @@ class FtsDatasetManager(BaseModel):
     ) -> tuple[list[FtsQuery], list[dict[str, int]]]:
         self.filter_stats = {}
         self.qrel_filter_ids = {}
+        self.recall_skipped = False
+        self.recall_skip_reason = None
         if filters is None or filters.type == FilterOp.NonFilter:
             return queries, ground_truth
         if filters.type == FilterOp.NumGE:
@@ -976,14 +983,16 @@ class FtsDatasetManager(BaseModel):
 
                 self.required_doc_ids = {doc_id for qrels in self.gt_data for doc_id in qrels}
                 self.selected_doc_ids = self._build_selected_doc_ids()
-                self.queries_data, self.gt_data = self._apply_filters_to_qrels(
+                self.recall_queries_data, self.recall_gt_data = self._apply_filters_to_qrels(
                     self.queries_data,
                     self.gt_data,
                     filters,
                 )
                 log.info(
-                    "Loaded semantic qrels for %s queries; selected %s corpus docs including %s qrel docs",
+                    "Loaded semantic qrels for %s queries; recall uses %s queries; "
+                    "selected %s corpus docs including %s qrel docs",
                     len(self.gt_data),
+                    len(self.recall_gt_data),
                     len(self.selected_doc_ids),
                     len(self.required_doc_ids),
                 )
@@ -991,6 +1000,10 @@ class FtsDatasetManager(BaseModel):
                 self.selected_doc_ids = None
                 self.qrel_filter_ids = {}
                 self.filter_stats = {}
+                self.recall_queries_data = None
+                self.recall_gt_data = None
+                self.recall_skipped = False
+                self.recall_skip_reason = None
 
         except (TypeError, ValueError):
             log.exception("Invalid FTS dataset configuration")

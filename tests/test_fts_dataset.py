@@ -125,8 +125,12 @@ def test_fts_prepare_integer_filter_derives_filtered_qrels(monkeypatch: pytest.M
     filters = NewIntFilter(filter_rate=0.5, int_field="filter_id", int_value=2)
     assert manager.prepare(source=None, filters=filters)
 
-    assert [query.query_id for query in manager.queries_data] == ["q1"]
-    assert manager.gt_data == [{"d3": 1}]
+    assert [query.query_id for query in manager.queries_data] == ["q1", "q2"]
+    assert manager.gt_data == [{"d3": 1}, {"d1": 2}]
+    assert [query.query_id for query in manager.recall_queries_data] == ["q1"]
+    assert manager.recall_gt_data == [{"d3": 1}]
+    assert manager.recall_skipped is False
+    assert manager.recall_skip_reason is None
     assert manager.qrel_filter_ids == {"d1": 0, "d3": 2}
     assert manager.filter_stats == {
         "filter_type": "NumGE",
@@ -143,13 +147,21 @@ def test_fts_prepare_integer_filter_derives_filtered_qrels(monkeypatch: pytest.M
     }
 
 
-def test_fts_prepare_integer_filter_rejects_empty_filtered_qrels(monkeypatch: pytest.MonkeyPatch):
+def test_fts_prepare_integer_filter_skips_empty_filtered_qrels(monkeypatch: pytest.MonkeyPatch):
     manager = make_tiny_msmarco_manager(size=4)
     monkeypatch.setattr(manager._translator, "load", FakeDataset)
 
     filters = NewIntFilter(filter_rate=0.75, int_field="filter_id", int_value=3)
-    with pytest.raises(ValueError, match="no queries with positive semantic qrels after applying FTS filter"):
-        manager.prepare(source=None, filters=filters)
+    assert manager.prepare(source=None, filters=filters)
+
+    assert [query.query_id for query in manager.queries_data] == ["q1", "q2"]
+    assert manager.gt_data == [{"d3": 1}, {"d1": 2}]
+    assert manager.recall_queries_data == []
+    assert manager.recall_gt_data == []
+    assert manager.recall_skipped is True
+    assert manager.recall_skip_reason == "no_positive_qrels_after_filter"
+    assert manager.filter_stats["filtered_query_count"] == 0
+    assert manager.filter_stats["filtered_relevant_doc_count"] == 0
 
 
 def test_fts_prepare_integer_filter_requires_filter_id_field(monkeypatch: pytest.MonkeyPatch):

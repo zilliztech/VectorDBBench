@@ -316,6 +316,12 @@ class CaseRunner(BaseModel):
             m = Metric()
             if self.is_fts and getattr(self.ca.dataset, "filter_stats", None):
                 m.additional_parameters["fts_filter"] = dict(self.ca.dataset.filter_stats)
+                m.additional_parameters["fts_recall"] = {
+                    "skipped": bool(getattr(self.ca.dataset, "recall_skipped", False)),
+                    "reason": getattr(self.ca.dataset, "recall_skip_reason", None),
+                    "serial_query_count": len(getattr(self.ca.dataset, "recall_queries_data", []) or []),
+                    "full_query_count": len(getattr(self.ca.dataset, "queries_data", []) or []),
+                }
             if drop_old:
                 if TaskStage.LOAD in self.config.stages:
                     count, load_dur = self._load_data()
@@ -515,6 +521,15 @@ class CaseRunner(BaseModel):
                 FTS cases return recall, p99, p95.
         """
         try:
+            if self.serial_search_runner is None:
+                if self.is_fts and getattr(self.ca.dataset, "recall_skipped", False):
+                    log.warning(
+                        "Skipping FTS serial recall: %s",
+                        getattr(self.ca.dataset, "recall_skip_reason", "unknown"),
+                    )
+                    return (0.0, 0.0, 0.0, 0.0, 0.0)
+                msg = "serial search runner is not initialized"
+                raise RuntimeError(msg)
             results, _ = self.serial_search_runner.run()
         except Exception as e:
             log.warning(f"search error: {e!s}, {e}")
@@ -614,24 +629,40 @@ class CaseRunner(BaseModel):
             msg = "FTS dataset is missing queries or ground truth. Call prepare() before initializing search."
             raise ValueError(msg)
         test_texts = [q.text for q in fts_dataset.queries_data]
-        ground_truth = fts_dataset.gt_data
-        if len(test_texts) != len(ground_truth):
-            msg = f"FTS query count {len(test_texts)} does not match ground truth row count {len(ground_truth)}"
+        if len(test_texts) != len(fts_dataset.gt_data):
+            msg = f"FTS query count {len(test_texts)} does not match ground truth row count {len(fts_dataset.gt_data)}"
             raise ValueError(msg)
 
-        log.info(f"FTS test will use {len(test_texts)} queries for testing")
+        log.info(f"FTS concurrent test will use {len(test_texts)} queries for testing")
         self.test_texts = test_texts
 
         if TaskStage.SEARCH_SERIAL in self.config.stages:
-            self.serial_search_runner = SerialSearchRunner(
-                db=self.db,
-                test_data=test_texts,
-                ground_truth=ground_truth,
-                filters=self.ca.filters,
-                k=self.config.case_config.k,
-                payload_profile=self.ca.payload_profile,
-                workload_kind=WorkloadKind.FULL_TEXT,
-            )
+            recall_queries = fts_dataset.recall_queries_data
+            recall_ground_truth = fts_dataset.recall_gt_data
+            if recall_queries is None or recall_ground_truth is None:
+                msg = "FTS dataset is missing recall queries or ground truth. Call prepare() before initializing search."
+                raise ValueError(msg)
+            if len(recall_queries) != len(recall_ground_truth):
+                msg = (
+                    f"FTS recall query count {len(recall_queries)} does not match "
+                    f"ground truth row count {len(recall_ground_truth)}"
+                )
+                raise ValueError(msg)
+            if fts_dataset.recall_skipped:
+                log.warning("FTS serial recall will be skipped: %s", fts_dataset.recall_skip_reason)
+                self.serial_search_runner = None
+            else:
+                recall_test_texts = [q.text for q in recall_queries]
+                log.info(f"FTS serial recall will use {len(recall_test_texts)} queries")
+                self.serial_search_runner = SerialSearchRunner(
+                    db=self.db,
+                    test_data=recall_test_texts,
+                    ground_truth=recall_ground_truth,
+                    filters=self.ca.filters,
+                    k=self.config.case_config.k,
+                    payload_profile=self.ca.payload_profile,
+                    workload_kind=WorkloadKind.FULL_TEXT,
+                )
         if TaskStage.SEARCH_CONCURRENT in self.config.stages:
             self.search_runner = MultiProcessingSearchRunner(
                 db=self.db,
