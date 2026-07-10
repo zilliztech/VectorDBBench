@@ -133,7 +133,20 @@ class HyperspaceDB(VectorDB):
     ) -> list[int]:
         assert self.client is not None, "Please call self.init() before"
         
-        # Build filter if present
+        # Direct gRPC fast-path to bypass Python SDK overhead when no filters are present
+        if not filters:
+            try:
+                from hyperspace.proto import hyperspace_pb2
+                req = hyperspace_pb2.SearchRequest(
+                    vector=query,
+                    top_k=k,
+                    collection=self.collection_name
+                )
+                resp = self.client.stub.Search(req, metadata=self.client.metadata)
+                return [r.id for r in resp.results]
+            except Exception as e:
+                log.warning(f"Fast-path search failed: {e}. Falling back to SDK search.")
+        
         flt = None
         if filters:
             # Map simple filter if supported
