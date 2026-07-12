@@ -7,9 +7,17 @@ from hyperspace import HyperspaceClient
 from ..api import VectorDB
 from .config import HyperspaceDBIndexConfig
 
+from vectordb_bench.backend.filter import Filter, FilterOp
+
 log = logging.getLogger(__name__)
 
 class HyperspaceDB(VectorDB):
+    supported_filter_types = [
+        FilterOp.NonFilter,
+        FilterOp.NumGE,
+        FilterOp.StrEqual,
+    ]
+
     def __init__(
         self,
         dim: int,
@@ -22,6 +30,7 @@ class HyperspaceDB(VectorDB):
         self.db_config = db_config
         self.case_config = db_case_config
         self.collection_name = collection_name
+        self.expr = None
         
         # Initialize client
         host = db_config.get("host", "localhost:50051")
@@ -48,6 +57,7 @@ class HyperspaceDB(VectorDB):
             client.configure(
                 ef_search=self.case_config.ef_search,
                 ef_construction=self.case_config.ef_construction,
+                m=self.case_config.m,
                 collection=self.collection_name
             )
         except Exception as e:
@@ -70,6 +80,16 @@ class HyperspaceDB(VectorDB):
     def need_normalize_cosine(self) -> bool:
         """Whether this database needs to normalize dataset to support COSINE"""
         return True
+
+    def prepare_filter(self, filters: Filter):
+        if filters.type == FilterOp.NonFilter:
+            self.expr = None
+        elif filters.type == FilterOp.NumGE:
+            self.expr = [{"type": "range", "key": filters.int_field, "gte": filters.int_value}]
+        elif filters.type == FilterOp.StrEqual:
+            self.expr = [{"type": "match", "key": filters.label_field, "value": filters.label_value}]
+        else:
+            raise ValueError(f"Unsupported filter type for HyperspaceDB: {filters.type}")
         
     def optimize(self, data_size: int | None = None):
         # Apply search param config
@@ -78,6 +98,7 @@ class HyperspaceDB(VectorDB):
                 collection=self.collection_name,
                 ef_search=self.case_config.ef_search,
                 ef_construction=self.case_config.ef_construction,
+                m=self.case_config.m,
             )
         except Exception as e:
             log.warning(f"Optimize configure error: {e}")
@@ -110,7 +131,11 @@ class HyperspaceDB(VectorDB):
         assert self.client is not None, "Please call self.init() before"
         
         # Prepare metadata
-        metas = [{"id": str(idx)} for idx in metadata]
+        labels_data = kwargs.get("labels_data")
+        if labels_data is not None:
+            metas = [{"id": str(idx), "labels": str(label)} for idx, label in zip(metadata, labels_data)]
+        else:
+            metas = [{"id": str(idx)} for idx in metadata]
         
         try:
             self.client.batch_insert(
@@ -133,8 +158,13 @@ class HyperspaceDB(VectorDB):
     ) -> list[int]:
         assert self.client is not None, "Please call self.init() before"
         
+        # Use pre-prepared filter expression if available, fallback to dynamic filters
+        expr = self.expr
+        if not expr and filters:
+            expr = [{"type": "match", "key": k, "value": str(v)} for k, v in filters.items()]
+        
         # Direct gRPC fast-path to bypass Python SDK overhead when no filters are present
-        if not filters:
+        if not expr:
             try:
                 from hyperspace.proto import hyperspace_pb2
                 req = hyperspace_pb2.SearchRequest(
@@ -147,16 +177,11 @@ class HyperspaceDB(VectorDB):
             except Exception as e:
                 log.warning(f"Fast-path search failed: {e}. Falling back to SDK search.")
         
-        flt = None
-        if filters:
-            # Map simple filter if supported
-            pass
-            
         try:
             results = self.client.search(
                 vector=query,
                 top_k=k,
-                filter=flt,
+                filters=expr,
                 collection=self.collection_name
             )
             return [r["id"] for r in results]
