@@ -1,0 +1,208 @@
+{
+    "run_id": "b339a7ab425346909c0812a2e866b5eb",
+    "task_label": "b339a7ab425346909c0812a2e866b5eb",
+    "results": [
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 793.4783,
+                "optimize_duration": 3100.2448,
+                "load_duration": 3893.7231,
+                "qps": 8474.52,
+                "serial_latency_p99": 0.0117,
+                "serial_latency_p95": 0.005,
+                "recall": 0.9328,
+                "ndcg": 0.9439,
+                "conc_num_list": [
+                    12,
+                    14,
+                    16,
+                    18,
+                    20
+                ],
+                "conc_qps_list": [
+                    3564.1959,
+                    7593.1742,
+                    8474.52,
+                    8010.2936,
+                    7918.4358
+                ],
+                "conc_latency_p99_list": [
+                    0.05615552279050462,
+                    0.003168641997035593,
+                    0.00334706231311429,
+                    0.005783486005966552,
+                    0.006213033783133149
+                ],
+                "conc_latency_p95_list": [
+                    0.002912548667518414,
+                    0.0023780519841238856,
+                    0.0023845255869673564,
+                    0.004046849280712195,
+                    0.004418226782581768
+                ],
+                "conc_latency_avg_list": [
+                    0.0032597548304676757,
+                    0.001794983359722544,
+                    0.0018366792782073028,
+                    0.002175057804638464,
+                    0.0024385746208240243
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_serial_latency_p95_list": [],
+                "st_conc_failed_rate_list": [],
+                "st_conc_num_list_list": [],
+                "st_conc_qps_list_list": [],
+                "st_conc_latency_p99_list_list": [],
+                "st_conc_latency_p95_list_list": [],
+                "st_conc_latency_avg_list_list": []
+            },
+            "task_config": {
+                "db": "Zvec",
+                "db_config": {
+                    "db_label": "16c64g-v0.1",
+                    "version": "",
+                    "note": "",
+                    "path": "Performance768D10M"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "M": 100,
+                    "ef_construction": 500,
+                    "ef_search": 118,
+                    "quantize_type": "int8",
+                    "is_using_refiner": true
+                },
+                "case_config": {
+                    "case_id": 4,
+                    "custom_case": {},
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            12,
+                            14,
+                            16,
+                            18,
+                            20
+                        ],
+                        "concurrency_duration": 30,
+                        "concurrency_timeout": 3600
+                    }
+                },
+                "stages": [
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        },
+        {
+            "metrics": {
+                "max_load_count": 0,
+                "insert_duration": 48.4678,
+                "optimize_duration": 99.4455,
+                "load_duration": 147.9133,
+                "qps": 16491.1959,
+                "serial_latency_p99": 0.0014,
+                "serial_latency_p95": 0.0007,
+                "recall": 0.9164,
+                "ndcg": 0.9321,
+                "conc_num_list": [
+                    12,
+                    14,
+                    16,
+                    18,
+                    20
+                ],
+                "conc_qps_list": [
+                    13267.9407,
+                    14575.8741,
+                    16491.1959,
+                    14745.1812,
+                    14631.7626
+                ],
+                "conc_latency_p99_list": [
+                    0.0011894991993904114,
+                    0.00160781410522759,
+                    0.0011780869087669999,
+                    0.0024138282559579235,
+                    0.0025049704912817102
+                ],
+                "conc_latency_p95_list": [
+                    0.0011246530746575445,
+                    0.0011556909885257483,
+                    0.0011128381243906914,
+                    0.002252491089166142,
+                    0.002335969009436667
+                ],
+                "conc_latency_avg_list": [
+                    0.000898740841141723,
+                    0.0009541964989561765,
+                    0.0009630311999944731,
+                    0.0012120416670320518,
+                    0.0013564778723793372
+                ],
+                "st_ideal_insert_duration": 0,
+                "st_search_stage_list": [],
+                "st_search_time_list": [],
+                "st_max_qps_list_list": [],
+                "st_recall_list": [],
+                "st_ndcg_list": [],
+                "st_serial_latency_p99_list": [],
+                "st_serial_latency_p95_list": [],
+                "st_conc_failed_rate_list": [],
+                "st_conc_num_list_list": [],
+                "st_conc_qps_list_list": [],
+                "st_conc_latency_p99_list_list": [],
+                "st_conc_latency_p95_list_list": [],
+                "st_conc_latency_avg_list_list": []
+            },
+            "task_config": {
+                "db": "Zvec",
+                "db_config": {
+                    "db_label": "16c64g-v0.1",
+                    "version": "",
+                    "note": "",
+                    "path": "Performance768D1M"
+                },
+                "db_case_config": {
+                    "metric_type": "COSINE",
+                    "M": 30,
+                    "ef_construction": 500,
+                    "ef_search": 180,
+                    "quantize_type": "int8",
+                    "is_using_refiner": false
+                },
+                "case_config": {
+                    "case_id": 5,
+                    "custom_case": {},
+                    "k": 100,
+                    "concurrency_search_config": {
+                        "num_concurrency": [
+                            12,
+                            14,
+                            16,
+                            18,
+                            20
+                        ],
+                        "concurrency_duration": 30,
+                        "concurrency_timeout": 3600
+                    }
+                },
+                "stages": [
+                    "search_serial",
+                    "search_concurrent"
+                ]
+            },
+            "label": ":)"
+        }
+    ],
+    "file_fmt": "result_{}_{}_{}.json",
+    "timestamp": 1767542400.0
+}
