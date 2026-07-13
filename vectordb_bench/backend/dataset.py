@@ -31,6 +31,7 @@ from .data_source import DatasetReader, DatasetSource
 from .filter import Filter, FilterOp, non_filter
 
 log = logging.getLogger(__name__)
+DEFAULT_INSERT_BATCH_SIZE = config.DEFAULT_INSERT_BATCH_SIZE
 
 
 class SizeLabel(NamedTuple):
@@ -414,7 +415,10 @@ class DatasetManager(BaseModel):
 
 
 class DataSetIterator:
-    def __init__(self, dataset: DatasetManager, batch_size: int = config.NUM_PER_BATCH):
+    def __init__(self, dataset: DatasetManager, batch_size: int = DEFAULT_INSERT_BATCH_SIZE):
+        if batch_size <= 0:
+            msg = f"insert batch size must be greater than 0, got {batch_size}"
+            raise ValueError(msg)
         self._ds = dataset
         self._batch_size = batch_size
         self._idx = 0  # file number
@@ -880,7 +884,7 @@ class FtsDatasetManager(BaseModel):
             log.info(f"FTS dataset preparation completed: {self.data.full_name}")
             return True
 
-    def iter_batches(self, batch_size: int = config.NUM_PER_BATCH):
+    def iter_batches(self, batch_size: int = DEFAULT_INSERT_BATCH_SIZE):
         """Return an iterator for streaming FTS document batches."""
         return FtsDocumentIterator(self, batch_size=batch_size)
 
@@ -907,7 +911,10 @@ class FtsDocumentIterator:
     processing of large datasets.
     """
 
-    def __init__(self, dataset: FtsDatasetManager, batch_size: int = config.NUM_PER_BATCH):
+    def __init__(self, dataset: FtsDatasetManager, batch_size: int = DEFAULT_INSERT_BATCH_SIZE):
+        if batch_size <= 0:
+            msg = f"insert batch size must be greater than 0, got {batch_size}"
+            raise ValueError(msg)
         self._ds = dataset
         self._batch_size = batch_size
         self._finished = False

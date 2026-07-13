@@ -13,13 +13,15 @@ class config:
     ALIYUN_OSS_URL = "assets.zilliz.com.cn/benchmark/"
     AWS_S3_URL = "assets.zilliz.com/benchmark/"
 
+    DEFAULT_INSERT_BATCH_SIZE = 100
+    DEFAULT_STREAMING_INSERT_RATE = 500
+
     LOG_LEVEL = env.str("LOG_LEVEL", "INFO")
     LOG_FILE = env.str("LOG_FILE", "logs/vectordb_bench.log")
 
     DEFAULT_DATASET_URL = env.str("DEFAULT_DATASET_URL", AWS_S3_URL)
     DATASET_SOURCE = env.str("DATASET_SOURCE", "S3")  # Options "S3", "AliyunOSS", or "IR_DATASETS"
     DATASET_LOCAL_DIR = env.path("DATASET_LOCAL_DIR", "/tmp/vectordb_bench/dataset")
-    NUM_PER_BATCH = env.int("NUM_PER_BATCH", 100)
     LOAD_CONCURRENCY = env.int("LOAD_CONCURRENCY", 0)  # 0 = cpu_count
     TIME_PER_BATCH = 1  # 1s. for streaming insertion.
     MAX_INSERT_RETRY = 5

@@ -65,7 +65,7 @@ vectordbbench zillizautoindex \
   --uri "$ZILLIZ_URI" \
   --token "$ZILLIZ_TOKEN" \
   --collection-name cloud_insert_laion100m_bs10k \
-  --cloud-insert-batch-size 10000 \
+  --insert-batch-size 10000 \
   --load-concurrency 16 \
   --skip-search-serial \
   --skip-search-concurrent \

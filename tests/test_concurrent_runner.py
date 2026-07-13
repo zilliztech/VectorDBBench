@@ -4,8 +4,8 @@ Includes:
   - Correctness tests (threading & async backends)
   - Parameterized benchmark: serial vs concurrent across (batch_size, workers) matrix
 
-NUM_PER_BATCH is set via os.environ before each run. Since runners execute
-task() in a spawn subprocess that re-imports config, the env var takes effect.
+Batch size is passed directly to each runner so subprocess execution uses the
+same explicit benchmark value.
 
 Requires:
   - Milvus running at localhost:19530
@@ -21,7 +21,6 @@ Usage:
 from __future__ import annotations
 
 import logging
-import os
 import time
 
 from vectordb_bench.backend.clients import DB
@@ -53,10 +52,6 @@ def prepare_dataset():
     dataset = Dataset.OPENAI.manager(DATASET_SIZE)
     dataset.prepare(DatasetSource.AliyunOSS)
     return dataset
-
-
-def set_batch_size(batch_size: int) -> None:
-    os.environ["NUM_PER_BATCH"] = str(batch_size)
 
 
 def timed_run(runner: SerialInsertRunner | ConcurrentInsertRunner) -> tuple[int, float]:
@@ -100,23 +95,23 @@ def test_concurrent_insert_async():
 
 
 def run_serial(batch_size: int) -> tuple[int, float]:
-    set_batch_size(batch_size)
     runner = SerialInsertRunner(
         db=get_milvus_db(f"bench_serial_b{batch_size}"),
         dataset=prepare_dataset(),
         normalize=False,
+        batch_size=batch_size,
     )
     return timed_run(runner)
 
 
 def run_concurrent(batch_size: int, workers: int) -> tuple[int, float]:
-    set_batch_size(batch_size)
     runner = ConcurrentInsertRunner(
         db=get_milvus_db(f"bench_conc_b{batch_size}_w{workers}"),
         dataset=prepare_dataset(),
         normalize=False,
         max_workers=workers,
         backend=ExecutorBackend.THREADING,
+        batch_size=batch_size,
     )
     return timed_run(runner)
 
@@ -150,9 +145,6 @@ def bench_matrix():
         for dur_c in conc_durs:
             print(f" {dur_s / dur_c:>11.2f}x", end="")
         print()
-
-    # restore default
-    set_batch_size(100)
 
 
 if __name__ == "__main__":

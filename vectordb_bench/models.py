@@ -6,6 +6,7 @@ from enum import Enum, StrEnum
 from typing import Any, ClassVar, Self
 
 import ujson
+from pydantic import PositiveInt, model_validator
 
 from vectordb_bench.backend.cases import type2case
 from vectordb_bench.backend.dataset import DatasetWithSizeMap
@@ -257,6 +258,38 @@ class TaskConfig(BaseModel):
     case_config: CaseConfig
     stages: list[TaskStage] = ALL_TASK_STAGES
     load_concurrency: int = config.LOAD_CONCURRENCY
+    insert_batch_size: PositiveInt = config.DEFAULT_INSERT_BATCH_SIZE
+
+    @model_validator(mode="after")
+    def validate_streaming_insert_rate(self) -> Self:
+        streaming_case_types = {
+            CaseType.StreamingPerformanceCase,
+            CaseType.StreamingCustomDataset,
+        }
+        if self.case_config.case_id not in streaming_case_types:
+            return self
+
+        custom_case = self.case_config.custom_case or {}
+        insert_rate = custom_case.get("insert_rate", config.DEFAULT_STREAMING_INSERT_RATE)
+        if not isinstance(insert_rate, int) or isinstance(insert_rate, bool) or insert_rate <= 0:
+            raise ValueError("streaming insert_rate must be a positive integer")
+
+        rate_is_too_low = insert_rate < self.insert_batch_size
+        rate_is_divisible = insert_rate % self.insert_batch_size == 0
+
+        if rate_is_too_low:
+            msg = (
+                f"streaming insert_rate ({insert_rate}) must be greater than or equal to "
+                f"insert_batch_size ({self.insert_batch_size})"
+            )
+            raise ValueError(msg)
+        if not rate_is_divisible:
+            msg = (
+                f"streaming insert_rate ({insert_rate}) must be divisible by "
+                f"insert_batch_size ({self.insert_batch_size})"
+            )
+            raise ValueError(msg)
+        return self
 
     @property
     def db_name(self):
@@ -420,7 +453,22 @@ class TestResult(BaseModel):
             for case_result in test_result["results"]:
                 task_config = case_result.get("task_config")
                 case_config = task_config.get("case_config")
+                metrics = case_result.get("metrics")
                 db = DB(task_config.get("db"))
+
+                if "insert_batch_size" not in task_config:
+                    insert_batch_size = None
+                    if CaseType(case_config.get("case_id")) == CaseType.CloudInsertCase:
+                        custom_case = case_config.get("custom_case") or {}
+                        insert_batch_size = custom_case.get("batch_size")
+                    if insert_batch_size is None and metrics:
+                        additional_parameters = metrics.get("additional_parameters") or {}
+                        insert_batch_size = additional_parameters.get(
+                            "insert_batch_size",
+                            additional_parameters.get("num_per_batch"),
+                        )
+                    if insert_batch_size is not None:
+                        task_config["insert_batch_size"] = insert_batch_size
 
                 task_config["db_config"] = db.config_cls(**task_config["db_config"])
 
@@ -439,7 +487,6 @@ class TestResult(BaseModel):
 
                 task_config["case_config"] = cls.get_case_config(case_config=case_config)
                 case_result["task_config"] = task_config
-                metrics = case_result.get("metrics")
                 if (
                     metrics
                     and CaseType(case_config.get("case_id")) == CaseType.CloudColdLatencyCase

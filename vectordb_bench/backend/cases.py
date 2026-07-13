@@ -464,17 +464,6 @@ class StreamingPerformanceCase(Case):
         concurrencies: list[int] | str = (5, 10),
         **kwargs,
     ):
-        num_per_batch = config.NUM_PER_BATCH
-        if insert_rate % config.NUM_PER_BATCH != 0:
-            _insert_rate = max(
-                num_per_batch,
-                insert_rate // num_per_batch * num_per_batch,
-            )
-            log.warning(
-                f"[streaming_case init] insert_rate(={insert_rate}) should be "
-                f"divisible by NUM_PER_BATCH={num_per_batch}), reset to {_insert_rate}",
-            )
-            insert_rate = _insert_rate
         if not isinstance(dataset_with_size_type, DatasetWithSizeType):
             dataset_with_size_type = DatasetWithSizeType(dataset_with_size_type)
         dataset = dataset_with_size_type.get_manager()
@@ -524,18 +513,6 @@ class StreamingCustomDataset(Case):
         read_dur_after_write: int = 30,
         **kwargs,
     ):
-        num_per_batch = config.NUM_PER_BATCH
-        if insert_rate % config.NUM_PER_BATCH != 0:
-            _insert_rate = max(
-                num_per_batch,
-                insert_rate // num_per_batch * num_per_batch,
-            )
-            log.warning(
-                f"[streaming_case init] insert_rate(={insert_rate}) should be "
-                f"divisible by NUM_PER_BATCH={num_per_batch}), reset to {_insert_rate}",
-            )
-            insert_rate = _insert_rate
-
         dataset_config = CustomDatasetConfig(**dataset_config)
         dataset = CustomDataset(
             name=dataset_config.name,
@@ -756,7 +733,6 @@ class CloudColdLatencyCase(Case):
 class CloudInsertCase(Case):
     case_id: CaseType = CaseType.CloudInsertCase
     label: CaseLabel = CaseLabel.CloudInsert
-    batch_size: int
     duration: float | None = None
     readiness_timeout: float | None = config.CLOUD_INSERT_READINESS_TIMEOUT
     readiness_poll_interval: float = config.CLOUD_INSERT_READINESS_POLL_INTERVAL
@@ -764,7 +740,6 @@ class CloudInsertCase(Case):
 
     def __init__(
         self,
-        batch_size: int,
         duration: float | None = None,
         readiness_timeout: float | None = config.CLOUD_INSERT_READINESS_TIMEOUT,
         readiness_poll_interval: float = config.CLOUD_INSERT_READINESS_POLL_INTERVAL,
@@ -779,10 +754,9 @@ class CloudInsertCase(Case):
             else dataset_with_size_type.get_manager()
         )
         super().__init__(
-            name=f"Cloud Insert - batch {batch_size}",
+            name="Cloud Insert",
             description="Cloud leaderboard insert-only case with readiness polling.",
             dataset=dataset,
-            batch_size=batch_size,
             duration=duration,
             readiness_timeout=readiness_timeout,
             readiness_poll_interval=readiness_poll_interval,
