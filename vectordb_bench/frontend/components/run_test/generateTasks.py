@@ -3,7 +3,13 @@ from vectordb_bench.backend.cases import CaseLabel
 from vectordb_bench.models import CaseConfig, CaseConfigParamType, TaskConfig
 
 
-def generate_tasks(activedDbList: list[DB], dbConfigs, activedCaseList: list[CaseConfig], allCaseConfigs):
+def generate_tasks(
+    activedDbList: list[DB],
+    dbConfigs,
+    activedCaseList: list[CaseConfig],
+    allCaseConfigs,
+    batch_size: int,
+):
     tasks = []
     for db in activedDbList:
         for case in activedCaseList:
@@ -35,6 +41,7 @@ def generate_tasks(activedDbList: list[DB], dbConfigs, activedCaseList: list[Cas
                 db_config=dbConfigs[db],
                 case_config=case,
                 db_case_config=db_case_config,
+                insert_batch_size=batch_size,
             )
             tasks.append(task)
 

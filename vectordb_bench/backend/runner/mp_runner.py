@@ -19,7 +19,6 @@ from ... import config
 from ...models import ConcurrencySlotTimeoutError
 from ..clients import api
 
-NUM_PER_BATCH = config.NUM_PER_BATCH
 log = logging.getLogger(__name__)
 
 # HDR Histogram constants

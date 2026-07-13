@@ -8,6 +8,7 @@ from collections.abc import Iterable
 
 import numpy as np
 
+from vectordb_bench import config
 from vectordb_bench.backend.clients import api
 from vectordb_bench.backend.dataset import DatasetManager
 from vectordb_bench.backend.filter import Filter, non_filter
@@ -19,6 +20,7 @@ from .rate_runner import RatedMultiThreadingInsertRunner
 from .serial_runner import SerialSearchRunner
 
 log = logging.getLogger(__name__)
+DEFAULT_INSERT_BATCH_SIZE = config.DEFAULT_INSERT_BATCH_SIZE
 
 
 class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunner):
@@ -41,6 +43,7 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
         optimize_after_write: bool = True,
         read_dur_after_write: int = 300,  # seconds, search duration when insertion is done
         timeout: float | None = None,
+        batch_size: int = DEFAULT_INSERT_BATCH_SIZE,
     ):
         self.insert_rate = insert_rate
         self.data_volume = dataset.data.size
@@ -75,8 +78,9 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
             self,
             rate=insert_rate,
             db=db,
-            dataset_iter=iter(dataset),
+            dataset_iter=dataset.iter_batches(batch_size),
             normalize=normalize,
+            batch_size=batch_size,
         )
         self.serial_search_runner = SerialSearchRunner(
             db=db,

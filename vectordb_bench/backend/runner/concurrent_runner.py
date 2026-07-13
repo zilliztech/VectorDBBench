@@ -33,6 +33,7 @@ if TYPE_CHECKING:
     from .executor import TaskExecutor
 
 log = logging.getLogger(__name__)
+DEFAULT_INSERT_BATCH_SIZE = config.DEFAULT_INSERT_BATCH_SIZE
 
 
 class ExecutorBackend(StrEnum):
@@ -65,12 +66,15 @@ class ConcurrentInsertRunner:
         timeout: float | None = None,
         max_workers: int | None = None,
         backend: ExecutorBackend = ExecutorBackend.THREADING,
-        batch_size: int = config.NUM_PER_BATCH,
+        batch_size: int = DEFAULT_INSERT_BATCH_SIZE,
         duration: float | None = None,
         with_scalar_labels: bool = False,
         tenant_case=None,  # noqa: ANN001
         workload_kind: WorkloadKind = WorkloadKind.VECTOR,
     ):
+        if batch_size <= 0:
+            msg = f"insert batch size must be greater than 0, got {batch_size}"
+            raise ValueError(msg)
         self.timeout = timeout if isinstance(timeout, int | float) else None
         self.dataset: DatasetManager | FtsDatasetManager = dataset
         self.db = db

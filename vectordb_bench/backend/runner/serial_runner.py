@@ -19,8 +19,8 @@ from ...models import LoadTimeoutError
 from .. import utils
 from ..clients import api
 
-NUM_PER_BATCH = config.NUM_PER_BATCH
 LOAD_MAX_TRY_COUNT = config.LOAD_MAX_TRY_COUNT
+DEFAULT_INSERT_BATCH_SIZE = config.DEFAULT_INSERT_BATCH_SIZE
 
 log = logging.getLogger(__name__)
 
@@ -36,29 +36,34 @@ class SerialInsertRunner:
         normalize: bool,
         filters: Filter = non_filter,
         timeout: float | None = None,
+        batch_size: int = DEFAULT_INSERT_BATCH_SIZE,
     ):
+        if batch_size <= 0:
+            msg = f"insert batch size must be greater than 0, got {batch_size}"
+            raise ValueError(msg)
         self.timeout = timeout if isinstance(timeout, int | float) else None
         self.dataset = dataset
         self.db = db
         self.normalize = normalize
         self.filters = filters
+        self.batch_size = batch_size
 
     def endless_insert_data(self, all_embeddings: list, all_metadata: list, left_id: int = 0) -> int:
         with self.db.init():
             # unique id for endlessness insertion
             all_metadata = [i + left_id for i in all_metadata]
 
-            num_batches = math.ceil(len(all_embeddings) / NUM_PER_BATCH)
+            num_batches = math.ceil(len(all_embeddings) / self.batch_size)
             log.info(
                 f"({mp.current_process().name:16}) Start inserting {len(all_embeddings)} "
-                f"embeddings in batch {NUM_PER_BATCH}"
+                f"embeddings in batch {self.batch_size}"
             )
             count = 0
             for batch_id in range(num_batches):
                 retry_count = 0
                 already_insert_count = 0
-                metadata = all_metadata[batch_id * NUM_PER_BATCH : (batch_id + 1) * NUM_PER_BATCH]
-                embeddings = all_embeddings[batch_id * NUM_PER_BATCH : (batch_id + 1) * NUM_PER_BATCH]
+                metadata = all_metadata[batch_id * self.batch_size : (batch_id + 1) * self.batch_size]
+                embeddings = all_embeddings[batch_id * self.batch_size : (batch_id + 1) * self.batch_size]
 
                 log.debug(
                     f"({mp.current_process().name:16}) batch [{batch_id:3}/{num_batches}], "
@@ -88,7 +93,7 @@ class SerialInsertRunner:
                 count += already_insert_count
             log.info(
                 f"({mp.current_process().name:16}) Finish inserting {len(all_embeddings)} embeddings in "
-                f"batch {NUM_PER_BATCH}"
+                f"batch {self.batch_size}"
             )
         return count
 
@@ -96,7 +101,7 @@ class SerialInsertRunner:
         """run forever util DB raises exception or crash"""
         # datasets for load tests are quite small, can fit into memory
         # only 1 file
-        data_df = next(iter(self.dataset))
+        data_df = next(self.dataset.iter_batches(self.batch_size))
         all_embeddings, all_metadata = (
             np.stack(data_df[self.dataset.data.train_vector_field]).tolist(),
             data_df[self.dataset.data.train_id_field].tolist(),

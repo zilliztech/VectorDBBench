@@ -8,7 +8,6 @@ from enum import Enum, auto
 
 import numpy as np
 
-from .. import config
 from ..base import BaseModel
 from ..metric import Metric
 from ..models import PerformanceTimeoutError, TaskConfig, TaskStage
@@ -82,6 +81,7 @@ class CaseRunner(BaseModel):
             self._db_case_config_hash_key(),
             self._collection_name_hash_key(),
             self._dataset_hash_key(),
+            self.config.insert_batch_size,
             self.ca.with_scalar_labels,
             self.ca.is_multitenant,
             self._multitenant_routing_hash_key(),
@@ -298,6 +298,7 @@ class CaseRunner(BaseModel):
                 self.normalize,
                 self.ca.filters,
                 self.ca.load_timeout,
+                batch_size=self.config.insert_batch_size,
             )
             count = runner.run_endlessness()
         except Exception as e:
@@ -335,7 +336,7 @@ class CaseRunner(BaseModel):
                     m.load_duration = round(load_dur + build_dur, 4)
                     m.additional_parameters.update(
                         {
-                            "num_per_batch": config.NUM_PER_BATCH,
+                            "insert_batch_size": self.config.insert_batch_size,
                             "load_concurrency": self.config.load_concurrency,
                         }
                     )
@@ -408,7 +409,7 @@ class CaseRunner(BaseModel):
             self.normalize,
             self.ca.filters,
             max_workers=self.config.load_concurrency or None,
-            batch_size=self.ca.batch_size,
+            batch_size=self.config.insert_batch_size,
             duration=self.ca.duration,
             **runner_kwargs,
         )
@@ -511,6 +512,7 @@ class CaseRunner(BaseModel):
                 self.ca.filters,
                 self.ca.load_timeout,
                 max_workers=self.config.load_concurrency or None,
+                batch_size=self.config.insert_batch_size,
                 with_scalar_labels=self.ca.with_scalar_labels,
                 workload_kind=self.workload_kind,
                 **runner_kwargs,
@@ -699,6 +701,7 @@ class CaseRunner(BaseModel):
             concurrencies=ca.concurrencies,
             k=self.config.case_config.k,
             normalize=self.normalize,
+            batch_size=self.config.insert_batch_size,
         )
 
     def stop(self):
