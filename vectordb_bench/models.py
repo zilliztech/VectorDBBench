@@ -187,6 +187,15 @@ class CaseConfigParamType(Enum):
     exbits = "exbits"
     number_of_regions = "number_of_regions"
 
+    # ADBPG parameters
+    hnsw_m = "hnsw_m"
+    algorithm = "algorithm"
+    rabitq_bits = "rabitq_bits"
+    quantize_rescore_amp = "quantize_rescore_amp"
+    nova_adaptive_gamma = "nova_adaptive_gamma"
+    max_scan_points = "max_scan_points"
+    auto_reduction = "auto_reduction"
+
 
 class CustomizedCase(BaseModel):
     pass
@@ -196,6 +205,7 @@ class ConcurrencySearchConfig(BaseModel):
     num_concurrency: list[int] = config.NUM_CONCURRENCY
     concurrency_duration: int = config.CONCURRENCY_DURATION
     concurrency_timeout: int = config.CONCURRENCY_TIMEOUT
+    serial_cooldown: float = config.SERIAL_COOLDOWN
 
 
 class CaseConfig(BaseModel):
@@ -455,7 +465,6 @@ class TestResult(BaseModel):
                 case_config = task_config.get("case_config")
                 metrics = case_result.get("metrics")
                 db = DB(task_config.get("db"))
-
                 if "insert_batch_size" not in task_config:
                     insert_batch_size = None
                     if CaseType(case_config.get("case_id")) == CaseType.CloudInsertCase:
@@ -469,9 +478,7 @@ class TestResult(BaseModel):
                         )
                     if insert_batch_size is not None:
                         task_config["insert_batch_size"] = insert_batch_size
-
                 task_config["db_config"] = db.config_cls(**task_config["db_config"])
-
                 # Safely instantiate DBCaseConfig (fallback to EmptyDBCaseConfig on None)
                 raw_case_cfg = task_config.get("db_case_config") or {}
                 index_value = raw_case_cfg.get("index", None)

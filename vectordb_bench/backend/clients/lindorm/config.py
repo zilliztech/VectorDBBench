@@ -48,6 +48,7 @@ class HNSWConfig(LindormIndexConfig, DBCaseConfig):
     efSearch: int | None = None
     filter_type: str | None = "efficient_filter"
     k_expand_scope: int | None = 1000
+    reorder_factor: int | None = 2
 
     def index_param(self, dim: int | None = None) -> dict:
         return {
@@ -61,7 +62,7 @@ class HNSWConfig(LindormIndexConfig, DBCaseConfig):
         }
 
     def search_param(self, do_filter: bool = False) -> dict:
-        search_ext_param = {"lvector": {"ef_search": str(self.efSearch)}}
+        search_ext_param = {"lvector": {"ef_search": str(self.efSearch), "reorder_factor": str(self.reorder_factor)}}
         if do_filter:
             search_ext_param["lvector"]["filter_type"] = self.filter_type
             if self.filter_type == "efficient_filter":
@@ -80,7 +81,7 @@ class IVFPQConfig(LindormIndexConfig, DBCaseConfig):
     centroids_hnsw_efSearch: int | None = None
     filter_type: str | None = "efficient_filter"
 
-    reorder_factor: int | None = 10
+    reorder_factor: int | None = 2
     client_refactor: bool = False
     k_expand_scope: int | None = 1000
 
@@ -125,7 +126,7 @@ class IVFBQConfig(LindormIndexConfig, DBCaseConfig):
     centroids_hnsw_efSearch: int | None = None
     filter_type: str | None = "efficient_filter"
 
-    reorder_factor: int | None = 10
+    reorder_factor: int | None = 2
     client_refactor: bool = False
     k_expand_scope: int | None = 1000
 

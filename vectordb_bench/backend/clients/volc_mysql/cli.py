@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from typing import Annotated, Unpack
 
 import click
@@ -13,7 +14,7 @@ from ....cli.cli import (
 )
 
 
-class AliSQLTypedDict(CommonTypedDict):
+class VolcMySQLTypedDict(CommonTypedDict):
     user_name: Annotated[
         str,
         click.option(
@@ -49,22 +50,12 @@ class AliSQLTypedDict(CommonTypedDict):
             "--port",
             type=int,
             default=3306,
-            help="Db Port",
-        ),
-    ]
-
-    database: Annotated[
-        str,
-        click.option(
-            "--database",
-            type=str,
-            help="Database name",
-            default="vectordbbench",
+            help="DB Port",
         ),
     ]
 
 
-class AliSQLHNSWTypedDict(AliSQLTypedDict):
+class VolcMySQLHNSWTypedDict(VolcMySQLTypedDict):
     m: Annotated[
         int | None,
         click.option(
@@ -80,54 +71,64 @@ class AliSQLHNSWTypedDict(AliSQLTypedDict):
         click.option(
             "--ef-search",
             type=int,
-            help="AliSQL system variable vidx_hnsw_ef_search",
+            help="Session variable loose_hnsw_ef_search",
             required=False,
         ),
     ]
 
-    shards: Annotated[
+    ef_construction: Annotated[
         int | None,
         click.option(
-            "--shards",
+            "--ef-construction",
             type=int,
-            help="Number of shards for the vector index",
+            help="HNSW ef_construction",
             required=False,
         ),
     ]
 
-    quantization: Annotated[
+    quant_algorithm: Annotated[
         str | None,
         click.option(
-            "--quantization",
-            type=click.Choice(["SQ8", "SQ16"], case_sensitive=False),
-            help="Quantization algorithm for the vector index",
+            "--quant-algorithm",
+            type=click.Choice(["NONE", "SQ", "PQ"]),
+            help="Quantization algorithm",
+            required=False,
+        ),
+    ]
+
+    quant_type: Annotated[
+        str | None,
+        click.option(
+            "--quant-type",
+            type=click.Choice(["16_bit", "8_bit", "4_bit", "binary"]),
+            help="Quantization type",
             required=False,
         ),
     ]
 
 
 @cli.command()
-@click_parameter_decorators_from_typed_dict(AliSQLHNSWTypedDict)
-def AliSQLHNSW(
-    **parameters: Unpack[AliSQLHNSWTypedDict],
+@click_parameter_decorators_from_typed_dict(VolcMySQLHNSWTypedDict)
+def VolcMySQLHNSW(
+    **parameters: Unpack[VolcMySQLHNSWTypedDict],
 ):
-    from .config import AliSQLConfig, AliSQLHNSWConfig
+    from .config import VolcMySQLConfig, VolcMySQLHNSWConfig
 
     run(
-        db=DB.AliSQL,
-        db_config=AliSQLConfig(
+        db=DB.VolcMySQL,
+        db_config=VolcMySQLConfig(
             db_label=parameters["db_label"],
             user_name=parameters["username"],
             password=SecretStr(parameters["password"]),
             host=parameters["host"],
             port=parameters["port"],
-            database=parameters["database"],
         ),
-        db_case_config=AliSQLHNSWConfig(
+        db_case_config=VolcMySQLHNSWConfig(
             M=parameters["m"],
             ef_search=parameters["ef_search"],
-            shards=parameters["shards"],
-            quantization=parameters["quantization"].upper() if parameters["quantization"] is not None else None,
+            ef_construction=parameters["ef_construction"],
+            quant_algorithm=parameters["quant_algorithm"],
+            quant_type=parameters["quant_type"],
         ),
         **parameters,
     )

@@ -89,6 +89,18 @@ class RatedMultiThreadingInsertRunner:
                 log.debug("Failed to reset SeekDB connection on thread-local copy", exc_info=True)
             with db_copy.init():
                 _insert_embeddings(db_copy, emb, metadata, retry_idx=0)
+        elif db.name == "VolcMySQL":
+            # mysql.connector is not thread-safe; do not share one connection across workers.
+            # deepcopy() fails on an open conn (socket is not picklable / not copy-safe in spawn workers).
+            db_copy = copy(db)
+            try:
+                db_copy.conn = None
+                db_copy.cursor = None
+                db_copy.admin_cursor = None
+            except Exception:
+                log.debug("Failed to reset VolcMySQL connection on thread-local copy", exc_info=True)
+            with db_copy.init():
+                _insert_embeddings(db_copy, emb, metadata, retry_idx=0)
         else:
             _insert_embeddings(db, emb, metadata, retry_idx=0)
 
