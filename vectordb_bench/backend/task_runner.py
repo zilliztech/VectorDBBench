@@ -348,6 +348,12 @@ class CaseRunner(BaseModel):
                         m.conc_latency_avg_list,
                     ) = search_results
                 if TaskStage.SEARCH_SERIAL in self.config.stages:
+                    cooldown = self.config.case_config.concurrency_search_config.serial_cooldown
+                    if TaskStage.SEARCH_CONCURRENT in self.config.stages and cooldown > 0:
+                        log.info(
+                            f"Cooldown {cooldown}s before serial search to ensure a stable measurement environment"
+                        )
+                        time.sleep(cooldown)
                     search_results = self._serial_search()
                     if self.is_fts:
                         m.recall, m.ndcg, m.mrr, m.serial_latency_p99, m.serial_latency_p95 = search_results
