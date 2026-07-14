@@ -13,7 +13,6 @@ from vectordb_bench.backend.dataset import (
     MSMarcoTranslator,
     SizeLabel,
 )
-from vectordb_bench.backend.filter import NewIntFilter
 
 
 @dataclass
@@ -110,67 +109,11 @@ def test_fts_iterator_preserves_qrel_docs_before_filler():
     assert manager.selected_doc_ids == {"d1", "d2", "d4"}
 
     batches = list(manager)
-    docs = [(doc.doc_id, doc.filter_id) for batch in batches for doc in batch]
+    docs = [doc.doc_id for batch in batches for doc in batch]
 
     assert len(docs) == 3
-    assert ("d4", 2) in docs
-    assert all(not doc_id.isdecimal() for doc_id, _ in docs)
-    assert [filter_id for _, filter_id in docs] == [0, 1, 2]
-
-
-def test_fts_prepare_integer_filter_derives_filtered_qrels(monkeypatch: pytest.MonkeyPatch):
-    manager = make_tiny_msmarco_manager(size=4)
-    monkeypatch.setattr(manager._translator, "load", FakeDataset)
-
-    filters = NewIntFilter(filter_rate=0.5, int_field="filter_id", int_value=2)
-    assert manager.prepare(source=None, filters=filters)
-
-    assert [query.query_id for query in manager.queries_data] == ["q1", "q2"]
-    assert manager.gt_data == [{"d3": 1}, {"d1": 2}]
-    assert [query.query_id for query in manager.recall_queries_data] == ["q1"]
-    assert manager.recall_gt_data == [{"d3": 1}]
-    assert manager.recall_skipped is False
-    assert manager.recall_skip_reason is None
-    assert manager.qrel_filter_ids == {"d1": 0, "d3": 2}
-    assert manager.filter_stats == {
-        "filter_type": "NumGE",
-        "filter_field": "filter_id",
-        "filter_value": 2,
-        "filter_rate": 0.5,
-        "matched_doc_count": 2,
-        "matched_doc_ratio": 0.5,
-        "original_query_count": 2,
-        "filtered_query_count": 1,
-        "filtered_query_ratio": 0.5,
-        "original_relevant_doc_count": 2,
-        "filtered_relevant_doc_count": 1,
-    }
-
-
-def test_fts_prepare_integer_filter_skips_empty_filtered_qrels(monkeypatch: pytest.MonkeyPatch):
-    manager = make_tiny_msmarco_manager(size=4)
-    monkeypatch.setattr(manager._translator, "load", FakeDataset)
-
-    filters = NewIntFilter(filter_rate=0.75, int_field="filter_id", int_value=3)
-    assert manager.prepare(source=None, filters=filters)
-
-    assert [query.query_id for query in manager.queries_data] == ["q1", "q2"]
-    assert manager.gt_data == [{"d3": 1}, {"d1": 2}]
-    assert manager.recall_queries_data == []
-    assert manager.recall_gt_data == []
-    assert manager.recall_skipped is True
-    assert manager.recall_skip_reason == "no_positive_qrels_after_filter"
-    assert manager.filter_stats["filtered_query_count"] == 0
-    assert manager.filter_stats["filtered_relevant_doc_count"] == 0
-
-
-def test_fts_prepare_integer_filter_requires_filter_id_field(monkeypatch: pytest.MonkeyPatch):
-    manager = make_tiny_msmarco_manager(size=4)
-    monkeypatch.setattr(manager._translator, "load", FakeDataset)
-
-    filters = NewIntFilter(filter_rate=0.5, int_field="id", int_value=2)
-    with pytest.raises(ValueError, match="int_field='filter_id'"):
-        manager.prepare(source=None, filters=filters)
+    assert "d4" in docs
+    assert all(not doc_id.isdecimal() for doc_id in docs)
 
 
 def test_fts_cap_rejects_required_qrel_docs_missing_from_corpus():

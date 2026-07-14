@@ -50,7 +50,6 @@ class ElasticCloud(VectorDB):
         self.with_scalar_labels = with_scalar_labels
         self._is_fts = isinstance(db_case_config, ElasticCloudFtsConfig)
         self.text_col_name = "text"
-        self.filter_id_col_name = "filter_id"
         if self._is_fts:
             self.id_col_name = "doc_id"
 
@@ -188,26 +187,17 @@ class ElasticCloud(VectorDB):
         if len(docs) != len(doc_ids):
             msg = f"Mismatch between texts ({len(docs)}) and doc_ids ({len(doc_ids)}) lengths"
             raise ValueError(msg)
-        filter_ids = kwargs.get("filter_ids")
-        if filter_ids is not None and len(filter_ids) != len(docs):
-            msg = f"Mismatch between texts ({len(docs)}) and filter_ids ({len(filter_ids)}) lengths"
-            raise ValueError(msg)
-
-        actions = []
-        for i, doc in enumerate(docs):
-            source = {
-                self.id_col_name: str(doc_ids[i]),
-                self.text_col_name: doc,
+        actions = [
+            {
+                "_index": self.indice,
+                "_id": str(doc_ids[i]),
+                "_source": {
+                    self.id_col_name: str(doc_ids[i]),
+                    self.text_col_name: docs[i],
+                },
             }
-            if filter_ids is not None:
-                source[self.filter_id_col_name] = int(filter_ids[i])
-            actions.append(
-                {
-                    "_index": self.indice,
-                    "_id": str(doc_ids[i]),
-                    "_source": source,
-                }
-            )
+            for i in range(len(docs))
+        ]
         try:
             result = bulk(self.client, actions)
             return result[0], None
@@ -218,19 +208,10 @@ class ElasticCloud(VectorDB):
     def prepare_filter(self, filters: Filter):
         self.routing_key = None
         if filters.type == FilterOp.NonFilter:
-            self.filter = None if self._is_fts else []
+            self.filter = []
         elif filters.type == FilterOp.NumGE:
-            if self._is_fts:
-                if getattr(filters, "int_field", None) != self.filter_id_col_name:
-                    msg = f"ElasticCloud FTS filters only support int_field='{self.filter_id_col_name}'"
-                    raise ValueError(msg)
-                self.filter = {"range": {self.filter_id_col_name: {"gte": filters.int_value}}}
-            else:
-                self.filter = {"range": {self.id_col_name: {"gt": filters.int_value}}}
+            self.filter = {"range": {self.id_col_name: {"gt": filters.int_value}}}
         elif filters.type == FilterOp.StrEqual:
-            if self._is_fts:
-                msg = f"Not support Filter for ElasticCloud FTS - {filters}"
-                raise ValueError(msg)
             self.filter = {"term": {self.label_col_name: filters.label_value}}
             if self.case_config.use_routing:
                 self.routing_key = filters.label_value
@@ -296,12 +277,9 @@ class ElasticCloud(VectorDB):
         filter_path = ["hits.hits._id", f"hits.hits.fields.{self.id_col_name}"]
         if payload_profile == PayloadProfile.TEXT:
             filter_path.append(f"hits.hits._source.{self.text_col_name}")
-        query_clause = {"match": {self.text_col_name: query}}
-        if getattr(self, "filter", None):
-            query_clause = {"bool": {"must": query_clause, "filter": self.filter}}
         search_kwargs = {
             "index": self.indice,
-            "query": query_clause,
+            "query": {"match": {self.text_col_name: query}},
             "size": k,
             "_source": source,
             "docvalue_fields": [self.id_col_name],

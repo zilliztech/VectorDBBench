@@ -5,8 +5,7 @@ from vectordb_bench.backend.clients.api import IndexType
 from vectordb_bench.backend.clients.elastic_cloud.config import ElasticCloudFtsConfig, ElasticCloudIndexConfig
 from vectordb_bench.backend.clients.milvus.config import MilvusFtsConfig
 from vectordb_bench.backend.clients.vespa.config import VespaFtsConfig, VespaHNSWConfig
-from vectordb_bench.backend.dataset import FtsDatasetWithSizeType
-from vectordb_bench.cli.cli import CommonTypedDict, get_custom_case_config, select_cli_db_case_config
+from vectordb_bench.cli.cli import CommonTypedDict, select_cli_db_case_config
 
 
 def test_common_cli_exposes_optional_fts_bm25_overrides():
@@ -14,24 +13,6 @@ def test_common_cli_exposes_optional_fts_bm25_overrides():
 
     assert "bm25_k1" in hints
     assert "bm25_b" in hints
-    assert "fts_filter_rate" in hints
-
-
-def test_cli_builds_fts_filter_case_config():
-    custom_case = get_custom_case_config(
-        {
-            "case_type": "FTSBm25Performance",
-            "dataset_with_size_type": FtsDatasetWithSizeType.MSMarcoLarge.value,
-            "payload_profile": "ids_only",
-            "fts_filter_rate": 0.95,
-        }
-    )
-
-    assert custom_case == {
-        "dataset_with_size_type": FtsDatasetWithSizeType.MSMarcoLarge.value,
-        "payload_profile": "ids_only",
-        "filter_rate": 0.95,
-    }
 
 
 def test_cli_applies_bm25_overrides_to_existing_fts_config():

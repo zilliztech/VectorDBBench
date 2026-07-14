@@ -152,7 +152,6 @@ class ElasticCloudFtsConfig(BaseModel, DBCaseConfig):
         return {
             "properties": {
                 "doc_id": {"type": "keyword"},
-                "filter_id": {"type": "long"},
                 "text": text_mapping,
             },
         }

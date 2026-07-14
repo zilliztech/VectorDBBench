@@ -119,7 +119,6 @@ class TurboPuffer(VectorDB):
         self._scalar_label_field = "label"
         self._scalar_payload_label_field = db_config.get("scalar_payload_label_field", self._scalar_label_field)
         self._text_field = "text"
-        self._filter_id_field = "filter_id"
 
         self.with_scalar_labels = with_scalar_labels
         self.expr = None
@@ -388,33 +387,20 @@ class TurboPuffer(VectorDB):
         if len(docs) != len(doc_ids):
             msg = f"Mismatch between texts ({len(docs)}) and doc_ids ({len(doc_ids)}) lengths"
             raise ValueError(msg)
-        filter_ids = kwargs.get("filter_ids")
-        if filter_ids is not None and len(filter_ids) != len(docs):
-            msg = f"Mismatch between texts ({len(docs)}) and filter_ids ({len(filter_ids)}) lengths"
-            raise ValueError(msg)
 
         text_field = self._text_field
-        upsert_columns = {
-            self._scalar_id_field: [str(doc_id) for doc_id in doc_ids],
-            text_field: docs,
-        }
-        if filter_ids is not None:
-            upsert_columns[self._filter_id_field] = [int(filter_id) for filter_id in filter_ids]
-        schema = {
-            text_field: {
-                "type": "string",
-                "full_text_search": True,
-            }
-        }
-        if filter_ids is not None:
-            schema[self._filter_id_field] = {
-                "type": "int",
-                "filterable": True,
-            }
         try:
             self.ns.write(
-                upsert_columns=upsert_columns,
-                schema=schema,
+                upsert_columns={
+                    self._scalar_id_field: [str(doc_id) for doc_id in doc_ids],
+                    text_field: docs,
+                },
+                schema={
+                    text_field: {
+                        "type": "string",
+                        "full_text_search": True,
+                    }
+                },
                 disable_backpressure=self.db_case_config.disable_backpressure,
             )
         except Exception as e:
@@ -461,8 +447,6 @@ class TurboPuffer(VectorDB):
             "rank_by": (self._text_field, "BM25", query),
             "top_k": k,
         }
-        if self.expr is not None:
-            query_kwargs["filters"] = self.expr
         if payload_profile == PayloadProfile.TEXT:
             query_kwargs["include_attributes"] = [self._text_field]
         res = self.ns.query(**query_kwargs)
@@ -473,17 +457,8 @@ class TurboPuffer(VectorDB):
         if filters.type == FilterOp.NonFilter:
             self.expr = None
         elif filters.type == FilterOp.NumGE:
-            if self._is_fts:
-                if getattr(filters, "int_field", None) != self._filter_id_field:
-                    msg = f"TurboPuffer FTS filters only support int_field='{self._filter_id_field}'"
-                    raise ValueError(msg)
-                self.expr = (self._filter_id_field, "Gte", filters.int_value)
-            else:
-                self.expr = (self._scalar_id_field, "Gte", filters.int_value)
+            self.expr = (self._scalar_id_field, "Gte", filters.int_value)
         elif filters.type == FilterOp.StrEqual:
-            if self._is_fts:
-                msg = f"Not support Filter for TurboPuffer FTS - {filters}"
-                raise ValueError(msg)
             self.expr = (self._scalar_payload_label_field, "Eq", filters.label_value)
         else:
             msg = f"Not support Filter for TurboPuffer - {filters}"

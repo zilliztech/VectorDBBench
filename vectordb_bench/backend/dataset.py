@@ -556,7 +556,6 @@ class FtsDocument:
 
     doc_id: str
     text: str
-    filter_id: int | None = None
 
 
 class FtsDatasetTranslator(ABC):
@@ -723,8 +722,6 @@ class FtsDatasetManager(BaseModel):
     Similar to DatasetManager, but for text-based FTS datasets:
     - queries_data: loaded queries (similar to test_data in vectors)
     - gt_data: loaded ground truth (similar to gt_data in vectors)
-    - recall_queries_data: recall-valid queries after optional FTS filter
-    - recall_gt_data: recall-valid ground truth after optional FTS filter
     - translator: dataset-specific translator for schema conversion
     - _ir_dataset: ir_datasets dataset object for direct access
     """
@@ -734,15 +731,9 @@ class FtsDatasetManager(BaseModel):
 
     queries_data: list[FtsQuery] | None = None
     gt_data: list[dict[str, int]] | None = None
-    recall_queries_data: list[FtsQuery] | None = None
-    recall_gt_data: list[dict[str, int]] | None = None
-    recall_skipped: bool = False
-    recall_skip_reason: str | None = None
     qrels_data: dict[str, dict[str, int]] = PydanticField(default_factory=dict)
     required_doc_ids: set[str] = PydanticField(default_factory=set)
     selected_doc_ids: set[str] | None = None
-    qrel_filter_ids: dict[str, int] = PydanticField(default_factory=dict)
-    filter_stats: dict[str, int | float | str] = PydanticField(default_factory=dict)
     _ir_dataset: typing.Any = PrivateAttr(default=None)
 
     def __init__(self, **data):
@@ -814,114 +805,6 @@ class FtsDatasetManager(BaseModel):
 
         return selected_doc_ids
 
-    def _build_qrel_filter_ids(self) -> dict[str, int]:
-        """Map qrel doc IDs to their deterministic FTS filter_id ordinal."""
-        if self._ir_dataset is None:
-            msg = "ir_datasets dataset not loaded. Call prepare() first."
-            raise RuntimeError(msg)
-        if self.selected_doc_ids is None:
-            msg = "selected_doc_ids is required before building FTS filter IDs"
-            raise RuntimeError(msg)
-
-        qrel_doc_ids = set(self.required_doc_ids)
-        qrel_filter_ids: dict[str, int] = {}
-        emitted_count = 0
-        for doc in self._translator.iter_documents(self._ir_dataset):
-            doc_id = str(doc.doc_id)
-            if doc_id not in self.selected_doc_ids:
-                continue
-            if doc_id in qrel_doc_ids:
-                qrel_filter_ids[doc_id] = emitted_count
-            emitted_count += 1
-            if emitted_count >= self.data.size and len(qrel_filter_ids) == len(qrel_doc_ids):
-                break
-
-        missing_doc_ids = qrel_doc_ids - set(qrel_filter_ids)
-        if missing_doc_ids:
-            preview = ", ".join(sorted(missing_doc_ids)[:10])
-            msg = (
-                f"{self.data.full_name} semantic qrel docs missing filter_id assignment: {preview}"
-                f"{'...' if len(missing_doc_ids) > 10 else ''}"
-            )
-            raise ValueError(msg)
-        return qrel_filter_ids
-
-    def _apply_integer_filter_to_qrels(
-        self,
-        queries: list[FtsQuery],
-        ground_truth: list[dict[str, int]],
-        filters: Filter,
-    ) -> tuple[list[FtsQuery], list[dict[str, int]]]:
-        filter_field = getattr(filters, "int_field", "filter_id")
-        if filter_field != "filter_id":
-            msg = f"FTS integer filters require int_field='filter_id', got {filter_field!r}"
-            raise ValueError(msg)
-
-        filter_value = int(getattr(filters, "int_value"))
-        if filter_value < 0 or filter_value > self.data.size:
-            msg = f"FTS filter_id threshold must be in [0, {self.data.size}], got {filter_value}"
-            raise ValueError(msg)
-
-        self.qrel_filter_ids = self._build_qrel_filter_ids()
-        filtered_queries: list[FtsQuery] = []
-        filtered_gt: list[dict[str, int]] = []
-        for query, qrels in zip(queries, ground_truth, strict=True):
-            filtered_qrels = {
-                doc_id: rel
-                for doc_id, rel in qrels.items()
-                if self.qrel_filter_ids.get(doc_id, -1) >= filter_value
-            }
-            if not filtered_qrels:
-                continue
-            filtered_queries.append(query)
-            filtered_gt.append(filtered_qrels)
-
-        matched_doc_count = self.data.size - filter_value
-        filtered_relevant_doc_ids = {doc_id for qrels in filtered_gt for doc_id in qrels}
-        self.filter_stats = {
-            "filter_type": filters.type.value,
-            "filter_field": filter_field,
-            "filter_value": filter_value,
-            "filter_rate": filters.filter_rate,
-            "matched_doc_count": matched_doc_count,
-            "matched_doc_ratio": round(matched_doc_count / self.data.size, 6),
-            "original_query_count": len(queries),
-            "filtered_query_count": len(filtered_queries),
-            "filtered_query_ratio": round(len(filtered_queries) / len(queries), 6),
-            "original_relevant_doc_count": len(self.required_doc_ids),
-            "filtered_relevant_doc_count": len(filtered_relevant_doc_ids),
-        }
-        log.info(
-            "Applied FTS integer filter %s >= %s: queries %s/%s, relevant docs %s/%s",
-            filter_field,
-            filter_value,
-            len(filtered_queries),
-            len(queries),
-            len(filtered_relevant_doc_ids),
-            len(self.required_doc_ids),
-        )
-        if not filtered_queries:
-            self.recall_skipped = True
-            self.recall_skip_reason = "no_positive_qrels_after_filter"
-        return filtered_queries, filtered_gt
-
-    def _apply_filters_to_qrels(
-        self,
-        queries: list[FtsQuery],
-        ground_truth: list[dict[str, int]],
-        filters: Filter | None,
-    ) -> tuple[list[FtsQuery], list[dict[str, int]]]:
-        self.filter_stats = {}
-        self.qrel_filter_ids = {}
-        self.recall_skipped = False
-        self.recall_skip_reason = None
-        if filters is None or filters.type == FilterOp.NonFilter:
-            return queries, ground_truth
-        if filters.type == FilterOp.NumGE:
-            return self._apply_integer_filter_to_qrels(queries, ground_truth, filters)
-        msg = f"FTS dataset filtering does not support filter type {filters.type}"
-        raise ValueError(msg)
-
     def prepare(
         self,
         source: DatasetSource | None = None,
@@ -936,8 +819,7 @@ class FtsDatasetManager(BaseModel):
 
         Args:
             source: Data source to download from (should be IR_DATASETS for FTS)
-            filters: Optional filters. FTS supports natural semantic GT
-                filtering for integer filter_id cases.
+            filters: Optional filters (not used for FTS)
 
         Returns:
             bool: True if preparation successful, False otherwise
@@ -983,27 +865,14 @@ class FtsDatasetManager(BaseModel):
 
                 self.required_doc_ids = {doc_id for qrels in self.gt_data for doc_id in qrels}
                 self.selected_doc_ids = self._build_selected_doc_ids()
-                self.recall_queries_data, self.recall_gt_data = self._apply_filters_to_qrels(
-                    self.queries_data,
-                    self.gt_data,
-                    filters,
-                )
                 log.info(
-                    "Loaded semantic qrels for %s queries; recall uses %s queries; "
-                    "selected %s corpus docs including %s qrel docs",
+                    "Loaded semantic qrels for %s queries; selected %s corpus docs including %s qrel docs",
                     len(self.gt_data),
-                    len(self.recall_gt_data),
                     len(self.selected_doc_ids),
                     len(self.required_doc_ids),
                 )
             else:
                 self.selected_doc_ids = None
-                self.qrel_filter_ids = {}
-                self.filter_stats = {}
-                self.recall_queries_data = None
-                self.recall_gt_data = None
-                self.recall_skipped = False
-                self.recall_skip_reason = None
 
         except (TypeError, ValueError):
             log.exception("Invalid FTS dataset configuration")
@@ -1089,7 +958,6 @@ class FtsDocumentIterator:
                     doc.doc_id = str(doc.doc_id)
                     if self._ds.selected_doc_ids is not None and doc.doc_id not in self._ds.selected_doc_ids:
                         continue
-                    doc.filter_id = self._doc_count
                     batch.append(doc)
                     self._doc_count += 1
                 except StopIteration:
