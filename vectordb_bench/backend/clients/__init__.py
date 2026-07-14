@@ -58,6 +58,7 @@ class DB(Enum):
     TurboPuffer = "TurboPuffer"
     Zvec = "Zvec"
     Endee = "Endee"
+    EndeeOSS = "EndeeOSS"
     Lindorm = "Lindorm"
     VectorChord = "VectorChord"
     PolarDB = "PolarDB"
@@ -241,6 +242,11 @@ class DB(Enum):
             from .endee.endee import Endee
 
             return Endee
+
+        if self == DB.EndeeOSS:
+            from .endee.endee import EndeeOSS
+
+            return EndeeOSS
 
         if self == DB.Zvec:
             from .zvec.zvec import Zvec
@@ -459,6 +465,11 @@ class DB(Enum):
             from .endee.config import EndeeConfig
 
             return EndeeConfig
+
+        if self == DB.EndeeOSS:
+            from .endee.config import EndeeOSSConfig
+
+            return EndeeOSSConfig
 
         if self == DB.Zvec:
             from .zvec.config import ZvecConfig
