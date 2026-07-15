@@ -7,6 +7,7 @@ Usage:
 import json
 import logging
 import pathlib
+import struct
 import types
 import typing
 from abc import ABC, abstractmethod
@@ -18,9 +19,11 @@ from typing import Any, ClassVar, NamedTuple
 import ir_datasets
 import pandas as pd
 import polars as pl
+import s3fs
 from pyarrow.parquet import ParquetFile
 from pydantic import Field as PydanticField
 from pydantic import PrivateAttr, field_validator
+from tqdm import tqdm
 
 from vectordb_bench import config
 from vectordb_bench.base import BaseModel
@@ -265,6 +268,28 @@ class SIFT(BaseDataset):
     }
 
 
+class SIFTBinary(BaseDataset):
+    name: str = "SIFTBinary"
+    dim: int = 128
+    metric_type: MetricType = MetricType.HAMMING
+    use_shuffled: bool = False
+    with_gt: bool = True
+    remote_path: str = "assets.zilliz.com/nightly/v1/siftbinary_1m"
+    test_file: str = "query.bin"
+    gt_file: str = "truth.ibin"
+    _size_label: ClassVar[dict[int, SizeLabel]] = {
+        1_000_000: SizeLabel(1_000_000, "1M", 1),
+    }
+
+    @property
+    def dir_name(self) -> str:
+        return "siftbinary_1m"
+
+    @property
+    def train_files(self) -> list[str]:
+        return ["base.bin"]
+
+
 class OpenAI(BaseDataset):
     name: str = "OpenAI"
     dim: int = 1536
@@ -466,6 +491,151 @@ class DataSetIterator:
         raise StopIteration
 
 
+class BinaryDatasetManager(DatasetManager):
+    """Dataset manager for vecTool-style packed binary vector files."""
+
+    data: SIFTBinary
+
+    def __iter__(self):
+        return BinaryDataSetIterator(self)
+
+    def iter_batches(self, batch_size: int):
+        return BinaryDataSetIterator(self, batch_size=batch_size)
+
+    def prepare(
+        self,
+        source: DatasetSource = DatasetSource.S3,
+        filters: Filter = non_filter,
+        with_train_files: bool = True,
+        with_scalar_labels: bool = False,
+    ) -> bool:
+        if source != DatasetSource.S3:
+            msg = f"{self.data.name} is currently hosted under assets.zilliz.com/nightly and supports S3 only"
+            raise ValueError(msg)
+
+        self.train_files = self.data.train_files if with_train_files else []
+        download_files = [*self.train_files, self.data.test_file, self.data.gt_file, "manifest.json"]
+        self._download_files(download_files)
+
+        self.test_data = self._read_binary_vectors(self.data.test_file)
+        self.gt_data = self._read_truth_ids(self.data.gt_file)
+        log.debug(f"{self.data.name}: available train files {self.train_files}")
+        return True
+
+    def _download_files(self, files: list[str]) -> None:
+        self.data_dir.mkdir(parents=True, exist_ok=True)
+        fs = s3fs.S3FileSystem(anon=True, client_kwargs={"region_name": "us-west-2"})
+        downloads = []
+        for file in files:
+            remote_file = pathlib.PurePosixPath(self.data.remote_path, file)
+            local_file = self.data_dir.joinpath(file)
+            if not local_file.exists():
+                downloads.append((remote_file, local_file))
+                continue
+
+            remote_size = fs.info(remote_file.as_posix()).get("size")
+            if remote_size != local_file.stat().st_size:
+                downloads.append((remote_file, local_file))
+
+        if not downloads:
+            return
+
+        log.info(f"Start downloading binary dataset files, total count: {len(downloads)}")
+        for remote_file, local_file in tqdm(downloads):
+            fs.download(remote_file.as_posix(), local_file.as_posix())
+
+    def _read_binary_header(self, file_name: str) -> tuple[int, int]:
+        path = self.data_dir.joinpath(file_name)
+        with path.open("rb") as fp:
+            header = fp.read(8)
+        if len(header) != 8:
+            msg = f"Invalid binary vector file header: {path}"
+            raise ValueError(msg)
+        rows, dim = struct.unpack("<II", header)
+        if dim != self.data.dim:
+            msg = f"Unexpected {file_name} dim={dim}; expected {self.data.dim}"
+            raise ValueError(msg)
+        return rows, dim
+
+    def _read_binary_vectors(self, file_name: str) -> list[str]:
+        path = self.data_dir.joinpath(file_name)
+        rows, dim = self._read_binary_header(file_name)
+        bytes_per_vector = dim // 8
+        with path.open("rb") as fp:
+            fp.seek(8)
+            raw = fp.read()
+        expected = rows * bytes_per_vector
+        if len(raw) != expected:
+            msg = f"Unexpected {file_name} payload size={len(raw)}; expected {expected}"
+            raise ValueError(msg)
+        return [raw[i : i + bytes_per_vector].hex() for i in range(0, len(raw), bytes_per_vector)]
+
+    def _read_truth_ids(self, file_name: str) -> list[list[int]]:
+        path = self.data_dir.joinpath(file_name)
+        with path.open("rb") as fp:
+            header = fp.read(8)
+            raw = fp.read()
+        if len(header) != 8:
+            msg = f"Invalid truth file header: {path}"
+            raise ValueError(msg)
+        nq, topk = struct.unpack("<II", header)
+        expected = nq * topk * 4
+        if len(raw) != expected:
+            msg = f"Unexpected {file_name} payload size={len(raw)}; expected {expected}"
+            raise ValueError(msg)
+        ids = [value[0] for value in struct.iter_unpack("<i", raw)]
+        return [ids[i : i + topk] for i in range(0, len(ids), topk)]
+
+
+class BinaryDataSetIterator:
+    def __init__(self, dataset: BinaryDatasetManager, batch_size: int = config.NUM_PER_BATCH):
+        self._ds = dataset
+        self._batch_size = batch_size
+        self._idx = 0
+        self._rows, self._dim = self._ds._read_binary_header("base.bin")
+        self._bytes_per_vector = self._dim // 8
+        self._fp = None
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state["_fp"] = None
+        return state
+
+    def __setstate__(self, state: Any):
+        self.__dict__.update(state)
+
+    def __iter__(self):
+        return self
+
+    def __next__(self) -> pd.DataFrame:
+        if self._idx >= self._rows:
+            if self._fp is not None:
+                self._fp.close()
+                self._fp = None
+            raise StopIteration
+
+        if self._fp is None:
+            path = self._ds.data_dir.joinpath("base.bin")
+            self._fp = path.open("rb")
+            self._fp.seek(8 + self._idx * self._bytes_per_vector)
+
+        batch_rows = min(self._batch_size, self._rows - self._idx)
+        raw = self._fp.read(batch_rows * self._bytes_per_vector)
+        if len(raw) != batch_rows * self._bytes_per_vector:
+            msg = f"Unexpected EOF while reading {self._ds.data.name} at row {self._idx}"
+            raise ValueError(msg)
+
+        start = self._idx
+        self._idx += batch_rows
+        vectors = [raw[i : i + self._bytes_per_vector].hex() for i in range(0, len(raw), self._bytes_per_vector)]
+        return pd.DataFrame(
+            {
+                self._ds.data.train_id_field: range(start, start + batch_rows),
+                self._ds.data.train_vector_field: vectors,
+            }
+        )
+
+
 class Dataset(Enum):
     """
     Value is Dataset classes, DO NOT use it
@@ -481,13 +651,17 @@ class Dataset(Enum):
     BIOASQ = Bioasq
     GLOVE = Glove
     SIFT = SIFT
+    SIFT_BINARY = SIFTBinary
     OPENAI = OpenAI
 
     def get(self, size: int) -> BaseDataset:
         return self.value(size=size)
 
     def manager(self, size: int) -> DatasetManager:
-        return DatasetManager(data=self.get(size))
+        data = self.get(size)
+        if isinstance(data, SIFTBinary):
+            return BinaryDatasetManager(data=data)
+        return DatasetManager(data=data)
 
 
 class DatasetWithSizeType(Enum):
@@ -500,6 +674,7 @@ class DatasetWithSizeType(Enum):
     OpenAISmall = "Small OpenAI (1536dim, 50K)"
     OpenAIMedium = "Medium OpenAI (1536dim, 500K)"
     OpenAILarge = "Large OpenAI (1536dim, 5M)"
+    SIFTBinary1M = "Medium SIFT Binary (128bit, 1M)"
 
     def get_manager(self) -> DatasetManager:
         if self not in DatasetWithSizeMap:
@@ -541,6 +716,7 @@ DatasetWithSizeMap = {
     DatasetWithSizeType.OpenAISmall: Dataset.OPENAI.manager(50_000),
     DatasetWithSizeType.OpenAIMedium: Dataset.OPENAI.manager(500_000),
     DatasetWithSizeType.OpenAILarge: Dataset.OPENAI.manager(5_000_000),
+    DatasetWithSizeType.SIFTBinary1M: Dataset.SIFT_BINARY.manager(1_000_000),
 }
 
 

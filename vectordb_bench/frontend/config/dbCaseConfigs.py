@@ -2326,6 +2326,7 @@ ZillizCloudFtsConfig = [
 
 ElasticCloudFtsConfig = []
 VespaFtsConfig = []
+OSSOpenSearchFtsConfig = []
 TurboPufferFtsConfig = []
 
 WeaviateLoadConfig = [
@@ -3275,6 +3276,7 @@ CASE_CONFIG_MAP = {
     DB.OSSOpenSearch: {
         CaseLabel.Load: OSSOpensearchLoadingConfig,
         CaseLabel.Performance: OSSOpenSearchPerformanceConfig,
+        CaseLabel.FullTextSearchPerformance: OSSOpenSearchFtsConfig,
     },
     DB.PgVector: {
         CaseLabel.Load: PgVectorLoadingConfig,

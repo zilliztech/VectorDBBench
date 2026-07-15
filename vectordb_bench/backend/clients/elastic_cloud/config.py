@@ -68,6 +68,7 @@ class ElasticCloudConfig(DBConfig, BaseModel):
 class ESElementType(StrEnum):
     float = "float"  # 4 byte
     byte = "byte"  # 1 byte, -128 to 127
+    bit = "bit"  # packed binary vector
 
 
 class ElasticCloudIndexConfig(BaseModel, DBCaseConfig):
@@ -86,6 +87,12 @@ class ElasticCloudIndexConfig(BaseModel, DBCaseConfig):
     efConstruction: int | None = None
     M: int | None = None
     num_candidates: int | None = None
+
+    def _metric_value(self) -> str | None:
+        metric = self.metric_type
+        if metric is None:
+            return None
+        return metric.value if hasattr(metric, "value") else str(metric)
 
     def __eq__(self, obj: any):
         return (
@@ -111,17 +118,24 @@ class ElasticCloudIndexConfig(BaseModel, DBCaseConfig):
         )
 
     def parse_metric(self) -> str:
+        if self._metric_value() == MetricType.HAMMING.value:
+            return "l2_norm"
         if self.metric_type == MetricType.L2:
             return "l2_norm"
         if self.metric_type == MetricType.IP:
             return "dot_product"
         return "cosine"
 
+    def parse_element_type(self) -> ESElementType:
+        if self._metric_value() == MetricType.HAMMING.value:
+            return ESElementType.bit
+        return self.element_type
+
     def index_param(self) -> dict:
         return {
             "type": "dense_vector",
             "index": True,
-            "element_type": self.element_type.value,
+            "element_type": self.parse_element_type().value,
             "similarity": self.parse_metric(),
             "index_options": {
                 "type": self.index.value,
