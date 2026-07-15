@@ -16,7 +16,6 @@ from .config import EndeeConfig, EndeeOSSConfig
 
 class EndeeTypedDict(CommonTypedDict):
     token: Annotated[str, click.option("--token", type=str, required=True, default=None, help="Endee API token")]
-    region: Annotated[str, click.option("--region", type=str, default=None, help="Endee region", show_default=True)]
     base_url: Annotated[
         str | None,
         click.option(
@@ -102,7 +101,6 @@ def Endee(**parameters: Unpack[EndeeTypedDict]):
 # OSS Repo: https://github.com/endee-io/endee
 class EndeeOSSTypedDict(CommonTypedDict):
     token: Annotated[str, click.option("--token", type=str, required=True, default=None, help="Endee API token")]
-    region: Annotated[str, click.option("--region", type=str, default=None, help="Endee region", show_default=True)]
     base_url: Annotated[
         str,
         click.option(
