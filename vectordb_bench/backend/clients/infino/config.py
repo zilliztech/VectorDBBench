@@ -34,3 +34,31 @@ class InfinoIndexConfig(BaseModel, DBCaseConfig):
 
     def search_param(self) -> dict:
         return {"nprobe": self.nprobe}
+
+
+# Infino's BM25 k1/b are compile-time constants and its analyzer is not
+# configurable from the binding, so the FTS index has no tunable params.
+_INFINO_BM25_K1 = 1.2
+_INFINO_BM25_B = 0.75
+
+
+class InfinoFTSConfig(BaseModel, DBCaseConfig):
+    """Marks a run as full-text (BM25) rather than vector."""
+
+    metric_type: MetricType | None = None
+
+    def index_param(self) -> dict:
+        return {}
+
+    def search_param(self) -> dict:
+        return {}
+
+    def apply_fts_manifest(self, bm25_params: dict[str, float], analyzer_params: dict) -> tuple[DBCaseConfig, dict]:
+        fixed = {"k1": _INFINO_BM25_K1, "b": _INFINO_BM25_B}
+        applied = {k: v for k, v in bm25_params.items() if k in fixed and v == fixed[k]}
+        return self, {
+            "applied_bm25_params": applied,
+            "unapplied_bm25_params": {k: v for k, v in bm25_params.items() if k not in applied},
+            "applied_analyzer_params": {},
+            "unapplied_analyzer_params": dict(analyzer_params),
+        }

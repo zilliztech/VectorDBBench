@@ -4,6 +4,7 @@ import numpy as np
 
 from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.clients.api import MetricType
+from vectordb_bench.backend.clients.infino.config import InfinoFTSConfig
 from vectordb_bench.backend.filter import IntFilter, LabelFilter
 
 
@@ -108,3 +109,31 @@ class TestInfino:
                 res = client.search_embedding(query=embeddings[query_id], k=10)
                 assert res[0] == query_id
                 assert all(r % 2 == 0 for r in res), f"StrEqual leaked non-target rows: {res}"
+
+    def test_fts_bm25(self):
+        assert DB.Infino.init_cls.supports_full_text_search() is True
+
+        dbcls = DB.Infino.init_cls
+        config_cls = DB.Infino.config_cls
+
+        docs = ["alpha beta", "gamma delta", "beta gamma", "unique zebra sentence"]
+        doc_ids = [str(i) for i in range(len(docs))]
+
+        with tempfile.TemporaryDirectory() as data_path:
+            client = dbcls(
+                dim=0,
+                db_config=config_cls(data_path=data_path).to_dict(),
+                db_case_config=InfinoFTSConfig(),
+                collection_name="test_fts",
+                drop_old=True,
+            )
+            with client.init():
+                inserted, err = client.insert_documents(texts=docs, doc_ids=doc_ids)
+                assert err is None
+                assert inserted == len(docs)
+
+            with client.init():
+                res = client.search_documents(query="zebra", k=10)
+                assert res == ["3"], f"expected doc 3 for 'zebra', got {res}"
+                # returned ids are strings matching the FTS ground-truth dtype
+                assert all(isinstance(r, str) for r in res)

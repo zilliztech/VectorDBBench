@@ -8,14 +8,16 @@ import pyarrow as pa
 
 from vectordb_bench.backend.filter import Filter, FilterOp
 
-from ..api import DBCaseConfig, VectorDB
-from .config import InfinoConfig, InfinoIndexConfig
+from ..api import DBCaseConfig, IndexType, VectorDB
+from .config import InfinoConfig, InfinoFTSConfig, InfinoIndexConfig
 
 log = logging.getLogger(__name__)
 
 _VECTOR_FIELD = "emb"
 _ID_FIELD = "id"
 _LABEL_FIELD = "label"
+_DOC_ID_FIELD = "doc_id"
+_TEXT_FIELD = "text"
 # vector_search's filter args are FTS-token-only; scalar filters go through the
 # SQL vector_search TVF, which post-filters the top-k, so over-fetch to refill.
 _FILTER_OVERSAMPLE = 10
@@ -55,10 +57,12 @@ class Infino(VectorDB):
         self.data_path = db_config["data_path"]
         self.table_name = collection_name
         self.with_scalar_labels = with_scalar_labels
-        index_param = db_case_config.index_param()
-        self.metric = index_param["metric"]
-        self.n_cent = index_param["n_cent"]
-        self.nprobe = db_case_config.search_param()["nprobe"]
+        self._is_fts = isinstance(db_case_config, InfinoFTSConfig)
+        if not self._is_fts:
+            index_param = db_case_config.index_param()
+            self.metric = index_param["metric"]
+            self.n_cent = index_param["n_cent"]
+            self.nprobe = db_case_config.search_param()["nprobe"]
 
         self._where = None
         self._conn = None
@@ -72,6 +76,13 @@ class Infino(VectorDB):
             conn.create_table(self.table_name, self._schema(), self._index_spec())
 
     def _schema(self) -> pa.Schema:
+        if self._is_fts:
+            return pa.schema(
+                [
+                    pa.field(_DOC_ID_FIELD, pa.large_utf8(), nullable=False),
+                    pa.field(_TEXT_FIELD, pa.large_utf8(), nullable=False),
+                ],
+            )
         fields = [pa.field(_ID_FIELD, pa.int64(), nullable=False)]
         if self.with_scalar_labels:
             fields.append(pa.field(_LABEL_FIELD, pa.large_utf8(), nullable=False))
@@ -79,6 +90,8 @@ class Infino(VectorDB):
         return pa.schema(fields)
 
     def _index_spec(self) -> infino.IndexSpec:
+        if self._is_fts:
+            return infino.IndexSpec().fts(_TEXT_FIELD)
         return infino.IndexSpec().vector(_VECTOR_FIELD, self.dim, self.n_cent, self.metric)
 
     @classmethod
@@ -87,7 +100,13 @@ class Infino(VectorDB):
 
     @classmethod
     def case_config_cls(cls, index_type: str | None = None) -> type[DBCaseConfig]:
+        if index_type == IndexType.FTS:
+            return InfinoFTSConfig
         return InfinoIndexConfig
+
+    @classmethod
+    def supports_full_text_search(cls) -> bool:
+        return True
 
     @contextmanager
     def init(self):
@@ -147,6 +166,30 @@ class Infino(VectorDB):
             f"WHERE {self._where} ORDER BY score ASC LIMIT {k}"
         )
         return self._conn.query_sql(sql).column(_ID_FIELD).to_pylist()
+
+    def insert_documents(
+        self,
+        texts: list[str],
+        doc_ids: list[str],
+        **kwargs,
+    ) -> tuple[int, Exception | None]:
+        try:
+            batch = pa.record_batch(
+                [
+                    pa.array([str(d) for d in doc_ids], type=pa.large_utf8()),
+                    pa.array(texts, type=pa.large_utf8()),
+                ],
+                schema=self._schema(),
+            )
+            self._table.append(batch)
+        except Exception as e:
+            log.exception("Failed to insert documents into Infino")
+            return 0, e
+        return len(doc_ids), None
+
+    def search_documents(self, query: str, k: int = 100, **kwargs) -> list[str]:
+        hits = self._table.bm25_search(_TEXT_FIELD, query, k, projection=[_DOC_ID_FIELD])
+        return hits.column(_DOC_ID_FIELD).to_pylist()
 
     def optimize(self, data_size: int | None = None):
         with self.init():
