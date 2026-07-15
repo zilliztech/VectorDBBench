@@ -87,6 +87,7 @@ seekdb          = [ "mysql-connector-python" ]
 volc_mysql      = [ "mysql-connector-python" ]
 pinot           = [ "requests" ]
 adbpg           = [ "psycopg", "psycopg-binary", "pgvector" ]
+hyperspacedb    = [ "hyperspacedb" ]
 
 [project.urls]
 Repository  = "https://github.com/zilliztech/VectorDBBench"
