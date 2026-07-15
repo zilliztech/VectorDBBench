@@ -18,9 +18,13 @@ class EndeeTypedDict(CommonTypedDict):
     token: Annotated[str, click.option("--token", type=str, required=True, default=None, help="Endee API token")]
     region: Annotated[str, click.option("--region", type=str, default=None, help="Endee region", show_default=True)]
     base_url: Annotated[
-        str,
+        str | None,
         click.option(
-            "--base-url", type=str, default="http://127.0.0.1:8080/api/v2", help="API server URL", show_default=True
+            "--base-url",
+            type=str,
+            default=None,
+            help="API server URL. Leave unset to auto-detect from a serverless token "
+            "or the local self-hosted default.",
         ),
     ]
     space_type: Annotated[
