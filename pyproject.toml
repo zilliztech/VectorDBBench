@@ -86,6 +86,7 @@ lindorm         = [ "opensearch-py" ]
 seekdb          = [ "mysql-connector-python" ]
 volc_mysql      = [ "mysql-connector-python" ]
 pinot           = [ "requests" ]
+logosdb         = [ "logosdb" ]
 adbpg           = [ "psycopg", "psycopg-binary", "pgvector" ]
 
 [project.urls]

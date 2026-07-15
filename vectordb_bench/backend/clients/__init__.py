@@ -63,6 +63,7 @@ class DB(Enum):
     PolarDB = "PolarDB"
     Pinot = "Pinot"
     SeekDB = "SeekDB"
+    LogosDB = "LogosDB"
     VolcMySQL = "VolcMySQL"
     Adbpg = "AnalyticDB for PostgreSQL"
 
@@ -271,6 +272,10 @@ class DB(Enum):
 
             return SeekDB
 
+        if self == DB.LogosDB:
+            from .logosdb.logosdb import LogosDB
+
+            return LogosDB
         if self == DB.VolcMySQL:
             from .volc_mysql.volc_mysql import VolcMySQL
 
@@ -489,6 +494,10 @@ class DB(Enum):
 
             return SeekDBConfig
 
+        if self == DB.LogosDB:
+            from .logosdb.config import LogosDBConfig
+
+            return LogosDBConfig
         if self == DB.VolcMySQL:
             from .volc_mysql.config import VolcMySQLConfig
 
@@ -705,6 +714,10 @@ class DB(Enum):
 
             return _seekdb_case_config.get(index_type)
 
+        if self == DB.LogosDB:
+            from .logosdb.config import LogosDBIndexConfig
+
+            return LogosDBIndexConfig
         if self == DB.VolcMySQL:
             from .volc_mysql.config import _volcmysql_case_config
 
