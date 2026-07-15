@@ -8,8 +8,8 @@ import pyarrow as pa
 
 from vectordb_bench.backend.filter import Filter, FilterOp
 
-from ..api import DBCaseConfig, IndexType, VectorDB
-from .config import InfinoConfig, InfinoFTSConfig, InfinoIndexConfig
+from ..api import VectorDB
+from .config import InfinoFTSConfig, InfinoIndexConfig
 
 log = logging.getLogger(__name__)
 
@@ -93,16 +93,6 @@ class Infino(VectorDB):
         if self._is_fts:
             return infino.IndexSpec().fts(_TEXT_FIELD)
         return infino.IndexSpec().vector(_VECTOR_FIELD, self.dim, self.n_cent, self.metric)
-
-    @classmethod
-    def config_cls(cls) -> type[InfinoConfig]:
-        return InfinoConfig
-
-    @classmethod
-    def case_config_cls(cls, index_type: str | None = None) -> type[DBCaseConfig]:
-        if index_type == IndexType.FTS:
-            return InfinoFTSConfig
-        return InfinoIndexConfig
 
     @classmethod
     def supports_full_text_search(cls) -> bool:

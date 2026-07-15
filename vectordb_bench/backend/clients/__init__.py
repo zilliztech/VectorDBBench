@@ -727,8 +727,10 @@ class DB(Enum):
             return AdbpgIndexConfig
 
         if self == DB.Infino:
-            from .infino.config import InfinoIndexConfig
+            from .infino.config import InfinoFTSConfig, InfinoIndexConfig
 
+            if index_type == IndexType.FTS:
+                return InfinoFTSConfig
             return InfinoIndexConfig
 
         # DB.Pinecone, DB.Redis

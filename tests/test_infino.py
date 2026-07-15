@@ -3,12 +3,18 @@ import tempfile
 import numpy as np
 
 from vectordb_bench.backend.clients import DB
-from vectordb_bench.backend.clients.api import MetricType
-from vectordb_bench.backend.clients.infino.config import InfinoFTSConfig
+from vectordb_bench.backend.clients.api import IndexType, MetricType
+from vectordb_bench.backend.clients.infino.config import InfinoFTSConfig, InfinoIndexConfig
 from vectordb_bench.backend.filter import IntFilter, LabelFilter
 
 
 class TestInfino:
+    def test_case_config_cls_selects_fts(self):
+        # The FTS CLI/assembler path resolves the case config via DB.case_config_cls;
+        # FTS index_type must yield the FTS config, everything else the vector config.
+        assert DB.Infino.case_config_cls(IndexType.FTS) is InfinoFTSConfig
+        assert DB.Infino.case_config_cls() is InfinoIndexConfig
+
     def test_insert_and_search(self):
         assert DB.Infino.value == "Infino"
 
