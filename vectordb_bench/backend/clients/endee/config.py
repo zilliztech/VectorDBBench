@@ -8,7 +8,7 @@ class EndeeConfig(DBConfig):
 
     token: SecretStr | None = None
     region: str | None = None
-    base_url: str = "http://127.0.0.1:8080/api/v2"
+    base_url: str | None = None
     space_type: str = "cosine"
     precision: str = "int16"
     version: str | None = None
