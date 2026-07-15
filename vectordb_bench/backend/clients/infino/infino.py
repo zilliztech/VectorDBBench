@@ -6,6 +6,8 @@ from pathlib import Path
 import infino
 import pyarrow as pa
 
+from vectordb_bench.backend.filter import Filter, FilterOp
+
 from ..api import DBCaseConfig, VectorDB
 from .config import InfinoConfig, InfinoIndexConfig
 
@@ -13,6 +15,10 @@ log = logging.getLogger(__name__)
 
 _VECTOR_FIELD = "emb"
 _ID_FIELD = "id"
+_LABEL_FIELD = "label"
+# vector_search's filter args are FTS-token-only; scalar filters go through the
+# SQL vector_search TVF, which post-filters the top-k, so over-fetch to refill.
+_FILTER_OVERSAMPLE = 10
 
 
 class Infino(VectorDB):
@@ -28,6 +34,12 @@ class Infino(VectorDB):
     # serialize the load (runner clamps max_workers to 1 when thread_safe is False).
     thread_safe: bool = False
 
+    supported_filter_types: list[FilterOp] = [
+        FilterOp.NonFilter,
+        FilterOp.NumGE,
+        FilterOp.StrEqual,
+    ]
+
     def __init__(
         self,
         dim: int,
@@ -35,17 +47,20 @@ class Infino(VectorDB):
         db_case_config: InfinoIndexConfig,
         collection_name: str = "vdbbench_infino",
         drop_old: bool = False,
+        with_scalar_labels: bool = False,
         **kwargs,
     ):
         self.name = "Infino"
         self.dim = dim
         self.data_path = db_config["data_path"]
         self.table_name = collection_name
+        self.with_scalar_labels = with_scalar_labels
         index_param = db_case_config.index_param()
         self.metric = index_param["metric"]
         self.n_cent = index_param["n_cent"]
         self.nprobe = db_case_config.search_param()["nprobe"]
 
+        self._where = None
         self._conn = None
         self._table = None
 
@@ -57,12 +72,11 @@ class Infino(VectorDB):
             conn.create_table(self.table_name, self._schema(), self._index_spec())
 
     def _schema(self) -> pa.Schema:
-        return pa.schema(
-            [
-                pa.field(_ID_FIELD, pa.int64(), nullable=False),
-                pa.field(_VECTOR_FIELD, pa.list_(pa.float32(), self.dim), nullable=False),
-            ],
-        )
+        fields = [pa.field(_ID_FIELD, pa.int64(), nullable=False)]
+        if self.with_scalar_labels:
+            fields.append(pa.field(_LABEL_FIELD, pa.large_utf8(), nullable=False))
+        fields.append(pa.field(_VECTOR_FIELD, pa.list_(pa.float32(), self.dim), nullable=False))
+        return pa.schema(fields)
 
     def _index_spec(self) -> infino.IndexSpec:
         return infino.IndexSpec().vector(_VECTOR_FIELD, self.dim, self.n_cent, self.metric)
@@ -89,31 +103,50 @@ class Infino(VectorDB):
         self,
         embeddings: Iterable[list[float]],
         metadata: list[int],
+        labels_data: list[str] | None = None,
         **kwargs,
     ) -> tuple[int, Exception | None]:
         try:
-            batch = pa.record_batch(
-                [
-                    pa.array(metadata, type=pa.int64()),
-                    pa.array(embeddings, type=pa.list_(pa.float32(), self.dim)),
-                ],
-                schema=self._schema(),
-            )
-            self._table.append(batch)
+            arrays = [pa.array(metadata, type=pa.int64())]
+            if self.with_scalar_labels:
+                arrays.append(pa.array(labels_data, type=pa.large_utf8()))
+            arrays.append(pa.array(embeddings, type=pa.list_(pa.float32(), self.dim)))
+            self._table.append(pa.record_batch(arrays, schema=self._schema()))
         except Exception as e:
             log.exception("Failed to insert embeddings into Infino")
             return 0, e
         return len(metadata), None
 
+    def prepare_filter(self, filters: Filter):
+        if filters.type == FilterOp.NonFilter:
+            self._where = None
+        elif filters.type == FilterOp.NumGE:
+            self._where = f"{_ID_FIELD} >= {filters.int_value}"
+        elif filters.type == FilterOp.StrEqual:
+            self._where = f"{_LABEL_FIELD} = '{filters.label_value}'"
+        else:
+            msg = f"Infino does not support filter {filters.type}"
+            raise ValueError(msg)
+
     def search_embedding(self, query: list[float], k: int = 100, **kwargs) -> list[int]:
-        hits = self._table.vector_search(
-            _VECTOR_FIELD,
-            query,
-            k,
-            nprobe=self.nprobe,
-            projection=[_ID_FIELD],
+        if not self._where:
+            hits = self._table.vector_search(
+                _VECTOR_FIELD,
+                query,
+                k,
+                nprobe=self.nprobe,
+                projection=[_ID_FIELD],
+            )
+            return hits.column(_ID_FIELD).to_pylist()
+
+        # Scalar filter: SQL vector_search TVF post-filters top-k, so over-fetch.
+        vector_literal = ",".join(repr(float(x)) for x in query)
+        sql = (
+            f"SELECT {_ID_FIELD}, score FROM vector_search("
+            f"'{self.table_name}', '{_VECTOR_FIELD}', '{vector_literal}', {k * _FILTER_OVERSAMPLE}) "
+            f"WHERE {self._where} ORDER BY score ASC LIMIT {k}"
         )
-        return hits.column(_ID_FIELD).to_pylist()
+        return self._conn.query_sql(sql).column(_ID_FIELD).to_pylist()
 
     def optimize(self, data_size: int | None = None):
         with self.init():
