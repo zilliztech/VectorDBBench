@@ -209,6 +209,13 @@ def get_custom_case_config(parameters: dict) -> dict:
             "dataset_with_size_type": dataset_with_size_type,
             "label_percentage": parameters["label_percentage"],
         }
+    elif parameters["case_type"] in {
+        "StreamingPerformanceCase",
+        "StreamingCustomDataset",
+    }:
+        custom_case_config = {
+            "insert_rate": parameters["streaming_insert_rate"],
+        }
     elif parameters["case_type"] == "CloudPayloadSearchCase":
         custom_case_config = {
             "payload_profile": parameters["payload_profile"],
@@ -228,7 +235,6 @@ def get_custom_case_config(parameters: dict) -> dict:
         copy_if_not_none(custom_case_config, parameters, "cloud_label_percentage", "label_percentage")
     elif parameters["case_type"] == "CloudInsertCase":
         custom_case_config = {
-            "batch_size": parameters["cloud_insert_batch_size"],
             "duration": parameters["cloud_insert_duration"],
             "dataset_with_size_type": dataset_with_size_type,
         }
@@ -318,6 +324,26 @@ class CommonTypedDict(TypedDict):
             default=config.LOAD_CONCURRENCY,
             show_default=True,
             help="Number of concurrent workers for data loading in performance cases (0 = cpu_count)",
+        ),
+    ]
+    insert_batch_size: Annotated[
+        int,
+        click.option(
+            "--insert-batch-size",
+            type=click.IntRange(min=1),
+            default=config.DEFAULT_INSERT_BATCH_SIZE,
+            show_default=True,
+            help="Rows or documents in each logical VDBBench insert batch; backends may split it further",
+        ),
+    ]
+    streaming_insert_rate: Annotated[
+        int,
+        click.option(
+            "--streaming-insert-rate",
+            type=click.IntRange(min=1),
+            default=config.DEFAULT_STREAMING_INSERT_RATE,
+            show_default=True,
+            help="Rows inserted per second for StreamingPerformanceCase",
         ),
     ]
     search_serial: Annotated[
@@ -594,16 +620,6 @@ class CommonTypedDict(TypedDict):
             help="Number of serial queries per cold/warm pass for CloudColdLatencyCase",
         ),
     ]
-    cloud_insert_batch_size: Annotated[
-        int,
-        click.option(
-            "--cloud-insert-batch-size",
-            type=int,
-            default=5000,
-            show_default=True,
-            help="Insert batch size for CloudInsertCase",
-        ),
-    ]
     cloud_insert_duration: Annotated[
         float | None,
         click.option(
@@ -851,6 +867,7 @@ def run(
             parameters["search_concurrent"],
         ),
         load_concurrency=parameters["load_concurrency"],
+        insert_batch_size=parameters["insert_batch_size"],
     )
     task_label = parameters["task_label"]
 

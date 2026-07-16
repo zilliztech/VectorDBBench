@@ -69,13 +69,13 @@ class _ConcurrentRunnerDataset:
 
 
 def test_cloud_insert_case_defaults_to_laion_100m():
-    case = CloudInsertCase(batch_size=1000)
+    case = CloudInsertCase()
 
     assert case.case_id == CaseType.CloudInsertCase
     assert case.label == CaseLabel.CloudInsert
     assert case.dataset.data.name == "LAION"
     assert case.dataset.data.size == 100_000_000
-    assert case.batch_size == 1000
+    assert not hasattr(case, "batch_size")
     assert case.duration is None
     assert case.readiness_timeout is None
 
@@ -84,14 +84,13 @@ def test_case_config_builds_cloud_insert_case_from_custom_case():
     case = CaseConfig(
         case_id=CaseType.CloudInsertCase,
         custom_case={
-            "batch_size": 5000,
             "duration": 1800,
             "dataset_with_size_type": DatasetWithSizeType.CohereMedium.value,
         },
     ).case
 
     assert isinstance(case, CloudInsertCase)
-    assert case.batch_size == 5000
+    assert not hasattr(case, "batch_size")
     assert case.duration == 1800
     assert case.dataset.data.name == "Cohere"
     assert case.dataset.data.size == 1_000_000
@@ -101,13 +100,12 @@ def test_case_config_builds_cloud_insert_case_from_laion_100m_dataset_option():
     case = CaseConfig(
         case_id=CaseType.CloudInsertCase,
         custom_case={
-            "batch_size": 10_000,
             "dataset_with_size_type": "Large LAION (768dim, 100M)",
         },
     ).case
 
     assert isinstance(case, CloudInsertCase)
-    assert case.batch_size == 10_000
+    assert not hasattr(case, "batch_size")
     assert case.dataset_with_size_type == DatasetWithSizeType.LAIONLarge
     assert case.dataset.data.name == "LAION"
     assert case.dataset.data.size == 100_000_000
@@ -122,7 +120,6 @@ def test_laion_100m_dataset_option_uses_100m_timeouts():
 def test_cli_builds_cloud_insert_custom_case_config():
     params = {
         "case_type": "CloudInsertCase",
-        "cloud_insert_batch_size": 10_000,
         "cloud_insert_duration": 1800,
         "cloud_insert_readiness_timeout": 7200,
         "cloud_insert_readiness_poll_interval": 10,
@@ -130,7 +127,6 @@ def test_cli_builds_cloud_insert_custom_case_config():
     }
 
     assert get_custom_case_config(params) == {
-        "batch_size": 10_000,
         "duration": 1800,
         "readiness_timeout": 7200,
         "readiness_poll_interval": 10,
@@ -142,7 +138,6 @@ def test_cli_builds_cloud_insert_custom_case_config_with_laion_100m_dataset():
     cfg = get_custom_case_config(
         {
             "case_type": "CloudInsertCase",
-            "cloud_insert_batch_size": 10_000,
             "cloud_insert_duration": None,
             "cloud_insert_readiness_timeout": None,
             "cloud_insert_readiness_poll_interval": None,
@@ -151,7 +146,6 @@ def test_cli_builds_cloud_insert_custom_case_config_with_laion_100m_dataset():
     )
 
     assert cfg == {
-        "batch_size": 10_000,
         "duration": None,
         "dataset_with_size_type": DatasetWithSizeType.LAIONLarge.value,
     }
@@ -166,7 +160,6 @@ def test_cli_builds_cloud_insert_custom_case_config_with_default_dataset():
     cfg = get_custom_case_config(
         {
             "case_type": "CloudInsertCase",
-            "cloud_insert_batch_size": 10_000,
             "cloud_insert_duration": None,
             "cloud_insert_readiness_timeout": None,
             "cloud_insert_readiness_poll_interval": None,
@@ -175,7 +168,6 @@ def test_cli_builds_cloud_insert_custom_case_config_with_default_dataset():
     )
 
     assert cfg == {
-        "batch_size": 10_000,
         "duration": None,
         "dataset_with_size_type": DatasetWithSizeType.CohereMedium.value,
     }
@@ -243,11 +235,11 @@ def test_assembler_schedules_cloud_insert_case():
         case_config=CaseConfig(
             case_id=CaseType.CloudInsertCase,
             custom_case={
-                "batch_size": 1000,
                 "dataset_with_size_type": DatasetWithSizeType.CohereMedium.value,
             },
         ),
         stages=[TaskStage.DROP_OLD, TaskStage.LOAD],
+        insert_batch_size=1000,
     )
 
     runner = Assembler.assemble_all("run-id", "task-label", [task], DatasetSource.S3)
@@ -311,10 +303,11 @@ def test_cloud_insert_result_file_uses_insert_only_metrics(tmp_path: Path):
             db_case_config=EmptyDBCaseConfig(),
             case_config=CaseConfig(
                 case_id=CaseType.CloudInsertCase,
-                custom_case={"batch_size": 1000, "duration": None},
+                custom_case={"duration": None},
             ),
             stages=[TaskStage.DROP_OLD, TaskStage.LOAD],
             load_concurrency=0,
+            insert_batch_size=1000,
         ),
         metrics=Metric(
             inserted_count=100_000_000,
@@ -343,14 +336,16 @@ def test_cloud_insert_result_file_uses_insert_only_metrics(tmp_path: Path):
     }
     assert written["results"][0]["task_config"]["db_config"]["api_key"] == "**********"
     assert written["results"][0]["task_config"]["db_config"]["index_name"] == "laion100m"
+    assert written["results"][0]["task_config"]["insert_batch_size"] == 1000
     assert written["results"][0]["task_config"]["case_config"] == {
         "case_id": 600,
-        "custom_case": {"batch_size": 1000, "duration": None},
+        "custom_case": {"duration": None},
     }
 
     read_back = TestResult.read_file(result_file)
     assert read_back.results[0].task_config.case_config.case_id == CaseType.CloudInsertCase
-    assert read_back.results[0].task_config.case_config.custom_case == {"batch_size": 1000, "duration": None}
+    assert read_back.results[0].task_config.case_config.custom_case == {"duration": None}
+    assert read_back.results[0].task_config.insert_batch_size == 1000
 
     collected = ResultCollector.collect(tmp_path)
     assert len(collected) == 1
@@ -423,7 +418,7 @@ def test_turbopuffer_insert_returns_write_error():
 def test_milvus_insert_readiness_uses_entity_count_and_index_progress():
     db = Milvus.__new__(Milvus)
     db.collection_name = "c"
-    db._vector_index_name = "vector_idx"
+    db._main_index_name = "vector_idx"
     db.client = type(
         "Client",
         (),
@@ -697,9 +692,9 @@ def test_cloud_insert_runner_records_insert_and_readiness_metrics(monkeypatch):
 
     db = DB()
     monkeypatch.setattr("vectordb_bench.backend.task_runner.time.sleep", lambda _: None)
-    case = CloudInsertCase(batch_size=2)
+    case = CloudInsertCase()
     case.dataset = Dataset()
-    config = type("Config", (), {"load_concurrency": 1})()
+    config = type("Config", (), {"load_concurrency": 1, "insert_batch_size": 2})()
     runner = CaseRunner.construct(ca=case, db=db, config=config)
 
     metric = runner._run_cloud_insert_case()
@@ -752,9 +747,13 @@ def test_cloud_insert_runner_times_out_when_readiness_never_completes(monkeypatc
 
     monkeypatch.setattr("vectordb_bench.backend.task_runner.ConcurrentInsertRunner", FakeConcurrentInsertRunner)
     monkeypatch.setattr("vectordb_bench.backend.task_runner.time.sleep", fail_on_sleep)
-    case = CloudInsertCase(batch_size=1, readiness_timeout=0, readiness_poll_interval=0)
+    case = CloudInsertCase(readiness_timeout=0, readiness_poll_interval=0)
     case.dataset = Dataset()
-    runner = CaseRunner.construct(ca=case, db=DB(), config=type("Config", (), {"load_concurrency": 1})())
+    runner = CaseRunner.construct(
+        ca=case,
+        db=DB(),
+        config=type("Config", (), {"load_concurrency": 1, "insert_batch_size": 1})(),
+    )
 
     with pytest.raises(TimeoutError, match="fully_searchable.*last_status.*stalled"):
         runner._run_cloud_insert_case()
@@ -798,9 +797,9 @@ def test_cloud_insert_runner_uses_concurrent_insert_runner(monkeypatch):
             return {"fully_searchable": True, "fully_indexed": True, "additional_parameters": {}}
 
     monkeypatch.setattr("vectordb_bench.backend.task_runner.ConcurrentInsertRunner", FakeConcurrentInsertRunner)
-    case = CloudInsertCase(batch_size=1000, duration=60)
+    case = CloudInsertCase(duration=60)
     case.dataset = Dataset()
-    config = type("Config", (), {"load_concurrency": 7})()
+    config = type("Config", (), {"load_concurrency": 7, "insert_batch_size": 1000})()
     runner = CaseRunner.construct(ca=case, db=DB(), config=config)
 
     metric = runner._run_cloud_insert_case()

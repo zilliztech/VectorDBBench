@@ -360,8 +360,7 @@ class VectorDB(ABC):
         tenant_labels_data: list[str] | None = None,
         **kwargs,
     ) -> tuple[int, Exception]:
-        """Insert the embeddings to the vector database. The default number of embeddings for
-        each insert_embeddings is 5000.
+        """Insert one task-configured batch of embeddings into the vector database.
 
         Args:
             embeddings(list[list[float]]): list of embedding to add to the vector database.

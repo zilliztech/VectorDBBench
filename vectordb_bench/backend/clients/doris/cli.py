@@ -144,7 +144,7 @@ class DorisTypedDict(CommonTypedDict, HNSWBaseTypedDict):
             "--stream-load-rows-per-batch",
             type=int,
             required=False,
-            help="Rows per single stream load request; default uses NUM_PER_BATCH",
+            help="Rows per Doris stream-load request; when omitted, the Doris client default is used",
         ),
     ]
     no_index: Annotated[

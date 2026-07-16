@@ -1,5 +1,6 @@
 from pydantic import SecretStr
 
+from vectordb_bench import config
 from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.clients.api import EmptyDBCaseConfig, MetricType
 from vectordb_bench.backend.clients.doris.config import DorisCaseConfig, DorisConfig
@@ -12,6 +13,8 @@ from vectordb_bench.interface import BenchMarkRunner
 from vectordb_bench.metric import Metric
 from vectordb_bench.models import CaseConfig, CaseType, TaskConfig, TaskStage, TestResult
 
+DEFAULT_INSERT_BATCH_SIZE = config.DEFAULT_INSERT_BATCH_SIZE
+
 
 def make_runner(
     *,
@@ -21,6 +24,7 @@ def make_runner(
     db_config=None,
     db_case_config=None,
     stages: list[TaskStage] | None = None,
+    insert_batch_size: int = DEFAULT_INSERT_BATCH_SIZE,
 ) -> CaseRunner:
     if db_config is None:
         if db == DB.TurboPuffer:
@@ -45,6 +49,7 @@ def make_runner(
         db_case_config=db_case_config,
         case_config=CaseConfig(case_id=case_id, custom_case=custom_case or {}),
         stages=stages or [TaskStage.DROP_OLD, TaskStage.LOAD, TaskStage.SEARCH_SERIAL],
+        insert_batch_size=insert_batch_size,
     )
     return CaseRunner(
         run_id="run-id",
@@ -109,6 +114,13 @@ def test_reuse_key_preserves_safe_payload_reuse():
 
     assert ids_only == vector
     assert hash(ids_only) == hash(vector)
+
+
+def test_reuse_key_distinguishes_insert_batch_size():
+    assert_not_reusable(
+        make_runner(insert_batch_size=100),
+        make_runner(insert_batch_size=200),
+    )
 
 
 def test_reuse_key_distinguishes_physical_db_targets():

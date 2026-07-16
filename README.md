@@ -466,7 +466,7 @@ pip install 'vectordb-bench[hologres]' 'psycopg[binary]' pgvector
 Execute tests for the index types: HGraph.
 
 ```shell
-NUM_PER_BATCH=10000 vectordbbench hologreshgraph --host Hologres_Endpoint --port 80 \
+vectordbbench hologreshgraph --host Hologres_Endpoint --port 80 --insert-batch-size 10000 \
 --user ACCESS_ID --password ACCESS_KEY --database DATABASE_NAME \
 --m 64 --ef-construction 400 --case-type Performance768D10M \
 --index-type HGraph --ef-search 400 --k 10 --num-concurrency 1,60,70,75,80,90,95,100,105,110,115,120,125,130 \
@@ -520,12 +520,12 @@ To list the options for zvec, execute vectordbbench zvec --help
 Doris supports ann index with type hnsw from version 4.0.x
 
 ```shell
-NUM_PER_BATCH=1000000 vectordbbench doris --http-port=8030 --port=9030 --db-name=vector_test --case-type=Performance768D1M --stream-load-rows-per-batch=500000
+vectordbbench doris --http-port=8030 --port=9030 --db-name=vector_test --case-type=Performance768D1M --insert-batch-size=1000000 --stream-load-rows-per-batch=500000
 ```
 
 Using flag `--session-var`, if you want to test doris with some customized session variables. For example:
 ```shell
-NUM_PER_BATCH=1000000 vectordbbench doris --http-port=8030 --port=9030 --db-name=vector_test --case-type=Performance768D1M --stream-load-rows-per-batch=500000 --session-var enable_profile=True
+vectordbbench doris --http-port=8030 --port=9030 --db-name=vector_test --case-type=Performance768D1M --insert-batch-size=1000000 --stream-load-rows-per-batch=500000 --session-var enable_profile=True
 ```
 
 Mote options:
@@ -546,8 +546,8 @@ Mote options:
 --session-var TEXT              Session variable key=value applied to each
                                 SQL session (repeatable)
 --stream-load-rows-per-batch INTEGER
-                                Rows per single stream load request; default
-                                uses NUM_PER_BATCH
+                                Rows per Doris stream-load request; when
+                                omitted, the Doris client default is used
 --no-index                      Create table without ANN index
 ```
 

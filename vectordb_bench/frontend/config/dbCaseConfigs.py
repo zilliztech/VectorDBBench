@@ -240,9 +240,10 @@ custom_streaming_config: list[ConfigInput] = [
     ),
     ConfigInput(
         label=CaseConfigParamType.insert_rate,
+        displayLabel="Streaming Insert Rate",
         inputType=InputType.Number,
-        inputConfig=dict(step=100, min=100, max=4_000, value=200),
-        inputHelp="fixed insertion rate (rows/s), must be divisible by 100",
+        inputConfig=dict(step=100, min=100, max=MAX_STREAMLIT_INT, value=500),
+        inputHelp="Fixed streaming insertion rate (rows/s); must be at least and divisible by Insert Batch Size.",
     ),
     ConfigInput(
         label=CaseConfigParamType.search_stages,
@@ -2326,6 +2327,7 @@ ZillizCloudFtsConfig = [
 
 ElasticCloudFtsConfig = []
 VespaFtsConfig = []
+OSSOpenSearchFtsConfig = []
 TurboPufferFtsConfig = []
 
 WeaviateLoadConfig = [
@@ -3275,6 +3277,7 @@ CASE_CONFIG_MAP = {
     DB.OSSOpenSearch: {
         CaseLabel.Load: OSSOpensearchLoadingConfig,
         CaseLabel.Performance: OSSOpenSearchPerformanceConfig,
+        CaseLabel.FullTextSearchPerformance: OSSOpenSearchFtsConfig,
     },
     DB.PgVector: {
         CaseLabel.Load: PgVectorLoadingConfig,

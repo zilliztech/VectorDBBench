@@ -560,6 +560,10 @@ class DB(Enum):
             return AWSOpenSearchIndexConfig
 
         if self == DB.OSSOpenSearch:
+            if index_type == IndexType.FTS:
+                from .oss_opensearch.config import OSSOpenSearchFtsConfig
+
+                return OSSOpenSearchFtsConfig
             from .oss_opensearch.config import OSSOpenSearchIndexConfig
 
             return OSSOpenSearchIndexConfig

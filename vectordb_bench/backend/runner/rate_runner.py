@@ -13,6 +13,7 @@ from vectordb_bench.backend.utils import time_it
 from .util import get_data
 
 log = logging.getLogger(__name__)
+DEFAULT_INSERT_BATCH_SIZE = config.DEFAULT_INSERT_BATCH_SIZE
 
 
 class RatedMultiThreadingInsertRunner:
@@ -23,13 +24,25 @@ class RatedMultiThreadingInsertRunner:
         dataset_iter: DataSetIterator,
         normalize: bool = False,
         timeout: float | None = None,
+        batch_size: int = DEFAULT_INSERT_BATCH_SIZE,
     ):
+        if batch_size <= 0:
+            msg = f"insert batch size must be greater than 0, got {batch_size}"
+            raise ValueError(msg)
+        if rate <= 0:
+            msg = f"insert rate must be greater than 0, got {rate}"
+            raise ValueError(msg)
+        if rate % batch_size != 0:
+            msg = f"insert rate {rate} must be divisible by insert batch size {batch_size}"
+            raise ValueError(msg)
+
         self.timeout = timeout if isinstance(timeout, int | float) else None
         self.dataset = dataset_iter
         self.db = db
         self.normalize = normalize
         self.insert_rate = rate
-        self.batch_rate = rate // config.NUM_PER_BATCH
+        self.batch_size = batch_size
+        self.batch_rate = rate // batch_size
 
         self.executing_futures = []
         self.sig_idx = 0
