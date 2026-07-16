@@ -10,6 +10,7 @@ from vectordb_bench.cli.cli import (
     click_parameter_decorators_from_typed_dict,
     get_custom_case_config,
     parse_task_stages,
+    resolve_db_note,
 )
 from vectordb_bench.models import (
     CaseConfig,
@@ -94,6 +95,7 @@ def Endee(**parameters):
 
     # Filter out None values before creating config
     params_for_nd = {k: v for k, v in parameters.items() if v is not None}
+    params_for_nd["note"] = resolve_db_note(parameters["note"], parameters["note_file"])
     db_config = EndeeConfig(**params_for_nd)
 
     custom_case_config = get_custom_case_config(parameters)
