@@ -115,6 +115,56 @@ def test_oss_opensearch_insert_documents_builds_bulk_body():
     ]
 
 
+def test_oss_opensearch_insert_documents_reports_partial_bulk_failure():
+    db = make_fts_db()
+
+    class Client:
+        def bulk(self, **kwargs):
+            return {
+                "errors": True,
+                "items": [
+                    {"index": {"_id": "d1", "status": 201}},
+                    {
+                        "index": {
+                            "_id": "d2",
+                            "status": 429,
+                            "error": {
+                                "type": "rejected_execution_exception",
+                                "reason": "indexing queue is full",
+                            },
+                        }
+                    },
+                ],
+            }
+
+    db.client = Client()
+
+    insert_count, error = db.insert_documents(["alpha", "beta"], ["d1", "d2"])
+
+    assert insert_count == 1
+    assert isinstance(error, RuntimeError)
+    assert "failed for 1/2 documents" in str(error)
+    assert "successful=1" in str(error)
+    assert "id=d2" in str(error)
+    assert "rejected_execution_exception: indexing queue is full" in str(error)
+
+
+def test_oss_opensearch_insert_documents_rejects_malformed_bulk_error_response():
+    db = make_fts_db()
+
+    class Client:
+        def bulk(self, **kwargs):
+            return {"errors": True}
+
+    db.client = Client()
+
+    insert_count, error = db.insert_documents(["alpha"], ["d1"])
+
+    assert insert_count == 0
+    assert isinstance(error, RuntimeError)
+    assert str(error) == "OpenSearch FTS bulk response reported errors without an items list"
+
+
 def test_oss_opensearch_insert_documents_validates_lengths():
     db = make_fts_db()
 

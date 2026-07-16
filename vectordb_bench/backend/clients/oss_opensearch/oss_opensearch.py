@@ -481,12 +481,63 @@ class OSSOpenSearch(VectorDB):
 
         try:
             response = self.client.bulk(body=insert_data)
-            if response.get("errors"):
-                log.warning(f"FTS bulk insert had errors: {response}")
-            return len(docs), None
         except Exception as e:
             log.warning(f"Failed to insert FTS docs: {self.index_name} error: {e!s}")
             return 0, e
+        insert_count, error = self._parse_fts_bulk_response(response, len(docs))
+        if error is not None:
+            log.warning("FTS bulk insert failed: %s", error)
+        return insert_count, error
+
+    @staticmethod
+    def _parse_fts_bulk_response(response: dict[str, Any], expected_count: int) -> tuple[int, Exception | None]:
+        if not response.get("errors"):
+            return expected_count, None
+
+        items = response.get("items")
+        if not isinstance(items, list):
+            error = RuntimeError("OpenSearch FTS bulk response reported errors without an items list")
+            return 0, error
+
+        success_count = 0
+        failure_samples = []
+        for position, item in enumerate(items):
+            if not isinstance(item, dict) or len(item) != 1:
+                failure_samples.append(f"item[{position}]=malformed")
+                continue
+
+            operation, result = next(iter(item.items()))
+            if not isinstance(result, dict):
+                failure_samples.append(f"item[{position}] {operation}=malformed")
+                continue
+
+            status = result.get("status")
+            if isinstance(status, int) and 200 <= status < 300 and "error" not in result:
+                success_count += 1
+                continue
+
+            error_detail = result.get("error")
+            if isinstance(error_detail, dict):
+                error_type = error_detail.get("type", "unknown")
+                reason = error_detail.get("reason", "unknown")
+                error_summary = f"{error_type}: {reason}"
+            else:
+                error_summary = str(error_detail or "unknown")
+            failure_samples.append(
+                f"item[{position}] {operation} id={result.get('_id', 'unknown')} "
+                f"status={status or 'unknown'} error={error_summary}"
+            )
+
+        success_count = min(success_count, expected_count)
+        failed_count = max(expected_count - success_count, 1)
+        sample_summary = "; ".join(failure_samples[:3]) or "no failed item details"
+        if len(items) != expected_count:
+            sample_summary = f"response_items={len(items)}, expected_items={expected_count}; {sample_summary}"
+        error = RuntimeError(
+            f"OpenSearch FTS bulk insert failed for {failed_count}/{expected_count} documents; "
+            f"successful={success_count}; {sample_summary}"
+        )
+        return success_count, error
 
     def _insert_with_single_client(
         self,
