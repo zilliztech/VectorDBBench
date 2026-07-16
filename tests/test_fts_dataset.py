@@ -8,6 +8,7 @@ from vectordb_bench.backend.dataset import (
     FtsDataset,
     FtsDatasetManager,
     FtsDatasetWithSizeType,
+    FtsFilterIdDistribution,
     FtsFilterIdPermutation,
     HotpotQAFts,
     HotpotQATranslator,
@@ -119,6 +120,16 @@ def test_fts_filter_id_permutation_has_stable_sequence():
     assert permutation == FtsFilterIdPermutation.for_size(8)
 
 
+def test_fts_filter_id_permutation_supports_sequential_distribution():
+    permutation = FtsFilterIdPermutation.for_size(8, FtsFilterIdDistribution.Sequential)
+
+    assert permutation.algorithm == "sequential_v1"
+    assert permutation.multiplier == 1
+    assert permutation.offset == 0
+    assert [permutation.map(i) for i in range(8)] == list(range(8))
+    assert permutation == FtsFilterIdPermutation.for_size(8, "sequential")
+
+
 @pytest.mark.parametrize("size", [1, 2, 3, 4, 8, 10, 97, 100, 1_000, 100_000, 1_000_000, 5_233_329, 8_841_823])
 def test_fts_filter_id_permutation_is_bijective(size: int):
     permutation = FtsFilterIdPermutation.for_size(size)
@@ -221,6 +232,27 @@ def test_fts_prepare_integer_filter_skips_empty_filtered_qrels(monkeypatch: pyte
     assert manager.recall_skip_reason == "no_positive_qrels_after_filter"
     assert manager.filter_stats["filtered_query_count"] == 0
     assert manager.filter_stats["filtered_relevant_doc_count"] == 0
+
+
+def test_fts_prepare_integer_filter_supports_sequential_distribution(monkeypatch: pytest.MonkeyPatch):
+    manager = make_tiny_msmarco_manager(size=4)
+    monkeypatch.setattr(manager._translator, "load", FakeDataset)
+
+    filters = NewIntFilter(filter_rate=0.5, int_field="filter_id", int_value=2)
+    assert manager.prepare(
+        source=None,
+        filters=filters,
+        filter_id_distribution=FtsFilterIdDistribution.Sequential,
+    )
+
+    assert manager.filter_id_distribution == FtsFilterIdDistribution.Sequential
+    assert manager.qrel_filter_ids == {"d1": 0, "d3": 2}
+    assert [query.query_id for query in manager.recall_queries_data] == ["q1"]
+    assert manager.recall_gt_data == [{"d3": 1}]
+    assert manager.filter_stats["filter_id_distribution"] == "sequential_v1"
+    assert manager.filter_stats["filter_id_multiplier"] == 1
+    assert manager.filter_stats["filter_id_offset"] == 0
+    assert [doc.filter_id for batch in manager for doc in batch] == [0, 1, 2, 3]
 
 
 def test_fts_prepare_integer_filter_requires_filter_id_field(monkeypatch: pytest.MonkeyPatch):

@@ -226,7 +226,11 @@ class CaseRunner(BaseModel):
                 raise ValueError(msg)
 
             if self.is_fts:
-                self.ca.dataset.prepare(self.dataset_source, filters=self.ca.filters)
+                self.ca.dataset.prepare(
+                    self.dataset_source,
+                    filters=self.ca.filters,
+                    filter_id_distribution=self.ca.filter_id_distribution,
+                )
                 self.init_db(drop_old)
                 return
 

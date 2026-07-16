@@ -20,7 +20,7 @@ from .. import config
 from ..backend.cases import FTS_FILTER_RATES
 from ..backend.clients import DB
 from ..backend.clients.api import IndexType, MetricType
-from ..backend.dataset import DatasetWithSizeType, FtsDatasetWithSizeType
+from ..backend.dataset import DatasetWithSizeType, FtsDatasetWithSizeType, FtsFilterIdDistribution
 from ..backend.payload import PayloadProfile
 from ..interface import benchmark_runner
 from ..models import (
@@ -275,6 +275,10 @@ def get_custom_case_config(parameters: dict) -> dict:
         custom_case_config = {
             "dataset_with_size_type": dataset_with_size_type,
             "payload_profile": parameters.get("payload_profile", PayloadProfile.IDS_ONLY.value),
+            "filter_id_distribution": parameters.get(
+                "fts_filter_id_distribution",
+                FtsFilterIdDistribution.Permuted.value,
+            ),
         }
         copy_if_not_none(custom_case_config, parameters, "fts_filter_rate", "filter_rate")
     return custom_case_config
@@ -668,6 +672,16 @@ class CommonTypedDict(TypedDict):
                 "Optional FTS integer filter rate for FTSBm25Performance. "
                 f"Only valid for large FTS datasets. Supported values: {SUPPORTED_FTS_FILTER_RATES}."
             ),
+        ),
+    ]
+    fts_filter_id_distribution: Annotated[
+        str,
+        click.option(
+            "--fts-filter-id-distribution",
+            type=click.Choice([distribution.value for distribution in FtsFilterIdDistribution]),
+            default=FtsFilterIdDistribution.Permuted.value,
+            show_default=True,
+            help="FTS filter ID distribution. Changing modes requires reloading the collection.",
         ),
     ]
     cloud_filter_rate: Annotated[

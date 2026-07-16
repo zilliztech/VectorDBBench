@@ -2,7 +2,7 @@ import threading
 
 from vectordb_bench.backend.cases import CaseLabel
 from vectordb_bench.backend.data_source import DatasetSource
-from vectordb_bench.backend.dataset import FtsDocument, FtsQuery
+from vectordb_bench.backend.dataset import FtsDocument, FtsFilterIdDistribution, FtsQuery
 from vectordb_bench.backend.filter import non_filter
 from vectordb_bench.backend.payload import PayloadProfile
 from vectordb_bench.backend.runner.concurrent_runner import ConcurrentInsertRunner
@@ -39,14 +39,15 @@ def test_fts_pre_run_passes_filters_to_dataset(monkeypatch):
         def __init__(self):
             self.calls = []
 
-        def prepare(self, source, filters=None):
-            self.calls.append((source, filters))
+        def prepare(self, source, filters=None, filter_id_distribution=None):
+            self.calls.append((source, filters, filter_id_distribution))
 
     class Case:
         label = CaseLabel.FullTextSearchPerformance
         is_multitenant = False
         dataset = Dataset()
         filters = filter_obj
+        filter_id_distribution = FtsFilterIdDistribution.Sequential
 
     config_obj = type("Config", (), {"stages": [TaskStage.LOAD]})()
     runner = CaseRunner.construct(ca=Case(), config=config_obj, dataset_source=DatasetSource.S3)
@@ -55,7 +56,9 @@ def test_fts_pre_run_passes_filters_to_dataset(monkeypatch):
 
     runner._pre_run(drop_old=False)
 
-    assert runner.ca.dataset.calls == [(DatasetSource.S3, filter_obj)]
+    assert runner.ca.dataset.calls == [
+        (DatasetSource.S3, filter_obj, FtsFilterIdDistribution.Sequential),
+    ]
     assert init_calls == [False]
 
 

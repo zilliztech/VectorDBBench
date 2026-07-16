@@ -5,7 +5,7 @@ from vectordb_bench.backend.clients.api import IndexType
 from vectordb_bench.backend.clients.elastic_cloud.config import ElasticCloudFtsConfig, ElasticCloudIndexConfig
 from vectordb_bench.backend.clients.milvus.config import MilvusFtsConfig
 from vectordb_bench.backend.clients.vespa.config import VespaFtsConfig, VespaHNSWConfig
-from vectordb_bench.backend.dataset import FtsDatasetWithSizeType
+from vectordb_bench.backend.dataset import FtsDatasetWithSizeType, FtsFilterIdDistribution
 from vectordb_bench.cli.cli import CommonTypedDict, get_custom_case_config, select_cli_db_case_config
 
 
@@ -15,6 +15,7 @@ def test_common_cli_exposes_optional_fts_bm25_overrides():
     assert "bm25_k1" in hints
     assert "bm25_b" in hints
     assert "fts_filter_rate" in hints
+    assert "fts_filter_id_distribution" in hints
 
 
 def test_cli_builds_fts_filter_case_config():
@@ -31,7 +32,21 @@ def test_cli_builds_fts_filter_case_config():
         "dataset_with_size_type": FtsDatasetWithSizeType.MSMarcoLarge.value,
         "payload_profile": "ids_only",
         "filter_rate": 0.95,
+        "filter_id_distribution": FtsFilterIdDistribution.Permuted.value,
     }
+
+
+def test_cli_builds_sequential_fts_filter_case_config():
+    custom_case = get_custom_case_config(
+        {
+            "case_type": "FTSBm25Performance",
+            "dataset_with_size_type": FtsDatasetWithSizeType.HotpotQALarge.value,
+            "fts_filter_rate": 0.99,
+            "fts_filter_id_distribution": FtsFilterIdDistribution.Sequential.value,
+        }
+    )
+
+    assert custom_case["filter_id_distribution"] == FtsFilterIdDistribution.Sequential.value
 
 
 def test_cli_applies_bm25_overrides_to_existing_fts_config():

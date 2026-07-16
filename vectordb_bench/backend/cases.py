@@ -16,6 +16,7 @@ from .dataset import (
     DatasetWithSizeType,
     FtsDatasetManager,
     FtsDatasetWithSizeType,
+    FtsFilterIdDistribution,
 )
 
 log = logging.getLogger(__name__)
@@ -928,6 +929,7 @@ class FtsPerformanceCase(Case):
     dataset: FtsDatasetManager
 
     filter_rate: float | None = None
+    filter_id_distribution: FtsFilterIdDistribution = FtsFilterIdDistribution.Permuted
 
     @property
     def filters(self) -> Filter:
@@ -950,10 +952,13 @@ class FTSBm25Performance(FtsPerformanceCase):
         self,
         dataset_with_size_type: FtsDatasetWithSizeType | str = FtsDatasetWithSizeType.MSMarcoSmall,
         filter_rate: float | None = None,
+        filter_id_distribution: FtsFilterIdDistribution | str = FtsFilterIdDistribution.Permuted,
         **kwargs,
     ):
         if not isinstance(dataset_with_size_type, FtsDatasetWithSizeType):
             dataset_with_size_type = FtsDatasetWithSizeType(dataset_with_size_type)
+        if not isinstance(filter_id_distribution, FtsFilterIdDistribution):
+            filter_id_distribution = FtsFilterIdDistribution(filter_id_distribution)
         if filter_rate is not None:
             if not dataset_with_size_type.is_advanced:
                 msg = "FTS filter cases are only supported for MS MARCO Large and HotpotQA Large"
@@ -980,6 +985,7 @@ class FTSBm25Performance(FtsPerformanceCase):
             dataset=dataset,
             dataset_with_size_type=dataset_with_size_type,
             filter_rate=filter_rate,
+            filter_id_distribution=filter_id_distribution,
             load_timeout=dataset_with_size_type.get_load_timeout(),
             optimize_timeout=dataset_with_size_type.get_optimize_timeout(),
             **kwargs,
