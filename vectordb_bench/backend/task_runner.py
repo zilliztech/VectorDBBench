@@ -535,7 +535,7 @@ class CaseRunner(BaseModel):
                     )
                     return (0.0, 0.0, 0.0, 0.0, 0.0)
                 msg = "serial search runner is not initialized"
-                raise RuntimeError(msg)
+                raise RuntimeError(msg)  # noqa: TRY301
             results, _ = self.serial_search_runner.run()
         except Exception as e:
             log.warning(f"search error: {e!s}, {e}")
@@ -646,7 +646,9 @@ class CaseRunner(BaseModel):
             recall_queries = fts_dataset.recall_queries_data
             recall_ground_truth = fts_dataset.recall_gt_data
             if recall_queries is None or recall_ground_truth is None:
-                msg = "FTS dataset is missing recall queries or ground truth. Call prepare() before initializing search."
+                msg = (
+                    "FTS dataset is missing recall queries or ground truth. Call prepare() before initializing search."
+                )
                 raise ValueError(msg)
             if len(recall_queries) != len(recall_ground_truth):
                 msg = (

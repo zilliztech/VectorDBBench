@@ -859,7 +859,7 @@ class FtsDatasetManager(BaseModel):
             msg = f"FTS integer filters require int_field='filter_id', got {filter_field!r}"
             raise ValueError(msg)
 
-        filter_value = int(getattr(filters, "int_value"))
+        filter_value = int(filters.int_value)
         if filter_value < 0 or filter_value > self.data.size:
             msg = f"FTS filter_id threshold must be in [0, {self.data.size}], got {filter_value}"
             raise ValueError(msg)
@@ -869,9 +869,7 @@ class FtsDatasetManager(BaseModel):
         filtered_gt: list[dict[str, int]] = []
         for query, qrels in zip(queries, ground_truth, strict=True):
             filtered_qrels = {
-                doc_id: rel
-                for doc_id, rel in qrels.items()
-                if self.qrel_filter_ids.get(doc_id, -1) >= filter_value
+                doc_id: rel for doc_id, rel in qrels.items() if self.qrel_filter_ids.get(doc_id, -1) >= filter_value
             }
             if not filtered_qrels:
                 continue
