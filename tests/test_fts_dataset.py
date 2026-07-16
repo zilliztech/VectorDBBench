@@ -1,3 +1,4 @@
+import math
 from dataclasses import dataclass
 from typing import ClassVar
 
@@ -7,6 +8,7 @@ from vectordb_bench.backend.dataset import (
     FtsDataset,
     FtsDatasetManager,
     FtsDatasetWithSizeType,
+    FtsFilterIdPermutation,
     HotpotQAFts,
     HotpotQATranslator,
     MSMarcoFts,
@@ -63,6 +65,12 @@ class FakeDatasetWithMissingQrel(FakeDataset):
         self.qrels = [Qrel("q1", "missing", 1)]
 
 
+class FakeDatasetWithLowPermutationQrels(FakeDataset):
+    def __init__(self):
+        super().__init__()
+        self.qrels = [Qrel("q1", "d3", 1), Qrel("q2", "d4", 2)]
+
+
 def make_tiny_msmarco_manager(size: int = 3) -> FtsDatasetManager:
     small_label = MSMarcoFts._size_label[100_000]
 
@@ -101,6 +109,54 @@ def test_hotpotqa_translator_combines_title_and_text_and_uses_qrels():
     assert ground_truth == {"q1": {"d3": 1}, "q2": {"d1": 2}}
 
 
+def test_fts_filter_id_permutation_has_stable_sequence():
+    permutation = FtsFilterIdPermutation.for_size(8)
+
+    assert permutation.algorithm == "affine_permutation_v1"
+    assert permutation.multiplier == 5
+    assert permutation.offset == 3
+    assert [permutation.map(i) for i in range(8)] == [3, 0, 5, 2, 7, 4, 1, 6]
+    assert permutation == FtsFilterIdPermutation.for_size(8)
+
+
+@pytest.mark.parametrize("size", [1, 2, 3, 4, 8, 10, 97, 100, 1_000, 100_000, 1_000_000, 5_233_329, 8_841_823])
+def test_fts_filter_id_permutation_is_bijective(size: int):
+    permutation = FtsFilterIdPermutation.for_size(size)
+
+    assert math.gcd(permutation.multiplier, size) == 1
+    assert 0 <= permutation.offset < size
+    if size <= 1_000:
+        assert sorted(permutation.map(i) for i in range(size)) == list(range(size))
+
+
+@pytest.mark.parametrize(("size", "filter_rate"), [(8, 0.5), (100, 0.99), (101, 0.75)])
+def test_fts_filter_id_permutation_preserves_exact_selectivity(size: int, filter_rate: float):
+    permutation = FtsFilterIdPermutation.for_size(size)
+    filter_value = int(size * filter_rate)
+
+    matched = sum(permutation.map(i) >= filter_value for i in range(size))
+
+    assert matched == size - filter_value
+
+
+def test_fts_filter_id_permutation_scatters_matches_across_corpus_order():
+    permutation = FtsFilterIdPermutation.for_size(100)
+
+    matching_ordinals = [ordinal for ordinal in range(100) if permutation.map(ordinal) >= 90]
+
+    assert matching_ordinals != list(range(90, 100))
+    assert len({ordinal // 10 for ordinal in matching_ordinals}) >= 6
+
+
+def test_fts_filter_id_permutation_validates_bounds():
+    with pytest.raises(ValueError, match="size must be positive"):
+        FtsFilterIdPermutation.for_size(0)
+
+    permutation = FtsFilterIdPermutation.for_size(3)
+    with pytest.raises(ValueError, match="ordinal must be in"):
+        permutation.map(3)
+
+
 def test_fts_iterator_preserves_qrel_docs_before_filler():
     manager = make_tiny_msmarco_manager()
     manager._ir_dataset = FakeDataset()
@@ -113,9 +169,9 @@ def test_fts_iterator_preserves_qrel_docs_before_filler():
     docs = [(doc.doc_id, doc.filter_id) for batch in batches for doc in batch]
 
     assert len(docs) == 3
-    assert ("d4", 2) in docs
+    assert ("d4", 1) in docs
     assert all(not doc_id.isdecimal() for doc_id, _ in docs)
-    assert [filter_id for _, filter_id in docs] == [0, 1, 2]
+    assert [filter_id for _, filter_id in docs] == [2, 0, 1]
 
 
 def test_fts_prepare_integer_filter_derives_filtered_qrels(monkeypatch: pytest.MonkeyPatch):
@@ -127,16 +183,19 @@ def test_fts_prepare_integer_filter_derives_filtered_qrels(monkeypatch: pytest.M
 
     assert [query.query_id for query in manager.queries_data] == ["q1", "q2"]
     assert manager.gt_data == [{"d3": 1}, {"d1": 2}]
-    assert [query.query_id for query in manager.recall_queries_data] == ["q1"]
-    assert manager.recall_gt_data == [{"d3": 1}]
+    assert [query.query_id for query in manager.recall_queries_data] == ["q2"]
+    assert manager.recall_gt_data == [{"d1": 2}]
     assert manager.recall_skipped is False
     assert manager.recall_skip_reason is None
-    assert manager.qrel_filter_ids == {"d1": 0, "d3": 2}
+    assert manager.qrel_filter_ids == {"d1": 3, "d3": 1}
     assert manager.filter_stats == {
         "filter_type": "NumGE",
         "filter_field": "filter_id",
         "filter_value": 2,
         "filter_rate": 0.5,
+        "filter_id_distribution": "affine_permutation_v1",
+        "filter_id_multiplier": 3,
+        "filter_id_offset": 3,
         "matched_doc_count": 2,
         "matched_doc_ratio": 0.5,
         "original_query_count": 2,
@@ -149,13 +208,13 @@ def test_fts_prepare_integer_filter_derives_filtered_qrels(monkeypatch: pytest.M
 
 def test_fts_prepare_integer_filter_skips_empty_filtered_qrels(monkeypatch: pytest.MonkeyPatch):
     manager = make_tiny_msmarco_manager(size=4)
-    monkeypatch.setattr(manager._translator, "load", FakeDataset)
+    monkeypatch.setattr(manager._translator, "load", FakeDatasetWithLowPermutationQrels)
 
     filters = NewIntFilter(filter_rate=0.75, int_field="filter_id", int_value=3)
     assert manager.prepare(source=None, filters=filters)
 
     assert [query.query_id for query in manager.queries_data] == ["q1", "q2"]
-    assert manager.gt_data == [{"d3": 1}, {"d1": 2}]
+    assert manager.gt_data == [{"d3": 1}, {"d4": 2}]
     assert manager.recall_queries_data == []
     assert manager.recall_gt_data == []
     assert manager.recall_skipped is True

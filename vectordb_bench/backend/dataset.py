@@ -5,6 +5,7 @@ Usage:
 """
 
 import logging
+import math
 import pathlib
 import types
 import typing
@@ -561,6 +562,46 @@ class FtsDocument:
     filter_id: int | None = None
 
 
+_FTS_FILTER_GOLDEN_RATIO_64 = 0x9E3779B97F4A7C15
+_FTS_FILTER_OFFSET_SEED = 0xD1B54A32D192ED03
+
+
+@dataclass(frozen=True)
+class FtsFilterIdPermutation:
+    """Deterministic bijection that scatters FTS filter IDs across corpus order."""
+
+    algorithm: ClassVar[str] = "affine_permutation_v1"
+    size: int
+    multiplier: int
+    offset: int
+
+    @classmethod
+    def for_size(cls, size: int) -> "FtsFilterIdPermutation":
+        if size <= 0:
+            msg = f"FTS filter ID permutation size must be positive, got {size}"
+            raise ValueError(msg)
+        if size == 1:
+            return cls(size=1, multiplier=1, offset=0)
+
+        multiplier = max(1, (size * _FTS_FILTER_GOLDEN_RATIO_64) >> 64)
+        while math.gcd(multiplier, size) != 1:
+            multiplier += 1
+            if multiplier >= size:
+                multiplier = 1
+
+        return cls(
+            size=size,
+            multiplier=multiplier,
+            offset=_FTS_FILTER_OFFSET_SEED % size,
+        )
+
+    def map(self, ordinal: int) -> int:
+        if ordinal < 0 or ordinal >= self.size:
+            msg = f"FTS filter ID ordinal must be in [0, {self.size}), got {ordinal}"
+            raise ValueError(msg)
+        return (self.multiplier * ordinal + self.offset) % self.size
+
+
 class FtsDatasetTranslator(ABC):
     """Abstract base class for converting ir_datasets schema to internal format.
 
@@ -817,7 +858,7 @@ class FtsDatasetManager(BaseModel):
         return selected_doc_ids
 
     def _build_qrel_filter_ids(self) -> dict[str, int]:
-        """Map qrel doc IDs to their deterministic FTS filter_id ordinal."""
+        """Map qrel doc IDs to their deterministic permuted FTS filter ID."""
         if self._ir_dataset is None:
             msg = "ir_datasets dataset not loaded. Call prepare() first."
             raise RuntimeError(msg)
@@ -827,13 +868,14 @@ class FtsDatasetManager(BaseModel):
 
         qrel_doc_ids = set(self.required_doc_ids)
         qrel_filter_ids: dict[str, int] = {}
+        permutation = FtsFilterIdPermutation.for_size(self.data.size)
         emitted_count = 0
         for doc in self._translator.iter_documents(self._ir_dataset):
             doc_id = str(doc.doc_id)
             if doc_id not in self.selected_doc_ids:
                 continue
             if doc_id in qrel_doc_ids:
-                qrel_filter_ids[doc_id] = emitted_count
+                qrel_filter_ids[doc_id] = permutation.map(emitted_count)
             emitted_count += 1
             if emitted_count >= self.data.size and len(qrel_filter_ids) == len(qrel_doc_ids):
                 break
@@ -878,11 +920,15 @@ class FtsDatasetManager(BaseModel):
 
         matched_doc_count = self.data.size - filter_value
         filtered_relevant_doc_ids = {doc_id for qrels in filtered_gt for doc_id in qrels}
+        permutation = FtsFilterIdPermutation.for_size(self.data.size)
         self.filter_stats = {
             "filter_type": filters.type.value,
             "filter_field": filter_field,
             "filter_value": filter_value,
             "filter_rate": filters.filter_rate,
+            "filter_id_distribution": permutation.algorithm,
+            "filter_id_multiplier": permutation.multiplier,
+            "filter_id_offset": permutation.offset,
             "matched_doc_count": matched_doc_count,
             "matched_doc_ratio": round(matched_doc_count / self.data.size, 6),
             "original_query_count": len(queries),
@@ -1046,6 +1092,7 @@ class FtsDocumentIterator:
     def __init__(self, dataset: FtsDatasetManager, batch_size: int = config.NUM_PER_BATCH):
         self._ds = dataset
         self._batch_size = batch_size
+        self._filter_id_permutation = FtsFilterIdPermutation.for_size(self._ds.data.size)
         self._finished = False
         self._doc_count = 0  # Track total documents emitted
         self._docs_iter = None
@@ -1089,7 +1136,7 @@ class FtsDocumentIterator:
                     doc.doc_id = str(doc.doc_id)
                     if self._ds.selected_doc_ids is not None and doc.doc_id not in self._ds.selected_doc_ids:
                         continue
-                    doc.filter_id = self._doc_count
+                    doc.filter_id = self._filter_id_permutation.map(self._doc_count)
                     batch.append(doc)
                     self._doc_count += 1
                 except StopIteration:
