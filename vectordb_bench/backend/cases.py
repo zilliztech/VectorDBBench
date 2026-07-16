@@ -20,6 +20,17 @@ from .dataset import (
 
 log = logging.getLogger(__name__)
 
+FTS_FILTER_ID_FIELD = "filter_id"
+FTS_FILTER_RATES = (0.5, 0.75, 0.9, 0.95, 0.99)
+
+
+def _format_filter_rate(filter_rate: float) -> str:
+    return f"{filter_rate * 100:g}%"
+
+
+def _is_supported_fts_filter_rate(filter_rate: float) -> bool:
+    return any(abs(filter_rate - supported_rate) < 1e-9 for supported_rate in FTS_FILTER_RATES)
+
 
 class CaseType(Enum):
     """
@@ -920,7 +931,10 @@ class FtsPerformanceCase(Case):
 
     @property
     def filters(self) -> Filter:
-        return non_filter
+        if self.filter_rate is None:
+            return non_filter
+        int_value = int(self.dataset.data.size * self.filter_rate)
+        return NewIntFilter(filter_rate=self.filter_rate, int_field=FTS_FILTER_ID_FIELD, int_value=int_value)
 
     def estimated_payload_bytes_per_query(self, k: int | None) -> int:
         if k is None:
@@ -935,21 +949,37 @@ class FTSBm25Performance(FtsPerformanceCase):
     def __init__(
         self,
         dataset_with_size_type: FtsDatasetWithSizeType | str = FtsDatasetWithSizeType.MSMarcoSmall,
+        filter_rate: float | None = None,
         **kwargs,
     ):
         if not isinstance(dataset_with_size_type, FtsDatasetWithSizeType):
             dataset_with_size_type = FtsDatasetWithSizeType(dataset_with_size_type)
+        if filter_rate is not None:
+            if not dataset_with_size_type.is_advanced:
+                msg = "FTS filter cases are only supported for MS MARCO Large and HotpotQA Large"
+                raise ValueError(msg)
+            if not _is_supported_fts_filter_rate(filter_rate):
+                supported_rates = ", ".join(_format_filter_rate(rate) for rate in FTS_FILTER_RATES)
+                msg = f"FTS filter_rate must be one of: {supported_rates}"
+                raise ValueError(msg)
         dataset = dataset_with_size_type.get_manager()
-        name = f"FTS BM25 Performance - {dataset_with_size_type.value}"
+        filter_suffix = f", Filter {_format_filter_rate(filter_rate)}" if filter_rate is not None else ""
+        name = f"FTS BM25 Performance - {dataset_with_size_type.value}{filter_suffix}"
         description = (
             f"This case tests native BM25 full-text search performance on {dataset_with_size_type.value}. "
             "It measures index building time, recall, serial latency, and search QPS."
         )
+        if filter_rate is not None:
+            description += (
+                f" The FTS filter case searches only documents with {FTS_FILTER_ID_FIELD} >= "
+                f"int(dataset_size * {filter_rate})."
+            )
         super().__init__(
             name=name,
             description=description,
             dataset=dataset,
             dataset_with_size_type=dataset_with_size_type,
+            filter_rate=filter_rate,
             load_timeout=dataset_with_size_type.get_load_timeout(),
             optimize_timeout=dataset_with_size_type.get_optimize_timeout(),
             **kwargs,

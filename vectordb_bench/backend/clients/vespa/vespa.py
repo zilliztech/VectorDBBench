@@ -13,6 +13,7 @@ from typing import Any
 
 from vespa import application
 
+from vectordb_bench.backend.filter import Filter, FilterOp
 from vectordb_bench.backend.payload import PayloadProfile
 
 from ..api import VectorDB
@@ -46,6 +47,11 @@ def _tail_text(value: str, limit: int = VESPA_FEED_OUTPUT_TAIL_CHARS) -> str:
 
 
 class Vespa(VectorDB):
+    supported_filter_types: list[FilterOp] = [
+        FilterOp.NonFilter,
+        FilterOp.NumGE,
+    ]
+
     def __init__(
         self,
         dim: int,
@@ -61,6 +67,8 @@ class Vespa(VectorDB):
         self._is_fts = isinstance(self.case_config, VespaFtsConfig)
         self.schema_name = collection_name
         self._text_field = "text"
+        self._filter_id_field = "filter_id"
+        self._filter_expr: str | None = None
 
         client = self.deploy_http()
         client.wait_for_application_up()
@@ -168,9 +176,13 @@ class Vespa(VectorDB):
         if len(texts) != len(doc_ids):
             msg = f"Mismatch between texts ({len(texts)}) and doc_ids ({len(doc_ids)}) lengths"
             raise ValueError(msg)
+        filter_ids = kwargs.get("filter_ids")
+        if filter_ids is not None and len(filter_ids) != len(texts):
+            msg = f"Mismatch between texts ({len(texts)}) and filter_ids ({len(filter_ids)}) lengths"
+            raise ValueError(msg)
 
         try:
-            self._write_fts_feed_batch(texts, doc_ids)
+            self._write_fts_feed_batch(texts, doc_ids, filter_ids)
         except Exception as exc:
             log.warning("Vespa feed failed for schema %s", self.schema_name, exc_info=True)
             return 0, exc
@@ -223,12 +235,15 @@ class Vespa(VectorDB):
         )
         return self._feed_proc
 
-    def _write_fts_feed_batch(self, texts: list[str], doc_ids: list[str]) -> None:
+    def _write_fts_feed_batch(self, texts: list[str], doc_ids: list[str], filter_ids: list[int] | None = None) -> None:
         lines = []
-        for doc_id, text in zip(doc_ids, texts, strict=True):
+        for i, (doc_id, text) in enumerate(zip(doc_ids, texts, strict=True)):
+            fields = {"id": str(doc_id), "text": text}
+            if filter_ids is not None:
+                fields[self._filter_id_field] = int(filter_ids[i])
             operation = {
                 "put": self._vespa_document_id(str(doc_id)),
-                "fields": {"id": str(doc_id), "text": text},
+                "fields": fields,
             }
             lines.append(json.dumps(operation, ensure_ascii=False, separators=(",", ":")))
 
@@ -349,9 +364,12 @@ class Vespa(VectorDB):
             f"nearestNeighbor({embedding_field}, query_embedding)"
         )
 
+        prepared_filter = getattr(self, "_filter_expr", None)
         if filters:
             id_filter = filters.get("id")
-            yql += f" and id >= {id_filter}"
+            prepared_filter = f"id >= {id_filter}"
+        if prepared_filter:
+            yql += f" and {prepared_filter}"
 
         query_embedding = query if self.case_config.quantization_type == "none" else util.binarize_tensor(query)
 
@@ -379,6 +397,8 @@ class Vespa(VectorDB):
         if payload_profile == PayloadProfile.TEXT:
             selected_fields = f"id, {self._text_field}"
         yql = f"select {selected_fields} from {self.schema_name} where userQuery()"
+        if self._filter_expr:
+            yql += f" and {self._filter_expr}"
         result = self.client.query(
             {
                 "yql": yql,
@@ -398,6 +418,20 @@ class Vespa(VectorDB):
             if doc_id is not None:
                 ids.append(doc_id)
         return ids
+
+    def prepare_filter(self, filters: Filter) -> None:
+        if filters.type == FilterOp.NonFilter:
+            self._filter_expr = None
+            return
+        if filters.type == FilterOp.NumGE:
+            expected_field = self._filter_id_field if self._is_fts else "id"
+            if getattr(filters, "int_field", None) != expected_field:
+                msg = f"Vespa filters only support int_field='{expected_field}' in this mode"
+                raise ValueError(msg)
+            self._filter_expr = f"{expected_field} >= {filters.int_value}"
+            return
+        msg = f"Not support Filter for Vespa - {filters}"
+        raise ValueError(msg)
 
     def optimize(self, data_size: int | None = None):
         """optimize will be called between insertion and search in performance cases.
@@ -461,6 +495,7 @@ class Vespa(VectorDB):
         if self._is_fts:
             fields = [
                 Field("id", "string", indexing=["summary", "attribute"]),
+                Field("filter_id", "int", indexing=["summary", "attribute"]),
                 Field(
                     "text",
                     "string",

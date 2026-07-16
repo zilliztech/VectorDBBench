@@ -17,6 +17,7 @@ import click
 from yaml import load
 
 from .. import config
+from ..backend.cases import FTS_FILTER_RATES
 from ..backend.clients import DB
 from ..backend.clients.api import IndexType, MetricType
 from ..backend.dataset import DatasetWithSizeType, FtsDatasetWithSizeType
@@ -39,6 +40,8 @@ except ImportError:
 
 DEFAULT_DATASET_WITH_SIZE_TYPE = DatasetWithSizeType.CohereMedium.value
 SUPPORTED_DATASET_WITH_SIZE_TYPES = "|".join(dataset.value for dataset in DatasetWithSizeType)
+SUPPORTED_FTS_DATASET_WITH_SIZE_TYPES = "|".join(dataset.value for dataset in FtsDatasetWithSizeType)
+SUPPORTED_FTS_FILTER_RATES = "|".join(f"{rate:g}" for rate in FTS_FILTER_RATES)
 
 
 def copy_if_not_none(
@@ -273,6 +276,7 @@ def get_custom_case_config(parameters: dict) -> dict:
             "dataset_with_size_type": dataset_with_size_type,
             "payload_profile": parameters.get("payload_profile", PayloadProfile.IDS_ONLY.value),
         }
+        copy_if_not_none(custom_case_config, parameters, "fts_filter_rate", "filter_rate")
     return custom_case_config
 
 
@@ -603,9 +607,8 @@ class CommonTypedDict(TypedDict):
             help="Dataset with size type. When omitted, filter/insert cases use Medium Cohere (768dim, 1M), "
             "CloudPayloadSearchCase and CloudColdLatencyCase use LAION 100M, and CloudMultiTenantSearchCase "
             f"uses Large Cohere (768dim, 10M). Supported vector values include "
-            f"{SUPPORTED_DATASET_WITH_SIZE_TYPES}. For FTSBm25Performance, supported default UI datasets include "
-            f"{FtsDatasetWithSizeType.MSMarcoSmall.value}|{FtsDatasetWithSizeType.MSMarcoMedium.value}|"
-            f"{FtsDatasetWithSizeType.HotpotQASmall.value}|{FtsDatasetWithSizeType.HotpotQAMedium.value}.",
+            f"{SUPPORTED_DATASET_WITH_SIZE_TYPES}. For FTSBm25Performance, supported datasets include "
+            f"{SUPPORTED_FTS_DATASET_WITH_SIZE_TYPES}.",
             default=None,
         ),
     ]
@@ -653,6 +656,18 @@ class CommonTypedDict(TypedDict):
             type=float,
             default=None,
             help="Optional BM25 b override for FTS cases. Omit to use the backend default.",
+        ),
+    ]
+    fts_filter_rate: Annotated[
+        float | None,
+        click.option(
+            "--fts-filter-rate",
+            type=float,
+            default=None,
+            help=(
+                "Optional FTS integer filter rate for FTSBm25Performance. "
+                f"Only valid for large FTS datasets. Supported values: {SUPPORTED_FTS_FILTER_RATES}."
+            ),
         ),
     ]
     cloud_filter_rate: Annotated[

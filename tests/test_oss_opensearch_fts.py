@@ -1,3 +1,5 @@
+# ruff: noqa: E402
+
 import sys
 import types
 
@@ -14,6 +16,7 @@ from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.clients.api import IndexType
 from vectordb_bench.backend.clients.oss_opensearch.config import OSSOpenSearchFtsConfig
 from vectordb_bench.backend.clients.oss_opensearch.oss_opensearch import OSSOpenSearch
+from vectordb_bench.backend.filter import NewIntFilter
 from vectordb_bench.backend.payload import PayloadProfile
 
 
@@ -22,6 +25,8 @@ def make_fts_db():
     db.index_name = "idx"
     db.id_col_name = "doc_id"
     db.text_col_name = "text"
+    db.filter_id_col_name = "filter_id"
+    db.filter = None
     db._is_fts = True
     db.client = object()
     return db
@@ -31,6 +36,7 @@ def test_oss_opensearch_fts_config_defaults():
     config = OSSOpenSearchFtsConfig()
 
     assert config.index_param()["properties"]["doc_id"] == {"type": "keyword"}
+    assert config.index_param()["properties"]["filter_id"] == {"type": "long"}
     assert config.index_param()["properties"]["text"] == {"type": "text"}
     assert config.search_param() == {}
 
@@ -88,6 +94,7 @@ def test_oss_opensearch_create_index_fts_uses_text_mappings_and_settings():
             "mappings": {
                 "properties": {
                     "doc_id": {"type": "keyword"},
+                    "filter_id": {"type": "long"},
                     "text": {"type": "text"},
                 }
             },
@@ -106,12 +113,12 @@ def test_oss_opensearch_insert_documents_builds_bulk_body():
 
     db.client = Client()
 
-    assert db.insert_documents(["alpha", "beta"], ["d1", "d2"]) == (2, None)
+    assert db.insert_documents(["alpha", "beta"], ["d1", "d2"], filter_ids=[0, 7]) == (2, None)
     assert captured["body"] == [
         {"index": {"_index": "idx", "_id": "d1"}},
-        {"doc_id": "d1", "text": "alpha"},
+        {"doc_id": "d1", "text": "alpha", "filter_id": 0},
         {"index": {"_index": "idx", "_id": "d2"}},
-        {"doc_id": "d2", "text": "beta"},
+        {"doc_id": "d2", "text": "beta", "filter_id": 7},
     ]
 
 
@@ -174,7 +181,7 @@ def test_oss_opensearch_insert_documents_validates_lengths():
 
     db.client = Client()
 
-    with pytest.raises(ValueError, match="Mismatch between texts .* and doc_ids .* lengths"):
+    with pytest.raises(ValueError, match=r"Mismatch between texts .* and doc_ids .* lengths"):
         db.insert_documents(["alpha", "beta"], ["d1"])
 
 
@@ -195,6 +202,29 @@ def test_oss_opensearch_search_documents_builds_match_query():
     assert calls["size"] == 3
     assert calls["stored_fields"] == "_none_"
     assert calls["filter_path"] == ["hits.hits._id", "hits.hits.fields.doc_id"]
+
+
+def test_oss_opensearch_search_documents_applies_fts_filter():
+    db = make_fts_db()
+    calls = {}
+
+    class Client:
+        def search(self, **kwargs):
+            calls.update(kwargs)
+            return {"hits": {"hits": [{"fields": {"doc_id": ["d1"]}}]}}
+
+    db.client = Client()
+    db.prepare_filter(NewIntFilter(filter_rate=0.5, int_field="filter_id", int_value=10))
+
+    assert db.search_documents("hello world", k=3) == ["d1"]
+    assert calls["body"] == {
+        "query": {
+            "bool": {
+                "must": {"match": {"text": "hello world"}},
+                "filter": {"range": {"filter_id": {"gte": 10}}},
+            }
+        }
+    }
 
 
 def test_oss_opensearch_search_documents_requests_text_payload():

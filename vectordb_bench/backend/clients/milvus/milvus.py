@@ -64,9 +64,11 @@ class Milvus(VectorDB):
             self.batch_size = fts_batch_size or MILVUS_FTS_BATCH_SIZE
             self._primary_field = "doc_id"
             self._text_field = "text"
+            self._filter_id_field = "filter_id"
             self._sparse_field = "sparse_vector"
             self._sparse_index_name = "sparse_vector_idx"
             self._doc_id_sort_index_name = "doc_id_sort_idx"
+            self._filter_id_sort_index_name = "filter_id_sort_idx"
             self._main_index_name = self._sparse_index_name
             self._sort_index_name = self._doc_id_sort_index_name
             self._sort_index_field = self._primary_field
@@ -108,6 +110,7 @@ class Milvus(VectorDB):
                     else self.case_config.index_param().get("analyzer_params", {"type": "english"})
                 )
                 schema.add_field(self._primary_field, DataType.VARCHAR, max_length=512, is_primary=True)
+                schema.add_field(self._filter_id_field, DataType.INT64)
                 schema.add_field(
                     self._text_field,
                     DataType.VARCHAR,
@@ -200,6 +203,12 @@ class Milvus(VectorDB):
             index_name=self._sort_index_name,
             index_type="STL_SORT",
         )
+        if self._is_fts:
+            index_params.add_index(
+                field_name=self._filter_id_field,
+                index_name=self._filter_id_sort_index_name,
+                index_type="STL_SORT",
+            )
         if self.with_scalar_labels:
             index_params.add_index(
                 field_name=self._scalar_payload_label_field,
@@ -398,6 +407,10 @@ class Milvus(VectorDB):
 
         batch_size = kwargs.get("batch_size", self.batch_size)
         labels_data = kwargs.get("labels_data")
+        filter_ids = kwargs.get("filter_ids")
+        if filter_ids is not None and len(filter_ids) != len(docs):
+            msg = f"Mismatch between texts ({len(docs)}) and filter_ids ({len(filter_ids)}) lengths"
+            raise ValueError(msg)
 
         insert_count = 0
         try:
@@ -409,6 +422,8 @@ class Milvus(VectorDB):
                         self._primary_field: str(doc_ids[i]),
                         self._text_field: docs[i],
                     }
+                    if filter_ids is not None:
+                        row[self._filter_id_field] = int(filter_ids[i])
                     if self.with_scalar_labels:
                         row[self._scalar_label_field] = labels_data[i] if labels_data is not None else ""
                     rows.append(row)
@@ -427,8 +442,17 @@ class Milvus(VectorDB):
 
     def prepare_filter(self, filters: Filter):
         if self._is_fts:
-            self.expr = ""
-            return
+            if filters.type == FilterOp.NonFilter:
+                self.expr = ""
+                return
+            if filters.type == FilterOp.NumGE:
+                if getattr(filters, "int_field", None) != self._filter_id_field:
+                    msg = f"Milvus FTS filters only support int_field='{self._filter_id_field}'"
+                    raise ValueError(msg)
+                self.expr = f"{self._filter_id_field} >= {filters.int_value}"
+                return
+            msg = f"Not support Filter for Milvus FTS - {filters}"
+            raise ValueError(msg)
         if filters.type == FilterOp.NonFilter:
             self.expr = ""
         elif filters.type == FilterOp.NumGE:
@@ -520,6 +544,7 @@ class Milvus(VectorDB):
             anns_field=self._sparse_field,
             search_params=self.case_config.search_param(),
             limit=k,
+            filter=getattr(self, "expr", ""),
             output_fields=output_fields,
         )
 
