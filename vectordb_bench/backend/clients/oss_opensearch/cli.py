@@ -18,6 +18,7 @@ log = logging.getLogger(__name__)
 
 
 class OSSOpenSearchTypedDict(TypedDict):
+    index_name: Annotated[str, click.option("--index-name", type=str, help="Db index name", default="vdb_bench_index")]
     host: Annotated[str, click.option("--host", type=str, help="Db host", required=True)]
     port: Annotated[int, click.option("--port", type=int, default=80, help="Db Port")]
     user: Annotated[str, click.option("--user", type=str, help="Db User")]
@@ -152,6 +153,7 @@ def OSSOpenSearch(**parameters: Unpack[OSSOpenSearchHNSWTypedDict]):
     run(
         db=DB.OSSOpenSearch,
         db_config=OSSOpenSearchConfig(
+            index_name=parameters["index_name"],
             host=parameters["host"],
             port=parameters["port"],
             user=parameters["user"],

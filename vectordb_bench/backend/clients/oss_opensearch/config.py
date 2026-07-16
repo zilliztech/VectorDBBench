@@ -12,6 +12,7 @@ log = logging.getLogger(__name__)
 class OSSOpenSearchConfig(DBConfig, BaseModel):
     _extra_empty_skip: ClassVar[frozenset[str]] = frozenset({"user", "password", "host"})
 
+    index_name: str = "vdb_bench_index"
     host: str = ""
     port: int = 80
     user: str | None = None
@@ -25,6 +26,7 @@ class OSSOpenSearchConfig(DBConfig, BaseModel):
             else ()
         )
         return {
+            "index_name": self.index_name,
             "hosts": [{"host": self.host, "port": self.port}],
             "http_auth": http_auth,
             "use_ssl": use_ssl,
@@ -247,3 +249,38 @@ class OSSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
 
     def search_param(self) -> dict:
         return {"ef_search": self.efSearch}
+
+
+class OSSOpenSearchFtsConfig(BaseModel, DBCaseConfig):
+    number_of_shards: int = 1
+    number_of_replicas: int = 0
+    refresh_interval: str = "30s"
+    force_merge_enabled: bool = True
+    metric_type: MetricType = MetricType.BM25
+    bm25_k1: float | None = None
+    bm25_b: float | None = None
+
+    def index_param(self) -> dict:
+        text_mapping = {"type": "text"}
+        if self.bm25_k1 is not None or self.bm25_b is not None:
+            text_mapping["similarity"] = "vdbbench_bm25"
+        return {
+            "properties": {
+                "doc_id": {"type": "keyword"},
+                "filter_id": {"type": "long"},
+                "text": text_mapping,
+            },
+        }
+
+    def search_param(self) -> dict:
+        return {}
+
+    def similarity_settings(self) -> dict:
+        if self.bm25_k1 is None and self.bm25_b is None:
+            return {}
+        bm25_settings = {"type": "BM25"}
+        if self.bm25_k1 is not None:
+            bm25_settings["k1"] = self.bm25_k1
+        if self.bm25_b is not None:
+            bm25_settings["b"] = self.bm25_b
+        return {"similarity": {"vdbbench_bm25": bm25_settings}}

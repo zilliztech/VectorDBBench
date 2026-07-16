@@ -34,6 +34,7 @@ class FormatResult(BaseModel):
     serial_latency_p95: float = 0
     recall: float = 0
     ndcg: float = 0
+    mrr: float = 0
     conc_num_list: list[int] = []
     conc_qps_list: list[float] = []
     conc_latency_p99_list: list[float] = []

@@ -23,11 +23,11 @@ DATASET_ORDER = [
     "HotpotQA Large",
 ]
 # Published FTS results currently cover this cloud/service backend subset.
-BACKEND_ORDER = ["ZillizCloud", "ElasticSearch", "Vespa", "TurboPuffer"]
+BACKEND_ORDER = ["ZillizCloud", "ElasticSearch", "OSSOpenSearch", "TurboPuffer"]
 BACKEND_COLORS = {
     "ZillizCloud": "#0D6EFD",
     "ElasticSearch": "#04D6C8",
-    "Vespa": "#61D790",
+    "OSSOpenSearch": "#61D790",
     "TurboPuffer": "#FF6B2C",
 }
 SIZE_ORDER = ["Small", "Medium", "Large"]
@@ -123,6 +123,8 @@ def _parse_result_file(result_file: Path) -> list[dict[str, Any]]:
                 "load_s": metrics.get("load_duration", 0.0),
                 "qps": metrics.get("qps", 0.0),
                 "recall": metrics.get("recall", 0.0),
+                "ndcg": metrics.get("ndcg", 0.0),
+                "mrr": metrics.get("mrr", 0.0),
                 "p95_s": metrics.get("serial_latency_p95", 0.0),
                 "p99_s": metrics.get("serial_latency_p99", 0.0),
                 "concurrency": metrics.get("conc_num_list") or [],
@@ -133,14 +135,8 @@ def _parse_result_file(result_file: Path) -> list[dict[str, Any]]:
     return rows
 
 
-def _latest_backend_result_files(result_dir: Path) -> list[Path]:
-    result_files = []
-    backend_dirs = sorted(path for path in result_dir.iterdir() if path.is_dir())
-    for backend_dir in backend_dirs:
-        backend_files = sorted(backend_dir.glob("result_*.json"))
-        if backend_files:
-            result_files.append(backend_files[-1])
-    return result_files
+def _result_files(result_dir: Path) -> list[Path]:
+    return sorted(result_dir.rglob("result_*.json"))
 
 
 def load_full_text_search_rows(result_dir: Path = RESULT_DIR) -> pd.DataFrame:
@@ -148,7 +144,7 @@ def load_full_text_search_rows(result_dir: Path = RESULT_DIR) -> pd.DataFrame:
         return pd.DataFrame()
 
     rows = []
-    for result_file in _latest_backend_result_files(result_dir):
+    for result_file in _result_files(result_dir):
         rows.extend(_parse_result_file(result_file))
 
     data = pd.DataFrame(rows)
@@ -196,6 +192,8 @@ def _draw_summary_table(st: Any, data: pd.DataFrame) -> None:
         "load_s",
         "qps",
         "recall",
+        "ndcg",
+        "mrr",
         "p95_s",
         "p99_s",
     ]
@@ -207,10 +205,31 @@ def _draw_summary_table(st: Any, data: pd.DataFrame) -> None:
             "load_s": st.column_config.NumberColumn("Load s", format="%.4f"),
             "qps": st.column_config.NumberColumn("QPS", format="%.4f"),
             "recall": st.column_config.NumberColumn("Recall", format="%.4f"),
+            "ndcg": st.column_config.NumberColumn("NDCG", format="%.4f"),
+            "mrr": st.column_config.NumberColumn("MRR", format="%.4f"),
             "p95_s": st.column_config.NumberColumn("p95 s", format="%.4f"),
             "p99_s": st.column_config.NumberColumn("p99 s", format="%.4f"),
         },
     )
+
+
+def _chart_label(value: Any, metric: str) -> str:
+    if pd.isna(value):
+        return ""
+
+    value = float(value)
+    abs_value = abs(value)
+    if metric in {"recall", "ndcg", "mrr"}:
+        return f"{value:.3f}"
+    if metric == "qps":
+        return f"{value / 1000:.1f}k" if abs_value >= 1000 else f"{value:.0f}"
+    if metric == "load_s":
+        if abs_value >= 3600:
+            return f"{value / 3600:.1f}h"
+        if abs_value >= 60:
+            return f"{value / 60:.1f}m"
+        return f"{value:.1f}s"
+    return f"{value:.1f}"
 
 
 def _draw_metric_chart(
@@ -224,8 +243,12 @@ def _draw_metric_chart(
         backend_order = BACKEND_ORDER
 
     show_text = data["payload"].nunique() <= 1
+    chart_data = data.copy()
+    if show_text:
+        chart_data["_chart_label"] = chart_data[metric].apply(lambda value: _chart_label(value, metric))
+
     fig = px.bar(
-        data,
+        chart_data,
         x="dataset_axis_label",
         y=metric,
         color="backend",
@@ -234,16 +257,15 @@ def _draw_metric_chart(
         category_orders={"dataset_axis_label": _dataset_axis_order(data), "backend": backend_order},
         color_discrete_map=BACKEND_COLORS,
         hover_data=["dataset_doc_count", "payload", "context", "task_label"],
-        text_auto=".4g" if show_text else False,
+        text="_chart_label" if show_text else None,
         title=title,
     )
     if show_text:
-        text_template = "%{y:.4f}" if metric == "recall" else "%{y:.1f}"
         fig.update_traces(
-            texttemplate=text_template,
+            texttemplate="%{text}",
             textposition="outside",
             textangle=0,
-            textfont={"size": 11},
+            textfont={"size": 10},
             cliponaxis=False,
         )
     fig.update_layout(
@@ -314,7 +336,7 @@ def main():
     NavToPages(st)
 
     st.title("Full Text Search Cloud Results")
-    st.caption("Published FTS results for Zilliz Cloud, ElasticSearch, Vespa, and TurboPuffer.")
+    st.caption("Published FTS results for Zilliz Cloud, ElasticSearch, OpenSearch, and TurboPuffer.")
 
     data = load_full_text_search_rows()
     if data.empty:
@@ -329,7 +351,7 @@ def main():
         return
 
     _draw_summary_table(st, shown_data)
-    chart_tabs = st.tabs(["QPS", "Recall", "Load"])
+    chart_tabs = st.tabs(["QPS", "Recall", "NDCG", "MRR", "Load"])
     with chart_tabs[0]:
         qps_data = shown_data
         _draw_metric_chart(
@@ -345,10 +367,28 @@ def main():
             st,
             recall_data,
             "recall",
-            "Math-GT Recall",
+            "Semantic Recall",
             _backend_metric_order(recall_data, "recall", ascending=False),
         )
     with chart_tabs[2]:
+        ndcg_data = shown_data[shown_data["payload"] == "ids_only"]
+        _draw_metric_chart(
+            st,
+            ndcg_data,
+            "ndcg",
+            "NDCG",
+            _backend_metric_order(ndcg_data, "ndcg", ascending=False),
+        )
+    with chart_tabs[3]:
+        mrr_data = shown_data[shown_data["payload"] == "ids_only"]
+        _draw_metric_chart(
+            st,
+            mrr_data,
+            "mrr",
+            "MRR",
+            _backend_metric_order(mrr_data, "mrr", ascending=False),
+        )
+    with chart_tabs[4]:
         load_data = shown_data[shown_data["payload"] == "ids_only"]
         _draw_metric_chart(
             st,

@@ -14,7 +14,7 @@ from vectordb_bench.backend.payload import PayloadProfile
 from vectordb_bench.backend.workload import WorkloadKind
 
 from ... import config
-from ...metric import calc_ndcg, calc_recall, calc_recall_fts, get_ideal_dcg
+from ...metric import calc_mrr_fts, calc_ndcg, calc_ndcg_fts, calc_recall, calc_recall_fts, get_ideal_dcg
 from ...models import LoadTimeoutError
 from .. import utils
 from ..clients import api
@@ -133,7 +133,7 @@ class SerialSearchRunner:
         self,
         db: api.VectorDB,
         test_data: list,
-        ground_truth: list[list[int]],
+        ground_truth: list[list[int]] | list[dict[str, int]],
         k: int = 100,
         filters: Filter = non_filter,
         payload_profile: PayloadProfile = PayloadProfile.IDS_ONLY,
@@ -205,7 +205,7 @@ class SerialSearchRunner:
 
         return results
 
-    def search(self, args: tuple[list, list[list[int]]]) -> tuple[float, ...]:
+    def search(self, args: tuple[list, list[list[int]] | list[dict[str, int]]]) -> tuple[float, ...]:
         log.info(f"{mp.current_process().name:14} start search the entire test_data to get recall and latency")
         with self.db.init():
             self.db.prepare_filter(self.filters)
@@ -215,7 +215,7 @@ class SerialSearchRunner:
             log.debug(f"test dataset size: {len(test_data)}")
             log.debug(f"ground truth size: {len(ground_truth) if ground_truth is not None else 0}")
 
-            latencies, recalls, ndcgs = [], [], []
+            latencies, recalls, ndcgs, mrrs = [], [], [], []
             tenant_rng = random.Random(0)
             for idx, emb in enumerate(test_data):
                 tenant = (
@@ -236,13 +236,16 @@ class SerialSearchRunner:
                     gt = ground_truth[idx]
                     if self._use_fts_metrics:
                         recalls.append(calc_recall_fts(self.k, gt, results))
+                        ndcgs.append(calc_ndcg_fts(self.k, gt, results))
+                        mrrs.append(calc_mrr_fts(self.k, gt, results))
                     else:
                         recalls.append(calc_recall(self.k, gt[: self.k], results))
                         ndcgs.append(calc_ndcg(gt[: self.k], results, ideal_dcg))
                 else:
                     recalls.append(0)
-                    if not self._use_fts_metrics:
-                        ndcgs.append(0)
+                    ndcgs.append(0)
+                    if self._use_fts_metrics:
+                        mrrs.append(0)
 
                 if len(latencies) % 100 == 0:
                     log.debug(
@@ -252,22 +255,25 @@ class SerialSearchRunner:
 
         avg_latency = round(np.mean(latencies), 4)
         avg_recall = round(np.mean(recalls), 4)
+        avg_ndcg = round(np.mean(ndcgs), 4)
         cost = round(np.sum(latencies), 4)
         p99 = round(np.percentile(latencies, 99), 4)
         p95 = round(np.percentile(latencies, 95), 4)
         if self._use_fts_metrics:
+            avg_mrr = round(np.mean(mrrs), 4)
             log.info(
                 f"{mp.current_process().name:14} search entire test_data: "
                 f"cost={cost}s, "
                 f"queries={len(latencies)}, "
                 f"avg_recall={avg_recall}, "
+                f"avg_ndcg={avg_ndcg}, "
+                f"avg_mrr={avg_mrr}, "
                 f"avg_latency={avg_latency}, "
                 f"p99={p99}, "
                 f"p95={p95}"
             )
-            return (avg_recall, p99, p95)
+            return (avg_recall, avg_ndcg, avg_mrr, p99, p95)
 
-        avg_ndcg = round(np.mean(ndcgs), 4)
         log.info(
             f"{mp.current_process().name:14} search entire test_data: "
             f"cost={cost}s, "
