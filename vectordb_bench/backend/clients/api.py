@@ -57,6 +57,8 @@ class IndexType(StrEnum):
     IVF_HNSW_SQ = "IVF_HNSW_SQ"
     IVF_HNSW_PQ = "IVF_HNSW_PQ"
     NONE = "NONE"
+    HybridAnn = "hybridann"
+    GRAPH_INDEX = "graph_index"
 
 
 class SQType(StrEnum):

@@ -65,6 +65,7 @@ class DB(Enum):
     SeekDB = "SeekDB"
     VolcMySQL = "VolcMySQL"
     Adbpg = "AnalyticDB for PostgreSQL"
+    VexDB = "VexDB"
 
     @property
     def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901, PLR0915
@@ -226,6 +227,11 @@ class DB(Enum):
             from .hologres.hologres import Hologres
 
             return Hologres
+
+        if self == DB.VexDB:
+            from .vexdb.vexdb import VexDB
+
+            return VexDB
 
         if self == DB.TencentElasticsearch:
             from .tencent_elasticsearch.tencent_elasticsearch import TencentElasticsearch
@@ -444,6 +450,11 @@ class DB(Enum):
             from .hologres.config import HologresConfig
 
             return HologresConfig
+
+        if self == DB.VexDB:
+            from .vexdb.config import VexDBConfig
+
+            return VexDBConfig
 
         if self == DB.TencentElasticsearch:
             from .tencent_elasticsearch.config import TencentElasticsearchConfig
@@ -715,7 +726,11 @@ class DB(Enum):
 
             return AdbpgIndexConfig
 
-        # DB.Pinecone, DB.Redis
+        if self == DB.VexDB:
+            from .vexdb.config import _vexdb_case_config
+
+            return _vexdb_case_config.get(index_type)
+
         return EmptyDBCaseConfig
 
 

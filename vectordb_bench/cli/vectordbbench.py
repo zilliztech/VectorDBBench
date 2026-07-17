@@ -49,6 +49,7 @@ from ..backend.clients.tidb.cli import TiDB
 from ..backend.clients.turbopuffer.cli import TurboPuffer, TurboPufferUnpin
 from ..backend.clients.vectorchord.cli import VectorChordGraph, VectorChordRQ
 from ..backend.clients.vespa.cli import Vespa
+from ..backend.clients.vexdb.cli import VexDBGRAPHINDEX, VexDBHybridANN, VexDBIVFFlat
 from ..backend.clients.volc_mysql.cli import VolcMySQLHNSW
 from ..backend.clients.weaviate_cloud.cli import Weaviate
 from ..backend.clients.zilliz_cloud.cli import ZillizAutoIndex
@@ -113,6 +114,9 @@ cli.add_command(PolarDBHNSWPQ)
 cli.add_command(PolarDBHNSWSQ)
 cli.add_command(SeekDBHNSW)
 cli.add_command(VolcMySQLHNSW)
+cli.add_command(VexDBGRAPHINDEX)
+cli.add_command(VexDBIVFFlat)
+cli.add_command(VexDBHybridANN)
 
 
 if __name__ == "__main__":

@@ -158,7 +158,7 @@ class CaseConfigParamType(Enum):
     max_partition_size = "max_partition_size"
     build_beam_size = "build_beam_size"
     vector_search_beam_size = "vector_search_beam_size"
-
+    create_index_before_load = "create_index_before_load"
     dataset_with_size_type = "dataset_with_size_type"
     filter_rate = "filter_rate"
     payload_profile = "payload_profile"
@@ -167,6 +167,10 @@ class CaseConfigParamType(Enum):
     concurrencies = "concurrencies"
     optimize_after_write = "optimize_after_write"
     read_dur_after_write = "read_dur_after_write"
+    graph_magnitude_threshold = "graph_magnitude_threshold"
+    vec_index_magnitudes = "vec_index_magnitudes"
+    hybrid_query_ivf_probes_factor = "hybrid_query_ivf_probes_factor"
+    col_name_list = "col_name_list"
 
     # PolarDB parameters
     insert_workers = "insert_workers"
