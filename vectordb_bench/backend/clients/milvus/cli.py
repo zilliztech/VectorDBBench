@@ -179,6 +179,14 @@ class MilvusRefineTypedDict(TypedDict):
 
 
 class MilvusHNSWPQTypedDict(CommonTypedDict, MilvusTypedDict, MilvusHNSWTypedDict, MilvusRefineTypedDict):
+    pq_m: Annotated[
+        int,
+        click.option(
+            "--pq-m",
+            type=int,
+            required=True,
+        ),
+    ]
     nbits: Annotated[
         int,
         click.option(
@@ -209,6 +217,7 @@ def MilvusHNSWPQ(**parameters: Unpack[MilvusHNSWPQTypedDict]):
                 M=parameters["m"],
                 efConstruction=parameters["ef_construction"],
                 ef=parameters["ef_search"],
+                m=parameters["pq_m"],
                 nbits=parameters["nbits"],
                 refine=parameters["refine"],
                 refine_type=parameters["refine_type"],
