@@ -47,7 +47,7 @@ class RatedMultiThreadingInsertRunner:
                     msg = f"Insert failed and retried more than {config.MAX_INSERT_RETRY} times"
                     raise RuntimeError(msg) from None
 
-        if db.name == "PgVector":
+        if db.name in {"PgVector", "VexDB"}:
             # pgvector is not thread-safe for concurrent insert,
             #   so we need to copy the db object, make sure each thread has its own connection
             db_copy = deepcopy(db)
