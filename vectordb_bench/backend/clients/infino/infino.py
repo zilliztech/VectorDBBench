@@ -100,6 +100,10 @@ class Infino(VectorDB):
 
     @contextmanager
     def init(self):
+        # Reentrant: nested init() reuses the connection; a second one deadlocks optimize's lock on Linux.
+        if self._conn is not None:
+            yield
+            return
         self._conn = infino.connect(self.data_path)
         self._table = self._conn.open_table(self.table_name)
         try:
