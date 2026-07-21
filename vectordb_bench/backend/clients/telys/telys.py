@@ -139,7 +139,11 @@ class TelysClient(VectorDB):
         return [int(i) for i in res["ids"]]
 
     def optimize(self, data_size: int | None = None):
-        """Build per-partition IVF for oversized partitions, then persist (the commit point)."""
+        """Build per-partition IVF for oversized partitions, then persist (the commit point).
+
+        Remote build_ivf requires a telys server that exposes the self-host IVF op. On an older telys
+        release that lacks it, build_ivf is skipped and partitions stay exact (still correct — just no
+        IVF speedup for very large partitions); the commit (save) still happens."""
         p = self.case_config.index_param() if self.case_config else {}
         col = self._col
         eng = None
@@ -147,7 +151,11 @@ class TelysClient(VectorDB):
             eng = self._connect()
             col = eng.open_collection(self.collection_name)
         try:
-            col.build_ivf(min_rows=int(p.get("min_rows", 20000)), target_recall=float(p.get("target_recall", 0.98)))
+            try:
+                col.build_ivf(min_rows=int(p.get("min_rows", 20000)),
+                              target_recall=float(p.get("target_recall", 0.98)))
+            except Exception as e:  # noqa: BLE001  — telys server without remote build_ivf: stay exact
+                log.warning("Telys optimize: remote build_ivf unavailable (%s); partitions stay exact", e)
             col.save()
         finally:
             if eng is not None:
