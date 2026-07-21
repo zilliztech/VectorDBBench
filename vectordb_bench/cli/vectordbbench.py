@@ -4,6 +4,7 @@ from ..backend.clients.alloydb.cli import AlloyDBScaNN
 from ..backend.clients.aws_opensearch.cli import AWSOpenSearch
 from ..backend.clients.chroma.cli import Chroma
 from ..backend.clients.clickhouse.cli import Clickhouse
+from ..backend.clients.telys.cli import Telys
 from ..backend.clients.cockroachdb.cli import CockroachDB as CockroachDBCli
 from ..backend.clients.doris.cli import Doris
 from ..backend.clients.elastic_cloud.cli import (
@@ -113,6 +114,7 @@ cli.add_command(PolarDBHNSWPQ)
 cli.add_command(PolarDBHNSWSQ)
 cli.add_command(SeekDBHNSW)
 cli.add_command(VolcMySQLHNSW)
+cli.add_command(Telys)
 
 
 if __name__ == "__main__":
