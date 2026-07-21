@@ -4,7 +4,6 @@ from ..backend.clients.alloydb.cli import AlloyDBScaNN
 from ..backend.clients.aws_opensearch.cli import AWSOpenSearch
 from ..backend.clients.chroma.cli import Chroma
 from ..backend.clients.clickhouse.cli import Clickhouse
-from ..backend.clients.telys.cli import Telys
 from ..backend.clients.cockroachdb.cli import CockroachDB as CockroachDBCli
 from ..backend.clients.doris.cli import Doris
 from ..backend.clients.elastic_cloud.cli import (
@@ -44,6 +43,7 @@ from ..backend.clients.qdrant_local.cli import QdrantLocal
 from ..backend.clients.redis.cli import Redis
 from ..backend.clients.s3_vectors.cli import S3Vectors
 from ..backend.clients.seekdb.cli import SeekDBHNSW
+from ..backend.clients.telys.cli import Telys
 from ..backend.clients.tencent_elasticsearch.cli import TencentElasticsearch
 from ..backend.clients.test.cli import Test
 from ..backend.clients.tidb.cli import TiDB

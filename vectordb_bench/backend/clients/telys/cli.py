@@ -25,13 +25,21 @@ class TelysTypedDict(CommonTypedDict):
     ]
     access_token: Annotated[
         str | None,
-        click.option("--access-token", type=str, required=False,
-                     help="Shared access token (required for TCP serving; omit for a trusted Unix socket)"),
+        click.option(
+            "--access-token",
+            type=str,
+            required=False,
+            help="Shared access token (required for TCP serving; omit for a trusted Unix socket)",
+        ),
     ]
     min_rows: Annotated[
         int,
-        click.option("--min-rows", type=int, default=20000,
-                     help="Per-partition IVF build threshold; smaller partitions stay exact"),
+        click.option(
+            "--min-rows",
+            type=int,
+            default=20000,
+            help="Per-partition IVF build threshold; smaller partitions stay exact",
+        ),
     ]
     target_recall: Annotated[
         float,

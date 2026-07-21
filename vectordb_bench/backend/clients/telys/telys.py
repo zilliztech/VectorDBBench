@@ -22,13 +22,13 @@ import numpy as np
 
 from vectordb_bench.backend.filter import Filter, FilterOp
 
-from ..api import VectorDB
+from ..api import MetricType, VectorDB
 from .config import TelysIndexConfig
 
 log = logging.getLogger(__name__)
 
 LABEL_FIELD = "labels"  # metadata field the label-filter case filters on (e.g. labels == "label_5p")
-SCOPE_FIELD = "scope"   # single constant partition key for the no-filter case
+SCOPE_FIELD = "scope"  # single constant partition key for the no-filter case
 
 
 class TelysClient(VectorDB):
@@ -55,6 +55,11 @@ class TelysClient(VectorDB):
         self.dim = int(dim)
         self.db_config = db_config
         self.case_config = db_case_config
+        # Telys ranks by inner product (see need_normalize_cosine); an L2/Euclidean dataset would silently
+        # give wrong recall (argmax IP != argmin L2). Reject it loudly instead of publishing bad numbers.
+        if db_case_config is not None and getattr(db_case_config, "metric_type", None) == MetricType.L2:
+            msg = "Telys connector supports COSINE/IP metrics only; L2 (Euclidean) datasets are not supported"
+            raise ValueError(msg)
         self.collection_name = collection_name
         self.with_scalar_labels = with_scalar_labels
         self.partition_by = LABEL_FIELD if with_scalar_labels else SCOPE_FIELD
@@ -69,11 +74,15 @@ class TelysClient(VectorDB):
                 try:
                     eng.drop_collection(collection_name)
                     log.info("Telys: dropped old collection %s", collection_name)
-                except Exception as e:  # noqa: BLE001
+                except Exception as e:
                     log.warning("Telys drop_old (%s): %s", collection_name, e)
             eng.create_collection(
-                collection_name, self.dim, self.partition_by,
-                filter_columns=self.filter_columns, dtype="f32", embedder=None,
+                collection_name,
+                self.dim,
+                self.partition_by,
+                filter_columns=self.filter_columns,
+                dtype="f32",
+                embedder=None,
             )
         finally:
             eng.close()
@@ -119,7 +128,7 @@ class TelysClient(VectorDB):
             vecs = np.ascontiguousarray(np.asarray(embeddings, dtype=np.float32))
             self._col.add(vecs, ids, md)
             return len(ids), None
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             log.warning("Telys insert failed: %s", e)
             return 0, e
 
@@ -152,9 +161,8 @@ class TelysClient(VectorDB):
             col = eng.open_collection(self.collection_name)
         try:
             try:
-                col.build_ivf(min_rows=int(p.get("min_rows", 20000)),
-                              target_recall=float(p.get("target_recall", 0.98)))
-            except Exception as e:  # noqa: BLE001  — telys server without remote build_ivf: stay exact
+                col.build_ivf(min_rows=int(p.get("min_rows", 20000)), target_recall=float(p.get("target_recall", 0.98)))
+            except Exception as e:
                 log.warning("Telys optimize: remote build_ivf unavailable (%s); partitions stay exact", e)
             col.save()
         finally:
