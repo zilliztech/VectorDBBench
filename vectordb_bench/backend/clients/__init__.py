@@ -45,6 +45,7 @@ class DB(Enum):
     MemoryDB = "MemoryDB"
     KiviDB = "KiviDB"
     Chroma = "Chroma"
+    Telys = "Telys"
     AWSOpenSearch = "OpenSearch"
     OSSOpenSearch = "OSSOpenSearch"
     AliyunElasticsearch = "AliyunElasticsearch"
@@ -169,6 +170,11 @@ class DB(Enum):
             from .chroma.chroma import ChromaClient
 
             return ChromaClient
+
+        if self == DB.Telys:
+            from .telys.telys import TelysClient
+
+            return TelysClient
 
         if self == DB.AWSOpenSearch:
             from .aws_opensearch.aws_opensearch import AWSOpenSearch
@@ -422,6 +428,11 @@ class DB(Enum):
             from .chroma.config import ChromaConfig
 
             return ChromaConfig
+
+        if self == DB.Telys:
+            from .telys.config import TelysConfig
+
+            return TelysConfig
 
         if self == DB.AWSOpenSearch:
             from .aws_opensearch.config import AWSOpenSearchConfig
@@ -792,6 +803,11 @@ class DB(Enum):
             from .chroma.config import ChromaIndexConfig
 
             return ChromaIndexConfig
+
+        if self == DB.Telys:
+            from .telys.config import TelysIndexConfig
+
+            return TelysIndexConfig
 
         if self == DB.Lindorm:
             from .lindorm.config import _lindorm_vector_case_config
