@@ -58,6 +58,12 @@ class Infino(VectorDB):
         self.name = "Infino"
         self.dim = dim
         self.data_path = db_config["data_path"]
+        # Connection tuning (cache budget, cache dir, object-store options); pass only what is set.
+        self._connect_opts = {
+            k: db_config[k]
+            for k in ("cache_budget_bytes", "cache_dir", "storage_options")
+            if db_config.get(k) is not None
+        }
         self.table_name = collection_name
         self.with_scalar_labels = with_scalar_labels
         self._is_fts = isinstance(db_case_config, InfinoFTSConfig)
@@ -74,11 +80,14 @@ class Infino(VectorDB):
         self._schema = self._build_schema()
 
         Path(self.data_path).mkdir(parents=True, exist_ok=True)
-        conn = infino.connect(self.data_path)
+        conn = self._connect()
         if drop_old and self.table_name in conn.list_tables():
             conn.drop_table(self.table_name, purge=True)
         if self.table_name not in conn.list_tables():
             conn.create_table(self.table_name, self._schema, self._index_spec())
+
+    def _connect(self):
+        return infino.connect(self.data_path, **self._connect_opts)
 
     def __getstate__(self) -> dict:
         # Drop the non-picklable live connection so the instance can cross a process boundary.
@@ -111,7 +120,7 @@ class Infino(VectorDB):
     def init(self):
         # Reuse one connection for the whole process: reopening is costly and can deadlock.
         if self._conn is None:
-            conn = infino.connect(self.data_path)
+            conn = self._connect()
             self._table = conn.open_table(self.table_name)
             self._conn = conn  # assign last so a failed open leaves a clean state to retry
         yield

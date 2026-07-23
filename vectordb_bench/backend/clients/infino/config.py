@@ -10,12 +10,26 @@ _METRIC_MAP = {
 }
 
 
+# Disk-cache ceiling, not a preallocation: sized well above the 10 GiB engine
+# default so large corpora stay cached instead of falling back to range-only reads.
+_DEFAULT_CACHE_BUDGET_BYTES = 64 * 1024**3
+
+
 class InfinoConfig(DBConfig):
     data_path: str = "/tmp/vectordb_bench/infino"
     table_name: str = "vdbbench_infino"
+    cache_budget_bytes: int = _DEFAULT_CACHE_BUDGET_BYTES
+    cache_dir: str | None = None
+    storage_options: dict[str, str] | None = None
 
     def to_dict(self) -> dict:
-        return {"data_path": self.data_path, "table_name": self.table_name}
+        return {
+            "data_path": self.data_path,
+            "table_name": self.table_name,
+            "cache_budget_bytes": self.cache_budget_bytes,
+            "cache_dir": self.cache_dir,
+            "storage_options": self.storage_options,
+        }
 
 
 class InfinoIndexConfig(BaseModel, DBCaseConfig):
