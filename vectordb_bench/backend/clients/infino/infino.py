@@ -23,6 +23,11 @@ _TEXT_FIELD = "text"
 _FILTER_OVERSAMPLE = 10
 
 
+def _sql_str(value: str) -> str:
+    # Escape single quotes for safe interpolation into an Infino SQL string literal.
+    return value.replace("'", "''")
+
+
 class Infino(VectorDB):
     """VectorDBBench client for Infino, an embedded vector/search engine.
 
@@ -75,6 +80,11 @@ class Infino(VectorDB):
         if self.table_name not in conn.list_tables():
             conn.create_table(self.table_name, self._schema(), self._index_spec())
 
+    def __getstate__(self) -> dict:
+        # _conn/_table are opened per process in init() and are not picklable; drop them so the
+        # instance survives the ProcessPoolExecutor(spawn) boundary (e.g. FTS optimize -> search).
+        return {**self.__dict__, "_conn": None, "_table": None}
+
     def _schema(self) -> pa.Schema:
         if self._is_fts:
             return pa.schema(
@@ -100,17 +110,13 @@ class Infino(VectorDB):
 
     @contextmanager
     def init(self):
-        # Reentrant: nested init() reuses the connection; a second one deadlocks optimize's lock on Linux.
-        if self._conn is not None:
-            yield
-            return
-        self._conn = infino.connect(self.data_path)
-        self._table = self._conn.open_table(self.table_name)
-        try:
-            yield
-        finally:
-            self._table = None
-            self._conn = None
+        # Open once per process and hold for its lifetime: open_table is costly and a second
+        # connect() deadlocks optimize's lock on Linux, so every init() reuses this connection.
+        if self._conn is None:
+            conn = infino.connect(self.data_path)
+            self._table = conn.open_table(self.table_name)
+            self._conn = conn  # assign last so a failed open_table leaves both None for a clean retry
+        yield
 
     def insert_embeddings(
         self,
@@ -136,7 +142,7 @@ class Infino(VectorDB):
         elif filters.type == FilterOp.NumGE:
             self._where = f"{_ID_FIELD} >= {filters.int_value}"
         elif filters.type == FilterOp.StrEqual:
-            self._where = f"{_LABEL_FIELD} = '{filters.label_value}'"
+            self._where = f"{_LABEL_FIELD} = '{_sql_str(filters.label_value)}'"
         else:
             msg = f"Infino does not support filter {filters.type}"
             raise ValueError(msg)
@@ -156,7 +162,7 @@ class Infino(VectorDB):
         vector_literal = ",".join(repr(float(x)) for x in query)
         sql = (
             f"SELECT {_ID_FIELD}, score FROM vector_search("
-            f"'{self.table_name}', '{_VECTOR_FIELD}', '{vector_literal}', {k * _FILTER_OVERSAMPLE}) "
+            f"'{_sql_str(self.table_name)}', '{_VECTOR_FIELD}', '{vector_literal}', {k * _FILTER_OVERSAMPLE}) "
             f"WHERE {self._where} ORDER BY score ASC LIMIT {k}"
         )
         return self._conn.query_sql(sql).column(_ID_FIELD).to_pylist()
