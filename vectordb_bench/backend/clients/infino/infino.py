@@ -18,8 +18,7 @@ _ID_FIELD = "id"
 _LABEL_FIELD = "label"
 _DOC_ID_FIELD = "doc_id"
 _TEXT_FIELD = "text"
-# vector_search's filter args are FTS-token-only; scalar filters go through the
-# SQL vector_search TVF, which post-filters the top-k, so over-fetch to refill.
+# Over-fetch factor so a filtered search still returns a full k after post-filtering.
 _FILTER_OVERSAMPLE = 10
 
 
@@ -37,8 +36,7 @@ class Infino(VectorDB):
     lazily in init().
     """
 
-    # Concurrent same-process writes to one table are not yet validated, so
-    # serialize the load (runner clamps max_workers to 1 when thread_safe is False).
+    # Serialize the load: concurrent writes to a single table are not supported.
     thread_safe: bool = False
 
     supported_filter_types: list[FilterOp] = [
@@ -72,20 +70,21 @@ class Infino(VectorDB):
         self._where = None
         self._conn = None
         self._table = None
+        # Build the schema once so table creation and every append stay in lockstep.
+        self._schema = self._build_schema()
 
         Path(self.data_path).mkdir(parents=True, exist_ok=True)
         conn = infino.connect(self.data_path)
         if drop_old and self.table_name in conn.list_tables():
             conn.drop_table(self.table_name, purge=True)
         if self.table_name not in conn.list_tables():
-            conn.create_table(self.table_name, self._schema(), self._index_spec())
+            conn.create_table(self.table_name, self._schema, self._index_spec())
 
     def __getstate__(self) -> dict:
-        # _conn/_table are opened per process in init() and are not picklable; drop them so the
-        # instance survives the ProcessPoolExecutor(spawn) boundary (e.g. FTS optimize -> search).
+        # Drop the non-picklable live connection so the instance can cross a process boundary.
         return {**self.__dict__, "_conn": None, "_table": None}
 
-    def _schema(self) -> pa.Schema:
+    def _build_schema(self) -> pa.Schema:
         if self._is_fts:
             return pa.schema(
                 [
@@ -110,12 +109,11 @@ class Infino(VectorDB):
 
     @contextmanager
     def init(self):
-        # Open once per process and hold for its lifetime: open_table is costly and a second
-        # connect() deadlocks optimize's lock on Linux, so every init() reuses this connection.
+        # Reuse one connection for the whole process: reopening is costly and can deadlock.
         if self._conn is None:
             conn = infino.connect(self.data_path)
             self._table = conn.open_table(self.table_name)
-            self._conn = conn  # assign last so a failed open_table leaves both None for a clean retry
+            self._conn = conn  # assign last so a failed open leaves a clean state to retry
         yield
 
     def insert_embeddings(
@@ -130,7 +128,7 @@ class Infino(VectorDB):
             if self.with_scalar_labels:
                 arrays.append(pa.array(labels_data, type=pa.large_utf8()))
             arrays.append(pa.array(embeddings, type=pa.list_(pa.float32(), self.dim)))
-            self._table.append(pa.record_batch(arrays, schema=self._schema()))
+            self._table.append(pa.record_batch(arrays, schema=self._schema))
         except Exception as e:
             log.exception("Failed to insert embeddings into Infino")
             return 0, e
@@ -158,7 +156,7 @@ class Infino(VectorDB):
             )
             return hits.column(_ID_FIELD).to_pylist()
 
-        # Scalar filter: SQL vector_search TVF post-filters top-k, so over-fetch.
+        # Filtered search goes through the SQL path, which over-fetches then narrows to k.
         vector_literal = ",".join(repr(float(x)) for x in query)
         sql = (
             f"SELECT {_ID_FIELD}, score FROM vector_search("
@@ -179,7 +177,7 @@ class Infino(VectorDB):
                     pa.array([str(d) for d in doc_ids], type=pa.large_utf8()),
                     pa.array(texts, type=pa.large_utf8()),
                 ],
-                schema=self._schema(),
+                schema=self._schema,
             )
             self._table.append(batch)
         except Exception as e:
