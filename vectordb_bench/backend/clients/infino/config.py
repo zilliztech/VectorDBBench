@@ -36,6 +36,7 @@ class InfinoIndexConfig(BaseModel, DBCaseConfig):
     metric_type: MetricType | None = None
     n_cent: int = 256
     nprobe: int = 32
+    rerank_mult: int = 256  # 256 = engine default
 
     def parse_metric(self) -> str:
         if self.metric_type not in _METRIC_MAP:
@@ -47,7 +48,7 @@ class InfinoIndexConfig(BaseModel, DBCaseConfig):
         return {"metric": self.parse_metric(), "n_cent": self.n_cent}
 
     def search_param(self) -> dict:
-        return {"nprobe": self.nprobe}
+        return {"nprobe": self.nprobe, "rerank_mult": self.rerank_mult}
 
 
 # Infino's BM25 k1/b are compile-time constants and its analyzer is not

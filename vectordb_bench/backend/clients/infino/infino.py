@@ -6,8 +6,6 @@ from pathlib import Path
 import infino
 import pyarrow as pa
 
-from vectordb_bench.backend.filter import Filter, FilterOp
-
 from ..api import VectorDB
 from .config import InfinoFTSConfig, InfinoIndexConfig
 
@@ -18,13 +16,6 @@ _ID_FIELD = "id"
 _LABEL_FIELD = "label"
 _DOC_ID_FIELD = "doc_id"
 _TEXT_FIELD = "text"
-# Over-fetch factor so a filtered search still returns a full k after post-filtering.
-_FILTER_OVERSAMPLE = 10
-
-
-def _sql_str(value: str) -> str:
-    # Escape single quotes for safe interpolation into an Infino SQL string literal.
-    return value.replace("'", "''")
 
 
 class Infino(VectorDB):
@@ -39,11 +30,8 @@ class Infino(VectorDB):
     # Serialize the load: concurrent writes to a single table are not supported.
     thread_safe: bool = False
 
-    supported_filter_types: list[FilterOp] = [
-        FilterOp.NonFilter,
-        FilterOp.NumGE,
-        FilterOp.StrEqual,
-    ]
+    # NonFilter only (base default): Infino's native filtered ANN is an FTS-token
+    # pre-filter that can't express the harness's scalar equality / range filters.
 
     def __init__(
         self,
@@ -67,13 +55,16 @@ class Infino(VectorDB):
         self.table_name = collection_name
         self.with_scalar_labels = with_scalar_labels
         self._is_fts = isinstance(db_case_config, InfinoFTSConfig)
+        # Vector-only params; left None for FTS runs, which never call search_embedding.
+        self.metric = self.n_cent = self.nprobe = self.rerank_mult = None
         if not self._is_fts:
             index_param = db_case_config.index_param()
+            search_param = db_case_config.search_param()
             self.metric = index_param["metric"]
             self.n_cent = index_param["n_cent"]
-            self.nprobe = db_case_config.search_param()["nprobe"]
+            self.nprobe = search_param["nprobe"]
+            self.rerank_mult = search_param["rerank_mult"]
 
-        self._where = None
         self._conn = None
         self._table = None
         # Build the schema once so table creation and every append stay in lockstep.
@@ -143,36 +134,16 @@ class Infino(VectorDB):
             return 0, e
         return len(metadata), None
 
-    def prepare_filter(self, filters: Filter):
-        if filters.type == FilterOp.NonFilter:
-            self._where = None
-        elif filters.type == FilterOp.NumGE:
-            self._where = f"{_ID_FIELD} >= {filters.int_value}"
-        elif filters.type == FilterOp.StrEqual:
-            self._where = f"{_LABEL_FIELD} = '{_sql_str(filters.label_value)}'"
-        else:
-            msg = f"Infino does not support filter {filters.type}"
-            raise ValueError(msg)
-
     def search_embedding(self, query: list[float], k: int = 100, **kwargs) -> list[int]:
-        if not self._where:
-            hits = self._table.vector_search(
-                _VECTOR_FIELD,
-                query,
-                k,
-                nprobe=self.nprobe,
-                projection=[_ID_FIELD],
-            )
-            return hits.column(_ID_FIELD).to_pylist()
-
-        # Filtered search goes through the SQL path, which over-fetches then narrows to k.
-        vector_literal = ",".join(repr(float(x)) for x in query)
-        sql = (
-            f"SELECT {_ID_FIELD}, score FROM vector_search("
-            f"'{_sql_str(self.table_name)}', '{_VECTOR_FIELD}', '{vector_literal}', {k * _FILTER_OVERSAMPLE}) "
-            f"WHERE {self._where} ORDER BY score ASC LIMIT {k}"
+        hits = self._table.vector_search(
+            _VECTOR_FIELD,
+            query,
+            k,
+            nprobe=self.nprobe,
+            rerank_mult=self.rerank_mult,
+            projection=[_ID_FIELD],
         )
-        return self._conn.query_sql(sql).column(_ID_FIELD).to_pylist()
+        return hits.column(_ID_FIELD).to_pylist()
 
     def insert_documents(
         self,
