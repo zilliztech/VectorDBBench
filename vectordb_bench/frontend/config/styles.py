@@ -81,6 +81,7 @@ DB_TO_ICON = {
 # RedisCloud color: #0D6EFD
 # Chroma color: #FFC107
 COLOR_MAP = {
+    DB.Infino.value: "#E8384F",
     DB.Milvus.value: "#0DCAF0",
     DB.ZillizCloud.value: "#0D6EFD",
     DB.ElasticCloud.value: "#04D6C8",

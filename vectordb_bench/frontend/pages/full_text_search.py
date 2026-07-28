@@ -22,9 +22,10 @@ DATASET_ORDER = [
     "HotpotQA Medium",
     "HotpotQA Large",
 ]
-# Published FTS results currently cover this cloud/service backend subset.
-BACKEND_ORDER = ["ZillizCloud", "ElasticSearch", "Vespa", "TurboPuffer"]
+# A backend absent from this list is cast to NaN below and silently dropped.
+BACKEND_ORDER = ["Infino", "ZillizCloud", "ElasticSearch", "Vespa", "TurboPuffer"]
 BACKEND_COLORS = {
+    "Infino": "#E8384F",
     "ZillizCloud": "#0D6EFD",
     "ElasticSearch": "#04D6C8",
     "Vespa": "#61D790",
@@ -314,7 +315,7 @@ def main():
     NavToPages(st)
 
     st.title("Full Text Search Cloud Results")
-    st.caption("Published FTS results for Zilliz Cloud, ElasticSearch, Vespa, and TurboPuffer.")
+    st.caption("Published FTS results for Infino, Zilliz Cloud, ElasticSearch, Vespa, and TurboPuffer.")
 
     data = load_full_text_search_rows()
     if data.empty:
