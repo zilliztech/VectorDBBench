@@ -46,6 +46,11 @@ class Infino(VectorDB):
         self.name = "Infino"
         self.dim = dim
         self.data_path = db_config["data_path"]
+        # A cache budget without a cache dir is a silent no-op in the
+        # engine (no disk cache is created); default the cache next to the
+        # catalog so warm queries are actually warm.
+        if db_config.get("cache_budget_bytes") and not db_config.get("cache_dir"):
+            db_config = {**db_config, "cache_dir": str(Path(self.data_path) / "cache")}
         # Connection tuning (cache budget, cache dir, object-store options); pass only what is set.
         self._connect_opts = {
             k: db_config[k]
@@ -66,11 +71,16 @@ class Infino(VectorDB):
             search_param = db_case_config.search_param()
             self.metric = index_param["metric"]
             self.n_cent = index_param["n_cent"]
-            self.nprobe = search_param["nprobe"]
-            self.rerank_mult = search_param["rerank_mult"]
+            # Absent => engine default; not forwarded to vector_search.
+            self.nprobe = search_param.get("nprobe")
+            self.rerank_mult = search_param.get("rerank_mult")
 
         self._conn = None
         self._table = None
+        # Engine _id -> caller id, built once per process on first search:
+        # search returns the engine-native stable _id for free, while
+        # projecting the id column costs a per-query scalar resolve.
+        self._id_map = None
         # Build the schema once so table creation and every append stay in lockstep.
         self._schema = self._build_schema()
 
@@ -86,7 +96,7 @@ class Infino(VectorDB):
 
     def __getstate__(self) -> dict:
         # Drop the non-picklable live connection so the instance can cross a process boundary.
-        return {**self.__dict__, "_conn": None, "_table": None}
+        return {**self.__dict__, "_conn": None, "_table": None, "_id_map": None}
 
     def _build_schema(self) -> pa.Schema:
         if self._is_fts:
@@ -138,16 +148,23 @@ class Infino(VectorDB):
             return 0, e
         return len(metadata), None
 
+    def _ensure_id_map(self) -> dict:
+        if self._id_map is None:
+            m = self._conn.query_sql(f"SELECT _id, {_ID_FIELD} FROM {self.table_name}")
+            self._id_map = dict(
+                zip(m.column("_id").to_pylist(), m.column(_ID_FIELD).to_pylist())
+            )
+        return self._id_map
+
     def search_embedding(self, query: list[float], k: int = 100, **kwargs) -> list[int]:
-        hits = self._table.vector_search(
-            _VECTOR_FIELD,
-            query,
-            k,
-            nprobe=self.nprobe,
-            rerank_mult=self.rerank_mult,
-            projection=[_ID_FIELD],
-        )
-        return hits.column(_ID_FIELD).to_pylist()
+        opts = {}
+        if self.nprobe is not None:
+            opts["nprobe"] = self.nprobe
+        if self.rerank_mult is not None:
+            opts["rerank_mult"] = self.rerank_mult
+        id_map = self._ensure_id_map()
+        hits = self._table.vector_search(_VECTOR_FIELD, query, k, **opts)
+        return [id_map[h] for h in hits.column("_id").to_pylist()]
 
     def insert_documents(
         self,

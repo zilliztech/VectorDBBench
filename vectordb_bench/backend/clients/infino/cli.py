@@ -64,11 +64,18 @@ class InfinoTypedDict(InfinoCommonTypedDict):
         click.option("--table-name", type=str, default="vdbbench_infino", help="Infino table name"),
     ]
     n_cent: Annotated[int, click.option("--n-cent", type=int, default=256, help="IVF centroid count (build)")]
-    nprobe: Annotated[int, click.option("--nprobe", type=int, default=32, help="IVF cells probed (query)")]
+    nprobe: Annotated[
+        int | None,
+        click.option(
+            "--nprobe", type=int, default=None,
+            help="IVF cells probed (query). Omit to use the engine default.",
+        ),
+    ]
     rerank_mult: Annotated[
         int,
         click.option(
-            "--rerank-mult", type=int, default=256, help="Coarse candidates re-scored exactly = k * rerank_mult"
+            "--rerank-mult", type=int, default=None,
+            help="Coarse candidates re-scored exactly = k * rerank_mult. Omit to use the engine default.",
         ),
     ]
 
