@@ -91,6 +91,19 @@ def test_common_cli_rejects_inline_note_with_note_file(monkeypatch: MonkeyPatch,
     assert "--note and --note-file cannot be used together" in result.output
 
 
+def test_common_cli_rejects_empty_inline_note_with_note_file(
+    monkeypatch: MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    note_file = tmp_path / "run-context.json"
+    note_file.write_text("context", encoding="utf-8")
+
+    result, _ = invoke_test_command(monkeypatch, ["--note", "", "--note-file", str(note_file)])
+
+    assert result.exit_code != 0
+    assert "--note and --note-file cannot be used together" in result.output
+
+
 def test_common_cli_rejects_empty_note_file(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
     note_file = tmp_path / "empty.txt"
     note_file.write_text("", encoding="utf-8")
