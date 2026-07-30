@@ -14,6 +14,7 @@ from typing import (
 )
 
 import click
+from click.core import ParameterSource
 from yaml import load
 
 from .. import config
@@ -64,6 +65,26 @@ def click_get_defaults_from_file(ctx, param, value):  # noqa: ANN001, ARG001
             msg = f"Failed to load config file: {e}"
             raise click.BadParameter(msg) from e
     return value
+
+
+def resolve_db_note(note: str, note_file: Path | None) -> str:
+    ctx = click.get_current_context()
+    note_source = ctx.get_parameter_source("note")
+    note_file_source = ctx.get_parameter_source("note_file")
+    note_supplied = note_source not in {None, ParameterSource.DEFAULT}
+    note_file_supplied = note_file_source not in {None, ParameterSource.DEFAULT}
+
+    if note_supplied and note_file_supplied:
+        raise click.UsageError("--note and --note-file cannot be used together")
+    if note_file is None:
+        return note
+    try:
+        content = note_file.read_text(encoding="utf-8").rstrip("\r\n")
+    except UnicodeDecodeError as e:
+        raise click.BadParameter("Note file is not valid UTF-8", param_hint="--note-file") from e
+    if not content.strip():
+        raise click.BadParameter("Note file is empty", param_hint="--note-file")
+    return content
 
 
 def click_parameter_decorators_from_typed_dict(
@@ -358,6 +379,25 @@ class CommonTypedDict(TypedDict):
             help="Db label, default: date in ISO format",
             show_default=True,
             default=datetime.now().isoformat(),
+        ),
+    ]
+    note: Annotated[
+        str,
+        click.option(
+            "--note",
+            type=str,
+            help="Run context stored with each result",
+            default="",
+            show_default=True,
+        ),
+    ]
+    note_file: Annotated[
+        Path | None,
+        click.option(
+            "--note-file",
+            type=click.Path(exists=True, dir_okay=False, readable=True, path_type=Path),
+            help="Read run context from a UTF-8 text file",
+            default=None,
         ),
     ]
     dry_run: Annotated[
@@ -828,6 +868,10 @@ def run(
         db_case_config (DBCaseConfig)
         **parameters: expects keys from CommonTypedDict
     """
+
+    db_config = db_config.model_copy(
+        update={"note": resolve_db_note(parameters["note"], parameters["note_file"])},
+    )
 
     task = TaskConfig(
         db=db,

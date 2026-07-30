@@ -26,10 +26,6 @@ class PineconeTypedDict(TypedDict):
         str,
         click.option("--version", type=str, help="Database version", default="", show_default=True),
     ]
-    note: Annotated[
-        str,
-        click.option("--note", type=str, help="Additional notes", default="", show_default=True),
-    ]
 
 
 class PineconeIndexTypedDict(CommonTypedDict, PineconeTypedDict): ...
@@ -45,7 +41,6 @@ def Pinecone(**parameters: Unpack[PineconeIndexTypedDict]):
         db_config=PineconeConfig(
             db_label=parameters["db_label"],
             version=parameters["version"],
-            note=parameters["note"],
             api_key=SecretStr(parameters["api_key"]),
             index_name=parameters["index_name"],
         ),

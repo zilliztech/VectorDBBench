@@ -100,6 +100,14 @@ Commands:
 ```
 To list the options for each command, execute `vectordbbench [command] --help`
 
+Use `--note` or `--note-file` to preserve deployment, resource, client, network, and constraint context in each result JSON under `task_config.db_config.note`. The options are mutually exclusive. Prefer `--note-file` for structured or multiline context, and never include credentials, tokens, or sensitive connection details.
+
+```shell
+vectordbbench zillizautoindex \
+  --note-file ./run-context.json \
+  <other options>
+```
+
 ```text
 $ vectordbbench pgvectorhnsw --help
 Usage: vectordbbench pgvectorhnsw [OPTIONS]
@@ -118,6 +126,9 @@ Options:
                                   Case type
   --db-label TEXT                 Db label, default: date in ISO format
                                   [default: 2024-05-20T20:26:31.113290]
+  --note TEXT                     Run context stored with each result
+                                  [default: ""]
+  --note-file FILE                Read run context from a UTF-8 text file
   --dry-run                       Print just the configuration and exit
                                   without running the tasks
   --k INTEGER                     K value for number of nearest neighbors to
