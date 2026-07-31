@@ -102,6 +102,11 @@ def _parse_result_file(result_file: Path) -> list[dict[str, Any]]:
         task_config = case_result.get("task_config", {})
         case_config = task_config.get("case_config", {})
         custom_case = case_config.get("custom_case") or {}
+        additional_parameters = metrics.get("additional_parameters") or {}
+        # Keep filtered benchmark evidence out of the standard FTS result page.
+        if custom_case.get("filter_rate") is not None or additional_parameters.get("fts_filter"):
+            continue
+
         dataset_label = custom_case.get("dataset_with_size_type", "")
         dataset_family, dataset_size, dataset_key = _dataset_parts(dataset_label)
         dataset_doc_count = _dataset_doc_count(dataset_label)
