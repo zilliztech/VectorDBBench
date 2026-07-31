@@ -14,6 +14,7 @@ from typing import (
 )
 
 import click
+from click.core import ParameterSource
 from yaml import load
 
 from .. import config
@@ -70,7 +71,13 @@ def click_get_defaults_from_file(ctx, param, value):  # noqa: ANN001, ARG001
 
 
 def resolve_db_note(note: str, note_file: Path | None) -> str:
-    if note and note_file is not None:
+    ctx = click.get_current_context()
+    note_source = ctx.get_parameter_source("note")
+    note_file_source = ctx.get_parameter_source("note_file")
+    note_supplied = note_source not in {None, ParameterSource.DEFAULT}
+    note_file_supplied = note_file_source not in {None, ParameterSource.DEFAULT}
+
+    if note_supplied and note_file_supplied:
         raise click.UsageError("--note and --note-file cannot be used together")
     if note_file is None:
         return note
