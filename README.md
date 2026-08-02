@@ -41,33 +41,34 @@ All the database client supported
 
 | Optional database client | install command                             |
 |--------------------------|---------------------------------------------|
+| adbpg                    | `pip install 'vectordb-bench[adbpg]'`         |
+| alisql                   | `pip install 'vectordb-bench[alisql]'`      |
+| aliyun_opensearch        | `pip install 'vectordb-bench[aliyun_opensearch]'` |
+| awsopensearch            | `pip install 'vectordb-bench[opensearch]'` |
+| chromadb                 | `pip install 'vectordb-bench[chromadb]'`      |
+| cockroachdb              | `pip install 'vectordb-bench[cockroachdb]'`   |
+| doris                    | `pip install 'vectordb-bench[doris]'`         |
+| elastic, aliyun_elasticsearch| `pip install 'vectordb-bench[elastic]'`       |
+| endee                    | `pip install 'vectordb-bench[endee]'`         |
+| hologres                 | `pip install 'vectordb-bench[hologres]'`      |
+| lancedb                  | `pip install 'vectordb-bench[lancedb]'`       |
+| lindorm                  | `pip install 'vectordb-bench[lindorm]'`       |
+| memorydb                 | `pip install 'vectordb-bench[memorydb]'`      |
+| mongodb                  | `pip install 'vectordb-bench[mongodb]'`       |
+| oceanbase                | `pip install 'vectordb-bench[oceanbase]'`     |
+| pgvecto.rs               | `pip install 'vectordb-bench[pgvecto_rs]'`    |
+| pgvector, pgvectorscale, pgdiskann, alloydb, vectorchord | `pip install 'vectordb-bench[pgvector]'`      |
+| pinecone                 | `pip install 'vectordb-bench[pinecone]'`      |
+| polardb                  | `pip install 'vectordb-bench[polardb]'`       |
 | pymilvus, zilliz_cloud (*default*)     | `pip install vectordb-bench`                |
-| qdrant                   | `pip install vectordb-bench[qdrant]`        |
-| pinecone                 | `pip install vectordb-bench[pinecone]`      |
-| weaviate                 | `pip install vectordb-bench[weaviate]`      |
-| elastic, aliyun_elasticsearch| `pip install vectordb-bench[elastic]`       |
-| pgvector, pgvectorscale, pgdiskann, alloydb, vectorchord | `pip install vectordb-bench[pgvector]`      |
-| pgvecto.rs               | `pip install vectordb-bench[pgvecto_rs]`    |
-| redis                    | `pip install vectordb-bench[redis]`         |
-| memorydb                 | `pip install vectordb-bench[memorydb]`      |
-| chromadb                 | `pip install vectordb-bench[chromadb]`      |
-| cockroachdb              | `pip install vectordb-bench[cockroachdb]`   |
-| awsopensearch            | `pip install vectordb-bench[opensearch]` |
-| aliyun_opensearch        | `pip install vectordb-bench[aliyun_opensearch]` |
-| mongodb                  | `pip install vectordb-bench[mongodb]`       |
-| tidb                     | `pip install vectordb-bench[tidb]`          |
-| vespa                    | `pip install vectordb-bench[vespa]`         |
-| oceanbase                | `pip install vectordb-bench[oceanbase]`     |
-| hologres                 | `pip install vectordb-bench[hologres]`      |
-| tencent_es               | `pip install vectordb-bench[tencent_es]`    |
-| alisql                   | `pip install vectordb-bench[alisql]`      |
-| polardb                  | `pip install vectordb-bench[polardb]`       |
-| doris                    | `pip install vectordb-bench[doris]`         |
-| zvec                     | `pip install vectordb-bench[zvec]`          |
-| endee                    | `pip install vectordb-bench[endee]`         |
-| lindorm                  | `pip install vectordb-bench[lindorm]`       |
-| volc_mysql               | `pip install vectordb-bench[volc_mysql]`    |
-| adbpg                    | `pip install vectordb-bench[adbpg]`         |
+| qdrant                   | `pip install 'vectordb-bench[qdrant]'`        |
+| redis                    | `pip install 'vectordb-bench[redis]'`         |
+| tencent_es               | `pip install 'vectordb-bench[tencent_es]'`    |
+| tidb                     | `pip install 'vectordb-bench[tidb]'`          |
+| vespa                    | `pip install 'vectordb-bench[vespa]'`         |
+| volc_mysql               | `pip install 'vectordb-bench[volc_mysql]'`    |
+| weaviate                 | `pip install 'vectordb-bench[weaviate]'`      |
+| zvec                     | `pip install 'vectordb-bench[zvec]'`          |
 
 ### Run
 
