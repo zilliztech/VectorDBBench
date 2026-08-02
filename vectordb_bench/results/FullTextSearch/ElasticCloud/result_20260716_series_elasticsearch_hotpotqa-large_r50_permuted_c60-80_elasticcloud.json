@@ -1,0 +1,141 @@
+{
+  "run_id": "14bba1042884402f8bfe87971bc17b76",
+  "task_label": "series_elasticsearch_hotpotqa-large_r50_permuted_c60-80",
+  "results": [
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 210.0847,
+        "optimize_duration": 93.2572,
+        "load_duration": 303.3419,
+        "qps": 721.3662,
+        "serial_latency_p99": 0.0,
+        "serial_latency_p95": 0.0,
+        "recall": 0.0,
+        "ndcg": 0.0,
+        "mrr": 0.0,
+        "conc_num_list": [
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          709.952,
+          721.3662
+        ],
+        "conc_latency_p99_list": [
+          0.1806982008819614,
+          0.2100805627823138
+        ],
+        "conc_latency_p95_list": [
+          0.13791442114634248,
+          0.16302671675002783
+        ],
+        "conc_latency_avg_list": [
+          0.08436115583290123,
+          0.11065719012112213
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 5233329,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "fts_filter": {
+            "filter_type": "NumGE",
+            "filter_field": "filter_id",
+            "filter_value": 2616664,
+            "filter_rate": 0.5,
+            "filter_id_distribution": "affine_permutation_v1",
+            "filter_id_multiplier": 3234376,
+            "filter_id_offset": 1082441,
+            "matched_doc_count": 2616665,
+            "matched_doc_ratio": 0.5,
+            "original_query_count": 7405,
+            "filtered_query_count": 5547,
+            "filtered_query_ratio": 0.749088,
+            "original_relevant_doc_count": 13783,
+            "filtered_relevant_doc_count": 6846
+          },
+          "fts_recall": {
+            "skipped": false,
+            "reason": null,
+            "serial_query_count": 5547,
+            "full_query_count": 7405
+          },
+          "num_per_batch": 1000,
+          "load_concurrency": 4
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ElasticCloud",
+        "db_config": {
+          "db_label": "2026-07-16T19:33:09.977867",
+          "version": "",
+          "note": "{\n  \"schema\": \"vdbbench-run-context\/v1\",\n  \"profile\": \"elasticsearch\/v1\",\n  \"backend_version\": \"9.4.3\",\n  \"deployment\": {\n    \"method\": \"docker\",\n    \"config\": {\n      \"mode\": \"single_node\"\n    }\n  },\n  \"server_groups\": [\n    {\n      \"role\": \"elasticsearch-data-master\",\n      \"count\": 1,\n      \"jvm_heap_gib\": 30,\n      \"hardware\": {\n        \"machine_type\": \"i8g.4xlarge\",\n        \"cpu_count\": 16,\n        \"memory_gib\": 123.54,\n        \"storage\": {\n          \"type\": \"local_nvme\",\n          \"device_count\": 1,\n          \"total_gib\": 3492.46,\n          \"model\": \"Amazon EC2 NVMe Instance Storage\"\n        }\n      }\n    }\n  ],\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  }\n}",
+          "cloud_id": null,
+          "scheme": "http",
+          "host": "**********",
+          "port": 9200,
+          "user": "elastic",
+          "user_name": null,
+          "password": "**********",
+          "use_ssl": false,
+          "verify_certs": true
+        },
+        "db_case_config": {
+          "number_of_shards": 1,
+          "number_of_replicas": 0,
+          "refresh_interval": "30s",
+          "use_force_merge": true,
+          "metric_type": "BM25",
+          "bm25_k1": null,
+          "bm25_b": null
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "HotpotQA Large (5.2M documents)",
+            "payload_profile": "ids_only",
+            "filter_id_distribution": "permuted",
+            "filter_rate": 0.5
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600,
+            "serial_cooldown": 0.0
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_concurrent"
+        ],
+        "load_concurrency": 4
+      },
+      "label": ":)"
+    }
+  ],
+  "file_fmt": "result_{}_{}_{}.json",
+  "timestamp": 1784160000.0
+}
