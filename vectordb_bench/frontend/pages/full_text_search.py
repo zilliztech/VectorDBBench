@@ -32,6 +32,13 @@ BACKEND_COLORS = {
 }
 SIZE_ORDER = ["Small", "Medium", "Large"]
 FILTER_RATE_LABEL_ORDER = ["50%", "75%", "90%", "95%", "99%"]
+FILTER_RATE_COLORS = {
+    "50%": "#0D6EFD",
+    "75%": "#04B8A7",
+    "90%": "#61D790",
+    "95%": "#F2B84B",
+    "99%": "#FF6B2C",
+}
 CHART_TABS = ["QPS", "Recall", "NDCG", "MRR", "Load", "Filtered QPS"]
 FILTERED_TAB = "Filtered QPS"
 
@@ -391,6 +398,20 @@ def _concurrency_rows(data: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def _peak_filtered_qps_rows(data: pd.DataFrame) -> pd.DataFrame:
+    concurrency_data = _concurrency_rows(data)
+    if concurrency_data.empty:
+        return concurrency_data
+
+    concurrency_data["qps"] = pd.to_numeric(concurrency_data["qps"], errors="coerce")
+    concurrency_data = concurrency_data.dropna(subset=["qps"])
+    if concurrency_data.empty:
+        return concurrency_data
+
+    peak_indices = concurrency_data.groupby(["backend", "filter_rate_label"], sort=False, observed=True)["qps"].idxmax()
+    return concurrency_data.loc[peak_indices].reset_index(drop=True)
+
+
 def _draw_concurrency_chart(st: Any, data: pd.DataFrame) -> None:
     concurrency_data = _concurrency_rows(data)
     if concurrency_data.empty:
@@ -420,39 +441,27 @@ def _draw_concurrency_chart(st: Any, data: pd.DataFrame) -> None:
 
 def _draw_filtered_qps_tab(st: Any, data: pd.DataFrame) -> None:
     filtered_data = data[(data["payload"] == "ids_only") & data["filter_rate"].notna()].copy()
-    concurrency_data = _concurrency_rows(filtered_data)
-    if concurrency_data.empty:
+    peak_data = _peak_filtered_qps_rows(filtered_data)
+    if peak_data.empty:
         st.info("No filtered concurrency QPS rows found.")
         return
 
-    selected_family = str(concurrency_data["dataset_family"].iloc[0])
-    concurrency_data["series_label"] = concurrency_data.apply(
-        lambda row: f"{row['filter_distribution']} / c{int(row['concurrency'])}", axis=1
-    )
-    backend_order = _backend_metric_order(concurrency_data, "qps", ascending=False)
-    filter_rate_order = [
-        label for label in FILTER_RATE_LABEL_ORDER if label in set(concurrency_data["filter_rate_label"])
-    ]
-    series_order = []
-    for distribution in ["Permuted", "Sequential", "Unspecified"]:
-        for concurrency in sorted(concurrency_data["concurrency"].unique()):
-            label = f"{distribution} / c{int(concurrency)}"
-            if label in set(concurrency_data["series_label"]):
-                series_order.append(label)
+    selected_family = str(peak_data["dataset_family"].iloc[0])
+    peak_data["_chart_label"] = peak_data["qps"].apply(lambda value: _chart_label(value, "qps"))
+    backend_order = _backend_metric_order(peak_data, "qps", ascending=False)
+    filter_rate_order = [label for label in FILTER_RATE_LABEL_ORDER if label in set(peak_data["filter_rate_label"])]
 
-    fig = px.line(
-        concurrency_data,
-        x="filter_rate_label",
+    fig = px.bar(
+        peak_data,
+        x="backend",
         y="qps",
-        color="backend",
-        line_dash="series_label",
-        markers=True,
+        color="filter_rate_label",
+        barmode="group",
         category_orders={
             "filter_rate_label": filter_rate_order,
             "backend": backend_order,
-            "series_label": series_order,
         },
-        color_discrete_map=BACKEND_COLORS,
+        color_discrete_map=FILTER_RATE_COLORS,
         hover_data=[
             "dataset",
             "dataset_doc_count",
@@ -461,13 +470,22 @@ def _draw_filtered_qps_tab(st: Any, data: pd.DataFrame) -> None:
             "concurrency",
             "task_label",
         ],
-        title=f"{selected_family} Filtered Concurrent Search QPS",
+        text="_chart_label",
+        title=f"{selected_family} Peak Filtered Concurrent Search QPS",
+    )
+    fig.update_traces(
+        texttemplate="%{text}",
+        textposition="outside",
+        textangle=0,
+        textfont={"size": 10},
+        cliponaxis=False,
     )
     fig.update_layout(
         margin={"l": 0, "r": 0, "t": 56, "b": 12, "pad": 8},
         legend={"orientation": "h", "yanchor": "bottom", "y": 1, "xanchor": "right", "x": 1, "title": ""},
-        xaxis_title="Filter rate",
+        xaxis_title="",
         yaxis_title="QPS",
+        uniformtext={"minsize": 10, "mode": "show"},
     )
     st.plotly_chart(fig, width="stretch", key=f"fts-filtered-concurrency-qps-{selected_family}")
 

@@ -11,8 +11,9 @@
         "qps": 1291.365,
         "serial_latency_p99": 0.02,
         "serial_latency_p95": 0.0136,
-        "recall": 0.9935,
-        "ndcg": 0.0,
+        "recall": 0.7674,
+        "ndcg": 0.6265,
+        "mrr": 0.7574,
         "conc_num_list": [
           40,
           80
@@ -280,8 +281,9 @@
         "qps": 5024.8673,
         "serial_latency_p99": 0.0099,
         "serial_latency_p95": 0.0074,
-        "recall": 0.9348,
-        "ndcg": 0.0,
+        "recall": 0.8437,
+        "ndcg": 0.7322,
+        "mrr": 0.8636,
         "conc_num_list": [
           40,
           80
@@ -549,8 +551,9 @@
         "qps": 11840.6594,
         "serial_latency_p99": 0.0036,
         "serial_latency_p95": 0.0031,
-        "recall": 0.9987,
-        "ndcg": 0.0,
+        "recall": 0.9225,
+        "ndcg": 0.8459,
+        "mrr": 0.9485,
         "conc_num_list": [
           40,
           80
@@ -818,8 +821,9 @@
         "qps": 2859.4474,
         "serial_latency_p99": 0.008,
         "serial_latency_p95": 0.0058,
-        "recall": 0.9636,
-        "ndcg": 0.0,
+        "recall": 0.6283,
+        "ndcg": 0.2763,
+        "mrr": 0.1889,
         "conc_num_list": [
           40,
           80
@@ -1087,8 +1091,9 @@
         "qps": 10440.9225,
         "serial_latency_p99": 0.0045,
         "serial_latency_p95": 0.0037,
-        "recall": 0.9194,
-        "ndcg": 0.0,
+        "recall": 0.8261,
+        "ndcg": 0.5298,
+        "mrr": 0.4572,
         "conc_num_list": [
           40,
           80
@@ -1356,8 +1361,9 @@
         "qps": 14523.9158,
         "serial_latency_p99": 0.003,
         "serial_latency_p95": 0.0028,
-        "recall": 0.9854,
-        "ndcg": 0.0,
+        "recall": 0.9157,
+        "ndcg": 0.7206,
+        "mrr": 0.6713,
         "conc_num_list": [
           40,
           80
