@@ -34,7 +34,6 @@ class InfinoConfig(DBConfig):
 
 class InfinoIndexConfig(BaseModel, DBCaseConfig):
     metric_type: MetricType | None = None
-    n_cent: int = 256
     # Unset => the engine picks. The engine owns these defaults and its
     # recall numbers are measured on that path, so the client must not
     # substitute values of its own; only forward what a caller asked for.
@@ -48,7 +47,7 @@ class InfinoIndexConfig(BaseModel, DBCaseConfig):
         return _METRIC_MAP[self.metric_type]
 
     def index_param(self) -> dict:
-        return {"metric": self.parse_metric(), "n_cent": self.n_cent}
+        return {"metric": self.parse_metric()}
 
     def search_param(self) -> dict:
         return {

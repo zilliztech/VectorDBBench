@@ -63,7 +63,6 @@ class InfinoTypedDict(InfinoCommonTypedDict):
         str,
         click.option("--table-name", type=str, default="vdbbench_infino", help="Infino table name"),
     ]
-    n_cent: Annotated[int, click.option("--n-cent", type=int, default=256, help="IVF centroid count (build)")]
     nprobe: Annotated[
         int | None,
         click.option(
@@ -102,7 +101,6 @@ def Infino(**parameters: Unpack[InfinoTypedDict]):
             storage_options=parameters["storage_options"] or None,
         ),
         db_case_config=InfinoIndexConfig(
-            n_cent=parameters["n_cent"],
             nprobe=parameters["nprobe"],
             rerank_mult=parameters["rerank_mult"],
         ),

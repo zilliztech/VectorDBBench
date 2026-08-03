@@ -61,7 +61,7 @@ class Infino(VectorDB):
         self.with_scalar_labels = with_scalar_labels
         self._is_fts = isinstance(db_case_config, InfinoFTSConfig)
         # Vector-only params; left None for FTS runs, which never call search_embedding.
-        self.metric = self.n_cent = self.nprobe = self.rerank_mult = None
+        self.metric = self.nprobe = self.rerank_mult = None
         if self._is_fts:
             # Tokenizer chosen to match the GT analyzer (set by
             # apply_fts_manifest); defaults to the ASCII tokenizer.
@@ -70,7 +70,6 @@ class Infino(VectorDB):
             index_param = db_case_config.index_param()
             search_param = db_case_config.search_param()
             self.metric = index_param["metric"]
-            self.n_cent = index_param["n_cent"]
             # Absent => engine default; not forwarded to vector_search.
             self.nprobe = search_param.get("nprobe")
             self.rerank_mult = search_param.get("rerank_mult")
@@ -115,7 +114,7 @@ class Infino(VectorDB):
     def _index_spec(self) -> infino.IndexSpec:
         if self._is_fts:
             return infino.IndexSpec().fts(_TEXT_FIELD, analyzer=self._analyzer)
-        return infino.IndexSpec().vector(_VECTOR_FIELD, self.dim, self.n_cent, self.metric)
+        return infino.IndexSpec().vector(_VECTOR_FIELD, self.dim, self.metric)
 
     @classmethod
     def supports_full_text_search(cls) -> bool:
