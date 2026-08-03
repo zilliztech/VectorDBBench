@@ -86,9 +86,14 @@ def test_checked_in_permuted_results_expose_concurrency_qps_for_all_backends():
     filtered_data = data[data["is_filtered"]]
     concurrency_data = _concurrency_rows(filtered_data)
 
-    assert len(filtered_data) == 30
-    assert len(concurrency_data) == 60
-    assert set(filtered_data["backend"].astype(str)) == {"ElasticSearch", "OSSOpenSearch", "ZillizCloud"}
+    assert len(filtered_data) == 40
+    assert len(concurrency_data) == 80
+    assert set(filtered_data["backend"].astype(str)) == {
+        "ElasticSearch",
+        "OSSOpenSearch",
+        "TurboPuffer",
+        "ZillizCloud",
+    }
     assert set(filtered_data["filter_distribution"]) == {"Permuted"}
     assert set(concurrency_data["concurrency"]) == {60, 80}
     assert set(pd.to_numeric(filtered_data["filter_rate"])) == {0.5, 0.75, 0.9, 0.95, 0.99}
