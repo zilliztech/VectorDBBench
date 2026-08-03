@@ -12,6 +12,7 @@ from psycopg import Connection, Cursor, sql
 from psycopg_pool import ConnectionPool
 
 from vectordb_bench.backend.filter import Filter, FilterOp
+from vectordb_bench.backend.utils import redact_sensitive
 
 from ..api import VectorDB
 from .config import CockroachDBIndexConfig
@@ -91,7 +92,7 @@ class CockroachDB(VectorDB):
         self.conn: Connection | None = None
         self.cursor: Cursor | None = None
 
-        log.info(f"{self.name} config: {self.connect_config}, pool_size={self.pool_size}")
+        log.info(f"{self.name} config: {redact_sensitive(self.connect_config)}, pool_size={self.pool_size}")
 
         # Allow manual index creation (both flags can be False)
         # This is useful when CREATE INDEX times out in subprocess on multi-node clusters

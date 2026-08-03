@@ -8,6 +8,7 @@ from typing import Any
 import mysql.connector as mysql
 
 from vectordb_bench.backend.filter import Filter, FilterOp
+from vectordb_bench.backend.utils import redact_sensitive
 
 from ..api import IndexType, VectorDB
 from .config import SeekDBConfigDict, SeekDBHNSWConfig
@@ -70,7 +71,9 @@ class SeekDB(VectorDB):
         self.expr = ""
 
         log.info(
-            f"{self.name} initialized with config:\nDatabase: {self.db_config}\nCase Config: {self.db_case_config}"
+            f"{self.name} initialized with config:\n"
+            f"Database: {redact_sensitive(self.db_config)}\n"
+            f"Case Config: {self.db_case_config}"
         )
 
         self._conn = None

@@ -9,6 +9,7 @@ from packaging.version import Version
 from packaging.version import parse as parse_version
 
 from vectordb_bench.backend.filter import Filter, FilterOp
+from vectordb_bench.backend.utils import redact_sensitive
 
 from ..api import VectorDB
 from .config import OSSOpenSearchIndexConfig, OSSOS_Engine
@@ -218,7 +219,7 @@ class OSSOpenSearch(VectorDB):
         self.filter: dict[str, Any] | None = None
         self.routing_key: str | None = None
 
-        log.info(f"OSS_OpenSearch client config: {self.db_config}")
+        log.info(f"OSS_OpenSearch client config: {redact_sensitive(self.db_config)}")
         log.info(f"OSS_OpenSearch db case config: {self.case_config}")
         client = OpenSearch(**self.db_config)
         self._handle_index_initialization(client, drop_old)

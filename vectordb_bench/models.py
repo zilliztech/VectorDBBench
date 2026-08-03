@@ -3,12 +3,13 @@ import pathlib
 from dataclasses import asdict
 from datetime import date, datetime
 from enum import Enum, StrEnum
-from typing import Any, ClassVar, Self
+from typing import Self
 
 import ujson
 
 from vectordb_bench.backend.cases import type2case
 from vectordb_bench.backend.dataset import DatasetWithSizeMap
+from vectordb_bench.backend.utils import redact_sensitive
 
 from . import config
 from .backend.cases import Case, CaseType
@@ -299,22 +300,6 @@ class TestResult(BaseModel):
 
     file_fmt: str = "result_{}_{}_{}.json"  # result_20230718_statndard_milvus.json
     timestamp: float = 0.0
-    sensitive_output_fields: ClassVar[set[str]] = {"api_key", "password", "token"}
-
-    @classmethod
-    def _redact_sensitive_fields(cls, value: Any) -> Any:
-        if isinstance(value, dict):
-            return {
-                key: (
-                    "**********"
-                    if key.lower() in cls.sensitive_output_fields and item
-                    else cls._redact_sensitive_fields(item)
-                )
-                for key, item in value.items()
-            }
-        if isinstance(value, list):
-            return [cls._redact_sensitive_fields(item) for item in value]
-        return value
 
     @staticmethod
     def _output_metrics_for_case(case_result: CaseResult) -> dict:
@@ -360,7 +345,7 @@ class TestResult(BaseModel):
         for idx, case_result in enumerate(self.results):
             output["results"][idx]["metrics"] = self._output_metrics_for_case(case_result)
             output["results"][idx]["task_config"]["case_config"] = self._output_case_config_for_case(case_result)
-        return self._redact_sensitive_fields(output)
+        return redact_sensitive(output)
 
     def flush(self):
         db2case = self.get_db_results()
