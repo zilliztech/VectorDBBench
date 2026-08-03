@@ -13,6 +13,7 @@ from ....cli.cli import (
     get_custom_case_config,
     run,
 )
+from .options import parse_key_values, parse_reloptions
 
 
 class AdbpgTypedDict(CommonTypedDict):
@@ -168,6 +169,35 @@ class AdbpgTypedDict(CommonTypedDict):
             required=False,
         ),
     ]
+    session_guc: Annotated[
+        dict[str, str],
+        click.option(
+            "--session-guc",
+            type=str,
+            multiple=True,
+            callback=parse_key_values,
+            help="Session GUC as name=value; repeatable or comma-separated",
+        ),
+    ]
+    index_reloption: Annotated[
+        dict[str, str | None],
+        click.option(
+            "--index-reloption",
+            type=str,
+            multiple=True,
+            callback=parse_reloptions,
+            help="Index reloption as name=value; a bare name resets it",
+        ),
+    ]
+    setup_sql: Annotated[
+        tuple[str, ...],
+        click.option(
+            "--setup-sql",
+            type=str,
+            multiple=True,
+            help="SQL run once after the index exists; supports $index, $table and $topk",
+        ),
+    ]
 
 
 @cli.command()
@@ -186,6 +216,7 @@ def AdbpgNova(**parameters: Unpack[AdbpgTypedDict]):
             db_name=parameters["db_name"],
         ),
         db_case_config=AdbpgIndexConfig(
+            benchmark_topk=parameters["k"],
             hnsw_m=parameters["hnsw_m"],
             ef_search=parameters["ef_search"],
             ef_construction=parameters["ef_construction"],
@@ -200,6 +231,9 @@ def AdbpgNova(**parameters: Unpack[AdbpgTypedDict]):
             max_scan_points=parameters["max_scan_points"],
             index_scan_mode=parameters["index_scan_mode"],
             nprobe=parameters["nprobe"],
+            session_gucs=parameters["session_guc"],
+            index_reloptions=parameters["index_reloption"],
+            setup_sql=parameters["setup_sql"],
         ),
         **parameters,
     )

@@ -3,6 +3,7 @@
 import logging
 from collections.abc import Generator, Sequence
 from contextlib import contextmanager
+from string import Template
 from typing import Any
 
 import numpy as np
@@ -87,6 +88,9 @@ class Adbpg(VectorDB):
             self._create_table(dim)
             if self.case_config.create_index_before_load:
                 self._create_index()
+        else:
+            # Search-only runs reuse an existing index and skip optimize().
+            self._apply_search_setup()
 
         self.cursor.close()
         self.conn.close()
@@ -144,7 +148,7 @@ class Adbpg(VectorDB):
             for setting in session_options:
                 command = sql.SQL("SET {setting_name} = {val};").format(
                     setting_name=sql.Identifier(setting["parameter"]["setting_name"]),
-                    val=sql.Identifier(str(setting["parameter"]["val"])),
+                    val=sql.Literal(setting["parameter"]["val"]),
                 )
                 log.debug(command.as_string(self.cursor))
                 self.cursor.execute(command)
@@ -172,6 +176,7 @@ class Adbpg(VectorDB):
 
     def optimize(self, data_size: int | None = None):
         self._post_insert()
+        self._apply_search_setup()
 
     def _post_insert(self):
         log.info(f"{self.name} post insert before optimize")
@@ -190,6 +195,70 @@ class Adbpg(VectorDB):
         log.debug(drop_index_sql.as_string(self.cursor))
         self.cursor.execute(drop_index_sql)
         self.conn.commit()
+
+    @staticmethod
+    def _quote_identifier(name: str) -> str:
+        return '"' + name.replace('"', '""') + '"'
+
+    def _render_setup_sql(self, statement: str) -> str:
+        """Resolve stable benchmark placeholders in explicitly injected SQL."""
+        return Template(statement).safe_substitute(
+            index=f'"public".{self._quote_identifier(self._index_name)}',
+            table=f'"public".{self._quote_identifier(self.table_name)}',
+            topk=str(self.case_config.benchmark_topk),
+        )
+
+    def _resolve_reloption_value(self, value: str) -> str | int:
+        """Resolve exact benchmark placeholders while preserving SQL literal safety."""
+        placeholders: dict[str, str | int] = {
+            "$index": self._index_name,
+            "$table": self.table_name,
+            "$topk": self.case_config.benchmark_topk,
+        }
+        return placeholders.get(value, value)
+
+    def _apply_search_setup(self) -> None:
+        """Apply index-level setup once, using a coordinator connection."""
+        reloptions = self.case_config.index_reloptions
+        statements = self.case_config.setup_sql
+        if not reloptions and not statements:
+            return
+
+        connect_config = dict(self.connect_config)
+        connect_config.pop("options", None)
+        conn, cursor = self._create_connection(**connect_config)
+        try:
+            index = sql.Identifier("public", self._index_name)
+            set_options = [(name, value) for name, value in reloptions.items() if value is not None]
+            reset_options = [name for name, value in reloptions.items() if value is None]
+            if set_options:
+                assignments = sql.SQL(", ").join(
+                    sql.SQL("{name} = {value}").format(
+                        name=sql.Identifier(name),
+                        value=sql.Literal(self._resolve_reloption_value(value)),
+                    )
+                    for name, value in set_options
+                )
+                cursor.execute(
+                    sql.SQL("ALTER INDEX {index} SET ({assignments})").format(
+                        index=index,
+                        assignments=assignments,
+                    )
+                )
+            if reset_options:
+                names = sql.SQL(", ").join(sql.Identifier(name) for name in reset_options)
+                cursor.execute(sql.SQL("ALTER INDEX {index} RESET ({names})").format(index=index, names=names))
+            for statement in statements:
+                rendered = self._render_setup_sql(statement)
+                log.info("%s setup SQL: %s", self.name, rendered)
+                cursor.execute(rendered)
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            cursor.close()
+            conn.close()
 
     def _set_parallel_index_build_param(self):
         assert self.conn is not None, "Connection is not initialized"

@@ -1,7 +1,7 @@
 from collections.abc import Mapping, Sequence
 from typing import Any, TypedDict
 
-from pydantic import BaseModel, SecretStr
+from pydantic import BaseModel, Field, SecretStr
 
 from ..api import DBCaseConfig, DBConfig, MetricType
 
@@ -46,6 +46,7 @@ class AdbpgConfig(DBConfig):
 
 class AdbpgIndexConfig(BaseModel, DBCaseConfig):
     metric_type: MetricType | None = None
+    benchmark_topk: int = 100
     create_index_before_load: bool = False
     create_index_after_load: bool = True
 
@@ -66,6 +67,12 @@ class AdbpgIndexConfig(BaseModel, DBCaseConfig):
     pca_dim: int | None = None
     # novad-specific search param (no-op for novamr/HNSW algorithms)
     nprobe: int = 5
+    # Generic ADBPG search setup. Product-specific parameters no longer need
+    # dedicated Python fields: GUCs apply per connection, while reloptions and
+    # SQL run once after the index exists.
+    session_gucs: dict[str, str] = Field(default_factory=dict)
+    index_reloptions: dict[str, str | None] = Field(default_factory=dict)
+    setup_sql: tuple[str, ...] = ()
 
     def parse_metric(self) -> str:
         if self.metric_type == MetricType.L2:
@@ -134,4 +141,5 @@ class AdbpgIndexConfig(BaseModel, DBCaseConfig):
             "optimizer": "off",
             "elog_process_parameters": "off",
         }
+        session_parameters.update(self.session_gucs)
         return {"session_options": self._build_forced_set_options(session_parameters)}
