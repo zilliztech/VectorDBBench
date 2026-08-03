@@ -11,6 +11,7 @@ from pgvector.psycopg import register_vector
 from psycopg import Connection, Cursor, sql
 
 from vectordb_bench.backend.filter import Filter, FilterOp
+from vectordb_bench.backend.utils import redact_sensitive
 
 from ..api import VectorDB
 from .config import PgVectorConfigDict, PgVectorIndexConfig
@@ -61,7 +62,7 @@ class PgVector(VectorDB):
         self.cursor.execute("CREATE EXTENSION IF NOT EXISTS vector")
         self.conn.commit()
 
-        log.info(f"{self.name} config values: {self.connect_config}\n{self.case_config}")
+        log.info(f"{self.name} config values: {redact_sensitive(self.connect_config)}\n{self.case_config}")
         if not any(
             (
                 self.case_config.create_index_before_load,
@@ -70,7 +71,7 @@ class PgVector(VectorDB):
         ):
             msg = (
                 f"{self.name} config must create an index using create_index_before_load or create_index_after_load"
-                f"{self.name} config values: {self.connect_config}\n{self.case_config}"
+                f"{self.name} config values: {redact_sensitive(self.connect_config)}\n{self.case_config}"
             )
             log.error(msg)
             raise RuntimeError(msg)

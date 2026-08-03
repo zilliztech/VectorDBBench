@@ -64,3 +64,21 @@ class TestGetFiles:
             for t in trains:
                 assert "shuffle" not in t
                 assert "train" in t
+
+
+class TestRedactSensitive:
+    @pytest.mark.parametrize("key", ["password", "Password", "api_key", "token"])
+    def test_sensitive_keys_are_masked(self, key):
+        assert utils.redact_sensitive({"host": "h", key: "s3cret"}) == {"host": "h", key: utils.MASK}
+
+    def test_http_auth_keeps_user_and_masks_secret(self):
+        assert utils.redact_sensitive({"http_auth": ("admin", "s3cret")}) == {"http_auth": ("admin", utils.MASK)}
+        # serverless OpenSearch passes an opaque auth object (e.g. AWS4Auth) instead of a pair
+        assert utils.redact_sensitive({"http_auth": object()}) == {"http_auth": utils.MASK}
+
+    def test_nested_values_and_non_sensitive_keys(self):
+        config = {"hosts": [{"host": "h", "port": 443, "password": "s3cret"}], "use_ssl": True}
+        assert utils.redact_sensitive(config) == {
+            "hosts": [{"host": "h", "port": 443, "password": utils.MASK}],
+            "use_ssl": True,
+        }

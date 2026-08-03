@@ -6,6 +6,7 @@ from contextlib import contextmanager
 from opensearchpy import OpenSearch
 
 from vectordb_bench.backend.filter import Filter, FilterOp
+from vectordb_bench.backend.utils import redact_sensitive
 
 from ..api import VectorDB
 from .config import AWSOpenSearchIndexConfig, AWSOS_Engine
@@ -46,7 +47,7 @@ class AWSOpenSearch(VectorDB):
         self.vector_col_name = vector_col_name
         self.with_scalar_labels = with_scalar_labels
 
-        log.info(f"AWS_OpenSearch client config: {self.db_config}")
+        log.info(f"AWS_OpenSearch client config: {redact_sensitive(self.db_config)}")
         log.info(f"AWS_OpenSearch db case config : {self.case_config}")
         self._is_serverless = ".aoss." in self.db_config.get("hosts", [{}])[0].get("host", "")
         client = OpenSearch(**self.db_config)
