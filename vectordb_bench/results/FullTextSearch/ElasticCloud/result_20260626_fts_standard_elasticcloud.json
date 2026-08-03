@@ -92,7 +92,7 @@
         "db_config": {
           "db_label": "2026-06-23T17:49:51.080771",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-run-context/v1\",\n  \"profile\": \"elasticsearch/v1\",\n  \"backend_version\": \"9.4.3\",\n  \"deployment\": {\n    \"method\": \"docker\",\n    \"config\": {\n      \"mode\": \"single_node\"\n    }\n  },\n  \"server_groups\": [\n    {\n      \"role\": \"elasticsearch-data-master\",\n      \"count\": 1,\n      \"jvm_heap_gib\": 30,\n      \"hardware\": {\n        \"machine_type\": \"i8g.4xlarge\",\n        \"cpu_count\": 16,\n        \"memory_gib\": 123.54,\n        \"storage\": {\n          \"type\": \"local_nvme\",\n          \"device_count\": 1,\n          \"total_gib\": 3492.46,\n          \"model\": \"Amazon EC2 NVMe Instance Storage\"\n        }\n      }\n    }\n  ],\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  }\n}",
           "cloud_id": null,
           "scheme": "http",
           "host": "**********",
@@ -227,7 +227,7 @@
         "db_config": {
           "db_label": "2026-06-23T17:57:42.938491",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-run-context/v1\",\n  \"profile\": \"elasticsearch/v1\",\n  \"backend_version\": \"9.4.3\",\n  \"deployment\": {\n    \"method\": \"docker\",\n    \"config\": {\n      \"mode\": \"single_node\"\n    }\n  },\n  \"server_groups\": [\n    {\n      \"role\": \"elasticsearch-data-master\",\n      \"count\": 1,\n      \"jvm_heap_gib\": 30,\n      \"hardware\": {\n        \"machine_type\": \"i8g.4xlarge\",\n        \"cpu_count\": 16,\n        \"memory_gib\": 123.54,\n        \"storage\": {\n          \"type\": \"local_nvme\",\n          \"device_count\": 1,\n          \"total_gib\": 3492.46,\n          \"model\": \"Amazon EC2 NVMe Instance Storage\"\n        }\n      }\n    }\n  ],\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  }\n}",
           "cloud_id": null,
           "scheme": "http",
           "host": "**********",
@@ -362,7 +362,7 @@
         "db_config": {
           "db_label": "2026-06-23T17:43:25.431349",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-run-context/v1\",\n  \"profile\": \"elasticsearch/v1\",\n  \"backend_version\": \"9.4.3\",\n  \"deployment\": {\n    \"method\": \"docker\",\n    \"config\": {\n      \"mode\": \"single_node\"\n    }\n  },\n  \"server_groups\": [\n    {\n      \"role\": \"elasticsearch-data-master\",\n      \"count\": 1,\n      \"jvm_heap_gib\": 30,\n      \"hardware\": {\n        \"machine_type\": \"i8g.4xlarge\",\n        \"cpu_count\": 16,\n        \"memory_gib\": 123.54,\n        \"storage\": {\n          \"type\": \"local_nvme\",\n          \"device_count\": 1,\n          \"total_gib\": 3492.46,\n          \"model\": \"Amazon EC2 NVMe Instance Storage\"\n        }\n      }\n    }\n  ],\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  }\n}",
           "cloud_id": null,
           "scheme": "http",
           "host": "**********",
@@ -497,7 +497,7 @@
         "db_config": {
           "db_label": "2026-06-23T17:47:10.387803",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-run-context/v1\",\n  \"profile\": \"elasticsearch/v1\",\n  \"backend_version\": \"9.4.3\",\n  \"deployment\": {\n    \"method\": \"docker\",\n    \"config\": {\n      \"mode\": \"single_node\"\n    }\n  },\n  \"server_groups\": [\n    {\n      \"role\": \"elasticsearch-data-master\",\n      \"count\": 1,\n      \"jvm_heap_gib\": 30,\n      \"hardware\": {\n        \"machine_type\": \"i8g.4xlarge\",\n        \"cpu_count\": 16,\n        \"memory_gib\": 123.54,\n        \"storage\": {\n          \"type\": \"local_nvme\",\n          \"device_count\": 1,\n          \"total_gib\": 3492.46,\n          \"model\": \"Amazon EC2 NVMe Instance Storage\"\n        }\n      }\n    }\n  ],\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  }\n}",
           "cloud_id": null,
           "scheme": "http",
           "host": "**********",
@@ -632,7 +632,7 @@
         "db_config": {
           "db_label": "2026-06-23T17:38:23.654768",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-run-context/v1\",\n  \"profile\": \"elasticsearch/v1\",\n  \"backend_version\": \"9.4.3\",\n  \"deployment\": {\n    \"method\": \"docker\",\n    \"config\": {\n      \"mode\": \"single_node\"\n    }\n  },\n  \"server_groups\": [\n    {\n      \"role\": \"elasticsearch-data-master\",\n      \"count\": 1,\n      \"jvm_heap_gib\": 30,\n      \"hardware\": {\n        \"machine_type\": \"i8g.4xlarge\",\n        \"cpu_count\": 16,\n        \"memory_gib\": 123.54,\n        \"storage\": {\n          \"type\": \"local_nvme\",\n          \"device_count\": 1,\n          \"total_gib\": 3492.46,\n          \"model\": \"Amazon EC2 NVMe Instance Storage\"\n        }\n      }\n    }\n  ],\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  }\n}",
           "cloud_id": null,
           "scheme": "http",
           "host": "**********",
@@ -767,7 +767,7 @@
         "db_config": {
           "db_label": "2026-06-23T17:41:05.239861",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-run-context/v1\",\n  \"profile\": \"elasticsearch/v1\",\n  \"backend_version\": \"9.4.3\",\n  \"deployment\": {\n    \"method\": \"docker\",\n    \"config\": {\n      \"mode\": \"single_node\"\n    }\n  },\n  \"server_groups\": [\n    {\n      \"role\": \"elasticsearch-data-master\",\n      \"count\": 1,\n      \"jvm_heap_gib\": 30,\n      \"hardware\": {\n        \"machine_type\": \"i8g.4xlarge\",\n        \"cpu_count\": 16,\n        \"memory_gib\": 123.54,\n        \"storage\": {\n          \"type\": \"local_nvme\",\n          \"device_count\": 1,\n          \"total_gib\": 3492.46,\n          \"model\": \"Amazon EC2 NVMe Instance Storage\"\n        }\n      }\n    }\n  ],\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  }\n}",
           "cloud_id": null,
           "scheme": "http",
           "host": "**********",
@@ -902,7 +902,7 @@
         "db_config": {
           "db_label": "2026-06-23T17:25:04.982818",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-run-context/v1\",\n  \"profile\": \"elasticsearch/v1\",\n  \"backend_version\": \"9.4.3\",\n  \"deployment\": {\n    \"method\": \"docker\",\n    \"config\": {\n      \"mode\": \"single_node\"\n    }\n  },\n  \"server_groups\": [\n    {\n      \"role\": \"elasticsearch-data-master\",\n      \"count\": 1,\n      \"jvm_heap_gib\": 30,\n      \"hardware\": {\n        \"machine_type\": \"i8g.4xlarge\",\n        \"cpu_count\": 16,\n        \"memory_gib\": 123.54,\n        \"storage\": {\n          \"type\": \"local_nvme\",\n          \"device_count\": 1,\n          \"total_gib\": 3492.46,\n          \"model\": \"Amazon EC2 NVMe Instance Storage\"\n        }\n      }\n    }\n  ],\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  }\n}",
           "cloud_id": null,
           "scheme": "http",
           "host": "**********",
@@ -1037,7 +1037,7 @@
         "db_config": {
           "db_label": "2026-06-23T17:32:21.485921",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-run-context/v1\",\n  \"profile\": \"elasticsearch/v1\",\n  \"backend_version\": \"9.4.3\",\n  \"deployment\": {\n    \"method\": \"docker\",\n    \"config\": {\n      \"mode\": \"single_node\"\n    }\n  },\n  \"server_groups\": [\n    {\n      \"role\": \"elasticsearch-data-master\",\n      \"count\": 1,\n      \"jvm_heap_gib\": 30,\n      \"hardware\": {\n        \"machine_type\": \"i8g.4xlarge\",\n        \"cpu_count\": 16,\n        \"memory_gib\": 123.54,\n        \"storage\": {\n          \"type\": \"local_nvme\",\n          \"device_count\": 1,\n          \"total_gib\": 3492.46,\n          \"model\": \"Amazon EC2 NVMe Instance Storage\"\n        }\n      }\n    }\n  ],\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  }\n}",
           "cloud_id": null,
           "scheme": "http",
           "host": "**********",
@@ -1172,7 +1172,7 @@
         "db_config": {
           "db_label": "2026-06-23T17:19:23.319688",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-run-context/v1\",\n  \"profile\": \"elasticsearch/v1\",\n  \"backend_version\": \"9.4.3\",\n  \"deployment\": {\n    \"method\": \"docker\",\n    \"config\": {\n      \"mode\": \"single_node\"\n    }\n  },\n  \"server_groups\": [\n    {\n      \"role\": \"elasticsearch-data-master\",\n      \"count\": 1,\n      \"jvm_heap_gib\": 30,\n      \"hardware\": {\n        \"machine_type\": \"i8g.4xlarge\",\n        \"cpu_count\": 16,\n        \"memory_gib\": 123.54,\n        \"storage\": {\n          \"type\": \"local_nvme\",\n          \"device_count\": 1,\n          \"total_gib\": 3492.46,\n          \"model\": \"Amazon EC2 NVMe Instance Storage\"\n        }\n      }\n    }\n  ],\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  }\n}",
           "cloud_id": null,
           "scheme": "http",
           "host": "**********",
@@ -1307,7 +1307,7 @@
         "db_config": {
           "db_label": "2026-06-23T17:22:25.552010",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-run-context/v1\",\n  \"profile\": \"elasticsearch/v1\",\n  \"backend_version\": \"9.4.3\",\n  \"deployment\": {\n    \"method\": \"docker\",\n    \"config\": {\n      \"mode\": \"single_node\"\n    }\n  },\n  \"server_groups\": [\n    {\n      \"role\": \"elasticsearch-data-master\",\n      \"count\": 1,\n      \"jvm_heap_gib\": 30,\n      \"hardware\": {\n        \"machine_type\": \"i8g.4xlarge\",\n        \"cpu_count\": 16,\n        \"memory_gib\": 123.54,\n        \"storage\": {\n          \"type\": \"local_nvme\",\n          \"device_count\": 1,\n          \"total_gib\": 3492.46,\n          \"model\": \"Amazon EC2 NVMe Instance Storage\"\n        }\n      }\n    }\n  ],\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  }\n}",
           "cloud_id": null,
           "scheme": "http",
           "host": "**********",
@@ -1442,7 +1442,7 @@
         "db_config": {
           "db_label": "2026-06-23T17:14:30.502248",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-run-context/v1\",\n  \"profile\": \"elasticsearch/v1\",\n  \"backend_version\": \"9.4.3\",\n  \"deployment\": {\n    \"method\": \"docker\",\n    \"config\": {\n      \"mode\": \"single_node\"\n    }\n  },\n  \"server_groups\": [\n    {\n      \"role\": \"elasticsearch-data-master\",\n      \"count\": 1,\n      \"jvm_heap_gib\": 30,\n      \"hardware\": {\n        \"machine_type\": \"i8g.4xlarge\",\n        \"cpu_count\": 16,\n        \"memory_gib\": 123.54,\n        \"storage\": {\n          \"type\": \"local_nvme\",\n          \"device_count\": 1,\n          \"total_gib\": 3492.46,\n          \"model\": \"Amazon EC2 NVMe Instance Storage\"\n        }\n      }\n    }\n  ],\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  }\n}",
           "cloud_id": null,
           "scheme": "http",
           "host": "**********",
@@ -1577,7 +1577,7 @@
         "db_config": {
           "db_label": "2026-06-23T17:17:03.106278",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-run-context/v1\",\n  \"profile\": \"elasticsearch/v1\",\n  \"backend_version\": \"9.4.3\",\n  \"deployment\": {\n    \"method\": \"docker\",\n    \"config\": {\n      \"mode\": \"single_node\"\n    }\n  },\n  \"server_groups\": [\n    {\n      \"role\": \"elasticsearch-data-master\",\n      \"count\": 1,\n      \"jvm_heap_gib\": 30,\n      \"hardware\": {\n        \"machine_type\": \"i8g.4xlarge\",\n        \"cpu_count\": 16,\n        \"memory_gib\": 123.54,\n        \"storage\": {\n          \"type\": \"local_nvme\",\n          \"device_count\": 1,\n          \"total_gib\": 3492.46,\n          \"model\": \"Amazon EC2 NVMe Instance Storage\"\n        }\n      }\n    }\n  ],\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  }\n}",
           "cloud_id": null,
           "scheme": "http",
           "host": "**********",

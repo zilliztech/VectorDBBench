@@ -91,7 +91,7 @@
         "db_config": {
           "db_label": "2026-06-23T16:12:30.162495",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"task\": {\n    \"id\": 15844,\n    \"type\": \"deployServer\",\n    \"cluster\": \"awswest\",\n    \"status\": \"Completed\"\n  },\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"version\": \"unknown-20260623-751f17a8\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  },\n  \"evidence\": {\n    \"source\": \"user-provided Task 15844 configuration and successful authenticated probe\",\n    \"credential_storage\": \"external to benchmark plan and artifacts\"\n  }\n}",
           "uri": "**********",
           "user": "root",
           "password": "**********",
@@ -226,7 +226,7 @@
         "db_config": {
           "db_label": "2026-06-23T16:21:46.167469",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"task\": {\n    \"id\": 15844,\n    \"type\": \"deployServer\",\n    \"cluster\": \"awswest\",\n    \"status\": \"Completed\"\n  },\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"version\": \"unknown-20260623-751f17a8\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  },\n  \"evidence\": {\n    \"source\": \"user-provided Task 15844 configuration and successful authenticated probe\",\n    \"credential_storage\": \"external to benchmark plan and artifacts\"\n  }\n}",
           "uri": "**********",
           "user": "root",
           "password": "**********",
@@ -361,7 +361,7 @@
         "db_config": {
           "db_label": "2026-06-23T16:04:10.277433",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"task\": {\n    \"id\": 15844,\n    \"type\": \"deployServer\",\n    \"cluster\": \"awswest\",\n    \"status\": \"Completed\"\n  },\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"version\": \"unknown-20260623-751f17a8\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  },\n  \"evidence\": {\n    \"source\": \"user-provided Task 15844 configuration and successful authenticated probe\",\n    \"credential_storage\": \"external to benchmark plan and artifacts\"\n  }\n}",
           "uri": "**********",
           "user": "root",
           "password": "**********",
@@ -496,7 +496,7 @@
         "db_config": {
           "db_label": "2026-06-23T16:09:07.352737",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"task\": {\n    \"id\": 15844,\n    \"type\": \"deployServer\",\n    \"cluster\": \"awswest\",\n    \"status\": \"Completed\"\n  },\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"version\": \"unknown-20260623-751f17a8\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  },\n  \"evidence\": {\n    \"source\": \"user-provided Task 15844 configuration and successful authenticated probe\",\n    \"credential_storage\": \"external to benchmark plan and artifacts\"\n  }\n}",
           "uri": "**********",
           "user": "root",
           "password": "**********",
@@ -631,7 +631,7 @@
         "db_config": {
           "db_label": "2026-06-23T15:59:30.355088",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"task\": {\n    \"id\": 15844,\n    \"type\": \"deployServer\",\n    \"cluster\": \"awswest\",\n    \"status\": \"Completed\"\n  },\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"version\": \"unknown-20260623-751f17a8\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  },\n  \"evidence\": {\n    \"source\": \"user-provided Task 15844 configuration and successful authenticated probe\",\n    \"credential_storage\": \"external to benchmark plan and artifacts\"\n  }\n}",
           "uri": "**********",
           "user": "root",
           "password": "**********",
@@ -766,7 +766,7 @@
         "db_config": {
           "db_label": "2026-06-23T16:02:03.206355",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"task\": {\n    \"id\": 15844,\n    \"type\": \"deployServer\",\n    \"cluster\": \"awswest\",\n    \"status\": \"Completed\"\n  },\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"version\": \"unknown-20260623-751f17a8\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  },\n  \"evidence\": {\n    \"source\": \"user-provided Task 15844 configuration and successful authenticated probe\",\n    \"credential_storage\": \"external to benchmark plan and artifacts\"\n  }\n}",
           "uri": "**********",
           "user": "root",
           "password": "**********",
@@ -901,7 +901,7 @@
         "db_config": {
           "db_label": "2026-06-23T15:37:30.224815",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"task\": {\n    \"id\": 15844,\n    \"type\": \"deployServer\",\n    \"cluster\": \"awswest\",\n    \"status\": \"Completed\"\n  },\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"version\": \"unknown-20260623-751f17a8\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  },\n  \"evidence\": {\n    \"source\": \"user-provided Task 15844 configuration and successful authenticated probe\",\n    \"credential_storage\": \"external to benchmark plan and artifacts\"\n  }\n}",
           "uri": "**********",
           "user": "root",
           "password": "**********",
@@ -1036,7 +1036,7 @@
         "db_config": {
           "db_label": "2026-06-23T15:50:48.791703",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"task\": {\n    \"id\": 15844,\n    \"type\": \"deployServer\",\n    \"cluster\": \"awswest\",\n    \"status\": \"Completed\"\n  },\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"version\": \"unknown-20260623-751f17a8\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  },\n  \"evidence\": {\n    \"source\": \"user-provided Task 15844 configuration and successful authenticated probe\",\n    \"credential_storage\": \"external to benchmark plan and artifacts\"\n  }\n}",
           "uri": "**********",
           "user": "root",
           "password": "**********",
@@ -1171,7 +1171,7 @@
         "db_config": {
           "db_label": "2026-06-23T15:28:10.214232",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"task\": {\n    \"id\": 15844,\n    \"type\": \"deployServer\",\n    \"cluster\": \"awswest\",\n    \"status\": \"Completed\"\n  },\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"version\": \"unknown-20260623-751f17a8\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  },\n  \"evidence\": {\n    \"source\": \"user-provided Task 15844 configuration and successful authenticated probe\",\n    \"credential_storage\": \"external to benchmark plan and artifacts\"\n  }\n}",
           "uri": "**********",
           "user": "root",
           "password": "**********",
@@ -1306,7 +1306,7 @@
         "db_config": {
           "db_label": "2026-06-23T15:31:42.678098",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"task\": {\n    \"id\": 15844,\n    \"type\": \"deployServer\",\n    \"cluster\": \"awswest\",\n    \"status\": \"Completed\"\n  },\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"version\": \"unknown-20260623-751f17a8\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  },\n  \"evidence\": {\n    \"source\": \"user-provided Task 15844 configuration and successful authenticated probe\",\n    \"credential_storage\": \"external to benchmark plan and artifacts\"\n  }\n}",
           "uri": "**********",
           "user": "root",
           "password": "**********",
@@ -1441,7 +1441,7 @@
         "db_config": {
           "db_label": "2026-06-23T15:23:49.914938",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"task\": {\n    \"id\": 15844,\n    \"type\": \"deployServer\",\n    \"cluster\": \"awswest\",\n    \"status\": \"Completed\"\n  },\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"version\": \"unknown-20260623-751f17a8\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  },\n  \"evidence\": {\n    \"source\": \"user-provided Task 15844 configuration and successful authenticated probe\",\n    \"credential_storage\": \"external to benchmark plan and artifacts\"\n  }\n}",
           "uri": "**********",
           "user": "root",
           "password": "**********",
@@ -1576,7 +1576,7 @@
         "db_config": {
           "db_label": "2026-06-23T15:26:11.226516",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"task\": {\n    \"id\": 15844,\n    \"type\": \"deployServer\",\n    \"cluster\": \"awswest\",\n    \"status\": \"Completed\"\n  },\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"version\": \"unknown-20260623-751f17a8\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  },\n  \"evidence\": {\n    \"source\": \"user-provided Task 15844 configuration and successful authenticated probe\",\n    \"credential_storage\": \"external to benchmark plan and artifacts\"\n  }\n}",
           "uri": "**********",
           "user": "root",
           "password": "**********",

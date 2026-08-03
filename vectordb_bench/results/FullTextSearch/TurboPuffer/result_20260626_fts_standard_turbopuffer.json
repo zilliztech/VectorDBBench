@@ -97,7 +97,7 @@
         "db_config": {
           "db_label": "2026-06-24T12:21:56.394316",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-turbopuffer-context/v1\",\n  \"backend\": {\n    \"name\": \"TurboPuffer\",\n    \"deployment\": \"managed_service\",\n    \"region\": \"aws-us-west-2\",\n    \"api_base_url\": \"https://aws-us-west-2.turbopuffer.com\",\n    \"service_version\": \"not_exposed\"\n  },\n  \"provenance\": {\n    \"capture\": \"retrospective\",\n    \"basis\": \"User confirmed filtered and unfiltered FTS cases used the same backend setup.\"\n  }\n}",
           "api_key": "**********",
           "region": "aws-us-west-2",
           "api_base_url": null,
@@ -234,7 +234,7 @@
         "db_config": {
           "db_label": "2026-06-24T12:43:28.084741",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-turbopuffer-context/v1\",\n  \"backend\": {\n    \"name\": \"TurboPuffer\",\n    \"deployment\": \"managed_service\",\n    \"region\": \"aws-us-west-2\",\n    \"api_base_url\": \"https://aws-us-west-2.turbopuffer.com\",\n    \"service_version\": \"not_exposed\"\n  },\n  \"provenance\": {\n    \"capture\": \"retrospective\",\n    \"basis\": \"User confirmed filtered and unfiltered FTS cases used the same backend setup.\"\n  }\n}",
           "api_key": "**********",
           "region": "aws-us-west-2",
           "api_base_url": null,
@@ -371,7 +371,7 @@
         "db_config": {
           "db_label": "2026-06-24T12:15:28.328411",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-turbopuffer-context/v1\",\n  \"backend\": {\n    \"name\": \"TurboPuffer\",\n    \"deployment\": \"managed_service\",\n    \"region\": \"aws-us-west-2\",\n    \"api_base_url\": \"https://aws-us-west-2.turbopuffer.com\",\n    \"service_version\": \"not_exposed\"\n  },\n  \"provenance\": {\n    \"capture\": \"retrospective\",\n    \"basis\": \"User confirmed filtered and unfiltered FTS cases used the same backend setup.\"\n  }\n}",
           "api_key": "**********",
           "region": "aws-us-west-2",
           "api_base_url": null,
@@ -508,7 +508,7 @@
         "db_config": {
           "db_label": "2026-06-24T12:39:57.159706",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-turbopuffer-context/v1\",\n  \"backend\": {\n    \"name\": \"TurboPuffer\",\n    \"deployment\": \"managed_service\",\n    \"region\": \"aws-us-west-2\",\n    \"api_base_url\": \"https://aws-us-west-2.turbopuffer.com\",\n    \"service_version\": \"not_exposed\"\n  },\n  \"provenance\": {\n    \"capture\": \"retrospective\",\n    \"basis\": \"User confirmed filtered and unfiltered FTS cases used the same backend setup.\"\n  }\n}",
           "api_key": "**********",
           "region": "aws-us-west-2",
           "api_base_url": null,
@@ -645,7 +645,7 @@
         "db_config": {
           "db_label": "2026-06-24T12:09:49.389682",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-turbopuffer-context/v1\",\n  \"backend\": {\n    \"name\": \"TurboPuffer\",\n    \"deployment\": \"managed_service\",\n    \"region\": \"aws-us-west-2\",\n    \"api_base_url\": \"https://aws-us-west-2.turbopuffer.com\",\n    \"service_version\": \"not_exposed\"\n  },\n  \"provenance\": {\n    \"capture\": \"retrospective\",\n    \"basis\": \"User confirmed filtered and unfiltered FTS cases used the same backend setup.\"\n  }\n}",
           "api_key": "**********",
           "region": "aws-us-west-2",
           "api_base_url": null,
@@ -782,7 +782,7 @@
         "db_config": {
           "db_label": "2026-06-24T12:36:19.214107",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-turbopuffer-context/v1\",\n  \"backend\": {\n    \"name\": \"TurboPuffer\",\n    \"deployment\": \"managed_service\",\n    \"region\": \"aws-us-west-2\",\n    \"api_base_url\": \"https://aws-us-west-2.turbopuffer.com\",\n    \"service_version\": \"not_exposed\"\n  },\n  \"provenance\": {\n    \"capture\": \"retrospective\",\n    \"basis\": \"User confirmed filtered and unfiltered FTS cases used the same backend setup.\"\n  }\n}",
           "api_key": "**********",
           "region": "aws-us-west-2",
           "api_base_url": null,
@@ -919,7 +919,7 @@
         "db_config": {
           "db_label": "2026-06-24T12:05:15.433938",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-turbopuffer-context/v1\",\n  \"backend\": {\n    \"name\": \"TurboPuffer\",\n    \"deployment\": \"managed_service\",\n    \"region\": \"aws-us-west-2\",\n    \"api_base_url\": \"https://aws-us-west-2.turbopuffer.com\",\n    \"service_version\": \"not_exposed\"\n  },\n  \"provenance\": {\n    \"capture\": \"retrospective\",\n    \"basis\": \"User confirmed filtered and unfiltered FTS cases used the same backend setup.\"\n  }\n}",
           "api_key": "**********",
           "region": "aws-us-west-2",
           "api_base_url": null,
@@ -1056,7 +1056,7 @@
         "db_config": {
           "db_label": "2026-06-24T12:33:35.259663",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-turbopuffer-context/v1\",\n  \"backend\": {\n    \"name\": \"TurboPuffer\",\n    \"deployment\": \"managed_service\",\n    \"region\": \"aws-us-west-2\",\n    \"api_base_url\": \"https://aws-us-west-2.turbopuffer.com\",\n    \"service_version\": \"not_exposed\"\n  },\n  \"provenance\": {\n    \"capture\": \"retrospective\",\n    \"basis\": \"User confirmed filtered and unfiltered FTS cases used the same backend setup.\"\n  }\n}",
           "api_key": "**********",
           "region": "aws-us-west-2",
           "api_base_url": null,
@@ -1193,7 +1193,7 @@
         "db_config": {
           "db_label": "2026-06-24T12:00:41.474589",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-turbopuffer-context/v1\",\n  \"backend\": {\n    \"name\": \"TurboPuffer\",\n    \"deployment\": \"managed_service\",\n    \"region\": \"aws-us-west-2\",\n    \"api_base_url\": \"https://aws-us-west-2.turbopuffer.com\",\n    \"service_version\": \"not_exposed\"\n  },\n  \"provenance\": {\n    \"capture\": \"retrospective\",\n    \"basis\": \"User confirmed filtered and unfiltered FTS cases used the same backend setup.\"\n  }\n}",
           "api_key": "**********",
           "region": "aws-us-west-2",
           "api_base_url": null,
@@ -1330,7 +1330,7 @@
         "db_config": {
           "db_label": "2026-06-24T12:30:55.307994",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-turbopuffer-context/v1\",\n  \"backend\": {\n    \"name\": \"TurboPuffer\",\n    \"deployment\": \"managed_service\",\n    \"region\": \"aws-us-west-2\",\n    \"api_base_url\": \"https://aws-us-west-2.turbopuffer.com\",\n    \"service_version\": \"not_exposed\"\n  },\n  \"provenance\": {\n    \"capture\": \"retrospective\",\n    \"basis\": \"User confirmed filtered and unfiltered FTS cases used the same backend setup.\"\n  }\n}",
           "api_key": "**********",
           "region": "aws-us-west-2",
           "api_base_url": null,
@@ -1467,7 +1467,7 @@
         "db_config": {
           "db_label": "2026-06-24T11:56:16.498129",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-turbopuffer-context/v1\",\n  \"backend\": {\n    \"name\": \"TurboPuffer\",\n    \"deployment\": \"managed_service\",\n    \"region\": \"aws-us-west-2\",\n    \"api_base_url\": \"https://aws-us-west-2.turbopuffer.com\",\n    \"service_version\": \"not_exposed\"\n  },\n  \"provenance\": {\n    \"capture\": \"retrospective\",\n    \"basis\": \"User confirmed filtered and unfiltered FTS cases used the same backend setup.\"\n  }\n}",
           "api_key": "**********",
           "region": "aws-us-west-2",
           "api_base_url": null,
@@ -1604,7 +1604,7 @@
         "db_config": {
           "db_label": "2026-06-24T12:28:10.345065",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-turbopuffer-context/v1\",\n  \"backend\": {\n    \"name\": \"TurboPuffer\",\n    \"deployment\": \"managed_service\",\n    \"region\": \"aws-us-west-2\",\n    \"api_base_url\": \"https://aws-us-west-2.turbopuffer.com\",\n    \"service_version\": \"not_exposed\"\n  },\n  \"provenance\": {\n    \"capture\": \"retrospective\",\n    \"basis\": \"User confirmed filtered and unfiltered FTS cases used the same backend setup.\"\n  }\n}",
           "api_key": "**********",
           "region": "aws-us-west-2",
           "api_base_url": null,
