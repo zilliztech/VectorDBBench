@@ -32,13 +32,6 @@ BACKEND_COLORS = {
 }
 SIZE_ORDER = ["Small", "Medium", "Large"]
 FILTER_RATE_LABEL_ORDER = ["50%", "75%", "90%", "95%", "99%"]
-FILTER_RATE_COLORS = {
-    "50%": "#0D6EFD",
-    "75%": "#04B8A7",
-    "90%": "#61D790",
-    "95%": "#F2B84B",
-    "99%": "#FF6B2C",
-}
 CHART_TABS = ["QPS", "Recall", "NDCG", "MRR", "Load", "Filtered QPS"]
 FILTERED_TAB = "Filtered QPS"
 
@@ -453,15 +446,15 @@ def _draw_filtered_qps_tab(st: Any, data: pd.DataFrame) -> None:
 
     fig = px.bar(
         peak_data,
-        x="backend",
+        x="filter_rate_label",
         y="qps",
-        color="filter_rate_label",
+        color="backend",
         barmode="group",
         category_orders={
             "filter_rate_label": filter_rate_order,
             "backend": backend_order,
         },
-        color_discrete_map=FILTER_RATE_COLORS,
+        color_discrete_map=BACKEND_COLORS,
         hover_data=[
             "dataset",
             "dataset_doc_count",
@@ -483,10 +476,11 @@ def _draw_filtered_qps_tab(st: Any, data: pd.DataFrame) -> None:
     fig.update_layout(
         margin={"l": 0, "r": 0, "t": 56, "b": 12, "pad": 8},
         legend={"orientation": "h", "yanchor": "bottom", "y": 1, "xanchor": "right", "x": 1, "title": ""},
-        xaxis_title="",
+        xaxis_title="Filter rate",
         yaxis_title="QPS",
         uniformtext={"minsize": 10, "mode": "show"},
     )
+    fig.update_xaxes(type="category", categoryorder="array", categoryarray=filter_rate_order)
     st.plotly_chart(fig, width="stretch", key=f"fts-filtered-concurrency-qps-{selected_family}")
 
 

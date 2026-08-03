@@ -114,7 +114,7 @@ def test_checked_in_permuted_results_expose_concurrency_qps_for_all_backends():
     assert not (result_dir / "ZillizCloud" / "result_20260709_fts_filtered_zillizcloud.json").exists()
 
 
-def test_filtered_qps_chart_groups_filter_rate_bars_by_backend():
+def test_filtered_qps_chart_groups_backend_bars_by_filter_rate():
     repo_root = Path(__file__).resolve().parents[1]
     result_dir = repo_root / "vectordb_bench" / "results" / "FullTextSearch"
     data = load_full_text_search_rows(result_dir)
@@ -135,13 +135,16 @@ def test_filtered_qps_chart_groups_filter_rate_bars_by_backend():
     assert recorder.figure is not None
     assert recorder.figure.layout.barmode == "group"
     assert {trace.type for trace in recorder.figure.data} == {"bar"}
-    assert {trace.name for trace in recorder.figure.data} == {"50%", "75%", "90%", "95%", "99%"}
-    assert {backend for trace in recorder.figure.data for backend in trace.x} == {
+    assert {trace.name for trace in recorder.figure.data} == {
         "ElasticSearch",
         "OSSOpenSearch",
         "TurboPuffer",
         "ZillizCloud",
     }
+    expected_filter_rates = {"50%", "75%", "90%", "95%", "99%"}
+    assert all(set(trace.x) == expected_filter_rates for trace in recorder.figure.data)
+    assert recorder.figure.layout.xaxis.type == "category"
+    assert tuple(recorder.figure.layout.xaxis.categoryarray) == ("50%", "75%", "90%", "95%", "99%")
 
 
 def test_checked_in_zilliz_standard_results_use_semantic_metrics():
