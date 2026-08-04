@@ -37,6 +37,8 @@ class FormatResult(BaseModel):
     recall_at: dict[int, float] = {}
     ndcg: float = 0
     mrr: float = 0
+    payload_profile: str = "ids_only"
+    payload_estimated_bytes_per_query: int = 0
     conc_num_list: list[int] = []
     conc_qps_list: list[float] = []
     conc_latency_p99_list: list[float] = []

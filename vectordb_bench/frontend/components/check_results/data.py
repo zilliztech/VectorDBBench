@@ -2,14 +2,27 @@ from collections import defaultdict
 from dataclasses import asdict
 
 from vectordb_bench import config
+from vectordb_bench.backend.cases import CaseType, PerformanceCase
+from vectordb_bench.backend.payload import PayloadProfile
 from vectordb_bench.metric import QPS_METRIC, isLowerIsBetterMetric
 from vectordb_bench.models import CaseResult, ResultLabel
 
 
 def getCaseResultName(task: CaseResult) -> str:
-    case_name = task.task_config.case_config.case_name
-    k = task.task_config.case_config.k
-    return case_name if k is None or k == config.K_DEFAULT else f"{case_name} (K={k:,})"
+    case_config = task.task_config.case_config
+    case = case_config.case
+    details = []
+    if case_config.k is not None and case_config.k != config.K_DEFAULT:
+        details.append(f"K={case_config.k:,}")
+    if (
+        isinstance(case, PerformanceCase)
+        and case.case_id != CaseType.CloudPayloadSearchCase
+        and case.payload_profile != PayloadProfile.IDS_ONLY
+    ):
+        details.append(f"Payload={case.payload_profile.value}")
+    if not details:
+        return case.name
+    return f"{case.name} ({', '.join(details)})"
 
 
 def getChartData(
