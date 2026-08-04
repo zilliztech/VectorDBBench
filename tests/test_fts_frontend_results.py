@@ -88,7 +88,7 @@ def test_frontend_separates_filtered_results_and_expands_concurrency_qps(tmp_pat
     ]
 
 
-def test_checked_in_permuted_results_expose_concurrency_qps_for_all_backends():
+def test_checked_in_consolidated_permuted_results_expose_concurrency_qps_for_all_backends():
     repo_root = Path(__file__).resolve().parents[1]
     result_dir = repo_root / "vectordb_bench" / "results" / "FullTextSearch"
 
@@ -97,6 +97,7 @@ def test_checked_in_permuted_results_expose_concurrency_qps_for_all_backends():
     concurrency_data = _concurrency_rows(filtered_data)
     peak_data = _peak_filtered_qps_rows(filtered_data)
 
+    assert len(data) == 82
     assert len(filtered_data) == 40
     assert len(concurrency_data) == 80
     assert (pd.to_numeric(filtered_data["p99_s"]) > 0).all()
@@ -118,8 +119,36 @@ def test_checked_in_permuted_results_expose_concurrency_qps_for_all_backends():
     assert set(pd.to_numeric(filtered_data["filter_rate"])) == {0.5, 0.75, 0.9, 0.95, 0.99}
     assert not (result_dir / "ZillizCloud" / "result_20260709_fts_filtered_zillizcloud.json").exists()
 
-    result_files = sorted(result_dir.glob("*/result_*_series_*_permuted_c60-80_*.json"))
-    assert len(result_files) == 40
+    expected_result_files = {
+        "ElasticCloud": "result_20260626_fts_standard_elasticcloud.json",
+        "OpenSearch": "result_20260708_fts_standard_opensearch.json",
+        "TurboPuffer": "result_20260626_fts_standard_turbopuffer.json",
+        "ZillizCloud": "result_20260626_fts_standard_zillizcloud.json",
+    }
+    expected_result_counts = {
+        "ElasticCloud": 22,
+        "OpenSearch": 16,
+        "TurboPuffer": 22,
+        "ZillizCloud": 22,
+    }
+    result_files = sorted(result_dir.glob("*/result_*.json"))
+    assert len(result_files) == 4
+    assert {path.parent.name: path.name for path in result_files} == expected_result_files
+
+    filtered_results = []
+    result_counts = {}
+    for result_file in result_files:
+        results = json.loads(result_file.read_text())["results"]
+        result_counts[result_file.parent.name] = len(results)
+        for case_result in results:
+            custom_case = case_result["task_config"]["case_config"].get("custom_case") or {}
+            fts_filter = case_result["metrics"].get("additional_parameters", {}).get("fts_filter") or {}
+            filter_rate = custom_case.get("filter_rate", fts_filter.get("filter_rate"))
+            if filter_rate is not None:
+                filtered_results.append(case_result)
+
+    assert result_counts == expected_result_counts
+    assert len(filtered_results) == 40
     expected_serial_fields = {
         "serial_latency_p99",
         "serial_latency_p95",
@@ -127,8 +156,7 @@ def test_checked_in_permuted_results_expose_concurrency_qps_for_all_backends():
         "ndcg",
         "mrr",
     }
-    for result_file in result_files:
-        case_result = json.loads(result_file.read_text())["results"][0]
+    for case_result in filtered_results:
         stages = set(case_result["task_config"]["stages"])
         provenance = case_result["metrics"]["additional_parameters"]["serial_measurement"]
 

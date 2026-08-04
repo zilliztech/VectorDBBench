@@ -91,7 +91,7 @@
         "db_config": {
           "db_label": "2026-06-23T16:12:30.162495",
           "version": "",
-          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"task\": {\n    \"id\": 15844,\n    \"type\": \"deployServer\",\n    \"cluster\": \"awswest\",\n    \"status\": \"Completed\"\n  },\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"version\": \"unknown-20260623-751f17a8\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  },\n  \"evidence\": {\n    \"source\": \"user-provided Task 15844 configuration and successful authenticated probe\",\n    \"credential_storage\": \"external to benchmark plan and artifacts\"\n  }\n}",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"task\": {\n    \"type\": \"deployServer\",\n    \"status\": \"Completed\"\n  },\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"version\": \"unknown-20260623-751f17a8\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1,\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\"\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  },\n  \"evidence\": {\n    \"source\": \"user-provided deployment configuration and successful authenticated probe\",\n    \"credential_storage\": \"external to benchmark plan and artifacts\"\n  }\n}",
           "uri": "**********",
           "user": "root",
           "password": "**********",
@@ -226,7 +226,7 @@
         "db_config": {
           "db_label": "2026-06-23T16:21:46.167469",
           "version": "",
-          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"task\": {\n    \"id\": 15844,\n    \"type\": \"deployServer\",\n    \"cluster\": \"awswest\",\n    \"status\": \"Completed\"\n  },\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"version\": \"unknown-20260623-751f17a8\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  },\n  \"evidence\": {\n    \"source\": \"user-provided Task 15844 configuration and successful authenticated probe\",\n    \"credential_storage\": \"external to benchmark plan and artifacts\"\n  }\n}",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"task\": {\n    \"type\": \"deployServer\",\n    \"status\": \"Completed\"\n  },\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"version\": \"unknown-20260623-751f17a8\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1,\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\"\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  },\n  \"evidence\": {\n    \"source\": \"user-provided deployment configuration and successful authenticated probe\",\n    \"credential_storage\": \"external to benchmark plan and artifacts\"\n  }\n}",
           "uri": "**********",
           "user": "root",
           "password": "**********",
@@ -361,7 +361,7 @@
         "db_config": {
           "db_label": "2026-06-23T16:04:10.277433",
           "version": "",
-          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"task\": {\n    \"id\": 15844,\n    \"type\": \"deployServer\",\n    \"cluster\": \"awswest\",\n    \"status\": \"Completed\"\n  },\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"version\": \"unknown-20260623-751f17a8\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  },\n  \"evidence\": {\n    \"source\": \"user-provided Task 15844 configuration and successful authenticated probe\",\n    \"credential_storage\": \"external to benchmark plan and artifacts\"\n  }\n}",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"task\": {\n    \"type\": \"deployServer\",\n    \"status\": \"Completed\"\n  },\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"version\": \"unknown-20260623-751f17a8\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1,\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\"\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  },\n  \"evidence\": {\n    \"source\": \"user-provided deployment configuration and successful authenticated probe\",\n    \"credential_storage\": \"external to benchmark plan and artifacts\"\n  }\n}",
           "uri": "**********",
           "user": "root",
           "password": "**********",
@@ -496,7 +496,7 @@
         "db_config": {
           "db_label": "2026-06-23T16:09:07.352737",
           "version": "",
-          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"task\": {\n    \"id\": 15844,\n    \"type\": \"deployServer\",\n    \"cluster\": \"awswest\",\n    \"status\": \"Completed\"\n  },\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"version\": \"unknown-20260623-751f17a8\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  },\n  \"evidence\": {\n    \"source\": \"user-provided Task 15844 configuration and successful authenticated probe\",\n    \"credential_storage\": \"external to benchmark plan and artifacts\"\n  }\n}",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"task\": {\n    \"type\": \"deployServer\",\n    \"status\": \"Completed\"\n  },\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"version\": \"unknown-20260623-751f17a8\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1,\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\"\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  },\n  \"evidence\": {\n    \"source\": \"user-provided deployment configuration and successful authenticated probe\",\n    \"credential_storage\": \"external to benchmark plan and artifacts\"\n  }\n}",
           "uri": "**********",
           "user": "root",
           "password": "**********",
@@ -631,7 +631,7 @@
         "db_config": {
           "db_label": "2026-06-23T15:59:30.355088",
           "version": "",
-          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"task\": {\n    \"id\": 15844,\n    \"type\": \"deployServer\",\n    \"cluster\": \"awswest\",\n    \"status\": \"Completed\"\n  },\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"version\": \"unknown-20260623-751f17a8\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  },\n  \"evidence\": {\n    \"source\": \"user-provided Task 15844 configuration and successful authenticated probe\",\n    \"credential_storage\": \"external to benchmark plan and artifacts\"\n  }\n}",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"task\": {\n    \"type\": \"deployServer\",\n    \"status\": \"Completed\"\n  },\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"version\": \"unknown-20260623-751f17a8\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1,\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\"\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  },\n  \"evidence\": {\n    \"source\": \"user-provided deployment configuration and successful authenticated probe\",\n    \"credential_storage\": \"external to benchmark plan and artifacts\"\n  }\n}",
           "uri": "**********",
           "user": "root",
           "password": "**********",
@@ -766,7 +766,7 @@
         "db_config": {
           "db_label": "2026-06-23T16:02:03.206355",
           "version": "",
-          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"task\": {\n    \"id\": 15844,\n    \"type\": \"deployServer\",\n    \"cluster\": \"awswest\",\n    \"status\": \"Completed\"\n  },\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"version\": \"unknown-20260623-751f17a8\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  },\n  \"evidence\": {\n    \"source\": \"user-provided Task 15844 configuration and successful authenticated probe\",\n    \"credential_storage\": \"external to benchmark plan and artifacts\"\n  }\n}",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"task\": {\n    \"type\": \"deployServer\",\n    \"status\": \"Completed\"\n  },\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"version\": \"unknown-20260623-751f17a8\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1,\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\"\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  },\n  \"evidence\": {\n    \"source\": \"user-provided deployment configuration and successful authenticated probe\",\n    \"credential_storage\": \"external to benchmark plan and artifacts\"\n  }\n}",
           "uri": "**********",
           "user": "root",
           "password": "**********",
@@ -901,7 +901,7 @@
         "db_config": {
           "db_label": "2026-06-23T15:37:30.224815",
           "version": "",
-          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"task\": {\n    \"id\": 15844,\n    \"type\": \"deployServer\",\n    \"cluster\": \"awswest\",\n    \"status\": \"Completed\"\n  },\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"version\": \"unknown-20260623-751f17a8\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  },\n  \"evidence\": {\n    \"source\": \"user-provided Task 15844 configuration and successful authenticated probe\",\n    \"credential_storage\": \"external to benchmark plan and artifacts\"\n  }\n}",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"task\": {\n    \"type\": \"deployServer\",\n    \"status\": \"Completed\"\n  },\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"version\": \"unknown-20260623-751f17a8\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1,\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\"\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  },\n  \"evidence\": {\n    \"source\": \"user-provided deployment configuration and successful authenticated probe\",\n    \"credential_storage\": \"external to benchmark plan and artifacts\"\n  }\n}",
           "uri": "**********",
           "user": "root",
           "password": "**********",
@@ -1036,7 +1036,7 @@
         "db_config": {
           "db_label": "2026-06-23T15:50:48.791703",
           "version": "",
-          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"task\": {\n    \"id\": 15844,\n    \"type\": \"deployServer\",\n    \"cluster\": \"awswest\",\n    \"status\": \"Completed\"\n  },\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"version\": \"unknown-20260623-751f17a8\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  },\n  \"evidence\": {\n    \"source\": \"user-provided Task 15844 configuration and successful authenticated probe\",\n    \"credential_storage\": \"external to benchmark plan and artifacts\"\n  }\n}",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"task\": {\n    \"type\": \"deployServer\",\n    \"status\": \"Completed\"\n  },\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"version\": \"unknown-20260623-751f17a8\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1,\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\"\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  },\n  \"evidence\": {\n    \"source\": \"user-provided deployment configuration and successful authenticated probe\",\n    \"credential_storage\": \"external to benchmark plan and artifacts\"\n  }\n}",
           "uri": "**********",
           "user": "root",
           "password": "**********",
@@ -1171,7 +1171,7 @@
         "db_config": {
           "db_label": "2026-06-23T15:28:10.214232",
           "version": "",
-          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"task\": {\n    \"id\": 15844,\n    \"type\": \"deployServer\",\n    \"cluster\": \"awswest\",\n    \"status\": \"Completed\"\n  },\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"version\": \"unknown-20260623-751f17a8\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  },\n  \"evidence\": {\n    \"source\": \"user-provided Task 15844 configuration and successful authenticated probe\",\n    \"credential_storage\": \"external to benchmark plan and artifacts\"\n  }\n}",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"task\": {\n    \"type\": \"deployServer\",\n    \"status\": \"Completed\"\n  },\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"version\": \"unknown-20260623-751f17a8\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1,\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\"\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  },\n  \"evidence\": {\n    \"source\": \"user-provided deployment configuration and successful authenticated probe\",\n    \"credential_storage\": \"external to benchmark plan and artifacts\"\n  }\n}",
           "uri": "**********",
           "user": "root",
           "password": "**********",
@@ -1306,7 +1306,7 @@
         "db_config": {
           "db_label": "2026-06-23T15:31:42.678098",
           "version": "",
-          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"task\": {\n    \"id\": 15844,\n    \"type\": \"deployServer\",\n    \"cluster\": \"awswest\",\n    \"status\": \"Completed\"\n  },\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"version\": \"unknown-20260623-751f17a8\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  },\n  \"evidence\": {\n    \"source\": \"user-provided Task 15844 configuration and successful authenticated probe\",\n    \"credential_storage\": \"external to benchmark plan and artifacts\"\n  }\n}",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"task\": {\n    \"type\": \"deployServer\",\n    \"status\": \"Completed\"\n  },\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"version\": \"unknown-20260623-751f17a8\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1,\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\"\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  },\n  \"evidence\": {\n    \"source\": \"user-provided deployment configuration and successful authenticated probe\",\n    \"credential_storage\": \"external to benchmark plan and artifacts\"\n  }\n}",
           "uri": "**********",
           "user": "root",
           "password": "**********",
@@ -1441,7 +1441,7 @@
         "db_config": {
           "db_label": "2026-06-23T15:23:49.914938",
           "version": "",
-          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"task\": {\n    \"id\": 15844,\n    \"type\": \"deployServer\",\n    \"cluster\": \"awswest\",\n    \"status\": \"Completed\"\n  },\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"version\": \"unknown-20260623-751f17a8\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  },\n  \"evidence\": {\n    \"source\": \"user-provided Task 15844 configuration and successful authenticated probe\",\n    \"credential_storage\": \"external to benchmark plan and artifacts\"\n  }\n}",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"task\": {\n    \"type\": \"deployServer\",\n    \"status\": \"Completed\"\n  },\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"version\": \"unknown-20260623-751f17a8\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1,\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\"\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  },\n  \"evidence\": {\n    \"source\": \"user-provided deployment configuration and successful authenticated probe\",\n    \"credential_storage\": \"external to benchmark plan and artifacts\"\n  }\n}",
           "uri": "**********",
           "user": "root",
           "password": "**********",
@@ -1576,7 +1576,7 @@
         "db_config": {
           "db_label": "2026-06-23T15:26:11.226516",
           "version": "",
-          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"task\": {\n    \"id\": 15844,\n    \"type\": \"deployServer\",\n    \"cluster\": \"awswest\",\n    \"status\": \"Completed\"\n  },\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"version\": \"unknown-20260623-751f17a8\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  },\n  \"evidence\": {\n    \"source\": \"user-provided Task 15844 configuration and successful authenticated probe\",\n    \"credential_storage\": \"external to benchmark plan and artifacts\"\n  }\n}",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"task\": {\n    \"type\": \"deployServer\",\n    \"status\": \"Completed\"\n  },\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"version\": \"unknown-20260623-751f17a8\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1,\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\"\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  },\n  \"evidence\": {\n    \"source\": \"user-provided deployment configuration and successful authenticated probe\",\n    \"credential_storage\": \"external to benchmark plan and artifacts\"\n  }\n}",
           "uri": "**********",
           "user": "root",
           "password": "**********",
@@ -1617,6 +1617,1528 @@
           "drop_old",
           "load",
           "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 153.863,
+        "optimize_duration": 70.5361,
+        "load_duration": 224.3991,
+        "qps": 1024.8015,
+        "serial_latency_p99": 0.0115,
+        "serial_latency_p95": 0.009,
+        "recall": 0.7975,
+        "ndcg": 0.6176,
+        "mrr": 0.6255,
+        "conc_num_list": [
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          984.5237,
+          1024.8015
+        ],
+        "conc_latency_p99_list": [
+          0.08549913499708053,
+          0.10171667180198711
+        ],
+        "conc_latency_p95_list": [
+          0.07884469290074776,
+          0.09385240700212308
+        ],
+        "conc_latency_avg_list": [
+          0.06007711118056373,
+          0.07662047067628201
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 5233329,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "fts_filter": {
+            "filter_type": "NumGE",
+            "filter_field": "filter_id",
+            "filter_value": 2616664,
+            "filter_rate": 0.5,
+            "filter_id_distribution": "affine_permutation_v1",
+            "filter_id_multiplier": 3234376,
+            "filter_id_offset": 1082441,
+            "matched_doc_count": 2616665,
+            "matched_doc_ratio": 0.5,
+            "original_query_count": 7405,
+            "filtered_query_count": 5547,
+            "filtered_query_ratio": 0.749088,
+            "original_relevant_doc_count": 13783,
+            "filtered_relevant_doc_count": 6846
+          },
+          "fts_recall": {
+            "skipped": false,
+            "reason": null,
+            "serial_query_count": 5547,
+            "full_query_count": 7405
+          },
+          "num_per_batch": 1000,
+          "load_concurrency": 4,
+          "serial_measurement": {
+            "composed_from_separate_run": true,
+            "metric_fields": [
+              "serial_latency_p99",
+              "serial_latency_p95",
+              "recall",
+              "ndcg",
+              "mrr"
+            ],
+            "source_run_id": "fe1b6443f3ca4161aa954d7210767a41",
+            "source_task_label": "fts_filtered_serial_zilliz_hotpotqa-large_r50_permuted",
+            "source_timestamp": 1785715200.0,
+            "source_file": "result_20260803_fts_filtered_serial_zilliz_hotpotqa-large_r50_permuted_zillizcloud.json",
+            "source_sha256": "823b9f88967ad39fa97a4dbfa02ba06f822a3d75dbf6d329aa94061d20932e60",
+            "source_db_label": "fts-filtered-serial-task15919",
+            "source_stages": [
+              "drop_old",
+              "load",
+              "search_serial"
+            ],
+            "source_note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\"\n  },\n  \"evidence\": {\n    \"source\": \"user-confirmed deployment shape for Task 15919\",\n    \"credential_storage\": \"external mode-600 secret file removed by runner cleanup\"\n  }\n}"
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "total-series-task15844",
+          "version": "",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"task\": {\n    \"type\": \"deployServer\",\n    \"status\": \"Completed\"\n  },\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"version\": \"unknown-20260623-751f17a8\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1,\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\"\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  },\n  \"evidence\": {\n    \"source\": \"user-provided deployment configuration and successful authenticated probe\",\n    \"credential_storage\": \"external to benchmark plan and artifacts\"\n  }\n}",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********",
+          "token": "",
+          "num_shards": 1,
+          "collection_name": "vdbbench_fts_total_series"
+        },
+        "db_case_config": {
+          "index_type": "AUTOINDEX",
+          "metric_type": "BM25",
+          "inverted_index_algo": "DAAT_MAXSCORE",
+          "bm25_k1": null,
+          "bm25_b": null,
+          "analyzer_tokenizer": "standard",
+          "analyzer_enable_lowercase": true,
+          "analyzer_max_token_length": null,
+          "analyzer_stop_words": null,
+          "drop_ratio_search": null,
+          "level": 1
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "HotpotQA Large (5.2M documents)",
+            "payload_profile": "ids_only",
+            "filter_id_distribution": "permuted",
+            "filter_rate": 0.5
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600,
+            "serial_cooldown": 0.0
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_concurrent",
+          "search_serial"
+        ],
+        "load_concurrency": 4
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 1656.3276,
+        "serial_latency_p99": 0.0166,
+        "serial_latency_p95": 0.0123,
+        "recall": 0.8291,
+        "ndcg": 0.6445,
+        "mrr": 0.6195,
+        "conc_num_list": [
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          1656.3276,
+          1644.2221
+        ],
+        "conc_latency_p99_list": [
+          0.060174821413165755,
+          0.06930061160237527
+        ],
+        "conc_latency_p95_list": [
+          0.05531145700006163,
+          0.06392330499511445
+        ],
+        "conc_latency_avg_list": [
+          0.035745685428957626,
+          0.04769969033254803
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 0,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "fts_filter": {
+            "filter_type": "NumGE",
+            "filter_field": "filter_id",
+            "filter_value": 3924996,
+            "filter_rate": 0.75,
+            "filter_id_distribution": "affine_permutation_v1",
+            "filter_id_multiplier": 3234376,
+            "filter_id_offset": 1082441,
+            "matched_doc_count": 1308333,
+            "matched_doc_ratio": 0.25,
+            "original_query_count": 7405,
+            "filtered_query_count": 3175,
+            "filtered_query_ratio": 0.428764,
+            "original_relevant_doc_count": 13783,
+            "filtered_relevant_doc_count": 3379
+          },
+          "fts_recall": {
+            "skipped": false,
+            "reason": null,
+            "serial_query_count": 3175,
+            "full_query_count": 7405
+          },
+          "serial_measurement": {
+            "composed_from_separate_run": true,
+            "metric_fields": [
+              "serial_latency_p99",
+              "serial_latency_p95",
+              "recall",
+              "ndcg",
+              "mrr"
+            ],
+            "source_run_id": "b20db9d6bffc414f898aae238af2bfe7",
+            "source_task_label": "fts_filtered_serial_zilliz_hotpotqa-large_r75_permuted",
+            "source_timestamp": 1785715200.0,
+            "source_file": "result_20260803_fts_filtered_serial_zilliz_hotpotqa-large_r75_permuted_zillizcloud.json",
+            "source_sha256": "dbc88e7bc241894de520b0ba69b32fed5b69d17d864c8785d75c5b7b231c20f5",
+            "source_db_label": "fts-filtered-serial-task15919",
+            "source_stages": [
+              "search_serial"
+            ],
+            "source_note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\"\n  },\n  \"evidence\": {\n    \"source\": \"user-confirmed deployment shape for Task 15919\",\n    \"credential_storage\": \"external mode-600 secret file removed by runner cleanup\"\n  }\n}"
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "total-series-task15844",
+          "version": "",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"task\": {\n    \"type\": \"deployServer\",\n    \"status\": \"Completed\"\n  },\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"version\": \"unknown-20260623-751f17a8\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1,\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\"\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  },\n  \"evidence\": {\n    \"source\": \"user-provided deployment configuration and successful authenticated probe\",\n    \"credential_storage\": \"external to benchmark plan and artifacts\"\n  }\n}",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********",
+          "token": "",
+          "num_shards": 1,
+          "collection_name": "vdbbench_fts_total_series"
+        },
+        "db_case_config": {
+          "index_type": "AUTOINDEX",
+          "metric_type": "BM25",
+          "inverted_index_algo": "DAAT_MAXSCORE",
+          "bm25_k1": null,
+          "bm25_b": null,
+          "analyzer_tokenizer": "standard",
+          "analyzer_enable_lowercase": true,
+          "analyzer_max_token_length": null,
+          "analyzer_stop_words": null,
+          "drop_ratio_search": null,
+          "level": 1
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "HotpotQA Large (5.2M documents)",
+            "payload_profile": "ids_only",
+            "filter_id_distribution": "permuted",
+            "filter_rate": 0.75
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600,
+            "serial_cooldown": 0.0
+          }
+        },
+        "stages": [
+          "search_concurrent",
+          "search_serial"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 2137.6395,
+        "serial_latency_p99": 0.0133,
+        "serial_latency_p95": 0.0101,
+        "recall": 0.8687,
+        "ndcg": 0.7021,
+        "mrr": 0.6648,
+        "conc_num_list": [
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          2035.3689,
+          2137.6395
+        ],
+        "conc_latency_p99_list": [
+          0.05069324247422628,
+          0.05923173332259466
+        ],
+        "conc_latency_p95_list": [
+          0.045846941650233924,
+          0.05541537014833011
+        ],
+        "conc_latency_avg_list": [
+          0.02909027725589089,
+          0.036693150144700065
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 0,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "fts_filter": {
+            "filter_type": "NumGE",
+            "filter_field": "filter_id",
+            "filter_value": 4709996,
+            "filter_rate": 0.9,
+            "filter_id_distribution": "affine_permutation_v1",
+            "filter_id_multiplier": 3234376,
+            "filter_id_offset": 1082441,
+            "matched_doc_count": 523333,
+            "matched_doc_ratio": 0.1,
+            "original_query_count": 7405,
+            "filtered_query_count": 1367,
+            "filtered_query_ratio": 0.184605,
+            "original_relevant_doc_count": 13783,
+            "filtered_relevant_doc_count": 1335
+          },
+          "fts_recall": {
+            "skipped": false,
+            "reason": null,
+            "serial_query_count": 1367,
+            "full_query_count": 7405
+          },
+          "serial_measurement": {
+            "composed_from_separate_run": true,
+            "metric_fields": [
+              "serial_latency_p99",
+              "serial_latency_p95",
+              "recall",
+              "ndcg",
+              "mrr"
+            ],
+            "source_run_id": "4104aa6e468648299a59e4e6db8fb1cc",
+            "source_task_label": "fts_filtered_serial_zilliz_hotpotqa-large_r90_permuted",
+            "source_timestamp": 1785715200.0,
+            "source_file": "result_20260803_fts_filtered_serial_zilliz_hotpotqa-large_r90_permuted_zillizcloud.json",
+            "source_sha256": "206d344c33e49a42ff5493f75bfd55e22d633a7477f5c047b41eae858ff4c4c5",
+            "source_db_label": "fts-filtered-serial-task15919",
+            "source_stages": [
+              "search_serial"
+            ],
+            "source_note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\"\n  },\n  \"evidence\": {\n    \"source\": \"user-confirmed deployment shape for Task 15919\",\n    \"credential_storage\": \"external mode-600 secret file removed by runner cleanup\"\n  }\n}"
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "total-series-task15844",
+          "version": "",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"task\": {\n    \"type\": \"deployServer\",\n    \"status\": \"Completed\"\n  },\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"version\": \"unknown-20260623-751f17a8\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1,\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\"\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  },\n  \"evidence\": {\n    \"source\": \"user-provided deployment configuration and successful authenticated probe\",\n    \"credential_storage\": \"external to benchmark plan and artifacts\"\n  }\n}",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********",
+          "token": "",
+          "num_shards": 1,
+          "collection_name": "vdbbench_fts_total_series"
+        },
+        "db_case_config": {
+          "index_type": "AUTOINDEX",
+          "metric_type": "BM25",
+          "inverted_index_algo": "DAAT_MAXSCORE",
+          "bm25_k1": null,
+          "bm25_b": null,
+          "analyzer_tokenizer": "standard",
+          "analyzer_enable_lowercase": true,
+          "analyzer_max_token_length": null,
+          "analyzer_stop_words": null,
+          "drop_ratio_search": null,
+          "level": 1
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "HotpotQA Large (5.2M documents)",
+            "payload_profile": "ids_only",
+            "filter_id_distribution": "permuted",
+            "filter_rate": 0.9
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600,
+            "serial_cooldown": 0.0
+          }
+        },
+        "stages": [
+          "search_concurrent",
+          "search_serial"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 2360.69,
+        "serial_latency_p99": 0.0113,
+        "serial_latency_p95": 0.0086,
+        "recall": 0.884,
+        "ndcg": 0.7273,
+        "mrr": 0.6873,
+        "conc_num_list": [
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          2318.8671,
+          2360.69
+        ],
+        "conc_latency_p99_list": [
+          0.049550217252544826,
+          0.05589644151827083
+        ],
+        "conc_latency_p95_list": [
+          0.04627314149911399,
+          0.05229555699625052
+        ],
+        "conc_latency_avg_list": [
+          0.02550964814555174,
+          0.03317556669666874
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 0,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "fts_filter": {
+            "filter_type": "NumGE",
+            "filter_field": "filter_id",
+            "filter_value": 4971662,
+            "filter_rate": 0.95,
+            "filter_id_distribution": "affine_permutation_v1",
+            "filter_id_multiplier": 3234376,
+            "filter_id_offset": 1082441,
+            "matched_doc_count": 261667,
+            "matched_doc_ratio": 0.05,
+            "original_query_count": 7405,
+            "filtered_query_count": 698,
+            "filtered_query_ratio": 0.094261,
+            "original_relevant_doc_count": 13783,
+            "filtered_relevant_doc_count": 664
+          },
+          "fts_recall": {
+            "skipped": false,
+            "reason": null,
+            "serial_query_count": 698,
+            "full_query_count": 7405
+          },
+          "serial_measurement": {
+            "composed_from_separate_run": true,
+            "metric_fields": [
+              "serial_latency_p99",
+              "serial_latency_p95",
+              "recall",
+              "ndcg",
+              "mrr"
+            ],
+            "source_run_id": "ee4e73c05d844418804c3635912e90cf",
+            "source_task_label": "fts_filtered_serial_zilliz_hotpotqa-large_r95_permuted",
+            "source_timestamp": 1785715200.0,
+            "source_file": "result_20260803_fts_filtered_serial_zilliz_hotpotqa-large_r95_permuted_zillizcloud.json",
+            "source_sha256": "33f30528056e9a9f04f609798a3d6980f3664f06e4503cd1df72d3b72fee69bd",
+            "source_db_label": "fts-filtered-serial-task15919",
+            "source_stages": [
+              "search_serial"
+            ],
+            "source_note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\"\n  },\n  \"evidence\": {\n    \"source\": \"user-confirmed deployment shape for Task 15919\",\n    \"credential_storage\": \"external mode-600 secret file removed by runner cleanup\"\n  }\n}"
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "total-series-task15844",
+          "version": "",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"task\": {\n    \"type\": \"deployServer\",\n    \"status\": \"Completed\"\n  },\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"version\": \"unknown-20260623-751f17a8\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1,\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\"\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  },\n  \"evidence\": {\n    \"source\": \"user-provided deployment configuration and successful authenticated probe\",\n    \"credential_storage\": \"external to benchmark plan and artifacts\"\n  }\n}",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********",
+          "token": "",
+          "num_shards": 1,
+          "collection_name": "vdbbench_fts_total_series"
+        },
+        "db_case_config": {
+          "index_type": "AUTOINDEX",
+          "metric_type": "BM25",
+          "inverted_index_algo": "DAAT_MAXSCORE",
+          "bm25_k1": null,
+          "bm25_b": null,
+          "analyzer_tokenizer": "standard",
+          "analyzer_enable_lowercase": true,
+          "analyzer_max_token_length": null,
+          "analyzer_stop_words": null,
+          "drop_ratio_search": null,
+          "level": 1
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "HotpotQA Large (5.2M documents)",
+            "payload_profile": "ids_only",
+            "filter_id_distribution": "permuted",
+            "filter_rate": 0.95
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600,
+            "serial_cooldown": 0.0
+          }
+        },
+        "stages": [
+          "search_concurrent",
+          "search_serial"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 2408.4484,
+        "serial_latency_p99": 0.0106,
+        "serial_latency_p95": 0.0081,
+        "recall": 0.898,
+        "ndcg": 0.774,
+        "mrr": 0.7382,
+        "conc_num_list": [
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          2374.3462,
+          2408.4484
+        ],
+        "conc_latency_p99_list": [
+          0.048768463508677105,
+          0.05487532160041157
+        ],
+        "conc_latency_p95_list": [
+          0.04526920665084617,
+          0.051229935001174454
+        ],
+        "conc_latency_avg_list": [
+          0.024913626570619313,
+          0.032554555012358107
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 0,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "fts_filter": {
+            "filter_type": "NumGE",
+            "filter_field": "filter_id",
+            "filter_value": 5180995,
+            "filter_rate": 0.99,
+            "filter_id_distribution": "affine_permutation_v1",
+            "filter_id_multiplier": 3234376,
+            "filter_id_offset": 1082441,
+            "matched_doc_count": 52334,
+            "matched_doc_ratio": 0.01,
+            "original_query_count": 7405,
+            "filtered_query_count": 147,
+            "filtered_query_ratio": 0.019851,
+            "original_relevant_doc_count": 13783,
+            "filtered_relevant_doc_count": 136
+          },
+          "fts_recall": {
+            "skipped": false,
+            "reason": null,
+            "serial_query_count": 147,
+            "full_query_count": 7405
+          },
+          "serial_measurement": {
+            "composed_from_separate_run": true,
+            "metric_fields": [
+              "serial_latency_p99",
+              "serial_latency_p95",
+              "recall",
+              "ndcg",
+              "mrr"
+            ],
+            "source_run_id": "1e45fbd9852c4c37b1a718222844668a",
+            "source_task_label": "fts_filtered_serial_zilliz_hotpotqa-large_r99_permuted",
+            "source_timestamp": 1785715200.0,
+            "source_file": "result_20260803_fts_filtered_serial_zilliz_hotpotqa-large_r99_permuted_zillizcloud.json",
+            "source_sha256": "39d921662456346e8803bb1dbf644df0d2e3a9599f432d7b81a3a1000c8e0c93",
+            "source_db_label": "fts-filtered-serial-task15919",
+            "source_stages": [
+              "search_serial"
+            ],
+            "source_note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\"\n  },\n  \"evidence\": {\n    \"source\": \"user-confirmed deployment shape for Task 15919\",\n    \"credential_storage\": \"external mode-600 secret file removed by runner cleanup\"\n  }\n}"
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "total-series-task15844",
+          "version": "",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"task\": {\n    \"type\": \"deployServer\",\n    \"status\": \"Completed\"\n  },\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"version\": \"unknown-20260623-751f17a8\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1,\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\"\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  },\n  \"evidence\": {\n    \"source\": \"user-provided deployment configuration and successful authenticated probe\",\n    \"credential_storage\": \"external to benchmark plan and artifacts\"\n  }\n}",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********",
+          "token": "",
+          "num_shards": 1,
+          "collection_name": "vdbbench_fts_total_series"
+        },
+        "db_case_config": {
+          "index_type": "AUTOINDEX",
+          "metric_type": "BM25",
+          "inverted_index_algo": "DAAT_MAXSCORE",
+          "bm25_k1": null,
+          "bm25_b": null,
+          "analyzer_tokenizer": "standard",
+          "analyzer_enable_lowercase": true,
+          "analyzer_max_token_length": null,
+          "analyzer_stop_words": null,
+          "drop_ratio_search": null,
+          "level": 1
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "HotpotQA Large (5.2M documents)",
+            "payload_profile": "ids_only",
+            "filter_id_distribution": "permuted",
+            "filter_rate": 0.99
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600,
+            "serial_cooldown": 0.0
+          }
+        },
+        "stages": [
+          "search_concurrent",
+          "search_serial"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 206.1942,
+        "optimize_duration": 95.8413,
+        "load_duration": 302.0354,
+        "qps": 1455.9984,
+        "serial_latency_p99": 0.0114,
+        "serial_latency_p95": 0.0092,
+        "recall": 0.7035,
+        "ndcg": 0.3472,
+        "mrr": 0.2565,
+        "conc_num_list": [
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          1334.652,
+          1455.9984
+        ],
+        "conc_latency_p99_list": [
+          0.07524726106203158,
+          0.08176569327046312
+        ],
+        "conc_latency_p95_list": [
+          0.07080162979946181,
+          0.0773988372005988
+        ],
+        "conc_latency_avg_list": [
+          0.044366832682183076,
+          0.053945946618395524
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 8841823,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "fts_filter": {
+            "filter_type": "NumGE",
+            "filter_field": "filter_id",
+            "filter_value": 4420911,
+            "filter_rate": 0.5,
+            "filter_id_distribution": "affine_permutation_v1",
+            "filter_id_multiplier": 5464547,
+            "filter_id_offset": 1684563,
+            "matched_doc_count": 4420912,
+            "matched_doc_ratio": 0.5,
+            "original_query_count": 6980,
+            "filtered_query_count": 3658,
+            "filtered_query_ratio": 0.524069,
+            "original_relevant_doc_count": 7433,
+            "filtered_relevant_doc_count": 3758
+          },
+          "fts_recall": {
+            "skipped": false,
+            "reason": null,
+            "serial_query_count": 3658,
+            "full_query_count": 6980
+          },
+          "num_per_batch": 1000,
+          "load_concurrency": 4,
+          "serial_measurement": {
+            "composed_from_separate_run": true,
+            "metric_fields": [
+              "serial_latency_p99",
+              "serial_latency_p95",
+              "recall",
+              "ndcg",
+              "mrr"
+            ],
+            "source_run_id": "1704e428423348988a01076eebf60fec",
+            "source_task_label": "fts_filtered_serial_zilliz_msmarco-large_r50_permuted",
+            "source_timestamp": 1785715200.0,
+            "source_file": "result_20260803_fts_filtered_serial_zilliz_msmarco-large_r50_permuted_zillizcloud.json",
+            "source_sha256": "0131ec8d63c1f7bcca4e38963815c73d389c5ece5677819a786e36c3eff1a78c",
+            "source_db_label": "fts-filtered-serial-task15919",
+            "source_stages": [
+              "drop_old",
+              "load",
+              "search_serial"
+            ],
+            "source_note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\"\n  },\n  \"evidence\": {\n    \"source\": \"user-confirmed deployment shape for Task 15919\",\n    \"credential_storage\": \"external mode-600 secret file removed by runner cleanup\"\n  }\n}"
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "total-series-task15844",
+          "version": "",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"task\": {\n    \"type\": \"deployServer\",\n    \"status\": \"Completed\"\n  },\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"version\": \"unknown-20260623-751f17a8\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1,\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\"\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  },\n  \"evidence\": {\n    \"source\": \"user-provided deployment configuration and successful authenticated probe\",\n    \"credential_storage\": \"external to benchmark plan and artifacts\"\n  }\n}",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********",
+          "token": "",
+          "num_shards": 1,
+          "collection_name": "vdbbench_fts_total_series"
+        },
+        "db_case_config": {
+          "index_type": "AUTOINDEX",
+          "metric_type": "BM25",
+          "inverted_index_algo": "DAAT_MAXSCORE",
+          "bm25_k1": null,
+          "bm25_b": null,
+          "analyzer_tokenizer": "standard",
+          "analyzer_enable_lowercase": true,
+          "analyzer_max_token_length": null,
+          "analyzer_stop_words": null,
+          "drop_ratio_search": null,
+          "level": 1
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "MS MARCO Large (8.8M documents)",
+            "payload_profile": "ids_only",
+            "filter_id_distribution": "permuted",
+            "filter_rate": 0.5
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600,
+            "serial_cooldown": 0.0
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_concurrent",
+          "search_serial"
+        ],
+        "load_concurrency": 4
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 2014.3194,
+        "serial_latency_p99": 0.0098,
+        "serial_latency_p95": 0.008,
+        "recall": 0.7662,
+        "ndcg": 0.425,
+        "mrr": 0.3365,
+        "conc_num_list": [
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          1726.46,
+          2014.3194
+        ],
+        "conc_latency_p99_list": [
+          0.06578671599709196,
+          0.07674184764095117
+        ],
+        "conc_latency_p95_list": [
+          0.062432950999209424,
+          0.06775431919813854
+        ],
+        "conc_latency_avg_list": [
+          0.03429934712740984,
+          0.038926459966251985
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 0,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "fts_filter": {
+            "filter_type": "NumGE",
+            "filter_field": "filter_id",
+            "filter_value": 6631367,
+            "filter_rate": 0.75,
+            "filter_id_distribution": "affine_permutation_v1",
+            "filter_id_multiplier": 5464547,
+            "filter_id_offset": 1684563,
+            "matched_doc_count": 2210456,
+            "matched_doc_ratio": 0.25,
+            "original_query_count": 6980,
+            "filtered_query_count": 1818,
+            "filtered_query_ratio": 0.260458,
+            "original_relevant_doc_count": 7433,
+            "filtered_relevant_doc_count": 1839
+          },
+          "fts_recall": {
+            "skipped": false,
+            "reason": null,
+            "serial_query_count": 1818,
+            "full_query_count": 6980
+          },
+          "serial_measurement": {
+            "composed_from_separate_run": true,
+            "metric_fields": [
+              "serial_latency_p99",
+              "serial_latency_p95",
+              "recall",
+              "ndcg",
+              "mrr"
+            ],
+            "source_run_id": "70eb4aed374149ab8727d9d3d9de9876",
+            "source_task_label": "fts_filtered_serial_zilliz_msmarco-large_r75_permuted",
+            "source_timestamp": 1785715200.0,
+            "source_file": "result_20260803_fts_filtered_serial_zilliz_msmarco-large_r75_permuted_zillizcloud.json",
+            "source_sha256": "75ff13185459b00e99a15385594f61fc24270246cde918bc5e5608f38f81e767",
+            "source_db_label": "fts-filtered-serial-task15919",
+            "source_stages": [
+              "search_serial"
+            ],
+            "source_note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\"\n  },\n  \"evidence\": {\n    \"source\": \"user-confirmed deployment shape for Task 15919\",\n    \"credential_storage\": \"external mode-600 secret file removed by runner cleanup\"\n  }\n}"
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "total-series-task15844",
+          "version": "",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"task\": {\n    \"type\": \"deployServer\",\n    \"status\": \"Completed\"\n  },\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"version\": \"unknown-20260623-751f17a8\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1,\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\"\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  },\n  \"evidence\": {\n    \"source\": \"user-provided deployment configuration and successful authenticated probe\",\n    \"credential_storage\": \"external to benchmark plan and artifacts\"\n  }\n}",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********",
+          "token": "",
+          "num_shards": 1,
+          "collection_name": "vdbbench_fts_total_series"
+        },
+        "db_case_config": {
+          "index_type": "AUTOINDEX",
+          "metric_type": "BM25",
+          "inverted_index_algo": "DAAT_MAXSCORE",
+          "bm25_k1": null,
+          "bm25_b": null,
+          "analyzer_tokenizer": "standard",
+          "analyzer_enable_lowercase": true,
+          "analyzer_max_token_length": null,
+          "analyzer_stop_words": null,
+          "drop_ratio_search": null,
+          "level": 1
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "MS MARCO Large (8.8M documents)",
+            "payload_profile": "ids_only",
+            "filter_id_distribution": "permuted",
+            "filter_rate": 0.75
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600,
+            "serial_cooldown": 0.0
+          }
+        },
+        "stages": [
+          "search_concurrent",
+          "search_serial"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 2590.6215,
+        "serial_latency_p99": 0.0079,
+        "serial_latency_p95": 0.0067,
+        "recall": 0.8383,
+        "ndcg": 0.5192,
+        "mrr": 0.4349,
+        "conc_num_list": [
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          2439.3924,
+          2590.6215
+        ],
+        "conc_latency_p99_list": [
+          0.057422419590402556,
+          0.06064708100075222
+        ],
+        "conc_latency_p95_list": [
+          0.054436052098390066,
+          0.05741116574972693
+        ],
+        "conc_latency_avg_list": [
+          0.02427248652202698,
+          0.030206100813624317
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 0,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "fts_filter": {
+            "filter_type": "NumGE",
+            "filter_field": "filter_id",
+            "filter_value": 7957640,
+            "filter_rate": 0.9,
+            "filter_id_distribution": "affine_permutation_v1",
+            "filter_id_multiplier": 5464547,
+            "filter_id_offset": 1684563,
+            "matched_doc_count": 884183,
+            "matched_doc_ratio": 0.1,
+            "original_query_count": 6980,
+            "filtered_query_count": 739,
+            "filtered_query_ratio": 0.105874,
+            "original_relevant_doc_count": 7433,
+            "filtered_relevant_doc_count": 740
+          },
+          "fts_recall": {
+            "skipped": false,
+            "reason": null,
+            "serial_query_count": 739,
+            "full_query_count": 6980
+          },
+          "serial_measurement": {
+            "composed_from_separate_run": true,
+            "metric_fields": [
+              "serial_latency_p99",
+              "serial_latency_p95",
+              "recall",
+              "ndcg",
+              "mrr"
+            ],
+            "source_run_id": "dbc1a517a45d44efad16527373d87379",
+            "source_task_label": "fts_filtered_serial_zilliz_msmarco-large_r90_permuted",
+            "source_timestamp": 1785715200.0,
+            "source_file": "result_20260803_fts_filtered_serial_zilliz_msmarco-large_r90_permuted_zillizcloud.json",
+            "source_sha256": "0357e18ba509eeceb54bef1940dd45d9a45cb703a3c7a602b638b0d7fbd9eb42",
+            "source_db_label": "fts-filtered-serial-task15919",
+            "source_stages": [
+              "search_serial"
+            ],
+            "source_note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\"\n  },\n  \"evidence\": {\n    \"source\": \"user-confirmed deployment shape for Task 15919\",\n    \"credential_storage\": \"external mode-600 secret file removed by runner cleanup\"\n  }\n}"
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "total-series-task15844",
+          "version": "",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"task\": {\n    \"type\": \"deployServer\",\n    \"status\": \"Completed\"\n  },\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"version\": \"unknown-20260623-751f17a8\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1,\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\"\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  },\n  \"evidence\": {\n    \"source\": \"user-provided deployment configuration and successful authenticated probe\",\n    \"credential_storage\": \"external to benchmark plan and artifacts\"\n  }\n}",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********",
+          "token": "",
+          "num_shards": 1,
+          "collection_name": "vdbbench_fts_total_series"
+        },
+        "db_case_config": {
+          "index_type": "AUTOINDEX",
+          "metric_type": "BM25",
+          "inverted_index_algo": "DAAT_MAXSCORE",
+          "bm25_k1": null,
+          "bm25_b": null,
+          "analyzer_tokenizer": "standard",
+          "analyzer_enable_lowercase": true,
+          "analyzer_max_token_length": null,
+          "analyzer_stop_words": null,
+          "drop_ratio_search": null,
+          "level": 1
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "MS MARCO Large (8.8M documents)",
+            "payload_profile": "ids_only",
+            "filter_id_distribution": "permuted",
+            "filter_rate": 0.9
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600,
+            "serial_cooldown": 0.0
+          }
+        },
+        "stages": [
+          "search_concurrent",
+          "search_serial"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 2787.9977,
+        "serial_latency_p99": 0.007,
+        "serial_latency_p95": 0.0062,
+        "recall": 0.8473,
+        "ndcg": 0.5791,
+        "mrr": 0.5077,
+        "conc_num_list": [
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          2639.8785,
+          2787.9977
+        ],
+        "conc_latency_p99_list": [
+          0.055587523868925924,
+          0.05845332880053319
+        ],
+        "conc_latency_p95_list": [
+          0.05258288335062389,
+          0.0554266908991849
+        ],
+        "conc_latency_avg_list": [
+          0.022420729952010172,
+          0.028075120591236923
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 0,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "fts_filter": {
+            "filter_type": "NumGE",
+            "filter_field": "filter_id",
+            "filter_value": 8399731,
+            "filter_rate": 0.95,
+            "filter_id_distribution": "affine_permutation_v1",
+            "filter_id_multiplier": 5464547,
+            "filter_id_offset": 1684563,
+            "matched_doc_count": 442092,
+            "matched_doc_ratio": 0.05,
+            "original_query_count": 6980,
+            "filtered_query_count": 347,
+            "filtered_query_ratio": 0.049713,
+            "original_relevant_doc_count": 7433,
+            "filtered_relevant_doc_count": 347
+          },
+          "fts_recall": {
+            "skipped": false,
+            "reason": null,
+            "serial_query_count": 347,
+            "full_query_count": 6980
+          },
+          "serial_measurement": {
+            "composed_from_separate_run": true,
+            "metric_fields": [
+              "serial_latency_p99",
+              "serial_latency_p95",
+              "recall",
+              "ndcg",
+              "mrr"
+            ],
+            "source_run_id": "69c5fc3b0f944962af09e35512dc2699",
+            "source_task_label": "fts_filtered_serial_zilliz_msmarco-large_r95_permuted",
+            "source_timestamp": 1785715200.0,
+            "source_file": "result_20260803_fts_filtered_serial_zilliz_msmarco-large_r95_permuted_zillizcloud.json",
+            "source_sha256": "5be3cd9e849e23ff03eb9a666ebfef95570dd7599658e1076886e1979bd3a5a6",
+            "source_db_label": "fts-filtered-serial-task15919",
+            "source_stages": [
+              "search_serial"
+            ],
+            "source_note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\"\n  },\n  \"evidence\": {\n    \"source\": \"user-confirmed deployment shape for Task 15919\",\n    \"credential_storage\": \"external mode-600 secret file removed by runner cleanup\"\n  }\n}"
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "total-series-task15844",
+          "version": "",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"task\": {\n    \"type\": \"deployServer\",\n    \"status\": \"Completed\"\n  },\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"version\": \"unknown-20260623-751f17a8\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1,\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\"\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  },\n  \"evidence\": {\n    \"source\": \"user-provided deployment configuration and successful authenticated probe\",\n    \"credential_storage\": \"external to benchmark plan and artifacts\"\n  }\n}",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********",
+          "token": "",
+          "num_shards": 1,
+          "collection_name": "vdbbench_fts_total_series"
+        },
+        "db_case_config": {
+          "index_type": "AUTOINDEX",
+          "metric_type": "BM25",
+          "inverted_index_algo": "DAAT_MAXSCORE",
+          "bm25_k1": null,
+          "bm25_b": null,
+          "analyzer_tokenizer": "standard",
+          "analyzer_enable_lowercase": true,
+          "analyzer_max_token_length": null,
+          "analyzer_stop_words": null,
+          "drop_ratio_search": null,
+          "level": 1
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "MS MARCO Large (8.8M documents)",
+            "payload_profile": "ids_only",
+            "filter_id_distribution": "permuted",
+            "filter_rate": 0.95
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600,
+            "serial_cooldown": 0.0
+          }
+        },
+        "stages": [
+          "search_concurrent",
+          "search_serial"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 2798.7708,
+        "serial_latency_p99": 0.0204,
+        "serial_latency_p95": 0.0065,
+        "recall": 0.9403,
+        "ndcg": 0.6958,
+        "mrr": 0.628,
+        "conc_num_list": [
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          2652.3898,
+          2798.7708
+        ],
+        "conc_latency_p99_list": [
+          0.0538581761709429,
+          0.057731691799272164
+        ],
+        "conc_latency_p95_list": [
+          0.050613950800652674,
+          0.05414646179851843
+        ],
+        "conc_latency_avg_list": [
+          0.02228945248403199,
+          0.027947754571488587
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 0,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "fts_filter": {
+            "filter_type": "NumGE",
+            "filter_field": "filter_id",
+            "filter_value": 8753404,
+            "filter_rate": 0.99,
+            "filter_id_distribution": "affine_permutation_v1",
+            "filter_id_multiplier": 5464547,
+            "filter_id_offset": 1684563,
+            "matched_doc_count": 88419,
+            "matched_doc_ratio": 0.01,
+            "original_query_count": 6980,
+            "filtered_query_count": 67,
+            "filtered_query_ratio": 0.009599,
+            "original_relevant_doc_count": 7433,
+            "filtered_relevant_doc_count": 67
+          },
+          "fts_recall": {
+            "skipped": false,
+            "reason": null,
+            "serial_query_count": 67,
+            "full_query_count": 6980
+          },
+          "serial_measurement": {
+            "composed_from_separate_run": true,
+            "metric_fields": [
+              "serial_latency_p99",
+              "serial_latency_p95",
+              "recall",
+              "ndcg",
+              "mrr"
+            ],
+            "source_run_id": "4b02a5a505e84a4faacf2651c8cc21fa",
+            "source_task_label": "fts_filtered_serial_zilliz_msmarco-large_r99_permuted",
+            "source_timestamp": 1785715200.0,
+            "source_file": "result_20260803_fts_filtered_serial_zilliz_msmarco-large_r99_permuted_zillizcloud.json",
+            "source_sha256": "9c470ed1434deabe14d63ec840f205e88b00b60a0c821bcd92b605db74b64abb",
+            "source_db_label": "fts-filtered-serial-task15919",
+            "source_stages": [
+              "search_serial"
+            ],
+            "source_note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\"\n  },\n  \"evidence\": {\n    \"source\": \"user-confirmed deployment shape for Task 15919\",\n    \"credential_storage\": \"external mode-600 secret file removed by runner cleanup\"\n  }\n}"
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "total-series-task15844",
+          "version": "",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"task\": {\n    \"type\": \"deployServer\",\n    \"status\": \"Completed\"\n  },\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"version\": \"unknown-20260623-751f17a8\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1,\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\"\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  },\n  \"evidence\": {\n    \"source\": \"user-provided deployment configuration and successful authenticated probe\",\n    \"credential_storage\": \"external to benchmark plan and artifacts\"\n  }\n}",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********",
+          "token": "",
+          "num_shards": 1,
+          "collection_name": "vdbbench_fts_total_series"
+        },
+        "db_case_config": {
+          "index_type": "AUTOINDEX",
+          "metric_type": "BM25",
+          "inverted_index_algo": "DAAT_MAXSCORE",
+          "bm25_k1": null,
+          "bm25_b": null,
+          "analyzer_tokenizer": "standard",
+          "analyzer_enable_lowercase": true,
+          "analyzer_max_token_length": null,
+          "analyzer_stop_words": null,
+          "drop_ratio_search": null,
+          "level": 1
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "MS MARCO Large (8.8M documents)",
+            "payload_profile": "ids_only",
+            "filter_id_distribution": "permuted",
+            "filter_rate": 0.99
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600,
+            "serial_cooldown": 0.0
+          }
+        },
+        "stages": [
+          "search_concurrent",
+          "search_serial"
         ],
         "load_concurrency": 0
       },
