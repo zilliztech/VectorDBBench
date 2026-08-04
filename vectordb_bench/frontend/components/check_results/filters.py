@@ -1,7 +1,7 @@
-from vectordb_bench.backend.cases import Case, CaseLabel
+from vectordb_bench.backend.cases import CaseLabel
 from vectordb_bench.backend.dataset import DatasetWithSizeType
 from vectordb_bench.backend.filter import FilterOp
-from vectordb_bench.frontend.components.check_results.data import getChartData
+from vectordb_bench.frontend.components.check_results.data import getCaseResultName, getChartData
 from vectordb_bench.frontend.components.check_results.expanderStyle import (
     initSidebarExanderStyle,
 )
@@ -63,8 +63,6 @@ def getShowDbsAndCases(st, result: list[CaseResult], filter_type: FilterOp) -> t
     case_results = [res for res in result if res.task_config.case_config.case.filters.type == filter_type]
     allDbNames = list(set({res.task_config.db_name for res in case_results}))
     allDbNames.sort()
-    allCases: list[Case] = [res.task_config.case_config.case for res in case_results]
-
     # DB Filter
     dbFilterContainer = st.container()
     showDBNames = filterView(
@@ -76,14 +74,29 @@ def getShowDbsAndCases(st, result: list[CaseResult], filter_type: FilterOp) -> t
     showCaseNames = []
 
     # Handle FTS cases separately
-    fts_cases = [case for case in allCases if case.label == CaseLabel.FullTextSearchPerformance]
-    non_fts_cases = [case for case in allCases if case.label != CaseLabel.FullTextSearchPerformance]
+    fts_case_results = [
+        result
+        for result in case_results
+        if result.task_config.case_config.case.label == CaseLabel.FullTextSearchPerformance
+    ]
+    non_fts_case_results = [
+        result
+        for result in case_results
+        if result.task_config.case_config.case.label != CaseLabel.FullTextSearchPerformance
+    ]
 
     if filter_type == FilterOp.NonFilter:
-        allCaseNameSet = set({case.name for case in allCases})
-        allCaseNames = [case_name for case_name in CASE_NAME_ORDER if case_name in allCaseNameSet] + [
-            case_name for case_name in allCaseNameSet if case_name not in CASE_NAME_ORDER
-        ]
+        display_to_base = {
+            getCaseResultName(result): result.task_config.case_config.case.name for result in case_results
+        }
+        case_order = {case_name: idx for idx, case_name in enumerate(CASE_NAME_ORDER)}
+        allCaseNames = sorted(
+            display_to_base,
+            key=lambda display_name: (
+                case_order.get(display_to_base[display_name], len(case_order)),
+                display_name,
+            ),
+        )
 
         # Case Filter
         caseFilterContainer = st.container()
@@ -105,9 +118,15 @@ def getShowDbsAndCases(st, result: list[CaseResult], filter_type: FilterOp) -> t
             optionLables=[v.value for v in datasetWithSizeTypes],
         )
         datasets = [dataset_with_size_type.get_manager() for dataset_with_size_type in showDatasetWithSizeTypes]
-        showCaseNames = list(set([case.name for case in non_fts_cases if case.dataset in datasets]))
+        showCaseNames = list(
+            {
+                getCaseResultName(result)
+                for result in non_fts_case_results
+                if result.task_config.case_config.case.dataset in datasets
+            }
+        )
         # Add FTS cases
-        fts_case_names = [case.name for case in fts_cases]
+        fts_case_names = [getCaseResultName(result) for result in fts_case_results]
         showCaseNames.extend(fts_case_names)
 
     return showDBNames, showCaseNames

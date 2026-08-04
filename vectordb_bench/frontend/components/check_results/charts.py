@@ -45,6 +45,43 @@ def drawChart(data, st, key_prefix: str):
         key = f"{key_prefix}-{metric}"
         drawMetricChart(data, metric, container, key=key)
 
+    drawRecallAtChart(data, st.container(), key=f"{key_prefix}-recall-at")
+
+
+def buildRecallAtChartData(data):
+    chart_data = []
+    for case_data in data:
+        for cutoff, recall in case_data.get("recall_at", {}).items():
+            chart_data.append(
+                {
+                    "k": int(cutoff),
+                    "recall": recall,
+                    "db": case_data["db"],
+                    "db_name": case_data["db_name"],
+                }
+            )
+    return sorted(chart_data, key=lambda item: (item["k"], item["db_name"]))
+
+
+def drawRecallAtChart(data, st, key: str):
+    chart_data = buildRecallAtChartData(data)
+    if len(chart_data) == 0:
+        return
+
+    fig = px.line(
+        chart_data,
+        x="k",
+        y="recall",
+        color="db_name",
+        markers=True,
+        hover_data={"db": True, "db_name": True},
+        title="Recall by K",
+    )
+    fig.update_xaxes(type="log", title_text="K")
+    fig.update_yaxes(range=[0, 1], title_text="Recall")
+    fig.update_layout(showlegend=True, legend_title_text="")
+    st.plotly_chart(fig, width="stretch", key=key)
+
 
 def getLabelToShapeMap(data):
     labelIndexMap = {}

@@ -1,11 +1,135 @@
-from vectordb_bench.backend.dataset import Dataset
 import logging
+import pickle
+
+import polars as pl
 import pytest
 from pydantic import ValidationError
-from vectordb_bench.backend.data_source import DatasetSource
 
+from vectordb_bench import config
+from vectordb_bench.backend import dataset as dataset_module
+from vectordb_bench.backend.clients import MetricType
+from vectordb_bench.backend.data_source import DatasetSource
+from vectordb_bench.backend.dataset import CustomDataset, Dataset, DatasetManager
+from vectordb_bench.backend.filter import IntFilter, non_filter
 
 log = logging.getLogger("vectordb_bench")
+
+
+@pytest.mark.parametrize(
+    ("k", "test_file", "gt_file", "width", "query_count"),
+    [
+        (1_000, "test.parquet", "neighbors.parquet", 1_000, 1_000),
+        (1_001, "test_nq200.parquet", "neighbors_top100k_nq200.parquet", 100_000, 200),
+        (100_000, "test_nq200.parquet", "neighbors_top100k_nq200.parquet", 100_000, 200),
+        (100_001, "test_nq200.parquet", "neighbors_top1m_nq200.parquet", 1_000_000, 200),
+        (1_000_000, "test_nq200.parquet", "neighbors_top1m_nq200.parquet", 1_000_000, 200),
+    ],
+)
+def test_laion_artifact_selection(k, test_file, gt_file, width, query_count):
+    dataset = Dataset.LAION.manager(100_000_000)
+    assert hasattr(dataset, "resolve_search_files")
+
+    files = dataset.resolve_search_files(k=k, filters=non_filter)
+
+    assert files.test_file == test_file
+    assert files.gt_file == gt_file
+    assert files.width == width
+    assert files.query_count == query_count
+
+
+@pytest.mark.parametrize("k", [0, -1, 1_000_001])
+def test_laion_artifact_selection_rejects_unsupported_k(k):
+    dataset = Dataset.LAION.manager(100_000_000)
+    assert hasattr(dataset, "resolve_search_files")
+
+    with pytest.raises(ValueError, match="LAION"):
+        dataset.resolve_search_files(k=k, filters=non_filter)
+
+
+def test_laion_large_topk_rejects_filtered_ground_truth():
+    dataset = Dataset.LAION.manager(100_000_000)
+    filters = IntFilter(filter_rate=0.01, int_field="id", int_value=99_000_000)
+    assert hasattr(dataset, "resolve_search_files")
+
+    with pytest.raises(ValueError, match="filtered"):
+        dataset.resolve_search_files(k=1_001, filters=filters)
+
+
+def test_dataset_prepare_keeps_ground_truth_path_based(tmp_path, monkeypatch):
+    assert hasattr(dataset_module, "ParquetGroundTruth")
+    monkeypatch.setattr(config, "DATASET_LOCAL_DIR", tmp_path)
+    dataset = _custom_dataset_manager()
+    dataset.data.with_remote_resource = False
+    dataset.data_dir.mkdir(parents=True)
+    _write_vector_fixture(dataset.data_dir)
+
+    dataset.prepare(with_train_files=False, k=4)
+
+    assert isinstance(dataset.gt_data, dataset_module.ParquetGroundTruth)
+    assert dataset.gt_data.row_count == 2
+    assert dataset.gt_data.width == 4
+    restored = pickle.loads(pickle.dumps(dataset.gt_data))
+    assert [row.tolist() for row in restored.iter_rows()] == [[1, 2, 3, 4], [5, 6, 7, 8]]
+
+
+def test_parquet_ground_truth_rejects_query_id_mismatch(tmp_path):
+    assert hasattr(dataset_module, "ParquetGroundTruth")
+    gt_path = tmp_path / "neighbors.parquet"
+    pl.DataFrame({"id": [11, 20], "neighbors_id": [[1, 2], [3, 4]]}).write_parquet(gt_path)
+
+    with pytest.raises(ValueError, match="query IDs"):
+        dataset_module.ParquetGroundTruth.from_file(
+            gt_path,
+            id_field="id",
+            neighbors_field="neighbors_id",
+            expected_query_ids=[10, 20],
+            minimum_width=2,
+        )
+
+
+def test_parquet_ground_truth_rejects_narrow_row(tmp_path):
+    assert hasattr(dataset_module, "ParquetGroundTruth")
+    gt_path = tmp_path / "neighbors.parquet"
+    pl.DataFrame({"id": [10, 20], "neighbors_id": [[1, 2], [3]]}).write_parquet(gt_path)
+
+    with pytest.raises(ValueError, match="width"):
+        dataset_module.ParquetGroundTruth.from_file(
+            gt_path,
+            id_field="id",
+            neighbors_field="neighbors_id",
+            expected_query_ids=[10, 20],
+            minimum_width=2,
+        )
+
+
+def _custom_dataset_manager() -> DatasetManager:
+    data = CustomDataset(
+        name="local",
+        size=8,
+        dim=2,
+        metric_type=MetricType.L2,
+        use_shuffled=False,
+        with_gt=True,
+        dir="large_topk_fixture",
+        file_num=1,
+    )
+    return DatasetManager(data=data)
+
+
+def _write_vector_fixture(data_dir):
+    pl.DataFrame(
+        {
+            "id": [10, 20],
+            "emb": [[0.1, 0.2], [0.3, 0.4]],
+        }
+    ).write_parquet(data_dir / "test.parquet")
+    pl.DataFrame(
+        {
+            "id": [10, 20],
+            "neighbors_id": [[1, 2, 3, 4], [5, 6, 7, 8]],
+        }
+    ).write_parquet(data_dir / "neighbors.parquet")
+
 
 class TestDataSet:
     def test_iter_dataset(self):
@@ -29,6 +153,7 @@ class TestDataSet:
         cohere_10m.prepare()
 
         import time
+
         before = time.time()
         for i in cohere_10m:
             log.debug(i.head(1))
@@ -40,9 +165,11 @@ class TestDataSet:
     def test_iter_laion(self):
         laion_100m = Dataset.LAION.manager(100_000_000)
         from vectordb_bench.backend.data_source import DatasetSource
+
         laion_100m.prepare(source=DatasetSource.AliyunOSS)
 
         import time
+
         before = time.time()
         for i in laion_100m:
             log.debug(i.head(1))
@@ -74,4 +201,3 @@ class TestDataSet:
             files=files,
             local_ds_root=openai_50k.data_dir,
         )
-

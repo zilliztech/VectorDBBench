@@ -1,7 +1,15 @@
 from collections import defaultdict
 from dataclasses import asdict
+
+from vectordb_bench import config
 from vectordb_bench.metric import QPS_METRIC, isLowerIsBetterMetric
 from vectordb_bench.models import CaseResult, ResultLabel
+
+
+def getCaseResultName(task: CaseResult) -> str:
+    case_name = task.task_config.case_config.case_name
+    k = task.task_config.case_config.k
+    return case_name if k is None or k == config.K_DEFAULT else f"{case_name} (K={k:,})"
 
 
 def getChartData(
@@ -20,9 +28,7 @@ def getFilterTasks(
     caseNames: list[str],
 ) -> list[CaseResult]:
     filterTasks = [
-        task
-        for task in tasks
-        if task.task_config.db_name in dbNames and task.task_config.case_config.case_name in caseNames
+        task for task in tasks if task.task_config.db_name in dbNames and getCaseResultName(task) in caseNames
     ]
     return filterTasks
 
@@ -35,13 +41,15 @@ def mergeTasks(tasks: list[CaseResult]):
         db_label = task.task_config.db_config.db_label or ""
         version = task.task_config.db_config.version or ""
         case = task.task_config.case_config.case
-        case_name = case.name
+        case_name = getCaseResultName(task)
+        k = task.task_config.case_config.k
         dataset_name = case.dataset.data.full_name
         filter_rate = case.filter_rate
-        dbCaseMetricsMap[db_name][case.name] = {
+        dbCaseMetricsMap[db_name][case_name] = {
             "db": db,
             "db_label": db_label,
             "version": version,
+            "k": k,
             "dataset_name": dataset_name,
             "filter_rate": filter_rate,
             "metrics": mergeMetrics(
@@ -62,6 +70,7 @@ def mergeTasks(tasks: list[CaseResult]):
             db = metricInfo["db"]
             db_label = metricInfo["db_label"]
             version = metricInfo["version"]
+            k = metricInfo["k"]
             label = metricInfo["label"]
             dataset_name = metricInfo["dataset_name"]
             filter_rate = metricInfo["filter_rate"]
@@ -74,6 +83,7 @@ def mergeTasks(tasks: list[CaseResult]):
                         "dataset_name": dataset_name,
                         "filter_rate": filter_rate,
                         "version": version,
+                        "k": k,
                         "case_name": case_name,
                         "metricsSet": set(metrics.keys()),
                         **metrics,
