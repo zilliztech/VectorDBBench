@@ -1,14 +1,54 @@
 import json
 import logging
+
 import pytest
-from vectordb_bench.models import TaskConfig, CaseConfig, CaseResult, TestResult, Metric, CaseType
-from vectordb_bench.backend.clients import DB, IndexType
-from vectordb_bench.backend.clients.api import EmptyDBCaseConfig
-from vectordb_bench.restful.format_res import format_results
+from pydantic import ValidationError
 
 from vectordb_bench import config
+from vectordb_bench.backend.clients import DB, IndexType
+from vectordb_bench.backend.clients.api import EmptyDBCaseConfig
+from vectordb_bench.backend.payload import PayloadProfile
+from vectordb_bench.models import CaseConfig, CaseResult, CaseType, Metric, TaskConfig, TestResult
+from vectordb_bench.restful.format_res import format_results
 
 log = logging.getLogger("vectordb_bench")
+
+
+def test_performance_case_config_applies_top_level_payload_without_mutating_custom_case():
+    custom_case = {}
+    case_config = CaseConfig(
+        case_id=CaseType.Performance768D100M,
+        custom_case=custom_case,
+        payload_profile=PayloadProfile.VECTOR,
+    )
+
+    assert case_config.case.payload_profile == PayloadProfile.VECTOR
+    assert custom_case == {}
+
+
+def test_performance_case_config_payload_round_trip_and_hash_identity():
+    ids_only = CaseConfig(
+        case_id=CaseType.Performance768D100M,
+        payload_profile=PayloadProfile.IDS_ONLY,
+    )
+    vector = CaseConfig(
+        case_id=CaseType.Performance768D100M,
+        payload_profile=PayloadProfile.VECTOR,
+    )
+
+    restored = CaseConfig.model_validate(vector.model_dump(mode="json"))
+
+    assert restored.payload_profile == PayloadProfile.VECTOR
+    assert restored.case.payload_profile == PayloadProfile.VECTOR
+    assert hash(ids_only) != hash(vector)
+
+
+def test_case_config_rejects_payload_for_non_performance_case():
+    with pytest.raises(ValidationError, match="only supported for PerformanceCase"):
+        CaseConfig(
+            case_id=CaseType.CapacityDim128,
+            payload_profile=PayloadProfile.VECTOR,
+        )
 
 
 class TestModels:
