@@ -1,6 +1,7 @@
 import pytest
 
 from vectordb_bench import config
+from vectordb_bench.backend.assembler import Assembler
 from vectordb_bench.backend.cases import CaseType, CloudPayloadSearchCase
 from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.clients.api import EmptyDBCaseConfig
@@ -92,6 +93,22 @@ def test_case_config_rejects_conflicting_payload_profiles():
             custom_case={"payload_profile": "ids_only"},
             payload_profile=PayloadProfile.VECTOR,
         )
+
+
+def test_assembler_preserves_top_level_performance_payload_profile():
+    task = TaskConfig(
+        db=DB.Test,
+        db_config=DB.Test.config_cls(),
+        db_case_config=EmptyDBCaseConfig(),
+        case_config=CaseConfig(
+            case_id=CaseType.Performance768D100M,
+            payload_profile=PayloadProfile.VECTOR,
+        ),
+    )
+
+    runner = Assembler.assemble("run-id", task, DatasetSource.S3)
+
+    assert runner.ca.payload_profile == PayloadProfile.VECTOR
 
 
 def test_case_runner_reuse_key_distinguishes_scalar_label_schema_requirement():
