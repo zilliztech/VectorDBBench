@@ -22,9 +22,7 @@ class FilterNotSupportedError(ValueError):
 class Assembler:
     @classmethod
     def assemble(cls, run_id: str, task: TaskConfig, source: DatasetSource) -> CaseRunner:
-        c_cls = task.case_config.case_id.case_cls
-
-        c = c_cls(task.case_config.custom_case)
+        c = task.case_config.case
         if c.label == CaseLabel.FullTextSearchPerformance and not task.db.init_cls.supports_full_text_search():
             msg = f"{task.db.value} does not support full-text search"
             raise ValueError(msg)
