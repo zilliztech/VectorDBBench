@@ -959,6 +959,17 @@ Wide GT remains in Parquet/Arrow form and is opened inside the serial-search sub
 
 The target database or pre-created collection must already permit the requested K. VDBBench forwards K unchanged and does not configure backend-specific large-TopK collection properties.
 
+##### Performance Response Payloads
+
+Every vector search performance case can be configured for either an IDs-only response or a response that also includes each result vector. IDs only remains the default. Run the scenarios separately from the CLI:
+
+```bash
+vectordbbench milvusautoindex --uri http://localhost:19530 --case-type Performance768D100M --k 1000000 --payload-profile ids_only
+vectordbbench milvusautoindex --uri http://localhost:19530 --case-type Performance768D100M --k 1000000 --payload-profile vector
+```
+
+The frontend can select one or both scenarios for Milvus and Zilliz Cloud. Each scenario produces independent P99 latency, QPS, and recall metrics. `qps` remains the highest observed QPS among the configured concurrency levels; VDBBench does not discover a backend concurrency limit.
+
 #### Filtering Search Performance Case
 - **Int-Filter Cases:** Evaluates search performance with int-based filter expression (e.g.  "id >= 2,000").
 - **Label-Filter Cases:** Evaluates search performance with label-based filter expressions (e.g., "color == 'red'"). The test includes randomly generated labels to simulate real-world filtering scenarios.
