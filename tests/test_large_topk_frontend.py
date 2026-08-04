@@ -1,11 +1,97 @@
+import pytest
+from pydantic import ValidationError
+
 from vectordb_bench.backend.cases import CaseType
 from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.clients.api import EmptyDBCaseConfig
+from vectordb_bench.backend.payload import PayloadProfile
 from vectordb_bench.frontend.components.check_results import charts, data
 from vectordb_bench.frontend.components.qps_recall import data as qps_recall_data
+from vectordb_bench.frontend.components.run_test.caseSelector import payloadProfileSetting
 from vectordb_bench.frontend.components.tables import data as table_data
+from vectordb_bench.frontend.config.dbCaseConfigs import (
+    UICaseItem,
+    generate_normal_cases,
+    get_payload_profile_options,
+)
 from vectordb_bench.metric import Metric
 from vectordb_bench.models import CaseConfig, CaseResult, TaskConfig
+
+
+def test_performance_ui_case_expands_selected_payload_profiles():
+    item = UICaseItem(cases=generate_normal_cases(CaseType.Performance768D100M))
+    item.payload_profiles = [PayloadProfile.IDS_ONLY, PayloadProfile.VECTOR]
+
+    cases = item.get_cases()
+
+    assert [case.payload_profile for case in cases] == [
+        PayloadProfile.IDS_ONLY,
+        PayloadProfile.VECTOR,
+    ]
+    assert all(case.case_id == CaseType.Performance768D100M for case in cases)
+
+
+def test_capacity_ui_case_does_not_expand_payload_profiles():
+    item = UICaseItem(cases=generate_normal_cases(CaseType.CapacityDim128))
+    item.payload_profiles = [PayloadProfile.IDS_ONLY, PayloadProfile.VECTOR]
+
+    cases = item.get_cases()
+
+    assert len(cases) == 1
+    assert cases[0].payload_profile is None
+
+
+def test_ui_case_expansion_preserves_payload_conflict_validation():
+    item = UICaseItem(
+        cases=[
+            CaseConfig(
+                case_id=CaseType.CloudPayloadSearchCase,
+                custom_case={"payload_profile": "vector"},
+            )
+        ]
+    )
+    item.payload_profiles = [PayloadProfile.IDS_ONLY]
+
+    with pytest.raises(ValidationError, match="conflicts with custom_case"):
+        item.get_cases()
+
+
+def test_payload_profile_options_require_only_supported_backends():
+    assert get_payload_profile_options([DB.Milvus]) == [
+        PayloadProfile.IDS_ONLY,
+        PayloadProfile.VECTOR,
+    ]
+    assert get_payload_profile_options([DB.Milvus, DB.ZillizCloud]) == [
+        PayloadProfile.IDS_ONLY,
+        PayloadProfile.VECTOR,
+    ]
+    assert get_payload_profile_options([DB.Milvus, DB.Test]) == [PayloadProfile.IDS_ONLY]
+    assert get_payload_profile_options([]) == [PayloadProfile.IDS_ONLY]
+
+
+def test_payload_profile_setting_records_frontend_selection():
+    class FakeContainer:
+        def __init__(self):
+            self.options = []
+
+        def multiselect(self, label, options, default, format_func, key):
+            assert label == "Return scenario"
+            assert default == [PayloadProfile.IDS_ONLY]
+            assert format_func(PayloadProfile.VECTOR) == "Vector payload"
+            assert key
+            self.options = options
+            return options
+
+        def error(self, message):
+            raise AssertionError(message)
+
+    item = UICaseItem(cases=generate_normal_cases(CaseType.Performance768D100M))
+    container = FakeContainer()
+
+    payloadProfileSetting(container, item, [DB.Milvus])
+
+    assert container.options == [PayloadProfile.IDS_ONLY, PayloadProfile.VECTOR]
+    assert item.payload_profiles == [PayloadProfile.IDS_ONLY, PayloadProfile.VECTOR]
 
 
 def test_merge_tasks_keeps_results_with_different_k_separate():
