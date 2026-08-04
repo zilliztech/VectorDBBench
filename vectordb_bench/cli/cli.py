@@ -18,6 +18,7 @@ from click.core import ParameterSource
 from yaml import load
 
 from .. import config
+from ..backend.cases import PerformanceCase, type2case
 from ..backend.clients import DB
 from ..backend.clients.api import IndexType, MetricType
 from ..backend.dataset import DatasetWithSizeType, FtsDatasetWithSizeType
@@ -281,6 +282,13 @@ def get_custom_case_config(parameters: dict) -> dict:
             "payload_profile": parameters.get("payload_profile", PayloadProfile.IDS_ONLY.value),
         }
     return custom_case_config
+
+
+def get_case_payload_profile(parameters: dict[str, Any]) -> PayloadProfile | None:
+    case_type = CaseType[parameters["case_type"]]
+    if not issubclass(type2case[case_type], PerformanceCase):
+        return None
+    return PayloadProfile(parameters["payload_profile"])
 
 
 def select_cli_db_case_config(db: DB, db_case_config: DBCaseConfig, case_type: str) -> DBCaseConfig:
@@ -601,7 +609,7 @@ class CommonTypedDict(TypedDict):
         click.option(
             "--payload-profile",
             type=click.Choice([profile.value for profile in PayloadProfile]),
-            help="Response payload profile for payload and FTS cases",
+            help="Response payload profile for vector performance, cloud payload, and FTS cases",
             default="ids_only",
             show_default=True,
         ),
@@ -879,6 +887,7 @@ def run(
         db_case_config=select_cli_db_case_config(db, db_case_config, parameters["case_type"]),
         case_config=CaseConfig(
             case_id=CaseType[parameters["case_type"]],
+            payload_profile=get_case_payload_profile(parameters),
             k=parameters["k"],
             concurrency_search_config=ConcurrencySearchConfig(
                 concurrency_duration=parameters["concurrency_duration"],
