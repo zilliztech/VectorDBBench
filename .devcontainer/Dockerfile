@@ -1,4 +1,4 @@
-FROM python:3.11-buster as builder-image
+FROM python:3.11 as builder-image
 
 RUN apt-get update
 
