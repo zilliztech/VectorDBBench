@@ -22,6 +22,28 @@ from vectordb_bench.models import CaseConfig, TaskConfig
 log = logging.getLogger(__name__)
 
 
+def test_milvus_vector_payload_requests_vector_field_and_returns_ids():
+    captured = {}
+
+    def search(**kwargs):
+        captured.update(kwargs)
+        return [[{"pk": 1, "vector": [0.1, 0.2]}]]
+
+    db = object.__new__(Milvus)
+    db.client = SimpleNamespace(search=search)
+    db.collection_name = "test_collection"
+    db._vector_field = "vector"
+    db._primary_field = "pk"
+    db._scalar_label_field = "label"
+    db.case_config = SimpleNamespace(search_param=lambda: {"metric_type": "COSINE"})
+    db.expr = ""
+
+    result = db.search_embedding([0.1, 0.2], k=3, payload_profile=PayloadProfile.VECTOR)
+
+    assert result == [1]
+    assert captured["output_fields"] == ["vector"]
+
+
 class TestMilvusOptimize:
     def _milvus(
         self,
