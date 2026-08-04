@@ -23,10 +23,12 @@ import pickle
 from unittest.mock import MagicMock
 
 import numpy as np
+import psycopg
 import pytest
 
 from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.clients.pgvector.config import PgVectorHNSWConfig
+from vectordb_bench.backend.clients.pgvector.pgvector import PgVector
 from vectordb_bench.backend.dataset import Dataset, DatasetSource
 from vectordb_bench.backend.filter import Filter, FilterOp, non_filter
 from vectordb_bench.backend.runner.concurrent_runner import ConcurrentInsertRunner
@@ -84,6 +86,13 @@ def random_embeddings(n: int = COUNT, d: int = DIM) -> list[list[float]]:
 
 class TestPgVectorBasic:
     """Unit tests for the PgVector client (no subprocess)."""
+    def test_create_connection_installs_vector_extension(self):
+        conn, cursor = PgVector._create_connection(**DB_CONFIG["connect_config"])
+        try:
+            assert conn.execute("SELECT 1 FROM pg_extension WHERE extname = 'vector'").fetchone() is not None
+        finally:
+            cursor.close()
+            conn.close()
 
     def test_insert_and_search(self):
         db = make_db("test_basic")
