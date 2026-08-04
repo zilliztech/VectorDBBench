@@ -1,17 +1,12 @@
-import pytest
+import json
 import logging
-from vectordb_bench.models import (
-    TaskConfig, CaseConfig,
-    CaseResult, TestResult,
-    Metric, CaseType
-)
-from vectordb_bench.backend.clients import (
-    DB,
-    IndexType
-)
+import pytest
+from vectordb_bench.models import TaskConfig, CaseConfig, CaseResult, TestResult, Metric, CaseType
+from vectordb_bench.backend.clients import DB, IndexType
+from vectordb_bench.backend.clients.api import EmptyDBCaseConfig
+from vectordb_bench.restful.format_res import format_results
 
 from vectordb_bench import config
-
 
 log = logging.getLogger("vectordb_bench")
 
@@ -33,7 +28,7 @@ class TestModels:
         test_result.flush()
 
         with pytest.raises(ValueError):
-            result = TestResult.read_file('nosuchfile.json')
+            result = TestResult.read_file("nosuchfile.json")
 
     def test_test_result_read_write(self):
         result_dir = config.RESULTS_LOCAL_DIR
@@ -68,3 +63,73 @@ class TestModels:
             log.info(json_file)
             res = TestResult.read_file(json_file)
             res.display()
+
+
+def test_old_result_defaults_large_topk_metrics(tmp_path):
+    test_result = _large_topk_test_result(Metric())
+    payload = test_result.model_dump_for_output()
+    metrics = payload["results"][0]["metrics"]
+    metrics.pop("serial_latency_p50", None)
+    metrics.pop("conc_latency_p50_list", None)
+    metrics.pop("recall_at", None)
+    result_file = tmp_path / "old-result.json"
+    result_file.write_text(json.dumps(payload), encoding="utf-8")
+
+    loaded = TestResult.read_file(result_file)
+
+    assert loaded.results[0].metrics.serial_latency_p50 == 0
+    assert loaded.results[0].metrics.conc_latency_p50_list == []
+    assert loaded.results[0].metrics.recall_at == {}
+
+
+def test_large_topk_metrics_round_trip_and_convert_serial_p50(tmp_path):
+    test_result = _large_topk_test_result(
+        Metric(
+            serial_latency_p50=0.25,
+            conc_latency_p50_list=[0.3],
+            recall_at={100: 0.9, 1_000: 0.8},
+        )
+    )
+    result_file = tmp_path / "large-topk-result.json"
+    result_file.write_text(json.dumps(test_result.model_dump_for_output()), encoding="utf-8")
+
+    loaded = TestResult.read_file(result_file, trans_unit=True)
+
+    metrics = loaded.results[0].metrics
+    assert metrics.serial_latency_p50 == 250
+    assert metrics.conc_latency_p50_list == [0.3]
+    assert metrics.recall_at == {100: 0.9, 1_000: 0.8}
+
+
+def test_rest_formatter_exports_large_topk_metrics():
+    test_result = _large_topk_test_result(
+        Metric(
+            serial_latency_p50=0.25,
+            conc_latency_p50_list=[0.3],
+            recall_at={100: 0.9},
+        )
+    )
+
+    formatted = format_results([test_result], task_label="large-topk")[0]
+
+    assert formatted["serial_latency_p50"] == 0.25
+    assert formatted["conc_latency_p50_list"] == [0.3]
+    assert formatted["recall_at"] == {100: 0.9}
+
+
+def _large_topk_test_result(metric):
+    return TestResult(
+        run_id="large-topk",
+        task_label="large-topk",
+        results=[
+            CaseResult(
+                task_config=TaskConfig(
+                    db=DB.Test,
+                    db_config=DB.Test.config_cls(),
+                    db_case_config=EmptyDBCaseConfig(),
+                    case_config=CaseConfig(case_id=CaseType.Performance768D100M, k=1_000_000),
+                ),
+                metrics=metric,
+            )
+        ],
+    )

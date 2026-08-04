@@ -942,6 +942,23 @@ We've developed lots of comprehensive benchmark cases to test vector databases' 
 - **Large Dataset:** Similar to the XLarge Dataset case, but uses a slightly smaller dataset (10M-1024dim, 10M-768dim, 5M-1536dim).
 - **Medium Dataset:** A case using a medium dataset (1M-1024dim, 1M-768dim, 500K-1536dim).
 - **Small Dataset:** For development (100K-768dim, 50K-1536dim).
+
+##### LAION-100M Large-TopK
+
+`Performance768D100M` selects its query and ground-truth files from `--k`:
+
+| Requested K | Query file | Ground-truth file | Queries | GT width |
+|---:|---|---|---:|---:|
+| `1..1,000` | `test.parquet` | `neighbors.parquet` | 1,000 | 1,000 |
+| `1,001..100,000` | `test_nq200.parquet` | `neighbors_top100k_nq200.parquet` | 200 | 100,000 |
+| `100,001..1,000,000` | `test_nq200.parquet` | `neighbors_top1m_nq200.parquet` | 200 | 1,000,000 |
+
+K must be positive, and LAION-100M rejects values above 1,000,000. Filtered LAION runs above K=1,000 are also rejected because no matching wide filtered GT is available. VDBBench validates query IDs, row counts, and GT width before issuing a search.
+
+Wide GT remains in Parquet/Arrow form and is opened inside the serial-search subprocess one query row at a time. Results include primary `recall@K`, `recall_at` for the available cutoffs among 100, 1K, 10K, 100K, and 1M, plus serial and concurrent p50/p95/p99 latency. Concurrent throughput continues to use the configured fixed-duration phase.
+
+The target database or pre-created collection must already permit the requested K. VDBBench forwards K unchanged and does not configure backend-specific large-TopK collection properties.
+
 #### Filtering Search Performance Case
 - **Int-Filter Cases:** Evaluates search performance with int-based filter expression (e.g.  "id >= 2,000").
 - **Label-Filter Cases:** Evaluates search performance with label-based filter expressions (e.g., "color == 'red'"). The test includes randomly generated labels to simulate real-world filtering scenarios.

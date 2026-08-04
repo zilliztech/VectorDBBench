@@ -213,6 +213,12 @@ class CaseRunner(BaseModel):
     def _pre_run(self, drop_old: bool = True):
         try:
             self._validate_cloud_cold_latency_config(drop_old)
+            requested_k = self.config.case_config.k or config.K_DEFAULT
+            ground_truth_k = (
+                requested_k
+                if self.ca.label == CaseLabel.Performance and getattr(self.ca, "measure_recall", True)
+                else config.K_DEFAULT
+            )
             creates_multitenant_collection = (
                 TaskStage.DROP_OLD in self.config.stages or TaskStage.LOAD in self.config.stages
             )
@@ -233,6 +239,8 @@ class CaseRunner(BaseModel):
                 self.init_db(drop_old)
                 return
 
+            if self.ca.dataset.data.with_gt:
+                self.ca.dataset.resolve_search_files(k=ground_truth_k, filters=self.ca.filters)
             self.init_db(drop_old)
             if self.ca.is_multitenant and self.db is not None:
                 if not self.db.supports_multitenant():
@@ -246,6 +254,7 @@ class CaseRunner(BaseModel):
                 filters=self.ca.filters,
                 with_train_files=TaskStage.LOAD in self.config.stages,
                 with_scalar_labels=self.ca.with_scalar_labels,
+                k=ground_truth_k,
             )
         except ModuleNotFoundError as e:
             log.warning(f"pre run case error: please install client for db: {self.config.db}, error={e}")
@@ -357,6 +366,7 @@ class CaseRunner(BaseModel):
                         m.conc_latency_p99_list,
                         m.conc_latency_p95_list,
                         m.conc_latency_avg_list,
+                        m.conc_latency_p50_list,
                     ) = search_results
                 if TaskStage.SEARCH_SERIAL in self.config.stages:
                     cooldown = self.config.case_config.concurrency_search_config.serial_cooldown
@@ -369,7 +379,21 @@ class CaseRunner(BaseModel):
                     if self.is_fts:
                         m.recall, m.ndcg, m.mrr, m.serial_latency_p99, m.serial_latency_p95 = search_results
                     else:
-                        m.recall, m.ndcg, m.serial_latency_p99, m.serial_latency_p95 = search_results
+                        (
+                            m.recall,
+                            m.ndcg,
+                            m.serial_latency_p99,
+                            m.serial_latency_p95,
+                            m.serial_latency_p50,
+                            m.recall_at,
+                        ) = search_results
+            gt_data = getattr(self.ca.dataset, "gt_data", None)
+            if gt_data is not None and hasattr(gt_data, "path"):
+                m.additional_parameters["ground_truth"] = {
+                    "file": gt_data.path.name,
+                    "query_count": gt_data.row_count,
+                    "width": gt_data.width,
+                }
             if hasattr(self.ca, "payload_profile"):
                 m.payload_profile = self.ca.payload_profile.value
                 m.payload_estimated_bytes_per_query = self.ca.estimated_payload_bytes_per_query(
@@ -526,8 +550,8 @@ class CaseRunner(BaseModel):
         calculate the recall, serial_latency_p99, serial_latency_p95
 
         Returns:
-            tuple[float, ...]: vector cases return recall, ndcg, p99, p95;
-                FTS cases return recall, p99, p95.
+            tuple[float, ...]: vector cases return recall, ndcg, p99, p95, p50, recall_at;
+                FTS cases return recall, p99, p95, p50.
         """
         try:
             if self.serial_search_runner is None:

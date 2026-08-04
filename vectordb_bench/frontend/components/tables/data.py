@@ -1,7 +1,10 @@
 from dataclasses import asdict
+
+import pandas as pd
+
+from vectordb_bench.frontend.components.check_results.data import getCaseResultName
 from vectordb_bench.interface import benchmark_runner
 from vectordb_bench.models import CaseResult, ResultLabel
-import pandas as pd
 
 
 def getNewResults():
@@ -32,7 +35,8 @@ def formatData(caseResults: list[CaseResult]):
             {
                 "db": db,
                 "db_label": db_label,
-                "case_name": case.name,
+                "case_name": getCaseResultName(caseResult),
+                "k": case_config.k,
                 "dataset": dataset,
                 "filter_rate": filter_rate,
                 **metrics,
