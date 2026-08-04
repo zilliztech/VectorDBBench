@@ -6,6 +6,7 @@ from enum import Enum, StrEnum
 from typing import Any, ClassVar, Self
 
 import ujson
+from pydantic import field_validator
 
 from vectordb_bench.backend.cases import type2case
 from vectordb_bench.backend.dataset import DatasetWithSizeMap
@@ -215,6 +216,14 @@ class CaseConfig(BaseModel):
     k: int | None = config.K_DEFAULT
     concurrency_search_config: ConcurrencySearchConfig = ConcurrencySearchConfig()
 
+    @field_validator("k")
+    @classmethod
+    def validate_k(cls, value: int | None) -> int | None:
+        if value is not None and value <= 0:
+            msg = f"K must be positive, got {value}"
+            raise ValueError(msg)
+        return value
+
     '''
     @property
     def k(self):
@@ -307,7 +316,7 @@ class TestResult(BaseModel):
             return {
                 key: (
                     "**********"
-                    if key.lower() in cls.sensitive_output_fields and item
+                    if isinstance(key, str) and key.lower() in cls.sensitive_output_fields and item
                     else cls._redact_sensitive_fields(item)
                 )
                 for key, item in value.items()
@@ -472,6 +481,12 @@ class TestResult(BaseModel):
                         )
                     elif "serial_latency_p99" in metrics:
                         metrics["serial_latency_p95"] = 0.0
+
+                    if "serial_latency_p50" in metrics:
+                        cur_latency_p50 = metrics["serial_latency_p50"]
+                        metrics["serial_latency_p50"] = (
+                            cur_latency_p50 * 1000 if cur_latency_p50 > 0 else cur_latency_p50
+                        )
             return TestResult.model_validate(test_result)
 
     def display(self, dbs: list[DB] | None = None):

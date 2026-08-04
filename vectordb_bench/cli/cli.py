@@ -414,10 +414,10 @@ class CommonTypedDict(TypedDict):
         int,
         click.option(
             "--k",
-            type=int,
+            type=click.IntRange(min=1),
             default=config.K_DEFAULT,
             show_default=True,
-            help="K value for number of nearest neighbors to search",
+            help="Number of nearest neighbors. LAION 100M selects tiered GT automatically up to 1,000,000.",
         ),
     ]
     concurrency_duration: Annotated[
