@@ -1,18 +1,28 @@
-from enum import IntEnum, Enum
 import typing
-from pydantic import BaseModel
-from vectordb_bench.backend.cases import CaseLabel, CaseType
+from enum import Enum, IntEnum
+
+from pydantic import BaseModel, Field
+
+from vectordb_bench.backend.cases import CaseLabel, CaseType, PerformanceCase
 from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.clients.api import IndexType, MetricType, SQType
 from vectordb_bench.backend.dataset import DatasetWithSizeType, FtsDatasetWithSizeType
+from vectordb_bench.backend.payload import PayloadProfile
 from vectordb_bench.frontend.components.custom.getCustomConfig import get_custom_configs
-
 from vectordb_bench.models import CaseConfig, CaseConfigParamType
 
 MAX_STREAMLIT_INT = (1 << 53) - 1
 
 DB_LIST = [d for d in DB if d != DB.Test]
 FTS_SUPPORTED_DBS = {DB.Milvus, DB.ZillizCloud, DB.ElasticCloud, DB.Vespa, DB.TurboPuffer}
+VECTOR_PAYLOAD_SUPPORTED_DBS = {DB.Milvus, DB.ZillizCloud}
+
+
+def get_payload_profile_options(active_dbs: list[DB]) -> list[PayloadProfile]:
+    profiles = [PayloadProfile.IDS_ONLY]
+    if active_dbs and all(db in VECTOR_PAYLOAD_SUPPORTED_DBS for db in active_dbs):
+        profiles.append(PayloadProfile.VECTOR)
+    return profiles
 
 
 class Delimiter(Enum):
@@ -56,6 +66,7 @@ class UICaseItem(BaseModel):
     supportedDbs: list[DB] | None = None
     extra_custom_case_config_inputs: list[ConfigInput] = []
     tmp_custom_config: dict = dict()
+    payload_profiles: list[PayloadProfile] = Field(default_factory=lambda: [PayloadProfile.IDS_ONLY])
 
     def __init__(
         self,
@@ -91,20 +102,29 @@ class UICaseItem(BaseModel):
     def __hash__(self) -> int:
         return hash(self.key if self.key else self.label)
 
+    @property
+    def supports_payload_profiles(self) -> bool:
+        return bool(self.cases) and all(isinstance(case.case, PerformanceCase) for case in self.cases)
+
     def get_cases(self) -> list[CaseConfig]:
-        # return self.cases
-        if len(self.extra_custom_case_config_inputs) == 0:
-            return self.cases
-        cases = [
-            CaseConfig(
-                case_id=c.case_id,
-                k=c.k,
-                concurrency_search_config=c.concurrency_search_config,
-                custom_case={**c.custom_case, **self.tmp_custom_config},
-            )
-            for c in self.cases
+        cases = self.cases
+        if self.extra_custom_case_config_inputs:
+            cases = [
+                CaseConfig(
+                    case_id=case.case_id,
+                    k=case.k,
+                    concurrency_search_config=case.concurrency_search_config,
+                    custom_case={**(case.custom_case or {}), **self.tmp_custom_config},
+                )
+                for case in cases
+            ]
+        if not self.supports_payload_profiles:
+            return cases
+        return [
+            CaseConfig.model_validate({**case.model_dump(), "payload_profile": payload_profile})
+            for case in cases
+            for payload_profile in self.payload_profiles
         ]
-        return cases
 
     def supports_dbs(self, dbs: list[DB]) -> bool:
         if self.supportedDbs is None:
