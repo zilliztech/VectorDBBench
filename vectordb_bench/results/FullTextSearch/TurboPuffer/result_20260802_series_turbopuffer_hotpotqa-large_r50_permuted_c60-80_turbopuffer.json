@@ -9,11 +9,11 @@
         "optimize_duration": 60.0409,
         "load_duration": 424.2438,
         "qps": 86.5254,
-        "serial_latency_p99": 0.0,
-        "serial_latency_p95": 0.0,
-        "recall": 0.0,
-        "ndcg": 0.0,
-        "mrr": 0.0,
+        "serial_latency_p99": 0.3979,
+        "serial_latency_p95": 0.3663,
+        "recall": 0.8087,
+        "ndcg": 0.6319,
+        "mrr": 0.6398,
         "conc_num_list": [
           60,
           80
@@ -65,7 +65,29 @@
             "full_query_count": 7405
           },
           "num_per_batch": 1000,
-          "load_concurrency": 4
+          "load_concurrency": 4,
+          "serial_measurement": {
+            "composed_from_separate_run": true,
+            "metric_fields": [
+              "serial_latency_p99",
+              "serial_latency_p95",
+              "recall",
+              "ndcg",
+              "mrr"
+            ],
+            "source_run_id": "8c0d2eabf9594bdfb5d9d1957f10ace6",
+            "source_task_label": "fts_filtered_serial_turbopuffer_hotpotqa-large_r50_permuted",
+            "source_timestamp": 1785801600.0,
+            "source_file": "result_20260804_fts_filtered_serial_turbopuffer_hotpotqa-large_r50_permuted_turbopuffer.json",
+            "source_sha256": "529edcaeea08b03e39532fa8ab30025d640c9834774ed1c16cee2c5a1901243a",
+            "source_db_label": "turbopuffer-aws-us-west-2-filtered-permuted-serial",
+            "source_stages": [
+              "drop_old",
+              "load",
+              "search_serial"
+            ],
+            "source_note": "{\n  \"schema\": \"vdbbench-turbopuffer-context\/v1\",\n  \"backend\": {\n    \"name\": \"TurboPuffer\",\n    \"deployment\": \"managed_service\",\n    \"region\": \"aws-us-west-2\",\n    \"api_base_url\": \"https:\/\/aws-us-west-2.turbopuffer.com\",\n    \"service_version\": \"not_exposed\",\n    \"sdk_version\": \"2.6.0\"\n  },\n  \"client\": {\n    \"branch\": \"fts_v2_backend\",\n    \"commit\": \"235ac46886e58d48f9561fb8c39ef913fa3e71d7\",\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_kib\": 64648904,\n    \"working_tree_clean\": false,\n    \"working_tree_scope\": \"pre-existing FullTextSearch result JSON note edits only\"\n  },\n  \"execution\": {\n    \"credential_delivery\": \"ephemeral mode-600 config outside logs and report bundle; removed by trap\",\n    \"namespace_strategy\": \"create_new_per_dataset_and_reuse_across_filter_rates\",\n    \"retain_namespace_after_run\": true,\n    \"pin_namespace\": false,\n    \"pin_replicas\": 1,\n    \"sdk_max_retries\": 4,\n    \"write_backpressure_enabled\": true,\n    \"warmup_seconds_after_load\": 60,\n    \"insert_batch_size\": 1000,\n    \"load_concurrency\": 1\n  },\n  \"validation\": {\n    \"credentials_stored\": false,\n    \"namespace_list_http_status\": 200,\n    \"target_namespace_precondition\": \"failed_partial_namespace_exists_and_will_be_reset_once\",\n    \"target_namespaces_absent\": false,\n    \"verified_at\": \"2026-08-04T03:55:01Z\",\n    \"datasets\": [\n      \"HotpotQA Large (5.2M documents)\"\n    ]\n  }\n}"
+          }
         },
         "st_ideal_insert_duration": 0,
         "st_search_stage_list": [],
@@ -87,7 +109,7 @@
         "db_config": {
           "db_label": "turbopuffer-aws-us-west-2-filtered-permuted",
           "version": "",
-          "note": "{\n  \"schema\": \"vdbbench-turbopuffer-context\/v1\",\n  \"backend\": {\n    \"name\": \"TurboPuffer\",\n    \"deployment\": \"managed_service\",\n    \"service_version\": \"not_exposed\",\n    \"region\": \"aws-us-west-2\",\n    \"api_base_url\": \"https:\/\/aws-us-west-2.turbopuffer.com\",\n    \"sdk_version\": \"2.6.0\"\n  },\n  \"client\": {\n    \"host\": \"10.15.2.233\",\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_kib\": 64648904,\n    \"workdir\": \"\/home\/ubuntu\/VectorDBBench-fts-v2-backend\",\n    \"branch\": \"fts_v2_backend\",\n    \"commit\": \"07bcefdbd5b04f51faebfc857219061d46148b6b\",\n    \"working_tree_clean\": true\n  },\n  \"execution\": {\n    \"pin_namespace\": false,\n    \"pin_replicas\": 1,\n    \"write_backpressure_enabled\": true,\n    \"sdk_max_retries\": 4,\n    \"warmup_seconds_after_load\": 60,\n    \"credential_delivery\": \"ephemeral mode-600 config outside logs and report bundle; removed by trap\"\n  },\n  \"validation\": {\n    \"performed_at_utc\": \"2026-08-02T14:29:29Z\",\n    \"namespace_list_http_status\": 200,\n    \"existing_namespace_metadata_http_status\": 200,\n    \"live_filtered_fts_probe\": {\n      \"source\": \"current VDBBench TurboPuffer backend implementation\",\n      \"documents_written\": 3,\n      \"unfiltered_ids\": [\n        \"doc-0\",\n        \"doc-1\",\n        \"doc-2\"\n      ],\n      \"filter_expression\": [\n        \"filter_id\",\n        \"Gte\",\n        1\n      ],\n      \"filtered_ids\": [\n        \"doc-0\",\n        \"doc-2\"\n      ],\n      \"expected_filtered_ids\": [\n        \"doc-0\",\n        \"doc-2\"\n      ],\n      \"passed\": true,\n      \"temporary_namespace_deleted\": true\n    },\n    \"historical_capacity_evidence\": {\n      \"result\": \"\/home\/ubuntu\/VectorDBBench-fts-v2-backend\/vectordb_bench\/results\/FullTextSearch\/TurboPuffer\/result_20260626_fts_standard_turbopuffer.json\",\n      \"datasets\": [\n        \"HotpotQA Large (5.2M documents)\",\n        \"MS MARCO Large (8.8M documents)\"\n      ],\n      \"batch_size\": 1000\n    },\n    \"credentials_stored\": false\n  }\n}",
+          "note": "{\n  \"schema\": \"vdbbench-turbopuffer-context\/v1\",\n  \"backend\": {\n    \"name\": \"TurboPuffer\",\n    \"deployment\": \"managed_service\",\n    \"service_version\": \"not_exposed\",\n    \"region\": \"aws-us-west-2\",\n    \"api_base_url\": \"https:\/\/aws-us-west-2.turbopuffer.com\",\n    \"sdk_version\": \"2.6.0\"\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_kib\": 64648904,\n    \"branch\": \"fts_v2_backend\",\n    \"commit\": \"07bcefdbd5b04f51faebfc857219061d46148b6b\",\n    \"working_tree_clean\": true\n  },\n  \"execution\": {\n    \"pin_namespace\": false,\n    \"pin_replicas\": 1,\n    \"write_backpressure_enabled\": true,\n    \"sdk_max_retries\": 4,\n    \"warmup_seconds_after_load\": 60,\n    \"credential_delivery\": \"ephemeral mode-600 config outside logs and report bundle; removed by trap\"\n  },\n  \"validation\": {\n    \"namespace_list_http_status\": 200,\n    \"existing_namespace_metadata_http_status\": 200,\n    \"historical_capacity_evidence\": {\n      \"datasets\": [\n        \"HotpotQA Large (5.2M documents)\",\n        \"MS MARCO Large (8.8M documents)\"\n      ],\n      \"batch_size\": 1000\n    },\n    \"credentials_stored\": false\n  }\n}",
           "api_key": "",
           "region": "aws-us-west-2",
           "api_base_url": null,
@@ -127,7 +149,8 @@
         "stages": [
           "drop_old",
           "load",
-          "search_concurrent"
+          "search_concurrent",
+          "search_serial"
         ],
         "load_concurrency": 4
       },

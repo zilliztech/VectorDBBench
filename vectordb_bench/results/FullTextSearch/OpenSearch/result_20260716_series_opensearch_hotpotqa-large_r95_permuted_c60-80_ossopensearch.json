@@ -9,11 +9,11 @@
         "optimize_duration": 0.0,
         "load_duration": 0.0,
         "qps": 822.775,
-        "serial_latency_p99": 0.0,
-        "serial_latency_p95": 0.0,
-        "recall": 0.0,
-        "ndcg": 0.0,
-        "mrr": 0.0,
+        "serial_latency_p99": 0.0559,
+        "serial_latency_p95": 0.0403,
+        "recall": 0.884,
+        "ndcg": 0.7266,
+        "mrr": 0.6865,
         "conc_num_list": [
           60,
           80
@@ -63,6 +63,26 @@
             "reason": null,
             "serial_query_count": 698,
             "full_query_count": 7405
+          },
+          "serial_measurement": {
+            "composed_from_separate_run": true,
+            "metric_fields": [
+              "serial_latency_p99",
+              "serial_latency_p95",
+              "recall",
+              "ndcg",
+              "mrr"
+            ],
+            "source_run_id": "cafbf08c0a1b4340aeffdd5c17a98e8a",
+            "source_task_label": "fts_filtered_serial_opensearch_hotpotqa-large_r95_permuted",
+            "source_timestamp": 1785715200.0,
+            "source_file": "result_20260803_fts_filtered_serial_opensearch_hotpotqa-large_r95_permuted_ossopensearch.json",
+            "source_sha256": "d347d5d0d87058dc524a0f64457fc34dbd52fe7eab60fd50f1e381a61aa8e723",
+            "source_db_label": "",
+            "source_stages": [
+              "search_serial"
+            ],
+            "source_note": "{\n  \"schema\": \"vdbbench-run-context\/v1\",\n  \"profile\": \"opensearch\/v1\",\n  \"backend_version\": \"3.7.0\",\n  \"deployment\": {\n    \"method\": \"docker\",\n    \"config\": {\n      \"mode\": \"single_node\"\n    }\n  },\n  \"server_groups\": [\n    {\n      \"role\": \"opensearch-data-master\",\n      \"count\": 1,\n      \"jvm_heap_gib\": 30,\n      \"hardware\": {\n        \"machine_type\": \"i8g.4xlarge\",\n        \"cpu_count\": 16,\n        \"memory_gib\": 123.54,\n        \"storage\": {\n          \"type\": \"local_nvme\",\n          \"device_count\": 1,\n          \"total_gib\": 3492.46,\n          \"model\": \"Amazon EC2 NVMe Instance Storage\"\n        }\n      }\n    }\n  ],\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  }\n}"
           }
         },
         "st_ideal_insert_duration": 0,
@@ -121,7 +141,8 @@
           }
         },
         "stages": [
-          "search_concurrent"
+          "search_concurrent",
+          "search_serial"
         ],
         "load_concurrency": 0
       },

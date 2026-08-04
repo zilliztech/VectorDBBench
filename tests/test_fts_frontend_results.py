@@ -99,6 +99,11 @@ def test_checked_in_permuted_results_expose_concurrency_qps_for_all_backends():
 
     assert len(filtered_data) == 40
     assert len(concurrency_data) == 80
+    assert (pd.to_numeric(filtered_data["p99_s"]) > 0).all()
+    assert (pd.to_numeric(filtered_data["p95_s"]) > 0).all()
+    assert (pd.to_numeric(filtered_data["recall"]) > 0).all()
+    assert (pd.to_numeric(filtered_data["ndcg"]) > 0).all()
+    assert (pd.to_numeric(filtered_data["mrr"]) > 0).all()
     assert len(peak_data) == 20
     assert set(filtered_data["backend"].astype(str)) == {
         "ElasticSearch",
@@ -112,6 +117,28 @@ def test_checked_in_permuted_results_expose_concurrency_qps_for_all_backends():
     assert set(peak_data["concurrency"]).issubset({60, 80})
     assert set(pd.to_numeric(filtered_data["filter_rate"])) == {0.5, 0.75, 0.9, 0.95, 0.99}
     assert not (result_dir / "ZillizCloud" / "result_20260709_fts_filtered_zillizcloud.json").exists()
+
+    result_files = sorted(result_dir.glob("*/result_*_series_*_permuted_c60-80_*.json"))
+    assert len(result_files) == 40
+    expected_serial_fields = {
+        "serial_latency_p99",
+        "serial_latency_p95",
+        "recall",
+        "ndcg",
+        "mrr",
+    }
+    for result_file in result_files:
+        case_result = json.loads(result_file.read_text())["results"][0]
+        stages = set(case_result["task_config"]["stages"])
+        provenance = case_result["metrics"]["additional_parameters"]["serial_measurement"]
+
+        assert {"search_concurrent", "search_serial"}.issubset(stages)
+        assert provenance["composed_from_separate_run"] is True
+        assert set(provenance["metric_fields"]) == expected_serial_fields
+        assert provenance["source_file"].startswith("result_")
+        assert len(provenance["source_sha256"]) == 64
+        assert "search_serial" in provenance["source_stages"]
+        assert provenance["source_note"]
 
 
 def test_filtered_qps_chart_groups_backend_bars_by_filter_rate():
