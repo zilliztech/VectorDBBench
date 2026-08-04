@@ -23,7 +23,6 @@ import pickle
 from unittest.mock import MagicMock
 
 import numpy as np
-import psycopg
 import pytest
 
 from vectordb_bench.backend.clients import DB
