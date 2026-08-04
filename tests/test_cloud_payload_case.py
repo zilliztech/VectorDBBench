@@ -209,3 +209,46 @@ def test_search_runners_fail_fast_for_unsupported_payload_profile():
             k=3,
             payload_profile=PayloadProfile.VECTOR,
         )
+
+
+def test_case_runner_rejects_unsupported_payload_before_dataset_prepare(monkeypatch: pytest.MonkeyPatch):
+    events = []
+    case_config = CaseConfig(
+        case_id=CaseType.Performance768D100M,
+        payload_profile=PayloadProfile.VECTOR,
+    )
+    task = TaskConfig(
+        db=DB.Test,
+        db_config=DB.Test.config_cls(),
+        db_case_config=EmptyDBCaseConfig(),
+        case_config=case_config,
+    )
+    runner = CaseRunner(
+        run_id="run-id",
+        config=task,
+        ca=case_config.case,
+        status=RunningStatus.PENDING,
+        dataset_source=DatasetSource.S3,
+    )
+
+    monkeypatch.setattr(
+        type(runner.ca.dataset),
+        "resolve_search_files",
+        lambda self, **kwargs: events.append("resolve"),
+    )
+    monkeypatch.setattr(
+        type(runner.ca.dataset),
+        "prepare",
+        lambda self, *args, **kwargs: events.append("prepare"),
+    )
+
+    def fake_init_db(self, drop_old=True):
+        events.append("init_db")
+        self.db = FakeDB()
+
+    monkeypatch.setattr(CaseRunner, "init_db", fake_init_db)
+
+    with pytest.raises(NotImplementedError, match="payload_profile=vector"):
+        runner._pre_run(drop_old=False)
+
+    assert events == ["resolve", "init_db"]

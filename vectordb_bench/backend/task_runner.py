@@ -231,6 +231,13 @@ class CaseRunner(BaseModel):
     def _fts_manifest_additional_parameters(self) -> dict:
         return dict(self._fts_manifest_report)
 
+    def _validate_vector_payload_profile(self) -> None:
+        if self.db is None or self.ca.label != CaseLabel.Performance or self.is_fts:
+            return
+        if not self.db.supports_payload_profile(self.ca.payload_profile):
+            msg = f"{self.config.db_name} does not support payload_profile={self.ca.payload_profile.value}"
+            raise NotImplementedError(msg)
+
     def _pre_run(self, drop_old: bool = True):
         try:
             self._validate_cloud_cold_latency_config(drop_old)
@@ -261,6 +268,7 @@ class CaseRunner(BaseModel):
             if self.ca.dataset.data.with_gt:
                 self.ca.dataset.resolve_search_files(k=ground_truth_k, filters=self.ca.filters)
             self.init_db(drop_old)
+            self._validate_vector_payload_profile()
             if self.ca.is_multitenant and self.db is not None:
                 if not self.db.supports_multitenant():
                     msg = f"{self.config.db_name} does not support CloudMultiTenantSearchCase"
