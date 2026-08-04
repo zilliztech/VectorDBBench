@@ -64,6 +64,36 @@ def test_case_config_builds_cloud_payload_case_from_custom_case():
     assert case.payload_profile == PayloadProfile.VECTOR
 
 
+def test_case_config_preserves_legacy_payload_profile():
+    case_config = CaseConfig(
+        case_id=CaseType.CloudPayloadSearchCase,
+        custom_case={"payload_profile": "vector"},
+    )
+
+    assert case_config.payload_profile is None
+    assert case_config.case.payload_profile == PayloadProfile.VECTOR
+
+
+def test_case_config_accepts_matching_top_level_and_legacy_payload_profiles():
+    case_config = CaseConfig(
+        case_id=CaseType.CloudPayloadSearchCase,
+        custom_case={"payload_profile": "vector"},
+        payload_profile=PayloadProfile.VECTOR,
+    )
+
+    assert case_config.payload_profile == PayloadProfile.VECTOR
+    assert case_config.case.payload_profile == PayloadProfile.VECTOR
+
+
+def test_case_config_rejects_conflicting_payload_profiles():
+    with pytest.raises(ValueError, match="conflicts with custom_case"):
+        CaseConfig(
+            case_id=CaseType.CloudPayloadSearchCase,
+            custom_case={"payload_profile": "ids_only"},
+            payload_profile=PayloadProfile.VECTOR,
+        )
+
+
 def test_case_runner_reuse_key_distinguishes_scalar_label_schema_requirement():
     ids_only_case = CloudPayloadSearchCase(
         dataset_with_size_type=DatasetWithSizeType.CohereSmall.value,
