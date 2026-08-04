@@ -108,6 +108,20 @@ def test_merge_tasks_keeps_results_with_different_k_separate():
     assert len({item["case_name"] for item in merged}) == 2
 
 
+def test_merge_tasks_keeps_payload_profiles_separate_for_same_k():
+    merged, failed = data.mergeTasks(
+        [
+            _case_result(k=1_000_000, qps=10, payload_profile=PayloadProfile.IDS_ONLY),
+            _case_result(k=1_000_000, qps=5, payload_profile=PayloadProfile.VECTOR),
+        ]
+    )
+
+    assert failed == {}
+    assert len(merged) == 2
+    assert {item["payload_profile"] for item in merged} == {"ids_only", "vector"}
+    assert len({item["case_name"] for item in merged}) == 2
+
+
 def test_build_recall_at_chart_data_normalizes_and_sorts_cutoffs():
     assert hasattr(charts, "buildRecallAtChartData")
     chart_data = charts.buildRecallAtChartData(
@@ -153,13 +167,22 @@ def test_results_table_uses_k_aware_case_name():
     assert len({row["case_name"] for row in rows}) == 2
 
 
-def _case_result(*, k: int, qps: float) -> CaseResult:
+def _case_result(
+    *,
+    k: int,
+    qps: float,
+    payload_profile: PayloadProfile = PayloadProfile.IDS_ONLY,
+) -> CaseResult:
     return CaseResult(
         task_config=TaskConfig(
             db=DB.Test,
             db_config=DB.Test.config_cls(db_label="same-db"),
             db_case_config=EmptyDBCaseConfig(),
-            case_config=CaseConfig(case_id=CaseType.Performance768D100M, k=k),
+            case_config=CaseConfig(
+                case_id=CaseType.Performance768D100M,
+                k=k,
+                payload_profile=payload_profile,
+            ),
         ),
-        metrics=Metric(qps=qps),
+        metrics=Metric(qps=qps, payload_profile=payload_profile.value),
     )
