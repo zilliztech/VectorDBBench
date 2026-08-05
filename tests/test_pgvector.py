@@ -23,7 +23,9 @@ import pickle
 from unittest.mock import MagicMock
 
 import numpy as np
+import psycopg
 import pytest
+from psycopg import sql
 
 from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.clients.pgvector.config import PgVectorHNSWConfig
@@ -84,8 +86,16 @@ def random_embeddings(n: int = COUNT, d: int = DIM) -> list[list[float]]:
 
 
 class TestPgVectorBasic:
-    """Unit tests for the PgVector client (no subprocess)."""
+    # """Unit tests for the PgVector client (no subprocess)."""
     def test_create_connection_installs_vector_extension(self):
+        dbname = DB_CONFIG["connect_config"]["dbname"]
+        admin_config = {**DB_CONFIG["connect_config"], "dbname": "postgres"}
+        with psycopg.connect(**admin_config, autocommit=True) as admin_conn:
+            admin_conn.execute(
+                sql.SQL("DROP DATABASE IF EXISTS {} WITH (FORCE)").format(sql.Identifier(dbname))
+            )
+            admin_conn.execute(sql.SQL("CREATE DATABASE {}").format(sql.Identifier(dbname)))
+
         conn, cursor = PgVector._create_connection(**DB_CONFIG["connect_config"])
         try:
             assert conn.execute("SELECT 1 FROM pg_extension WHERE extname = 'vector'").fetchone() is not None
