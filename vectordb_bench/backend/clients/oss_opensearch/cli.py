@@ -11,6 +11,7 @@ from ....cli.cli import (
     click_parameter_decorators_from_typed_dict,
     run,
 )
+from ...cases import CaseType
 from .. import DB
 from .config import OSSOpenSearchQuantization, OSSOS_Engine
 
@@ -148,18 +149,16 @@ class OSSOpenSearchHNSWTypedDict(CommonTypedDict, OSSOpenSearchTypedDict, HNSWFl
 @cli.command()
 @click_parameter_decorators_from_typed_dict(OSSOpenSearchHNSWTypedDict)
 def OSSOpenSearch(**parameters: Unpack[OSSOpenSearchHNSWTypedDict]):
-    from .config import OSSOpenSearchConfig, OSSOpenSearchIndexConfig
+    from .config import OSSOpenSearchConfig, OSSOpenSearchFtsConfig, OSSOpenSearchIndexConfig
 
-    run(
-        db=DB.OSSOpenSearch,
-        db_config=OSSOpenSearchConfig(
-            index_name=parameters["index_name"],
-            host=parameters["host"],
-            port=parameters["port"],
-            user=parameters["user"],
-            password=SecretStr(parameters["password"]),
-        ),
-        db_case_config=OSSOpenSearchIndexConfig(
+    if parameters["case_type"] == CaseType.FTSBm25Performance.name:
+        db_case_config = OSSOpenSearchFtsConfig(
+            number_of_shards=parameters["number_of_shards"],
+            number_of_replicas=parameters["number_of_replicas"],
+            refresh_interval=parameters["refresh_interval"],
+        )
+    else:
+        db_case_config = OSSOpenSearchIndexConfig(
             number_of_shards=parameters["number_of_shards"],
             number_of_replicas=parameters["number_of_replicas"],
             index_thread_qty=parameters["index_thread_qty"],
@@ -176,6 +175,17 @@ def OSSOpenSearch(**parameters: Unpack[OSSOpenSearchHNSWTypedDict]):
             quantization_type=OSSOpenSearchQuantization(parameters["quantization_type"]),
             confidence_interval=parameters["confidence_interval"],
             clip=parameters["clip"],
+        )
+
+    run(
+        db=DB.OSSOpenSearch,
+        db_config=OSSOpenSearchConfig(
+            index_name=parameters["index_name"],
+            host=parameters["host"],
+            port=parameters["port"],
+            user=parameters["user"],
+            password=SecretStr(parameters["password"]),
         ),
+        db_case_config=db_case_config,
         **parameters,
     )

@@ -4,6 +4,7 @@ import sys
 import types
 
 import pytest
+from click.testing import CliRunner
 
 
 class _FakeOpenSearch:
@@ -14,6 +15,7 @@ sys.modules.setdefault("opensearchpy", types.SimpleNamespace(OpenSearch=_FakeOpe
 
 from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.clients.api import IndexType
+from vectordb_bench.backend.clients.oss_opensearch import cli as oss_opensearch_cli
 from vectordb_bench.backend.clients.oss_opensearch.config import OSSOpenSearchFtsConfig
 from vectordb_bench.backend.clients.oss_opensearch.oss_opensearch import OSSOpenSearch
 from vectordb_bench.backend.filter import NewIntFilter
@@ -59,6 +61,19 @@ def test_oss_opensearch_fts_config_supports_bm25_similarity():
 def test_oss_opensearch_declares_full_text_support():
     assert OSSOpenSearch.supports_full_text_search() is True
     assert DB.OSSOpenSearch.case_config_cls(IndexType.FTS) is OSSOpenSearchFtsConfig
+
+
+def test_oss_opensearch_fts_cli_does_not_require_vector_index_options(monkeypatch: pytest.MonkeyPatch):
+    captured = {}
+    monkeypatch.setattr(oss_opensearch_cli, "run", lambda **kwargs: captured.update(kwargs))
+
+    result = CliRunner().invoke(
+        oss_opensearch_cli.OSSOpenSearch,
+        ["--host", "localhost", "--case-type", "FTSBm25Performance", "--dry-run"],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert isinstance(captured["db_case_config"], OSSOpenSearchFtsConfig)
 
 
 def test_oss_opensearch_create_index_fts_uses_text_mappings_and_settings():
