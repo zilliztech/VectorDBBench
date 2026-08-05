@@ -1,8 +1,11 @@
 import json
+import tomllib
+from inspect import signature
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
+import streamlit as st
 
 from vectordb_bench.backend.clients import DB
 from vectordb_bench.frontend.config.dbCaseConfigs import get_fts_case_items
@@ -16,6 +19,14 @@ from vectordb_bench.frontend.pages.full_text_search import (
 
 def test_oss_opensearch_fts_cases_are_selectable_in_run_test():
     assert all(item.supports_dbs([DB.OSSOpenSearch]) for item in get_fts_case_items())
+
+
+def test_streamlit_dependency_floor_supports_fts_tab_state_api():
+    repo_root = Path(__file__).resolve().parents[1]
+    dependencies = tomllib.loads((repo_root / "pyproject.toml").read_text())["project"]["dependencies"]
+
+    assert "streamlit>=1.61,<2" in dependencies
+    assert {"default", "key", "on_change"}.issubset(signature(st.tabs).parameters)
 
 
 def test_frontend_separates_filtered_results_and_expands_concurrency_qps(tmp_path: Path):
