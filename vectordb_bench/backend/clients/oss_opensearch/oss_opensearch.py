@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 
 WAITING_FOR_REFRESH_SEC: Final[int] = 30
 WAITING_FOR_FORCE_MERGE_SEC: Final[int] = 30
-SECONDS_WAITING_FOR_REPLICAS_TO_BE_ENABLED_SEC: Final[int] = 30
+REPLICA_HEALTH_TIMEOUT: Final[str] = "30m"
 
 # Central registry for version-dependent OpenSearch index settings.
 # Add new rules here to automatically support future versions.
@@ -809,13 +809,20 @@ class OSSOpenSearch(VectorDB):
 
     def _wait_till_green(self):
         log.info("Wait for index to become green..")
-        while True:
-            res = self.client.cat.indices(index=self.index_name, h="health", format="json")
-            health = res[0]["health"]
-            if health == "green":
-                break
-            log.info(f"The index {self.index_name} has health : {health} and is not green. Retrying")
-            time.sleep(SECONDS_WAITING_FOR_REPLICAS_TO_BE_ENABLED_SEC)
+        response = self.client.cluster.health(
+            index=self.index_name,
+            wait_for_status="green",
+            timeout=REPLICA_HEALTH_TIMEOUT,
+        )
+        health = response.get("status", "unknown")
+        if response.get("timed_out") or health != "green":
+            msg = (
+                f"Index {self.index_name} did not reach green health within {REPLICA_HEALTH_TIMEOUT}: "
+                f"status={health}, configured_replicas={self.case_config.number_of_replicas}, "
+                f"unassigned_shards={response.get('unassigned_shards', 'unknown')}, "
+                f"number_of_nodes={response.get('number_of_nodes', 'unknown')}"
+            )
+            raise OpenSearchError(msg)
         log.info(f"Index {self.index_name} is green..")
 
     def _refresh_index(self):

@@ -16,10 +16,11 @@ sys.modules.setdefault("opensearchpy", types.SimpleNamespace(OpenSearch=_FakeOpe
 from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.clients.api import IndexType
 from vectordb_bench.backend.clients.oss_opensearch import cli as oss_opensearch_cli
-from vectordb_bench.backend.clients.oss_opensearch.config import OSSOpenSearchFtsConfig
-from vectordb_bench.backend.clients.oss_opensearch.oss_opensearch import OSSOpenSearch
+from vectordb_bench.backend.clients.oss_opensearch.config import OSSOpenSearchFtsConfig, OSSOpenSearchIndexConfig
+from vectordb_bench.backend.clients.oss_opensearch.oss_opensearch import OSSOpenSearch, OpenSearchError
 from vectordb_bench.backend.filter import NewIntFilter
 from vectordb_bench.backend.payload import PayloadProfile
+from vectordb_bench.cli.cli import select_cli_db_case_config
 
 
 def make_fts_db():
@@ -74,6 +75,66 @@ def test_oss_opensearch_fts_cli_does_not_require_vector_index_options(monkeypatc
 
     assert result.exit_code == 0, result.output
     assert isinstance(captured["db_case_config"], OSSOpenSearchFtsConfig)
+
+
+def test_oss_opensearch_fts_cli_uses_single_node_defaults_and_force_merge_flag(monkeypatch: pytest.MonkeyPatch):
+    captured = {}
+    monkeypatch.setattr(oss_opensearch_cli, "run", lambda **kwargs: captured.update(kwargs))
+
+    result = CliRunner().invoke(
+        oss_opensearch_cli.OSSOpenSearch,
+        [
+            "--host",
+            "localhost",
+            "--case-type",
+            "FTSBm25Performance",
+            "--force-merge-enabled",
+            "false",
+            "--dry-run",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert captured["db_case_config"].number_of_replicas == 0
+    assert captured["db_case_config"].force_merge_enabled is False
+
+
+def test_oss_opensearch_generic_fts_routing_preserves_force_merge():
+    selected = select_cli_db_case_config(
+        DB.OSSOpenSearch,
+        OSSOpenSearchIndexConfig(force_merge_enabled=False),
+        "FTSBm25Performance",
+    )
+
+    assert isinstance(selected, OSSOpenSearchFtsConfig)
+    assert selected.force_merge_enabled is False
+
+
+def test_oss_opensearch_green_health_wait_is_bounded_and_diagnostic():
+    db = make_fts_db()
+    db.case_config = OSSOpenSearchFtsConfig(number_of_replicas=1)
+    calls = {}
+
+    class Cluster:
+        def health(self, **kwargs):
+            calls.update(kwargs)
+            return {
+                "status": "yellow",
+                "timed_out": True,
+                "unassigned_shards": 1,
+                "number_of_nodes": 1,
+            }
+
+    db.client = types.SimpleNamespace(cluster=Cluster())
+
+    with pytest.raises(OpenSearchError, match="configured_replicas=1.*unassigned_shards=1.*number_of_nodes=1"):
+        db._wait_till_green()
+
+    assert calls == {
+        "index": "idx",
+        "wait_for_status": "green",
+        "timeout": "30m",
+    }
 
 
 def test_oss_opensearch_create_index_fts_uses_text_mappings_and_settings():

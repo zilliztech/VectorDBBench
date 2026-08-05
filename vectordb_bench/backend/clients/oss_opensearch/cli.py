@@ -31,7 +31,7 @@ class OSSOpenSearchTypedDict(TypedDict):
     number_of_replicas: Annotated[
         int,
         click.option(
-            "--number-of-replicas", type=int, help="Number of replica copies for each primary shard", default=1
+            "--number-of-replicas", type=int, help="Number of replica copies for each primary shard", default=0
         ),
     ]
     index_thread_qty: Annotated[
@@ -156,6 +156,7 @@ def OSSOpenSearch(**parameters: Unpack[OSSOpenSearchHNSWTypedDict]):
             number_of_shards=parameters["number_of_shards"],
             number_of_replicas=parameters["number_of_replicas"],
             refresh_interval=parameters["refresh_interval"],
+            force_merge_enabled=parameters["force_merge_enabled"],
         )
     else:
         db_case_config = OSSOpenSearchIndexConfig(
