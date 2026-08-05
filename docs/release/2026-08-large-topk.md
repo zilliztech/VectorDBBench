@@ -24,6 +24,8 @@ Recall and NDCG now use O(K) hash lookups. A large-TopK serial run reports:
 
 Serial and concurrent latency fields are stored in seconds, matching the existing p95/p99 fields; the frontend converts them to milliseconds for display. `recall_at` values are ratios from 0 to 1. Existing result files load with zero/empty defaults for the new fields.
 
-## Backend Prerequisite
+## Zilliz Cloud Collection Mode
 
-VDBBench sends the configured K unchanged. Backend-specific setup is outside this feature, so the target database or pre-created collection must already support the requested result count before the benchmark starts.
+For Zilliz Cloud performance runs with K above 16,384, VDBBench sets `query_mode=large_topk` when it creates the collection, before creating the vector index. The run log records the requested K and selected query mode. When reusing a collection, VDBBench validates the property and fails before loading or searching if the collection is incompatible.
+
+Milvus and other backends are unchanged. Their target collection must already support the requested result count before the benchmark starts.

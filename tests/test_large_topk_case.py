@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from vectordb_bench.backend.cases import CaseType
+from vectordb_bench.backend.cases import CaseLabel, CaseType
 from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.clients.api import EmptyDBCaseConfig
 from vectordb_bench.backend.data_source import DatasetSource
@@ -39,6 +39,35 @@ class SearchProbeDB:
         if self.results:
             return self.results.pop(0)
         return []
+
+
+def _large_topk_property_runner(db: DB, k: int) -> CaseRunner:
+    return CaseRunner.model_construct(
+        config=SimpleNamespace(db=db, case_config=SimpleNamespace(k=k)),
+        ca=SimpleNamespace(label=CaseLabel.Performance),
+    )
+
+
+def test_zilliz_large_topk_selects_collection_mode_and_logs_requested_k(monkeypatch):
+    runner = _large_topk_property_runner(DB.ZillizCloud, 100_000)
+    messages = []
+    monkeypatch.setattr(
+        "vectordb_bench.backend.task_runner.log.info",
+        lambda message, *args: messages.append(message % args),
+    )
+
+    properties = runner._collection_properties(log_selection=True)
+
+    assert properties == {"query_mode": "large_topk"}
+    assert "requested K=100000" in messages[0]
+    assert "query_mode=large_topk" in messages[0]
+
+
+@pytest.mark.parametrize(("db", "k"), [(DB.ZillizCloud, 16_384), (DB.Milvus, 100_000)])
+def test_large_topk_collection_mode_does_not_change_other_workloads(db, k):
+    runner = _large_topk_property_runner(db, k)
+
+    assert runner._collection_properties() == {}
 
 
 def test_serial_runner_rejects_query_count_mismatch_before_db_init():
