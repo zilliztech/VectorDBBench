@@ -218,9 +218,8 @@ def _filter_filtered_data(st: Any, data: pd.DataFrame) -> pd.DataFrame:
             default=backend_options,
             key="fts-filtered-backends",
         )
-    filters = (
-        data["dataset_family"].astype(str).eq(selected_dataset)
-        & data["backend"].astype(str).isin(selected_backends)
+    filters = data["dataset_family"].astype(str).eq(selected_dataset) & data["backend"].astype(str).isin(
+        selected_backends
     )
     return data[filters].copy()
 
