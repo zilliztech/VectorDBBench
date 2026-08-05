@@ -44,6 +44,47 @@ def test_milvus_vector_payload_requests_vector_field_and_returns_ids():
     assert captured["output_fields"] == ["vector"]
 
 
+def _fake_milvus_client(monkeypatch, *, collection_exists=False, properties=None):
+    client = MagicMock()
+    client.has_collection.return_value = collection_exists
+    client.describe_collection.return_value = {"properties": properties or {}}
+    client_cls = MagicMock(return_value=client)
+    client_cls.create_schema.return_value = MagicMock()
+    client_cls.prepare_index_params.return_value = MagicMock()
+    monkeypatch.setattr("vectordb_bench.backend.clients.milvus.milvus.MilvusClient", client_cls)
+    return client
+
+
+def _create_milvus_with_collection_properties(monkeypatch, *, collection_exists=False, properties=None):
+    client = _fake_milvus_client(
+        monkeypatch,
+        collection_exists=collection_exists,
+        properties=properties,
+    )
+    Milvus(
+        dim=2,
+        db_config={"uri": "http://example.invalid"},
+        db_case_config=SimpleNamespace(
+            index_param=lambda: {"index_type": "AUTOINDEX", "metric_type": "COSINE", "params": {}},
+        ),
+        collection_properties={"query_mode": "large_topk"},
+    )
+    return client
+
+
+def test_milvus_creates_collection_properties_before_index(monkeypatch):
+    client = _create_milvus_with_collection_properties(monkeypatch)
+
+    assert client.create_collection.call_args.kwargs["properties"] == {"query_mode": "large_topk"}
+    method_names = [method_call[0] for method_call in client.method_calls]
+    assert method_names.index("create_collection") < method_names.index("create_index")
+
+
+def test_milvus_rejects_existing_collection_with_incompatible_properties(monkeypatch):
+    with pytest.raises(ValueError, match="incompatible collection properties"):
+        _create_milvus_with_collection_properties(monkeypatch, collection_exists=True)
+
+
 class TestMilvusOptimize:
     def _milvus(
         self,

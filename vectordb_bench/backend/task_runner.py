@@ -28,6 +28,7 @@ from .utils import kill_proc_tree
 from .workload import WorkloadKind
 
 log = logging.getLogger(__name__)
+ZILLIZ_CLOUD_DEFAULT_TOPK_LIMIT = 16_384
 
 
 class RunningStatus(Enum):
@@ -83,6 +84,7 @@ class CaseRunner(BaseModel):
             self._collection_name_hash_key(),
             self._dataset_hash_key(),
             self.config.insert_batch_size,
+            self._hashable_value(self._collection_properties()),
             self.ca.with_scalar_labels,
             self.ca.is_multitenant,
             self._multitenant_routing_hash_key(),
@@ -181,6 +183,24 @@ class CaseRunner(BaseModel):
     def is_fts(self) -> bool:
         return self.workload_kind == WorkloadKind.FULL_TEXT
 
+    def _collection_properties(self, *, log_selection: bool = False) -> dict[str, str]:
+        requested_k = self.config.case_config.k or config.K_DEFAULT
+        if (
+            self.config.db != DB.ZillizCloud
+            or self.ca.label != CaseLabel.Performance
+            or requested_k <= ZILLIZ_CLOUD_DEFAULT_TOPK_LIMIT
+        ):
+            return {}
+
+        # Zilliz Cloud requires Large TopK mode at collection creation, before the vector index is created.
+        if log_selection:
+            log.info(
+                "Zilliz Cloud requested K=%d exceeds the default TopK limit %d; using query_mode=large_topk",
+                requested_k,
+                ZILLIZ_CLOUD_DEFAULT_TOPK_LIMIT,
+            )
+        return {"query_mode": "large_topk"}
+
     def init_db(self, drop_old: bool = True) -> None:
         db_cls = self.config.db.init_cls
         # Compose a compact, case-unique collection/table name for Doris to avoid cross-case interference
@@ -205,6 +225,9 @@ class CaseRunner(BaseModel):
             extra_db_kwargs["fts_filter_enabled"] = self.ca.filters.type != FilterOp.NonFilter
         if self.config.db is DB.AWSOpenSearch:
             extra_db_kwargs["insert_batch_size"] = self.config.insert_batch_size
+        collection_properties = self._collection_properties(log_selection=True)
+        if collection_properties:
+            extra_db_kwargs["collection_properties"] = collection_properties
 
         self.db = db_cls(
             dim=getattr(self.ca.dataset.data, "dim", 0),
