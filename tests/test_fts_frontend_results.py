@@ -4,12 +4,18 @@ from typing import Any
 
 import pandas as pd
 
+from vectordb_bench.backend.clients import DB
+from vectordb_bench.frontend.config.dbCaseConfigs import get_fts_case_items
 from vectordb_bench.frontend.pages.full_text_search import (
     _concurrency_rows,
     _draw_filtered_qps_tab,
     _peak_filtered_qps_rows,
     load_full_text_search_rows,
 )
+
+
+def test_oss_opensearch_fts_cases_are_selectable_in_run_test():
+    assert all(item.supports_dbs([DB.OSSOpenSearch]) for item in get_fts_case_items())
 
 
 def test_frontend_separates_filtered_results_and_expands_concurrency_qps(tmp_path: Path):
