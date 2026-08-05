@@ -29,7 +29,9 @@ from .utils import kill_proc_tree
 from .workload import WorkloadKind
 
 log = logging.getLogger(__name__)
-ZILLIZ_CLOUD_DEFAULT_TOPK_LIMIT = 16_384
+# Milvus and Zilliz Cloud cap topK at this value unless the collection opts into Large TopK mode.
+MILVUS_DEFAULT_TOPK_LIMIT = 16_384
+LARGE_TOPK_QUERY_MODE_DBS = frozenset({DB.Milvus, DB.ZillizCloud})
 
 
 class RunningStatus(Enum):
@@ -188,18 +190,19 @@ class CaseRunner(BaseModel):
     def _collection_properties(self, *, log_selection: bool = False) -> dict[str, str]:
         requested_k = self.config.case_config.k or config.K_DEFAULT
         if (
-            self.config.db != DB.ZillizCloud
+            self.config.db not in LARGE_TOPK_QUERY_MODE_DBS
             or self.ca.label != CaseLabel.Performance
-            or requested_k <= ZILLIZ_CLOUD_DEFAULT_TOPK_LIMIT
+            or requested_k <= MILVUS_DEFAULT_TOPK_LIMIT
         ):
             return {}
 
-        # Zilliz Cloud requires Large TopK mode at collection creation, before the vector index is created.
+        # Large TopK mode must be applied at collection creation, before the vector index is created.
         if log_selection:
             log.info(
-                "Zilliz Cloud requested K=%d exceeds the default TopK limit %d; using query_mode=large_topk",
+                "%s requested K=%d exceeds the default TopK limit %d; using query_mode=large_topk",
+                self.config.db.value,
                 requested_k,
-                ZILLIZ_CLOUD_DEFAULT_TOPK_LIMIT,
+                MILVUS_DEFAULT_TOPK_LIMIT,
             )
         return {"query_mode": "large_topk"}
 
