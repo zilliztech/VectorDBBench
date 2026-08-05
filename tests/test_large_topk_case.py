@@ -48,8 +48,9 @@ def _large_topk_property_runner(db: DB, k: int) -> CaseRunner:
     )
 
 
-def test_zilliz_large_topk_selects_collection_mode_and_logs_requested_k(monkeypatch):
-    runner = _large_topk_property_runner(DB.ZillizCloud, 100_000)
+@pytest.mark.parametrize("db", [DB.Milvus, DB.ZillizCloud])
+def test_large_topk_selects_collection_mode_and_logs_requested_k(db, monkeypatch):
+    runner = _large_topk_property_runner(db, 100_000)
     messages = []
     monkeypatch.setattr(
         "vectordb_bench.backend.task_runner.log.info",
@@ -59,11 +60,22 @@ def test_zilliz_large_topk_selects_collection_mode_and_logs_requested_k(monkeypa
     properties = runner._collection_properties(log_selection=True)
 
     assert properties == {"query_mode": "large_topk"}
+    assert db.value in messages[0]
     assert "requested K=100000" in messages[0]
     assert "query_mode=large_topk" in messages[0]
 
 
-@pytest.mark.parametrize(("db", "k"), [(DB.ZillizCloud, 16_384), (DB.Milvus, 100_000)])
+@pytest.mark.parametrize(
+    ("db", "k"),
+    [
+        # Milvus and Zilliz Cloud stay in default mode at or below the TopK limit.
+        (DB.ZillizCloud, 16_384),
+        (DB.Milvus, 16_384),
+        (DB.Milvus, 100),
+        # Backends without a Large TopK collection mode are never reconfigured.
+        (DB.Pinecone, 100_000),
+    ],
+)
 def test_large_topk_collection_mode_does_not_change_other_workloads(db, k):
     runner = _large_topk_property_runner(db, k)
 

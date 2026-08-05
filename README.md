@@ -957,7 +957,7 @@ K must be positive, and LAION-100M rejects values above 1,000,000. Filtered LAIO
 
 Wide GT remains in Parquet/Arrow form and is opened inside the serial-search subprocess one query row at a time. Results include primary `recall@K`, `recall_at` for the available cutoffs among 100, 1K, 10K, 100K, and 1M, plus serial and concurrent p50/p95/p99 latency. Concurrent throughput continues to use the configured fixed-duration phase.
 
-For Zilliz Cloud performance runs with K above 16,384, VDBBench automatically creates new collections with `query_mode=large_topk` before creating the vector index. Reused collections are validated and rejected when that property is missing or incompatible. The selected mode and requested K are written to the run log. Other backends must already permit the requested K; VDBBench forwards K unchanged and does not alter their collection properties.
+For Milvus and Zilliz Cloud performance runs with K above 16,384, VDBBench automatically creates new collections with `query_mode=large_topk` before creating the vector index. Reused collections are validated and rejected when that property is missing or incompatible. The target database, selected mode, and requested K are written to the run log. Self-hosted Milvus must be 2.6.14 or later, the release that introduced the `query_mode=large_topk` collection property; earlier servers accept the property without honoring it. Other backends must already permit the requested K; VDBBench forwards K unchanged and does not alter their collection properties.
 
 ##### Performance Response Payloads
 
