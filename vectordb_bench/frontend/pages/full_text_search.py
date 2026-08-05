@@ -80,15 +80,6 @@ def _filter_rate_label(value: Any) -> str:
     return f"{float(value):.0%}"
 
 
-def _filter_distribution_label(custom_case: dict[str, Any], fts_filter: dict[str, Any]) -> str:
-    distribution = custom_case.get("filter_id_distribution") or fts_filter.get("filter_id_distribution")
-    if distribution in {"permuted", "affine_permutation_v1"}:
-        return "Permuted"
-    if distribution in {"sequential", "sequential_v1"}:
-        return "Sequential"
-    return "Unspecified"
-
-
 def _backend_metric_order(data: pd.DataFrame, metric: str, ascending: bool) -> list[str]:
     if data.empty or metric not in data:
         return BACKEND_ORDER
@@ -123,7 +114,6 @@ def _parse_result_file(result_file: Path) -> list[dict[str, Any]]:
         additional_parameters = metrics.get("additional_parameters") or {}
         fts_filter = additional_parameters.get("fts_filter") or {}
         filter_rate = fts_filter.get("filter_rate", custom_case.get("filter_rate"))
-        filter_distribution = _filter_distribution_label(custom_case, fts_filter)
         dataset_label = custom_case.get("dataset_with_size_type", "")
         dataset_family, dataset_size, dataset_key = _dataset_parts(dataset_label)
         dataset_doc_count = _dataset_doc_count(dataset_label)
@@ -145,7 +135,6 @@ def _parse_result_file(result_file: Path) -> list[dict[str, Any]]:
                 "task_label": row_task_label,
                 "filter_rate": filter_rate,
                 "filter_rate_label": _filter_rate_label(filter_rate),
-                "filter_distribution": filter_distribution,
                 "is_filtered": filter_rate is not None,
                 "load_s": metrics.get("load_duration", 0.0),
                 "qps": metrics.get("qps", 0.0),
@@ -229,18 +218,9 @@ def _filter_filtered_data(st: Any, data: pd.DataFrame) -> pd.DataFrame:
             default=backend_options,
             key="fts-filtered-backends",
         )
-        distribution_options = sorted(data["filter_distribution"].dropna().unique().tolist())
-        selected_distributions = st.multiselect(
-            "ID distribution",
-            distribution_options,
-            default=distribution_options,
-            key="fts-filtered-distributions",
-        )
-
     filters = (
         data["dataset_family"].astype(str).eq(selected_dataset)
         & data["backend"].astype(str).isin(selected_backends)
-        & data["filter_distribution"].isin(selected_distributions)
     )
     return data[filters].copy()
 
@@ -283,7 +263,6 @@ def _draw_filtered_summary_table(st: Any, data: pd.DataFrame) -> None:
     columns = [
         "dataset",
         "backend",
-        "filter_distribution",
         "filter_rate_label",
         "concurrency",
         "qps",
@@ -296,7 +275,6 @@ def _draw_filtered_summary_table(st: Any, data: pd.DataFrame) -> None:
         column_config={
             "filter_rate_label": "Filter",
             "concurrency": st.column_config.NumberColumn("Concurrency", format="%d"),
-            "filter_distribution": "ID distribution",
             "qps": st.column_config.NumberColumn("QPS", format="%.4f"),
         },
     )
@@ -382,7 +360,6 @@ def _concurrency_rows(data: pd.DataFrame) -> pd.DataFrame:
                     "context": row["context"],
                     "filter_rate": row["filter_rate"],
                     "filter_rate_label": row["filter_rate_label"],
-                    "filter_distribution": row["filter_distribution"],
                     "concurrency": concurrency,
                     "qps": qps,
                     "task_label": row["task_label"],
@@ -459,7 +436,6 @@ def _draw_filtered_qps_tab(st: Any, data: pd.DataFrame) -> None:
             "dataset",
             "dataset_doc_count",
             "payload",
-            "filter_distribution",
             "concurrency",
             "task_label",
         ],

@@ -58,7 +58,6 @@ def test_frontend_separates_filtered_results_and_expands_concurrency_qps(tmp_pat
                                     "dataset_with_size_type": "HotpotQA Large (5.2M documents)",
                                     "payload_profile": "ids_only",
                                     "filter_rate": 0.5,
-                                    "filter_id_distribution": "permuted",
                                 }
                             },
                         },
@@ -78,7 +77,7 @@ def test_frontend_separates_filtered_results_and_expands_concurrency_qps(tmp_pat
     assert standard_data.iloc[0]["qps"] == 100.0
     assert len(filtered_data) == 1
     assert filtered_data.iloc[0]["filter_rate_label"] == "50%"
-    assert filtered_data.iloc[0]["filter_distribution"] == "Permuted"
+    assert "filter_distribution" not in filtered_data.columns
     assert concurrency_data[["concurrency", "qps"]].to_dict("records") == [
         {"concurrency": 60, "qps": 1200.0},
         {"concurrency": 80, "qps": 1500.0},
@@ -112,7 +111,6 @@ def test_checked_in_consolidated_permuted_results_expose_concurrency_qps_for_all
         "TurboPuffer",
         "ZillizCloud",
     }
-    assert set(filtered_data["filter_distribution"]) == {"Permuted"}
     assert set(concurrency_data["concurrency"]) == {60, 80}
     assert set(peak_data["filter_rate_label"]) == {"50%", "75%", "90%", "95%", "99%"}
     assert set(peak_data["concurrency"]).issubset({60, 80})
@@ -145,6 +143,8 @@ def test_checked_in_consolidated_permuted_results_expose_concurrency_qps_for_all
             fts_filter = case_result["metrics"].get("additional_parameters", {}).get("fts_filter") or {}
             filter_rate = custom_case.get("filter_rate", fts_filter.get("filter_rate"))
             if filter_rate is not None:
+                assert custom_case.get("filter_id_distribution") == "permuted"
+                assert fts_filter["filter_id_distribution"] == "affine_permutation_v1"
                 filtered_results.append(case_result)
 
     assert result_counts == expected_result_counts

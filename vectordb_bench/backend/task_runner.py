@@ -229,7 +229,6 @@ class CaseRunner(BaseModel):
                 self.ca.dataset.prepare(
                     self.dataset_source,
                     filters=self.ca.filters,
-                    filter_id_distribution=self.ca.filter_id_distribution,
                 )
                 self.init_db(drop_old)
                 return

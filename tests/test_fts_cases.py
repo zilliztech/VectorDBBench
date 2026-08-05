@@ -1,7 +1,7 @@
 import pytest
 
 from vectordb_bench.backend.cases import FTS_FILTER_ID_FIELD, FTSBm25Performance
-from vectordb_bench.backend.dataset import FtsDatasetWithSizeType, FtsFilterIdDistribution
+from vectordb_bench.backend.dataset import FtsDatasetWithSizeType
 from vectordb_bench.backend.filter import FilterOp
 
 
@@ -41,18 +41,7 @@ def test_fts_filter_case_rejects_unsupported_filter_rate():
         )
 
 
-def test_fts_filter_case_selects_filter_id_distribution():
-    default_case = FTSBm25Performance(dataset_with_size_type=FtsDatasetWithSizeType.MSMarcoLarge)
-    sequential_case = FTSBm25Performance(
-        dataset_with_size_type=FtsDatasetWithSizeType.MSMarcoLarge,
-        filter_id_distribution="sequential",
-    )
+def test_fts_filter_case_has_no_distribution_switch():
+    case = FTSBm25Performance(dataset_with_size_type=FtsDatasetWithSizeType.MSMarcoLarge)
 
-    assert default_case.filter_id_distribution == FtsFilterIdDistribution.Permuted
-    assert sequential_case.filter_id_distribution == FtsFilterIdDistribution.Sequential
-
-    with pytest.raises(ValueError, match="is not a valid FtsFilterIdDistribution"):
-        FTSBm25Performance(
-            dataset_with_size_type=FtsDatasetWithSizeType.MSMarcoLarge,
-            filter_id_distribution="random",
-        )
+    assert not hasattr(case, "filter_id_distribution")

@@ -12,7 +12,7 @@ import typing
 from abc import ABC, abstractmethod
 from collections.abc import Iterator
 from dataclasses import dataclass
-from enum import Enum, StrEnum
+from enum import Enum
 from typing import Any, ClassVar, NamedTuple
 
 import ir_datasets
@@ -566,11 +566,6 @@ _FTS_FILTER_GOLDEN_RATIO_64 = 0x9E3779B97F4A7C15
 _FTS_FILTER_OFFSET_SEED = 0xD1B54A32D192ED03
 
 
-class FtsFilterIdDistribution(StrEnum):
-    Permuted = "permuted"
-    Sequential = "sequential"
-
-
 @dataclass(frozen=True)
 class FtsFilterIdPermutation:
     """Deterministic bijection that scatters FTS filter IDs across corpus order."""
@@ -578,29 +573,18 @@ class FtsFilterIdPermutation:
     size: int
     multiplier: int
     offset: int
-    distribution: FtsFilterIdDistribution
 
     @property
     def algorithm(self) -> str:
-        if self.distribution == FtsFilterIdDistribution.Sequential:
-            return "sequential_v1"
         return "affine_permutation_v1"
 
     @classmethod
-    def for_size(
-        cls,
-        size: int,
-        distribution: FtsFilterIdDistribution | str = FtsFilterIdDistribution.Permuted,
-    ) -> "FtsFilterIdPermutation":
+    def for_size(cls, size: int) -> "FtsFilterIdPermutation":
         if size <= 0:
             msg = f"FTS filter ID permutation size must be positive, got {size}"
             raise ValueError(msg)
-        if not isinstance(distribution, FtsFilterIdDistribution):
-            distribution = FtsFilterIdDistribution(distribution)
-        if distribution == FtsFilterIdDistribution.Sequential:
-            return cls(size=size, multiplier=1, offset=0, distribution=distribution)
         if size == 1:
-            return cls(size=1, multiplier=1, offset=0, distribution=distribution)
+            return cls(size=1, multiplier=1, offset=0)
 
         multiplier = max(1, (size * _FTS_FILTER_GOLDEN_RATIO_64) >> 64)
         while math.gcd(multiplier, size) != 1:
@@ -612,7 +596,6 @@ class FtsFilterIdPermutation:
             size=size,
             multiplier=multiplier,
             offset=_FTS_FILTER_OFFSET_SEED % size,
-            distribution=distribution,
         )
 
     def map(self, ordinal: int) -> int:
@@ -806,7 +789,6 @@ class FtsDatasetManager(BaseModel):
     selected_doc_ids: set[str] | None = None
     qrel_filter_ids: dict[str, int] = PydanticField(default_factory=dict)
     filter_stats: dict[str, int | float | str] = PydanticField(default_factory=dict)
-    filter_id_distribution: FtsFilterIdDistribution = FtsFilterIdDistribution.Permuted
     _ir_dataset: typing.Any = PrivateAttr(default=None)
 
     def __init__(self, **data):
@@ -889,7 +871,7 @@ class FtsDatasetManager(BaseModel):
 
         qrel_doc_ids = set(self.required_doc_ids)
         qrel_filter_ids: dict[str, int] = {}
-        permutation = FtsFilterIdPermutation.for_size(self.data.size, self.filter_id_distribution)
+        permutation = FtsFilterIdPermutation.for_size(self.data.size)
         emitted_count = 0
         for doc in self._translator.iter_documents(self._ir_dataset):
             doc_id = str(doc.doc_id)
@@ -941,7 +923,7 @@ class FtsDatasetManager(BaseModel):
 
         matched_doc_count = self.data.size - filter_value
         filtered_relevant_doc_ids = {doc_id for qrels in filtered_gt for doc_id in qrels}
-        permutation = FtsFilterIdPermutation.for_size(self.data.size, self.filter_id_distribution)
+        permutation = FtsFilterIdPermutation.for_size(self.data.size)
         self.filter_stats = {
             "filter_type": filters.type.value,
             "filter_field": filter_field,
@@ -993,7 +975,6 @@ class FtsDatasetManager(BaseModel):
         self,
         source: DatasetSource | None = None,
         filters: Filter | None = None,
-        filter_id_distribution: FtsFilterIdDistribution | str = FtsFilterIdDistribution.Permuted,
     ) -> bool:
         """Prepare FTS dataset for testing using Translator pattern.
 
@@ -1013,7 +994,6 @@ class FtsDatasetManager(BaseModel):
         log.info(f"Preparing FTS dataset: {self.data.full_name}")
 
         try:
-            self.filter_id_distribution = FtsFilterIdDistribution(filter_id_distribution)
             # Download dataset if needed (ir_datasets handles caching)
             if source is not None:
                 reader = source.reader()
@@ -1117,7 +1097,6 @@ class FtsDocumentIterator:
         self._batch_size = batch_size
         self._filter_id_permutation = FtsFilterIdPermutation.for_size(
             self._ds.data.size,
-            self._ds.filter_id_distribution,
         )
         self._finished = False
         self._doc_count = 0  # Track total documents emitted
