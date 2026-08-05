@@ -19,6 +19,7 @@ This round focuses on full text search support across the following backends:
 - Milvus, using its full text search BM25 path.
 - Zilliz Cloud, using the cloud full text search path.
 - Elasticsearch, using its BM25 text search path.
+- OSS OpenSearch, using its BM25 text search path.
 - Vespa, using BM25 ranking over indexed text fields.
 - turbopuffer, using its full text search namespace path.
 
