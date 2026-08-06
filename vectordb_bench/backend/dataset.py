@@ -860,28 +860,43 @@ class FtsDatasetManager(BaseModel):
 
         return selected_doc_ids
 
-    def _build_qrel_filter_ids(self) -> dict[str, int]:
-        """Map qrel doc IDs to their deterministic permuted FTS filter ID."""
+    def _iter_selected_documents_with_filter_ids(self) -> Iterator[FtsDocument]:
+        """Yield selected documents with the exact filter IDs used for insertion and qrels."""
         if self._ir_dataset is None:
             msg = "ir_datasets dataset not loaded. Call prepare() first."
             raise RuntimeError(msg)
+
+        permutation = FtsFilterIdPermutation.for_size(self.data.size)
+        documents = iter(self._translator.iter_documents(self._ir_dataset))
+        emitted_count = 0
+        while emitted_count < self.data.size:
+            try:
+                doc = next(documents)
+                doc.doc_id = str(doc.doc_id)
+                if self.selected_doc_ids is not None and doc.doc_id not in self.selected_doc_ids:
+                    continue
+                doc.filter_id = permutation.map(emitted_count)
+            except StopIteration:
+                break
+            except Exception as e:
+                log.debug(f"Skipping malformed document: {e}")
+                continue
+
+            emitted_count += 1
+            yield doc
+
+    def _build_qrel_filter_ids(self) -> dict[str, int]:
+        """Map qrel doc IDs to their deterministic permuted FTS filter ID."""
         if self.selected_doc_ids is None:
             msg = "selected_doc_ids is required before building FTS filter IDs"
             raise RuntimeError(msg)
 
         qrel_doc_ids = set(self.required_doc_ids)
         qrel_filter_ids: dict[str, int] = {}
-        permutation = FtsFilterIdPermutation.for_size(self.data.size)
-        emitted_count = 0
-        for doc in self._translator.iter_documents(self._ir_dataset):
-            doc_id = str(doc.doc_id)
-            if doc_id not in self.selected_doc_ids:
-                continue
+        for doc in self._iter_selected_documents_with_filter_ids():
+            doc_id = doc.doc_id
             if doc_id in qrel_doc_ids:
-                qrel_filter_ids[doc_id] = permutation.map(emitted_count)
-            emitted_count += 1
-            if emitted_count >= self.data.size and len(qrel_filter_ids) == len(qrel_doc_ids):
-                break
+                qrel_filter_ids[doc_id] = doc.filter_id
 
         missing_doc_ids = qrel_doc_ids - set(qrel_filter_ids)
         if missing_doc_ids:
@@ -1095,11 +1110,7 @@ class FtsDocumentIterator:
     def __init__(self, dataset: FtsDatasetManager, batch_size: int = config.NUM_PER_BATCH):
         self._ds = dataset
         self._batch_size = batch_size
-        self._filter_id_permutation = FtsFilterIdPermutation.for_size(
-            self._ds.data.size,
-        )
         self._finished = False
-        self._doc_count = 0  # Track total documents emitted
         self._docs_iter = None
 
     def __iter__(self):
@@ -1117,50 +1128,19 @@ class FtsDocumentIterator:
         if self._finished:
             raise StopIteration
 
-        # Initialize iterator on first call
         if self._docs_iter is None:
-            if self._ds._ir_dataset is None:
-                error_msg = "ir_datasets dataset not loaded. Call prepare() first."
-                log.error(error_msg)
-                raise RuntimeError(error_msg)
+            self._docs_iter = self._ds._iter_selected_documents_with_filter_ids()
 
-            log.info("Starting to iterate documents using translator")
-            self._docs_iter = self._ds._translator.iter_documents(self._ds._ir_dataset)
-
-        # Read batch with proper error handling
-        try:
-            batch = []
-            while len(batch) < self._batch_size:
-                if self._doc_count >= self._ds.data.size:
-                    self._finished = True
-                    if batch:
-                        return batch
-                    raise StopIteration  # noqa: TRY301
-                try:
-                    doc = next(self._docs_iter)
-                    doc.doc_id = str(doc.doc_id)
-                    if self._ds.selected_doc_ids is not None and doc.doc_id not in self._ds.selected_doc_ids:
-                        continue
-                    doc.filter_id = self._filter_id_permutation.map(self._doc_count)
-                    batch.append(doc)
-                    self._doc_count += 1
-                except StopIteration:
-                    self._finished = True
-                    if batch:
-                        return batch
-                    raise
-                except Exception as e:
-                    log.debug(f"Skipping malformed document: {e}")
-                    continue
-
-        except StopIteration:
-            self._finished = True
-            raise
-        except Exception:
-            log.exception("Error reading documents from translator")
-            raise
-        else:
-            return batch
+        batch = []
+        while len(batch) < self._batch_size:
+            try:
+                batch.append(next(self._docs_iter))
+            except StopIteration:
+                self._finished = True
+                if batch:
+                    return batch
+                raise
+        return batch
 
     def __enter__(self):
         """Enter context manager."""

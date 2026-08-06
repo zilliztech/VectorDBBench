@@ -174,6 +174,40 @@ def test_fts_iterator_preserves_qrel_docs_before_filler():
     assert [filter_id for _, filter_id in docs] == [2, 0, 1]
 
 
+def test_fts_qrel_filter_ids_match_sparse_emitted_documents_when_one_is_skipped():
+    class UnassignableDocument:
+        doc_id = "d3"
+        text = "malformed"
+
+        @property
+        def filter_id(self) -> int | None:
+            return None
+
+        @filter_id.setter
+        def filter_id(self, value: int | None) -> None:  # noqa: ARG002
+            raise ValueError("cannot assign filter_id")
+
+    class SparseTranslator:
+        def iter_documents(self, dataset):  # noqa: ARG002
+            yield Doc("d1", "one")
+            yield Doc("d2", "two")
+            yield UnassignableDocument()
+            yield Doc("d4", "four")
+            yield Doc("d5", "five")
+
+    manager = make_tiny_msmarco_manager(size=3)
+    manager._ir_dataset = object()
+    manager._translator = SparseTranslator()
+    manager.required_doc_ids = {"d1", "d5"}
+    manager.selected_doc_ids = {"d1", "d3", "d5"}
+
+    qrel_filter_ids = manager._build_qrel_filter_ids()
+    emitted_filter_ids = {doc.doc_id: doc.filter_id for batch in manager for doc in batch}
+
+    assert emitted_filter_ids == {"d1": 2, "d5": 0}
+    assert qrel_filter_ids == emitted_filter_ids
+
+
 def test_fts_prepare_integer_filter_derives_filtered_qrels(monkeypatch: pytest.MonkeyPatch):
     manager = make_tiny_msmarco_manager(size=4)
     monkeypatch.setattr(manager._translator, "load", FakeDataset)
