@@ -29,7 +29,12 @@ class LanceDB(VectorDB):
         FilterOp.NumGE,
         FilterOp.StrEqual,
     ]
-    thread_safe: bool = False
+    # LanceDB's Python sync wrapper routes every table.add() through a shared
+    # tokio runtime (LOOP.run), and Lance's Rust core handles concurrent
+    # manifest commits with optimistic-concurrency retries. So multiple worker
+    # threads can share one connection. Set to True to let ConcurrentInsertRunner
+    # use max_workers > 1 for parallel data loading.
+    thread_safe: bool = True
 
     def __init__(
         self,

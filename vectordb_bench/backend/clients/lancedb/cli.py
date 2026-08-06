@@ -1,4 +1,3 @@
-import os
 from typing import Annotated, Unpack
 
 import click
@@ -61,84 +60,21 @@ class LanceDBTypedDict(CommonTypedDict):
     ]
 
 
-def _build_storage_options(**parameters) -> dict[str, str] | None:
-    """Build storage_options based on URI scheme.
-
-    Supports:
-    - cos:// / s3://  → Tencent COS credentials
-    - goosefs://      → GooseFS authentication options
-    """
-    uri = parameters.get("uri", "")
-
-    # --- GooseFS storage options ---
-    if uri.startswith("goosefs://"):
-        return _build_goosefs_storage_options(**parameters)
-
-    # --- COS / S3 storage options ---
-    if uri.startswith(("cos://", "s3://")):
-        return _build_cos_storage_options(**parameters)
-
-    return None
-
-
-def _build_cos_storage_options(**parameters) -> dict[str, str] | None:
-    """Build storage_options for COS/S3 if credentials are provided."""
-    secret_id = parameters.get("cos_secret_id") or os.environ.get("COS_SECRET_ID")
-    secret_key = parameters.get("cos_secret_key") or os.environ.get("COS_SECRET_KEY")
-    endpoint = parameters.get("cos_endpoint") or os.environ.get("COS_ENDPOINT")
-    region = parameters.get("cos_region") or os.environ.get("TENCENTCLOUD_REGION")
-
-    if not (secret_id and secret_key):
-        return None
-
-    storage_options = {
-        "aws_access_key_id": secret_id,
-        "aws_secret_access_key": secret_key,
-    }
-    if endpoint:
-        storage_options["endpoint"] = endpoint
-    if region:
-        storage_options["region"] = region
-
-    return storage_options
-
-
-def _build_goosefs_storage_options(**_parameters: str) -> dict[str, str] | None:
-    """Build storage_options for GooseFS.
-
-    Recognized environment variables:
-    - GOOSEFS_AUTH_TYPE       → goosefs_auth_type (simple / nosasl)
-    - GOOSEFS_AUTH_USERNAME   → goosefs_auth_username
-    - GOOSEFS_WRITE_TYPE      → goosefs_write_type (CACHE_THROUGH etc.)
-    - GOOSEFS_BLOCK_SIZE      → goosefs_block_size
-    - GOOSEFS_CHUNK_SIZE      → goosefs_chunk_size
-    """
-    storage_options: dict[str, str] = {}
-
-    _goosefs_env_keys = {
-        "GOOSEFS_AUTH_TYPE": "goosefs_auth_type",
-        "GOOSEFS_AUTH_USERNAME": "goosefs_auth_username",
-        "GOOSEFS_WRITE_TYPE": "goosefs_write_type",
-        "GOOSEFS_BLOCK_SIZE": "goosefs_block_size",
-        "GOOSEFS_CHUNK_SIZE": "goosefs_chunk_size",
-    }
-
-    for env_key, opt_key in _goosefs_env_keys.items():
-        value = os.environ.get(env_key)
-        if value:
-            storage_options[opt_key] = value
-
-    return storage_options if storage_options else None
-
-
 def _build_db_config(**parameters):
-    from .config import LanceDBConfig
+    from .config import LanceDBConfig, build_lancedb_storage_options
 
+    uri = parameters["uri"]
     return LanceDBConfig(
         db_label=parameters["db_label"],
-        uri=parameters["uri"],
+        uri=uri,
         token=SecretStr(parameters["token"]) if parameters.get("token") else None,
-        storage_options=_build_storage_options(**parameters),
+        storage_options=build_lancedb_storage_options(
+            uri,
+            cos_secret_id=parameters.get("cos_secret_id"),
+            cos_secret_key=parameters.get("cos_secret_key"),
+            cos_endpoint=parameters.get("cos_endpoint"),
+            cos_region=parameters.get("cos_region"),
+        ),
     )
 
 

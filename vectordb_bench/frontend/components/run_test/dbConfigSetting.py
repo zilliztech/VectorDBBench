@@ -41,15 +41,22 @@ def dbConfigSettingItem(st, activeDb: DB):
     dbConfig = {}
     idx = 0
 
+    ui_hidden = set(getattr(dbConfigClass, "ui_hidden_configs", lambda: [])())
+
     # db config (unique)
     for key, property in property_items:
+        if key in ui_hidden:
+            continue
         if key not in dbConfigClass.common_short_configs() and key not in dbConfigClass.common_long_configs():
             column = columns[idx % DB_CONFIG_SETTING_COLUMNS]
             idx += 1
+            default_value = property.get("default", "")
+            if default_value is None:
+                default_value = ""
             input_value = column.text_input(
                 key,
                 key=f"{activeDb.name}-{key}",
-                value=property.get("default", ""),
+                value=default_value,
                 type="password" if inputIsPassword(key) else "default",
                 placeholder="optional" if key not in required_fields else None,
             )
