@@ -5,6 +5,7 @@ from typing import ClassVar
 from pydantic import BaseModel, SecretStr, field_validator, model_validator
 
 from ..api import DBCaseConfig, DBConfig, MetricType
+from ..elasticsearch_compatible import build_bm25_similarity_settings, build_fts_index_param
 
 log = logging.getLogger(__name__)
 
@@ -261,26 +262,10 @@ class OSSOpenSearchFtsConfig(BaseModel, DBCaseConfig):
     bm25_b: float | None = None
 
     def index_param(self) -> dict:
-        text_mapping = {"type": "text"}
-        if self.bm25_k1 is not None or self.bm25_b is not None:
-            text_mapping["similarity"] = "vdbbench_bm25"
-        return {
-            "properties": {
-                "doc_id": {"type": "keyword"},
-                "filter_id": {"type": "long"},
-                "text": text_mapping,
-            },
-        }
+        return build_fts_index_param(self.bm25_k1, self.bm25_b)
 
     def search_param(self) -> dict:
         return {}
 
     def similarity_settings(self) -> dict:
-        if self.bm25_k1 is None and self.bm25_b is None:
-            return {}
-        bm25_settings = {"type": "BM25"}
-        if self.bm25_k1 is not None:
-            bm25_settings["k1"] = self.bm25_k1
-        if self.bm25_b is not None:
-            bm25_settings["b"] = self.bm25_b
-        return {"similarity": {"vdbbench_bm25": bm25_settings}}
+        return build_bm25_similarity_settings(self.bm25_k1, self.bm25_b)

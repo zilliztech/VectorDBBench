@@ -15,6 +15,7 @@ sys.modules.setdefault("opensearchpy", types.SimpleNamespace(OpenSearch=_FakeOpe
 
 from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.clients.api import IndexType
+from vectordb_bench.backend.clients.elastic_cloud.config import ElasticCloudFtsConfig
 from vectordb_bench.backend.clients.oss_opensearch import cli as oss_opensearch_cli
 from vectordb_bench.backend.clients.oss_opensearch.config import OSSOpenSearchFtsConfig, OSSOpenSearchIndexConfig
 from vectordb_bench.backend.clients.oss_opensearch.oss_opensearch import OSSOpenSearch, OpenSearchError
@@ -38,6 +39,7 @@ def make_fts_db():
 def test_oss_opensearch_fts_config_defaults():
     config = OSSOpenSearchFtsConfig()
 
+    assert config.index_param() == ElasticCloudFtsConfig().index_param()
     assert config.index_param()["properties"]["doc_id"] == {"type": "keyword"}
     assert config.index_param()["properties"]["filter_id"] == {"type": "long"}
     assert config.index_param()["properties"]["text"] == {"type": "text"}
@@ -46,7 +48,9 @@ def test_oss_opensearch_fts_config_defaults():
 
 def test_oss_opensearch_fts_config_supports_bm25_similarity():
     config = OSSOpenSearchFtsConfig(bm25_k1=1.2, bm25_b=0.75)
+    elastic_config = ElasticCloudFtsConfig(bm25_k1=1.2, bm25_b=0.75)
 
+    assert config.similarity_settings() == elastic_config.similarity_settings()
     assert config.index_param()["properties"]["text"]["similarity"] == "vdbbench_bm25"
     assert config.similarity_settings() == {
         "similarity": {
