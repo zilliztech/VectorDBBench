@@ -2594,16 +2594,33 @@ AliSQLPerformanceConfig = [
     CaseConfigParamInput_EFSearch_AliSQL,
 ]
 
+_LANCEDB_IVF_INDEXES = {
+    IndexType.IVFPQ.value,
+    IndexType.IVF_HNSW_SQ.value,
+    IndexType.IVF_HNSW_PQ.value,
+    IndexType.HNSW.value,  # backward compat alias of IVF_HNSW_SQ
+}
+_LANCEDB_PQ_INDEXES = {
+    IndexType.IVFPQ.value,
+    IndexType.IVF_HNSW_PQ.value,
+}
+_LANCEDB_HNSW_INDEXES = {
+    IndexType.IVF_HNSW_SQ.value,
+    IndexType.IVF_HNSW_PQ.value,
+    IndexType.HNSW.value,
+}
+
 CaseConfigParamInput_IndexType_LanceDB = CaseConfigInput(
     label=CaseConfigParamType.IndexType,
-    inputHelp="AUTOINDEX = IVFPQ with default parameters",
+    inputHelp="AUTOINDEX = IVFPQ with default parameters; IVF_HNSW_SQ/PQ for GooseFS/Lance hybrid indexes",
     inputType=InputType.Option,
     inputConfig={
         "options": [
             IndexType.NONE.value,
             IndexType.AUTOINDEX.value,
             IndexType.IVFPQ.value,
-            IndexType.HNSW.value,
+            IndexType.IVF_HNSW_SQ.value,
+            IndexType.IVF_HNSW_PQ.value,
         ],
     },
 )
@@ -2611,15 +2628,14 @@ CaseConfigParamInput_IndexType_LanceDB = CaseConfigInput(
 CaseConfigParamInput_num_partitions_LanceDB = CaseConfigInput(
     label=CaseConfigParamType.num_partitions,
     displayLabel="Number of Partitions",
-    inputHelp="Number of partitions (clusters) for IVF_PQ. Default (when 0): sqrt(num_rows)",
+    inputHelp="Number of partitions (clusters) for IVF indexes. Default (when 0): sqrt(num_rows)",
     inputType=InputType.Number,
     inputConfig={
         "min": 0,
         "max": 10000,
         "value": 0,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.IVFPQ.value
-    or config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) in _LANCEDB_IVF_INDEXES,
 )
 
 CaseConfigParamInput_num_sub_vectors_LanceDB = CaseConfigInput(
@@ -2632,8 +2648,7 @@ CaseConfigParamInput_num_sub_vectors_LanceDB = CaseConfigInput(
         "max": 1000,
         "value": 0,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.IVFPQ.value
-    or config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) in _LANCEDB_PQ_INDEXES,
 )
 
 CaseConfigParamInput_num_bits_LanceDB = CaseConfigInput(
@@ -2644,8 +2659,7 @@ CaseConfigParamInput_num_bits_LanceDB = CaseConfigInput(
     inputConfig={
         "options": [4, 8],
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.IVFPQ.value
-    or config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.IVFPQ.value,
 )
 
 CaseConfigParamInput_sample_rate_LanceDB = CaseConfigInput(
@@ -2658,8 +2672,7 @@ CaseConfigParamInput_sample_rate_LanceDB = CaseConfigInput(
         "max": 1024,
         "value": 256,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.IVFPQ.value
-    or config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.IVFPQ.value,
 )
 
 CaseConfigParamInput_max_iterations_LanceDB = CaseConfigInput(
@@ -2672,8 +2685,7 @@ CaseConfigParamInput_max_iterations_LanceDB = CaseConfigInput(
         "max": 200,
         "value": 50,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.IVFPQ.value
-    or config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.IVFPQ.value,
 )
 
 CaseConfigParamInput_m_LanceDB = CaseConfigInput(
@@ -2686,7 +2698,7 @@ CaseConfigParamInput_m_LanceDB = CaseConfigInput(
         "max": 1000,
         "value": 0,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) in _LANCEDB_HNSW_INDEXES,
 )
 
 CaseConfigParamInput_ef_construction_LanceDB = CaseConfigInput(
@@ -2699,7 +2711,7 @@ CaseConfigParamInput_ef_construction_LanceDB = CaseConfigInput(
         "max": 1000,
         "value": 0,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) in _LANCEDB_HNSW_INDEXES,
 )
 
 CaseConfigParamInput_IndexType_Lindorm = CaseConfigInput(
