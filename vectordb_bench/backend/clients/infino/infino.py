@@ -61,18 +61,13 @@ class Infino(VectorDB):
         self.with_scalar_labels = with_scalar_labels
         self._is_fts = isinstance(db_case_config, InfinoFTSConfig)
         # Vector-only params; left None for FTS runs, which never call search_embedding.
-        self.metric = self.nprobe = self.rerank_mult = None
+        self.metric = None
         if self._is_fts:
             # Tokenizer chosen to match the GT analyzer (set by
             # apply_fts_manifest); defaults to the ASCII tokenizer.
             self._analyzer = db_case_config.analyzer
         else:
-            index_param = db_case_config.index_param()
-            search_param = db_case_config.search_param()
-            self.metric = index_param["metric"]
-            # Absent => engine default; not forwarded to vector_search.
-            self.nprobe = search_param.get("nprobe")
-            self.rerank_mult = search_param.get("rerank_mult")
+            self.metric = db_case_config.index_param()["metric"]
 
         self._conn = None
         self._table = None
@@ -156,13 +151,9 @@ class Infino(VectorDB):
         return self._id_map
 
     def search_embedding(self, query: list[float], k: int = 100, **kwargs) -> list[int]:
-        opts = {}
-        if self.nprobe is not None:
-            opts["nprobe"] = self.nprobe
-        if self.rerank_mult is not None:
-            opts["rerank_mult"] = self.rerank_mult
+        # Vector serving is engine-decided; the call carries no tuning kwargs.
         id_map = self._ensure_id_map()
-        hits = self._table.vector_search(_VECTOR_FIELD, query, k, **opts)
+        hits = self._table.vector_search(_VECTOR_FIELD, query, k)
         return [id_map[h] for h in hits.column("_id").to_pylist()]
 
     def insert_documents(
