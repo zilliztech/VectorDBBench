@@ -177,10 +177,19 @@ class ConcurrentInsertRunner:
         all_metadata = data_df[self.dataset.data.train_id_field].tolist()
         emb_np = np.stack(data_df[self.dataset.data.train_vector_field])
         if self.normalize:
-            all_embeddings = (emb_np / np.linalg.norm(emb_np, axis=1)[:, np.newaxis]).tolist()
+            emb_np = np.ascontiguousarray(emb_np, dtype=np.float32)
+            emb_np /= np.linalg.norm(emb_np, axis=1)[:, np.newaxis]
+        # A whole shard goes to one insert call, so this conversion sets the
+        # loader's peak memory. As a list-of-lists a 1M x 768 shard is ~24.6 GB
+        # (32 bytes per float: a Python float object plus a list pointer)
+        # against 3.1 GB for the array itself; N workers each holding one is
+        # how a 62 GB box gets OOM-killed. Clients that can read the buffer
+        # directly take it as-is; the rest keep the list conversion.
+        if getattr(self.db, "accepts_ndarray_embeddings", False):
+            all_embeddings = emb_np
         else:
             all_embeddings = emb_np.tolist()
-        del emb_np
+            del emb_np
 
         labels_data = None
         if self.filters.type == FilterOp.StrEqual or self.with_scalar_labels:
