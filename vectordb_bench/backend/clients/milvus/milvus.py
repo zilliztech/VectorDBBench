@@ -19,6 +19,8 @@ log = logging.getLogger(__name__)
 MILVUS_LOAD_REQS_SIZE = 1.5 * 1024 * 1024
 MILVUS_FTS_BATCH_SIZE = 1000
 MILVUS_FORCE_MERGE_TARGET_SIZE_MB = ((1 << 63) - 1) // (1024**2)
+MILVUS_FORCE_MERGE_MAX_ATTEMPTS = 10
+MILVUS_FORCE_MERGE_RETRY_INTERVAL_SECONDS = 30
 
 
 class Milvus(VectorDB):
@@ -292,12 +294,54 @@ class Milvus(VectorDB):
                 break
             time.sleep(5)
 
+    def _wait_for_compaction_ready(self):
+        self._wait_for_segments_sorted()
+        self._wait_for_index()
+
     def _wait_for_compaction(self, compaction_id: int):
         while True:
             state = self.client.get_compaction_state(compaction_id)
             if state == "Completed":
                 break
             time.sleep(0.5)
+
+    def _force_merge_source_segment_ids(self) -> set[int]:
+        # isCompacting is not exposed by MilvusClient, so verify plan coverage
+        # against every persistent data segment that force merge should consume.
+        segments = self.client.list_persistent_segments(self.collection_name)
+        return {
+            segment.segment_id
+            for segment in segments
+            if segment.state_name == "Flushed" and segment.level_name not in {"L0", "L2"}
+        }
+
+    def _force_merge(self, max_attempts: int = MILVUS_FORCE_MERGE_MAX_ATTEMPTS):
+        if max_attempts <= 0:
+            message = "force merge max_attempts must be greater than zero"
+            raise ValueError(message)
+
+        for attempt in range(1, max_attempts + 1):
+            self._wait_for_compaction_ready()
+            expected_source_ids = self._force_merge_source_segment_ids()
+            compaction_id = self.client.compact(self.collection_name, target_size=MILVUS_FORCE_MERGE_TARGET_SIZE_MB)
+            if compaction_id <= 0:
+                failure_detail = f"generated no plan for snapshot {sorted(expected_source_ids)}"
+            else:
+                self._wait_for_compaction(compaction_id)
+                plans = self.client.get_compaction_plans(compaction_id)
+                actual_source_ids = {source_id for plan in plans.plans for source_id in plan.sources}
+                attempt_missing_source_ids = expected_source_ids - actual_source_ids
+                if not attempt_missing_source_ids:
+                    return
+
+                failure_detail = f"missing segments: {sorted(attempt_missing_source_ids)}"
+
+            if attempt == max_attempts:
+                message = f"{self.name} force merge failed after {max_attempts} attempts; {failure_detail}"
+                raise RuntimeError(message)
+
+            log.info(f"{self.name} force merge attempt {attempt}/{max_attempts} {failure_detail}; retrying...")
+            time.sleep(MILVUS_FORCE_MERGE_RETRY_INTERVAL_SECONDS)
 
     def _optimize(self):
         log.info(f"{self.name} optimizing before search")
@@ -308,14 +352,11 @@ class Milvus(VectorDB):
                 log.debug("skip force merge compaction for gpu index type.")
             else:
                 try:
-                    # wait for sort, index, compact
-                    self._wait_for_segments_sorted()
-                    self._wait_for_index()
-                    compaction_id = self.client.compact(
-                        self.collection_name, target_size=MILVUS_FORCE_MERGE_TARGET_SIZE_MB
-                    )
+                    self._wait_for_compaction_ready()
+                    compaction_id = self.client.compact(self.collection_name)
                     if compaction_id > 0:
                         self._wait_for_compaction(compaction_id)
+                    self._force_merge()
                     log.info(f"{self.name} force merge compaction completed.")
                 except Exception as e:
                     log.warning(f"{self.name} compact or list segments error: {e}")
