@@ -61,10 +61,12 @@ def build_lancedb_storage_options(
 ) -> dict[str, str] | None:
     """Resolve storage_options for a LanceDB URI.
 
-    Explicit options win when provided; otherwise options are derived from the
-    URI scheme (goosefs:// / cos:// / s3://) and environment variables.
+    Explicit options win when provided (including an empty mapping, which
+    intentionally disables inherited env-derived settings); otherwise options
+    are derived from the URI scheme (goosefs:// / cos:// / s3://) and
+    environment variables.
     """
-    if explicit:
+    if explicit is not None:
         return explicit
 
     if uri.startswith("goosefs://"):
