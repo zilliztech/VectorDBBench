@@ -34,11 +34,9 @@ class InfinoConfig(DBConfig):
 
 class InfinoIndexConfig(BaseModel, DBCaseConfig):
     metric_type: MetricType | None = None
-    # Unset => the engine picks. The engine owns these defaults and its
-    # recall numbers are measured on that path, so the client must not
-    # substitute values of its own; only forward what a caller asked for.
-    nprobe: int | None = None
-    rerank_mult: int | None = None
+    # Vector serving (probe width and rerank budget) is engine-decided —
+    # calibrated per table at optimize time. The published binding carries
+    # no tuning kwargs, so the client has nothing to forward.
 
     def parse_metric(self) -> str:
         if self.metric_type not in _METRIC_MAP:
@@ -50,11 +48,7 @@ class InfinoIndexConfig(BaseModel, DBCaseConfig):
         return {"metric": self.parse_metric()}
 
     def search_param(self) -> dict:
-        return {
-            k: v
-            for k, v in (("nprobe", self.nprobe), ("rerank_mult", self.rerank_mult))
-            if v is not None
-        }
+        return {}
 
 
 # Infino's BM25 k1/b are compile-time constants. The analyzer (tokenizer)

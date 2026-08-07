@@ -29,8 +29,9 @@ class TestInfino:
 
         with tempfile.TemporaryDirectory() as data_path:
             db_config = config_cls(data_path=data_path).to_dict()
-            # nprobe == n_cent probes every IVF cell -> exact search for the assertion.
-            db_case_config = case_config_cls(metric_type=MetricType.L2, n_cent=8, nprobe=8)
+            # 2K rows sit inside the engine's default rerank budget, so the
+            # engine-decided serving is exact for the assertion.
+            db_case_config = case_config_cls(metric_type=MetricType.L2)
 
             client = dbcls(
                 dim=dim,
@@ -65,7 +66,7 @@ class TestInfino:
             client = dbcls(
                 dim=dim,
                 db_config=config_cls(data_path=data_path).to_dict(),
-                db_case_config=case_config_cls(metric_type=MetricType.L2, n_cent=8, nprobe=8),
+                db_case_config=case_config_cls(metric_type=MetricType.L2),
                 collection_name="test_numge",
                 drop_old=True,
             )
@@ -97,7 +98,7 @@ class TestInfino:
             client = dbcls(
                 dim=dim,
                 db_config=config_cls(data_path=data_path).to_dict(),
-                db_case_config=case_config_cls(metric_type=MetricType.L2, n_cent=8, nprobe=8),
+                db_case_config=case_config_cls(metric_type=MetricType.L2),
                 collection_name="test_strequal",
                 drop_old=True,
                 with_scalar_labels=True,

@@ -63,20 +63,6 @@ class InfinoTypedDict(InfinoCommonTypedDict):
         str,
         click.option("--table-name", type=str, default="vdbbench_infino", help="Infino table name"),
     ]
-    nprobe: Annotated[
-        int | None,
-        click.option(
-            "--nprobe", type=int, default=None,
-            help="IVF cells probed (query). Omit to use the engine default.",
-        ),
-    ]
-    rerank_mult: Annotated[
-        int,
-        click.option(
-            "--rerank-mult", type=int, default=None,
-            help="Coarse candidates re-scored exactly = k * rerank_mult. Omit to use the engine default.",
-        ),
-    ]
 
 
 class InfinoFTSTypedDict(InfinoCommonTypedDict):
@@ -100,10 +86,7 @@ def Infino(**parameters: Unpack[InfinoTypedDict]):
             cache_dir=parameters["cache_dir"],
             storage_options=parameters["storage_options"] or None,
         ),
-        db_case_config=InfinoIndexConfig(
-            nprobe=parameters["nprobe"],
-            rerank_mult=parameters["rerank_mult"],
-        ),
+        db_case_config=InfinoIndexConfig(),
         **parameters,
     )
 
