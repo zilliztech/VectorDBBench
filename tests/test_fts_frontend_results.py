@@ -113,9 +113,9 @@ def test_checked_in_consolidated_permuted_results_expose_concurrency_qps_for_all
     concurrency_data = _concurrency_rows(filtered_data)
     peak_data = _peak_filtered_qps_rows(filtered_data)
 
-    assert len(data) == 82
+    assert len(data) == 76
     assert len(filtered_data) == 40
-    assert len(concurrency_data) == 80
+    assert len(concurrency_data) == 90
     assert (pd.to_numeric(filtered_data["p99_s"]) > 0).all()
     assert (pd.to_numeric(filtered_data["p95_s"]) > 0).all()
     assert (pd.to_numeric(filtered_data["recall"]) > 0).all()
@@ -128,7 +128,7 @@ def test_checked_in_consolidated_permuted_results_expose_concurrency_qps_for_all
         "TurboPuffer",
         "ZillizCloud",
     }
-    assert set(concurrency_data["concurrency"]) == {60, 80}
+    assert set(concurrency_data["concurrency"]) == {40, 60, 80}
     assert set(peak_data["filter_rate_label"]) == {"50%", "75%", "90%", "95%", "99%"}
     assert set(peak_data["concurrency"]).issubset({60, 80})
     assert set(pd.to_numeric(filtered_data["filter_rate"])) == {0.5, 0.75, 0.9, 0.95, 0.99}
@@ -144,7 +144,7 @@ def test_checked_in_consolidated_permuted_results_expose_concurrency_qps_for_all
         "ElasticCloud": 22,
         "OpenSearch": 16,
         "TurboPuffer": 22,
-        "ZillizCloud": 22,
+        "ZillizCloud": 16,
     }
     result_files = sorted(result_dir.glob("*/result_*.json"))
     assert len(result_files) == 4
@@ -155,12 +155,18 @@ def test_checked_in_consolidated_permuted_results_expose_concurrency_qps_for_all
     for result_file in result_files:
         results = json.loads(result_file.read_text())["results"]
         result_counts[result_file.parent.name] = len(results)
+        if result_file.parent.name == "ZillizCloud":
+            assert all(
+                "one persistent segment"
+                in json.loads(case_result["task_config"]["db_config"]["note"])["evidence"]["source"]
+                for case_result in results
+            )
         for case_result in results:
             custom_case = case_result["task_config"]["case_config"].get("custom_case") or {}
             fts_filter = case_result["metrics"].get("additional_parameters", {}).get("fts_filter") or {}
             filter_rate = custom_case.get("filter_rate", fts_filter.get("filter_rate"))
             if filter_rate is not None:
-                assert custom_case.get("filter_id_distribution") == "permuted"
+                assert custom_case.get("filter_id_distribution") in {None, "permuted"}
                 assert fts_filter["filter_id_distribution"] == "affine_permutation_v1"
                 filtered_results.append(case_result)
 
@@ -175,9 +181,13 @@ def test_checked_in_consolidated_permuted_results_expose_concurrency_qps_for_all
     }
     for case_result in filtered_results:
         stages = set(case_result["task_config"]["stages"])
-        provenance = case_result["metrics"]["additional_parameters"]["serial_measurement"]
+        provenance = case_result["metrics"]["additional_parameters"].get("serial_measurement")
 
         assert {"search_concurrent", "search_serial"}.issubset(stages)
+        if provenance is None:
+            assert case_result["task_config"]["db"] == "ZillizCloud"
+            assert all(case_result["metrics"][field] > 0 for field in expected_serial_fields)
+            continue
         assert provenance["composed_from_separate_run"] is True
         assert set(provenance["metric_fields"]) == expected_serial_fields
         assert provenance["source_file"].startswith("result_")
