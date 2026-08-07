@@ -9,7 +9,7 @@ import pyarrow as pa
 
 from vectordb_bench.backend.filter import Filter, FilterOp
 
-from ..api import IndexType, VectorDB
+from ..api import IndexType, PartialInsertError, VectorDB
 from .config import LanceDBIndexConfig
 
 log = logging.getLogger(__name__)
@@ -138,6 +138,10 @@ class LanceDB(VectorDB):
         **kwargs,
     ) -> tuple[int, Exception | None]:
         assert self.table is not None, "Please call self.init() before"
+        # Track committed rows across multi-fragment adds. A later ``table.add``
+        # failure must not report (0, err): ConcurrentInsertRunner would retry
+        # the whole NUM_PER_BATCH and duplicate already-committed IDs.
+        inserted = 0
         try:
             log.info(
                 f"LanceDB insert_embeddings called with {len(embeddings)} rows, "
@@ -172,10 +176,17 @@ class LanceDB(VectorDB):
                         }
                     )
                 self.table.add(batch_table)
+                inserted += len(batch_ids)
 
             return len(metadata), None
         except Exception as e:
             log.warning(f"Failed to insert data into LanceDB table ({self.table_name}), error: {e}")
+            if inserted > 0:
+                msg = (
+                    f"LanceDB insert failed after committing {inserted}/{len(metadata)} rows "
+                    f"into table ({self.table_name}); refusing retry to avoid duplicate IDs"
+                )
+                return inserted, PartialInsertError(msg, inserted_count=inserted, cause=e)
             return 0, e
 
     def prepare_filter(self, filters: Filter):

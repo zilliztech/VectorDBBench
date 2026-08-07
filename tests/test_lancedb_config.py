@@ -20,7 +20,35 @@ from vectordb_bench.backend.clients.lancedb.config import (
     LanceDBIVFHNSWSQConfig,
     LanceDBNoIndexConfig,
     _lancedb_case_config,
+    build_lancedb_storage_options,
 )
+
+# ---------------------------------------------------------------------------
+# storage_options resolution
+# ---------------------------------------------------------------------------
+
+
+def test_explicit_empty_storage_options_disable_env_inheritance(monkeypatch):
+    """``storage_options={}`` must win over GOOSEFS_*/COS env inheritance."""
+    monkeypatch.setenv("GOOSEFS_AUTH_TYPE", "simple")
+    monkeypatch.setenv("GOOSEFS_AUTH_USERNAME", "bench")
+    assert build_lancedb_storage_options("goosefs://bucket/path", explicit={}) == {}
+
+
+def test_none_storage_options_fall_back_to_env(monkeypatch):
+    monkeypatch.setenv("GOOSEFS_AUTH_TYPE", "simple")
+    monkeypatch.delenv("GOOSEFS_AUTH_USERNAME", raising=False)
+    monkeypatch.delenv("GOOSEFS_WRITE_TYPE", raising=False)
+    monkeypatch.delenv("GOOSEFS_BLOCK_SIZE", raising=False)
+    monkeypatch.delenv("GOOSEFS_CHUNK_SIZE", raising=False)
+    opts = build_lancedb_storage_options("goosefs://bucket/path", explicit=None)
+    assert opts == {"goosefs_auth_type": "simple"}
+
+
+def test_explicit_storage_options_are_returned_unchanged():
+    explicit = {"endpoint": "https://example.invalid"}
+    assert build_lancedb_storage_options("s3://bucket", explicit=explicit) is explicit
+
 
 # ---------------------------------------------------------------------------
 # Registry mapping
