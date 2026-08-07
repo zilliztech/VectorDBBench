@@ -78,6 +78,10 @@ class Infino(VectorDB):
 
         self._conn = None
         self._table = None
+        # _id -> dataset-id arrays; None until built (init() skips the build
+        # when the table is empty — the load-phase open) and after unpickling.
+        self._map_keys = None
+        self._map_vals = None
         # Build the schema once so table creation and every append stay in lockstep.
         self._schema = self._build_schema()
 
@@ -134,30 +138,75 @@ class Infino(VectorDB):
     # per TABLE (not per process), stored beside the catalog, reloaded by
     # every worker in well under a second. _ids are 128-bit decimals, so the
     # sorted key array is 16-byte big-endian bytes (lexicographic == numeric).
+    #
+    # The build lives in init() ON PURPOSE: init() runs before the timed
+    # search loops, so the scan/reload never lands inside a measured query.
+    # Two guards keep that placement safe: an empty table (the loader opens
+    # the connection before inserting a single row) builds and persists
+    # NOTHING, and a cached map is only trusted if its row count matches the
+    # table — otherwise it is rebuilt in place.
     def _id_map_path(self) -> Path:
         return Path(self.data_path) / f"{self.table_name}.idmap.npz"
 
+    def _table_row_count(self) -> int:
+        res = self._conn.query_sql(f"SELECT COUNT(*) FROM {self.table_name}")
+        return int(res.column(0).to_pylist()[0])
+
     def _load_or_build_id_map(self) -> None:
+        n_rows = self._table_row_count()
+        if n_rows == 0:
+            # Load-phase init(): drop_old has just recreated the table and no
+            # rows exist yet. Persisting an empty map here would poison every
+            # later search process (the cache is trusted once written).
+            return
         path = self._id_map_path()
-        if not path.exists():
-            m = self._conn.query_sql(f"SELECT _id, {_ID_FIELD} FROM {self.table_name}")
-            keys = np.array(
-                [int(v).to_bytes(16, "big") for v in m.column("_id").to_pylist()],
-                dtype="S16",
-            )
-            vals = np.array(m.column(_ID_FIELD).to_pylist(), dtype=np.int64)
-            order = np.argsort(keys)
-            # Suffix must end in .npz or np.savez appends it and orphans the file.
-            fd, tmp = tempfile.mkstemp(dir=path.parent, suffix=".tmp.npz")
-            os.close(fd)
-            np.savez(tmp, keys=keys[order], vals=vals[order])
-            os.replace(tmp, path)
-        data = np.load(path)
-        self._map_keys, self._map_vals = data["keys"], data["vals"]
+        if path.exists():
+            data = np.load(path)
+            if len(data["keys"]) == n_rows:
+                self._map_keys, self._map_vals = data["keys"], data["vals"]
+                return
+            # Row count mismatch: the cache belongs to a previous incarnation
+            # of the table (dropped and reloaded at a different size). Fall
+            # through and rebuild; os.replace keeps concurrent rebuilds safe.
+        m = self._conn.query_sql(f"SELECT _id, {_ID_FIELD} FROM {self.table_name}")
+        keys = np.array(
+            [int(v).to_bytes(16, "big") for v in m.column("_id").to_pylist()],
+            dtype="S16",
+        )
+        vals = np.array(m.column(_ID_FIELD).to_pylist(), dtype=np.int64)
+        order = np.argsort(keys)
+        keys, vals = keys[order], vals[order]
+        # Suffix must end in .npz or np.savez appends it and orphans the file.
+        fd, tmp = tempfile.mkstemp(dir=path.parent, suffix=".tmp.npz")
+        os.close(fd)
+        np.savez(tmp, keys=keys, vals=vals)
+        os.replace(tmp, path)
+        self._map_keys, self._map_vals = keys, vals
 
     def _to_dataset_ids(self, stable_ids: list) -> list[int]:
+        if not stable_ids:
+            return []
+        if self._map_keys is None:
+            # Only reachable in a process that opened the connection while the
+            # table was still empty (load) and then searched (read-write
+            # cases). Ordinary search processes built the map in init().
+            self._load_or_build_id_map()
+        if self._map_keys is None:
+            raise RuntimeError(
+                f"table {self.table_name!r} has no rows to map; the load stage "
+                "did not run (or wrote nothing) before search"
+            )
         q = np.array([int(v).to_bytes(16, "big") for v in stable_ids], dtype="S16")
+        n = len(self._map_keys)
         idx = np.searchsorted(self._map_keys, q)
+        # Every returned _id must be a key we mapped; a miss means the cached
+        # map belongs to a different table state — fail loudly, wrong ids
+        # here silently corrupt recall.
+        if (idx >= n).any() or (self._map_keys[idx.clip(max=n - 1)] != q).any():
+            raise RuntimeError(
+                f"search returned _ids absent from the id map for {self.table_name!r}; "
+                f"stale cache at {self._id_map_path()} — delete it and rerun"
+            )
         return self._map_vals[idx].tolist()
 
     def _vector_array(self, embeddings: Iterable[list[float]] | np.ndarray) -> pa.Array:
