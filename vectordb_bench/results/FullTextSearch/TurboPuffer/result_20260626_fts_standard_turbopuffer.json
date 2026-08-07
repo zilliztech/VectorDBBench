@@ -73,8 +73,7 @@
             "tokenizer": "standard"
           },
           "num_per_batch": 1000,
-          "load_concurrency": 0,
-          "load_metrics_source_result_json": "/home/ubuntu/bench-runs/turbopuffer_hotpotqa_c20_b1000_cli_sdkretry_20260624T105757Z/hotpotqa_large/runtime_results/TurboPuffer/result_20260624_turbopuffer-hotpotqa-large-c20-b1000-sdkretry-20260624T105757Z_turbopuffer.json"
+          "load_concurrency": 0
         },
         "st_ideal_insert_duration": 0,
         "st_search_stage_list": [],
@@ -211,8 +210,7 @@
             "tokenizer": "standard"
           },
           "num_per_batch": 1000,
-          "load_concurrency": 0,
-          "load_metrics_source_result_json": "/home/ubuntu/bench-runs/turbopuffer_hotpotqa_c20_b1000_cli_sdkretry_20260624T105757Z/hotpotqa_large/runtime_results/TurboPuffer/result_20260624_turbopuffer-hotpotqa-large-c20-b1000-sdkretry-20260624T105757Z_turbopuffer.json"
+          "load_concurrency": 0
         },
         "st_ideal_insert_duration": 0,
         "st_search_stage_list": [],
@@ -347,8 +345,7 @@
             "tokenizer": "standard"
           },
           "num_per_batch": 1000,
-          "load_concurrency": 0,
-          "load_metrics_source_result_json": "/home/ubuntu/bench-runs/turbopuffer_hotpotqa_c20_b1000_cli_sdkretry_20260624T105757Z/hotpotqa_medium/runtime_results/TurboPuffer/result_20260624_turbopuffer-hotpotqa-medium-c20-b1000-sdkretry-20260624T105757Z_turbopuffer.json"
+          "load_concurrency": 0
         },
         "st_ideal_insert_duration": 0,
         "st_search_stage_list": [],
@@ -485,8 +482,7 @@
             "tokenizer": "standard"
           },
           "num_per_batch": 1000,
-          "load_concurrency": 0,
-          "load_metrics_source_result_json": "/home/ubuntu/bench-runs/turbopuffer_hotpotqa_c20_b1000_cli_sdkretry_20260624T105757Z/hotpotqa_medium/runtime_results/TurboPuffer/result_20260624_turbopuffer-hotpotqa-medium-c20-b1000-sdkretry-20260624T105757Z_turbopuffer.json"
+          "load_concurrency": 0
         },
         "st_ideal_insert_duration": 0,
         "st_search_stage_list": [],
@@ -621,8 +617,7 @@
             "tokenizer": "standard"
           },
           "num_per_batch": 1000,
-          "load_concurrency": 0,
-          "load_metrics_source_result_json": "/home/ubuntu/bench-runs/turbopuffer_hotpotqa_c20_b1000_cli_sdkretry_20260624T105757Z/hotpotqa_small/runtime_results/TurboPuffer/result_20260624_turbopuffer-hotpotqa-small-c20-b1000-sdkretry-20260624T105757Z_turbopuffer.json"
+          "load_concurrency": 0
         },
         "st_ideal_insert_duration": 0,
         "st_search_stage_list": [],
@@ -759,8 +754,7 @@
             "tokenizer": "standard"
           },
           "num_per_batch": 1000,
-          "load_concurrency": 0,
-          "load_metrics_source_result_json": "/home/ubuntu/bench-runs/turbopuffer_hotpotqa_c20_b1000_cli_sdkretry_20260624T105757Z/hotpotqa_small/runtime_results/TurboPuffer/result_20260624_turbopuffer-hotpotqa-small-c20-b1000-sdkretry-20260624T105757Z_turbopuffer.json"
+          "load_concurrency": 0
         },
         "st_ideal_insert_duration": 0,
         "st_search_stage_list": [],
@@ -895,8 +889,7 @@
             "tokenizer": "standard"
           },
           "num_per_batch": 1000,
-          "load_concurrency": 0,
-          "load_metrics_source_result_json": "/home/ubuntu/bench-runs/turbopuffer_msmarco_large_c20_b1000_cli_sdkretry_20260624T094413Z/runtime_results/TurboPuffer/result_20260624_turbopuffer-msmarco-large-c20-b1000-sdkretry-20260624T094413Z_turbopuffer.json"
+          "load_concurrency": 0
         },
         "st_ideal_insert_duration": 0,
         "st_search_stage_list": [],
@@ -1033,8 +1026,7 @@
             "tokenizer": "standard"
           },
           "num_per_batch": 1000,
-          "load_concurrency": 0,
-          "load_metrics_source_result_json": "/home/ubuntu/bench-runs/turbopuffer_msmarco_large_c20_b1000_cli_sdkretry_20260624T094413Z/runtime_results/TurboPuffer/result_20260624_turbopuffer-msmarco-large-c20-b1000-sdkretry-20260624T094413Z_turbopuffer.json"
+          "load_concurrency": 0
         },
         "st_ideal_insert_duration": 0,
         "st_search_stage_list": [],
@@ -1169,8 +1161,7 @@
             "tokenizer": "standard"
           },
           "num_per_batch": 1000,
-          "load_concurrency": 0,
-          "load_metrics_source_result_json": "/home/ubuntu/bench-runs/turbopuffer_msmarco_medium_c20_b1000_cli_20260624T085600Z/runtime_results/TurboPuffer/result_20260624_turbopuffer-msmarco-medium-c20-b1000-cli-20260624T085600Z_turbopuffer.json"
+          "load_concurrency": 0
         },
         "st_ideal_insert_duration": 0,
         "st_search_stage_list": [],
@@ -1307,8 +1298,7 @@
             "tokenizer": "standard"
           },
           "num_per_batch": 1000,
-          "load_concurrency": 0,
-          "load_metrics_source_result_json": "/home/ubuntu/bench-runs/turbopuffer_msmarco_medium_c20_b1000_cli_20260624T085600Z/runtime_results/TurboPuffer/result_20260624_turbopuffer-msmarco-medium-c20-b1000-cli-20260624T085600Z_turbopuffer.json"
+          "load_concurrency": 0
         },
         "st_ideal_insert_duration": 0,
         "st_search_stage_list": [],
@@ -1443,8 +1433,7 @@
             "tokenizer": "standard"
           },
           "num_per_batch": 1000,
-          "load_concurrency": 0,
-          "load_metrics_source_result_json": "/home/ubuntu/bench-runs/turbopuffer_msmarco_small_c20_b1000_cli_20260624T084228Z/runtime_results/TurboPuffer/result_20260624_turbopuffer-msmarco-small-c20-b1000-cli-20260624T084228Z_turbopuffer.json"
+          "load_concurrency": 0
         },
         "st_ideal_insert_duration": 0,
         "st_search_stage_list": [],
@@ -1581,8 +1570,7 @@
             "tokenizer": "standard"
           },
           "num_per_batch": 1000,
-          "load_concurrency": 0,
-          "load_metrics_source_result_json": "/home/ubuntu/bench-runs/turbopuffer_msmarco_small_c20_b1000_cli_20260624T084228Z/runtime_results/TurboPuffer/result_20260624_turbopuffer-msmarco-small-c20-b1000-cli-20260624T084228Z_turbopuffer.json"
+          "load_concurrency": 0
         },
         "st_ideal_insert_duration": 0,
         "st_search_stage_list": [],
