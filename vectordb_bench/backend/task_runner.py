@@ -21,6 +21,7 @@ from .runner import (
     ColdWarmSearchRunner,
     ConcurrentInsertRunner,
     MultiProcessingSearchRunner,
+    ThreadedSearchRunner,
     ReadWriteRunner,
     SerialInsertRunner,
     SerialSearchRunner,
@@ -623,7 +624,14 @@ class CaseRunner(BaseModel):
                 workload_kind=WorkloadKind.VECTOR,
             )
         if TaskStage.SEARCH_CONCURRENT in self.config.stages:
-            self.search_runner = MultiProcessingSearchRunner(
+            # Embedded clients run the ladder as threads over one shared
+            # connection — see ThreadedSearchRunner for the measured why.
+            runner_cls = (
+                ThreadedSearchRunner
+                if getattr(self.db, "in_process_concurrency", False)
+                else MultiProcessingSearchRunner
+            )
+            self.search_runner = runner_cls(
                 db=self.db,
                 test_data=self.test_emb,
                 filters=self.ca.filters,
@@ -662,7 +670,12 @@ class CaseRunner(BaseModel):
                 workload_kind=WorkloadKind.FULL_TEXT,
             )
         if TaskStage.SEARCH_CONCURRENT in self.config.stages:
-            self.search_runner = MultiProcessingSearchRunner(
+            runner_cls = (
+                ThreadedSearchRunner
+                if getattr(self.db, "in_process_concurrency", False)
+                else MultiProcessingSearchRunner
+            )
+            self.search_runner = runner_cls(
                 db=self.db,
                 test_data=test_texts,
                 filters=self.ca.filters,

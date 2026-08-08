@@ -37,6 +37,15 @@ class Infino(VectorDB):
     # _vector_array() for the ~8x memory difference this avoids per shard.
     accepts_ndarray_embeddings: bool = True
 
+    # Run the concurrency ladder as N threads over ONE shared connection
+    # (ThreadedSearchRunner) instead of N spawned processes: Infino is an
+    # embedded engine, so process-per-worker multiplies whole engines
+    # (~2 GB anon RSS each after one query, ~13 GB of pages touched per
+    # first query — the stock ladder OOM-killed a 62 GB host at conc≈30
+    # on Cohere-10M). Searches are read-only over immutable snapshots, so
+    # a shared connection is thread-safe.
+    in_process_concurrency: bool = True
+
     # NonFilter only (base default): Infino's native filtered ANN is an FTS-token
     # pre-filter that can't express the harness's scalar equality / range filters.
 

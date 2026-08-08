@@ -2,6 +2,7 @@ import concurrent
 import contextlib
 import logging
 import multiprocessing as mp
+import threading
 import random
 import time
 import traceback
@@ -437,3 +438,136 @@ class MultiProcessingSearchRunner:
         }
 
         return success_count, failed_cnt, latency_stats
+
+
+class ThreadedSearchRunner(MultiProcessingSearchRunner):
+    """In-process threaded variant of the concurrency ladder, for EMBEDDED
+    clients (selected via ``db.in_process_concurrency``): N searcher
+    threads share ONE engine/connection, opened once before any timed
+    window.
+
+    Process-per-worker on an embedded client multiplies whole engines —
+    measured on a 62 GB host against a Cohere-10M table: ~2 GB anonymous
+    RSS per worker after a single query, plus ~13 GB of file-backed pages
+    touched by each worker's FIRST query (the engine's cold whole-block
+    fetch arm), so the stock ladder thrashes the page cache from conc≈5
+    and the kernel OOM-kills the pool around conc≈30. The process model
+    also measures each worker's engine open inside the timed window
+    (``init()`` runs after the barrier). One shared connection is the
+    deployment-honest shape for an embedded engine, pays the open/cache
+    cost once, and keeps setup outside the clock. Requires the client's
+    search path to be thread-safe for reads (Infino's is: searches run
+    over immutable snapshots and a read-only id map).
+
+    Aggregation, logging shape, and the returned tuple mirror
+    [`MultiProcessingSearchRunner`] so downstream metrics code cannot
+    tell the runners apart.
+    """
+
+    def _search_thread(self, barrier: "threading.Barrier", out: list, i: int) -> None:
+        try:
+            barrier.wait()
+        except threading.BrokenBarrierError:
+            return
+        test_data = self.test_data
+        num = len(test_data)
+        idx = random.randint(0, num - 1)
+        tenant_rng = random.Random(i)
+
+        start_time = time.perf_counter()
+        count = 0
+        latencies = []
+        while time.perf_counter() < start_time + self.duration:
+            s = time.perf_counter()
+            try:
+                self._search_once(test_data[idx], tenant_rng=tenant_rng)
+                count += 1
+                latencies.append(time.perf_counter() - s)
+            except Exception as e:  # noqa: BLE001 — parity with the mp worker loop
+                log.warning(f"VectorDB search_embedding error: {e}")
+
+            idx = idx + 1 if idx < num - 1 else 0
+
+        total_dur = round(time.perf_counter() - start_time, 4)
+        log.info(
+            f"{threading.current_thread().name:16} search {self.duration}s: "
+            f"actual_dur={total_dur}s, count={count}, qps in this thread: {round(count / total_dur, 4):3}"
+        )
+        out[i] = (count, total_dur, latencies)
+
+    def _run_all_concurrencies_mem_efficient(self):
+        max_qps = 0
+        conc_num_list = []
+        conc_qps_list = []
+        conc_latency_p99_list = []
+        conc_latency_p95_list = []
+        conc_latency_avg_list = []
+        try:
+            # ONE engine open + filter setup for the whole ladder, before
+            # any timed window — the mp runner pays this per worker inside
+            # the measured duration.
+            with self.db.init():
+                self.db.prepare_filter(self.filters)
+                for conc in self.concurrencies:
+                    log.info(
+                        f"Start search {self.duration}s in concurrency {conc} "
+                        f"(threaded, shared connection), filters: {self.filters}"
+                    )
+                    barrier = threading.Barrier(conc + 1)
+                    out: list = [None] * conc
+                    threads = [
+                        threading.Thread(
+                            target=self._search_thread,
+                            args=(barrier, out, i),
+                            name=f"SearchThread-{i}",
+                            daemon=True,
+                        )
+                        for i in range(conc)
+                    ]
+                    for t in threads:
+                        t.start()
+                    barrier.wait()
+                    log.info(f"Syncing all threads and start concurrency search, concurrency={conc}")
+
+                    start = time.perf_counter()
+                    for t in threads:
+                        t.join()
+                    results = [r for r in out if r is not None]
+                    all_count = sum(r[0] for r in results)
+                    latencies = sum((r[2] for r in results), start=[])
+                    latency_p99 = np.percentile(latencies, 99)
+                    latency_p95 = np.percentile(latencies, 95)
+                    latency_avg = np.mean(latencies)
+                    cost = time.perf_counter() - start
+
+                    qps = round(all_count / cost, 4)
+                    conc_num_list.append(conc)
+                    conc_qps_list.append(qps)
+                    conc_latency_p99_list.append(latency_p99)
+                    conc_latency_p95_list.append(latency_p95)
+                    conc_latency_avg_list.append(latency_avg)
+                    log.info(f"End search in concurrency {conc}: dur={cost}s, total_count={all_count}, qps={qps}")
+
+                    if qps > max_qps:
+                        max_qps = qps
+                        log.info(f"Update largest qps with concurrency {conc}: current max_qps={max_qps}")
+        except Exception as e:  # noqa: BLE001 — parity with the mp ladder's failure handling
+            log.warning(
+                f"Fail to search, concurrencies: {self.concurrencies}, max_qps before failure={max_qps}, reason={e}"
+            )
+            traceback.print_exc()
+
+            if max_qps == 0.0:
+                raise e from None
+
+        finally:
+            self.stop()
+
+        return (
+            max_qps,
+            conc_num_list,
+            conc_qps_list,
+            conc_latency_p99_list,
+            conc_latency_p95_list,
+            conc_latency_avg_list,
+        )
