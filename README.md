@@ -63,6 +63,7 @@ All the database client supported
 | alisql                   | `pip install vectordb-bench[alisql]`      |
 | polardb                  | `pip install vectordb-bench[polardb]`       |
 | doris                    | `pip install vectordb-bench[doris]`         |
+| turso                    | `pip install vectordb-bench[turso]`         |
 | zvec                     | `pip install vectordb-bench[zvec]`          |
 | endee                    | `pip install vectordb-bench[endee]`         |
 | lindorm                  | `pip install vectordb-bench[lindorm]`       |

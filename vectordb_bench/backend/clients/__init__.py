@@ -56,6 +56,7 @@ class DB(Enum):
     AliSQL = "AlibabaCloudRDSMySQL"
     Doris = "Doris"
     TurboPuffer = "TurboPuffer"
+    Turso = "Turso"
     Zvec = "Zvec"
     Endee = "Endee"
     Lindorm = "Lindorm"
@@ -201,6 +202,11 @@ class DB(Enum):
             from .turbopuffer.turbopuffer import TurboPuffer
 
             return TurboPuffer
+
+        if self == DB.Turso:
+            from .turso.turso import Turso
+
+            return Turso
 
         if self == DB.Test:
             from .test.test import Test
@@ -419,6 +425,11 @@ class DB(Enum):
             from .turbopuffer.config import TurboPufferConfig
 
             return TurboPufferConfig
+
+        if self == DB.Turso:
+            from .turso.config import TursoConfig
+
+            return TursoConfig
 
         if self == DB.Test:
             from .test.config import TestConfig
@@ -675,6 +686,11 @@ class DB(Enum):
             from .turbopuffer.config import TurboPufferIndexConfig
 
             return TurboPufferIndexConfig
+
+        if self == DB.Turso:
+            from .turso.config import TursoIndexConfig
+
+            return TursoIndexConfig
 
         if self == DB.Chroma:
             from .chroma.config import ChromaIndexConfig
