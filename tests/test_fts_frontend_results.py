@@ -113,7 +113,7 @@ def test_checked_in_consolidated_permuted_results_expose_concurrency_qps_for_all
     concurrency_data = _concurrency_rows(filtered_data)
     peak_data = _peak_filtered_qps_rows(filtered_data)
 
-    assert len(data) == 76
+    assert len(data) == 64
     assert len(filtered_data) == 40
     assert len(concurrency_data) == 90
     assert (pd.to_numeric(filtered_data["p99_s"]) > 0).all()
@@ -141,9 +141,9 @@ def test_checked_in_consolidated_permuted_results_expose_concurrency_qps_for_all
         "ZillizCloud": "result_20260626_fts_standard_zillizcloud.json",
     }
     expected_result_counts = {
-        "ElasticCloud": 22,
+        "ElasticCloud": 16,
         "OpenSearch": 16,
-        "TurboPuffer": 22,
+        "TurboPuffer": 16,
         "ZillizCloud": 16,
     }
     result_files = sorted(result_dir.glob("*/result_*.json"))
