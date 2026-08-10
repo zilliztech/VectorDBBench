@@ -166,7 +166,7 @@ def test_checked_in_consolidated_permuted_results_expose_concurrency_qps_for_all
             fts_filter = case_result["metrics"].get("additional_parameters", {}).get("fts_filter") or {}
             filter_rate = custom_case.get("filter_rate", fts_filter.get("filter_rate"))
             if filter_rate is not None:
-                assert custom_case.get("filter_id_distribution") in {None, "permuted"}
+                assert "filter_id_distribution" not in custom_case
                 assert fts_filter["filter_id_distribution"] == "affine_permutation_v1"
                 filtered_results.append(case_result)
 
@@ -249,3 +249,34 @@ def test_checked_in_zilliz_standard_results_use_semantic_metrics():
     assert len(zilliz_data) == len(expected)
     for row in zilliz_data.to_dict("records"):
         assert (row["recall"], row["ndcg"], row["mrr"]) == expected[str(row["dataset"])]
+
+
+def test_checked_in_zilliz_large_standard_results_retain_load_metrics():
+    repo_root = Path(__file__).resolve().parents[1]
+    result_file = (
+        repo_root
+        / "vectordb_bench"
+        / "results"
+        / "FullTextSearch"
+        / "ZillizCloud"
+        / "result_20260626_fts_standard_zillizcloud.json"
+    )
+    expected = {
+        "HotpotQA Large (5.2M documents)": (5_233_329, 92.5443, 81.9515, 174.4958),
+        "MS MARCO Large (8.8M documents)": (8_841_823, 183.6571, 98.8113, 282.4684),
+    }
+
+    large_results = {}
+    for case_result in json.loads(result_file.read_text())["results"]:
+        custom_case = case_result["task_config"]["case_config"].get("custom_case") or {}
+        dataset = custom_case.get("dataset_with_size_type")
+        if dataset in expected and custom_case.get("filter_rate") is None:
+            metrics = case_result["metrics"]
+            large_results[dataset] = (
+                metrics["inserted_count"],
+                metrics["insert_duration"],
+                metrics["optimize_duration"],
+                metrics["load_duration"],
+            )
+
+    assert large_results == expected

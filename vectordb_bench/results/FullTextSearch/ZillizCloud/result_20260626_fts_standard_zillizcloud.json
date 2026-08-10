@@ -5,9 +5,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 0.0,
-        "optimize_duration": 0.0,
-        "load_duration": 0.0,
+        "insert_duration": 92.5443,
+        "optimize_duration": 81.9515,
+        "load_duration": 174.4958,
         "qps": 1763.3502,
         "serial_latency_p99": 0.0331,
         "serial_latency_p95": 0.0222,
@@ -41,7 +41,7 @@
         ],
         "payload_profile": "ids_only",
         "payload_estimated_bytes_per_query": 2000,
-        "inserted_count": 0,
+        "inserted_count": 5233329,
         "insert_rows_per_second": 0.0,
         "insert_completion_seconds": 0.0,
         "searchable_after_insert_seconds": 0.0,
@@ -351,9 +351,9 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 0.0,
-        "optimize_duration": 0.0,
-        "load_duration": 0.0,
+        "insert_duration": 183.6571,
+        "optimize_duration": 98.8113,
+        "load_duration": 282.4684,
         "qps": 4252.6411,
         "serial_latency_p99": 0.0171,
         "serial_latency_p95": 0.0116,
@@ -387,7 +387,7 @@
         ],
         "payload_profile": "ids_only",
         "payload_estimated_bytes_per_query": 2000,
-        "inserted_count": 0,
+        "inserted_count": 8841823,
         "insert_rows_per_second": 0.0,
         "insert_completion_seconds": 0.0,
         "searchable_after_insert_seconds": 0.0,

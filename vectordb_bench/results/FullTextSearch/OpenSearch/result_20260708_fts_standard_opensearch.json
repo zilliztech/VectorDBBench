@@ -760,7 +760,6 @@
           "custom_case": {
             "dataset_with_size_type": "HotpotQA Large (5.2M documents)",
             "payload_profile": "ids_only",
-            "filter_id_distribution": "permuted",
             "filter_rate": 0.5
           },
           "k": 100,
@@ -908,7 +907,6 @@
           "custom_case": {
             "dataset_with_size_type": "HotpotQA Large (5.2M documents)",
             "payload_profile": "ids_only",
-            "filter_id_distribution": "permuted",
             "filter_rate": 0.75
           },
           "k": 100,
@@ -1054,7 +1052,6 @@
           "custom_case": {
             "dataset_with_size_type": "HotpotQA Large (5.2M documents)",
             "payload_profile": "ids_only",
-            "filter_id_distribution": "permuted",
             "filter_rate": 0.9
           },
           "k": 100,
@@ -1200,7 +1197,6 @@
           "custom_case": {
             "dataset_with_size_type": "HotpotQA Large (5.2M documents)",
             "payload_profile": "ids_only",
-            "filter_id_distribution": "permuted",
             "filter_rate": 0.95
           },
           "k": 100,
@@ -1346,7 +1342,6 @@
           "custom_case": {
             "dataset_with_size_type": "HotpotQA Large (5.2M documents)",
             "payload_profile": "ids_only",
-            "filter_id_distribution": "permuted",
             "filter_rate": 0.99
           },
           "k": 100,
@@ -1496,7 +1491,6 @@
           "custom_case": {
             "dataset_with_size_type": "MS MARCO Large (8.8M documents)",
             "payload_profile": "ids_only",
-            "filter_id_distribution": "permuted",
             "filter_rate": 0.5
           },
           "k": 100,
@@ -1644,7 +1638,6 @@
           "custom_case": {
             "dataset_with_size_type": "MS MARCO Large (8.8M documents)",
             "payload_profile": "ids_only",
-            "filter_id_distribution": "permuted",
             "filter_rate": 0.75
           },
           "k": 100,
@@ -1790,7 +1783,6 @@
           "custom_case": {
             "dataset_with_size_type": "MS MARCO Large (8.8M documents)",
             "payload_profile": "ids_only",
-            "filter_id_distribution": "permuted",
             "filter_rate": 0.9
           },
           "k": 100,
@@ -1936,7 +1928,6 @@
           "custom_case": {
             "dataset_with_size_type": "MS MARCO Large (8.8M documents)",
             "payload_profile": "ids_only",
-            "filter_id_distribution": "permuted",
             "filter_rate": 0.95
           },
           "k": 100,
@@ -2082,7 +2073,6 @@
           "custom_case": {
             "dataset_with_size_type": "MS MARCO Large (8.8M documents)",
             "payload_profile": "ids_only",
-            "filter_id_distribution": "permuted",
             "filter_rate": 0.99
           },
           "k": 100,
