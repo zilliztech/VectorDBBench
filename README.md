@@ -51,6 +51,7 @@ All the database client supported
 | redis                    | `pip install vectordb-bench[redis]`         |
 | memorydb                 | `pip install vectordb-bench[memorydb]`      |
 | chromadb                 | `pip install vectordb-bench[chromadb]`      |
+| sqlite-vector            | `pip install vectordb-bench[sqlite-vector]` |
 | cockroachdb              | `pip install vectordb-bench[cockroachdb]`   |
 | awsopensearch            | `pip install vectordb-bench[opensearch]` |
 | aliyun_opensearch        | `pip install vectordb-bench[aliyun_opensearch]` |
