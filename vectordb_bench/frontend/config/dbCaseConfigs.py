@@ -1666,6 +1666,16 @@ CaseConfigParamInput_NumCandidates_AliES = CaseConfigInput(
         "value": 100,
     },
 )
+CaseConfigParamInput_QueryWireFormat_AliES = CaseConfigInput(
+    label=CaseConfigParamType.query_wire_format,
+    displayLabel="Query wire format",
+    inputType=InputType.Option,
+    inputConfig={"options": ["base64-f32be", "cbor-f32le"]},
+    inputHelp=(
+        "Use Base64 float32 big-endian JSON, or application/cbor with the query vector encoded as raw "
+        "float32 little-endian bytes. CBOR raw-f32 supports non-filtered Aliyun Elasticsearch queries."
+    ),
+)
 
 CaseConfigParamInput_IndexType_TES = CaseConfigInput(
     label=CaseConfigParamType.IndexType,
@@ -2510,6 +2520,7 @@ AliyunElasticsearchPerformanceConfig = [
     CaseConfigParamInput_EFConstruction_AliES,
     CaseConfigParamInput_M_AliES,
     CaseConfigParamInput_NumCandidates_AliES,
+    CaseConfigParamInput_QueryWireFormat_AliES,
     CaseConfigParamInput_UseRescore_ES,
     CaseConfigParamInput_OversampleRatio_ES,
     CaseConfigParamInput_UseRouting_ES,

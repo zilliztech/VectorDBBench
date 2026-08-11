@@ -140,6 +140,7 @@ class CaseConfigParamType(Enum):
     use_rescore = "use_rescore"
     oversample_ratio = "oversample_ratio"
     use_routing = "use_routing"
+    query_wire_format = "query_wire_format"
     replication_type = "replication_type"
     knn_derived_source_enabled = "knn_derived_source_enabled"
     memory_optimized_search = "memory_optimized_search"

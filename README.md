@@ -45,7 +45,8 @@ All the database client supported
 | qdrant                   | `pip install vectordb-bench[qdrant]`        |
 | pinecone                 | `pip install vectordb-bench[pinecone]`      |
 | weaviate                 | `pip install vectordb-bench[weaviate]`      |
-| elastic, aliyun_elasticsearch| `pip install vectordb-bench[elastic]`       |
+| elastic                   | `pip install vectordb-bench[elastic]`       |
+| aliyun_elasticsearch      | `pip install vectordb-bench[aliyun_elasticsearch]` |
 | pgvector, pgvectorscale, pgdiskann, alloydb, vectorchord | `pip install vectordb-bench[pgvector]`      |
 | pgvecto.rs               | `pip install vectordb-bench[pgvecto_rs]`    |
 | redis                    | `pip install vectordb-bench[redis]`         |
@@ -68,6 +69,9 @@ All the database client supported
 | lindorm                  | `pip install vectordb-bench[lindorm]`       |
 | volc_mysql               | `pip install vectordb-bench[volc_mysql]`    |
 | adbpg                    | `pip install vectordb-bench[adbpg]`         |
+
+Aliyun Elasticsearch can send query vectors as Base64 JSON or raw float32 bytes in CBOR. See the
+[Aliyun Elasticsearch CBOR query transport guide](docs/aliyun-elasticsearch-cbor.md).
 
 ### Run
 
