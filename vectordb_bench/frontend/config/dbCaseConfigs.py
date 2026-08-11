@@ -12,7 +12,7 @@ from vectordb_bench.models import CaseConfig, CaseConfigParamType
 MAX_STREAMLIT_INT = (1 << 53) - 1
 
 DB_LIST = [d for d in DB if d != DB.Test]
-FTS_SUPPORTED_DBS = {DB.Milvus, DB.ZillizCloud, DB.ElasticCloud, DB.Vespa, DB.TurboPuffer}
+FTS_SUPPORTED_DBS = {DB.Milvus, DB.ZillizCloud, DB.ElasticCloud, DB.OSSOpenSearch, DB.Vespa, DB.TurboPuffer}
 
 
 class Delimiter(Enum):
@@ -2326,6 +2326,7 @@ ZillizCloudFtsConfig = [
 
 ElasticCloudFtsConfig = []
 VespaFtsConfig = []
+OSSOpenSearchFtsConfig = []
 TurboPufferFtsConfig = []
 
 WeaviateLoadConfig = [
@@ -3275,6 +3276,7 @@ CASE_CONFIG_MAP = {
     DB.OSSOpenSearch: {
         CaseLabel.Load: OSSOpensearchLoadingConfig,
         CaseLabel.Performance: OSSOpenSearchPerformanceConfig,
+        CaseLabel.FullTextSearchPerformance: OSSOpenSearchFtsConfig,
     },
     DB.PgVector: {
         CaseLabel.Load: PgVectorLoadingConfig,

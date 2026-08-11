@@ -8,30 +8,36 @@
         "insert_duration": 92.5443,
         "optimize_duration": 81.9515,
         "load_duration": 174.4958,
-        "qps": 1291.365,
-        "serial_latency_p99": 0.02,
-        "serial_latency_p95": 0.0136,
-        "recall": 0.9935,
-        "ndcg": 0.0,
+        "qps": 1763.3502,
+        "serial_latency_p99": 0.0331,
+        "serial_latency_p95": 0.0222,
+        "recall": 0.7674,
+        "ndcg": 0.6265,
+        "mrr": 0.7574,
         "conc_num_list": [
           40,
+          60,
           80
         ],
         "conc_qps_list": [
-          1291.365,
-          1163.3626
+          1738.3381,
+          1760.0975,
+          1763.3502
         ],
         "conc_latency_p99_list": [
-          0.04671075918056886,
-          0.09800235276106833
+          0.05301692362816539,
+          0.06365443888615119,
+          0.07476101434847807
         ],
         "conc_latency_p95_list": [
-          0.038866160500401745,
-          0.08286118600008194
+          0.03960793959267899,
+          0.05068928290565963,
+          0.061392078457720343
         ],
         "conc_latency_avg_list": [
-          0.027654020284034526,
-          0.06254546518180665
+          0.02283351154340615,
+          0.0336278670182451,
+          0.044479376343180034
         ],
         "payload_profile": "ids_only",
         "payload_estimated_bytes_per_query": 2000,
@@ -40,36 +46,7 @@
         "insert_completion_seconds": 0.0,
         "searchable_after_insert_seconds": 0.0,
         "indexed_after_searchable_seconds": 0.0,
-        "additional_parameters": {
-          "num_per_batch": 1000,
-          "load_concurrency": 0,
-          "fts_manifest": {
-            "bm25": {
-              "k1": 1.2,
-              "b": 0.75,
-              "avgdl": 47.43239876568051
-            },
-            "analyzer": {
-              "filter": [
-                "lowercase"
-              ],
-              "tokenizer": "standard"
-            }
-          },
-          "applied_bm25_params": {},
-          "unapplied_bm25_params": {
-            "k1": 1.2,
-            "b": 0.75,
-            "avgdl": 47.43239876568051
-          },
-          "applied_analyzer_params": {},
-          "unapplied_analyzer_params": {
-            "filter": [
-              "lowercase"
-            ],
-            "tokenizer": "standard"
-          }
-        },
+        "additional_parameters": {},
         "st_ideal_insert_duration": 0,
         "st_search_stage_list": [],
         "st_search_time_list": [],
@@ -88,15 +65,15 @@
       "task_config": {
         "db": "ZillizCloud",
         "db_config": {
-          "db_label": "2026-06-23T16:12:30.162495",
+          "db_label": "task15919-perf-8cu-oneseg-26-retest",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\"\n  },\n  \"evidence\": {\n    \"source\": \"User-confirmed Task 15919 deployment shape; one persistent segment per benchmark collection validated by run preflight and post-run inventory\",\n    \"credential_storage\": \"external mode-600 secret file removed by runner cleanup\"\n  }\n}",
           "uri": "**********",
           "user": "root",
           "password": "**********",
           "token": "",
           "num_shards": 1,
-          "collection_name": "ZillizCloudFTSBench"
+          "collection_name": "vdbbench_fts_serial_hotpotqa_permuted_20260803"
         },
         "db_case_config": {
           "index_type": "AUTOINDEX",
@@ -121,15 +98,15 @@
           "concurrency_search_config": {
             "num_concurrency": [
               40,
+              60,
               80
             ],
             "concurrency_duration": 30,
-            "concurrency_timeout": 3600
+            "concurrency_timeout": 3600,
+            "serial_cooldown": 0.0
           }
         },
         "stages": [
-          "drop_old",
-          "load",
           "search_serial",
           "search_concurrent"
         ],
@@ -140,69 +117,649 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 92.5443,
-        "optimize_duration": 81.9515,
-        "load_duration": 174.4958,
-        "qps": 1311.121,
-        "serial_latency_p99": 0.0,
-        "serial_latency_p95": 0.0,
-        "recall": 0.0,
-        "ndcg": 0.0,
+        "insert_duration": 33.6028,
+        "optimize_duration": 171.902,
+        "load_duration": 205.5048,
+        "qps": 4913.8932,
+        "serial_latency_p99": 0.0107,
+        "serial_latency_p95": 0.0079,
+        "recall": 0.8421,
+        "ndcg": 0.7319,
+        "mrr": 0.8636,
         "conc_num_list": [
           40,
+          60,
           80
         ],
         "conc_qps_list": [
-          1252.5852,
-          1311.121
+          4444.7978,
+          4823.2308,
+          4913.8932
         ],
         "conc_latency_p99_list": [
-          0.04848522670017702,
-          0.08333016816090094
+          0.018735603306413395,
+          0.024391331560909748,
+          0.02949425330734808
         ],
         "conc_latency_p95_list": [
-          0.04233008824876378,
-          0.0747867592010152
+          0.01459028425233555,
+          0.019086839698138645,
+          0.023468223997042514
         ],
         "conc_latency_avg_list": [
-          0.03172382021377068,
-          0.05988630893483264
+          0.00892458813977406,
+          0.012230295266112242,
+          0.01590514856506513
         ],
-        "payload_profile": "text",
-        "payload_estimated_bytes_per_query": 53200,
-        "inserted_count": 5233329,
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 1000000,
         "insert_rows_per_second": 0.0,
         "insert_completion_seconds": 0.0,
         "searchable_after_insert_seconds": 0.0,
         "indexed_after_searchable_seconds": 0.0,
         "additional_parameters": {
           "num_per_batch": 1000,
-          "load_concurrency": 0,
-          "fts_manifest": {
-            "bm25": {
-              "k1": 1.2,
-              "b": 0.75,
-              "avgdl": 47.43239876568051
-            },
-            "analyzer": {
-              "filter": [
-                "lowercase"
-              ],
-              "tokenizer": "standard"
-            }
+          "load_concurrency": 4
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "task15919-perf-8cu-oneseg-26-retest",
+          "version": "",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\"\n  },\n  \"evidence\": {\n    \"source\": \"User-confirmed Task 15919 deployment shape; one persistent segment per benchmark collection validated by run preflight and post-run inventory\",\n    \"credential_storage\": \"external mode-600 secret file removed by runner cleanup\"\n  }\n}",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********",
+          "token": "",
+          "num_shards": 1,
+          "collection_name": "vdbbench_fts_15919_hotpotqa_1m"
+        },
+        "db_case_config": {
+          "index_type": "AUTOINDEX",
+          "metric_type": "BM25",
+          "inverted_index_algo": "DAAT_MAXSCORE",
+          "bm25_k1": null,
+          "bm25_b": null,
+          "analyzer_tokenizer": "standard",
+          "analyzer_enable_lowercase": true,
+          "analyzer_max_token_length": null,
+          "analyzer_stop_words": null,
+          "drop_ratio_search": null,
+          "level": 1
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "HotpotQA Medium (1M documents)",
+            "payload_profile": "ids_only"
           },
-          "applied_bm25_params": {},
-          "unapplied_bm25_params": {
-            "k1": 1.2,
-            "b": 0.75,
-            "avgdl": 47.43239876568051
-          },
-          "applied_analyzer_params": {},
-          "unapplied_analyzer_params": {
-            "filter": [
-              "lowercase"
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              40,
+              60,
+              80
             ],
-            "tokenizer": "standard"
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600,
+            "serial_cooldown": 0.0
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 4
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 15.6627,
+        "optimize_duration": 31.7788,
+        "load_duration": 47.4414,
+        "qps": 9577.4013,
+        "serial_latency_p99": 0.0038,
+        "serial_latency_p95": 0.0034,
+        "recall": 0.9225,
+        "ndcg": 0.8459,
+        "mrr": 0.9485,
+        "conc_num_list": [
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          9125.0541,
+          9577.4013,
+          9299.4642
+        ],
+        "conc_latency_p99_list": [
+          0.0077219682798022405,
+          0.011414849478169344,
+          0.014094987509161003
+        ],
+        "conc_latency_p95_list": [
+          0.006174615799682212,
+          0.009074159996816888,
+          0.011642935798590763
+        ],
+        "conc_latency_avg_list": [
+          0.004340849293562033,
+          0.006164715776924379,
+          0.008391938989513186
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 100000,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "num_per_batch": 1000,
+          "load_concurrency": 4
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "task15919-perf-8cu-oneseg-26-retest",
+          "version": "",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\"\n  },\n  \"evidence\": {\n    \"source\": \"User-confirmed Task 15919 deployment shape; one persistent segment per benchmark collection validated by run preflight and post-run inventory\",\n    \"credential_storage\": \"external mode-600 secret file removed by runner cleanup\"\n  }\n}",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********",
+          "token": "",
+          "num_shards": 1,
+          "collection_name": "vdbbench_fts_15919_hotpotqa_100k"
+        },
+        "db_case_config": {
+          "index_type": "AUTOINDEX",
+          "metric_type": "BM25",
+          "inverted_index_algo": "DAAT_MAXSCORE",
+          "bm25_k1": null,
+          "bm25_b": null,
+          "analyzer_tokenizer": "standard",
+          "analyzer_enable_lowercase": true,
+          "analyzer_max_token_length": null,
+          "analyzer_stop_words": null,
+          "drop_ratio_search": null,
+          "level": 1
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "HotpotQA Small (100K documents)",
+            "payload_profile": "ids_only"
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600,
+            "serial_cooldown": 0.0
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 4
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 183.6571,
+        "optimize_duration": 98.8113,
+        "load_duration": 282.4684,
+        "qps": 4252.6411,
+        "serial_latency_p99": 0.0171,
+        "serial_latency_p95": 0.0116,
+        "recall": 0.6293,
+        "ndcg": 0.2765,
+        "mrr": 0.1889,
+        "conc_num_list": [
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          3780.8848,
+          4101.5114,
+          4252.6411
+        ],
+        "conc_latency_p99_list": [
+          0.02807033602366573,
+          0.03447981245903066,
+          0.03956317615084118
+        ],
+        "conc_latency_p95_list": [
+          0.01986048770704655,
+          0.025059146400599273,
+          0.029465016446192746
+        ],
+        "conc_latency_avg_list": [
+          0.010491047885415203,
+          0.014407923132888786,
+          0.01838277799370675
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 8841823,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {},
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "task15919-perf-8cu-oneseg-26-retest",
+          "version": "",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\"\n  },\n  \"evidence\": {\n    \"source\": \"User-confirmed Task 15919 deployment shape; one persistent segment per benchmark collection validated by run preflight and post-run inventory\",\n    \"credential_storage\": \"external mode-600 secret file removed by runner cleanup\"\n  }\n}",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********",
+          "token": "",
+          "num_shards": 1,
+          "collection_name": "vdbbench_fts_serial_msmarco_permuted_20260803"
+        },
+        "db_case_config": {
+          "index_type": "AUTOINDEX",
+          "metric_type": "BM25",
+          "inverted_index_algo": "DAAT_MAXSCORE",
+          "bm25_k1": null,
+          "bm25_b": null,
+          "analyzer_tokenizer": "standard",
+          "analyzer_enable_lowercase": true,
+          "analyzer_max_token_length": null,
+          "analyzer_stop_words": null,
+          "drop_ratio_search": null,
+          "level": 1
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "MS MARCO Large (8.8M documents)",
+            "payload_profile": "ids_only"
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600,
+            "serial_cooldown": 0.0
+          }
+        },
+        "stages": [
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 37.9759,
+        "optimize_duration": 116.3291,
+        "load_duration": 154.305,
+        "qps": 9734.7457,
+        "serial_latency_p99": 0.0052,
+        "serial_latency_p95": 0.0041,
+        "recall": 0.8091,
+        "ndcg": 0.5272,
+        "mrr": 0.4571,
+        "conc_num_list": [
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          8342.2067,
+          9230.3084,
+          9734.7457
+        ],
+        "conc_latency_p99_list": [
+          0.009523463060322682,
+          0.012660344481118952,
+          0.015673157188284638
+        ],
+        "conc_latency_p95_list": [
+          0.007388512603938574,
+          0.0100790631986456,
+          0.012480728703667407
+        ],
+        "conc_latency_avg_list": [
+          0.004753512925593361,
+          0.006390420499957776,
+          0.008009355143216565
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 1000000,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "num_per_batch": 1000,
+          "load_concurrency": 4
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "task15919-perf-8cu-oneseg-26-retest",
+          "version": "",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\"\n  },\n  \"evidence\": {\n    \"source\": \"User-confirmed Task 15919 deployment shape; one persistent segment per benchmark collection validated by run preflight and post-run inventory\",\n    \"credential_storage\": \"external mode-600 secret file removed by runner cleanup\"\n  }\n}",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********",
+          "token": "",
+          "num_shards": 1,
+          "collection_name": "vdbbench_fts_15919_msmarco_1m"
+        },
+        "db_case_config": {
+          "index_type": "AUTOINDEX",
+          "metric_type": "BM25",
+          "inverted_index_algo": "DAAT_MAXSCORE",
+          "bm25_k1": null,
+          "bm25_b": null,
+          "analyzer_tokenizer": "standard",
+          "analyzer_enable_lowercase": true,
+          "analyzer_max_token_length": null,
+          "analyzer_stop_words": null,
+          "drop_ratio_search": null,
+          "level": 1
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "MS MARCO Medium (1M documents)",
+            "payload_profile": "ids_only"
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600,
+            "serial_cooldown": 0.0
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 4
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 21.2111,
+        "optimize_duration": 39.6819,
+        "load_duration": 60.893,
+        "qps": 12134.2059,
+        "serial_latency_p99": 0.0035,
+        "serial_latency_p95": 0.003,
+        "recall": 0.9157,
+        "ndcg": 0.7206,
+        "mrr": 0.6713,
+        "conc_num_list": [
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          11108.1281,
+          12134.2059,
+          11328.5193
+        ],
+        "conc_latency_p99_list": [
+          0.00618511842898442,
+          0.009046302261704121,
+          0.011947811315185387
+        ],
+        "conc_latency_p95_list": [
+          0.0047809927520575,
+          0.007048962705448503,
+          0.009702080397983082
+        ],
+        "conc_latency_avg_list": [
+          0.0035620799904098437,
+          0.0048648263825587625,
+          0.006883590285044699
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 100000,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "num_per_batch": 1000,
+          "load_concurrency": 4
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "task15919-perf-8cu-oneseg-26-retest",
+          "version": "",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\"\n  },\n  \"evidence\": {\n    \"source\": \"User-confirmed Task 15919 deployment shape; one persistent segment per benchmark collection validated by run preflight and post-run inventory\",\n    \"credential_storage\": \"external mode-600 secret file removed by runner cleanup\"\n  }\n}",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********",
+          "token": "",
+          "num_shards": 1,
+          "collection_name": "vdbbench_fts_15919_msmarco_100k"
+        },
+        "db_case_config": {
+          "index_type": "AUTOINDEX",
+          "metric_type": "BM25",
+          "inverted_index_algo": "DAAT_MAXSCORE",
+          "bm25_k1": null,
+          "bm25_b": null,
+          "analyzer_tokenizer": "standard",
+          "analyzer_enable_lowercase": true,
+          "analyzer_max_token_length": null,
+          "analyzer_stop_words": null,
+          "drop_ratio_search": null,
+          "level": 1
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "MS MARCO Small (100K documents)",
+            "payload_profile": "ids_only"
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600,
+            "serial_cooldown": 0.0
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 4
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 1492.7432,
+        "serial_latency_p99": 0.0353,
+        "serial_latency_p95": 0.0253,
+        "recall": 0.7975,
+        "ndcg": 0.6176,
+        "mrr": 0.6255,
+        "conc_num_list": [
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          1310.191,
+          1469.5941,
+          1492.7432
+        ],
+        "conc_latency_p99_list": [
+          0.06350544799934141,
+          0.07389547589700673,
+          0.08604409836596456
+        ],
+        "conc_latency_p95_list": [
+          0.049314529009279795,
+          0.05927793249429669,
+          0.07131427159474693
+        ],
+        "conc_latency_avg_list": [
+          0.030282339088862433,
+          0.04027559123208463,
+          0.05258652822193272
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 0,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "fts_filter": {
+            "filter_type": "NumGE",
+            "filter_field": "filter_id",
+            "filter_value": 2616664,
+            "filter_rate": 0.5,
+            "filter_id_distribution": "affine_permutation_v1",
+            "filter_id_multiplier": 3234376,
+            "filter_id_offset": 1082441,
+            "matched_doc_count": 2616665,
+            "matched_doc_ratio": 0.5,
+            "original_query_count": 7405,
+            "filtered_query_count": 5547,
+            "filtered_query_ratio": 0.749088,
+            "original_relevant_doc_count": 13783,
+            "filtered_relevant_doc_count": 6846
+          },
+          "fts_recall": {
+            "skipped": false,
+            "reason": null,
+            "serial_query_count": 5547,
+            "full_query_count": 7405
           }
         },
         "st_ideal_insert_duration": 0,
@@ -223,15 +780,15 @@
       "task_config": {
         "db": "ZillizCloud",
         "db_config": {
-          "db_label": "2026-06-23T16:21:46.167469",
+          "db_label": "task15919-perf-8cu-oneseg-26-retest",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\"\n  },\n  \"evidence\": {\n    \"source\": \"User-confirmed Task 15919 deployment shape; one persistent segment per benchmark collection validated by run preflight and post-run inventory\",\n    \"credential_storage\": \"external mode-600 secret file removed by runner cleanup\"\n  }\n}",
           "uri": "**********",
           "user": "root",
           "password": "**********",
           "token": "",
           "num_shards": 1,
-          "collection_name": "ZillizCloudFTSBench"
+          "collection_name": "vdbbench_fts_serial_hotpotqa_permuted_20260803"
         },
         "db_case_config": {
           "index_type": "AUTOINDEX",
@@ -250,155 +807,22 @@
           "case_id": 503,
           "custom_case": {
             "dataset_with_size_type": "HotpotQA Large (5.2M documents)",
-            "payload_profile": "text"
+            "payload_profile": "ids_only",
+            "filter_rate": 0.5
           },
           "k": 100,
           "concurrency_search_config": {
             "num_concurrency": [
               40,
+              60,
               80
             ],
             "concurrency_duration": 30,
-            "concurrency_timeout": 3600
+            "concurrency_timeout": 3600,
+            "serial_cooldown": 0.0
           }
         },
         "stages": [
-          "drop_old",
-          "load",
-          "search_concurrent"
-        ],
-        "load_concurrency": 0
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "insert_duration": 19.2043,
-        "optimize_duration": 84.4117,
-        "load_duration": 103.616,
-        "qps": 5024.8673,
-        "serial_latency_p99": 0.0099,
-        "serial_latency_p95": 0.0074,
-        "recall": 0.9348,
-        "ndcg": 0.0,
-        "conc_num_list": [
-          40,
-          80
-        ],
-        "conc_qps_list": [
-          4539.6507,
-          5024.8673
-        ],
-        "conc_latency_p99_list": [
-          0.02007044190080706,
-          0.03161907671967124
-        ],
-        "conc_latency_p95_list": [
-          0.015511998999681963,
-          0.02536790084959648
-        ],
-        "conc_latency_avg_list": [
-          0.009547202163125637,
-          0.01752803334968866
-        ],
-        "payload_profile": "ids_only",
-        "payload_estimated_bytes_per_query": 2000,
-        "inserted_count": 1000000,
-        "insert_rows_per_second": 0.0,
-        "insert_completion_seconds": 0.0,
-        "searchable_after_insert_seconds": 0.0,
-        "indexed_after_searchable_seconds": 0.0,
-        "additional_parameters": {
-          "num_per_batch": 1000,
-          "load_concurrency": 0,
-          "fts_manifest": {
-            "bm25": {
-              "k1": 1.2,
-              "b": 0.75,
-              "avgdl": 55.803761
-            },
-            "analyzer": {
-              "filter": [
-                "lowercase"
-              ],
-              "tokenizer": "standard"
-            }
-          },
-          "applied_bm25_params": {},
-          "unapplied_bm25_params": {
-            "k1": 1.2,
-            "b": 0.75,
-            "avgdl": 55.803761
-          },
-          "applied_analyzer_params": {},
-          "unapplied_analyzer_params": {
-            "filter": [
-              "lowercase"
-            ],
-            "tokenizer": "standard"
-          }
-        },
-        "st_ideal_insert_duration": 0,
-        "st_search_stage_list": [],
-        "st_search_time_list": [],
-        "st_max_qps_list_list": [],
-        "st_recall_list": [],
-        "st_ndcg_list": [],
-        "st_serial_latency_p99_list": [],
-        "st_serial_latency_p95_list": [],
-        "st_conc_failed_rate_list": [],
-        "st_conc_num_list_list": [],
-        "st_conc_qps_list_list": [],
-        "st_conc_latency_p99_list_list": [],
-        "st_conc_latency_p95_list_list": [],
-        "st_conc_latency_avg_list_list": []
-      },
-      "task_config": {
-        "db": "ZillizCloud",
-        "db_config": {
-          "db_label": "2026-06-23T16:04:10.277433",
-          "version": "",
-          "note": "",
-          "uri": "**********",
-          "user": "root",
-          "password": "**********",
-          "token": "",
-          "num_shards": 1,
-          "collection_name": "ZillizCloudFTSBench"
-        },
-        "db_case_config": {
-          "index_type": "AUTOINDEX",
-          "metric_type": "BM25",
-          "inverted_index_algo": "DAAT_MAXSCORE",
-          "bm25_k1": null,
-          "bm25_b": null,
-          "analyzer_tokenizer": "standard",
-          "analyzer_enable_lowercase": true,
-          "analyzer_max_token_length": null,
-          "analyzer_stop_words": null,
-          "drop_ratio_search": null,
-          "level": 1
-        },
-        "case_config": {
-          "case_id": 503,
-          "custom_case": {
-            "dataset_with_size_type": "HotpotQA Medium (1M documents)",
-            "payload_profile": "ids_only"
-          },
-          "k": 100,
-          "concurrency_search_config": {
-            "num_concurrency": [
-              40,
-              80
-            ],
-            "concurrency_duration": 30,
-            "concurrency_timeout": 3600
-          }
-        },
-        "stages": [
-          "drop_old",
-          "load",
           "search_serial",
           "search_concurrent"
         ],
@@ -409,203 +833,69 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 19.2043,
-        "optimize_duration": 84.4117,
-        "load_duration": 103.616,
-        "qps": 4094.1935,
-        "serial_latency_p99": 0.0,
-        "serial_latency_p95": 0.0,
-        "recall": 0.0,
-        "ndcg": 0.0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 1925.4864,
+        "serial_latency_p99": 0.0261,
+        "serial_latency_p95": 0.0193,
+        "recall": 0.8291,
+        "ndcg": 0.6445,
+        "mrr": 0.6195,
         "conc_num_list": [
           40,
+          60,
           80
         ],
         "conc_qps_list": [
-          3772.8914,
-          4094.1935
+          1704.6319,
+          1874.4532,
+          1925.4864
         ],
         "conc_latency_p99_list": [
-          0.021262989360184278,
-          0.03570330930069758
+          0.04659453985688739,
+          0.056227957597002394,
+          0.06380992440390398
         ],
         "conc_latency_p95_list": [
-          0.01692326859993045,
-          0.028539174500110676
+          0.03717728605115552,
+          0.0455952929914929,
+          0.053582699001708534
         ],
         "conc_latency_avg_list": [
-          0.010518937966150272,
-          0.01910471804373547
-        ],
-        "payload_profile": "text",
-        "payload_estimated_bytes_per_query": 53200,
-        "inserted_count": 1000000,
-        "insert_rows_per_second": 0.0,
-        "insert_completion_seconds": 0.0,
-        "searchable_after_insert_seconds": 0.0,
-        "indexed_after_searchable_seconds": 0.0,
-        "additional_parameters": {
-          "num_per_batch": 1000,
-          "load_concurrency": 0,
-          "fts_manifest": {
-            "bm25": {
-              "k1": 1.2,
-              "b": 0.75,
-              "avgdl": 55.803761
-            },
-            "analyzer": {
-              "filter": [
-                "lowercase"
-              ],
-              "tokenizer": "standard"
-            }
-          },
-          "applied_bm25_params": {},
-          "unapplied_bm25_params": {
-            "k1": 1.2,
-            "b": 0.75,
-            "avgdl": 55.803761
-          },
-          "applied_analyzer_params": {},
-          "unapplied_analyzer_params": {
-            "filter": [
-              "lowercase"
-            ],
-            "tokenizer": "standard"
-          }
-        },
-        "st_ideal_insert_duration": 0,
-        "st_search_stage_list": [],
-        "st_search_time_list": [],
-        "st_max_qps_list_list": [],
-        "st_recall_list": [],
-        "st_ndcg_list": [],
-        "st_serial_latency_p99_list": [],
-        "st_serial_latency_p95_list": [],
-        "st_conc_failed_rate_list": [],
-        "st_conc_num_list_list": [],
-        "st_conc_qps_list_list": [],
-        "st_conc_latency_p99_list_list": [],
-        "st_conc_latency_p95_list_list": [],
-        "st_conc_latency_avg_list_list": []
-      },
-      "task_config": {
-        "db": "ZillizCloud",
-        "db_config": {
-          "db_label": "2026-06-23T16:09:07.352737",
-          "version": "",
-          "note": "",
-          "uri": "**********",
-          "user": "root",
-          "password": "**********",
-          "token": "",
-          "num_shards": 1,
-          "collection_name": "ZillizCloudFTSBench"
-        },
-        "db_case_config": {
-          "index_type": "AUTOINDEX",
-          "metric_type": "BM25",
-          "inverted_index_algo": "DAAT_MAXSCORE",
-          "bm25_k1": null,
-          "bm25_b": null,
-          "analyzer_tokenizer": "standard",
-          "analyzer_enable_lowercase": true,
-          "analyzer_max_token_length": null,
-          "analyzer_stop_words": null,
-          "drop_ratio_search": null,
-          "level": 1
-        },
-        "case_config": {
-          "case_id": 503,
-          "custom_case": {
-            "dataset_with_size_type": "HotpotQA Medium (1M documents)",
-            "payload_profile": "text"
-          },
-          "k": 100,
-          "concurrency_search_config": {
-            "num_concurrency": [
-              40,
-              80
-            ],
-            "concurrency_duration": 30,
-            "concurrency_timeout": 3600
-          }
-        },
-        "stages": [
-          "drop_old",
-          "load",
-          "search_concurrent"
-        ],
-        "load_concurrency": 0
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "insert_duration": 1.9379,
-        "optimize_duration": 25.6039,
-        "load_duration": 27.5418,
-        "qps": 11840.6594,
-        "serial_latency_p99": 0.0036,
-        "serial_latency_p95": 0.0031,
-        "recall": 0.9987,
-        "ndcg": 0.0,
-        "conc_num_list": [
-          40,
-          80
-        ],
-        "conc_qps_list": [
-          9511.1365,
-          11840.6594
-        ],
-        "conc_latency_p99_list": [
-          0.00816284980028285,
-          0.014502515860076526
-        ],
-        "conc_latency_p95_list": [
-          0.006357606800520441,
-          0.01137593650018971
-        ],
-        "conc_latency_avg_list": [
-          0.004235700703938657,
-          0.007192490032664778
+          0.023269752517795814,
+          0.03155254825551937,
+          0.04073994229261837
         ],
         "payload_profile": "ids_only",
         "payload_estimated_bytes_per_query": 2000,
-        "inserted_count": 100000,
+        "inserted_count": 0,
         "insert_rows_per_second": 0.0,
         "insert_completion_seconds": 0.0,
         "searchable_after_insert_seconds": 0.0,
         "indexed_after_searchable_seconds": 0.0,
         "additional_parameters": {
-          "num_per_batch": 1000,
-          "load_concurrency": 0,
-          "fts_manifest": {
-            "bm25": {
-              "k1": 1.2,
-              "b": 0.75,
-              "avgdl": 56.88413
-            },
-            "analyzer": {
-              "filter": [
-                "lowercase"
-              ],
-              "tokenizer": "standard"
-            }
+          "fts_filter": {
+            "filter_type": "NumGE",
+            "filter_field": "filter_id",
+            "filter_value": 3924996,
+            "filter_rate": 0.75,
+            "filter_id_distribution": "affine_permutation_v1",
+            "filter_id_multiplier": 3234376,
+            "filter_id_offset": 1082441,
+            "matched_doc_count": 1308333,
+            "matched_doc_ratio": 0.25,
+            "original_query_count": 7405,
+            "filtered_query_count": 3175,
+            "filtered_query_ratio": 0.428764,
+            "original_relevant_doc_count": 13783,
+            "filtered_relevant_doc_count": 3379
           },
-          "applied_bm25_params": {},
-          "unapplied_bm25_params": {
-            "k1": 1.2,
-            "b": 0.75,
-            "avgdl": 56.88413
-          },
-          "applied_analyzer_params": {},
-          "unapplied_analyzer_params": {
-            "filter": [
-              "lowercase"
-            ],
-            "tokenizer": "standard"
+          "fts_recall": {
+            "skipped": false,
+            "reason": null,
+            "serial_query_count": 3175,
+            "full_query_count": 7405
           }
         },
         "st_ideal_insert_duration": 0,
@@ -626,15 +916,15 @@
       "task_config": {
         "db": "ZillizCloud",
         "db_config": {
-          "db_label": "2026-06-23T15:59:30.355088",
+          "db_label": "task15919-perf-8cu-oneseg-26-retest",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\"\n  },\n  \"evidence\": {\n    \"source\": \"User-confirmed Task 15919 deployment shape; one persistent segment per benchmark collection validated by run preflight and post-run inventory\",\n    \"credential_storage\": \"external mode-600 secret file removed by runner cleanup\"\n  }\n}",
           "uri": "**********",
           "user": "root",
           "password": "**********",
           "token": "",
           "num_shards": 1,
-          "collection_name": "ZillizCloudFTSBench"
+          "collection_name": "vdbbench_fts_serial_hotpotqa_permuted_20260803"
         },
         "db_case_config": {
           "index_type": "AUTOINDEX",
@@ -652,22 +942,23 @@
         "case_config": {
           "case_id": 503,
           "custom_case": {
-            "dataset_with_size_type": "HotpotQA Small (100K documents)",
-            "payload_profile": "ids_only"
+            "dataset_with_size_type": "HotpotQA Large (5.2M documents)",
+            "payload_profile": "ids_only",
+            "filter_rate": 0.75
           },
           "k": 100,
           "concurrency_search_config": {
             "num_concurrency": [
               40,
+              60,
               80
             ],
             "concurrency_duration": 30,
-            "concurrency_timeout": 3600
+            "concurrency_timeout": 3600,
+            "serial_cooldown": 0.0
           }
         },
         "stages": [
-          "drop_old",
-          "load",
           "search_serial",
           "search_concurrent"
         ],
@@ -678,69 +969,69 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 1.9379,
-        "optimize_duration": 25.6039,
-        "load_duration": 27.5418,
-        "qps": 8475.056,
-        "serial_latency_p99": 0.0,
-        "serial_latency_p95": 0.0,
-        "recall": 0.0,
-        "ndcg": 0.0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 2484.2534,
+        "serial_latency_p99": 0.0193,
+        "serial_latency_p95": 0.0144,
+        "recall": 0.8687,
+        "ndcg": 0.7021,
+        "mrr": 0.6648,
         "conc_num_list": [
           40,
+          60,
           80
         ],
         "conc_qps_list": [
-          7722.3517,
-          8475.056
+          2200.1066,
+          2447.8999,
+          2484.2534
         ],
         "conc_latency_p99_list": [
-          0.009759001410220668,
-          0.018094878880474424
+          0.03526244850218063,
+          0.04156497399890213,
+          0.04930016008423986
         ],
         "conc_latency_p95_list": [
-          0.007649297249099612,
-          0.013853047499105738
+          0.028342882498691324,
+          0.03412441574255354,
+          0.04170981489733093
         ],
         "conc_latency_avg_list": [
-          0.005133058755745676,
-          0.009210371172970354
+          0.018032777527778057,
+          0.024189374054596657,
+          0.03155972211155846
         ],
-        "payload_profile": "text",
-        "payload_estimated_bytes_per_query": 53200,
-        "inserted_count": 100000,
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 0,
         "insert_rows_per_second": 0.0,
         "insert_completion_seconds": 0.0,
         "searchable_after_insert_seconds": 0.0,
         "indexed_after_searchable_seconds": 0.0,
         "additional_parameters": {
-          "num_per_batch": 1000,
-          "load_concurrency": 0,
-          "fts_manifest": {
-            "bm25": {
-              "k1": 1.2,
-              "b": 0.75,
-              "avgdl": 56.88413
-            },
-            "analyzer": {
-              "filter": [
-                "lowercase"
-              ],
-              "tokenizer": "standard"
-            }
+          "fts_filter": {
+            "filter_type": "NumGE",
+            "filter_field": "filter_id",
+            "filter_value": 4709996,
+            "filter_rate": 0.9,
+            "filter_id_distribution": "affine_permutation_v1",
+            "filter_id_multiplier": 3234376,
+            "filter_id_offset": 1082441,
+            "matched_doc_count": 523333,
+            "matched_doc_ratio": 0.1,
+            "original_query_count": 7405,
+            "filtered_query_count": 1367,
+            "filtered_query_ratio": 0.184605,
+            "original_relevant_doc_count": 13783,
+            "filtered_relevant_doc_count": 1335
           },
-          "applied_bm25_params": {},
-          "unapplied_bm25_params": {
-            "k1": 1.2,
-            "b": 0.75,
-            "avgdl": 56.88413
-          },
-          "applied_analyzer_params": {},
-          "unapplied_analyzer_params": {
-            "filter": [
-              "lowercase"
-            ],
-            "tokenizer": "standard"
+          "fts_recall": {
+            "skipped": false,
+            "reason": null,
+            "serial_query_count": 1367,
+            "full_query_count": 7405
           }
         },
         "st_ideal_insert_duration": 0,
@@ -761,15 +1052,15 @@
       "task_config": {
         "db": "ZillizCloud",
         "db_config": {
-          "db_label": "2026-06-23T16:02:03.206355",
+          "db_label": "task15919-perf-8cu-oneseg-26-retest",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\"\n  },\n  \"evidence\": {\n    \"source\": \"User-confirmed Task 15919 deployment shape; one persistent segment per benchmark collection validated by run preflight and post-run inventory\",\n    \"credential_storage\": \"external mode-600 secret file removed by runner cleanup\"\n  }\n}",
           "uri": "**********",
           "user": "root",
           "password": "**********",
           "token": "",
           "num_shards": 1,
-          "collection_name": "ZillizCloudFTSBench"
+          "collection_name": "vdbbench_fts_serial_hotpotqa_permuted_20260803"
         },
         "db_case_config": {
           "index_type": "AUTOINDEX",
@@ -787,22 +1078,24 @@
         "case_config": {
           "case_id": 503,
           "custom_case": {
-            "dataset_with_size_type": "HotpotQA Small (100K documents)",
-            "payload_profile": "text"
+            "dataset_with_size_type": "HotpotQA Large (5.2M documents)",
+            "payload_profile": "ids_only",
+            "filter_rate": 0.9
           },
           "k": 100,
           "concurrency_search_config": {
             "num_concurrency": [
               40,
+              60,
               80
             ],
             "concurrency_duration": 30,
-            "concurrency_timeout": 3600
+            "concurrency_timeout": 3600,
+            "serial_cooldown": 0.0
           }
         },
         "stages": [
-          "drop_old",
-          "load",
+          "search_serial",
           "search_concurrent"
         ],
         "load_concurrency": 0
@@ -812,69 +1105,69 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 183.6571,
-        "optimize_duration": 98.8113,
-        "load_duration": 282.4684,
-        "qps": 2859.4474,
-        "serial_latency_p99": 0.008,
-        "serial_latency_p95": 0.0058,
-        "recall": 0.9636,
-        "ndcg": 0.0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 2771.399,
+        "serial_latency_p99": 0.0163,
+        "serial_latency_p95": 0.0123,
+        "recall": 0.884,
+        "ndcg": 0.7273,
+        "mrr": 0.6873,
         "conc_num_list": [
           40,
+          60,
           80
         ],
         "conc_qps_list": [
-          2397.9818,
-          2859.4474
+          2474.7168,
+          2727.7045,
+          2771.399
         ],
         "conc_latency_p99_list": [
-          0.025391751239949356,
-          0.038862020799206254
+          0.030666672199731695,
+          0.037067809136351555,
+          0.04432674863608554
         ],
         "conc_latency_p95_list": [
-          0.02053890500028501,
-          0.032976875500025926
+          0.02494138489928446,
+          0.030652639707841444,
+          0.0372560238080041
         ],
         "conc_latency_avg_list": [
-          0.013524379689949012,
-          0.02457546268064057
+          0.016034226178701837,
+          0.02163131208297352,
+          0.02828691272543025
         ],
         "payload_profile": "ids_only",
         "payload_estimated_bytes_per_query": 2000,
-        "inserted_count": 8841823,
+        "inserted_count": 0,
         "insert_rows_per_second": 0.0,
         "insert_completion_seconds": 0.0,
         "searchable_after_insert_seconds": 0.0,
         "indexed_after_searchable_seconds": 0.0,
         "additional_parameters": {
-          "num_per_batch": 1000,
-          "load_concurrency": 0,
-          "fts_manifest": {
-            "bm25": {
-              "k1": 1.2,
-              "b": 0.75,
-              "avgdl": 57.83363736188793
-            },
-            "analyzer": {
-              "filter": [
-                "lowercase"
-              ],
-              "tokenizer": "standard"
-            }
+          "fts_filter": {
+            "filter_type": "NumGE",
+            "filter_field": "filter_id",
+            "filter_value": 4971662,
+            "filter_rate": 0.95,
+            "filter_id_distribution": "affine_permutation_v1",
+            "filter_id_multiplier": 3234376,
+            "filter_id_offset": 1082441,
+            "matched_doc_count": 261667,
+            "matched_doc_ratio": 0.05,
+            "original_query_count": 7405,
+            "filtered_query_count": 698,
+            "filtered_query_ratio": 0.094261,
+            "original_relevant_doc_count": 13783,
+            "filtered_relevant_doc_count": 664
           },
-          "applied_bm25_params": {},
-          "unapplied_bm25_params": {
-            "k1": 1.2,
-            "b": 0.75,
-            "avgdl": 57.83363736188793
-          },
-          "applied_analyzer_params": {},
-          "unapplied_analyzer_params": {
-            "filter": [
-              "lowercase"
-            ],
-            "tokenizer": "standard"
+          "fts_recall": {
+            "skipped": false,
+            "reason": null,
+            "serial_query_count": 698,
+            "full_query_count": 7405
           }
         },
         "st_ideal_insert_duration": 0,
@@ -895,15 +1188,287 @@
       "task_config": {
         "db": "ZillizCloud",
         "db_config": {
-          "db_label": "2026-06-23T15:37:30.224815",
+          "db_label": "task15919-perf-8cu-oneseg-26-retest",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\"\n  },\n  \"evidence\": {\n    \"source\": \"User-confirmed Task 15919 deployment shape; one persistent segment per benchmark collection validated by run preflight and post-run inventory\",\n    \"credential_storage\": \"external mode-600 secret file removed by runner cleanup\"\n  }\n}",
           "uri": "**********",
           "user": "root",
           "password": "**********",
           "token": "",
           "num_shards": 1,
-          "collection_name": "ZillizCloudFTSBench"
+          "collection_name": "vdbbench_fts_serial_hotpotqa_permuted_20260803"
+        },
+        "db_case_config": {
+          "index_type": "AUTOINDEX",
+          "metric_type": "BM25",
+          "inverted_index_algo": "DAAT_MAXSCORE",
+          "bm25_k1": null,
+          "bm25_b": null,
+          "analyzer_tokenizer": "standard",
+          "analyzer_enable_lowercase": true,
+          "analyzer_max_token_length": null,
+          "analyzer_stop_words": null,
+          "drop_ratio_search": null,
+          "level": 1
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "HotpotQA Large (5.2M documents)",
+            "payload_profile": "ids_only",
+            "filter_rate": 0.95
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600,
+            "serial_cooldown": 0.0
+          }
+        },
+        "stages": [
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 2887.0488,
+        "serial_latency_p99": 0.0147,
+        "serial_latency_p95": 0.0108,
+        "recall": 0.898,
+        "ndcg": 0.774,
+        "mrr": 0.7382,
+        "conc_num_list": [
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          2611.7941,
+          2842.4523,
+          2887.0488
+        ],
+        "conc_latency_p99_list": [
+          0.028886324879422363,
+          0.034578777490824,
+          0.04206452721206003
+        ],
+        "conc_latency_p95_list": [
+          0.023465643404051658,
+          0.028878978548164017,
+          0.0356531626493961
+        ],
+        "conc_latency_avg_list": [
+          0.015185543958564984,
+          0.02079020171914545,
+          0.027100502311054302
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 0,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "fts_filter": {
+            "filter_type": "NumGE",
+            "filter_field": "filter_id",
+            "filter_value": 5180995,
+            "filter_rate": 0.99,
+            "filter_id_distribution": "affine_permutation_v1",
+            "filter_id_multiplier": 3234376,
+            "filter_id_offset": 1082441,
+            "matched_doc_count": 52334,
+            "matched_doc_ratio": 0.01,
+            "original_query_count": 7405,
+            "filtered_query_count": 147,
+            "filtered_query_ratio": 0.019851,
+            "original_relevant_doc_count": 13783,
+            "filtered_relevant_doc_count": 136
+          },
+          "fts_recall": {
+            "skipped": false,
+            "reason": null,
+            "serial_query_count": 147,
+            "full_query_count": 7405
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "task15919-perf-8cu-oneseg-26-retest",
+          "version": "",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\"\n  },\n  \"evidence\": {\n    \"source\": \"User-confirmed Task 15919 deployment shape; one persistent segment per benchmark collection validated by run preflight and post-run inventory\",\n    \"credential_storage\": \"external mode-600 secret file removed by runner cleanup\"\n  }\n}",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********",
+          "token": "",
+          "num_shards": 1,
+          "collection_name": "vdbbench_fts_serial_hotpotqa_permuted_20260803"
+        },
+        "db_case_config": {
+          "index_type": "AUTOINDEX",
+          "metric_type": "BM25",
+          "inverted_index_algo": "DAAT_MAXSCORE",
+          "bm25_k1": null,
+          "bm25_b": null,
+          "analyzer_tokenizer": "standard",
+          "analyzer_enable_lowercase": true,
+          "analyzer_max_token_length": null,
+          "analyzer_stop_words": null,
+          "drop_ratio_search": null,
+          "level": 1
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "HotpotQA Large (5.2M documents)",
+            "payload_profile": "ids_only",
+            "filter_rate": 0.99
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600,
+            "serial_cooldown": 0.0
+          }
+        },
+        "stages": [
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 2157.5384,
+        "serial_latency_p99": 0.0251,
+        "serial_latency_p95": 0.0189,
+        "recall": 0.7044,
+        "ndcg": 0.3475,
+        "mrr": 0.2565,
+        "conc_num_list": [
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          1602.7776,
+          1965.32,
+          2157.5384
+        ],
+        "conc_latency_p99_list": [
+          0.04808061543459191,
+          0.05590218743600418,
+          0.06283525501348776
+        ],
+        "conc_latency_p95_list": [
+          0.038264308209181766,
+          0.044974703500338366,
+          0.05120332330261589
+        ],
+        "conc_latency_avg_list": [
+          0.024761475757823056,
+          0.03012121981174715,
+          0.036368580013719426
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 0,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "fts_filter": {
+            "filter_type": "NumGE",
+            "filter_field": "filter_id",
+            "filter_value": 4420911,
+            "filter_rate": 0.5,
+            "filter_id_distribution": "affine_permutation_v1",
+            "filter_id_multiplier": 5464547,
+            "filter_id_offset": 1684563,
+            "matched_doc_count": 4420912,
+            "matched_doc_ratio": 0.5,
+            "original_query_count": 6980,
+            "filtered_query_count": 3658,
+            "filtered_query_ratio": 0.524069,
+            "original_relevant_doc_count": 7433,
+            "filtered_relevant_doc_count": 3758
+          },
+          "fts_recall": {
+            "skipped": false,
+            "reason": null,
+            "serial_query_count": 3658,
+            "full_query_count": 6980
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "task15919-perf-8cu-oneseg-26-retest",
+          "version": "",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\"\n  },\n  \"evidence\": {\n    \"source\": \"User-confirmed Task 15919 deployment shape; one persistent segment per benchmark collection validated by run preflight and post-run inventory\",\n    \"credential_storage\": \"external mode-600 secret file removed by runner cleanup\"\n  }\n}",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********",
+          "token": "",
+          "num_shards": 1,
+          "collection_name": "vdbbench_fts_serial_msmarco_permuted_20260803"
         },
         "db_case_config": {
           "index_type": "AUTOINDEX",
@@ -922,21 +1487,22 @@
           "case_id": 503,
           "custom_case": {
             "dataset_with_size_type": "MS MARCO Large (8.8M documents)",
-            "payload_profile": "ids_only"
+            "payload_profile": "ids_only",
+            "filter_rate": 0.5
           },
           "k": 100,
           "concurrency_search_config": {
             "num_concurrency": [
               40,
+              60,
               80
             ],
             "concurrency_duration": 30,
-            "concurrency_timeout": 3600
+            "concurrency_timeout": 3600,
+            "serial_cooldown": 0.0
           }
         },
         "stages": [
-          "drop_old",
-          "load",
           "search_serial",
           "search_concurrent"
         ],
@@ -947,69 +1513,69 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 183.6571,
-        "optimize_duration": 98.8113,
-        "load_duration": 282.4684,
-        "qps": 2997.5483,
-        "serial_latency_p99": 0.0,
-        "serial_latency_p95": 0.0,
-        "recall": 0.0,
-        "ndcg": 0.0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 2761.6694,
+        "serial_latency_p99": 0.0192,
+        "serial_latency_p95": 0.0146,
+        "recall": 0.7668,
+        "ndcg": 0.4252,
+        "mrr": 0.3365,
         "conc_num_list": [
           40,
+          60,
           80
         ],
         "conc_qps_list": [
-          2764.3614,
-          2997.5483
+          2105.0956,
+          2509.0089,
+          2761.6694
         ],
         "conc_latency_p99_list": [
-          0.027363914300149103,
-          0.0428042954213015
+          0.03667745854880194,
+          0.043968265774310566,
+          0.04997027571342189
         ],
         "conc_latency_p95_list": [
-          0.022107690500342867,
-          0.03582373630015354
+          0.029508575000363628,
+          0.03553523525770286,
+          0.04100487310497556
         ],
         "conc_latency_avg_list": [
-          0.014345869193528543,
-          0.026168574204900128
+          0.018847058349541947,
+          0.023569575725606327,
+          0.028409127438431932
         ],
-        "payload_profile": "text",
-        "payload_estimated_bytes_per_query": 53200,
-        "inserted_count": 8841823,
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 0,
         "insert_rows_per_second": 0.0,
         "insert_completion_seconds": 0.0,
         "searchable_after_insert_seconds": 0.0,
         "indexed_after_searchable_seconds": 0.0,
         "additional_parameters": {
-          "num_per_batch": 1000,
-          "load_concurrency": 0,
-          "fts_manifest": {
-            "bm25": {
-              "k1": 1.2,
-              "b": 0.75,
-              "avgdl": 57.83363736188793
-            },
-            "analyzer": {
-              "filter": [
-                "lowercase"
-              ],
-              "tokenizer": "standard"
-            }
+          "fts_filter": {
+            "filter_type": "NumGE",
+            "filter_field": "filter_id",
+            "filter_value": 6631367,
+            "filter_rate": 0.75,
+            "filter_id_distribution": "affine_permutation_v1",
+            "filter_id_multiplier": 5464547,
+            "filter_id_offset": 1684563,
+            "matched_doc_count": 2210456,
+            "matched_doc_ratio": 0.25,
+            "original_query_count": 6980,
+            "filtered_query_count": 1818,
+            "filtered_query_ratio": 0.260458,
+            "original_relevant_doc_count": 7433,
+            "filtered_relevant_doc_count": 1839
           },
-          "applied_bm25_params": {},
-          "unapplied_bm25_params": {
-            "k1": 1.2,
-            "b": 0.75,
-            "avgdl": 57.83363736188793
-          },
-          "applied_analyzer_params": {},
-          "unapplied_analyzer_params": {
-            "filter": [
-              "lowercase"
-            ],
-            "tokenizer": "standard"
+          "fts_recall": {
+            "skipped": false,
+            "reason": null,
+            "serial_query_count": 1818,
+            "full_query_count": 6980
           }
         },
         "st_ideal_insert_duration": 0,
@@ -1030,15 +1596,15 @@
       "task_config": {
         "db": "ZillizCloud",
         "db_config": {
-          "db_label": "2026-06-23T15:50:48.791703",
+          "db_label": "task15919-perf-8cu-oneseg-26-retest",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\"\n  },\n  \"evidence\": {\n    \"source\": \"User-confirmed Task 15919 deployment shape; one persistent segment per benchmark collection validated by run preflight and post-run inventory\",\n    \"credential_storage\": \"external mode-600 secret file removed by runner cleanup\"\n  }\n}",
           "uri": "**********",
           "user": "root",
           "password": "**********",
           "token": "",
           "num_shards": 1,
-          "collection_name": "ZillizCloudFTSBench"
+          "collection_name": "vdbbench_fts_serial_msmarco_permuted_20260803"
         },
         "db_case_config": {
           "index_type": "AUTOINDEX",
@@ -1057,155 +1623,22 @@
           "case_id": 503,
           "custom_case": {
             "dataset_with_size_type": "MS MARCO Large (8.8M documents)",
-            "payload_profile": "text"
+            "payload_profile": "ids_only",
+            "filter_rate": 0.75
           },
           "k": 100,
           "concurrency_search_config": {
             "num_concurrency": [
               40,
+              60,
               80
             ],
             "concurrency_duration": 30,
-            "concurrency_timeout": 3600
+            "concurrency_timeout": 3600,
+            "serial_cooldown": 0.0
           }
         },
         "stages": [
-          "drop_old",
-          "load",
-          "search_concurrent"
-        ],
-        "load_concurrency": 0
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "insert_duration": 20.5452,
-        "optimize_duration": 119.3876,
-        "load_duration": 139.9328,
-        "qps": 10440.9225,
-        "serial_latency_p99": 0.0045,
-        "serial_latency_p95": 0.0037,
-        "recall": 0.9194,
-        "ndcg": 0.0,
-        "conc_num_list": [
-          40,
-          80
-        ],
-        "conc_qps_list": [
-          8403.6721,
-          10440.9225
-        ],
-        "conc_latency_p99_list": [
-          0.010635902699323196,
-          0.01738944091935992
-        ],
-        "conc_latency_p95_list": [
-          0.008483375000650994,
-          0.01400671859992144
-        ],
-        "conc_latency_avg_list": [
-          0.005399416001780447,
-          0.00889505466866669
-        ],
-        "payload_profile": "ids_only",
-        "payload_estimated_bytes_per_query": 2000,
-        "inserted_count": 1000000,
-        "insert_rows_per_second": 0.0,
-        "insert_completion_seconds": 0.0,
-        "searchable_after_insert_seconds": 0.0,
-        "indexed_after_searchable_seconds": 0.0,
-        "additional_parameters": {
-          "num_per_batch": 1000,
-          "load_concurrency": 0,
-          "fts_manifest": {
-            "bm25": {
-              "k1": 1.2,
-              "b": 0.75,
-              "avgdl": 57.242324
-            },
-            "analyzer": {
-              "filter": [
-                "lowercase"
-              ],
-              "tokenizer": "standard"
-            }
-          },
-          "applied_bm25_params": {},
-          "unapplied_bm25_params": {
-            "k1": 1.2,
-            "b": 0.75,
-            "avgdl": 57.242324
-          },
-          "applied_analyzer_params": {},
-          "unapplied_analyzer_params": {
-            "filter": [
-              "lowercase"
-            ],
-            "tokenizer": "standard"
-          }
-        },
-        "st_ideal_insert_duration": 0,
-        "st_search_stage_list": [],
-        "st_search_time_list": [],
-        "st_max_qps_list_list": [],
-        "st_recall_list": [],
-        "st_ndcg_list": [],
-        "st_serial_latency_p99_list": [],
-        "st_serial_latency_p95_list": [],
-        "st_conc_failed_rate_list": [],
-        "st_conc_num_list_list": [],
-        "st_conc_qps_list_list": [],
-        "st_conc_latency_p99_list_list": [],
-        "st_conc_latency_p95_list_list": [],
-        "st_conc_latency_avg_list_list": []
-      },
-      "task_config": {
-        "db": "ZillizCloud",
-        "db_config": {
-          "db_label": "2026-06-23T15:28:10.214232",
-          "version": "",
-          "note": "",
-          "uri": "**********",
-          "user": "root",
-          "password": "**********",
-          "token": "",
-          "num_shards": 1,
-          "collection_name": "ZillizCloudFTSBench"
-        },
-        "db_case_config": {
-          "index_type": "AUTOINDEX",
-          "metric_type": "BM25",
-          "inverted_index_algo": "DAAT_MAXSCORE",
-          "bm25_k1": null,
-          "bm25_b": null,
-          "analyzer_tokenizer": "standard",
-          "analyzer_enable_lowercase": true,
-          "analyzer_max_token_length": null,
-          "analyzer_stop_words": null,
-          "drop_ratio_search": null,
-          "level": 1
-        },
-        "case_config": {
-          "case_id": 503,
-          "custom_case": {
-            "dataset_with_size_type": "MS MARCO Medium (1M documents)",
-            "payload_profile": "ids_only"
-          },
-          "k": 100,
-          "concurrency_search_config": {
-            "num_concurrency": [
-              40,
-              80
-            ],
-            "concurrency_duration": 30,
-            "concurrency_timeout": 3600
-          }
-        },
-        "stages": [
-          "drop_old",
-          "load",
           "search_serial",
           "search_concurrent"
         ],
@@ -1216,203 +1649,69 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 20.5452,
-        "optimize_duration": 119.3876,
-        "load_duration": 139.9328,
-        "qps": 7477.8788,
-        "serial_latency_p99": 0.0,
-        "serial_latency_p95": 0.0,
-        "recall": 0.0,
-        "ndcg": 0.0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 3467.3872,
+        "serial_latency_p99": 0.0139,
+        "serial_latency_p95": 0.0113,
+        "recall": 0.8383,
+        "ndcg": 0.5192,
+        "mrr": 0.435,
         "conc_num_list": [
           40,
+          60,
           80
         ],
         "conc_qps_list": [
-          6408.2792,
-          7477.8788
+          2695.8315,
+          3198.641,
+          3467.3872
         ],
         "conc_latency_p99_list": [
-          0.012072665600589968,
-          0.02024130038942528
+          0.028783008844475263,
+          0.03443616359960289,
+          0.03963516379910289
         ],
         "conc_latency_p95_list": [
-          0.009671015750882361,
-          0.01634627664943764
+          0.023086678193067197,
+          0.02811312419653404,
+          0.032976010798302015
         ],
         "conc_latency_avg_list": [
-          0.006184244148888284,
-          0.01044489949882264
-        ],
-        "payload_profile": "text",
-        "payload_estimated_bytes_per_query": 53200,
-        "inserted_count": 1000000,
-        "insert_rows_per_second": 0.0,
-        "insert_completion_seconds": 0.0,
-        "searchable_after_insert_seconds": 0.0,
-        "indexed_after_searchable_seconds": 0.0,
-        "additional_parameters": {
-          "num_per_batch": 1000,
-          "load_concurrency": 0,
-          "fts_manifest": {
-            "bm25": {
-              "k1": 1.2,
-              "b": 0.75,
-              "avgdl": 57.242324
-            },
-            "analyzer": {
-              "filter": [
-                "lowercase"
-              ],
-              "tokenizer": "standard"
-            }
-          },
-          "applied_bm25_params": {},
-          "unapplied_bm25_params": {
-            "k1": 1.2,
-            "b": 0.75,
-            "avgdl": 57.242324
-          },
-          "applied_analyzer_params": {},
-          "unapplied_analyzer_params": {
-            "filter": [
-              "lowercase"
-            ],
-            "tokenizer": "standard"
-          }
-        },
-        "st_ideal_insert_duration": 0,
-        "st_search_stage_list": [],
-        "st_search_time_list": [],
-        "st_max_qps_list_list": [],
-        "st_recall_list": [],
-        "st_ndcg_list": [],
-        "st_serial_latency_p99_list": [],
-        "st_serial_latency_p95_list": [],
-        "st_conc_failed_rate_list": [],
-        "st_conc_num_list_list": [],
-        "st_conc_qps_list_list": [],
-        "st_conc_latency_p99_list_list": [],
-        "st_conc_latency_p95_list_list": [],
-        "st_conc_latency_avg_list_list": []
-      },
-      "task_config": {
-        "db": "ZillizCloud",
-        "db_config": {
-          "db_label": "2026-06-23T15:31:42.678098",
-          "version": "",
-          "note": "",
-          "uri": "**********",
-          "user": "root",
-          "password": "**********",
-          "token": "",
-          "num_shards": 1,
-          "collection_name": "ZillizCloudFTSBench"
-        },
-        "db_case_config": {
-          "index_type": "AUTOINDEX",
-          "metric_type": "BM25",
-          "inverted_index_algo": "DAAT_MAXSCORE",
-          "bm25_k1": null,
-          "bm25_b": null,
-          "analyzer_tokenizer": "standard",
-          "analyzer_enable_lowercase": true,
-          "analyzer_max_token_length": null,
-          "analyzer_stop_words": null,
-          "drop_ratio_search": null,
-          "level": 1
-        },
-        "case_config": {
-          "case_id": 503,
-          "custom_case": {
-            "dataset_with_size_type": "MS MARCO Medium (1M documents)",
-            "payload_profile": "text"
-          },
-          "k": 100,
-          "concurrency_search_config": {
-            "num_concurrency": [
-              40,
-              80
-            ],
-            "concurrency_duration": 30,
-            "concurrency_timeout": 3600
-          }
-        },
-        "stages": [
-          "drop_old",
-          "load",
-          "search_concurrent"
-        ],
-        "load_concurrency": 0
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
-        "insert_duration": 1.8223,
-        "optimize_duration": 18.0832,
-        "load_duration": 19.9055,
-        "qps": 14523.9158,
-        "serial_latency_p99": 0.003,
-        "serial_latency_p95": 0.0028,
-        "recall": 0.9854,
-        "ndcg": 0.0,
-        "conc_num_list": [
-          40,
-          80
-        ],
-        "conc_qps_list": [
-          11465.34,
-          14523.9158
-        ],
-        "conc_latency_p99_list": [
-          0.006605165030141507,
-          0.013721053038825629
-        ],
-        "conc_latency_p95_list": [
-          0.005089374199815211,
-          0.009782408600040073
-        ],
-        "conc_latency_avg_list": [
-          0.003510005176568982,
-          0.006679762620736736
+          0.014714017594863122,
+          0.018505583353593157,
+          0.022566899350545157
         ],
         "payload_profile": "ids_only",
         "payload_estimated_bytes_per_query": 2000,
-        "inserted_count": 100000,
+        "inserted_count": 0,
         "insert_rows_per_second": 0.0,
         "insert_completion_seconds": 0.0,
         "searchable_after_insert_seconds": 0.0,
         "indexed_after_searchable_seconds": 0.0,
         "additional_parameters": {
-          "num_per_batch": 1000,
-          "load_concurrency": 0,
-          "fts_manifest": {
-            "bm25": {
-              "k1": 1.2,
-              "b": 0.75,
-              "avgdl": 55.01342
-            },
-            "analyzer": {
-              "filter": [
-                "lowercase"
-              ],
-              "tokenizer": "standard"
-            }
+          "fts_filter": {
+            "filter_type": "NumGE",
+            "filter_field": "filter_id",
+            "filter_value": 7957640,
+            "filter_rate": 0.9,
+            "filter_id_distribution": "affine_permutation_v1",
+            "filter_id_multiplier": 5464547,
+            "filter_id_offset": 1684563,
+            "matched_doc_count": 884183,
+            "matched_doc_ratio": 0.1,
+            "original_query_count": 6980,
+            "filtered_query_count": 739,
+            "filtered_query_ratio": 0.105874,
+            "original_relevant_doc_count": 7433,
+            "filtered_relevant_doc_count": 740
           },
-          "applied_bm25_params": {},
-          "unapplied_bm25_params": {
-            "k1": 1.2,
-            "b": 0.75,
-            "avgdl": 55.01342
-          },
-          "applied_analyzer_params": {},
-          "unapplied_analyzer_params": {
-            "filter": [
-              "lowercase"
-            ],
-            "tokenizer": "standard"
+          "fts_recall": {
+            "skipped": false,
+            "reason": null,
+            "serial_query_count": 739,
+            "full_query_count": 6980
           }
         },
         "st_ideal_insert_duration": 0,
@@ -1433,15 +1732,15 @@
       "task_config": {
         "db": "ZillizCloud",
         "db_config": {
-          "db_label": "2026-06-23T15:23:49.914938",
+          "db_label": "task15919-perf-8cu-oneseg-26-retest",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\"\n  },\n  \"evidence\": {\n    \"source\": \"User-confirmed Task 15919 deployment shape; one persistent segment per benchmark collection validated by run preflight and post-run inventory\",\n    \"credential_storage\": \"external mode-600 secret file removed by runner cleanup\"\n  }\n}",
           "uri": "**********",
           "user": "root",
           "password": "**********",
           "token": "",
           "num_shards": 1,
-          "collection_name": "ZillizCloudFTSBench"
+          "collection_name": "vdbbench_fts_serial_msmarco_permuted_20260803"
         },
         "db_case_config": {
           "index_type": "AUTOINDEX",
@@ -1459,22 +1758,23 @@
         "case_config": {
           "case_id": 503,
           "custom_case": {
-            "dataset_with_size_type": "MS MARCO Small (100K documents)",
-            "payload_profile": "ids_only"
+            "dataset_with_size_type": "MS MARCO Large (8.8M documents)",
+            "payload_profile": "ids_only",
+            "filter_rate": 0.9
           },
           "k": 100,
           "concurrency_search_config": {
             "num_concurrency": [
               40,
+              60,
               80
             ],
             "concurrency_duration": 30,
-            "concurrency_timeout": 3600
+            "concurrency_timeout": 3600,
+            "serial_cooldown": 0.0
           }
         },
         "stages": [
-          "drop_old",
-          "load",
           "search_serial",
           "search_concurrent"
         ],
@@ -1485,69 +1785,69 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 1.8223,
-        "optimize_duration": 18.0832,
-        "load_duration": 19.9055,
-        "qps": 9382.1707,
-        "serial_latency_p99": 0.0,
-        "serial_latency_p95": 0.0,
-        "recall": 0.0,
-        "ndcg": 0.0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 3866.9025,
+        "serial_latency_p99": 0.0126,
+        "serial_latency_p95": 0.01,
+        "recall": 0.8473,
+        "ndcg": 0.5792,
+        "mrr": 0.5077,
         "conc_num_list": [
           40,
+          60,
           80
         ],
         "conc_qps_list": [
-          9382.1707,
-          9299.0682
+          3009.9118,
+          3519.8953,
+          3866.9025
         ],
         "conc_latency_p99_list": [
-          0.007831546979778047,
-          0.014077205400753908
+          0.02564647176885045,
+          0.03126390196281136,
+          0.03594922040065286
         ],
         "conc_latency_p95_list": [
-          0.006045342150900976,
-          0.011566458601373598
+          0.020645123507711104,
+          0.02540512894993297,
+          0.02950239399797283
         ],
         "conc_latency_avg_list": [
-          0.004228128073816301,
-          0.008412116105405435
+          0.013172088723884543,
+          0.01679307632555934,
+          0.02024829934249553
         ],
-        "payload_profile": "text",
-        "payload_estimated_bytes_per_query": 53200,
-        "inserted_count": 100000,
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 0,
         "insert_rows_per_second": 0.0,
         "insert_completion_seconds": 0.0,
         "searchable_after_insert_seconds": 0.0,
         "indexed_after_searchable_seconds": 0.0,
         "additional_parameters": {
-          "num_per_batch": 1000,
-          "load_concurrency": 0,
-          "fts_manifest": {
-            "bm25": {
-              "k1": 1.2,
-              "b": 0.75,
-              "avgdl": 55.01342
-            },
-            "analyzer": {
-              "filter": [
-                "lowercase"
-              ],
-              "tokenizer": "standard"
-            }
+          "fts_filter": {
+            "filter_type": "NumGE",
+            "filter_field": "filter_id",
+            "filter_value": 8399731,
+            "filter_rate": 0.95,
+            "filter_id_distribution": "affine_permutation_v1",
+            "filter_id_multiplier": 5464547,
+            "filter_id_offset": 1684563,
+            "matched_doc_count": 442092,
+            "matched_doc_ratio": 0.05,
+            "original_query_count": 6980,
+            "filtered_query_count": 347,
+            "filtered_query_ratio": 0.049713,
+            "original_relevant_doc_count": 7433,
+            "filtered_relevant_doc_count": 347
           },
-          "applied_bm25_params": {},
-          "unapplied_bm25_params": {
-            "k1": 1.2,
-            "b": 0.75,
-            "avgdl": 55.01342
-          },
-          "applied_analyzer_params": {},
-          "unapplied_analyzer_params": {
-            "filter": [
-              "lowercase"
-            ],
-            "tokenizer": "standard"
+          "fts_recall": {
+            "skipped": false,
+            "reason": null,
+            "serial_query_count": 347,
+            "full_query_count": 6980
           }
         },
         "st_ideal_insert_duration": 0,
@@ -1568,15 +1868,15 @@
       "task_config": {
         "db": "ZillizCloud",
         "db_config": {
-          "db_label": "2026-06-23T15:26:11.226516",
+          "db_label": "task15919-perf-8cu-oneseg-26-retest",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\"\n  },\n  \"evidence\": {\n    \"source\": \"User-confirmed Task 15919 deployment shape; one persistent segment per benchmark collection validated by run preflight and post-run inventory\",\n    \"credential_storage\": \"external mode-600 secret file removed by runner cleanup\"\n  }\n}",
           "uri": "**********",
           "user": "root",
           "password": "**********",
           "token": "",
           "num_shards": 1,
-          "collection_name": "ZillizCloudFTSBench"
+          "collection_name": "vdbbench_fts_serial_msmarco_permuted_20260803"
         },
         "db_case_config": {
           "index_type": "AUTOINDEX",
@@ -1594,22 +1894,160 @@
         "case_config": {
           "case_id": 503,
           "custom_case": {
-            "dataset_with_size_type": "MS MARCO Small (100K documents)",
-            "payload_profile": "text"
+            "dataset_with_size_type": "MS MARCO Large (8.8M documents)",
+            "payload_profile": "ids_only",
+            "filter_rate": 0.95
           },
           "k": 100,
           "concurrency_search_config": {
             "num_concurrency": [
               40,
+              60,
               80
             ],
             "concurrency_duration": 30,
-            "concurrency_timeout": 3600
+            "concurrency_timeout": 3600,
+            "serial_cooldown": 0.0
           }
         },
         "stages": [
-          "drop_old",
-          "load",
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 4028.3996,
+        "serial_latency_p99": 0.0246,
+        "serial_latency_p95": 0.0098,
+        "recall": 0.9403,
+        "ndcg": 0.6958,
+        "mrr": 0.628,
+        "conc_num_list": [
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          3205.3504,
+          3736.9223,
+          4028.3996
+        ],
+        "conc_latency_p99_list": [
+          0.023615233003511128,
+          0.02917098919919226,
+          0.034491611427802125
+        ],
+        "conc_latency_p95_list": [
+          0.019226595002692193,
+          0.02385359159961807,
+          0.028303666404826795
+        ],
+        "conc_latency_avg_list": [
+          0.012365652090037205,
+          0.015849408703119124,
+          0.01946939073238616
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 0,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "fts_filter": {
+            "filter_type": "NumGE",
+            "filter_field": "filter_id",
+            "filter_value": 8753404,
+            "filter_rate": 0.99,
+            "filter_id_distribution": "affine_permutation_v1",
+            "filter_id_multiplier": 5464547,
+            "filter_id_offset": 1684563,
+            "matched_doc_count": 88419,
+            "matched_doc_ratio": 0.01,
+            "original_query_count": 6980,
+            "filtered_query_count": 67,
+            "filtered_query_ratio": 0.009599,
+            "original_relevant_doc_count": 7433,
+            "filtered_relevant_doc_count": 67
+          },
+          "fts_recall": {
+            "skipped": false,
+            "reason": null,
+            "serial_query_count": 67,
+            "full_query_count": 6980
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ZillizCloud",
+        "db_config": {
+          "db_label": "task15919-perf-8cu-oneseg-26-retest",
+          "version": "",
+          "note": "{\n  \"schema\": \"vdbbench-zilliz-cloud-context/v1\",\n  \"backend\": {\n    \"name\": \"ZillizCloud\",\n    \"region\": \"aws-us-west-2\",\n    \"cu\": 8,\n    \"replica_count\": 1,\n    \"instance_type\": \"performance\",\n    \"deployment_method\": \"kubernetes\",\n    \"deployment_mode\": \"standalone\",\n    \"server_role\": \"milvus-standalone-r1\",\n    \"server_count\": 1\n  },\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\"\n  },\n  \"evidence\": {\n    \"source\": \"User-confirmed Task 15919 deployment shape; one persistent segment per benchmark collection validated by run preflight and post-run inventory\",\n    \"credential_storage\": \"external mode-600 secret file removed by runner cleanup\"\n  }\n}",
+          "uri": "**********",
+          "user": "root",
+          "password": "**********",
+          "token": "",
+          "num_shards": 1,
+          "collection_name": "vdbbench_fts_serial_msmarco_permuted_20260803"
+        },
+        "db_case_config": {
+          "index_type": "AUTOINDEX",
+          "metric_type": "BM25",
+          "inverted_index_algo": "DAAT_MAXSCORE",
+          "bm25_k1": null,
+          "bm25_b": null,
+          "analyzer_tokenizer": "standard",
+          "analyzer_enable_lowercase": true,
+          "analyzer_max_token_length": null,
+          "analyzer_stop_words": null,
+          "drop_ratio_search": null,
+          "level": 1
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "MS MARCO Large (8.8M documents)",
+            "payload_profile": "ids_only",
+            "filter_rate": 0.99
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600,
+            "serial_cooldown": 0.0
+          }
+        },
+        "stages": [
+          "search_serial",
           "search_concurrent"
         ],
         "load_concurrency": 0
@@ -1618,5 +2056,5 @@
     }
   ],
   "file_fmt": "result_{}_{}_{}.json",
-  "timestamp": 1782172800.0
+  "timestamp": 1786060800.0
 }

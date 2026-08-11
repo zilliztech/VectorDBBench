@@ -28,7 +28,7 @@ dependencies = [
     "click",
     "pyyaml",
     "pytz",
-    "streamlit>=1.47,<2",  # 1.47 fixes streamlit#11660
+    "streamlit>=1.61,<2",  # Stateful tabs and stretch widths used by the FTS page
     "tornado>=6.0",
     "tqdm",
     "s3fs",
