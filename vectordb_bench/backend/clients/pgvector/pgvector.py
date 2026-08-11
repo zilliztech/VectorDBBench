@@ -65,12 +65,19 @@ class PgVector(VectorDB):
         # construct basic units
         self.conn, self.cursor = self._create_connection(**self.connect_config)
 
-        # svs extension installs vector as a dependency; plain vector installs for other index types
         if isinstance(self.case_config, PgVectorSVSVamanaConfig):
-            self.cursor.execute("CREATE EXTENSION IF NOT EXISTS svs")
+            # svs is a superuser-only C extension; verify it's pre-installed rather than attempting CREATE
+            installed = self.cursor.execute(
+                "SELECT 1 FROM pg_extension WHERE extname = 'svs'"
+            ).fetchone()
+            if not installed:
+                raise RuntimeError(
+                    "Extension 'svs' is not installed. "
+                    "Run 'CREATE EXTENSION svs;' as a PostgreSQL superuser first."
+                )
         else:
             self.cursor.execute("CREATE EXTENSION IF NOT EXISTS vector")
-        self.conn.commit()
+            self.conn.commit()
 
         redacted_connect_config = _redact_connect_config(self.connect_config)
         log.info("%s config values: %s\n%s", self.name, redacted_connect_config, self.case_config)

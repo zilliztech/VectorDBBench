@@ -2,6 +2,9 @@
 requires = ["setuptools>=67.0", "wheel", "setuptools_scm[toml]>=6.2"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools_scm]
+fallback_version = "1.0.18"
+
 [tool.setuptools.package-data]
 "vectordb_bench.results" = ["*.json"]
 "vectordb_bench.fig.homepage" = ["*.png"]
@@ -107,8 +110,6 @@ Leaderborad = "https://zilliz.com/vdbbench-leaderboard"
 init_bench = "vectordb_bench.__main__:main"
 init_bench_rest = "vectordb_bench.restful.app:main"
 vectordbbench = "vectordb_bench.cli.vectordbbench:cli"
-
-[tool.setuptools_scm]
 
 [tool.black]
 line-length = 120
