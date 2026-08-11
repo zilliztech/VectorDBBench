@@ -287,7 +287,7 @@ OpenSearch Serverless (AOSS) is a serverless deployment option for Amazon OpenSe
 **Example: Run performance test on OpenSearch Serverless**
 
 ```shell
-vectordbbench awsopensearch --db-label aoss \
+NUM_PER_BATCH=100 vectordbbench awsopensearch --db-label aoss \
   --serverless --aws-region us-east-1 \
   --host <collection-id>.aoss.us-east-1.on.aws --port 443 \
   --case-type Performance768D1M \
@@ -303,12 +303,13 @@ OpenSearch Serverless-specific options:
 |--------|-------------|
 | `--serverless` | Enable OpenSearch Serverless mode (uses AWS SigV4 auth) |
 | `--aws-region` | AWS region for the AOSS collection (default: `us-east-1`) |
+| `NUM_PER_BATCH` | Number of vectors per Serverless bulk request (default: `100`) |
 
 > **Notes:**
 > - `--user` and `--password` are not needed for Serverless mode
 > - `--engine` is accepted but ignored internally (AOSS manages the engine)
 > - `--force-merge-enabled`, `--refresh-interval`, `--flush-threshold-size`, and `--cb-threshold` are ignored for Serverless
-> - Data insertion uses smaller batch sizes (100) for Serverless API compatibility
+> - Keep `NUM_PER_BATCH` small enough for the Serverless bulk API request limits
 
 ### Run Elastic Cloud from command line
 
