@@ -309,6 +309,7 @@ class PgVectorSVSVamanaConfig(PgVectorIndexConfig):
             "graph_degree": self.graph_degree,
             "leanvec_dims": self.leanvec_dims,
             "build_window_size": self.build_window_size,
+            "use_search_history": self.use_search_history,
             "compression_type": self.compression_type,
             "compression_primary": self.compression_primary,
             "compression_secondary": self.compression_secondary,
@@ -342,20 +343,8 @@ class PgVectorSVSVamanaConfig(PgVectorIndexConfig):
         }
 
     def session_param(self) -> PgVectorSessionCommands:
-        session_parameters = {"vamana.search_window_size": self.search_window_size}
-        session_options = self._optionally_build_set_options(session_parameters)
-
-        if self.use_search_history is not None:
-            session_options.append(
-                {
-                    "parameter": {
-                        "setting_name": "vamana.use_search_history",
-                        "val": str(self.use_search_history).lower(),
-                    },
-                },
-            )
-
-        return {"session_options": session_options}
+        session_parameters = {"svs.search_window_size": self.search_window_size}
+        return {"session_options": self._optionally_build_set_options(session_parameters)}
 
 _pgvector_case_config = {
     IndexType.HNSW: PgVectorHNSWConfig,

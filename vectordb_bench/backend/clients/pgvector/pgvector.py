@@ -65,8 +65,11 @@ class PgVector(VectorDB):
         # construct basic units
         self.conn, self.cursor = self._create_connection(**self.connect_config)
 
-        # create vector extension
-        self.cursor.execute("CREATE EXTENSION IF NOT EXISTS vector")
+        # svs extension installs vector as a dependency; plain vector installs for other index types
+        if isinstance(self.case_config, PgVectorSVSVamanaConfig):
+            self.cursor.execute("CREATE EXTENSION IF NOT EXISTS svs")
+        else:
+            self.cursor.execute("CREATE EXTENSION IF NOT EXISTS vector")
         self.conn.commit()
 
         redacted_connect_config = _redact_connect_config(self.connect_config)
