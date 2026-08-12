@@ -794,7 +794,13 @@ CaseConfigParamInput_Refine = CaseConfigInput(
     inputHelp="Whether refined data is reserved during index building.",
     inputConfig={"options": [True, False]},
     isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
-    in [IndexType.HNSW_SQ.value, IndexType.HNSW_PQ.value, IndexType.HNSW_PRQ.value, IndexType.IVF_RABITQ.value],
+    in [
+        IndexType.HNSW_SQ.value,
+        IndexType.HNSW_PQ.value,
+        IndexType.HNSW_PRQ.value,
+        IndexType.IVF_RABITQ.value,
+        IndexType.IVFPQ.value,
+    ],
 )
 
 CaseConfigParamInput_RefineType = CaseConfigInput(
@@ -805,7 +811,13 @@ CaseConfigParamInput_RefineType = CaseConfigInput(
         "options": [SQType.FP32.value, SQType.FP16.value, SQType.BF16.value, SQType.SQ8.value, SQType.SQ6.value]
     },
     isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
-    in [IndexType.HNSW_SQ.value, IndexType.HNSW_PQ.value, IndexType.HNSW_PRQ.value, IndexType.IVF_RABITQ.value]
+    in [
+        IndexType.HNSW_SQ.value,
+        IndexType.HNSW_PQ.value,
+        IndexType.HNSW_PRQ.value,
+        IndexType.IVF_RABITQ.value,
+        IndexType.IVFPQ.value,
+    ]
     and config.get(CaseConfigParamType.refine, True),
 )
 
@@ -815,7 +827,13 @@ CaseConfigParamInput_RefineK = CaseConfigInput(
     inputHelp="The magnification factor of refine compared to k.",
     inputConfig={"min": 1.0, "max": 10000.0, "value": 1.0},
     isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
-    in [IndexType.HNSW_SQ.value, IndexType.HNSW_PQ.value, IndexType.HNSW_PRQ.value, IndexType.IVF_RABITQ.value]
+    in [
+        IndexType.HNSW_SQ.value,
+        IndexType.HNSW_PQ.value,
+        IndexType.HNSW_PRQ.value,
+        IndexType.IVF_RABITQ.value,
+        IndexType.IVFPQ.value,
+    ]
     and config.get(CaseConfigParamType.refine, True),
 )
 

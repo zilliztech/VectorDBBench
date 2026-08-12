@@ -335,6 +335,52 @@ def MilvusIVFSQ8(**parameters: Unpack[MilvusIVFFlatTypedDict]):
     )
 
 
+class MilvusIVFPQTypedDict(MilvusIVFFlatTypedDict, MilvusRefineTypedDict):
+    nbits: Annotated[
+        int,
+        click.option(
+            "--nbits",
+            type=int,
+            required=True,
+        ),
+    ]
+    pq_m: Annotated[
+        int,
+        click.option(
+            "--pq-m",
+            type=int,
+            default=32,
+            show_default=True,
+            help="Number of PQ sub-quantizers; the vector dim must be divisible by it. "
+            "Higher = finer quantization and better recall, but larger codes.",
+        ),
+    ]
+
+
+@cli.command()
+@click_parameter_decorators_from_typed_dict(MilvusIVFPQTypedDict)
+def MilvusIVFPQ(**parameters: Unpack[MilvusIVFPQTypedDict]):
+    from .config import IVFPQConfig
+
+    run(
+        db=DBTYPE,
+        db_config=_build_milvus_config(parameters),
+        db_case_config=_with_partition_key(
+            IVFPQConfig(
+                nlist=parameters["nlist"],
+                nprobe=parameters["nprobe"],
+                m=parameters["pq_m"],
+                nbits=parameters["nbits"],
+                refine=parameters["refine"],
+                refine_type=parameters["refine_type"],
+                refine_k=parameters["refine_k"],
+            ),
+            parameters,
+        ),
+        **parameters,
+    )
+
+
 class MilvusIVFRABITQTypedDict(CommonTypedDict, MilvusTypedDict, MilvusIVFFlatTypedDict):
     rbq_bits_query: Annotated[
         int,
