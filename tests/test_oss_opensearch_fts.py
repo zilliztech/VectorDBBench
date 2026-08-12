@@ -138,6 +138,7 @@ def test_oss_opensearch_green_health_wait_is_bounded_and_diagnostic():
         "index": "idx",
         "wait_for_status": "green",
         "timeout": "30m",
+        "request_timeout": 1860,
     }
 
 
