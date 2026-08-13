@@ -394,7 +394,7 @@ class Hologres(VectorDB):
 
         sql_table = sql.SQL("""
             CREATE TABLE IF NOT EXISTS {table_name} (
-                id BIGINT PRIMARY KEY,
+                id BIGINT,
                 embedding FLOAT4[] CHECK (array_ndims(embedding) = 1 AND array_length(embedding, 1) = {dim})
             )
             WITH (table_group = {tg_name});
