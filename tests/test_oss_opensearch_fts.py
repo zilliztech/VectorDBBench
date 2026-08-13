@@ -46,6 +46,36 @@ def test_oss_opensearch_fts_config_defaults():
     assert config.search_param() == {}
 
 
+def test_oss_opensearch_cli_propagates_metric_type(monkeypatch):
+    captured = {}
+
+    def fake_run(**kwargs):
+        captured.update(kwargs)
+
+    monkeypatch.setattr(oss_opensearch_cli, "run", fake_run)
+    result = CliRunner().invoke(
+        oss_opensearch_cli.OSSOpenSearch,
+        [
+            "--host",
+            "localhost",
+            "--metric-type",
+            "cosine",
+            "--m",
+            "16",
+            "--ef-construction",
+            "256",
+            "--ef-search",
+            "100",
+            "--case-type",
+            "Performance768D1M",
+            "--dry-run",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert captured["db_case_config"].metric_type_name == "cosine"
+
+
 def test_oss_opensearch_fts_config_supports_bm25_similarity():
     config = OSSOpenSearchFtsConfig(bm25_k1=1.2, bm25_b=0.75)
     elastic_config = ElasticCloudFtsConfig(bm25_k1=1.2, bm25_b=0.75)
