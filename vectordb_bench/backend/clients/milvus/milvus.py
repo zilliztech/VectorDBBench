@@ -58,6 +58,7 @@ class Milvus(VectorDB):
         self._multitenant_partition_key_field = self._scalar_label_field
         self._scalar_labels_index_name = "labels_idx"
         self._is_fts = isinstance(self.case_config, MilvusFtsConfig)
+        self._fts_filter_enabled = bool(kwargs.get("fts_filter_enabled", self._is_fts))
 
         if self._is_fts:
             self._primary_field = "doc_id"
@@ -107,7 +108,8 @@ class Milvus(VectorDB):
                     else self.case_config.index_param().get("analyzer_params", {"type": "english"})
                 )
                 schema.add_field(self._primary_field, DataType.VARCHAR, max_length=512, is_primary=True)
-                schema.add_field(self._filter_id_field, DataType.INT64)
+                if self._fts_filter_enabled:
+                    schema.add_field(self._filter_id_field, DataType.INT64)
                 schema.add_field(
                     self._text_field,
                     DataType.VARCHAR,
@@ -200,7 +202,7 @@ class Milvus(VectorDB):
             index_name=self._sort_index_name,
             index_type="STL_SORT",
         )
-        if self._is_fts:
+        if self._is_fts and self._fts_filter_enabled:
             index_params.add_index(
                 field_name=self._filter_id_field,
                 index_name=self._filter_id_sort_index_name,

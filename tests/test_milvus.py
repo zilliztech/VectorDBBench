@@ -512,3 +512,30 @@ def test_milvus_fts_insert_uses_one_client_call_for_runner_batch() -> None:
     assert count == 5
     assert err is None
     client.insert.assert_called_once()
+
+
+def test_milvus_fts_filter_index_is_conditional(monkeypatch: pytest.MonkeyPatch) -> None:
+    db = object.__new__(Milvus)
+    db._is_fts = True
+    db._sparse_field = "sparse_vector"
+    db._main_index_name = "sparse_vector_idx"
+    db._sort_index_field = "doc_id"
+    db._sort_index_name = "doc_id_sort_idx"
+    db._filter_id_field = "filter_id"
+    db._filter_id_sort_index_name = "filter_id_sort_idx"
+    db.with_scalar_labels = False
+    db.case_config = SimpleNamespace(sparse_index_param=lambda: {})
+
+    for enabled, expected_fields in (
+        (False, {"sparse_vector", "doc_id"}),
+        (True, {"sparse_vector", "doc_id", "filter_id"}),
+    ):
+        params = MagicMock()
+        monkeypatch.setattr(
+            "vectordb_bench.backend.clients.milvus.milvus.MilvusClient.prepare_index_params",
+            lambda: params,
+        )
+        db._fts_filter_enabled = enabled
+        db._build_index_params()
+        fields = {call.kwargs["field_name"] for call in params.add_index.call_args_list}
+        assert fields == expected_fields

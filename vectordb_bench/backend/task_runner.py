@@ -15,6 +15,7 @@ from . import utils
 from .cases import Case, CaseLabel, StreamingPerformanceCase
 from .clients import DB, MetricType, api
 from .data_source import DatasetSource
+from .filter import FilterOp
 from .runner import (
     ColdWarmSearchRunner,
     ConcurrentInsertRunner,
@@ -200,6 +201,8 @@ class CaseRunner(BaseModel):
             extra_db_kwargs["collection_name"] = collection_name
         if self.ca.is_multitenant:
             extra_db_kwargs["multitenant_tenant_labels"] = self.ca.tenant_labels()
+        if self.is_fts:
+            extra_db_kwargs["fts_filter_enabled"] = self.ca.filters.type != FilterOp.NonFilter
 
         self.db = db_cls(
             dim=getattr(self.ca.dataset.data, "dim", 0),

@@ -3,7 +3,7 @@ import threading
 from vectordb_bench.backend.cases import CaseLabel
 from vectordb_bench.backend.data_source import DatasetSource
 from vectordb_bench.backend.dataset import FtsDocument, FtsQuery
-from vectordb_bench.backend.filter import non_filter
+from vectordb_bench.backend.filter import NewIntFilter, non_filter
 from vectordb_bench.backend.payload import PayloadProfile
 from vectordb_bench.backend.runner.concurrent_runner import ConcurrentInsertRunner
 from vectordb_bench.backend.task_runner import CaseRunner
@@ -57,6 +57,35 @@ def test_fts_pre_run_passes_filters_to_dataset(monkeypatch):
 
     assert runner.ca.dataset.calls == [(DatasetSource.S3, filter_obj)]
     assert init_calls == [False]
+
+
+def test_fts_init_db_passes_filter_schema_flag():
+    captured = []
+
+    class Db:
+        def __init__(self, **kwargs):
+            captured.append(kwargs["fts_filter_enabled"])
+
+    class Config:
+        db = type("DbConfig", (), {"init_cls": Db})()
+        db_config = type("Config", (), {"to_dict": lambda self: {}})()
+        db_case_config = object()
+
+    for filters in (non_filter, NewIntFilter(filter_rate=0.5, int_field="filter_id", int_value=50)):
+        case = type(
+            "Case",
+            (),
+            {
+                "label": CaseLabel.FullTextSearchPerformance,
+                "dataset": type("Dataset", (), {"data": object()})(),
+                "filters": filters,
+                "is_multitenant": False,
+                "with_scalar_labels": False,
+            },
+        )()
+        CaseRunner.construct(ca=case, config=Config()).init_db()
+
+    assert captured == [False, True]
 
 
 def test_fts_perf_metric_includes_dataset_filter_stats():
