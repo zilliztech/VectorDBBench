@@ -51,6 +51,7 @@ test = [
     "black",
     "ruff",
     "pytest",
+    "pytest-socket",
 ]
 restful         = [ "flask" ]
 qdrant          = [ "qdrant-client" ]

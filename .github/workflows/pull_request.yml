@@ -7,8 +7,8 @@ on:
       - vdbbench_*
 
 jobs:
-  build:
-    name: Run Python Tests
+  unit-test:
+    name: Hermetic unit tests
     strategy:
       matrix:
         python-version: [3.11, 3.12]
@@ -30,12 +30,12 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -e ".[test]"
+          python -m pip install -e ".[test]"
 
       - name: Run coding checks
         run: |
           make lint
 
-      - name: Test with pytest
+      - name: Run hermetic unit tests
         run: |
-          make unittest
+          make unit-test
