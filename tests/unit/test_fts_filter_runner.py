@@ -1,4 +1,5 @@
 import threading
+from types import SimpleNamespace
 
 from vectordb_bench.backend.cases import CaseLabel
 from vectordb_bench.backend.data_source import DatasetSource
@@ -48,7 +49,11 @@ def test_fts_pre_run_passes_filters_to_dataset(monkeypatch):
         dataset = Dataset()
         filters = filter_obj
 
-    config_obj = type("Config", (), {"stages": [TaskStage.LOAD]})()
+    config_obj = type(
+        "Config",
+        (),
+        {"stages": [TaskStage.LOAD], "case_config": SimpleNamespace(k=10)},
+    )()
     runner = CaseRunner.construct(ca=Case(), config=config_obj, dataset_source=DatasetSource.S3)
     init_calls = []
     monkeypatch.setattr(CaseRunner, "init_db", lambda self, drop_old=True: init_calls.append(drop_old))
@@ -70,6 +75,7 @@ def test_fts_init_db_passes_filter_schema_flag():
         db = type("DbConfig", (), {"init_cls": Db})()
         db_config = type("Config", (), {"to_dict": lambda self: {}})()
         db_case_config = object()
+        case_config = SimpleNamespace(k=10)
 
     for filters in (non_filter, NewIntFilter(filter_rate=0.5, int_field="filter_id", int_value=50)):
         case = type(
