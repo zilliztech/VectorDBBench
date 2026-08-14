@@ -46,7 +46,6 @@ class AdbpgConfig(DBConfig):
 
 class AdbpgIndexConfig(BaseModel, DBCaseConfig):
     metric_type: MetricType | None = None
-    benchmark_topk: int = 100
     create_index_before_load: bool = False
     create_index_after_load: bool = True
 
@@ -67,12 +66,22 @@ class AdbpgIndexConfig(BaseModel, DBCaseConfig):
     pca_dim: int | None = None
     # novad-specific search param (no-op for novamr/HNSW algorithms)
     nprobe: int = 5
+    # Generic reloptions merged into CREATE INDEX ... WITH (...). These
+    # override the dedicated fields above when the same option is supplied.
+    index_build_reloptions: dict[str, str] = Field(default_factory=dict)
     # Generic ADBPG search setup. Product-specific parameters no longer need
-    # dedicated Python fields: GUCs apply per connection, while reloptions and
-    # SQL run once after the index exists.
+    # dedicated Python fields: GUCs apply per connection, while post-build
+    # reloptions and SQL run once after the index exists.
     session_gucs: dict[str, str] = Field(default_factory=dict)
-    index_reloptions: dict[str, str | None] = Field(default_factory=dict)
+    # Reloptions applied after the index exists. A name=value item emits
+    # ALTER INDEX ... SET; a bare name emits ALTER INDEX ... RESET.
+    index_reset_reloptions: dict[str, str | None] = Field(default_factory=dict)
     setup_sql: tuple[str, ...] = ()
+    # Optional NOVA autotune invocation performed after index creation and
+    # setup_sql. Values are SQL expressions so newly added server parameters
+    # can be used without adding another client field.
+    autotune_params: dict[str, str] = Field(default_factory=dict)
+    autotune_timeout: int = Field(default=43200, gt=0)
 
     def parse_metric(self) -> str:
         if self.metric_type == MetricType.L2:
@@ -114,6 +123,25 @@ class AdbpgIndexConfig(BaseModel, DBCaseConfig):
             with_options.append({"option_name": "auto_reduction", "val": "on", "raw": True})
         if self.pca_dim is not None:
             with_options.append({"option_name": "pca_dim", "val": self.pca_dim})
+
+        reserved_options = {"dim", "distancemeasure"}
+        invalid_options = reserved_options.intersection(self.index_build_reloptions)
+        if invalid_options:
+            names = ", ".join(sorted(invalid_options))
+            msg = f"index_build_reloption cannot override dataset-derived options: {names}"
+            raise ValueError(msg)
+
+        # Preserve the existing option order while allowing generic build
+        # reloptions to override dedicated defaults without emitting duplicate
+        # CREATE INDEX WITH keys.
+        option_indexes = {option["option_name"]: index for index, option in enumerate(with_options)}
+        for name, value in self.index_build_reloptions.items():
+            option = {"option_name": name, "val": value}
+            if name in option_indexes:
+                with_options[option_indexes[name]] = option
+            else:
+                option_indexes[name] = len(with_options)
+                with_options.append(option)
 
         return {
             "metric": self.parse_metric(),
