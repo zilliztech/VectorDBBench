@@ -1,0 +1,54 @@
+# Cohere-1M import, NOVAMR build, autotune, and top-10 benchmark.
+# Performance guide: https://help.aliyun.com/zh/analyticdb/analyticdb-for-postgresql/user-guide/nova-vector-index-performance-white-paper
+adbpgnova:
+  db_label: cohere1m-novamr-autotune
+  task_label: cohere1m-top10-r095-autotune
+
+  # Dataset and benchmark.
+  case_type: Performance768D1M
+  k: 10
+  drop_old: true
+  load: true
+  search_serial: true
+  search_concurrent: true
+  num_concurrency: "1,32,48,64,128"
+  concurrency_duration: 100
+
+  # Database connection. Set the password with POSTGRES_PASSWORD.
+  host: <adbpg-host>
+  port: 5432
+  db_name: postgres
+  user_name: <adbpg-user>
+
+  # CREATE INDEX WITH reloptions.
+  index_build_reloption:
+    - "algorithm=novamr"
+    - "hnsw_m=48"
+    - "hnsw_ef_construction=600"
+    - "rabitq_bits=7"
+    - "auto_reduction=on"
+
+  # Index build parallelism.
+  build_parallel_processes: 32
+
+  # Search GUCs.
+  session_guc:
+    - "fastann.nova_adaptive_gamma=0"
+
+  # Run after the index is built and before autotune.
+  setup_sql:
+    - 'ANALYZE "public"."vector"'
+
+  # index_relation uses the new index; topk uses k above.
+  autotune_param:
+    - "target_recall=0.95"
+    - "n_samples=300"
+    - "n_trials=500"
+    - "n_threads=32"
+  autotune_timeout: 600
+
+  # To reuse an already tuned index, set drop_old/load to false, remove the
+  # autotune settings above, and uncomment this block.
+  # index_reset_reloption:
+  #   - "nova_autotune_topk=10"
+  #   - "nova_autotune_recall=0.95"
