@@ -34,6 +34,7 @@ class DB(Enum):
     PgVectorScale = "PgVectorScale"
     PgDiskANN = "PgDiskANN"
     AlloyDB = "AlloyDB"
+    LakebaseVector = "LakebaseVector"
     Redis = "Redis"
     MemoryDB = "MemoryDB"
     Chroma = "Chroma"
@@ -158,6 +159,11 @@ class DB(Enum):
             from .alloydb.alloydb import AlloyDB
 
             return AlloyDB
+
+        if self == DB.LakebaseVector:
+            from .lakebase_vector.lakebase_vector import LakebaseVector
+
+            return LakebaseVector
 
         if self == DB.AliyunElasticsearch:
             from .aliyun_elasticsearch.aliyun_elasticsearch import AliyunElasticsearch
@@ -377,6 +383,11 @@ class DB(Enum):
 
             return AlloyDBConfig
 
+        if self == DB.LakebaseVector:
+            from .lakebase_vector.config import LakebaseVectorConfig
+
+            return LakebaseVectorConfig
+
         if self == DB.AliyunElasticsearch:
             from .aliyun_elasticsearch.config import AliyunElasticsearchConfig
 
@@ -587,6 +598,11 @@ class DB(Enum):
             from .alloydb.config import _alloydb_case_config
 
             return _alloydb_case_config.get(index_type)
+
+        if self == DB.LakebaseVector:
+            from .lakebase_vector.config import _lakebase_search_case_config
+
+            return _lakebase_search_case_config.get(index_type)
 
         if self == DB.AliyunElasticsearch:
             from .elastic_cloud.config import ElasticCloudIndexConfig
