@@ -86,6 +86,7 @@ def test_index_build_reloptions_render_in_create_index(monkeypatch: pytest.Monke
     client.conn = FakeConnection()
     client.cursor = FakeCursor()
     client.case_config = _config(
+        index_build_includes=("id", "label", "tenant_id"),
         index_build_reloptions={
             "algorithm": "novamr",
             "hnsw_m": "48",
@@ -98,12 +99,21 @@ def test_index_build_reloptions_render_in_create_index(monkeypatch: pytest.Monke
     client._create_index()
 
     create_sql = next(statement for statement in executed if "CREATE INDEX" in statement)
-    assert '"algorithm" = \'novamr\'' in create_sql
-    assert '"hnsw_m" = \'48\'' in create_sql
-    assert '"hnsw_ef_construction" = \'600\'' in create_sql
-    assert '"rabitq_bits" = \'7\'' in create_sql
-    assert '"auto_reduction" = \'on\'' in create_sql
+    assert "\"algorithm\" = 'novamr'" in create_sql
+    assert "\"hnsw_m\" = '48'" in create_sql
+    assert "\"hnsw_ef_construction\" = '600'" in create_sql
+    assert "\"rabitq_bits\" = '7'" in create_sql
+    assert "\"auto_reduction\" = 'on'" in create_sql
     assert create_sql.count('"algorithm"') == 1
+    assert 'INCLUDE ("id", "label", "tenant_id")' in create_sql
+
+
+def test_index_build_include_defaults_and_validation() -> None:
+    assert _config().index_build_includes == ("id",)
+    assert _config(index_build_includes=("id", "label", "id")).index_build_includes == ("id", "label")
+
+    with pytest.raises(ValueError, match="column cannot be empty"):
+        _config(index_build_includes=("id", " "))
 
 
 def test_cli_parses_generic_settings_and_reset() -> None:
@@ -151,6 +161,7 @@ def test_cohere_autotune_example_loads_through_click(monkeypatch: pytest.MonkeyP
         "rabitq_bits": "7",
         "auto_reduction": "on",
     }
+    assert case_config.index_build_includes == ("id",)
     assert case_config.session_gucs == {"fastann.nova_adaptive_gamma": "0"}
     assert case_config.index_reset_reloptions == {}
     assert case_config.autotune_params == {
