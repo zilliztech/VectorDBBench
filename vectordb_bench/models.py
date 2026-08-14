@@ -69,6 +69,7 @@ class CaseConfigParamType(Enum):
     numCandidates = "num_candidates"
     lists = "lists"
     probes = "probes"
+    epsilon = "epsilon"
     quantizationType = "quantization_type"
     quantizationRatio = "quantization_ratio"
     tableQuantizationType = "table_quantization_type"

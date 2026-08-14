@@ -1638,6 +1638,53 @@ CaseConfigParamInput_max_parallel_workers_AlloyDB = CaseConfigInput(
     },
 )
 
+CaseConfigParamInput_IndexType_LakebaseVector = CaseConfigInput(
+    label=CaseConfigParamType.IndexType,
+    inputHelp="Select Index Type",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [
+            IndexType.LAKEBASE_ANN.value,
+        ],
+    },
+)
+
+CaseConfigParamInput_max_parallel_workers_LakebaseVector = CaseConfigInput(
+    label=CaseConfigParamType.max_parallel_workers,
+    displayLabel="Max parallel workers",
+    inputHelp="Recommended value: (cpu cores - 1). This will set the parameters: max_parallel_maintenance_workers,"
+    " max_parallel_workers & table(parallel_workers)",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 0,
+        "max": 1024,
+        "value": 16,
+    },
+)
+
+CaseConfigParamInput_Probes_LakebaseVector = CaseConfigInput(
+    label=CaseConfigParamType.probes,
+    displayLabel="Probes",
+    inputHelp="Optional comma-separated lakebase_ann probe counts; leave empty to use the server default",
+    inputType=InputType.Text,
+    inputConfig={
+        "value": "",
+    },
+)
+
+CaseConfigParamInput_Epsilon_LakebaseVector = CaseConfigInput(
+    label=CaseConfigParamType.epsilon,
+    displayLabel="Epsilon",
+    inputHelp="Optional lakebase_ann reranking margin; leave empty to use the server default",
+    inputType=InputType.Float,
+    inputConfig={
+        "min": 0.0,
+        "max": 4.0,
+        "step": 0.1,
+        "value": None,
+    },
+)
+
 CaseConfigParamInput_EFConstruction_AliES = CaseConfigInput(
     label=CaseConfigParamType.EFConstruction,
     inputType=InputType.Number,
@@ -2494,6 +2541,18 @@ AlloyDBPerformanceConfig = [
     CaseConfigParamInput_max_parallel_workers_AlloyDB,
 ]
 
+LakebaseVectorLoadingConfig = [
+    CaseConfigParamInput_IndexType_LakebaseVector,
+    CaseConfigParamInput_max_parallel_workers_LakebaseVector,
+]
+
+LakebaseVectorPerformanceConfig = [
+    CaseConfigParamInput_IndexType_LakebaseVector,
+    CaseConfigParamInput_max_parallel_workers_LakebaseVector,
+    CaseConfigParamInput_Probes_LakebaseVector,
+    CaseConfigParamInput_Epsilon_LakebaseVector,
+]
+
 AliyunElasticsearchLoadingConfig = [
     CaseConfigParamInput_IndexType_ES,
     CaseConfigParamInput_NumShards_ES,
@@ -3297,6 +3356,10 @@ CASE_CONFIG_MAP = {
     DB.AlloyDB: {
         CaseLabel.Load: AlloyDBLoadConfig,
         CaseLabel.Performance: AlloyDBPerformanceConfig,
+    },
+    DB.LakebaseVector: {
+        CaseLabel.Load: LakebaseVectorLoadingConfig,
+        CaseLabel.Performance: LakebaseVectorPerformanceConfig,
     },
     DB.AliyunElasticsearch: {
         CaseLabel.Load: AliyunElasticsearchLoadingConfig,
