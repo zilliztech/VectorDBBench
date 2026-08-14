@@ -201,10 +201,6 @@ class CaseRunner(BaseModel):
         extra_db_kwargs = {}
         if collection_name:
             extra_db_kwargs["collection_name"] = collection_name
-        if self.config.db == DB.Adbpg:
-            # ADBPG NOVA autotune must use the actual workload topK for every
-            # entry point (CLI, batch, UI, and REST), not a second default.
-            extra_db_kwargs["k"] = self.config.case_config.k
         if self.ca.is_multitenant:
             extra_db_kwargs["multitenant_tenant_labels"] = self.ca.tenant_labels()
 
