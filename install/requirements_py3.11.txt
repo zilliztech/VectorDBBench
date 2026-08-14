@@ -4,6 +4,7 @@ qdrant-client
 pinecone
 weaviate-client
 elasticsearch==8.16.0
+cbor2
 opensearch-py
 boto3
 requests-aws4auth

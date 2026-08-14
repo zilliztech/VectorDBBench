@@ -589,9 +589,9 @@ class DB(Enum):
             return _alloydb_case_config.get(index_type)
 
         if self == DB.AliyunElasticsearch:
-            from .elastic_cloud.config import ElasticCloudIndexConfig
+            from .aliyun_elasticsearch.config import AliyunElasticsearchIndexConfig
 
-            return ElasticCloudIndexConfig
+            return AliyunElasticsearchIndexConfig
 
         if self == DB.AliyunOpenSearch:
             from .aliyun_opensearch.config import AliyunOpenSearchIndexConfig
