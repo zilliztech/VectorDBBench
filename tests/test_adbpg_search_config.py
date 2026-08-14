@@ -1,5 +1,4 @@
 from pathlib import Path
-from types import SimpleNamespace
 from typing import Any
 
 import pytest
@@ -13,7 +12,6 @@ from vectordb_bench.backend.clients.adbpg.adbpg import Adbpg
 from vectordb_bench.backend.clients.adbpg.config import AdbpgConfig, AdbpgIndexConfig
 from vectordb_bench.backend.clients.adbpg.options import parse_key_values, parse_reloptions
 from vectordb_bench.backend.clients.api import MetricType
-from vectordb_bench.backend.task_runner import CaseRunner
 
 
 def _config(**kwargs: Any) -> AdbpgIndexConfig:
@@ -165,6 +163,7 @@ def test_cohere_autotune_example_loads_through_click(monkeypatch: pytest.MonkeyP
     assert case_config.session_gucs == {"fastann.nova_adaptive_gamma": "0"}
     assert case_config.index_reset_reloptions == {}
     assert case_config.autotune_params == {
+        "topk": "10",
         "target_recall": "0.95",
         "n_samples": "300",
         "n_trials": "500",
@@ -258,10 +257,10 @@ def test_autotune_waits_for_all_config_rows_and_worker_exit(monkeypatch: pytest.
             if "nova_autotune_progress" in self.current_query:
                 self.progress_polls += 1
                 if self.progress_polls == 1:
-                    return (4321, "running", 10, 20, 1)
+                    return (4321, "running", 10, 20, 4)
                 return None
             if "nova_autotune_configs" in self.current_query:
-                return (1,)
+                return (4,)
             raise AssertionError(self.current_query)
 
         def close(self) -> None:
@@ -284,12 +283,12 @@ def test_autotune_waits_for_all_config_rows_and_worker_exit(monkeypatch: pytest.
     client.name = "Adbpg"
     client.table_name = "vector"
     client._index_name = "vector_novamr_index"
-    client.topk = 10
     client.connect_config = {"host": "db", "options": "-c gp_session_role=utility"}
     client.case_config = _config(
         setup_sql=('ANALYZE "public"."vector"',),
         autotune_params={
-            "target_recall": "0.95",
+            "topk": "ARRAY[10,100]",
+            "target_recall": "ARRAY[0.90,0.95]",
             "n_samples": "300",
             "synthetic_query_mode": "'anchored_gaussian'",
         },
@@ -304,12 +303,20 @@ def test_autotune_waits_for_all_config_rows_and_worker_exit(monkeypatch: pytest.
     sql_text = [query for query, _params in executed]
     assert sql_text[0] == 'ANALYZE "public"."vector"'
     assert "SELECT fastann.nova_autotune(" in sql_text[1]
-    assert '"target_recall" => 0.95' in sql_text[1]
+    assert '"topk" => ARRAY[10,100]' in sql_text[1]
+    assert '"target_recall" => ARRAY[0.90,0.95]' in sql_text[1]
     assert '"n_samples" => 300' in sql_text[1]
     assert "\"synthetic_query_mode\" => 'anchored_gaussian'" in sql_text[1]
-    assert executed[1][1] == ("public.vector_novamr_index", 10)
+    assert executed[1][1] == ("public.vector_novamr_index",)
     assert "nova_autotune_progress" in sql_text[2]
     assert "nova_autotune_configs" in sql_text[3]
+    assert "c.topk = ANY(%s::integer[])" in sql_text[3]
+    assert "c.target_recall = ANY(%s::real[])" in sql_text[3]
+    assert executed[3][1] == (
+        "public.vector_novamr_index",
+        [10, 100],
+        [0.90, 0.95],
+    )
     assert sum("nova_autotune_progress" in query for query in sql_text) == 2
     assert sum("nova_autotune_configs" in query for query in sql_text) == 2
     assert all("nova_autotune_status" not in query for query in sql_text)
@@ -319,9 +326,8 @@ def test_autotune_waits_for_all_config_rows_and_worker_exit(monkeypatch: pytest.
 
 def test_autotune_and_target_reloptions_are_separate_modes() -> None:
     client = object.__new__(Adbpg)
-    client.topk = 10
     client.case_config = _config(
-        autotune_params={"target_recall": "0.95"},
+        autotune_params={"topk": "10", "target_recall": "0.95"},
         index_reset_reloptions={"nova_autotune_topk": "10", "nova_autotune_recall": "0.95"},
     )
 
@@ -352,58 +358,31 @@ def test_autotune_fails_closed_when_config_row_count_is_incomplete(monkeypatch: 
 
     client = object.__new__(Adbpg)
     client._index_name = "vector_novamr_index"
-    client.topk = 10
-    client.case_config = _config(autotune_params={"target_recall": "0.95"})
+    client.case_config = _config(autotune_params={"topk": "10", "target_recall": "0.95"})
     monkeypatch.setattr("vectordb_bench.backend.clients.adbpg.adbpg.time.sleep", lambda _seconds: None)
 
     with pytest.raises(RuntimeError, match=r"finished with 0 config rows.*expected 1"):
         client._run_nova_autotune(FakeConnection(), FakeCursor())
 
 
-def test_autotune_requires_new_index_and_owns_topk() -> None:
+def test_autotune_requires_new_index_and_explicit_topk() -> None:
     client = object.__new__(Adbpg)
-    client.topk = 10
-    client.case_config = _config(autotune_params={"target_recall": "ARRAY[0.90,0.95]"})
+    client.case_config = _config(autotune_params={"topk": "ARRAY[10,100]", "target_recall": "ARRAY[0.90,0.95]"})
 
     with pytest.raises(ValueError, match="requires a load run"):
         client._validate_autotune_configuration(drop_old=False)
 
-    client.case_config = _config(autotune_params={"topk": "100", "target_recall": "0.95"})
-    with pytest.raises(ValueError, match="cannot override topk"):
+    client.case_config = _config(autotune_params={"target_recall": "0.95"})
+    with pytest.raises(ValueError, match="requires an explicit topk"):
         client._validate_autotune_configuration(drop_old=True)
 
-    client.case_config = _config(autotune_params={"target_recall": "ARRAY[0.90,0.95]"})
-    assert client._autotune_target_recall_count() == 2
+    client.case_config = _config(autotune_params={"topk": "ARRAY[10,100]", "target_recall": "ARRAY[0.90,0.95]"})
+    assert client._autotune_topks() == (10, 100)
+    assert client._autotune_target_recalls() == (0.90, 0.95)
 
-
-def test_case_runner_passes_workload_k_to_adbpg(monkeypatch: pytest.MonkeyPatch) -> None:
-    captured: dict[str, Any] = {}
-
-    class FakeAdbpg:
-        def __init__(self, **kwargs: Any) -> None:
-            captured.update(kwargs)
-
-    monkeypatch.setattr(DB, "init_cls", property(lambda _db: FakeAdbpg))
-    runner = SimpleNamespace(
-        config=SimpleNamespace(
-            db=DB.Adbpg,
-            db_config=SimpleNamespace(to_dict=lambda: {"table_name": "vector"}),
-            db_case_config=_config(),
-            case_config=SimpleNamespace(k=10),
-        ),
-        ca=SimpleNamespace(
-            dataset=SimpleNamespace(data=SimpleNamespace(dim=768)),
-            is_multitenant=False,
-            with_scalar_labels=False,
-        ),
-        db=None,
-        _doris_collection_name=lambda: None,
-    )
-
-    CaseRunner.init_db(runner, drop_old=True)
-
-    assert captured["k"] == 10
-    assert captured["drop_old"] is True
+    client.case_config = _config(autotune_params={"topk": "ARRAY[10,10]", "target_recall": "ARRAY[0.95,0.95]"})
+    assert client._autotune_topks() == (10,)
+    assert client._autotune_target_recalls() == (0.95,)
 
 
 def test_optimize_applies_setup_after_index_work() -> None:
