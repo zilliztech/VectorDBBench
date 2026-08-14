@@ -472,7 +472,7 @@ Options:
 
 It is recommended to use the following code for installation.
 ```shell
-pip install 'vectordb-bench[hologres]' 'psycopg[binary]' pgvector
+pip install 'vectordb-bench[hologres]'
 ```
 
 Execute tests for the index types: HGraph.
@@ -503,6 +503,25 @@ Options:
   --ef-search INTEGER             hnsw ef-search  [required]
   --index-type [HGraph]           Type of index to use. Supported values:
                                   HGraph [required]
+  --use-reorder / --no-use-reorder
+                                  use reorder index  [default: use-reorder]
+  --quantization-method [rabitq|sq8_uniform|fp32]
+                                  Base quantization type for the HGraph index.
+                                  Ignored when --no-use-reorder (fp32 is
+                                  forced).  [default: rabitq]
+  --full-compact-max-file-size-mb INTEGER
+                                  Max file size (MB) for full compaction of
+                                  the HGraph index  [default: 16384]
+  --precise-io-type [block_memory_io|reader_io]
+                                  Storage medium for the precise index (only
+                                  effective with --use-reorder).
+                                  block_memory_io: all in memory; reader_io:
+                                  precise index on disk.  [default:
+                                  block_memory_io]
+  --use-extra-column-id / --no-use-extra-column-id
+                                  Embed the primary key 'id' in the index via
+                                  extra_columns to skip base-table lookups
+                                  [default: use-extra-column-id]
   --help                          Show this message and exit.
   ```
 
