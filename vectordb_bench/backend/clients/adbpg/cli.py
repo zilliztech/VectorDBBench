@@ -228,7 +228,8 @@ class AdbpgTypedDict(CommonTypedDict):
             callback=parse_key_values,
             help=(
                 "NOVA autotune argument as name=SQL-expression; repeat for multiple arguments. "
-                "The index_relation and topk arguments come from the created index and benchmark k."
+                "Set topk explicitly; scalar and ARRAY[...] values are supported. "
+                "The index_relation argument comes from the created index."
             ),
         ),
     ]
