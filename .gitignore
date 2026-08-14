@@ -19,3 +19,5 @@ vectordb_bench/results/cloudleaderboard/
 # AI rules
 CLAUDE.md
 AGENTS.md
+
+custom/

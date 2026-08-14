@@ -27,6 +27,9 @@ VDBBench is sponsored by Zilliz，the leading opensource vectorDB company behind
 python >= 3.11
 ```
 ### Install
+```shell
+pip install 'vectordb-bench[test]'
+```
 **Install vectordb-bench with only PyMilvus**
 ```shell
 pip install vectordb-bench
@@ -36,6 +39,9 @@ pip install vectordb-bench
 
 ```shell
 pip install 'vectordb-bench[pinecone]'
+```
+```shell
+pip install 'vectordb-bench[vexdb]'
 ```
 All the database client supported
 
@@ -68,6 +74,7 @@ All the database client supported
 | lindorm                  | `pip install vectordb-bench[lindorm]`       |
 | volc_mysql               | `pip install vectordb-bench[volc_mysql]`    |
 | adbpg                    | `pip install vectordb-bench[adbpg]`         |
+| vexdb                    | `pip install vectordb-bench[vexdb]`         |
 
 ### Run
 
