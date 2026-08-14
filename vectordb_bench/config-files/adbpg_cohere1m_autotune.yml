@@ -28,6 +28,10 @@ adbpgnova:
     - "rabitq_bits=7"
     - "auto_reduction=on"
 
+  # CREATE INDEX INCLUDE columns.
+  index_build_include:
+    - "id"
+
   # Index build parallelism.
   build_parallel_processes: 32
 
