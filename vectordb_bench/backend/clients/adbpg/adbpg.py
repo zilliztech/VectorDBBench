@@ -470,17 +470,25 @@ class Adbpg(VectorDB):
 
         with_clause = sql.SQL("WITH ({});").format(sql.SQL(", ").join(options)) if options else sql.Composed(())
 
-        # Covering index: always INCLUDE the primary field (e.g. id).
+        include_columns = self.case_config.index_build_includes
+        include_clause = (
+            sql.SQL(" INCLUDE ({})").format(
+                sql.SQL(", ").join(sql.Identifier(column) for column in include_columns),
+            )
+            if include_columns
+            else sql.Composed(())
+        )
+
         index_create_sql = sql.SQL(
             """
             CREATE INDEX IF NOT EXISTS {index_name} ON public.{table_name}
-            USING ann ({vector_field}) INCLUDE ({primary_field})
+            USING ann ({vector_field}){include_clause}
             """,
         ).format(
             index_name=sql.Identifier(self._index_name),
             table_name=sql.Identifier(self.table_name),
             vector_field=sql.Identifier(self._vector_field),
-            primary_field=sql.Identifier(self._primary_field),
+            include_clause=include_clause,
         )
 
         full_sql = (index_create_sql + with_clause).join(" ")
