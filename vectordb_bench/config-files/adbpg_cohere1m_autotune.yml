@@ -43,8 +43,9 @@ adbpgnova:
   setup_sql:
     - 'ANALYZE "public"."vector"'
 
-  # index_relation uses the new index; topk uses k above.
+  # index_relation uses the new index; set autotune topk explicitly.
   autotune_param:
+    - "topk=10"
     - "target_recall=0.95"
     - "n_samples=300"
     - "n_trials=500"
