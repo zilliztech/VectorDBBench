@@ -1,9 +1,10 @@
 """Wrapper around the Aliyun ADBPG (AnalyticDB for PostgreSQL) vector database."""
 
 import logging
+import re
+import time
 from collections.abc import Generator, Sequence
 from contextlib import contextmanager
-from string import Template
 from typing import Any
 
 import numpy as np
@@ -17,6 +18,17 @@ from ..api import VectorDB
 from .config import AdbpgConfigDict, AdbpgIndexConfig
 
 log = logging.getLogger(__name__)
+
+NOVA_AUTOTUNE_POLL_SECONDS = 5.0
+NOVA_AUTOTUNE_MISSING_PROGRESS_LIMIT = 3
+NOVA_AUTOTUNE_NUMERIC_EXPRESSION = re.compile(
+    r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?(?:\s*::\s*(?:real|float4|float8|double\s+precision))?",
+    re.IGNORECASE,
+)
+NOVA_AUTOTUNE_ARRAY_EXPRESSION = re.compile(
+    r"ARRAY\s*\[(.*)\](?:\s*::\s*(?:real|float4|float8|double\s+precision)\s*\[\s*\])?",
+    re.IGNORECASE | re.DOTALL,
+)
 
 
 class Adbpg(VectorDB):
@@ -62,6 +74,8 @@ class Adbpg(VectorDB):
         self._scalar_label_field = "label"
         # Index name derives from the table name + algorithm, e.g. vector_1024d_10m_novamr_index.
         self._index_name = f"{self.table_name}_{self.case_config.algorithm}_index"
+        self.topk = kwargs.get("k")
+        self._validate_autotune_configuration(drop_old)
 
         self.where_clause = ""
 
@@ -184,6 +198,58 @@ class Adbpg(VectorDB):
             self._drop_index()
             self._create_index()
 
+    def _validate_autotune_configuration(self, drop_old: bool) -> None:
+        params = self.case_config.autotune_params
+        if not params:
+            return
+        if not drop_old:
+            msg = "autotune_param requires a load run that creates a new index"
+            raise ValueError(msg)
+        if not isinstance(self.topk, int) or isinstance(self.topk, bool) or self.topk <= 0:
+            msg = "autotune_param requires a positive benchmark k"
+            raise ValueError(msg)
+
+        reserved = {"index_relation", "topk"}.intersection(params)
+        if reserved:
+            names = ", ".join(sorted(reserved))
+            msg = f"autotune_param cannot override {names}; they come from the created index and benchmark k"
+            raise ValueError(msg)
+        empty = [name for name, value in params.items() if not value.strip()]
+        if empty:
+            msg = f"autotune_param requires a SQL expression for: {', '.join(sorted(empty))}"
+            raise ValueError(msg)
+        self._autotune_target_recall_count()
+
+        target_reloptions = {"nova_autotune_topk", "nova_autotune_recall"}.intersection(
+            self.case_config.index_reset_reloptions
+        )
+        if target_reloptions:
+            names = ", ".join(sorted(target_reloptions))
+            msg = f"Do not combine autotune_param with target-selection index_reset_reloption values: {names}"
+            raise ValueError(msg)
+
+    def _autotune_target_recall_count(self) -> int:
+        """Return the number of target recalls requested by the SQL expression."""
+        expression = self.case_config.autotune_params.get("target_recall")
+        if expression is None:
+            return 1  # fastann.nova_autotune defaults to one target: 0.99.
+
+        expression = expression.strip()
+        if NOVA_AUTOTUNE_NUMERIC_EXPRESSION.fullmatch(expression):
+            return 1
+
+        array_match = NOVA_AUTOTUNE_ARRAY_EXPRESSION.fullmatch(expression)
+        if array_match:
+            values = [value.strip() for value in array_match.group(1).split(",")]
+            if values and all(value and NOVA_AUTOTUNE_NUMERIC_EXPRESSION.fullmatch(value) for value in values):
+                return len(values)
+
+        msg = (
+            "autotune target_recall must be a numeric SQL expression or an ARRAY[...] "
+            "of numeric SQL expressions so completion can be validated"
+        )
+        raise ValueError(msg)
+
     def _drop_index(self):
         assert self.conn is not None, "Connection is not initialized"
         assert self.cursor is not None, "Cursor is not initialized"
@@ -196,38 +262,29 @@ class Adbpg(VectorDB):
         self.cursor.execute(drop_index_sql)
         self.conn.commit()
 
-    @staticmethod
-    def _quote_identifier(name: str) -> str:
-        return '"' + name.replace('"', '""') + '"'
-
-    def _render_setup_sql(self, statement: str) -> str:
-        """Resolve stable benchmark placeholders in explicitly injected SQL."""
-        return Template(statement).safe_substitute(
-            index=f'"public".{self._quote_identifier(self._index_name)}',
-            table=f'"public".{self._quote_identifier(self.table_name)}',
-            topk=str(self.case_config.benchmark_topk),
-        )
-
-    def _resolve_reloption_value(self, value: str) -> str | int:
-        """Resolve exact benchmark placeholders while preserving SQL literal safety."""
-        placeholders: dict[str, str | int] = {
-            "$index": self._index_name,
-            "$table": self.table_name,
-            "$topk": self.case_config.benchmark_topk,
-        }
-        return placeholders.get(value, value)
-
     def _apply_search_setup(self) -> None:
-        """Apply index-level setup once, using a coordinator connection."""
-        reloptions = self.case_config.index_reloptions
+        """Run setup SQL, optional autotune, and reloptions on the coordinator."""
+        reloptions = self.case_config.index_reset_reloptions
         statements = self.case_config.setup_sql
-        if not reloptions and not statements:
+        autotune_params = self.case_config.autotune_params
+        if not reloptions and not statements and not autotune_params:
             return
 
         connect_config = dict(self.connect_config)
         connect_config.pop("options", None)
         conn, cursor = self._create_connection(**connect_config)
         try:
+            # setup_sql is the post-index preparation phase. Commit it before
+            # launching the asynchronous worker so ANALYZE and similar changes
+            # are visible to autotune.
+            for statement in statements:
+                log.info("%s setup SQL: %s", self.name, statement)
+                cursor.execute(statement)
+            if statements:
+                conn.commit()
+
+            self._run_nova_autotune(conn, cursor)
+
             index = sql.Identifier("public", self._index_name)
             set_options = [(name, value) for name, value in reloptions.items() if value is not None]
             reset_options = [name for name, value in reloptions.items() if value is None]
@@ -235,7 +292,7 @@ class Adbpg(VectorDB):
                 assignments = sql.SQL(", ").join(
                     sql.SQL("{name} = {value}").format(
                         name=sql.Identifier(name),
-                        value=sql.Literal(self._resolve_reloption_value(value)),
+                        value=sql.Literal(value),
                     )
                     for name, value in set_options
                 )
@@ -248,17 +305,119 @@ class Adbpg(VectorDB):
             if reset_options:
                 names = sql.SQL(", ").join(sql.Identifier(name) for name in reset_options)
                 cursor.execute(sql.SQL("ALTER INDEX {index} RESET ({names})").format(index=index, names=names))
-            for statement in statements:
-                rendered = self._render_setup_sql(statement)
-                log.info("%s setup SQL: %s", self.name, rendered)
-                cursor.execute(rendered)
-            conn.commit()
+            if set_options or reset_options:
+                conn.commit()
         except Exception:
             conn.rollback()
             raise
         finally:
             cursor.close()
             conn.close()
+
+    def _run_nova_autotune(self, conn: Connection, cursor: Cursor) -> None:
+        """Submit NOVA autotune, then wait for all config rows and worker exit."""
+        params = self.case_config.autotune_params
+        if not params:
+            return
+
+        expected_config_count = self._autotune_target_recall_count()
+        # This is bound as a query parameter, not interpolated into SQL. ADBPG
+        # currently derives index names from framework-controlled table and
+        # algorithm names, so the regclass text form is stable.
+        qualified_index = f"public.{self._index_name}"
+        arguments = [
+            sql.SQL("index_relation => %s::text"),
+            sql.SQL("topk => %s::integer"),
+        ]
+        arguments.extend(
+            sql.SQL("{name} => {value}").format(
+                name=sql.Identifier(name),
+                value=sql.SQL(value),
+            )
+            for name, value in params.items()
+        )
+        submit_sql = sql.SQL("SELECT fastann.nova_autotune({arguments})").format(
+            arguments=sql.SQL(", ").join(arguments)
+        )
+        cursor.execute(submit_sql, (qualified_index, self.topk))
+        row = cursor.fetchone()
+        if row is None:
+            msg = "nova_autotune did not return a task handle"
+            raise RuntimeError(msg)
+        handle = int(row[0])
+        conn.commit()
+        log.info(
+            "NOVA_AUTOTUNE_SUBMITTED handle=%s index=%s topk=%s params=%s",
+            handle,
+            qualified_index,
+            self.topk,
+            params,
+        )
+
+        deadline = time.monotonic() + self.case_config.autotune_timeout
+        missing_progress_polls = 0
+        latest_progress = None
+        latest_config_count = 0
+        while True:
+            cursor.execute(
+                """
+                SELECT pid, stage, work_done, work_total, target_count
+                FROM fastann.nova_autotune_progress(%s)
+                """,
+                (handle,),
+            )
+            latest_progress = cursor.fetchone()
+            cursor.execute(
+                """
+                SELECT count(*)
+                FROM fastann.nova_autotune_configs c
+                JOIN pg_catalog.pg_class i
+                  ON i.oid = c.index_relid
+                 AND i.relfilenode::oid = c.index_relfilenode
+                WHERE i.oid = %s::regclass
+                  AND c.topk = %s
+                """,
+                (qualified_index, self.topk),
+            )
+            count_row = cursor.fetchone()
+            latest_config_count = int(count_row[0]) if count_row is not None else 0
+            conn.commit()
+
+            if latest_progress is None and latest_config_count == expected_config_count:
+                log.info(
+                    "NOVA_AUTOTUNE_COMPLETED handle=%s index=%s configs=%s",
+                    handle,
+                    qualified_index,
+                    latest_config_count,
+                )
+                return
+
+            if latest_progress is None:
+                missing_progress_polls += 1
+                if missing_progress_polls >= NOVA_AUTOTUNE_MISSING_PROGRESS_LIMIT:
+                    msg = (
+                        f"nova_autotune handle {handle} finished with {latest_config_count} config rows "
+                        f"for topk={self.topk}; expected {expected_config_count}"
+                    )
+                    raise RuntimeError(msg)
+            else:
+                missing_progress_polls = 0
+
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                msg = (
+                    f"nova_autotune handle {handle} exceeded {self.case_config.autotune_timeout}s; "
+                    f"progress={latest_progress}, configs={latest_config_count}/{expected_config_count}"
+                )
+                raise TimeoutError(msg)
+            log.info(
+                "NOVA_AUTOTUNE_PROGRESS handle=%s progress=%s configs=%s/%s",
+                handle,
+                latest_progress,
+                latest_config_count,
+                expected_config_count,
+            )
+            time.sleep(min(NOVA_AUTOTUNE_POLL_SECONDS, remaining))
 
     def _set_parallel_index_build_param(self):
         assert self.conn is not None, "Connection is not initialized"
