@@ -1,7 +1,7 @@
 from collections.abc import Mapping, Sequence
 from typing import Any, TypedDict
 
-from pydantic import BaseModel, Field, SecretStr
+from pydantic import BaseModel, Field, SecretStr, field_validator
 
 from ..api import DBCaseConfig, DBConfig, MetricType
 
@@ -69,6 +69,8 @@ class AdbpgIndexConfig(BaseModel, DBCaseConfig):
     # Generic reloptions merged into CREATE INDEX ... WITH (...). These
     # override the dedicated fields above when the same option is supplied.
     index_build_reloptions: dict[str, str] = Field(default_factory=dict)
+    # Covering columns rendered as CREATE INDEX ... INCLUDE (...).
+    index_build_includes: tuple[str, ...] = ("id",)
     # Generic ADBPG search setup. Product-specific parameters no longer need
     # dedicated Python fields: GUCs apply per connection, while post-build
     # reloptions and SQL run once after the index exists.
@@ -82,6 +84,19 @@ class AdbpgIndexConfig(BaseModel, DBCaseConfig):
     # can be used without adding another client field.
     autotune_params: dict[str, str] = Field(default_factory=dict)
     autotune_timeout: int = Field(default=43200, gt=0)
+
+    @field_validator("index_build_includes")
+    @classmethod
+    def validate_index_build_includes(cls, columns: tuple[str, ...]) -> tuple[str, ...]:
+        normalized: list[str] = []
+        for column in columns:
+            name = column.strip()
+            if not name:
+                msg = "index_build_include column cannot be empty"
+                raise ValueError(msg)
+            if name not in normalized:
+                normalized.append(name)
+        return tuple(normalized)
 
     def parse_metric(self) -> str:
         if self.metric_type == MetricType.L2:
@@ -113,7 +128,7 @@ class AdbpgIndexConfig(BaseModel, DBCaseConfig):
             {"option_name": "hnsw_ef_construction", "val": self.ef_construction},
             {"option_name": "nlist", "val": self.nlist},
             {"option_name": "rabitq_bits", "val": self.rabitq_bits},
-            # Covering index key length.
+            # Maximum number of keys (ctids) stored per HNSW node.
             {"option_name": "max_key_len", "val": 1},
         ]
         # Optional: auto_reduction=on — only include when True.
