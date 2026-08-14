@@ -22,11 +22,17 @@ log = logging.getLogger(__name__)
 NOVA_AUTOTUNE_POLL_SECONDS = 5.0
 NOVA_AUTOTUNE_MISSING_PROGRESS_LIMIT = 3
 NOVA_AUTOTUNE_NUMERIC_EXPRESSION = re.compile(
-    r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?(?:\s*::\s*(?:real|float4|float8|double\s+precision))?",
+    r"(?P<number>[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)"
+    r"(?:\s*::\s*(?:real|float4|float8|double\s+precision))?",
+    re.IGNORECASE,
+)
+NOVA_AUTOTUNE_INTEGER_EXPRESSION = re.compile(
+    r"(?P<number>[+-]?\d+)(?:\s*::\s*(?:smallint|int2|integer|int4|bigint|int8))?",
     re.IGNORECASE,
 )
 NOVA_AUTOTUNE_ARRAY_EXPRESSION = re.compile(
-    r"ARRAY\s*\[(.*)\](?:\s*::\s*(?:real|float4|float8|double\s+precision)\s*\[\s*\])?",
+    r"ARRAY\s*\[(.*)\](?:\s*::\s*(?:smallint|int2|integer|int4|bigint|int8|"
+    r"real|float4|float8|double\s+precision)\s*\[\s*\])?",
     re.IGNORECASE | re.DOTALL,
 )
 
@@ -74,7 +80,6 @@ class Adbpg(VectorDB):
         self._scalar_label_field = "label"
         # Index name derives from the table name + algorithm, e.g. vector_1024d_10m_novamr_index.
         self._index_name = f"{self.table_name}_{self.case_config.algorithm}_index"
-        self.topk = kwargs.get("k")
         self._validate_autotune_configuration(drop_old)
 
         self.where_clause = ""
@@ -205,20 +210,17 @@ class Adbpg(VectorDB):
         if not drop_old:
             msg = "autotune_param requires a load run that creates a new index"
             raise ValueError(msg)
-        if not isinstance(self.topk, int) or isinstance(self.topk, bool) or self.topk <= 0:
-            msg = "autotune_param requires a positive benchmark k"
-            raise ValueError(msg)
-
-        reserved = {"index_relation", "topk"}.intersection(params)
+        reserved = {"index_relation"}.intersection(params)
         if reserved:
             names = ", ".join(sorted(reserved))
-            msg = f"autotune_param cannot override {names}; they come from the created index and benchmark k"
+            msg = f"autotune_param cannot override {names}; it comes from the created index"
             raise ValueError(msg)
         empty = [name for name, value in params.items() if not value.strip()]
         if empty:
             msg = f"autotune_param requires a SQL expression for: {', '.join(sorted(empty))}"
             raise ValueError(msg)
-        self._autotune_target_recall_count()
+        self._autotune_topks()
+        self._autotune_target_recalls()
 
         target_reloptions = {"nova_autotune_topk", "nova_autotune_recall"}.intersection(
             self.case_config.index_reset_reloptions
@@ -228,27 +230,54 @@ class Adbpg(VectorDB):
             msg = f"Do not combine autotune_param with target-selection index_reset_reloption values: {names}"
             raise ValueError(msg)
 
-    def _autotune_target_recall_count(self) -> int:
-        """Return the number of target recalls requested by the SQL expression."""
-        expression = self.case_config.autotune_params.get("target_recall")
-        if expression is None:
-            return 1  # fastann.nova_autotune defaults to one target: 0.99.
-
+    def _autotune_numeric_values(
+        self,
+        name: str,
+        expression: str,
+        pattern: re.Pattern[str],
+    ) -> tuple[str, ...]:
+        """Parse a scalar or ARRAY of numeric SQL literals for completion checks."""
         expression = expression.strip()
-        if NOVA_AUTOTUNE_NUMERIC_EXPRESSION.fullmatch(expression):
-            return 1
+        scalar_match = pattern.fullmatch(expression)
+        if scalar_match:
+            return (scalar_match.group("number"),)
 
         array_match = NOVA_AUTOTUNE_ARRAY_EXPRESSION.fullmatch(expression)
         if array_match:
-            values = [value.strip() for value in array_match.group(1).split(",")]
-            if values and all(value and NOVA_AUTOTUNE_NUMERIC_EXPRESSION.fullmatch(value) for value in values):
-                return len(values)
+            items = [item.strip() for item in array_match.group(1).split(",")]
+            matches = [pattern.fullmatch(item) for item in items]
+            if items and all(matches):
+                return tuple(match.group("number") for match in matches if match is not None)
 
-        msg = (
-            "autotune target_recall must be a numeric SQL expression or an ARRAY[...] "
-            "of numeric SQL expressions so completion can be validated"
-        )
+        msg = f"autotune {name} must be a numeric SQL literal or an ARRAY[...] of numeric SQL literals"
         raise ValueError(msg)
+
+    def _autotune_topks(self) -> tuple[int, ...]:
+        """Return the explicitly requested topK values."""
+        expression = self.case_config.autotune_params.get("topk")
+        if expression is None:
+            msg = "autotune_param requires an explicit topk value"
+            raise ValueError(msg)
+        values = self._autotune_numeric_values("topk", expression, NOVA_AUTOTUNE_INTEGER_EXPRESSION)
+        topks = tuple(dict.fromkeys(int(value) for value in values))
+        if any(value <= 0 for value in topks):
+            msg = "autotune topk values must be positive integers"
+            raise ValueError(msg)
+        return topks
+
+    def _autotune_target_recalls(self) -> tuple[float, ...]:
+        """Return requested target recalls, including the server default."""
+        expression = self.case_config.autotune_params.get("target_recall", "0.99")
+        values = self._autotune_numeric_values(
+            "target_recall",
+            expression,
+            NOVA_AUTOTUNE_NUMERIC_EXPRESSION,
+        )
+        target_recalls = tuple(dict.fromkeys(float(value) for value in values))
+        if any(value < 0.0 or value > 1.0 for value in target_recalls):
+            msg = "autotune target_recall values must be between 0 and 1"
+            raise ValueError(msg)
+        return target_recalls
 
     def _drop_index(self):
         assert self.conn is not None, "Connection is not initialized"
@@ -320,15 +349,14 @@ class Adbpg(VectorDB):
         if not params:
             return
 
-        expected_config_count = self._autotune_target_recall_count()
+        topks = self._autotune_topks()
+        target_recalls = self._autotune_target_recalls()
+        expected_config_count = len(topks) * len(target_recalls)
         # This is bound as a query parameter, not interpolated into SQL. ADBPG
         # currently derives index names from framework-controlled table and
         # algorithm names, so the regclass text form is stable.
         qualified_index = f"public.{self._index_name}"
-        arguments = [
-            sql.SQL("index_relation => %s::text"),
-            sql.SQL("topk => %s::integer"),
-        ]
+        arguments = [sql.SQL("index_relation => %s::text")]
         arguments.extend(
             sql.SQL("{name} => {value}").format(
                 name=sql.Identifier(name),
@@ -339,7 +367,7 @@ class Adbpg(VectorDB):
         submit_sql = sql.SQL("SELECT fastann.nova_autotune({arguments})").format(
             arguments=sql.SQL(", ").join(arguments)
         )
-        cursor.execute(submit_sql, (qualified_index, self.topk))
+        cursor.execute(submit_sql, (qualified_index,))
         row = cursor.fetchone()
         if row is None:
             msg = "nova_autotune did not return a task handle"
@@ -347,10 +375,11 @@ class Adbpg(VectorDB):
         handle = int(row[0])
         conn.commit()
         log.info(
-            "NOVA_AUTOTUNE_SUBMITTED handle=%s index=%s topk=%s params=%s",
+            "NOVA_AUTOTUNE_SUBMITTED handle=%s index=%s topks=%s target_recalls=%s params=%s",
             handle,
             qualified_index,
-            self.topk,
+            topks,
+            target_recalls,
             params,
         )
 
@@ -375,9 +404,10 @@ class Adbpg(VectorDB):
                   ON i.oid = c.index_relid
                  AND i.relfilenode::oid = c.index_relfilenode
                 WHERE i.oid = %s::regclass
-                  AND c.topk = %s
+                  AND c.topk = ANY(%s::integer[])
+                  AND c.target_recall = ANY(%s::real[])
                 """,
-                (qualified_index, self.topk),
+                (qualified_index, list(topks), list(target_recalls)),
             )
             count_row = cursor.fetchone()
             latest_config_count = int(count_row[0]) if count_row is not None else 0
@@ -397,7 +427,8 @@ class Adbpg(VectorDB):
                 if missing_progress_polls >= NOVA_AUTOTUNE_MISSING_PROGRESS_LIMIT:
                     msg = (
                         f"nova_autotune handle {handle} finished with {latest_config_count} config rows "
-                        f"for topk={self.topk}; expected {expected_config_count}"
+                        f"for topks={topks} and target_recalls={target_recalls}; "
+                        f"expected {expected_config_count}"
                     )
                     raise RuntimeError(msg)
             else:
