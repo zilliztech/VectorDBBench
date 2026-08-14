@@ -189,6 +189,17 @@ class AdbpgTypedDict(CommonTypedDict):
             help="CREATE INDEX WITH reloption as name=value; repeat for multiple options",
         ),
     ]
+    index_build_include: Annotated[
+        tuple[str, ...],
+        click.option(
+            "--index-build-include",
+            type=str,
+            multiple=True,
+            default=("id",),
+            show_default=True,
+            help="CREATE INDEX INCLUDE column; repeat for multiple columns",
+        ),
+    ]
     index_reset_reloption: Annotated[
         dict[str, str | None],
         click.option(
@@ -265,6 +276,7 @@ def AdbpgNova(**parameters: Unpack[AdbpgTypedDict]):
             index_scan_mode=parameters["index_scan_mode"],
             nprobe=parameters["nprobe"],
             index_build_reloptions=parameters["index_build_reloption"],
+            index_build_includes=parameters["index_build_include"],
             session_gucs=parameters["session_guc"],
             index_reset_reloptions=parameters["index_reset_reloption"],
             setup_sql=parameters["setup_sql"],
