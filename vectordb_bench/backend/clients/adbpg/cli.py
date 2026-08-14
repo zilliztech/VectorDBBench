@@ -176,17 +176,27 @@ class AdbpgTypedDict(CommonTypedDict):
             type=str,
             multiple=True,
             callback=parse_key_values,
-            help="Session GUC as name=value; repeatable or comma-separated",
+            help="Session GUC as name=value; repeat the option for multiple settings",
         ),
     ]
-    index_reloption: Annotated[
+    index_build_reloption: Annotated[
+        dict[str, str],
+        click.option(
+            "--index-build-reloption",
+            type=str,
+            multiple=True,
+            callback=parse_key_values,
+            help="CREATE INDEX WITH reloption as name=value; repeat for multiple options",
+        ),
+    ]
+    index_reset_reloption: Annotated[
         dict[str, str | None],
         click.option(
-            "--index-reloption",
+            "--index-reset-reloption",
             type=str,
             multiple=True,
             callback=parse_reloptions,
-            help="Index reloption as name=value; a bare name resets it",
+            help="Post-build index reloption: name=value sets it; a bare name resets it",
         ),
     ]
     setup_sql: Annotated[
@@ -195,7 +205,30 @@ class AdbpgTypedDict(CommonTypedDict):
             "--setup-sql",
             type=str,
             multiple=True,
-            help="SQL run once after the index exists; supports $index, $table and $topk",
+            help="SQL run once after the index exists",
+        ),
+    ]
+    autotune_param: Annotated[
+        dict[str, str],
+        click.option(
+            "--autotune-param",
+            type=str,
+            multiple=True,
+            callback=parse_key_values,
+            help=(
+                "NOVA autotune argument as name=SQL-expression; repeat for multiple arguments. "
+                "The index_relation and topk arguments come from the created index and benchmark k."
+            ),
+        ),
+    ]
+    autotune_timeout: Annotated[
+        int,
+        click.option(
+            "--autotune-timeout",
+            type=click.IntRange(min=1),
+            default=43200,
+            show_default=True,
+            help="Seconds to wait for NOVA autotune to finish",
         ),
     ]
 
@@ -209,6 +242,7 @@ def AdbpgNova(**parameters: Unpack[AdbpgTypedDict]):
     run(
         db=DB.Adbpg,
         db_config=AdbpgConfig(
+            db_label=parameters["db_label"],
             user_name=SecretStr(parameters["user_name"]),
             password=SecretStr(parameters["password"]),
             host=parameters["host"],
@@ -216,7 +250,6 @@ def AdbpgNova(**parameters: Unpack[AdbpgTypedDict]):
             db_name=parameters["db_name"],
         ),
         db_case_config=AdbpgIndexConfig(
-            benchmark_topk=parameters["k"],
             hnsw_m=parameters["hnsw_m"],
             ef_search=parameters["ef_search"],
             ef_construction=parameters["ef_construction"],
@@ -231,9 +264,12 @@ def AdbpgNova(**parameters: Unpack[AdbpgTypedDict]):
             max_scan_points=parameters["max_scan_points"],
             index_scan_mode=parameters["index_scan_mode"],
             nprobe=parameters["nprobe"],
+            index_build_reloptions=parameters["index_build_reloption"],
             session_gucs=parameters["session_guc"],
-            index_reloptions=parameters["index_reloption"],
+            index_reset_reloptions=parameters["index_reset_reloption"],
             setup_sql=parameters["setup_sql"],
+            autotune_params=parameters["autotune_param"],
+            autotune_timeout=parameters["autotune_timeout"],
         ),
         **parameters,
     )
