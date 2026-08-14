@@ -258,6 +258,8 @@ class AWSOpenSearch(VectorDB):
     ) -> tuple[int, Exception]:
         embeddings_list = list(embeddings)
         batch_size = config.NUM_PER_BATCH if self._is_serverless else len(embeddings_list)
+        if self._is_serverless and batch_size <= 0:
+            raise ValueError("NUM_PER_BATCH must be greater than 0 for OpenSearch Serverless")
         total_inserted = 0
 
         for i in range(0, len(embeddings_list), batch_size):
