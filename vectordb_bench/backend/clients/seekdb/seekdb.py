@@ -3,6 +3,7 @@ import re
 import struct
 from collections.abc import Generator
 from contextlib import contextmanager
+from copy import copy
 from typing import Any
 
 import mysql.connector as mysql
@@ -124,6 +125,14 @@ class SeekDB(VectorDB):
             ef_search = self.db_case_config.search_param()["params"]["ef_search"]
             # SeekDB uses OceanBase-style session vars (not plain hnsw_ef_search).
             self._cursor.execute(f"SET ob_hnsw_ef_search={ef_search}")
+
+    def copy_for_thread(self) -> "VectorDB":
+        # mysql.connector holds an open socket that can't be deep-copied; shallow-copy
+        # and drop the connection so init() reconnects inside the worker thread.
+        db_copy = copy(self)
+        db_copy._conn = None
+        db_copy._cursor = None
+        return db_copy
 
     @contextmanager
     def init(self) -> Generator[None, None, None]:
