@@ -18,7 +18,7 @@ from click.core import ParameterSource
 from yaml import load
 
 from .. import config
-from ..backend.cases import FTS_FILTER_RATES
+from ..backend.cases import FTS_FILTER_RATES, PerformanceCase, type2case
 from ..backend.clients import DB
 from ..backend.clients.api import IndexType, MetricType
 from ..backend.dataset import DatasetWithSizeType, FtsDatasetWithSizeType
@@ -323,6 +323,13 @@ def apply_fts_cli_db_case_params(
     return db_case_config.model_copy(update=updates)
 
 
+def get_case_payload_profile(parameters: dict[str, Any]) -> PayloadProfile | None:
+    case_type = CaseType[parameters["case_type"]]
+    if not issubclass(type2case[case_type], PerformanceCase):
+        return None
+    return PayloadProfile(parameters["payload_profile"])
+
+
 def select_cli_db_case_config(
     db: DB,
     db_case_config: DBCaseConfig,
@@ -457,10 +464,10 @@ class CommonTypedDict(TypedDict):
         int,
         click.option(
             "--k",
-            type=int,
+            type=click.IntRange(min=1),
             default=config.K_DEFAULT,
             show_default=True,
-            help="K value for number of nearest neighbors to search",
+            help="Number of nearest neighbors. LAION 100M selects tiered GT automatically up to 1,000,000.",
         ),
     ]
     concurrency_duration: Annotated[
@@ -643,7 +650,7 @@ class CommonTypedDict(TypedDict):
         click.option(
             "--payload-profile",
             type=click.Choice([profile.value for profile in PayloadProfile]),
-            help="Response payload profile for payload and FTS cases",
+            help="Response payload profile for vector performance, cloud payload, and FTS cases",
             default="ids_only",
             show_default=True,
         ),
@@ -951,6 +958,7 @@ def run(
         db_case_config=select_cli_db_case_config(db, db_case_config, parameters["case_type"], parameters),
         case_config=CaseConfig(
             case_id=CaseType[parameters["case_type"]],
+            payload_profile=get_case_payload_profile(parameters),
             k=parameters["k"],
             concurrency_search_config=ConcurrencySearchConfig(
                 concurrency_duration=parameters["concurrency_duration"],

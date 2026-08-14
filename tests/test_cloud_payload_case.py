@@ -1,6 +1,7 @@
 import pytest
 
 from vectordb_bench import config
+from vectordb_bench.backend.assembler import Assembler
 from vectordb_bench.backend.cases import CaseType, CloudPayloadSearchCase
 from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.clients.api import EmptyDBCaseConfig
@@ -62,6 +63,52 @@ def test_case_config_builds_cloud_payload_case_from_custom_case():
 
     assert isinstance(case, CloudPayloadSearchCase)
     assert case.payload_profile == PayloadProfile.VECTOR
+
+
+def test_case_config_preserves_legacy_payload_profile():
+    case_config = CaseConfig(
+        case_id=CaseType.CloudPayloadSearchCase,
+        custom_case={"payload_profile": "vector"},
+    )
+
+    assert case_config.payload_profile is None
+    assert case_config.case.payload_profile == PayloadProfile.VECTOR
+
+
+def test_case_config_accepts_matching_top_level_and_legacy_payload_profiles():
+    case_config = CaseConfig(
+        case_id=CaseType.CloudPayloadSearchCase,
+        custom_case={"payload_profile": "vector"},
+        payload_profile=PayloadProfile.VECTOR,
+    )
+
+    assert case_config.payload_profile == PayloadProfile.VECTOR
+    assert case_config.case.payload_profile == PayloadProfile.VECTOR
+
+
+def test_case_config_rejects_conflicting_payload_profiles():
+    with pytest.raises(ValueError, match="conflicts with custom_case"):
+        CaseConfig(
+            case_id=CaseType.CloudPayloadSearchCase,
+            custom_case={"payload_profile": "ids_only"},
+            payload_profile=PayloadProfile.VECTOR,
+        )
+
+
+def test_assembler_preserves_top_level_performance_payload_profile():
+    task = TaskConfig(
+        db=DB.Test,
+        db_config=DB.Test.config_cls(),
+        db_case_config=EmptyDBCaseConfig(),
+        case_config=CaseConfig(
+            case_id=CaseType.Performance768D100M,
+            payload_profile=PayloadProfile.VECTOR,
+        ),
+    )
+
+    runner = Assembler.assemble("run-id", task, DatasetSource.S3)
+
+    assert runner.ca.payload_profile == PayloadProfile.VECTOR
 
 
 def test_case_runner_reuse_key_distinguishes_scalar_label_schema_requirement():
@@ -179,3 +226,46 @@ def test_search_runners_fail_fast_for_unsupported_payload_profile():
             k=3,
             payload_profile=PayloadProfile.VECTOR,
         )
+
+
+def test_case_runner_rejects_unsupported_payload_before_dataset_prepare(monkeypatch: pytest.MonkeyPatch):
+    events = []
+    case_config = CaseConfig(
+        case_id=CaseType.Performance768D100M,
+        payload_profile=PayloadProfile.VECTOR,
+    )
+    task = TaskConfig(
+        db=DB.Test,
+        db_config=DB.Test.config_cls(),
+        db_case_config=EmptyDBCaseConfig(),
+        case_config=case_config,
+    )
+    runner = CaseRunner(
+        run_id="run-id",
+        config=task,
+        ca=case_config.case,
+        status=RunningStatus.PENDING,
+        dataset_source=DatasetSource.S3,
+    )
+
+    monkeypatch.setattr(
+        type(runner.ca.dataset),
+        "resolve_search_files",
+        lambda self, **kwargs: events.append("resolve"),
+    )
+    monkeypatch.setattr(
+        type(runner.ca.dataset),
+        "prepare",
+        lambda self, *args, **kwargs: events.append("prepare"),
+    )
+
+    def fake_init_db(self, drop_old=True):
+        events.append("init_db")
+        self.db = FakeDB()
+
+    monkeypatch.setattr(CaseRunner, "init_db", fake_init_db)
+
+    with pytest.raises(NotImplementedError, match="payload_profile=vector"):
+        runner._pre_run(drop_old=False)
+
+    assert events == ["resolve", "init_db"]

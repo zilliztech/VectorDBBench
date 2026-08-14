@@ -1,7 +1,28 @@
 from collections import defaultdict
 from dataclasses import asdict
+
+from vectordb_bench import config
+from vectordb_bench.backend.cases import CaseType, PerformanceCase
+from vectordb_bench.backend.payload import PayloadProfile
 from vectordb_bench.metric import QPS_METRIC, isLowerIsBetterMetric
 from vectordb_bench.models import CaseResult, ResultLabel
+
+
+def getCaseResultName(task: CaseResult) -> str:
+    case_config = task.task_config.case_config
+    case = case_config.case
+    details = []
+    if case_config.k is not None and case_config.k != config.K_DEFAULT:
+        details.append(f"K={case_config.k:,}")
+    if (
+        isinstance(case, PerformanceCase)
+        and case.case_id != CaseType.CloudPayloadSearchCase
+        and case.payload_profile != PayloadProfile.IDS_ONLY
+    ):
+        details.append(f"Payload={case.payload_profile.value}")
+    if not details:
+        return case.name
+    return f"{case.name} ({', '.join(details)})"
 
 
 def getChartData(
@@ -20,9 +41,7 @@ def getFilterTasks(
     caseNames: list[str],
 ) -> list[CaseResult]:
     filterTasks = [
-        task
-        for task in tasks
-        if task.task_config.db_name in dbNames and task.task_config.case_config.case_name in caseNames
+        task for task in tasks if task.task_config.db_name in dbNames and getCaseResultName(task) in caseNames
     ]
     return filterTasks
 
@@ -35,13 +54,15 @@ def mergeTasks(tasks: list[CaseResult]):
         db_label = task.task_config.db_config.db_label or ""
         version = task.task_config.db_config.version or ""
         case = task.task_config.case_config.case
-        case_name = case.name
+        case_name = getCaseResultName(task)
+        k = task.task_config.case_config.k
         dataset_name = case.dataset.data.full_name
         filter_rate = case.filter_rate
-        dbCaseMetricsMap[db_name][case.name] = {
+        dbCaseMetricsMap[db_name][case_name] = {
             "db": db,
             "db_label": db_label,
             "version": version,
+            "k": k,
             "dataset_name": dataset_name,
             "filter_rate": filter_rate,
             "metrics": mergeMetrics(
@@ -62,6 +83,7 @@ def mergeTasks(tasks: list[CaseResult]):
             db = metricInfo["db"]
             db_label = metricInfo["db_label"]
             version = metricInfo["version"]
+            k = metricInfo["k"]
             label = metricInfo["label"]
             dataset_name = metricInfo["dataset_name"]
             filter_rate = metricInfo["filter_rate"]
@@ -74,6 +96,7 @@ def mergeTasks(tasks: list[CaseResult]):
                         "dataset_name": dataset_name,
                         "filter_rate": filter_rate,
                         "version": version,
+                        "k": k,
                         "case_name": case_name,
                         "metricsSet": set(metrics.keys()),
                         **metrics,

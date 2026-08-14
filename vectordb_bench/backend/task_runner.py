@@ -28,6 +28,9 @@ from .utils import kill_proc_tree
 from .workload import WorkloadKind
 
 log = logging.getLogger(__name__)
+# Milvus and Zilliz Cloud cap topK at this value unless the collection opts into Large TopK mode.
+MILVUS_DEFAULT_TOPK_LIMIT = 16_384
+LARGE_TOPK_QUERY_MODE_DBS = frozenset({DB.Milvus, DB.ZillizCloud})
 
 
 class RunningStatus(Enum):
@@ -82,6 +85,7 @@ class CaseRunner(BaseModel):
             self._db_case_config_hash_key(),
             self._collection_name_hash_key(),
             self._dataset_hash_key(),
+            self._hashable_value(self._collection_properties()),
             self.ca.with_scalar_labels,
             self.ca.is_multitenant,
             self._multitenant_routing_hash_key(),
@@ -180,6 +184,25 @@ class CaseRunner(BaseModel):
     def is_fts(self) -> bool:
         return self.workload_kind == WorkloadKind.FULL_TEXT
 
+    def _collection_properties(self, *, log_selection: bool = False) -> dict[str, str]:
+        requested_k = self.config.case_config.k or config.K_DEFAULT
+        if (
+            self.config.db not in LARGE_TOPK_QUERY_MODE_DBS
+            or self.ca.label != CaseLabel.Performance
+            or requested_k <= MILVUS_DEFAULT_TOPK_LIMIT
+        ):
+            return {}
+
+        # Large TopK mode must be applied at collection creation, before the vector index is created.
+        if log_selection:
+            log.info(
+                "%s requested K=%d exceeds the default TopK limit %d; using query_mode=large_topk",
+                self.config.db.value,
+                requested_k,
+                MILVUS_DEFAULT_TOPK_LIMIT,
+            )
+        return {"query_mode": "large_topk"}
+
     def init_db(self, drop_old: bool = True) -> None:
         db_cls = self.config.db.init_cls
         # Compose a compact, case-unique collection/table name for Doris to avoid cross-case interference
@@ -200,6 +223,9 @@ class CaseRunner(BaseModel):
             extra_db_kwargs["collection_name"] = collection_name
         if self.ca.is_multitenant:
             extra_db_kwargs["multitenant_tenant_labels"] = self.ca.tenant_labels()
+        collection_properties = self._collection_properties(log_selection=True)
+        if collection_properties:
+            extra_db_kwargs["collection_properties"] = collection_properties
 
         self.db = db_cls(
             dim=getattr(self.ca.dataset.data, "dim", 0),
@@ -210,9 +236,22 @@ class CaseRunner(BaseModel):
             **extra_db_kwargs,
         )
 
+    def _validate_vector_payload_profile(self) -> None:
+        if self.db is None or self.ca.label != CaseLabel.Performance or self.is_fts:
+            return
+        if not self.db.supports_payload_profile(self.ca.payload_profile):
+            msg = f"{self.config.db_name} does not support payload_profile={self.ca.payload_profile.value}"
+            raise NotImplementedError(msg)
+
     def _pre_run(self, drop_old: bool = True):
         try:
             self._validate_cloud_cold_latency_config(drop_old)
+            requested_k = self.config.case_config.k or config.K_DEFAULT
+            ground_truth_k = (
+                requested_k
+                if self.ca.label == CaseLabel.Performance and getattr(self.ca, "measure_recall", True)
+                else config.K_DEFAULT
+            )
             creates_multitenant_collection = (
                 TaskStage.DROP_OLD in self.config.stages or TaskStage.LOAD in self.config.stages
             )
@@ -233,7 +272,10 @@ class CaseRunner(BaseModel):
                 self.init_db(drop_old)
                 return
 
+            if self.ca.dataset.data.with_gt:
+                self.ca.dataset.resolve_search_files(k=ground_truth_k, filters=self.ca.filters)
             self.init_db(drop_old)
+            self._validate_vector_payload_profile()
             if self.ca.is_multitenant and self.db is not None:
                 if not self.db.supports_multitenant():
                     msg = f"{self.config.db_name} does not support CloudMultiTenantSearchCase"
@@ -246,6 +288,7 @@ class CaseRunner(BaseModel):
                 filters=self.ca.filters,
                 with_train_files=TaskStage.LOAD in self.config.stages,
                 with_scalar_labels=self.ca.with_scalar_labels,
+                k=ground_truth_k,
             )
         except ModuleNotFoundError as e:
             log.warning(f"pre run case error: please install client for db: {self.config.db}, error={e}")
@@ -357,6 +400,7 @@ class CaseRunner(BaseModel):
                         m.conc_latency_p99_list,
                         m.conc_latency_p95_list,
                         m.conc_latency_avg_list,
+                        m.conc_latency_p50_list,
                     ) = search_results
                 if TaskStage.SEARCH_SERIAL in self.config.stages:
                     cooldown = self.config.case_config.concurrency_search_config.serial_cooldown
@@ -369,7 +413,21 @@ class CaseRunner(BaseModel):
                     if self.is_fts:
                         m.recall, m.ndcg, m.mrr, m.serial_latency_p99, m.serial_latency_p95 = search_results
                     else:
-                        m.recall, m.ndcg, m.serial_latency_p99, m.serial_latency_p95 = search_results
+                        (
+                            m.recall,
+                            m.ndcg,
+                            m.serial_latency_p99,
+                            m.serial_latency_p95,
+                            m.serial_latency_p50,
+                            m.recall_at,
+                        ) = search_results
+            gt_data = getattr(self.ca.dataset, "gt_data", None)
+            if gt_data is not None and hasattr(gt_data, "path"):
+                m.additional_parameters["ground_truth"] = {
+                    "file": gt_data.path.name,
+                    "query_count": gt_data.row_count,
+                    "width": gt_data.width,
+                }
             if hasattr(self.ca, "payload_profile"):
                 m.payload_profile = self.ca.payload_profile.value
                 m.payload_estimated_bytes_per_query = self.ca.estimated_payload_bytes_per_query(
@@ -526,8 +584,8 @@ class CaseRunner(BaseModel):
         calculate the recall, serial_latency_p99, serial_latency_p95
 
         Returns:
-            tuple[float, ...]: vector cases return recall, ndcg, p99, p95;
-                FTS cases return recall, p99, p95.
+            tuple[float, ...]: vector cases return recall, ndcg, p99, p95, p50, recall_at;
+                FTS cases return recall, p99, p95, p50.
         """
         try:
             if self.serial_search_runner is None:

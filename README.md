@@ -943,6 +943,34 @@ We've developed lots of comprehensive benchmark cases to test vector databases' 
 - **Large Dataset:** Similar to the XLarge Dataset case, but uses a slightly smaller dataset (10M-1024dim, 10M-768dim, 5M-1536dim).
 - **Medium Dataset:** A case using a medium dataset (1M-1024dim, 1M-768dim, 500K-1536dim).
 - **Small Dataset:** For development (100K-768dim, 50K-1536dim).
+
+##### LAION-100M Large-TopK
+
+`Performance768D100M` selects its query and ground-truth files from `--k`:
+
+| Requested K | Query file | Ground-truth file | Queries | GT width |
+|---:|---|---|---:|---:|
+| `1..1,000` | `test.parquet` | `neighbors.parquet` | 1,000 | 1,000 |
+| `1,001..100,000` | `test_nq200.parquet` | `neighbors_top100k_nq200.parquet` | 200 | 100,000 |
+| `100,001..1,000,000` | `test_nq200.parquet` | `neighbors_top1m_nq200.parquet` | 200 | 1,000,000 |
+
+K must be positive, and LAION-100M rejects values above 1,000,000. Filtered LAION runs above K=1,000 are also rejected because no matching wide filtered GT is available. VDBBench validates query IDs, row counts, and GT width before issuing a search.
+
+Wide GT remains in Parquet/Arrow form and is opened inside the serial-search subprocess one query row at a time. Results include primary `recall@K`, `recall_at` for the available cutoffs among 100, 1K, 10K, 100K, and 1M, plus serial and concurrent p50/p95/p99 latency. Concurrent throughput continues to use the configured fixed-duration phase.
+
+For Milvus and Zilliz Cloud performance runs with K above 16,384, VDBBench automatically creates new collections with `query_mode=large_topk` before creating the vector index. Reused collections are validated and rejected when that property is missing or incompatible. The target database, selected mode, and requested K are written to the run log. Self-hosted Milvus must be 2.6.14 or later, the release that introduced the `query_mode=large_topk` collection property; earlier servers accept the property without honoring it. Other backends must already permit the requested K; VDBBench forwards K unchanged and does not alter their collection properties.
+
+##### Performance Response Payloads
+
+Every vector search performance case can be configured for either an IDs-only response or a response that also includes each result vector. IDs only remains the default. Run the scenarios separately from the CLI:
+
+```bash
+vectordbbench milvusautoindex --uri http://localhost:19530 --case-type Performance768D100M --k 1000000 --payload-profile ids_only
+vectordbbench milvusautoindex --uri http://localhost:19530 --case-type Performance768D100M --k 1000000 --payload-profile vector
+```
+
+The frontend can select one or both scenarios for Milvus and Zilliz Cloud. Each scenario produces independent P99 latency, QPS, and recall metrics. `qps` remains the highest observed QPS among the configured concurrency levels; VDBBench does not discover a backend concurrency limit.
+
 #### Filtering Search Performance Case
 - **Int-Filter Cases:** Evaluates search performance with int-based filter expression (e.g.  "id >= 2,000").
 - **Label-Filter Cases:** Evaluates search performance with label-based filter expressions (e.g., "color == 'red'"). The test includes randomly generated labels to simulate real-world filtering scenarios.

@@ -155,6 +155,110 @@ class LAION(BaseDataset):
     }
 
 
+@dataclass(frozen=True)
+class SearchDatasetFiles:
+    test_file: str
+    gt_file: str
+    width: int | None = None
+    query_count: int | None = None
+
+
+LAION_SEARCH_DATASET_FILES = (
+    (1_000, SearchDatasetFiles("test.parquet", "neighbors.parquet", width=1_000, query_count=1_000)),
+    (
+        100_000,
+        SearchDatasetFiles(
+            "test_nq200.parquet",
+            "neighbors_top100k_nq200.parquet",
+            width=100_000,
+            query_count=200,
+        ),
+    ),
+    (
+        1_000_000,
+        SearchDatasetFiles(
+            "test_nq200.parquet",
+            "neighbors_top1m_nq200.parquet",
+            width=1_000_000,
+            query_count=200,
+        ),
+    ),
+)
+
+
+@dataclass(frozen=True)
+class ParquetGroundTruth:
+    path: pathlib.Path
+    neighbors_field: str
+    row_count: int
+    width: int
+
+    @classmethod
+    def from_file(
+        cls,
+        path: pathlib.Path,
+        *,
+        id_field: str,
+        neighbors_field: str,
+        expected_query_ids: typing.Sequence[Any],
+        minimum_width: int,
+        expected_width: int | None = None,
+    ) -> "ParquetGroundTruth":
+        if not path.exists():
+            msg = f"No such file: {path}"
+            raise FileNotFoundError(msg)
+
+        parquet_file = ParquetFile(path, memory_map=True, pre_buffer=False)
+        schema_names = parquet_file.schema_arrow.names
+        missing_fields = [field for field in (id_field, neighbors_field) if field not in schema_names]
+        if missing_fields:
+            msg = f"Ground truth file {path} is missing fields: {missing_fields}"
+            raise ValueError(msg)
+
+        query_ids = parquet_file.read(columns=[id_field]).column(0).to_pylist()
+        if query_ids != list(expected_query_ids):
+            msg = f"Ground truth query IDs in {path} do not match the selected query file"
+            raise ValueError(msg)
+
+        row_count = parquet_file.metadata.num_rows
+        minimum_observed_width = None
+        observed_rows = 0
+        for batch in parquet_file.iter_batches(batch_size=1, columns=[neighbors_field]):
+            for row in batch.column(0):
+                if not row.is_valid:
+                    msg = f"Ground truth file {path} contains a null neighbors row"
+                    raise ValueError(msg)
+                width = len(row.values)
+                observed_rows += 1
+                minimum_observed_width = width if minimum_observed_width is None else min(minimum_observed_width, width)
+                if expected_width is not None and width != expected_width:
+                    msg = f"Ground truth width {width} in {path} does not match expected width {expected_width}"
+                    raise ValueError(msg)
+                if width < minimum_width:
+                    msg = f"Ground truth width {width} in {path} is smaller than requested K={minimum_width}"
+                    raise ValueError(msg)
+
+        if observed_rows != row_count or minimum_observed_width is None:
+            msg = f"Ground truth row count in {path} is invalid: expected {row_count}, read {observed_rows}"
+            raise ValueError(msg)
+
+        return cls(
+            path=path,
+            neighbors_field=neighbors_field,
+            row_count=row_count,
+            width=minimum_observed_width,
+        )
+
+    def __len__(self) -> int:
+        return self.row_count
+
+    def iter_rows(self) -> Iterator[Any]:
+        parquet_file = ParquetFile(self.path, memory_map=True, pre_buffer=False)
+        for batch in parquet_file.iter_batches(batch_size=1, columns=[self.neighbors_field]):
+            for row in batch.column(0):
+                yield row.values.to_numpy(zero_copy_only=False)  # noqa: PD011
+
+
 class GIST(BaseDataset):
     name: str = "GIST"
     dim: int = 960
@@ -316,7 +420,8 @@ class DatasetManager(BaseModel):
 
     data: BaseDataset
     test_data: list[list[float]] | None = None
-    gt_data: list[list[int]] | None = None
+    gt_data: ParquetGroundTruth | list[list[int]] | None = None
+    search_files: SearchDatasetFiles | None = None
     scalar_labels: pl.DataFrame | None = None
     train_files: list[str] = []
     reader: DatasetReader | None = None
@@ -360,6 +465,7 @@ class DatasetManager(BaseModel):
         filters: Filter = non_filter,
         with_train_files: bool = True,
         with_scalar_labels: bool = False,
+        k: int | None = None,
     ) -> bool:
         """Download the dataset from DatasetSource
          url = f"{source}/{self.data.dir_name}"
@@ -368,15 +474,18 @@ class DatasetManager(BaseModel):
             source(DatasetSource): S3 or AliyunOSS, default as S3
             filters(Filter): combined with dataset's with_gt to
               compose the correct ground_truth file
+            k(int | None): requested search depth used to select and validate ground truth
 
         Returns:
             bool: whether the dataset is successfully prepared
 
         """
+        requested_k = config.K_DEFAULT if k is None else k
         self.train_files = self.data.train_files if with_train_files else []
         gt_file, test_file = None, None
         if self.data.with_gt:
-            gt_file, test_file = filters.groundtruth_file, self.data.test_file
+            self.search_files = self.resolve_search_files(k=requested_k, filters=filters)
+            gt_file, test_file = self.search_files.gt_file, self.search_files.test_file
 
         if self.data.with_remote_resource:
             download_files = [file for file in self.train_files]
@@ -397,12 +506,48 @@ class DatasetManager(BaseModel):
             self.scalar_labels = self._read_file(self.data.scalar_labels_file)
 
         if gt_file is not None and test_file is not None:
-            self.test_data = self._read_file(test_file)[self.data.test_vector_field].to_list()
-            self.gt_data = self._read_file(gt_file)[self.data.gt_neighbors_field].to_list()
+            test_frame = self._read_file(test_file)
+            if self.search_files.query_count is not None and len(test_frame) != self.search_files.query_count:
+                msg = (
+                    f"Query row count {len(test_frame)} in {test_file} does not match "
+                    f"expected count {self.search_files.query_count}"
+                )
+                raise ValueError(msg)
+            query_ids = test_frame[self.data.test_id_field].to_list()
+            self.test_data = test_frame[self.data.test_vector_field].to_list()
+            self.gt_data = ParquetGroundTruth.from_file(
+                pathlib.Path(self.data_dir, gt_file),
+                id_field=self.data.gt_id_field,
+                neighbors_field=self.data.gt_neighbors_field,
+                expected_query_ids=query_ids,
+                minimum_width=requested_k,
+                expected_width=self.search_files.width,
+            )
 
         log.debug(f"{self.data.name}: available train files {self.train_files}")
 
         return True
+
+    def resolve_search_files(self, *, k: int, filters: Filter = non_filter) -> SearchDatasetFiles:
+        if k <= 0:
+            msg = f"{self.data.name} search K must be positive, got {k}"
+            raise ValueError(msg)
+
+        if isinstance(self.data, LAION):
+            max_k = LAION_SEARCH_DATASET_FILES[-1][0]
+            if k > max_k:
+                msg = f"LAION supports K up to {max_k:,}, got {k:,}"
+                raise ValueError(msg)
+            if filters.type != FilterOp.NonFilter:
+                if k > LAION_SEARCH_DATASET_FILES[0][0]:
+                    msg = "LAION large-TopK does not support filtered ground truth"
+                    raise ValueError(msg)
+                return SearchDatasetFiles(self.data.test_file, filters.groundtruth_file)
+            for upper_bound, files in LAION_SEARCH_DATASET_FILES:
+                if k <= upper_bound:
+                    return files
+
+        return SearchDatasetFiles(self.data.test_file, filters.groundtruth_file)
 
     def _read_file(self, file_name: str) -> pl.DataFrame:
         """read one file from disk into memory"""

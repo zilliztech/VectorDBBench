@@ -126,6 +126,9 @@ def test_search_only_zilliz_multitenant_validates_existing_partition_key_schema(
     calls: list[tuple[str, object]] = []
 
     class ExistingCollectionDB:
+        def supports_payload_profile(self, payload_profile: PayloadProfile) -> bool:
+            return payload_profile == PayloadProfile.IDS_ONLY
+
         def supports_multitenant(self) -> bool:
             return True
 
