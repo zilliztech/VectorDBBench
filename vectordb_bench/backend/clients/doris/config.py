@@ -1,4 +1,5 @@
 import logging
+from typing import ClassVar
 
 from pydantic import BaseModel, SecretStr, model_validator
 
@@ -49,6 +50,11 @@ class DorisCaseConfig(BaseModel, DBCaseConfig):
     # Create table without ANN index
     no_index: bool = False
 
+    REQUIRED_INDEX_PARAMS_BY_TYPE: ClassVar[dict[str, tuple[str, ...]]] = {
+        "ivf": ("nlist",),
+        "ivf_on_disk": ("nlist",),
+    }
+
     def get_metric_fn(self) -> str:
         if self.metric_type == MetricType.L2:
             return "l2_distance_approximate"
@@ -65,30 +71,43 @@ class DorisCaseConfig(BaseModel, DBCaseConfig):
         metric_type = self.get_metric_fn()
         if metric_type.endswith("_approximate"):
             metric_type = metric_type[: -len("_approximate")]
-        props = {"metric_type": metric_type}
+        props: dict[str, str] = {"metric_type": metric_type}
+
+        # Merge user provided index_properties first; convenience fields fill missing values below.
+        if self.index_properties:
+            props.update({str(k): str(v) for k, v in self.index_properties.items()})
 
         if self.index_type is not None:
-            props.setdefault("index_type", self.index_type)
+            props["index_type"] = self.index_type
         else:
             props.setdefault("index_type", "hnsw")
 
-        # Merge optional HNSW params
-        props["index_type"] = str.lower(props["index_type"])
-        if props["index_type"] == "hnsw":
+        index_type = str(props["index_type"]).strip().lower()
+        if not index_type:
+            index_type = "hnsw"
+        props["index_type"] = index_type
+
+        # Map convenience fields when index type is known.
+        if index_type == "hnsw":
             if self.m is not None:
                 props.setdefault("max_degree", str(self.m))
             if self.ef_construction is not None:
                 props.setdefault("ef_construction", str(self.ef_construction))
-        elif props["index_type"] == "ivf":
+
+        if index_type in {"ivf", "ivf_on_disk"}:
             if self.nlist is not None:
                 props.setdefault("nlist", str(self.nlist))
-        else:
-            msg = f"Unsupported index type: {props['index_type']}"
-            raise ValueError(msg)
 
-        # Merge user provided index_properties
-        if self.index_properties:
-            props.update(self.index_properties)
+        # Validate only known required params; unknown index types are passed through.
+        required_params = self.REQUIRED_INDEX_PARAMS_BY_TYPE.get(index_type, ())
+        for param in required_params:
+            value = props.get(param)
+            if value is None or not str(value).strip():
+                msg = f"{param} of ann index must be specified for {index_type} type"
+                raise ValueError(msg)
+
+        if index_type not in {"hnsw", "ivf", "ivf_on_disk"}:
+            log.info("Passing through unknown Doris index_type without local validation: %s", index_type)
         return props
 
     def search_param(self) -> dict:
