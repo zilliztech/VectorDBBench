@@ -5,6 +5,8 @@ from contextlib import contextmanager
 from pymongo import MongoClient
 from pymongo.operations import SearchIndexModel
 
+from vectordb_bench.backend.filter import Filter, FilterOp
+
 from ..api import VectorDB
 from .config import MongoDBIndexConfig
 
@@ -16,6 +18,11 @@ class MongoDBError(Exception):
 
 
 class MongoDB(VectorDB):
+    supported_filter_types: list[FilterOp] = [
+        FilterOp.NonFilter,
+        FilterOp.StrEqual,
+    ]
+
     def __init__(
         self,
         dim: int,
@@ -25,6 +32,7 @@ class MongoDB(VectorDB):
         id_field: str = "id",
         vector_field: str = "vector",
         drop_old: bool = False,
+        with_scalar_labels: bool = False,
         **kwargs,
     ):
         self.dim = dim
@@ -34,6 +42,9 @@ class MongoDB(VectorDB):
         self.id_field = id_field
         self.vector_field = vector_field
         self.drop_old = drop_old
+        self.with_scalar_labels = with_scalar_labels
+        self._scalar_label_field = "label"
+        self._search_filter: dict | None = None
 
         # Update index dimensions
         index_params = self.case_config.index_param()
@@ -91,6 +102,13 @@ class MongoDB(VectorDB):
                         log.info(f"index deleting {indices}")
                 except Exception:
                     log.exception(f"Error dropping index {index_name}")
+        if self.with_scalar_labels:
+            fields = list(self.index_params.get("fields", []))
+            label_filter = {"type": "filter", "path": self._scalar_label_field}
+            if label_filter not in fields:
+                fields.append(label_filter)
+                self.index_params = {**self.index_params, "fields": fields}
+            index_params = self.index_params
         try:
             # Create vector search index
             search_index = SearchIndexModel(definition=index_params, name=index_name, type="vectorSearch")
@@ -129,18 +147,20 @@ class MongoDB(VectorDB):
         self,
         embeddings: list[list[float]],
         metadata: list[int],
+        labels_data: list[str] | None = None,
         **kwargs,
     ) -> (int, Exception | None):
         """Insert embeddings into MongoDB"""
 
-        # Prepare documents in bulk
-        documents = [
-            {
+        documents = []
+        for i, (id_, embedding) in enumerate(zip(metadata, embeddings, strict=False)):
+            doc = {
                 self.id_field: id_,
                 self.vector_field: embedding,
             }
-            for id_, embedding in zip(metadata, embeddings, strict=False)
-        ]
+            if self.with_scalar_labels and labels_data is not None:
+                doc[self._scalar_label_field] = labels_data[i]
+            documents.append(doc)
 
         # Use ordered=False for better insert performance
         try:
@@ -149,11 +169,19 @@ class MongoDB(VectorDB):
             return 0, e
         return len(documents), None
 
+    def prepare_filter(self, filters: Filter):
+        if filters.type == FilterOp.NonFilter:
+            self._search_filter = None
+        elif filters.type == FilterOp.StrEqual:
+            self._search_filter = {self._scalar_label_field: filters.label_value}
+        else:
+            msg = f"Not support Filter for MongoDB - {filters}"
+            raise ValueError(msg)
+
     def search_embedding(
         self,
         query: list[float],
         k: int = 100,
-        filters: dict | None = None,
         **kwargs,
     ) -> list[int]:
         """Search for similar vectors"""
@@ -170,12 +198,8 @@ class MongoDB(VectorDB):
             num_candidates = min(10000, k * search_params["num_candidates_ratio"])
             vector_search["numCandidates"] = num_candidates
 
-        # Add filter if specified
-        if filters:
-            log.info(f"Applying filter: {filters}")
-            vector_search["filter"] = {
-                "id": {"gte": filters["id"]},
-            }
+        if self._search_filter is not None:
+            vector_search["filter"] = self._search_filter
         pipeline = [
             {"$vectorSearch": vector_search},
             {
