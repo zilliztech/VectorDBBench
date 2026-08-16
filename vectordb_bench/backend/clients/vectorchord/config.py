@@ -94,13 +94,13 @@ class VectorChordRQConfig(VectorChordIndexConfig):
     rerank_in_table: bool = False
     degree_of_parallelism: int | None = None  # default 32, range [1, 256]
     # Build parameters ([build.internal] section)
-    lists: int | None = None
+    lists: list[int] | None = None  # e.g. [1000] for single-level or [4096, 128] for multi-level IVF
     spherical_centroids: bool = False
     build_threads: int | None = None  # range [1, 255]
     # PostgreSQL tuning parameter
     max_parallel_workers: int | None = None  # sets max_parallel_workers & max_parallel_maintenance_workers
     # Search parameters (GUCs)
-    probes: int | None = 10
+    probes: list[int] | None = [10]  # one probe per IVF level, e.g. [10] or [10, 1]
     epsilon: float | None = 1.9  # range [0.0, 4.0]
     max_scan_tuples: int | None = None  # default -1, range [-1, 2147483647]
 
@@ -114,7 +114,7 @@ class VectorChordRQConfig(VectorChordIndexConfig):
             options_parts.append(f"degree_of_parallelism = {self.degree_of_parallelism}")
         options_parts.append("[build.internal]")
         if self.lists is not None:
-            options_parts.append(f"lists = [{self.lists}]")
+            options_parts.append(f"lists = [{', '.join(str(v) for v in self.lists)}]")
         if self.spherical_centroids:
             options_parts.append("spherical_centroids = true")
         if self.build_threads is not None:
@@ -136,7 +136,7 @@ class VectorChordRQConfig(VectorChordIndexConfig):
     def session_param(self) -> dict:
         params = {}
         if self.probes is not None:
-            params["vchordrq.probes"] = str(self.probes)
+            params["vchordrq.probes"] = ",".join(str(v) for v in self.probes)
         if self.epsilon is not None:
             params["vchordrq.epsilon"] = str(self.epsilon)
         if self.max_scan_tuples is not None:
