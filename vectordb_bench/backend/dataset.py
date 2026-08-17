@@ -31,6 +31,7 @@ from .data_source import DatasetReader, DatasetSource
 from .filter import Filter, FilterOp, non_filter
 
 log = logging.getLogger(__name__)
+DEFAULT_INSERT_BATCH_SIZE = config.DEFAULT_INSERT_BATCH_SIZE
 
 
 class SizeLabel(NamedTuple):
@@ -416,7 +417,10 @@ class DatasetManager(BaseModel):
 
 
 class DataSetIterator:
-    def __init__(self, dataset: DatasetManager, batch_size: int = config.NUM_PER_BATCH):
+    def __init__(self, dataset: DatasetManager, batch_size: int = DEFAULT_INSERT_BATCH_SIZE):
+        if batch_size <= 0:
+            msg = f"insert batch size must be greater than 0, got {batch_size}"
+            raise ValueError(msg)
         self._ds = dataset
         self._batch_size = batch_size
         self._idx = 0  # file number
@@ -860,13 +864,13 @@ class FtsDatasetManager(BaseModel):
 
         return selected_doc_ids
 
-    def _iter_selected_documents_with_filter_ids(self) -> Iterator[FtsDocument]:
+    def _iter_selected_documents_with_filter_ids(self, include_filter_ids: bool = False) -> Iterator[FtsDocument]:
         """Yield selected documents with the exact filter IDs used for insertion and qrels."""
         if self._ir_dataset is None:
             msg = "ir_datasets dataset not loaded. Call prepare() first."
             raise RuntimeError(msg)
 
-        permutation = FtsFilterIdPermutation.for_size(self.data.size)
+        permutation = FtsFilterIdPermutation.for_size(self.data.size) if include_filter_ids else None
         documents = iter(self._translator.iter_documents(self._ir_dataset))
         emitted_count = 0
         while emitted_count < self.data.size:
@@ -875,7 +879,8 @@ class FtsDatasetManager(BaseModel):
                 doc.doc_id = str(doc.doc_id)
                 if self.selected_doc_ids is not None and doc.doc_id not in self.selected_doc_ids:
                     continue
-                doc.filter_id = permutation.map(emitted_count)
+                if permutation is not None:
+                    doc.filter_id = permutation.map(emitted_count)
             except StopIteration:
                 break
             except Exception as e:
@@ -893,7 +898,7 @@ class FtsDatasetManager(BaseModel):
 
         qrel_doc_ids = set(self.required_doc_ids)
         qrel_filter_ids: dict[str, int] = {}
-        for doc in self._iter_selected_documents_with_filter_ids():
+        for doc in self._iter_selected_documents_with_filter_ids(include_filter_ids=True):
             doc_id = doc.doc_id
             if doc_id in qrel_doc_ids:
                 qrel_filter_ids[doc_id] = doc.filter_id
@@ -1046,7 +1051,8 @@ class FtsDatasetManager(BaseModel):
                     raise ValueError(msg)  # noqa: TRY301
 
                 self.required_doc_ids = {doc_id for qrels in self.gt_data for doc_id in qrels}
-                self.selected_doc_ids = self._build_selected_doc_ids()
+                is_filtered = filters is not None and filters.type != FilterOp.NonFilter
+                self.selected_doc_ids = self._build_selected_doc_ids() if is_filtered else None
                 self.recall_queries_data, self.recall_gt_data = self._apply_filters_to_qrels(
                     self.queries_data,
                     self.gt_data,
@@ -1057,7 +1063,7 @@ class FtsDatasetManager(BaseModel):
                     "selected %s corpus docs including %s qrel docs",
                     len(self.gt_data),
                     len(self.recall_gt_data),
-                    len(self.selected_doc_ids),
+                    len(self.selected_doc_ids) if self.selected_doc_ids is not None else self.data.size,
                     len(self.required_doc_ids),
                 )
             else:
@@ -1080,7 +1086,7 @@ class FtsDatasetManager(BaseModel):
             log.info(f"FTS dataset preparation completed: {self.data.full_name}")
             return True
 
-    def iter_batches(self, batch_size: int = config.NUM_PER_BATCH):
+    def iter_batches(self, batch_size: int = DEFAULT_INSERT_BATCH_SIZE):
         """Return an iterator for streaming FTS document batches."""
         return FtsDocumentIterator(self, batch_size=batch_size)
 
@@ -1107,11 +1113,15 @@ class FtsDocumentIterator:
     processing of large datasets.
     """
 
-    def __init__(self, dataset: FtsDatasetManager, batch_size: int = config.NUM_PER_BATCH):
+    def __init__(self, dataset: FtsDatasetManager, batch_size: int = DEFAULT_INSERT_BATCH_SIZE):
+        if batch_size <= 0:
+            msg = f"insert batch size must be greater than 0, got {batch_size}"
+            raise ValueError(msg)
         self._ds = dataset
         self._batch_size = batch_size
         self._finished = False
         self._docs_iter = None
+        self._doc_count = 0
 
     def __iter__(self):
         return self
@@ -1129,12 +1139,24 @@ class FtsDocumentIterator:
             raise StopIteration
 
         if self._docs_iter is None:
-            self._docs_iter = self._ds._iter_selected_documents_with_filter_ids()
+            if self._ds.filter_stats:
+                self._docs_iter = self._ds._iter_selected_documents_with_filter_ids(include_filter_ids=True)
+            else:
+                self._docs_iter = self._ds._translator.iter_documents(self._ds._ir_dataset)
 
         batch = []
         while len(batch) < self._batch_size:
+            if self._doc_count >= self._ds.data.size:
+                self._finished = True
+                if batch:
+                    return batch
+                raise StopIteration
             try:
-                batch.append(next(self._docs_iter))
+                doc = next(self._docs_iter)
+                if not self._ds.filter_stats:
+                    doc.doc_id = str(doc.doc_id)
+                batch.append(doc)
+                self._doc_count += 1
             except StopIteration:
                 self._finished = True
                 if batch:

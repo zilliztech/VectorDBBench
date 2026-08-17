@@ -287,7 +287,7 @@ OpenSearch Serverless (AOSS) is a serverless deployment option for Amazon OpenSe
 **Example: Run performance test on OpenSearch Serverless**
 
 ```shell
-NUM_PER_BATCH=100 vectordbbench awsopensearch --db-label aoss \
+vectordbbench awsopensearch --db-label aoss --insert-batch-size 100 \
   --serverless --aws-region us-east-1 \
   --host <collection-id>.aoss.us-east-1.on.aws --port 443 \
   --case-type Performance768D1M \
@@ -303,13 +303,13 @@ OpenSearch Serverless-specific options:
 |--------|-------------|
 | `--serverless` | Enable OpenSearch Serverless mode (uses AWS SigV4 auth) |
 | `--aws-region` | AWS region for the AOSS collection (default: `us-east-1`) |
-| `NUM_PER_BATCH` | Number of vectors per Serverless bulk request (default: `100`) |
+| `--insert-batch-size` | Number of vectors per Serverless bulk request (default: `100`) |
 
 > **Notes:**
 > - `--user` and `--password` are not needed for Serverless mode
 > - `--engine` is accepted but ignored internally (AOSS manages the engine)
 > - `--force-merge-enabled`, `--refresh-interval`, `--flush-threshold-size`, and `--cb-threshold` are ignored for Serverless
-> - Keep `NUM_PER_BATCH` small enough for the Serverless bulk API request limits
+> - Keep `--insert-batch-size` small enough for the Serverless bulk API request limits
 
 ### Run Elastic Cloud from command line
 
@@ -478,7 +478,7 @@ pip install 'vectordb-bench[hologres]' 'psycopg[binary]' pgvector
 Execute tests for the index types: HGraph.
 
 ```shell
-NUM_PER_BATCH=10000 vectordbbench hologreshgraph --host Hologres_Endpoint --port 80 \
+vectordbbench hologreshgraph --host Hologres_Endpoint --port 80 --insert-batch-size 10000 \
 --user ACCESS_ID --password ACCESS_KEY --database DATABASE_NAME \
 --m 64 --ef-construction 400 --case-type Performance768D10M \
 --index-type HGraph --ef-search 400 --k 10 --num-concurrency 1,60,70,75,80,90,95,100,105,110,115,120,125,130 \
@@ -532,12 +532,12 @@ To list the options for zvec, execute vectordbbench zvec --help
 Doris supports ann index with type hnsw from version 4.0.x
 
 ```shell
-NUM_PER_BATCH=1000000 vectordbbench doris --http-port=8030 --port=9030 --db-name=vector_test --case-type=Performance768D1M --stream-load-rows-per-batch=500000
+vectordbbench doris --http-port=8030 --port=9030 --db-name=vector_test --case-type=Performance768D1M --insert-batch-size=1000000 --stream-load-rows-per-batch=500000
 ```
 
 Using flag `--session-var`, if you want to test doris with some customized session variables. For example:
 ```shell
-NUM_PER_BATCH=1000000 vectordbbench doris --http-port=8030 --port=9030 --db-name=vector_test --case-type=Performance768D1M --stream-load-rows-per-batch=500000 --session-var enable_profile=True
+vectordbbench doris --http-port=8030 --port=9030 --db-name=vector_test --case-type=Performance768D1M --insert-batch-size=1000000 --stream-load-rows-per-batch=500000 --session-var enable_profile=True
 ```
 
 Mote options:
@@ -558,8 +558,8 @@ Mote options:
 --session-var TEXT              Session variable key=value applied to each
                                 SQL session (repeatable)
 --stream-load-rows-per-batch INTEGER
-                                Rows per single stream load request; default
-                                uses NUM_PER_BATCH
+                                Rows per Doris stream-load request; when
+                                omitted, the Doris client default is used
 --no-index                      Create table without ANN index
 ```
 

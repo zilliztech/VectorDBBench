@@ -19,6 +19,7 @@ log = logging.getLogger(__name__)
 WAITING_FOR_REFRESH_SEC: Final[int] = 30
 WAITING_FOR_FORCE_MERGE_SEC: Final[int] = 30
 REPLICA_HEALTH_TIMEOUT: Final[str] = "30m"
+REPLICA_HEALTH_REQUEST_TIMEOUT_SEC: Final[int] = 31 * 60
 
 # Central registry for version-dependent OpenSearch index settings.
 # Add new rules here to automatically support future versions.
@@ -813,6 +814,7 @@ class OSSOpenSearch(VectorDB):
             index=self.index_name,
             wait_for_status="green",
             timeout=REPLICA_HEALTH_TIMEOUT,
+            request_timeout=REPLICA_HEALTH_REQUEST_TIMEOUT_SEC,
         )
         health = response.get("status", "unknown")
         if response.get("timed_out") or health != "green":

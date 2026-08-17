@@ -443,7 +443,6 @@ def test_milvus_multitenant_insert_writes_tenant_and_scalar_payload_labels() -> 
     db = object.__new__(Milvus)
     db.client = SimpleNamespace(insert=insert)
     db.collection_name = "test_collection"
-    db.batch_size = 100
     db._primary_field = "pk"
     db._scalar_id_field = "id"
     db._vector_field = "vector"
@@ -465,3 +464,78 @@ def test_milvus_multitenant_insert_writes_tenant_and_scalar_payload_labels() -> 
         {"pk": 1, "id": 1, "vector": [0.1, 0.2], "labels": "tenant_0001", "scalar_label": "label_a"},
         {"pk": 2, "id": 2, "vector": [0.3, 0.4], "labels": "tenant_0002", "scalar_label": "label_b"},
     ]
+
+
+def test_milvus_vector_insert_uses_one_client_call_for_runner_batch() -> None:
+    client = MagicMock()
+    client.insert.side_effect = lambda _collection, rows: {"insert_count": len(rows)}
+
+    db = object.__new__(Milvus)
+    db.client = client
+    db.collection_name = "test_collection"
+    db._primary_field = "pk"
+    db._scalar_id_field = "id"
+    db._vector_field = "vector"
+    db.with_scalar_labels = False
+
+    count, err = db.insert_embeddings(
+        embeddings=[[float(i)] for i in range(5)],
+        metadata=list(range(5)),
+    )
+
+    assert count == 5
+    assert err is None
+    client.insert.assert_called_once()
+    assert len(client.insert.call_args.args[1]) == 5
+
+
+def test_milvus_fts_insert_uses_one_client_call_for_runner_batch() -> None:
+    client = MagicMock()
+    client.insert.side_effect = lambda _collection, rows: {"insert_count": len(rows)}
+
+    db = object.__new__(Milvus)
+    db.client = client
+    db.name = "Milvus"
+    db.collection_name = "test_collection"
+    db._is_fts = True
+    db._primary_field = "doc_id"
+    db._text_field = "text"
+    db._filter_id_field = "filter_id"
+    db.with_scalar_labels = False
+
+    count, err = db.insert_documents(
+        texts=[f"document {i}" for i in range(5)],
+        doc_ids=[f"d{i}" for i in range(5)],
+        filter_ids=list(range(5)),
+    )
+
+    assert count == 5
+    assert err is None
+    client.insert.assert_called_once()
+
+
+def test_milvus_fts_filter_index_is_conditional(monkeypatch: pytest.MonkeyPatch) -> None:
+    db = object.__new__(Milvus)
+    db._is_fts = True
+    db._sparse_field = "sparse_vector"
+    db._main_index_name = "sparse_vector_idx"
+    db._sort_index_field = "doc_id"
+    db._sort_index_name = "doc_id_sort_idx"
+    db._filter_id_field = "filter_id"
+    db._filter_id_sort_index_name = "filter_id_sort_idx"
+    db.with_scalar_labels = False
+    db.case_config = SimpleNamespace(sparse_index_param=lambda: {})
+
+    for enabled, expected_fields in (
+        (False, {"sparse_vector", "doc_id"}),
+        (True, {"sparse_vector", "doc_id", "filter_id"}),
+    ):
+        params = MagicMock()
+        monkeypatch.setattr(
+            "vectordb_bench.backend.clients.milvus.milvus.MilvusClient.prepare_index_params",
+            lambda: params,
+        )
+        db._fts_filter_enabled = enabled
+        db._build_index_params()
+        fields = {call.kwargs["field_name"] for call in params.add_index.call_args_list}
+        assert fields == expected_fields
