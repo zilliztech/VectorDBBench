@@ -203,6 +203,8 @@ class CaseRunner(BaseModel):
             extra_db_kwargs["multitenant_tenant_labels"] = self.ca.tenant_labels()
         if self.is_fts:
             extra_db_kwargs["fts_filter_enabled"] = self.ca.filters.type != FilterOp.NonFilter
+        if self.config.db is DB.AWSOpenSearch:
+            extra_db_kwargs["insert_batch_size"] = self.config.insert_batch_size
 
         self.db = db_cls(
             dim=getattr(self.ca.dataset.data, "dim", 0),
