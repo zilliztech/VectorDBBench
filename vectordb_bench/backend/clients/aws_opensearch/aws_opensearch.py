@@ -2,6 +2,7 @@ import logging
 import time
 from collections.abc import Iterable
 from contextlib import contextmanager
+from typing import Any
 
 from opensearchpy import OpenSearch
 
@@ -16,6 +17,13 @@ log = logging.getLogger(__name__)
 WAITING_FOR_REFRESH_SEC = 30
 WAITING_FOR_FORCE_MERGE_SEC = 30
 SECONDS_WAITING_FOR_REPLICAS_TO_BE_ENABLED_SEC = 30
+BULK_MAX_ATTEMPTS = 30
+BULK_INITIAL_RETRY_DELAY_SEC = 2
+BULK_MAX_RETRY_DELAY_SEC = 60
+
+
+class OpenSearchBulkInsertError(RuntimeError):
+    non_retryable = True
 
 
 class AWSOpenSearch(VectorDB):
@@ -285,20 +293,124 @@ class AWSOpenSearch(VectorDB):
                     other_data[self.label_col_name] = batch_labels[j]
                 insert_data.append(other_data)
 
-            try:
-                self.client.bulk(body=insert_data)
-                total_inserted += len(batch_embeddings)
-            except Exception as e:
-                log.warning(f"Failed to insert batch: {self.index_name} error: {e!s}")
-                time.sleep(10)
-                try:
-                    self.client.bulk(body=insert_data)
-                    total_inserted += len(batch_embeddings)
-                except Exception as retry_e:
-                    log.warning(f"Retry failed for batch: {retry_e!s}")
-                    return total_inserted, retry_e
+            inserted, error = self._execute_bulk_with_retries(
+                self.client,
+                insert_data,
+                f"index {self.index_name}",
+            )
+            total_inserted += inserted
+            if error is not None:
+                raise error
 
         return total_inserted, None
+
+    @staticmethod
+    def _parse_bulk_response(
+        response: dict[str, Any],
+        insert_data: list[dict[str, Any]],
+    ) -> tuple[int, list[dict[str, Any]], list[str]]:
+        expected_count = len(insert_data) // 2
+        if not response.get("errors"):
+            return expected_count, [], []
+
+        items = response.get("items")
+        if not isinstance(items, list):
+            return 0, insert_data, ["response did not contain an items list"]
+
+        success_count = 0
+        failed_data = []
+        failure_samples = []
+        for position in range(expected_count):
+            item = items[position] if position < len(items) else None
+            if isinstance(item, dict) and len(item) == 1:
+                operation, result = next(iter(item.items()))
+                if isinstance(result, dict):
+                    status = result.get("status")
+                    if isinstance(status, int) and 200 <= status < 300 and "error" not in result:
+                        success_count += 1
+                        continue
+                    error = result.get("error", "unknown")
+                    failure_samples.append(
+                        f"item[{position}] {operation} id={result.get('_id', 'unknown')} "
+                        f"status={status or 'unknown'} error={error}"
+                    )
+                else:
+                    failure_samples.append(f"item[{position}] {operation}=malformed")
+            else:
+                failure_samples.append(f"item[{position}]=malformed")
+            failed_data.extend(insert_data[position * 2 : position * 2 + 2])
+
+        return success_count, failed_data, failure_samples
+
+    def _execute_bulk_with_retries(
+        self,
+        client: OpenSearch,
+        insert_data: list[dict[str, Any]],
+        context: str,
+    ) -> tuple[int, Exception | None]:
+        pending_data = insert_data
+        total_inserted = 0
+
+        for attempt in range(1, BULK_MAX_ATTEMPTS + 1):
+            response: Any = None
+            request_error = None
+            try:
+                response = client.bulk(body=pending_data)
+            except Exception as e:
+                request_error = e
+
+            if request_error is None and not isinstance(response, dict):
+                request_error = TypeError("OpenSearch bulk response was not an object")
+
+            if request_error is not None:
+                if attempt < BULK_MAX_ATTEMPTS:
+                    retry_delay = min(
+                        BULK_INITIAL_RETRY_DELAY_SEC * (2 ** (attempt - 1)),
+                        BULK_MAX_RETRY_DELAY_SEC,
+                    )
+                    log.warning(
+                        f"Bulk request failed for {context}; next attempt {attempt + 1}/{BULK_MAX_ATTEMPTS} "
+                        f"in {retry_delay}s: {request_error!s}"
+                    )
+                    time.sleep(retry_delay)
+                    continue
+                error = OpenSearchBulkInsertError(
+                    f"Bulk request failed for {context} after {BULK_MAX_ATTEMPTS} attempts; "
+                    f"successful={total_inserted}: {request_error!s}"
+                )
+                log.error(str(error))
+                return total_inserted, error
+
+            inserted, failed_data, failure_samples = self._parse_bulk_response(response, pending_data)
+            total_inserted += inserted
+            if not failed_data:
+                return total_inserted, None
+
+            failed_count = len(failed_data) // 2
+            sample_summary = "; ".join(failure_samples[:3])
+            if attempt < BULK_MAX_ATTEMPTS:
+                retry_delay = min(
+                    BULK_INITIAL_RETRY_DELAY_SEC * (2 ** (attempt - 1)),
+                    BULK_MAX_RETRY_DELAY_SEC,
+                )
+                log.warning(
+                    f"Bulk response for {context} rejected {failed_count} documents; "
+                    f"next attempt {attempt + 1}/{BULK_MAX_ATTEMPTS} in {retry_delay}s; "
+                    f"{sample_summary}"
+                )
+                pending_data = failed_data
+                time.sleep(retry_delay)
+                continue
+
+            error = OpenSearchBulkInsertError(
+                f"Bulk insert for {context} left {failed_count} documents uninserted after "
+                f"{BULK_MAX_ATTEMPTS} attempts; successful={total_inserted}; {sample_summary}"
+            )
+            log.error(str(error))
+            return total_inserted, error
+
+        error = OpenSearchBulkInsertError(f"Bulk insert for {context} exhausted its retry loop")
+        return total_inserted, error
 
     def _insert_with_multiple_clients(
         self,
@@ -342,19 +454,7 @@ class AWSOpenSearch(VectorDB):
                     other_data[self.label_col_name] = chunk_labels_data[i]
                 insert_data.append(other_data)
 
-            max_retries = 10
-            for attempt in range(max_retries):
-                try:
-                    client.bulk(body=insert_data)
-                    return len(chunk_embeddings), None
-                except Exception as e:
-                    if "429" in str(e) and attempt < max_retries - 1:
-                        log.warning(f"Client {client_idx} got 429 error, retry {attempt + 1}/{max_retries} after 10s")
-                        time.sleep(10)
-                    else:
-                        log.warning(f"Client {client_idx} failed to insert data: {e!s}")
-                        return 0, e
-            return 0, Exception("Max retries exceeded")
+            return self._execute_bulk_with_retries(client, insert_data, f"client {client_idx}")
 
         results = []
         with ThreadPoolExecutor(max_workers=len(clients)) as executor:
@@ -380,7 +480,7 @@ class AWSOpenSearch(VectorDB):
         if errors:
             log.warning("Some clients failed to insert data, retrying with single client")
             time.sleep(10)
-            return self._insert_with_single_client(embeddings, metadata)
+            return self._insert_with_single_client(embeddings, metadata, labels_data)
 
         resp = self.client.indices.stats(index=self.index_name)
         log.info(
