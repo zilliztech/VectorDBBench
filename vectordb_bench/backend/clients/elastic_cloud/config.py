@@ -4,6 +4,7 @@ from typing import ClassVar
 from pydantic import BaseModel, SecretStr, model_validator
 
 from ..api import DBCaseConfig, DBConfig, IndexType, MetricType
+from ..elasticsearch_compatible import build_bm25_similarity_settings, build_fts_index_param
 
 
 class ElasticCloudConfig(DBConfig, BaseModel):
@@ -145,49 +146,11 @@ class ElasticCloudFtsConfig(BaseModel, DBCaseConfig):
     bm25_k1: float | None = None
     bm25_b: float | None = None
 
-    def apply_fts_manifest(
-        self,
-        bm25_params: dict[str, float],
-        analyzer_params: dict,
-    ) -> tuple[DBCaseConfig, dict]:
-        updates = {}
-        applied_bm25_params = {}
-
-        if "k1" in bm25_params:
-            updates["bm25_k1"] = bm25_params["k1"]
-            applied_bm25_params["k1"] = bm25_params["k1"]
-        if "b" in bm25_params:
-            updates["bm25_b"] = bm25_params["b"]
-            applied_bm25_params["b"] = bm25_params["b"]
-
-        return self.model_copy(update=updates), {
-            "applied_bm25_params": applied_bm25_params,
-            "unapplied_bm25_params": {k: v for k, v in bm25_params.items() if k not in applied_bm25_params},
-            "applied_analyzer_params": {},
-            "unapplied_analyzer_params": dict(analyzer_params),
-        }
-
     def index_param(self) -> dict:
-        text_mapping = {"type": "text"}
-        if self.bm25_k1 is not None or self.bm25_b is not None:
-            text_mapping["similarity"] = "vdbbench_bm25"
-        return {
-            "properties": {
-                "doc_id": {"type": "keyword"},
-                "text": text_mapping,
-            },
-        }
+        return build_fts_index_param(self.bm25_k1, self.bm25_b)
 
     def search_param(self) -> dict:
         return {}
 
     def similarity_settings(self) -> dict:
-        if self.bm25_k1 is None and self.bm25_b is None:
-            return {}
-
-        bm25_settings = {"type": "BM25"}
-        if self.bm25_k1 is not None:
-            bm25_settings["k1"] = self.bm25_k1
-        if self.bm25_b is not None:
-            bm25_settings["b"] = self.bm25_b
-        return {"similarity": {"vdbbench_bm25": bm25_settings}}
+        return build_bm25_similarity_settings(self.bm25_k1, self.bm25_b)

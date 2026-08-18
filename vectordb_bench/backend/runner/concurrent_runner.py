@@ -224,10 +224,16 @@ class ConcurrentInsertRunner:
 
         doc_ids = []
         texts = []
+        filter_ids = []
         for doc in batch:
             doc_ids.append(doc.doc_id if hasattr(doc, "doc_id") else str(doc["doc_id"]))
             texts.append(doc.text if hasattr(doc, "text") else doc["text"])
-        return {"texts": texts, "doc_ids": doc_ids}
+            filter_id = doc.filter_id if hasattr(doc, "filter_id") else doc.get("filter_id", None)
+            filter_ids.append(filter_id)
+        insert_kwargs = {"texts": texts, "doc_ids": doc_ids}
+        if any(filter_id is not None for filter_id in filter_ids):
+            insert_kwargs["filter_ids"] = filter_ids
+        return insert_kwargs
 
     def _worker_loop(self) -> int:
         """Worker loop: pull batches from the shared iterator and insert them."""
