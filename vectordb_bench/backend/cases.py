@@ -439,6 +439,7 @@ class PerformanceCustomDataset(PerformanceCase):
             gt_neighbors_field=dataset_config.gt_col_name,
             scalar_labels_file=f"{dataset_config.scalar_labels_name}.parquet",
         )
+        filter_rate = (1.0 - label_percentage) if (use_filter and label_percentage is not None) else None
         super().__init__(
             name=name,
             description=description,
@@ -448,6 +449,7 @@ class PerformanceCustomDataset(PerformanceCase):
             dataset=DatasetManager(data=dataset),
             use_filter=use_filter,
             label_percentage=label_percentage,
+            filter_rate=filter_rate,
         )
 
     @property

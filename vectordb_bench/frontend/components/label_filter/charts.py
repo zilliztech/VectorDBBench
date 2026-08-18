@@ -21,8 +21,9 @@ def drawChartByMetric(st, data, metrics=("qps", "recall"), **kwargs):
 
 
 def getRange(metric, data, padding_multipliers):
-    minV = min([d.get(metric, 0) for d in data])
-    maxV = max([d.get(metric, 0) for d in data])
+    values = [d.get(metric) or 0 for d in data]
+    minV = min(values)
+    maxV = max(values)
     padding = maxV - minV
     rangeV = [
         minV - padding * padding_multipliers[0],
@@ -39,7 +40,7 @@ def drawChart(st, data: list[object], metric):
     y = metric
     yrange = getRange(y, data, [0.2, 0.1])
 
-    data.sort(key=lambda a: a[x])
+    data.sort(key=lambda a: a.get(x) or 0)
 
     fig = px.line(
         data,
