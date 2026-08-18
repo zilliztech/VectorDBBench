@@ -22,6 +22,7 @@ from ..backend.clients.lancedb.cli import (
     LanceDBIVFPQ,
 )
 from ..backend.clients.lindorm.cli import LindormHNSW, LindormIVFBQ, LindormIVFPQ
+from ..backend.clients.logosdb.cli import LogosDB
 from ..backend.clients.mariadb.cli import MariaDBHNSW
 from ..backend.clients.memorydb.cli import MemoryDB
 from ..backend.clients.milvus.cli import MilvusAutoIndex, MilvusFTS
@@ -112,6 +113,7 @@ cli.add_command(PolarDBHNSWFlat)
 cli.add_command(PolarDBHNSWPQ)
 cli.add_command(PolarDBHNSWSQ)
 cli.add_command(SeekDBHNSW)
+cli.add_command(LogosDB)
 cli.add_command(VolcMySQLHNSW)
 
 
