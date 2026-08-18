@@ -623,11 +623,15 @@ vectordbbench adbpgnova --case-type Performance1024D1M --k 10 \
 --ef-search 130 --max-scan-points 5000 --quantize-rescore-amp 2.0
 ```
 
-**Example: Run from config file**
+**Example: Import Cohere 1M, build NOVAMR, run autotune, and benchmark top-10 search**
 
 ```shell
-vectordbbench adbpgnova --config-file adbpg_bioasq1m_novamr.yml
+vectordbbench adbpgnova \
+  --config-file vectordb_bench/config-files/adbpg_cohere1m_autotune.yml
 ```
+
+The example config sets the benchmark `k` and the autotune `topk` independently. Autotune `topk` and
+`target_recall` accept either a scalar value or an `ARRAY[...]` expression for tuning multiple targets.
 
 To list the options for ADBPG, execute `vectordbbench adbpgnova --help`. The following are some ADBPG-specific command-line options.
 
@@ -638,13 +642,20 @@ To list the options for ADBPG, execute `vectordbbench adbpgnova --help`. The fol
   --port INTEGER                  Postgres database port  [default: 5432]
   --db-name TEXT                  Db name  [required]
   --algorithm TEXT                algorithm  [default: novamr]
-  --hnsw-m INTEGER                hnsw_m  [default: 16]
-  --ef-construction INTEGER       ef_construction  [default: 200]
-  --ef-search INTEGER             ef_search  [default: 100]
-  --max-scan-points INTEGER       max scan points  [default: 2000]
-  --quantize-rescore-amp FLOAT    fastann.quantize_rescore_amp  [default: 1.0]
+  --hnsw-m INTEGER                hnsw_m  [default: 48]
+  --ef-construction INTEGER       ef_construction  [default: 600]
+  --ef-search INTEGER             ef_search  [default: 150]
+  --max-scan-points INTEGER       max scan points  [default: 20000]
+  --quantize-rescore-amp FLOAT    fastann.quantize_rescore_amp  [default: 0.0]
   --nova-adaptive-gamma FLOAT     fastann.nova_adaptive_gamma  [default: 0.0]
   --auto-reduction/--no-auto-reduction  Index WITH auto_reduction=on  [default: False]
+  --index-build-reloption TEXT    CREATE INDEX WITH reloption as name=value; repeatable
+  --index-build-include TEXT      CREATE INDEX INCLUDE column; repeatable  [default: id]
+  --session-guc TEXT              Search-session GUC as name=value; repeatable
+  --setup-sql TEXT                SQL run once after the index exists; repeatable
+  --index-reset-reloption TEXT    Post-build reloption; name=value sets and a bare name resets
+  --autotune-param TEXT           NOVA autotune argument as name=SQL-expression; repeatable
+  --autotune-timeout INTEGER      Seconds to wait for NOVA autotune  [default: 43200]
 ```
 
 ### Run PolarDB from command line
