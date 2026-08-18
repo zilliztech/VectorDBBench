@@ -6,6 +6,7 @@ from ..backend.clients.chroma.cli import Chroma
 from ..backend.clients.clickhouse.cli import Clickhouse
 from ..backend.clients.cockroachdb.cli import CockroachDB as CockroachDBCli
 from ..backend.clients.doris.cli import Doris
+from ..backend.clients.duckdb.cli import DuckDB
 from ..backend.clients.elastic_cloud.cli import (
     ElasticCloudHNSW,
     ElasticCloudHNSWBBQ,
@@ -84,6 +85,7 @@ cli.add_command(LanceDBAutoIndex)
 cli.add_command(LanceDBIVFPQ)
 cli.add_command(LanceDBIVFHNSWSQ)
 cli.add_command(LanceDBIVFHNSWPQ)
+cli.add_command(DuckDB)
 cli.add_command(HologresHGraph)
 cli.add_command(QdrantCloud)
 cli.add_command(QdrantLocal)

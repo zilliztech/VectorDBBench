@@ -49,6 +49,7 @@ class DB(Enum):
     Clickhouse = "Clickhouse"
     Vespa = "Vespa"
     LanceDB = "LanceDB"
+    DuckDB = "DuckDB"
     OceanBase = "OceanBase"
     S3Vectors = "S3Vectors"
     Hologres = "Alibaba Cloud Hologres"
@@ -216,6 +217,11 @@ class DB(Enum):
             from .lancedb.lancedb import LanceDB
 
             return LanceDB
+
+        if self == DB.DuckDB:
+            from .duckdb.duckdb import DuckDB
+
+            return DuckDB
 
         if self == DB.S3Vectors:
             from .s3_vectors.s3_vectors import S3Vectors
@@ -435,6 +441,11 @@ class DB(Enum):
 
             return LanceDBConfig
 
+        if self == DB.DuckDB:
+            from .duckdb.config import DuckDBConfig
+
+            return DuckDBConfig
+
         if self == DB.S3Vectors:
             from .s3_vectors.config import S3VectorsConfig
 
@@ -636,6 +647,11 @@ class DB(Enum):
             from .lancedb.config import _lancedb_case_config
 
             return _lancedb_case_config.get(index_type)
+
+        if self == DB.DuckDB:
+            from .duckdb.config import DuckDBIndexConfig
+
+            return DuckDBIndexConfig
 
         if self == DB.S3Vectors:
             from .s3_vectors.config import S3VectorsIndexConfig
