@@ -1,0 +1,99 @@
+{
+  "run_id": "12997717849449e68c26c274c77a1d1a",
+  "task_label": "2026071213",
+  "results": [
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 46.0489,
+        "optimize_duration": 593.6236,
+        "load_duration": 639.6725,
+        "qps": 203.6497,
+        "serial_latency_p99": 0.0062,
+        "serial_latency_p95": 0.0058,
+        "recall": 0.9374,
+        "ndcg": 0.9511,
+        "conc_num_list": [
+          1
+        ],
+        "conc_qps_list": [
+          203.6497
+        ],
+        "conc_latency_p99_list": [
+          0.006120336796157062
+        ],
+        "conc_latency_p95_list": [
+          0.005847845610696822
+        ],
+        "conc_latency_avg_list": [
+          0.00490593512023579
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 1000000,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "num_per_batch": 100,
+          "load_concurrency": 0
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "HyperspaceDB",
+        "db_config": {
+          "db_label": "",
+          "version": "",
+          "note": "",
+          "host": "localhost:50051",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "index": "HNSW",
+          "metric_type": "COSINE",
+          "m": 16,
+          "ef_construction": 256,
+          "ef_search": 100
+        },
+        "case_config": {
+          "case_id": 5,
+          "custom_case": null,
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600,
+            "serial_cooldown": 0.0
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    }
+  ],
+  "file_fmt": "result_{}_{}_{}.json",
+  "timestamp": 1783807200.0
+}

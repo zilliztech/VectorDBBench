@@ -14,6 +14,7 @@ from ..backend.clients.elastic_cloud.cli import (
 )
 from ..backend.clients.endee.cli import Endee
 from ..backend.clients.hologres.cli import HologresHGraph
+from ..backend.clients.hyperspacedb.cli import HyperspaceDB
 from ..backend.clients.lancedb.cli import (
     LanceDB,
     LanceDBAutoIndex,
@@ -57,6 +58,7 @@ from .batch_cli import BatchCli
 from .cli import cli
 
 cli.add_command(AdbpgNova)
+cli.add_command(HyperspaceDB)
 cli.add_command(PgVectorHNSW)
 cli.add_command(PgVectoRSHNSW)
 cli.add_command(PgVectoRSIVFFlat)

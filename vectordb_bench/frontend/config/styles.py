@@ -40,6 +40,7 @@ HEADER_ICON = "https://assets.zilliz.com/VDB_Bench_text_icon_6c5f52a458.png"
 # Elasticsearch icon: https://assets.zilliz.com/elasticsearch_beffeadc29.png
 # Chroma icon: https://assets.zilliz.com/chroma_ceb3f06ed7.png
 DB_TO_ICON = {
+    DB.HyperspaceDB: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iYmxhY2siIC8+CiAgPHRleHQgeD0iNTAiIHk9IjcwIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjYwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjMDBmZmZmIiBmb250LXdlaWdodD0iYm9sZCI+W0hdPC90ZXh0Pgo8L3N2Zz4K",
     DB.Milvus: "https://assets.zilliz.com/milvus_c30b0d1994.png",
     DB.ZillizCloud: "https://assets.zilliz.com/zilliz_5f4cc9b050.png",
     DB.ElasticCloud: "https://assets.zilliz.com/Elatic_Cloud_dad8d6a3a3.png",
