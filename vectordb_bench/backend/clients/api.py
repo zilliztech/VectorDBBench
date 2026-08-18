@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
+from copy import deepcopy
 from enum import StrEnum
 from typing import ClassVar
 
@@ -198,6 +199,17 @@ class VectorDB(ABC):
 
         (All search tests in a case use consistent filtering conditions.)"""
         return
+
+    def copy_for_thread(self) -> "VectorDB":
+        """Return a per-thread copy of this client for non-thread-safe backends.
+
+        Runners call this (instead of branching on db.name) when thread_safe is
+        False, then init() the copy inside the worker so each thread owns its own
+        connection. Defaults to a deep copy; clients whose live connection can't be
+        deep-copied (e.g. an open DB-API socket) override this to shallow-copy and
+        drop their connection handles so init() re-establishes them per thread.
+        """
+        return deepcopy(self)
 
     @abstractmethod
     def __init__(

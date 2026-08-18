@@ -1,6 +1,7 @@
 import logging
 import os
 from contextlib import contextmanager
+from copy import deepcopy
 from typing import Any
 
 import pandas as pd
@@ -112,6 +113,14 @@ class Doris(VectorDB):
             except Exception:
                 # Table might not exist yet; leave it to ready_to_load
                 self.table = None
+
+    def copy_for_thread(self) -> "VectorDB":
+        # DorisVectorClient isn't thread-safe; hand each worker its own copy and force
+        # a fresh client/table so init() rebuilds them instead of sharing the parent's.
+        db_copy = deepcopy(self)
+        db_copy.client = None
+        db_copy.table = None
+        return db_copy
 
     @contextmanager
     def init(self):
