@@ -116,7 +116,6 @@ class Milvus(VectorDB):
                     DataType.VARCHAR,
                     max_length=65535,
                     enable_analyzer=True,
-                    enable_match=True,
                     analyzer_params=analyzer_params,
                 )
                 schema.add_field(self._sparse_field, DataType.SPARSE_FLOAT_VECTOR)

@@ -13,7 +13,7 @@ from pydantic import SecretStr
 from vectordb_bench.backend.cases import CaseType
 from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.clients.api import IndexType
-from vectordb_bench.backend.clients.milvus.config import MilvusConfig
+from vectordb_bench.backend.clients.milvus.config import MilvusConfig, MilvusFtsConfig
 from vectordb_bench.backend.clients.milvus.milvus import MILVUS_FORCE_MERGE_TARGET_SIZE_MB, Milvus
 from vectordb_bench.backend.payload import PayloadProfile
 from vectordb_bench.interface import BenchMarkRunner
@@ -602,3 +602,19 @@ def test_milvus_fts_filter_index_is_conditional(monkeypatch: pytest.MonkeyPatch)
         db._build_index_params()
         fields = {call.kwargs["field_name"] for call in params.add_index.call_args_list}
         assert fields == expected_fields
+
+
+def test_milvus_fts_schema_enables_analyzer_without_text_match(monkeypatch: pytest.MonkeyPatch) -> None:
+    client = MagicMock()
+    client.has_collection.return_value = False
+    schema = MagicMock()
+    client_type = MagicMock(return_value=client)
+    client_type.create_schema.return_value = schema
+    client_type.prepare_index_params.return_value = MagicMock()
+    monkeypatch.setattr("vectordb_bench.backend.clients.milvus.milvus.MilvusClient", client_type)
+
+    Milvus(dim=0, db_config={}, db_case_config=MilvusFtsConfig(), collection_name="test_collection")
+
+    text_field = next(call for call in schema.add_field.call_args_list if call.args[0] == "text")
+    assert text_field.kwargs["enable_analyzer"] is True
+    assert "enable_match" not in text_field.kwargs
