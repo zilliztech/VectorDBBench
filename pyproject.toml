@@ -60,7 +60,7 @@ elastic         = [ "elasticsearch" ]
 # For elastic and aliyun_elasticsearch
 
 pgvector        = [ "psycopg", "psycopg-binary", "pgvector" ]
-# for pgvector, pgvectorscale, pgdiskann, and, alloydb
+# for pgvector, pgvectorscale, pgdiskann, alloydb, and lakebase_vector
 
 pgvecto_rs      = [ "pgvecto_rs[psycopg3]>=0.2.2" ]
 redis           = [ "redis" ]

@@ -46,6 +46,7 @@ class IndexType(StrEnum):
     GPU_IVF_PQ = "GPU_IVF_PQ"
     GPU_CAGRA = "GPU_CAGRA"
     SCANN = "scann"
+    LAKEBASE_ANN = "lakebase_ann"
     VCHORDRQ = "vchordrq"
     VCHORDG = "vchordg"
     SCANN_MILVUS = "SCANN_MILVUS"
