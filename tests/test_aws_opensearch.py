@@ -1,6 +1,7 @@
 from types import SimpleNamespace
 
 import pytest
+from opensearchpy import ConnectionTimeout, TransportError
 
 from vectordb_bench import config
 from vectordb_bench.backend.clients.aws_opensearch.aws_opensearch import (
@@ -128,19 +129,88 @@ def test_serverless_insert_fails_after_partial_failure_exhausts_attempts(
     db.vector_col_name = "embedding"
     db.with_scalar_labels = False
 
-    with pytest.raises(OpenSearchBulkInsertError) as exc_info:
-        db._insert_with_single_client(
-            embeddings=[[0.1], [0.2]],
-            metadata=[1, 2],
-        )
+    inserted, error = db._insert_with_single_client(
+        embeddings=[[0.1], [0.2]],
+        metadata=[1, 2],
+    )
 
-    assert exc_info.value.non_retryable is True
-    assert "left 1 documents uninserted after 30 attempts; successful=1" in str(exc_info.value)
+    assert inserted == 1
+    assert isinstance(error, OpenSearchBulkInsertError)
+    assert error.non_retryable is True
+    assert "left 1 documents uninserted after 30 attempts; successful=1" in str(error)
     assert len(bulk_requests) == BULK_MAX_ATTEMPTS
     assert [len(request) // 2 for request in bulk_requests] == [2] + [1] * (BULK_MAX_ATTEMPTS - 1)
     assert retry_delays == [2, 4, 8, 16, 32] + [60] * 24
     assert sum(retry_delays) == 1502
     assert any("left 1 documents uninserted after 30 attempts; successful=1" in message for message in errors)
+
+
+def test_serverless_insert_retries_request_level_429(monkeypatch: pytest.MonkeyPatch) -> None:
+    bulk_requests: list[list[dict[str, object]]] = []
+    retry_delays: list[int] = []
+
+    def bulk(*, body: list[dict[str, object]]) -> dict[str, object]:
+        bulk_requests.append(body)
+        if len(bulk_requests) <= 2:
+            raise TransportError(429, "too many requests")
+        return _bulk_response(201)
+
+    monkeypatch.setattr(config, "NUM_PER_BATCH", 1)
+    monkeypatch.setattr(
+        "vectordb_bench.backend.clients.aws_opensearch.aws_opensearch.time.sleep",
+        retry_delays.append,
+    )
+
+    db = object.__new__(AWSOpenSearch)
+    db.client = SimpleNamespace(bulk=bulk)
+    db._is_serverless = True
+    db.index_name = "test-index"
+    db.vector_col_name = "embedding"
+    db.with_scalar_labels = False
+
+    inserted, error = db._insert_with_single_client(
+        embeddings=[[0.1]],
+        metadata=[1],
+    )
+
+    assert inserted == 1
+    assert error is None
+    assert len(bulk_requests) == 3
+    assert retry_delays == [2, 4]
+
+
+def test_serverless_insert_does_not_retry_ambiguous_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
+    bulk_requests: list[list[dict[str, object]]] = []
+    retry_delays: list[int] = []
+
+    def bulk(*, body: list[dict[str, object]]) -> dict[str, object]:
+        bulk_requests.append(body)
+        raise ConnectionTimeout(None, "timed out", None)
+
+    monkeypatch.setattr(config, "NUM_PER_BATCH", 1)
+    monkeypatch.setattr(
+        "vectordb_bench.backend.clients.aws_opensearch.aws_opensearch.time.sleep",
+        retry_delays.append,
+    )
+
+    db = object.__new__(AWSOpenSearch)
+    db.client = SimpleNamespace(bulk=bulk)
+    db._is_serverless = True
+    db.index_name = "test-index"
+    db.vector_col_name = "embedding"
+    db.with_scalar_labels = False
+
+    inserted, error = db._insert_with_single_client(
+        embeddings=[[0.1]],
+        metadata=[1],
+    )
+
+    assert inserted == 0
+    assert isinstance(error, OpenSearchBulkInsertError)
+    assert error.non_retryable is True
+    assert "ambiguous outcome" in str(error)
+    assert len(bulk_requests) == 1
+    assert retry_delays == []
 
 
 def test_multiple_clients_fallback_preserves_labels(monkeypatch: pytest.MonkeyPatch) -> None:

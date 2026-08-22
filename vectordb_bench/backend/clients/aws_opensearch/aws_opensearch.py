@@ -297,10 +297,11 @@ class AWSOpenSearch(VectorDB):
                 self.client,
                 insert_data,
                 f"index {self.index_name}",
+                retry_ambiguous_request_errors=not self._is_serverless,
             )
             total_inserted += inserted
             if error is not None:
-                raise error
+                return total_inserted, error
 
         return total_inserted, None
 
@@ -347,9 +348,11 @@ class AWSOpenSearch(VectorDB):
         client: OpenSearch,
         insert_data: list[dict[str, Any]],
         context: str,
+        retry_ambiguous_request_errors: bool = True,
     ) -> tuple[int, Exception | None]:
         pending_data = insert_data
         total_inserted = 0
+        final_error = None
 
         for attempt in range(1, BULK_MAX_ATTEMPTS + 1):
             response: Any = None
@@ -363,7 +366,9 @@ class AWSOpenSearch(VectorDB):
                 request_error = TypeError("OpenSearch bulk response was not an object")
 
             if request_error is not None:
-                if attempt < BULK_MAX_ATTEMPTS:
+                status_code = getattr(request_error, "status_code", None)
+                request_is_retryable = status_code == 429 or retry_ambiguous_request_errors
+                if request_is_retryable and attempt < BULK_MAX_ATTEMPTS:
                     retry_delay = min(
                         BULK_INITIAL_RETRY_DELAY_SEC * (2 ** (attempt - 1)),
                         BULK_MAX_RETRY_DELAY_SEC,
@@ -374,12 +379,15 @@ class AWSOpenSearch(VectorDB):
                     )
                     time.sleep(retry_delay)
                     continue
-                error = OpenSearchBulkInsertError(
-                    f"Bulk request failed for {context} after {BULK_MAX_ATTEMPTS} attempts; "
-                    f"successful={total_inserted}: {request_error!s}"
-                )
-                log.error(str(error))
-                return total_inserted, error
+                if request_is_retryable:
+                    message = f"Bulk request failed for {context} after {BULK_MAX_ATTEMPTS} attempts"
+                else:
+                    message = (
+                        f"Bulk request failed for {context} with an ambiguous outcome; "
+                        "not retrying an auto-ID request"
+                    )
+                final_error = OpenSearchBulkInsertError(f"{message}; successful={total_inserted}: {request_error!s}")
+                break
 
             inserted, failed_data, failure_samples = self._parse_bulk_response(response, pending_data)
             total_inserted += inserted
@@ -402,15 +410,15 @@ class AWSOpenSearch(VectorDB):
                 time.sleep(retry_delay)
                 continue
 
-            error = OpenSearchBulkInsertError(
+            final_error = OpenSearchBulkInsertError(
                 f"Bulk insert for {context} left {failed_count} documents uninserted after "
                 f"{BULK_MAX_ATTEMPTS} attempts; successful={total_inserted}; {sample_summary}"
             )
-            log.error(str(error))
-            return total_inserted, error
+            break
 
-        error = OpenSearchBulkInsertError(f"Bulk insert for {context} exhausted its retry loop")
-        return total_inserted, error
+        assert final_error is not None
+        log.error(str(final_error))
+        return total_inserted, final_error
 
     def _insert_with_multiple_clients(
         self,
