@@ -43,6 +43,7 @@ dependencies = [
     "hdrhistogram>=0.10.1",
     "ujson",
     "ir_datasets",
+    "matplotlib<=3.7.5",
 ]
 dynamic = ["version"]
 
@@ -87,6 +88,7 @@ seekdb          = [ "mysql-connector-python" ]
 volc_mysql      = [ "mysql-connector-python" ]
 pinot           = [ "requests" ]
 adbpg           = [ "psycopg", "psycopg-binary", "pgvector" ]
+vexdb           = [ "psycopg", "psycopg-binary", "pgvector<0.5" ]
 
 [project.urls]
 Repository  = "https://github.com/zilliztech/VectorDBBench"
