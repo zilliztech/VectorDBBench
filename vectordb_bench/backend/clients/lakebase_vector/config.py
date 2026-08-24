@@ -58,14 +58,16 @@ class LakebaseANNConfig(BaseModel, DBCaseConfig):
             return "vector_ip_ops"
         if self.metric_type == MetricType.COSINE:
             return "vector_cosine_ops"
-        return None
+        raise NotImplementedError
 
     def parse_metric_fun_op(self) -> LiteralString:
         if self.metric_type == MetricType.L2:
             return "<->"
         if self.metric_type == MetricType.IP:
             return "<#>"
-        return "<=>"
+        if self.metric_type == MetricType.COSINE:
+            return "<=>"
+        raise NotImplementedError
 
     def index_param(self) -> dict[str, Any]:
         return {

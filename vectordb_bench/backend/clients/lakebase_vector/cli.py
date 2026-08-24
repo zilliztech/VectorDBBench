@@ -22,7 +22,7 @@ class LakebaseVectorTypedDict(CommonTypedDict):
     ]
     host: Annotated[str, click.option("--host", type=str, required=True)]
     port: Annotated[int, click.option("--port", type=int, default=5432, show_default=True)]
-    db_name: Annotated[str, click.option("--db-name", type=str, default="databricks_postgres", show_default=True)]
+    db_name: Annotated[str, click.option("--db-name", type=str, help="Db name", required=True)]
     table_name: Annotated[
         str,
         click.option("--table-name", type=str, default="vdbbench_table_test", show_default=True),

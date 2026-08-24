@@ -60,7 +60,7 @@ class LakebaseVector(VectorDB):
         self.cursor.execute("CREATE EXTENSION IF NOT EXISTS lakebase_vector CASCADE")
         self.conn.commit()
 
-        log.info(f"{self.name} config values: {self.connect_config}\n{self.case_config}")
+        log.info(f"{self.name} case config: {self.case_config}")
         if db_case_config.create_index_before_load or not db_case_config.create_index_after_load:
             msg = "LakebaseVector supports only create_index_after_load"
             log.error(msg)
