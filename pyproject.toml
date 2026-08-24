@@ -64,6 +64,7 @@ pgvector        = [ "psycopg", "psycopg-binary", "pgvector" ]
 
 pgvecto_rs      = [ "pgvecto_rs[psycopg3]>=0.2.2" ]
 redis           = [ "redis" ]
+valkey          = [ "valkey-glide-sync>=2.5.1" ]
 memorydb        = [ "memorydb" ]
 chromadb        = [ "chromadb" ]
 opensearch      = [ "opensearch-py", "boto3", "requests-aws4auth" ]
