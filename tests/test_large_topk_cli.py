@@ -5,6 +5,7 @@ from pytest import MonkeyPatch
 
 from vectordb_bench.backend.cases import CaseType
 from vectordb_bench.backend.clients.test import cli as test_cli
+from vectordb_bench.backend.dataset import DatasetWithSizeType
 from vectordb_bench.backend.payload import PayloadProfile
 from vectordb_bench.cli import cli as common_cli
 from vectordb_bench.models import CaseConfig
@@ -41,6 +42,28 @@ def test_cli_help_describes_laion_large_topk_limit():
     assert result.exit_code == 0, result.output
     assert "LAION" in result.output
     assert "1,000,000" in result.output
+
+
+def test_cli_builds_laion_large_topk_integer_filter_case(monkeypatch: MonkeyPatch):
+    result, captured = invoke_test_command(
+        monkeypatch,
+        [
+            "--case-type",
+            "NewIntFilterPerformanceCase",
+            "--dataset-with-size-type",
+            DatasetWithSizeType.LAIONLarge.value,
+            "--filter-rate",
+            "0.99",
+            "--k",
+            "1000000",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    case_config = captured["task"].case_config
+    assert case_config.k == 1_000_000
+    assert case_config.case.dataset.data.name == "LAION"
+    assert case_config.case.filters.filter_rate == 0.99
 
 
 def test_cli_applies_vector_payload_to_standard_performance_case(monkeypatch: MonkeyPatch):

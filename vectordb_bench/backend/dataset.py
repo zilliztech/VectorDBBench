@@ -30,7 +30,7 @@ from vectordb_bench.base import BaseModel
 from . import utils
 from .clients import MetricType
 from .data_source import DatasetReader, DatasetSource
-from .filter import Filter, FilterOp, non_filter
+from .filter import Filter, FilterOp, NewIntFilter, non_filter
 
 log = logging.getLogger(__name__)
 DEFAULT_INSERT_BATCH_SIZE = config.DEFAULT_INSERT_BATCH_SIZE
@@ -187,6 +187,21 @@ LAION_SEARCH_DATASET_FILES = (
         ),
     ),
 )
+
+# Published widths are capped by the population left after applying each ID threshold.
+LAION_INT_FILTER_SEARCH_WIDTHS: dict[float, tuple[int, ...]] = {
+    0.5: (100_000, 1_000_000),
+    0.6: (100_000, 1_000_000),
+    0.7: (100_000, 1_000_000),
+    0.8: (100_000, 1_000_000),
+    0.9: (100_000, 1_000_000),
+    0.95: (100_000, 1_000_000),
+    0.98: (100_000, 1_000_000),
+    0.99: (100_000, 1_000_000),
+    0.995: (100_000, 500_000),
+    0.998: (100_000, 200_000),
+    0.999: (100_000,),
+}
 
 
 @dataclass(frozen=True)
@@ -541,9 +556,33 @@ class DatasetManager(BaseModel):
             if k > max_k:
                 msg = f"LAION supports K up to {max_k:,}, got {k:,}"
                 raise ValueError(msg)
+
+            if isinstance(filters, NewIntFilter):
+                widths = LAION_INT_FILTER_SEARCH_WIDTHS.get(filters.filter_rate)
+                if widths is None:
+                    supported_rates = ", ".join(f"{rate * 100:g}%" for rate in LAION_INT_FILTER_SEARCH_WIDTHS)
+                    msg = f"LAION supported filter rates are: {supported_rates}; got {filters.filter_rate * 100:g}%"
+                    raise ValueError(msg)
+                if k <= LAION_SEARCH_DATASET_FILES[0][0]:
+                    return SearchDatasetFiles(self.data.test_file, filters.groundtruth_file)
+                for width in widths:
+                    if k <= width:
+                        width_suffix = f"{width // 1_000_000}m" if width >= 1_000_000 else f"{width // 1_000}k"
+                        return SearchDatasetFiles(
+                            "test_nq200.parquet",
+                            f"neighbors_{filters.int_rate}_top{width_suffix}_nq200.parquet",
+                            width=width,
+                            query_count=200,
+                        )
+                msg = (
+                    f"LAION integer filter {filters.filter_rate * 100:g}% supports K up to "
+                    f"{widths[-1]:,}, got {k:,}"
+                )
+                raise ValueError(msg)
+
             if filters.type != FilterOp.NonFilter:
                 if k > LAION_SEARCH_DATASET_FILES[0][0]:
-                    msg = "LAION large-TopK does not support filtered ground truth"
+                    msg = "LAION large-TopK ground truth is published only for integer filters"
                     raise ValueError(msg)
                 return SearchDatasetFiles(self.data.test_file, filters.groundtruth_file)
             for upper_bound, files in LAION_SEARCH_DATASET_FILES:

@@ -954,7 +954,20 @@ We've developed lots of comprehensive benchmark cases to test vector databases' 
 | `1,001..100,000` | `test_nq200.parquet` | `neighbors_top100k_nq200.parquet` | 200 | 100,000 |
 | `100,001..1,000,000` | `test_nq200.parquet` | `neighbors_top1m_nq200.parquet` | 200 | 1,000,000 |
 
-K must be positive, and LAION-100M rejects values above 1,000,000. Filtered LAION runs above K=1,000 are also rejected because no matching wide filtered GT is available. VDBBench validates query IDs, row counts, and GT width before issuing a search.
+K must be positive, and LAION-100M rejects values above 1,000,000. Integer-filter runs use the smallest published GT width that covers K:
+
+| Integer filter rate | Published GT widths | Maximum K |
+|---:|---:|---:|
+| 50%, 60%, 70%, 80%, 90%, 95%, 98%, 99% | 100K, 1M | 1M |
+| 99.5% | 100K, 500K | 500K |
+| 99.8% | 100K, 200K | 200K |
+| 99.9% | 100K | 100K |
+
+K up to 1,000 keeps the original 1,000-query filtered artifacts; larger K uses `test_nq200.parquet`. Other integer filter rates and label-filter runs above K=1,000 are rejected before database initialization. VDBBench validates query IDs, row counts, and GT width before issuing a search.
+
+```bash
+vectordbbench milvusautoindex --uri http://localhost:19530 --case-type NewIntFilterPerformanceCase --dataset-with-size-type "Large LAION (768dim, 100M)" --filter-rate 0.99 --k 1000000
+```
 
 Wide GT remains in Parquet/Arrow form and is opened inside the serial-search subprocess one query row at a time. Results include primary `recall@K`, `recall_at` for the available cutoffs among 100, 1K, 10K, 100K, and 1M, plus serial and concurrent p50/p95/p99 latency. Concurrent throughput continues to use the configured fixed-duration phase.
 

@@ -10,7 +10,16 @@ The case selects hosted LAION artifacts from K:
 - K from 1,001 through 100,000 uses the 200-query `test_nq200.parquet` and `neighbors_top100k_nq200.parquet` files.
 - K from 100,001 through 1,000,000 uses `test_nq200.parquet` and `neighbors_top1m_nq200.parquet`.
 
-The loader verifies query ID alignment, row count, and ground-truth width. Filtered LAION performance runs above K=1,000 and LAION performance K values above 1,000,000 fail before database initialization. LAION-backed workloads that do not measure recall, such as cold latency, keep the standard 1,000-query artifacts while forwarding their configured K to the backend.
+Integer-filter runs use their original 1,000-query artifacts through K=1,000. Above that, VDBBench uses the smallest published 200-query GT tier that covers K:
+
+| Integer filter rate | Published GT widths | Maximum K |
+|---:|---:|---:|
+| 50%, 60%, 70%, 80%, 90%, 95%, 98%, 99% | 100K, 1M | 1M |
+| 99.5% | 100K, 500K | 500K |
+| 99.8% | 100K, 200K | 200K |
+| 99.9% | 100K | 100K |
+
+The loader verifies query ID alignment, row count, and ground-truth width. Unsupported integer rates, requests above the selected filter's maximum K, label-filter runs above K=1,000, and unfiltered LAION K above 1,000,000 fail before database initialization. LAION-backed workloads that do not measure recall, such as cold latency, keep the standard 1,000-query artifacts while forwarding their configured K to the backend.
 
 ## Memory And Metrics
 

@@ -8,7 +8,7 @@ from vectordb_bench.backend.cases import CaseLabel, CaseType
 from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.clients.api import EmptyDBCaseConfig
 from vectordb_bench.backend.data_source import DatasetSource
-from vectordb_bench.backend.dataset import DatasetManager
+from vectordb_bench.backend.dataset import DatasetManager, DatasetWithSizeType
 from vectordb_bench.backend.runner.mp_runner import MultiProcessingSearchRunner
 from vectordb_bench.backend.runner.serial_runner import SerialSearchRunner
 from vectordb_bench.backend.task_runner import CaseRunner, RunningStatus
@@ -152,8 +152,18 @@ def test_concurrent_latency_aggregation_handles_empty_success_window():
     assert runner._latency_summary([]) == (0, 0, 0, 0)
 
 
-def test_case_runner_rejects_unsupported_laion_k_before_db_init(monkeypatch):
-    case_config = CaseConfig(case_id=CaseType.Performance768D100M, k=1_000_001)
+@pytest.mark.parametrize(
+    "case_config",
+    [
+        CaseConfig(case_id=CaseType.Performance768D100M, k=1_000_001),
+        CaseConfig(
+            case_id=CaseType.NewIntFilterPerformanceCase,
+            custom_case={"dataset_with_size_type": DatasetWithSizeType.LAIONLarge, "filter_rate": 0.999},
+            k=100_001,
+        ),
+    ],
+)
+def test_case_runner_rejects_unsupported_laion_k_before_db_init(monkeypatch, case_config):
     runner = CaseRunner(
         run_id="large-topk",
         config=TaskConfig(

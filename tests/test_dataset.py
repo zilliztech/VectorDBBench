@@ -10,7 +10,7 @@ from vectordb_bench.backend import dataset as dataset_module
 from vectordb_bench.backend.clients import MetricType
 from vectordb_bench.backend.data_source import DatasetSource
 from vectordb_bench.backend.dataset import CustomDataset, Dataset, DatasetManager
-from vectordb_bench.backend.filter import IntFilter, non_filter
+from vectordb_bench.backend.filter import LabelFilter, NewIntFilter, non_filter
 
 log = logging.getLogger("vectordb_bench")
 
@@ -46,13 +46,67 @@ def test_laion_artifact_selection_rejects_unsupported_k(k):
         dataset.resolve_search_files(k=k, filters=non_filter)
 
 
-def test_laion_large_topk_rejects_filtered_ground_truth():
-    dataset = Dataset.LAION.manager(100_000_000)
-    filters = IntFilter(filter_rate=0.01, int_field="id", int_value=99_000_000)
-    assert hasattr(dataset, "resolve_search_files")
+def _laion_int_filter(filter_rate: float) -> NewIntFilter:
+    return NewIntFilter(filter_rate=filter_rate, int_field="id", int_value=int(100_000_000 * filter_rate))
 
-    with pytest.raises(ValueError, match="filtered"):
-        dataset.resolve_search_files(k=1_001, filters=filters)
+
+def test_laion_integer_filter_keeps_standard_artifacts_at_k_1000():
+    dataset = Dataset.LAION.manager(100_000_000)
+    files = dataset.resolve_search_files(k=1_000, filters=_laion_int_filter(0.5))
+
+    assert files.test_file == "test.parquet"
+    assert files.gt_file == "neighbors_int_50p.parquet"
+
+
+@pytest.mark.parametrize(
+    ("filter_rate", "max_k"),
+    [
+        (0.5, 1_000_000),
+        (0.6, 1_000_000),
+        (0.7, 1_000_000),
+        (0.8, 1_000_000),
+        (0.9, 1_000_000),
+        (0.95, 1_000_000),
+        (0.98, 1_000_000),
+        (0.99, 1_000_000),
+        (0.995, 500_000),
+        (0.998, 200_000),
+        (0.999, 100_000),
+    ],
+)
+def test_laion_integer_filter_selects_published_maximum_gt(filter_rate, max_k):
+    dataset = Dataset.LAION.manager(100_000_000)
+    filters = _laion_int_filter(filter_rate)
+    files = dataset.resolve_search_files(k=max_k, filters=filters)
+    width_suffix = f"{max_k // 1_000_000}m" if max_k >= 1_000_000 else f"{max_k // 1_000}k"
+
+    assert files.test_file == "test_nq200.parquet"
+    assert files.gt_file == f"neighbors_{filters.int_rate}_top{width_suffix}_nq200.parquet"
+    assert files.width == max_k
+    assert files.query_count == 200
+
+
+def test_laion_integer_filter_selects_top100k_for_smaller_large_topk():
+    dataset = Dataset.LAION.manager(100_000_000)
+    files = dataset.resolve_search_files(k=1_001, filters=_laion_int_filter(0.995))
+
+    assert files.gt_file == "neighbors_int_99.5p_top100k_nq200.parquet"
+    assert files.width == 100_000
+
+
+@pytest.mark.parametrize(
+    ("filters", "k", "error"),
+    [
+        (_laion_int_filter(0.75), 1_000, "supported filter rates"),
+        (_laion_int_filter(0.999), 100_001, "supports K up to 100,000"),
+        (LabelFilter(label_percentage=0.5), 1_001, "integer filters"),
+    ],
+)
+def test_laion_filtered_artifact_selection_rejects_unpublished_combinations(filters, k, error):
+    dataset = Dataset.LAION.manager(100_000_000)
+
+    with pytest.raises(ValueError, match=error):
+        dataset.resolve_search_files(k=k, filters=filters)
 
 
 def test_dataset_prepare_keeps_ground_truth_path_based(tmp_path, monkeypatch):
