@@ -479,7 +479,7 @@ class TestResult(BaseModel):
         return case_config
 
     @classmethod
-    def read_file(cls, full_path: pathlib.Path, trans_unit: bool = False) -> Self:
+    def read_file(cls, full_path: pathlib.Path, trans_unit: bool = False) -> Self:  # noqa: PLR0912
         if not full_path.exists():
             msg = f"No such file: {full_path}"
             raise ValueError(msg)
