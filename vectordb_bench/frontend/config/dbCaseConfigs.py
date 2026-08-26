@@ -3,10 +3,16 @@ from enum import Enum, IntEnum
 
 from pydantic import BaseModel, Field
 
+from vectordb_bench import config
 from vectordb_bench.backend.cases import CaseLabel, CaseType, PerformanceCase
 from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.clients.api import IndexType, MetricType, SQType
-from vectordb_bench.backend.dataset import DatasetWithSizeType, FtsDatasetWithSizeType
+from vectordb_bench.backend.dataset import (
+    LAION_INT_FILTER_SEARCH_WIDTHS,
+    LAION_SEARCH_DATASET_FILES,
+    DatasetWithSizeType,
+    FtsDatasetWithSizeType,
+)
 from vectordb_bench.backend.payload import PayloadProfile
 from vectordb_bench.frontend.components.custom.getCustomConfig import get_custom_configs
 from vectordb_bench.models import CaseConfig, CaseConfigParamType
@@ -109,12 +115,14 @@ class UICaseItem(BaseModel):
     def get_cases(self) -> list[CaseConfig]:
         cases = self.cases
         if self.extra_custom_case_config_inputs:
+            custom_config = dict(self.tmp_custom_config)
+            selected_k = custom_config.pop(CaseConfigParamType.k.value, None)
             cases = [
                 CaseConfig(
                     case_id=case.case_id,
-                    k=case.k,
+                    k=selected_k if selected_k is not None else case.k,
                     concurrency_search_config=case.concurrency_search_config,
-                    custom_case={**(case.custom_case or {}), **self.tmp_custom_config},
+                    custom_case={**(case.custom_case or {}), **custom_config},
                 )
                 for case in cases
             ]
@@ -309,8 +317,12 @@ def generate_label_filter_cases(dataset_with_size_type: DatasetWithSizeType) -> 
     ]
 
 
-def generate_int_filter_cases(dataset_with_size_type: DatasetWithSizeType) -> list[CaseConfig]:
-    filter_rates = dataset_with_size_type.get_manager().data.scalar_int_rates
+def generate_int_filter_cases(
+    dataset_with_size_type: DatasetWithSizeType,
+    filter_rates: typing.Iterable[float] | None = None,
+) -> list[CaseConfig]:
+    if filter_rates is None:
+        filter_rates = dataset_with_size_type.get_manager().data.scalar_int_rates
     return [
         CaseConfig(
             case_id=CaseType.NewIntFilterPerformanceCase,
@@ -320,11 +332,39 @@ def generate_int_filter_cases(dataset_with_size_type: DatasetWithSizeType) -> li
     ]
 
 
+def _top_k_input(max_k: int) -> ConfigInput:
+    return ConfigInput(
+        label=CaseConfigParamType.k,
+        displayLabel="Top K",
+        inputType=InputType.Number,
+        inputConfig=dict(step=1, min=1, max=max_k, value=config.K_DEFAULT),
+    )
+
+
+def generate_laion_large_topk_filter_items() -> list[UICaseItem]:
+    rates_by_max_k: dict[int, list[float]] = {}
+    for filter_rate, widths in LAION_INT_FILTER_SEARCH_WIDTHS.items():
+        rates_by_max_k.setdefault(widths[-1], []).append(filter_rate)
+
+    return [
+        UICaseItem(
+            label=f"Large LAION Int-Filter - K up to {max_k:,}",
+            description="Filter rates: " + ", ".join(f"{rate * 100:g}%" for rate in filter_rates),
+            cases=generate_int_filter_cases(DatasetWithSizeType.LAIONLarge, filter_rates),
+            extra_custom_case_config_inputs=[_top_k_input(max_k)],
+        )
+        for max_k, filter_rates in rates_by_max_k.items()
+    ]
+
+
 UI_CASE_CLUSTERS: list[UICaseItemCluster] = [
     UICaseItemCluster(
         label="Search Performance Test",
         uiCaseItems=[
-            UICaseItem(cases=generate_normal_cases(CaseType.Performance768D100M)),
+            UICaseItem(
+                cases=generate_normal_cases(CaseType.Performance768D100M),
+                extra_custom_case_config_inputs=[_top_k_input(LAION_SEARCH_DATASET_FILES[-1][0])],
+            ),
             UICaseItem(cases=generate_normal_cases(CaseType.Performance768D10M)),
             UICaseItem(cases=generate_normal_cases(CaseType.Performance768D1M)),
             UICaseItem(isLine=True),
@@ -352,7 +392,8 @@ UI_CASE_CLUSTERS: list[UICaseItemCluster] = [
     ),
     UICaseItemCluster(
         label="New-Int-Filter Search Performance Test",
-        uiCaseItems=[
+        uiCaseItems=generate_laion_large_topk_filter_items()
+        + [
             UICaseItem(
                 label=f"Int-Filter Search Performance Test - {dataset_with_size_type.value}",
                 description=(
