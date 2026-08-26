@@ -25,7 +25,7 @@ The loader verifies query ID alignment, row count, and ground-truth width. Unsup
 
 Ground truth is represented by a local Parquet path and compact metadata in the parent process. The serial-search subprocess opens that path and reads one Arrow/NumPy neighbor row at a time, avoiding conversion of the full wide GT into Python integer lists.
 
-Recall and NDCG now use O(K) hash lookups. A large-TopK serial run reports:
+Recall and NDCG now use O(K) hash lookups. Recall counts each matching returned ID at most once, so duplicate IDs do not inflate the score. A large-TopK serial run reports:
 
 - primary recall at the requested K;
 - `recall_at` for each supported cutoff no greater than K;
