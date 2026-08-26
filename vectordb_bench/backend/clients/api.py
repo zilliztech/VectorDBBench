@@ -244,7 +244,8 @@ class VectorDB(ABC):
         """Wheather this database need to normalize dataset to support COSINE"""
         return False
 
-    def supports_payload_profile(self, payload_profile: PayloadProfile) -> bool:
+    @staticmethod
+    def supports_payload_profile(payload_profile: PayloadProfile) -> bool:
         return payload_profile == PayloadProfile.IDS_ONLY
 
     def has_text_field(self) -> bool:

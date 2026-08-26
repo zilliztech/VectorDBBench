@@ -504,7 +504,8 @@ class Milvus(VectorDB):
             msg = f"Not support Filter for Milvus - {filters}"
             raise ValueError(msg)
 
-    def supports_payload_profile(self, payload_profile: PayloadProfile) -> bool:
+    @staticmethod
+    def supports_payload_profile(payload_profile: PayloadProfile) -> bool:
         return payload_profile in {
             PayloadProfile.IDS_ONLY,
             PayloadProfile.VECTOR,

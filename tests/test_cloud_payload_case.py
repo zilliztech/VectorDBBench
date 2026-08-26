@@ -228,7 +228,7 @@ def test_search_runners_fail_fast_for_unsupported_payload_profile():
         )
 
 
-def test_case_runner_rejects_unsupported_payload_before_dataset_prepare(monkeypatch: pytest.MonkeyPatch):
+def test_case_runner_rejects_unsupported_payload_before_db_init(monkeypatch: pytest.MonkeyPatch):
     events = []
     case_config = CaseConfig(
         case_id=CaseType.Performance768D100M,
@@ -268,4 +268,4 @@ def test_case_runner_rejects_unsupported_payload_before_dataset_prepare(monkeypa
     with pytest.raises(NotImplementedError, match="payload_profile=vector"):
         runner._pre_run(drop_old=False)
 
-    assert events == ["resolve", "init_db"]
+    assert events == []
