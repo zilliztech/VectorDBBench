@@ -3,6 +3,7 @@ from datetime import datetime
 import streamlit as st
 
 from vectordb_bench import config
+from vectordb_bench.backend.dataset import DatasetManager
 from vectordb_bench.frontend.config import styles
 from vectordb_bench.interface import benchmark_runner
 from vectordb_bench.models import TaskConfig
@@ -39,6 +40,8 @@ def get_max_search_k(tasks: list[TaskConfig]) -> int | None:
     limits = []
     for task in tasks:
         case = task.case_config.case
+        if not isinstance(case.dataset, DatasetManager):
+            continue
         max_k = case.dataset.max_search_k(case.filters)
         if max_k is not None:
             limits.append(max_k)
@@ -55,7 +58,8 @@ def apply_run_settings(
 ) -> None:
     for task in tasks:
         case = task.case_config.case
-        case.dataset.resolve_search_files(k=k, filters=case.filters)
+        if isinstance(case.dataset, DatasetManager) and case.dataset.data.with_gt:
+            case.dataset.resolve_search_files(k=k, filters=case.filters)
 
     for task in tasks:
         task.case_config.k = k

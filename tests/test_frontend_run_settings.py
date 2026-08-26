@@ -44,6 +44,15 @@ def laion_task(filter_rate: float | None = None) -> TaskConfig:
     )
 
 
+def fts_task() -> TaskConfig:
+    return TaskConfig(
+        db=DB.Test,
+        db_config=DB.Test.config_cls(),
+        db_case_config=EmptyDBCaseConfig(),
+        case_config=CaseConfig(case_id=CaseType.FTSBm25Performance),
+    )
+
+
 class SettingsContainer:
     def __init__(self):
         self.number_inputs = {}
@@ -66,7 +75,7 @@ class SettingsContainer:
 
 
 def test_global_k_control_uses_most_restrictive_selected_case():
-    tasks = [laion_task(), laion_task(0.995), laion_task(0.999)]
+    tasks = [laion_task(), laion_task(0.995), laion_task(0.999), fts_task()]
     container = SettingsContainer()
 
     assert get_max_search_k([laion_task()]) == 1_000_000
@@ -76,6 +85,15 @@ def test_global_k_control_uses_most_restrictive_selected_case():
     advancedSettings(container, tasks)
 
     assert container.number_inputs["k"]["max_value"] == 100_000
+
+
+def test_global_k_control_leaves_fts_uncapped():
+    container = SettingsContainer()
+
+    assert get_max_search_k([fts_task()]) is None
+    advancedSettings(container, [fts_task()])
+
+    assert "max_value" not in container.number_inputs["k"]
 
 
 def test_apply_run_settings_validates_all_cases_before_mutating_tasks():
@@ -94,7 +112,7 @@ def test_apply_run_settings_validates_all_cases_before_mutating_tasks():
 
 
 def test_apply_run_settings_applies_valid_global_settings():
-    tasks = [laion_task(), laion_task(0.999)]
+    tasks = [laion_task(0.999), fts_task()]
 
     apply_run_settings(
         tasks,
