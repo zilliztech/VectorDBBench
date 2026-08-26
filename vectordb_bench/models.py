@@ -47,7 +47,6 @@ class CaseConfigParamType(Enum):
     """
 
     IndexType = "IndexType"
-    k = "k"
     drop_ratio_search = "drop_ratio_search"
     drop_ratio_build = "drop_ratio_build"
     bm25_k1 = "bm25_k1"

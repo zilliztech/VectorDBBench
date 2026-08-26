@@ -17,18 +17,14 @@ from vectordb_bench.frontend.config.dbCaseConfigs import (
     get_payload_profile_options,
 )
 from vectordb_bench.metric import Metric
-from vectordb_bench.models import CaseConfig, CaseConfigParamType, CaseResult, TaskConfig
+from vectordb_bench.models import CaseConfig, CaseResult, TaskConfig
 
 
 def _ui_cluster(label: str):
     return next(cluster for cluster in UI_CASE_CLUSTERS if cluster.label == label)
 
 
-def _top_k_input(item: UICaseItem):
-    return next(config for config in item.extra_custom_case_config_inputs if config.label == CaseConfigParamType.k)
-
-
-def test_unfiltered_laion_ui_propagates_top_k_to_payload_cases():
+def test_unfiltered_laion_ui_uses_global_top_k_setting():
     cluster = _ui_cluster("Search Performance Test")
     item = next(
         item
@@ -36,16 +32,12 @@ def test_unfiltered_laion_ui_propagates_top_k_to_payload_cases():
         if item.cases and item.cases[0].case_id == CaseType.Performance768D100M
     ).model_copy(deep=True)
 
-    top_k_input = _top_k_input(item)
-    assert top_k_input.inputConfig == {"step": 1, "min": 1, "max": 1_000_000, "value": 100}
-
-    item.tmp_custom_config = {"k": 1_000_000}
+    assert item.extra_custom_case_config_inputs == []
     item.payload_profiles = [PayloadProfile.IDS_ONLY, PayloadProfile.VECTOR]
     cases = item.get_cases()
 
-    assert [case.k for case in cases] == [1_000_000, 1_000_000]
+    assert [case.k for case in cases] == [100, 100]
     assert [case.payload_profile for case in cases] == [PayloadProfile.IDS_ONLY, PayloadProfile.VECTOR]
-    assert all("k" not in (case.custom_case or {}) for case in cases)
 
 
 def test_filtered_laion_ui_groups_use_published_top_k_limits():
@@ -56,26 +48,18 @@ def test_filtered_laion_ui_groups_use_published_top_k_limits():
         if item.cases
         and item.cases[0].custom_case.get("dataset_with_size_type") == DatasetWithSizeType.LAIONLarge
     ]
-    expected_rates = {
-        1_000_000: [0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.98, 0.99],
-        500_000: [0.995],
-        200_000: [0.998],
-        100_000: [0.999],
+    expected_groups = {
+        "Large LAION Int-Filter - K up to 1,000,000": [0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.98, 0.99],
+        "Large LAION Int-Filter - K up to 500,000": [0.995],
+        "Large LAION Int-Filter - K up to 200,000": [0.998],
+        "Large LAION Int-Filter - K up to 100,000": [0.999],
     }
 
     assert len(items) == 4
     for item in items:
-        max_k = _top_k_input(item).inputConfig["max"]
         rates = [case.custom_case["filter_rate"] for case in item.cases]
-        assert rates == expected_rates[max_k]
-
-        item.tmp_custom_config = {"k": max_k}
-        for case_config in item.get_cases():
-            case = case_config.case
-            files = case.dataset.resolve_search_files(k=case_config.k, filters=case.filters)
-            assert case_config.k == max_k
-            assert files.width == max_k
-            assert "k" not in case_config.custom_case
+        assert rates == expected_groups[item.label]
+        assert item.extra_custom_case_config_inputs == []
 
 
 def test_performance_ui_case_expands_selected_payload_profiles():

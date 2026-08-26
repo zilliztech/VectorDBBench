@@ -546,6 +546,16 @@ class DatasetManager(BaseModel):
 
         return True
 
+    def max_search_k(self, filters: Filter = non_filter) -> int | None:
+        if not isinstance(self.data, LAION):
+            return None
+        if isinstance(filters, NewIntFilter):
+            widths = LAION_INT_FILTER_SEARCH_WIDTHS.get(filters.filter_rate)
+            return widths[-1] if widths is not None else None
+        if filters.type == FilterOp.NonFilter:
+            return LAION_SEARCH_DATASET_FILES[-1][0]
+        return LAION_SEARCH_DATASET_FILES[0][0]
+
     def resolve_search_files(self, *, k: int, filters: Filter = non_filter) -> SearchDatasetFiles:
         if k <= 0:
             msg = f"{self.data.name} search K must be positive, got {k}"
