@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, SecretStr
+from pydantic import BaseModel, Field, SecretStr, model_validator
 
 from ..api import DBCaseConfig, DBConfig, IndexType, MetricType
 
@@ -8,10 +8,18 @@ class ValkeyConfig(DBConfig):
     host: SecretStr
     port: int = Field(default=6379, ge=1, le=65535)
     ssl: bool = True
+    insecure_tls: bool = False
     cmd: bool = False
     request_timeout_ms: int = Field(default=600_000, gt=0)
     connection_timeout_ms: int = Field(default=10_000, gt=0)
     collection_name: str = Field(default="vdbbench_valkey", pattern=r"^[A-Za-z0-9_.-]+$")
+
+    @model_validator(mode="after")
+    def validate_tls(self) -> "ValkeyConfig":
+        if self.insecure_tls and not self.ssl:
+            msg = "insecure_tls requires ssl=True"
+            raise ValueError(msg)
+        return self
 
     def to_dict(self) -> dict:
         return {
@@ -19,6 +27,7 @@ class ValkeyConfig(DBConfig):
             "port": self.port,
             "password": self.password.get_secret_value() if self.password is not None else None,
             "ssl": self.ssl,
+            "insecure_tls": self.insecure_tls,
             "cmd": self.cmd,
             "request_timeout_ms": self.request_timeout_ms,
             "connection_timeout_ms": self.connection_timeout_ms,

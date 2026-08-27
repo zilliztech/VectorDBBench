@@ -23,6 +23,7 @@ from glide_sync import (
     NumericField,
     ServerCredentials,
     TagField,
+    TlsAdvancedConfiguration,
     VectorAlgorithm,
     VectorField,
     VectorFieldAttributesHnsw,
@@ -30,7 +31,6 @@ from glide_sync import (
     ft,
 )
 
-from vectordb_bench import config
 from vectordb_bench.backend.filter import Filter, FilterOp
 
 from ..api import VectorDB
@@ -39,6 +39,7 @@ from .config import ValkeyHNSWConfig
 log = logging.getLogger(__name__)
 ValkeyConnection = GlideClient | GlideClusterClient
 ValkeyBatch = Batch | ClusterBatch
+_DROP_CHUNK_SIZE = 10_000
 
 
 class Valkey(VectorDB):
@@ -85,12 +86,17 @@ class Valkey(VectorDB):
             "request_timeout": self.db_config["request_timeout_ms"],
         }
         connection_timeout = self.db_config["connection_timeout_ms"]
+        tls_config = TlsAdvancedConfiguration(use_insecure_tls=True) if self.db_config["insecure_tls"] else None
         if self.cluster_mode:
             config_kwargs["advanced_config"] = AdvancedGlideClusterClientConfiguration(
-                connection_timeout=connection_timeout
+                connection_timeout=connection_timeout,
+                tls_config=tls_config,
             )
             return GlideClusterClient.create(GlideClusterClientConfiguration(**config_kwargs))
-        config_kwargs["advanced_config"] = AdvancedGlideClientConfiguration(connection_timeout=connection_timeout)
+        config_kwargs["advanced_config"] = AdvancedGlideClientConfiguration(
+            connection_timeout=connection_timeout,
+            tls_config=tls_config,
+        )
         return GlideClient.create(GlideClientConfiguration(database_id=0, **config_kwargs))
 
     def _drop_index(self, conn: ValkeyConnection) -> None:
@@ -113,13 +119,13 @@ class Valkey(VectorDB):
         if self.cluster_mode:
             cursor = ClusterScanCursor()
             while not cursor.is_finished():
-                cursor, keys = conn.scan(cursor, match=match, count=config.NUM_PER_BATCH)
+                cursor, keys = conn.scan(cursor, match=match, count=_DROP_CHUNK_SIZE)
                 yield from keys
             return
 
         cursor: str | bytes | int = "0"
         while True:
-            cursor, keys = conn.scan(cursor, match=match, count=config.NUM_PER_BATCH)
+            cursor, keys = conn.scan(cursor, match=match, count=_DROP_CHUNK_SIZE)
             yield from keys
             if cursor in {"0", b"0", 0}:
                 return
@@ -132,7 +138,7 @@ class Valkey(VectorDB):
             batch.unlink([key])
             deleted += 1
             pending += 1
-            if pending == config.NUM_PER_BATCH:
+            if pending == _DROP_CHUNK_SIZE:
                 conn.exec(batch, raise_on_error=True)
                 batch = self._new_batch()
                 pending = 0

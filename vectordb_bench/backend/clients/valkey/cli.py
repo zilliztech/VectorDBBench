@@ -38,6 +38,16 @@ class ValkeyTypedDict(TypedDict):
             help="Enable or disable SSL for Valkey",
         ),
     ]
+    insecure_tls: Annotated[
+        bool,
+        click.option(
+            "--insecure-tls",
+            is_flag=True,
+            show_default=True,
+            default=False,
+            help="Disable TLS certificate verification",
+        ),
+    ]
     request_timeout_ms: Annotated[
         int,
         click.option(
@@ -87,6 +97,7 @@ def Valkey(**parameters: Unpack[ValkeyHNSWTypedDict]):
             port=parameters["port"],
             collection_name=parameters["collection_name"],
             ssl=parameters["ssl"],
+            insecure_tls=parameters["insecure_tls"],
             request_timeout_ms=parameters["request_timeout_ms"],
             connection_timeout_ms=parameters["connection_timeout_ms"],
             cmd=parameters["cmd"],

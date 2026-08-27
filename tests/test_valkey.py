@@ -6,7 +6,6 @@ import pytest
 from glide_sync import Batch
 from pydantic import ValidationError
 
-from vectordb_bench import config as benchmark_config
 from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.clients.api import IndexType, MetricType
 from vectordb_bench.backend.clients.valkey.config import ValkeyConfig, ValkeyHNSWConfig
@@ -78,6 +77,7 @@ def make_adapter():
         "port": 6379,
         "password": None,
         "ssl": False,
+        "insecure_tls": False,
         "request_timeout_ms": 12_000,
         "connection_timeout_ms": 13_000,
         "cmd": True,
@@ -104,11 +104,11 @@ def test_valkey_registration_and_config():
     assert config.to_dict()["password"] is None
     assert config.to_dict()["port"] == 6379
     assert config.to_dict()["ssl"] is True
+    assert config.to_dict()["insecure_tls"] is False
     assert config.to_dict()["cmd"] is False
     assert config.to_dict()["request_timeout_ms"] == 600_000
     assert config.to_dict()["connection_timeout_ms"] == 10_000
     assert config.to_dict()["collection_name"] == "vdbbench_valkey"
-    assert "ssl_ca_certs" not in ValkeyConfig.model_fields
 
     assert ValkeyHNSWConfig().model_dump() == {
         "metric_type": None,
@@ -129,6 +129,8 @@ def test_valkey_registration_and_config():
         ValkeyConfig(host="localhost", request_timeout_ms=0)
     with pytest.raises(ValidationError):
         ValkeyConfig(host="localhost", connection_timeout_ms=0)
+    with pytest.raises(ValidationError, match="requires ssl"):
+        ValkeyConfig(host="localhost", ssl=False, insecure_tls=True)
 
 
 def test_valkey_index_insert_and_search():
@@ -152,6 +154,7 @@ def test_valkey_index_insert_and_search():
         assert glide_config.use_tls is False
         assert glide_config.request_timeout == 12_000
         assert glide_config.advanced_config.connection_timeout == 13_000
+        assert glide_config.advanced_config.tls_config is None
         assert glide_config.database_id == 0
 
         embeddings = [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]
@@ -217,7 +220,7 @@ def test_valkey_filters_and_metrics():
 
 
 def test_valkey_cluster_client_and_drop_old(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setattr(benchmark_config, "NUM_PER_BATCH", 1)
+    monkeypatch.setattr("vectordb_bench.backend.clients.valkey.valkey._DROP_CHUNK_SIZE", 1)
     client = FakeClient()
     client.created = True
     client.scan_keys = [b"vdbbench_valkey:1", b"vdbbench_valkey:2"]
@@ -226,6 +229,7 @@ def test_valkey_cluster_client_and_drop_old(monkeypatch: pytest.MonkeyPatch):
         "port": 6379,
         "password": None,
         "ssl": True,
+        "insecure_tls": True,
         "request_timeout_ms": 20_000,
         "connection_timeout_ms": 21_000,
         "cmd": False,
@@ -251,6 +255,7 @@ def test_valkey_cluster_client_and_drop_old(monkeypatch: pytest.MonkeyPatch):
     assert client.closed is True
     commands = [command_name(args[0]) for args in client.custom_commands]
     assert commands == ["FT._LIST", "FT.DROPINDEX", "FT._LIST", "FT.CREATE"]
+    assert client.custom_commands[1] == ["FT.DROPINDEX", "vdbbench_valkey"]
     assert len(client.exec_batches) == 2
     assert all(len(batch) == 1 for batch in client.exec_batches)
     unlink_command = Batch(is_atomic=False).unlink(["key"]).commands[0][0]
@@ -260,6 +265,7 @@ def test_valkey_cluster_client_and_drop_old(monkeypatch: pytest.MonkeyPatch):
     assert glide_config.use_tls is True
     assert glide_config.request_timeout == 20_000
     assert glide_config.advanced_config.connection_timeout == 21_000
+    assert glide_config.advanced_config.tls_config.use_insecure_tls is True
     assert glide_config.database_id is None
 
 
@@ -279,6 +285,7 @@ def test_valkey_uses_config_defaults():
     assert glide_config.use_tls is True
     assert glide_config.request_timeout == 600_000
     assert glide_config.advanced_config.connection_timeout == 10_000
+    assert glide_config.advanced_config.tls_config is None
 
 
 def test_valkey_checks_index_list():
