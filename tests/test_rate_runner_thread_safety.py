@@ -49,7 +49,7 @@ class CapturingNonThreadSafeDB(FakeDB):
 
 
 def _runner(db: VectorDB):
-    return RatedMultiThreadingInsertRunner(rate=10, db=db, dataset_iter=None)
+    return RatedMultiThreadingInsertRunner(rate=10, db=db, dataset_iter=None, batch_size=10)
 
 
 def test_thread_safe_client_uses_shared_object():
