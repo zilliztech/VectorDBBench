@@ -448,6 +448,7 @@ class PerformanceCustomDataset(PerformanceCase):
             dataset=DatasetManager(data=dataset),
             use_filter=use_filter,
             label_percentage=label_percentage,
+            **kwargs,
         )
 
     @property

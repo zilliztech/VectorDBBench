@@ -28,6 +28,22 @@ def test_performance_case_config_applies_top_level_payload_without_mutating_cust
     assert custom_case == {}
 
 
+def test_custom_performance_case_config_applies_top_level_payload():
+    case_config = CaseConfig(
+        case_id=CaseType.PerformanceCustomDataset,
+        custom_case={
+            "name": "custom",
+            "description": "",
+            "load_timeout": 1,
+            "optimize_timeout": 1,
+            "dataset_config": {"size": 1, "dim": 1},
+        },
+        payload_profile=PayloadProfile.VECTOR,
+    )
+
+    assert case_config.case.payload_profile == PayloadProfile.VECTOR
+
+
 def test_performance_case_config_payload_round_trip_and_hash_identity():
     ids_only = CaseConfig(
         case_id=CaseType.Performance768D100M,
