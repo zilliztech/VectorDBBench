@@ -264,17 +264,18 @@ class LakebaseVector(VectorDB):
                     table_name=sql.Identifier(self.table_name),
                 )
             ) as copy:
+                copy_types = ["bigint", "vector", "varchar"] if self.with_scalar_labels else ["bigint", "vector"]
+                copy.set_types(copy_types)
                 for i, row in enumerate(metadata_arr):
                     if self.with_scalar_labels:
-                        copy.set_types(["bigint", "vector", "varchar"])
                         copy.write_row((row, embeddings_arr[i], labels_data[i]))
                     else:
-                        copy.set_types(["bigint", "vector"])
                         copy.write_row((row, embeddings_arr[i]))
             self.conn.commit()
 
             return len(metadata), None
         except Exception as e:
+            self.conn.rollback()
             log.warning(f"Failed to insert data into lakebase_vector table ({self.table_name}), error: {e}")
             return 0, e
 

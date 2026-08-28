@@ -40,7 +40,10 @@ class LakebaseVectorTypedDict(CommonTypedDict):
         click.option(
             "--probes",
             type=str,
-            help="Comma-separated lakebase_ann probe counts; omit to use index defaults",
+            help=(
+                "Positive integer or comma-separated positive integers for lakebase_ann.probes "
+                "(for example: 10 or 54,380); omit to use index defaults"
+            ),
         ),
     ]
     epsilon: Annotated[

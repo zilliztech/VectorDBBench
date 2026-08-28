@@ -140,7 +140,7 @@ def test_dataset_metric(
     db_case_config = LakebaseANNConfig()
     task = TaskConfig(
         db=DB.LakebaseVector,
-        db_config=LakebaseVectorConfig(password=SecretStr("test-password")),
+        db_config=LakebaseVectorConfig(password=SecretStr("test-password"), db_name="test-db"),
         db_case_config=db_case_config,
         case_config=CaseConfig(case_id=case_type),
     )
@@ -209,14 +209,17 @@ class TestLakebaseVectorClient:
 
         assert lifecycle.mock_calls == [call.drop_index(), call.create_index()]
 
+    # The two probes cases configure single-level and two-level IVF, respectively.
+    @pytest.mark.parametrize("probes", ["10", "10,20"])
     def test_session_guc(
         self,
         monkeypatch: pytest.MonkeyPatch,
         mocked_db_connection: tuple[MagicMock, MagicMock],
+        probes: str,
     ) -> None:
         conn, cursor = mocked_db_connection
         render_sql = patch_sql_rendering(monkeypatch)
-        case_config = make_ann_config(probes="10,20", epsilon=1.5)
+        case_config = make_ann_config(probes=probes, epsilon=1.5)
         db = make_db(
             "test_session_gucs",
             drop_old=False,
@@ -231,7 +234,7 @@ class TestLakebaseVectorClient:
 
         commands = [render_sql(execute_call.args[0]) for execute_call in cursor.execute.call_args_list]
         assert commands == [
-            'SET "lakebase_ann.probes" = "10,20";',
+            f'SET "lakebase_ann.probes" = "{probes}";',
             'SET "lakebase_ann.epsilon" = "1.5";',
         ]
         conn.commit.assert_called_once_with()
@@ -289,7 +292,7 @@ class TestLakebaseVectorClient:
         assert error is None
         assert count == 2
         expected_types = ["bigint", "vector", "varchar"] if with_scalar_labels else ["bigint", "vector"]
-        assert copy_writer.set_types.call_count == 2
+        assert copy_writer.set_types.call_count == 1
         copy_writer.set_types.assert_called_with(expected_types)
         rows = [call.args[0] for call in copy_writer.write_row.call_args_list]
         assert [int(row[0]) for row in rows] == metadata

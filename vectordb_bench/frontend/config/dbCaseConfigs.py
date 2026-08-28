@@ -1754,7 +1754,10 @@ CaseConfigParamInput_max_parallel_workers_LakebaseVector = CaseConfigInput(
 CaseConfigParamInput_Probes_LakebaseVector = CaseConfigInput(
     label=CaseConfigParamType.probes,
     displayLabel="Probes",
-    inputHelp="Optional comma-separated lakebase_ann probe counts; leave empty to use the server default",
+    inputHelp=(
+        "Optional positive integer or comma-separated positive integers for lakebase_ann.probes "
+        "(for example: 10 or 54,380); leave empty to use the server default"
+    ),
     inputType=InputType.Text,
     inputConfig={
         "value": "",

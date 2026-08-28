@@ -24,7 +24,7 @@ class LakebaseVectorConfig(DBConfig):
     password: SecretStr
     host: str = "localhost"
     port: int = 5432
-    db_name: str = "databricks_postgres"
+    db_name: str
     table_name: str = "vdbbench_table_test"
 
     def to_dict(self) -> LakebaseVectorConfigDict:
