@@ -3293,6 +3293,63 @@ AdbpgPerformanceConfig = [
     CaseConfigParamInput_NovaAdaptiveGamma_Adbpg,
 ]
 
+CaseConfigParamInput_m_QdrantLocal = CaseConfigInput(
+    label=CaseConfigParamType.m,
+    displayLabel="m",
+    inputHelp="HNSW index parameter m, set 0 to disable the index",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 0,
+        "max": 1000,
+        "value": 16,
+    },
+)
+
+CaseConfigParamInput_ef_construct_QdrantLocal = CaseConfigInput(
+    label=CaseConfigParamType.ef_construct,
+    displayLabel="ef_construct",
+    inputHelp="HNSW index parameter ef_construct",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 4,
+        "max": 4096,
+        "value": 200,
+    },
+)
+
+CaseConfigParamInput_on_disk_QdrantLocal = CaseConfigInput(
+    label=CaseConfigParamType.on_disk,
+    displayLabel="on_disk",
+    inputHelp="Store the vectors and the HNSW index on disk",
+    inputType=InputType.Bool,
+    inputConfig={
+        "value": False,
+    },
+)
+
+CaseConfigParamInput_hnsw_ef_QdrantLocal = CaseConfigInput(
+    label=CaseConfigParamType.hnsw_ef,
+    displayLabel="hnsw_ef",
+    inputHelp="HNSW search parameter hnsw_ef, set 0 to use ef_construct for search",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 0,
+        "max": 4096,
+        "value": 0,
+    },
+)
+
+QdrantLocalLoadConfig = [
+    CaseConfigParamInput_m_QdrantLocal,
+    CaseConfigParamInput_ef_construct_QdrantLocal,
+    CaseConfigParamInput_on_disk_QdrantLocal,
+]
+
+QdrantLocalPerformanceConfig = [
+    *QdrantLocalLoadConfig,
+    CaseConfigParamInput_hnsw_ef_QdrantLocal,
+]
+
 # Map DB to config
 CASE_CONFIG_MAP = {
     DB.Milvus: {
@@ -3367,6 +3424,10 @@ CASE_CONFIG_MAP = {
     DB.LanceDB: {
         CaseLabel.Load: LanceDBLoadConfig,
         CaseLabel.Performance: LanceDBPerformanceConfig,
+    },
+    DB.QdrantLocal: {
+        CaseLabel.Load: QdrantLocalLoadConfig,
+        CaseLabel.Performance: QdrantLocalPerformanceConfig,
     },
     DB.TencentElasticsearch: {
         CaseLabel.Load: TencentElasticsearchLoadingConfig,
