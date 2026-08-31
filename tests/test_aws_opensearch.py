@@ -3,7 +3,6 @@ from types import SimpleNamespace
 import pytest
 from opensearchpy import ConnectionTimeout, TransportError
 
-from vectordb_bench import config
 from vectordb_bench.backend.clients.aws_opensearch.aws_opensearch import (
     BULK_MAX_ATTEMPTS,
     AWSOpenSearch,
@@ -21,18 +20,17 @@ def _bulk_response(*statuses: int) -> dict[str, object]:
     return {"errors": any(status >= 300 for status in statuses), "items": items}
 
 
-def test_serverless_insert_uses_configured_batch_size(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_serverless_insert_uses_configured_batch_size() -> None:
     bulk_requests: list[list[dict[str, object]]] = []
 
     def bulk(*, body: list[dict[str, object]]) -> dict[str, object]:
         bulk_requests.append(body)
         return _bulk_response(*(201 for _ in body[::2]))
 
-    monkeypatch.setattr(config, "NUM_PER_BATCH", 2)
-
     db = object.__new__(AWSOpenSearch)
     db.client = SimpleNamespace(bulk=bulk)
     db._is_serverless = True
+    db._insert_batch_size = 2
     db.index_name = "test-index"
     db.vector_col_name = "embedding"
     db.with_scalar_labels = False
@@ -49,16 +47,12 @@ def test_serverless_insert_uses_configured_batch_size(monkeypatch: pytest.Monkey
 
 
 @pytest.mark.parametrize("batch_size", [0, -1])
-def test_serverless_insert_rejects_non_positive_batch_size(
-    monkeypatch: pytest.MonkeyPatch,
-    batch_size: int,
-) -> None:
-    monkeypatch.setattr(config, "NUM_PER_BATCH", batch_size)
-
+def test_serverless_insert_rejects_non_positive_batch_size(batch_size: int) -> None:
     db = object.__new__(AWSOpenSearch)
     db._is_serverless = True
+    db._insert_batch_size = batch_size
 
-    with pytest.raises(ValueError, match="NUM_PER_BATCH must be greater than 0"):
+    with pytest.raises(ValueError, match="insert_batch_size must be greater than 0"):
         db._insert_with_single_client(
             embeddings=[[0.1]],
             metadata=[1],
@@ -74,7 +68,6 @@ def test_serverless_insert_retries_only_failed_documents(monkeypatch: pytest.Mon
         bulk_requests.append(body)
         return next(responses)
 
-    monkeypatch.setattr(config, "NUM_PER_BATCH", 3)
     monkeypatch.setattr(
         "vectordb_bench.backend.clients.aws_opensearch.aws_opensearch.time.sleep",
         retry_delays.append,
@@ -83,6 +76,7 @@ def test_serverless_insert_retries_only_failed_documents(monkeypatch: pytest.Mon
     db = object.__new__(AWSOpenSearch)
     db.client = SimpleNamespace(bulk=bulk)
     db._is_serverless = True
+    db._insert_batch_size = 3
     db.index_name = "test-index"
     db.vector_col_name = "embedding"
     db.with_scalar_labels = False
@@ -112,7 +106,6 @@ def test_serverless_insert_fails_after_partial_failure_exhausts_attempts(
             return _bulk_response(201, 429)
         return _bulk_response(429)
 
-    monkeypatch.setattr(config, "NUM_PER_BATCH", 2)
     monkeypatch.setattr(
         "vectordb_bench.backend.clients.aws_opensearch.aws_opensearch.time.sleep",
         retry_delays.append,
@@ -125,6 +118,7 @@ def test_serverless_insert_fails_after_partial_failure_exhausts_attempts(
     db = object.__new__(AWSOpenSearch)
     db.client = SimpleNamespace(bulk=bulk)
     db._is_serverless = True
+    db._insert_batch_size = 2
     db.index_name = "test-index"
     db.vector_col_name = "embedding"
     db.with_scalar_labels = False
@@ -155,7 +149,6 @@ def test_serverless_insert_retries_request_level_429(monkeypatch: pytest.MonkeyP
             raise TransportError(429, "too many requests")
         return _bulk_response(201)
 
-    monkeypatch.setattr(config, "NUM_PER_BATCH", 1)
     monkeypatch.setattr(
         "vectordb_bench.backend.clients.aws_opensearch.aws_opensearch.time.sleep",
         retry_delays.append,
@@ -164,6 +157,7 @@ def test_serverless_insert_retries_request_level_429(monkeypatch: pytest.MonkeyP
     db = object.__new__(AWSOpenSearch)
     db.client = SimpleNamespace(bulk=bulk)
     db._is_serverless = True
+    db._insert_batch_size = 1
     db.index_name = "test-index"
     db.vector_col_name = "embedding"
     db.with_scalar_labels = False
@@ -187,7 +181,6 @@ def test_serverless_insert_does_not_retry_ambiguous_timeout(monkeypatch: pytest.
         bulk_requests.append(body)
         raise ConnectionTimeout(None, "timed out", None)
 
-    monkeypatch.setattr(config, "NUM_PER_BATCH", 1)
     monkeypatch.setattr(
         "vectordb_bench.backend.clients.aws_opensearch.aws_opensearch.time.sleep",
         retry_delays.append,
@@ -196,6 +189,7 @@ def test_serverless_insert_does_not_retry_ambiguous_timeout(monkeypatch: pytest.
     db = object.__new__(AWSOpenSearch)
     db.client = SimpleNamespace(bulk=bulk)
     db._is_serverless = True
+    db._insert_batch_size = 1
     db.index_name = "test-index"
     db.vector_col_name = "embedding"
     db.with_scalar_labels = False

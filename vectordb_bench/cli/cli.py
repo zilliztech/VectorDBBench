@@ -18,7 +18,7 @@ from click.core import ParameterSource
 from yaml import load
 
 from .. import config
-from ..backend.cases import FTS_FILTER_RATES
+from ..backend.cases import FTS_FILTER_RATES, PerformanceCase, type2case
 from ..backend.clients import DB
 from ..backend.clients.api import IndexType, MetricType
 from ..backend.dataset import DatasetWithSizeType, FtsDatasetWithSizeType
@@ -233,6 +233,13 @@ def get_custom_case_config(parameters: dict) -> dict:
             "dataset_with_size_type": dataset_with_size_type,
             "label_percentage": parameters["label_percentage"],
         }
+    elif parameters["case_type"] in {
+        "StreamingPerformanceCase",
+        "StreamingCustomDataset",
+    }:
+        custom_case_config = {
+            "insert_rate": parameters["streaming_insert_rate"],
+        }
     elif parameters["case_type"] == "CloudPayloadSearchCase":
         custom_case_config = {
             "payload_profile": parameters["payload_profile"],
@@ -252,7 +259,6 @@ def get_custom_case_config(parameters: dict) -> dict:
         copy_if_not_none(custom_case_config, parameters, "cloud_label_percentage", "label_percentage")
     elif parameters["case_type"] == "CloudInsertCase":
         custom_case_config = {
-            "batch_size": parameters["cloud_insert_batch_size"],
             "duration": parameters["cloud_insert_duration"],
             "dataset_with_size_type": dataset_with_size_type,
         }
@@ -323,6 +329,13 @@ def apply_fts_cli_db_case_params(
     return db_case_config.model_copy(update=updates)
 
 
+def get_case_payload_profile(parameters: dict[str, Any]) -> PayloadProfile | None:
+    case_type = CaseType[parameters["case_type"]]
+    if not issubclass(type2case[case_type], PerformanceCase):
+        return None
+    return PayloadProfile(parameters["payload_profile"])
+
+
 def select_cli_db_case_config(
     db: DB,
     db_case_config: DBCaseConfig,
@@ -382,6 +395,26 @@ class CommonTypedDict(TypedDict):
             default=config.LOAD_CONCURRENCY,
             show_default=True,
             help="Number of concurrent workers for data loading in performance cases (0 = cpu_count)",
+        ),
+    ]
+    insert_batch_size: Annotated[
+        int,
+        click.option(
+            "--insert-batch-size",
+            type=click.IntRange(min=1),
+            default=config.DEFAULT_INSERT_BATCH_SIZE,
+            show_default=True,
+            help="Rows or documents in each logical VDBBench insert batch; backends may split it further",
+        ),
+    ]
+    streaming_insert_rate: Annotated[
+        int,
+        click.option(
+            "--streaming-insert-rate",
+            type=click.IntRange(min=1),
+            default=config.DEFAULT_STREAMING_INSERT_RATE,
+            show_default=True,
+            help="Rows inserted per second for StreamingPerformanceCase",
         ),
     ]
     search_serial: Annotated[
@@ -457,10 +490,10 @@ class CommonTypedDict(TypedDict):
         int,
         click.option(
             "--k",
-            type=int,
+            type=click.IntRange(min=1),
             default=config.K_DEFAULT,
             show_default=True,
-            help="K value for number of nearest neighbors to search",
+            help="Number of nearest neighbors. LAION 100M selects tiered GT automatically up to 1,000,000.",
         ),
     ]
     concurrency_duration: Annotated[
@@ -643,7 +676,7 @@ class CommonTypedDict(TypedDict):
         click.option(
             "--payload-profile",
             type=click.Choice([profile.value for profile in PayloadProfile]),
-            help="Response payload profile for payload and FTS cases",
+            help="Response payload profile for vector performance, cloud payload, and FTS cases",
             default="ids_only",
             show_default=True,
         ),
@@ -704,16 +737,6 @@ class CommonTypedDict(TypedDict):
             default=1000,
             show_default=True,
             help="Number of serial queries per cold/warm pass for CloudColdLatencyCase",
-        ),
-    ]
-    cloud_insert_batch_size: Annotated[
-        int,
-        click.option(
-            "--cloud-insert-batch-size",
-            type=int,
-            default=5000,
-            show_default=True,
-            help="Insert batch size for CloudInsertCase",
         ),
     ]
     cloud_insert_duration: Annotated[
@@ -951,6 +974,7 @@ def run(
         db_case_config=select_cli_db_case_config(db, db_case_config, parameters["case_type"], parameters),
         case_config=CaseConfig(
             case_id=CaseType[parameters["case_type"]],
+            payload_profile=get_case_payload_profile(parameters),
             k=parameters["k"],
             concurrency_search_config=ConcurrencySearchConfig(
                 concurrency_duration=parameters["concurrency_duration"],
@@ -967,6 +991,7 @@ def run(
             parameters["search_concurrent"],
         ),
         load_concurrency=parameters["load_concurrency"],
+        insert_batch_size=parameters["insert_batch_size"],
     )
     task_label = parameters["task_label"]
 

@@ -16,8 +16,6 @@ from .config import MilvusFtsConfig, MilvusIndexConfig
 
 log = logging.getLogger(__name__)
 
-MILVUS_LOAD_REQS_SIZE = 1.5 * 1024 * 1024
-MILVUS_FTS_BATCH_SIZE = 1000
 MILVUS_FORCE_MERGE_TARGET_SIZE_MB = ((1 << 63) - 1) // (1024**2)
 MILVUS_FORCE_MERGE_MAX_ATTEMPTS = 10
 MILVUS_FORCE_MERGE_RETRY_INTERVAL_SECONDS = 30
@@ -37,7 +35,7 @@ class Milvus(VectorDB):
     def has_text_field(self) -> bool:
         return bool(getattr(self, "_is_fts", False) and getattr(self, "_text_field", None))
 
-    def __init__(  # noqa: PLR0915
+    def __init__(  # noqa: PLR0912, PLR0915
         self,
         dim: int,
         db_config: dict,
@@ -46,7 +44,6 @@ class Milvus(VectorDB):
         drop_old: bool = False,
         name: str = "Milvus",
         with_scalar_labels: bool = False,
-        fts_batch_size: int | None = None,
         **kwargs,
     ):
         """Initialize wrapper around the milvus vector database."""
@@ -55,15 +52,16 @@ class Milvus(VectorDB):
         self.case_config = db_case_config
         self.collection_name = collection_name
         self.with_scalar_labels = with_scalar_labels
+        collection_properties = kwargs.get("collection_properties", {})
 
         self._scalar_label_field = "label"
         self._scalar_payload_label_field = self._scalar_label_field
         self._multitenant_partition_key_field = self._scalar_label_field
         self._scalar_labels_index_name = "labels_idx"
         self._is_fts = isinstance(self.case_config, MilvusFtsConfig)
+        self._fts_filter_enabled = bool(kwargs.get("fts_filter_enabled", self._is_fts))
 
         if self._is_fts:
-            self.batch_size = fts_batch_size or MILVUS_FTS_BATCH_SIZE
             self._primary_field = "doc_id"
             self._text_field = "text"
             self._filter_id_field = "filter_id"
@@ -75,7 +73,6 @@ class Milvus(VectorDB):
             self._sort_index_name = self._doc_id_sort_index_name
             self._sort_index_field = self._primary_field
         else:
-            self.batch_size = int(MILVUS_LOAD_REQS_SIZE / (dim * 4))
             self._primary_field = "pk"
             self._scalar_id_field = "id"
             self._vector_field = "vector"
@@ -112,13 +109,13 @@ class Milvus(VectorDB):
                     else self.case_config.index_param().get("analyzer_params", {"type": "english"})
                 )
                 schema.add_field(self._primary_field, DataType.VARCHAR, max_length=512, is_primary=True)
-                schema.add_field(self._filter_id_field, DataType.INT64)
+                if self._fts_filter_enabled:
+                    schema.add_field(self._filter_id_field, DataType.INT64)
                 schema.add_field(
                     self._text_field,
                     DataType.VARCHAR,
                     max_length=65535,
                     enable_analyzer=True,
-                    enable_match=True,
                     analyzer_params=analyzer_params,
                 )
                 schema.add_field(self._sparse_field, DataType.SPARSE_FLOAT_VECTOR)
@@ -162,17 +159,31 @@ class Milvus(VectorDB):
             log.info(f"{self.name} create collection: {self.collection_name}")
 
             index_params = self._build_index_params()
+            create_kwargs = {}
+            if collection_properties:
+                # Large TopK collection properties must be applied before the vector index is created.
+                create_kwargs["properties"] = collection_properties
             client.create_collection(
                 collection_name=self.collection_name,
                 schema=schema,
                 num_shards=self.db_config.get("num_shards", 1),
                 consistency_level="Session",
+                **create_kwargs,
             )
             client.create_index(self.collection_name, index_params)
             client.load_collection(
                 self.collection_name,
                 replica_number=self.db_config.get("replica_number", 1),
             )
+        elif collection_properties:
+            actual_properties = client.describe_collection(self.collection_name).get("properties") or {}
+            if any(actual_properties.get(key) != value for key, value in collection_properties.items()):
+                client.close()
+                msg = (
+                    f"{self.name} collection {self.collection_name} has incompatible collection properties: "
+                    f"expected {collection_properties}, got {actual_properties}. Drop and recreate the collection."
+                )
+                raise ValueError(msg)
 
         client.close()
 
@@ -205,7 +216,7 @@ class Milvus(VectorDB):
             index_name=self._sort_index_name,
             index_type="STL_SORT",
         )
-        if self._is_fts:
+        if self._is_fts and self._fts_filter_enabled:
             index_params.add_index(
                 field_name=self._filter_id_field,
                 index_name=self._filter_id_sort_index_name,
@@ -403,31 +414,29 @@ class Milvus(VectorDB):
         tenant_labels_data: list[str] | None = None,
         **kwargs,
     ) -> tuple[int, Exception]:
-        """Insert embeddings into Milvus. should call self.init() first"""
+        """Insert one runner-provided batch of embeddings into Milvus."""
         assert self.client is not None
         assert len(embeddings) == len(metadata)
-        insert_count = 0
+
+        rows = []
+        for i in range(len(embeddings)):
+            row = {
+                self._primary_field: metadata[i],
+                self._scalar_id_field: metadata[i],
+                self._vector_field: embeddings[i],
+            }
+            if tenant_labels_data is not None:
+                row[self._multitenant_partition_key_field] = tenant_labels_data[i]
+            if self.with_scalar_labels:
+                row[self._scalar_payload_label_field] = labels_data[i]
+            rows.append(row)
+
         try:
-            for batch_start_offset in range(0, len(embeddings), self.batch_size):
-                batch_end_offset = min(batch_start_offset + self.batch_size, len(embeddings))
-                batch_data = []
-                for i in range(batch_start_offset, batch_end_offset):
-                    row = {
-                        self._primary_field: metadata[i],
-                        self._scalar_id_field: metadata[i],
-                        self._vector_field: embeddings[i],
-                    }
-                    if tenant_labels_data is not None:
-                        row[self._multitenant_partition_key_field] = tenant_labels_data[i]
-                    if self.with_scalar_labels:
-                        row[self._scalar_payload_label_field] = labels_data[i]
-                    batch_data.append(row)
-                res = self.client.insert(self.collection_name, batch_data)
-                insert_count += res["insert_count"]
+            res = self.client.insert(self.collection_name, rows)
         except MilvusException as e:
             log.info(f"Failed to insert data: {e}")
-            return insert_count, e
-        return insert_count, None
+            return 0, e
+        return res["insert_count"], None
 
     def insert_documents(
         self,
@@ -435,7 +444,7 @@ class Milvus(VectorDB):
         doc_ids: list[str],
         **kwargs,
     ) -> tuple[int, Exception | None]:
-        """Insert documents into a Milvus BM25 full-text collection."""
+        """Insert one runner-provided batch into a Milvus BM25 collection."""
         if not self._is_fts:
             msg = "insert_documents is only valid in FTS mode"
             raise RuntimeError(msg)
@@ -446,40 +455,30 @@ class Milvus(VectorDB):
             msg = f"Mismatch between texts ({len(docs)}) and doc_ids ({len(doc_ids)}) lengths"
             raise ValueError(msg)
 
-        batch_size = kwargs.get("batch_size", self.batch_size)
         labels_data = kwargs.get("labels_data")
         filter_ids = kwargs.get("filter_ids")
         if filter_ids is not None and len(filter_ids) != len(docs):
             msg = f"Mismatch between texts ({len(docs)}) and filter_ids ({len(filter_ids)}) lengths"
             raise ValueError(msg)
 
-        insert_count = 0
-        try:
-            for batch_start_offset in range(0, len(docs), batch_size):
-                batch_end_offset = min(batch_start_offset + batch_size, len(docs))
-                rows = []
-                for i in range(batch_start_offset, batch_end_offset):
-                    row = {
-                        self._primary_field: str(doc_ids[i]),
-                        self._text_field: docs[i],
-                    }
-                    if filter_ids is not None:
-                        row[self._filter_id_field] = int(filter_ids[i])
-                    if self.with_scalar_labels:
-                        row[self._scalar_label_field] = labels_data[i] if labels_data is not None else ""
-                    rows.append(row)
+        rows = []
+        for i, doc in enumerate(docs):
+            row = {
+                self._primary_field: str(doc_ids[i]),
+                self._text_field: doc,
+            }
+            if filter_ids is not None:
+                row[self._filter_id_field] = int(filter_ids[i])
+            if self.with_scalar_labels:
+                row[self._scalar_label_field] = labels_data[i] if labels_data is not None else ""
+            rows.append(row)
 
-                res = self.client.insert(self.collection_name, rows)
-                insert_count += res["insert_count"]
-                if batch_start_offset // batch_size % 10 == 0:
-                    log.debug(
-                        f"{self.name} batch insert progress: {batch_end_offset}/{len(docs)} "
-                        f"({batch_end_offset / len(docs) * 100:.1f}%)"
-                    )
+        try:
+            res = self.client.insert(self.collection_name, rows)
         except MilvusException as e:
             log.info(f"{self.name} insert error: {e}")
-            return insert_count, e
-        return insert_count, None
+            return 0, e
+        return res["insert_count"], None
 
     def prepare_filter(self, filters: Filter):
         if self._is_fts:
@@ -504,7 +503,8 @@ class Milvus(VectorDB):
             msg = f"Not support Filter for Milvus - {filters}"
             raise ValueError(msg)
 
-    def supports_payload_profile(self, payload_profile: PayloadProfile) -> bool:
+    @staticmethod
+    def supports_payload_profile(payload_profile: PayloadProfile) -> bool:
         return payload_profile in {
             PayloadProfile.IDS_ONLY,
             PayloadProfile.VECTOR,

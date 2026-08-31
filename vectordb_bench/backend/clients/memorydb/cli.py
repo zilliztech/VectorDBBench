@@ -48,13 +48,15 @@ class MemoryDBTypedDict(TypedDict):
             ),
         ),
     ]
-    insert_batch_size: Annotated[
+    pipeline_batch_size: Annotated[
         int,
         click.option(
-            "--insert-batch-size",
-            type=int,
+            "--memorydb-pipeline-batch-size",
+            "pipeline_batch_size",
+            type=click.IntRange(min=1),
             default=10,
-            help="Batch size for inserting data. Adjust this as needed, but don't make it too big",
+            show_default=True,
+            help="Commands buffered in each MemoryDB pipeline execution",
         ),
     ]
 
@@ -82,7 +84,7 @@ def MemoryDB(**parameters: Unpack[MemoryDBHNSWTypedDict]):
             M=parameters["m"],
             ef_construction=parameters["ef_construction"],
             ef_runtime=parameters["ef_runtime"],
-            insert_batch_size=parameters["insert_batch_size"],
+            pipeline_batch_size=parameters["pipeline_batch_size"],
         ),
         **parameters,
     )

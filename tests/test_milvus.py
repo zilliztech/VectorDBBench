@@ -13,13 +13,76 @@ from pydantic import SecretStr
 from vectordb_bench.backend.cases import CaseType
 from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.clients.api import IndexType
-from vectordb_bench.backend.clients.milvus.config import MilvusConfig
+from vectordb_bench.backend.clients.milvus.config import MilvusConfig, MilvusFtsConfig
 from vectordb_bench.backend.clients.milvus.milvus import MILVUS_FORCE_MERGE_TARGET_SIZE_MB, Milvus
 from vectordb_bench.backend.payload import PayloadProfile
 from vectordb_bench.interface import BenchMarkRunner
 from vectordb_bench.models import CaseConfig, TaskConfig
 
 log = logging.getLogger(__name__)
+
+
+def test_milvus_vector_payload_requests_vector_field_and_returns_ids():
+    captured = {}
+
+    def search(**kwargs):
+        captured.update(kwargs)
+        return [[{"pk": 1, "vector": [0.1, 0.2]}]]
+
+    db = object.__new__(Milvus)
+    db.client = SimpleNamespace(search=search)
+    db.collection_name = "test_collection"
+    db._vector_field = "vector"
+    db._primary_field = "pk"
+    db._scalar_label_field = "label"
+    db.case_config = SimpleNamespace(search_param=lambda: {"metric_type": "COSINE"})
+    db.expr = ""
+
+    result = db.search_embedding([0.1, 0.2], k=3, payload_profile=PayloadProfile.VECTOR)
+
+    assert result == [1]
+    assert captured["output_fields"] == ["vector"]
+
+
+def _fake_milvus_client(monkeypatch, *, collection_exists=False, properties=None):
+    client = MagicMock()
+    client.has_collection.return_value = collection_exists
+    client.describe_collection.return_value = {"properties": properties or {}}
+    client_cls = MagicMock(return_value=client)
+    client_cls.create_schema.return_value = MagicMock()
+    client_cls.prepare_index_params.return_value = MagicMock()
+    monkeypatch.setattr("vectordb_bench.backend.clients.milvus.milvus.MilvusClient", client_cls)
+    return client
+
+
+def _create_milvus_with_collection_properties(monkeypatch, *, collection_exists=False, properties=None):
+    client = _fake_milvus_client(
+        monkeypatch,
+        collection_exists=collection_exists,
+        properties=properties,
+    )
+    Milvus(
+        dim=2,
+        db_config={"uri": "http://example.invalid"},
+        db_case_config=SimpleNamespace(
+            index_param=lambda: {"index_type": "AUTOINDEX", "metric_type": "COSINE", "params": {}},
+        ),
+        collection_properties={"query_mode": "large_topk"},
+    )
+    return client
+
+
+def test_milvus_creates_collection_properties_before_index(monkeypatch):
+    client = _create_milvus_with_collection_properties(monkeypatch)
+
+    assert client.create_collection.call_args.kwargs["properties"] == {"query_mode": "large_topk"}
+    method_names = [method_call[0] for method_call in client.method_calls]
+    assert method_names.index("create_collection") < method_names.index("create_index")
+
+
+def test_milvus_rejects_existing_collection_with_incompatible_properties(monkeypatch):
+    with pytest.raises(ValueError, match="incompatible collection properties"):
+        _create_milvus_with_collection_properties(monkeypatch, collection_exists=True)
 
 
 class TestMilvusOptimize:
@@ -443,7 +506,6 @@ def test_milvus_multitenant_insert_writes_tenant_and_scalar_payload_labels() -> 
     db = object.__new__(Milvus)
     db.client = SimpleNamespace(insert=insert)
     db.collection_name = "test_collection"
-    db.batch_size = 100
     db._primary_field = "pk"
     db._scalar_id_field = "id"
     db._vector_field = "vector"
@@ -465,3 +527,94 @@ def test_milvus_multitenant_insert_writes_tenant_and_scalar_payload_labels() -> 
         {"pk": 1, "id": 1, "vector": [0.1, 0.2], "labels": "tenant_0001", "scalar_label": "label_a"},
         {"pk": 2, "id": 2, "vector": [0.3, 0.4], "labels": "tenant_0002", "scalar_label": "label_b"},
     ]
+
+
+def test_milvus_vector_insert_uses_one_client_call_for_runner_batch() -> None:
+    client = MagicMock()
+    client.insert.side_effect = lambda _collection, rows: {"insert_count": len(rows)}
+
+    db = object.__new__(Milvus)
+    db.client = client
+    db.collection_name = "test_collection"
+    db._primary_field = "pk"
+    db._scalar_id_field = "id"
+    db._vector_field = "vector"
+    db.with_scalar_labels = False
+
+    count, err = db.insert_embeddings(
+        embeddings=[[float(i)] for i in range(5)],
+        metadata=list(range(5)),
+    )
+
+    assert count == 5
+    assert err is None
+    client.insert.assert_called_once()
+    assert len(client.insert.call_args.args[1]) == 5
+
+
+def test_milvus_fts_insert_uses_one_client_call_for_runner_batch() -> None:
+    client = MagicMock()
+    client.insert.side_effect = lambda _collection, rows: {"insert_count": len(rows)}
+
+    db = object.__new__(Milvus)
+    db.client = client
+    db.name = "Milvus"
+    db.collection_name = "test_collection"
+    db._is_fts = True
+    db._primary_field = "doc_id"
+    db._text_field = "text"
+    db._filter_id_field = "filter_id"
+    db.with_scalar_labels = False
+
+    count, err = db.insert_documents(
+        texts=[f"document {i}" for i in range(5)],
+        doc_ids=[f"d{i}" for i in range(5)],
+        filter_ids=list(range(5)),
+    )
+
+    assert count == 5
+    assert err is None
+    client.insert.assert_called_once()
+
+
+def test_milvus_fts_filter_index_is_conditional(monkeypatch: pytest.MonkeyPatch) -> None:
+    db = object.__new__(Milvus)
+    db._is_fts = True
+    db._sparse_field = "sparse_vector"
+    db._main_index_name = "sparse_vector_idx"
+    db._sort_index_field = "doc_id"
+    db._sort_index_name = "doc_id_sort_idx"
+    db._filter_id_field = "filter_id"
+    db._filter_id_sort_index_name = "filter_id_sort_idx"
+    db.with_scalar_labels = False
+    db.case_config = SimpleNamespace(sparse_index_param=lambda: {})
+
+    for enabled, expected_fields in (
+        (False, {"sparse_vector", "doc_id"}),
+        (True, {"sparse_vector", "doc_id", "filter_id"}),
+    ):
+        params = MagicMock()
+        monkeypatch.setattr(
+            "vectordb_bench.backend.clients.milvus.milvus.MilvusClient.prepare_index_params",
+            lambda: params,
+        )
+        db._fts_filter_enabled = enabled
+        db._build_index_params()
+        fields = {call.kwargs["field_name"] for call in params.add_index.call_args_list}
+        assert fields == expected_fields
+
+
+def test_milvus_fts_schema_enables_analyzer_without_text_match(monkeypatch: pytest.MonkeyPatch) -> None:
+    client = MagicMock()
+    client.has_collection.return_value = False
+    schema = MagicMock()
+    client_type = MagicMock(return_value=client)
+    client_type.create_schema.return_value = schema
+    client_type.prepare_index_params.return_value = MagicMock()
+    monkeypatch.setattr("vectordb_bench.backend.clients.milvus.milvus.MilvusClient", client_type)
+
+    Milvus(dim=0, db_config={}, db_case_config=MilvusFtsConfig(), collection_name="test_collection")
+
+    text_field = next(call for call in schema.add_field.call_args_list if call.args[0] == "text")
+    assert text_field.kwargs["enable_analyzer"] is True
+    assert "enable_match" not in text_field.kwargs

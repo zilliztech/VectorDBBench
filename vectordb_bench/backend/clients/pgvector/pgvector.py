@@ -3,6 +3,7 @@
 import logging
 from collections.abc import Generator, Sequence
 from contextlib import contextmanager
+from copy import copy
 from typing import Any
 
 import numpy as np
@@ -98,6 +99,14 @@ class PgVector(VectorDB):
         assert cursor is not None, "Cursor is not initialized"
 
         return conn, cursor
+
+    def copy_for_thread(self) -> "VectorDB":
+        # psycopg holds an open socket that can't be deep-copied; shallow-copy
+        # and drop the connection so init() reconnects inside the worker thread.
+        db_copy = copy(self)
+        db_copy.conn = None
+        db_copy.cursor = None
+        return db_copy
 
     def _generate_search_query(self) -> sql.Composed:
         index_param = self.case_config.index_param()

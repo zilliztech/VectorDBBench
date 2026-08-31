@@ -42,6 +42,7 @@ def test_scalar_label_payload_profile_requires_scalar_label_materialization_with
 def test_dataset_prepare_loads_separated_scalar_labels_for_scalar_payload(monkeypatch):
     dataset = Dataset.LAION.manager(100_000_000)
     dataset.data.with_remote_resource = False
+    dataset.data.with_gt = False
     loaded_scalar_labels = object()
 
     def fake_read_file(file_name):
@@ -118,11 +119,13 @@ def test_serial_search_runner_passes_tenant_and_skips_recall():
         measure_recall=False,
     )
 
-    recall, ndcg, p99, p95 = runner.search((runner.test_data, runner.ground_truth))
+    recall, ndcg, p99, p95, p50, recall_at = runner.search((runner.test_data, runner.ground_truth))
 
     assert recall == 0
     assert ndcg == 0
     assert p99 >= 0
     assert p95 >= 0
+    assert p50 >= 0
+    assert recall_at == {}
     assert set(db.tenants).issubset({"tenant_0000", "tenant_0001"})
     assert db.tenants

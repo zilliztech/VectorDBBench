@@ -15,7 +15,7 @@ from vectordb_bench.backend.dataset import (
     MSMarcoTranslator,
     SizeLabel,
 )
-from vectordb_bench.backend.filter import NewIntFilter
+from vectordb_bench.backend.filter import NewIntFilter, non_filter
 
 
 @dataclass
@@ -69,6 +69,12 @@ class FakeDatasetWithLowPermutationQrels(FakeDataset):
     def __init__(self):
         super().__init__()
         self.qrels = [Qrel("q1", "d3", 1), Qrel("q2", "d4", 2)]
+
+
+class FakeDatasetWithLateQrel(FakeDataset):
+    def __init__(self):
+        super().__init__()
+        self.qrels = [Qrel("q1", "d4", 1)]
 
 
 def make_tiny_msmarco_manager(size: int = 3) -> FtsDatasetManager:
@@ -162,6 +168,7 @@ def test_fts_iterator_preserves_qrel_docs_before_filler():
     manager._ir_dataset = FakeDataset()
     manager.required_doc_ids = {"d4"}
     manager.selected_doc_ids = manager._build_selected_doc_ids()
+    manager.filter_stats = {"filter_type": "NumGE"}
 
     assert manager.selected_doc_ids == {"d1", "d2", "d4"}
 
@@ -172,6 +179,35 @@ def test_fts_iterator_preserves_qrel_docs_before_filler():
     assert ("d4", 1) in docs
     assert all(not doc_id.isdecimal() for doc_id, _ in docs)
     assert [filter_id for _, filter_id in docs] == [2, 0, 1]
+
+
+def test_fts_unfiltered_iterator_omits_filter_ids():
+    manager = make_tiny_msmarco_manager()
+    manager._ir_dataset = FakeDataset()
+    manager.selected_doc_ids = {"d1", "d2", "d3"}
+
+    docs = [doc for batch in manager for doc in batch]
+
+    assert [doc.filter_id for doc in docs] == [None, None, None]
+
+
+def test_fts_prepare_non_filter_materializes_qrel_preserving_corpus(monkeypatch: pytest.MonkeyPatch):
+    manager = make_tiny_msmarco_manager(size=3)
+    monkeypatch.setattr(manager._translator, "load", FakeDatasetWithLateQrel)
+
+    assert manager.prepare(source=None, filters=non_filter)
+    monkeypatch.setattr(
+        manager._translator,
+        "iter_documents",
+        lambda dataset: pytest.fail("timed insertion must use the prepared corpus"),
+    )
+    docs = [doc for batch in manager for doc in batch]
+
+    assert manager.selected_doc_ids is None
+    assert [doc.doc_id for doc in docs] == ["d1", "d2", "d4"]
+    assert [doc.filter_id for doc in docs] == [None, None, None]
+    assert manager.recall_queries_data == manager.queries_data
+    assert manager.recall_gt_data == manager.gt_data
 
 
 def test_fts_qrel_filter_ids_match_sparse_emitted_documents_when_one_is_skipped():
@@ -200,6 +236,7 @@ def test_fts_qrel_filter_ids_match_sparse_emitted_documents_when_one_is_skipped(
     manager._translator = SparseTranslator()
     manager.required_doc_ids = {"d1", "d5"}
     manager.selected_doc_ids = {"d1", "d3", "d5"}
+    manager.filter_stats = {"filter_type": "NumGE"}
 
     qrel_filter_ids = manager._build_qrel_filter_ids()
     emitted_filter_ids = {doc.doc_id: doc.filter_id for batch in manager for doc in batch}
@@ -214,6 +251,12 @@ def test_fts_prepare_integer_filter_derives_filtered_qrels(monkeypatch: pytest.M
 
     filters = NewIntFilter(filter_rate=0.5, int_field="filter_id", int_value=2)
     assert manager.prepare(source=None, filters=filters)
+    monkeypatch.setattr(
+        manager._translator,
+        "iter_documents",
+        lambda dataset: pytest.fail("timed insertion must use the prepared corpus"),
+    )
+    emitted_filter_ids = {doc.doc_id: doc.filter_id for batch in manager for doc in batch}
 
     assert [query.query_id for query in manager.queries_data] == ["q1", "q2"]
     assert manager.gt_data == [{"d3": 1}, {"d1": 2}]
@@ -222,6 +265,7 @@ def test_fts_prepare_integer_filter_derives_filtered_qrels(monkeypatch: pytest.M
     assert manager.recall_skipped is False
     assert manager.recall_skip_reason is None
     assert manager.qrel_filter_ids == {"d1": 3, "d3": 1}
+    assert emitted_filter_ids == {"d1": 3, "d2": 2, "d3": 1, "d4": 0}
     assert manager.filter_stats == {
         "filter_type": "NumGE",
         "filter_field": "filter_id",
@@ -278,9 +322,10 @@ def test_fts_cap_rejects_required_qrel_docs_missing_from_corpus():
 def test_fts_prepare_propagates_missing_required_qrel_docs(monkeypatch: pytest.MonkeyPatch):
     manager = FtsDatasetManager(data=MSMarcoFts(size=100_000))
     monkeypatch.setattr(manager._translator, "load", FakeDatasetWithMissingQrel)
+    filters = NewIntFilter(filter_rate=0.5, int_field="filter_id", int_value=50_000)
 
     with pytest.raises(ValueError, match="missing from corpus"):
-        manager.prepare(source=None)
+        manager.prepare(source=None, filters=filters)
 
 
 def test_fts_dataset_size_registry():

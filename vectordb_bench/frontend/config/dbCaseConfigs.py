@@ -1,18 +1,32 @@
-from enum import IntEnum, Enum
 import typing
-from pydantic import BaseModel
-from vectordb_bench.backend.cases import CaseLabel, CaseType
+from enum import Enum, IntEnum
+
+from pydantic import BaseModel, Field
+
+from vectordb_bench.backend.cases import CaseLabel, CaseType, PerformanceCase
 from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.clients.api import IndexType, MetricType, SQType
-from vectordb_bench.backend.dataset import DatasetWithSizeType, FtsDatasetWithSizeType
+from vectordb_bench.backend.dataset import (
+    LAION_INT_FILTER_SEARCH_WIDTHS,
+    DatasetWithSizeType,
+    FtsDatasetWithSizeType,
+)
+from vectordb_bench.backend.payload import PayloadProfile
 from vectordb_bench.frontend.components.custom.getCustomConfig import get_custom_configs
-
 from vectordb_bench.models import CaseConfig, CaseConfigParamType
 
 MAX_STREAMLIT_INT = (1 << 53) - 1
 
 DB_LIST = [d for d in DB if d != DB.Test]
 FTS_SUPPORTED_DBS = {DB.Milvus, DB.ZillizCloud, DB.ElasticCloud, DB.OSSOpenSearch, DB.Vespa, DB.TurboPuffer}
+VECTOR_PAYLOAD_SUPPORTED_DBS = {DB.Milvus, DB.ZillizCloud}
+
+
+def get_payload_profile_options(active_dbs: list[DB]) -> list[PayloadProfile]:
+    profiles = [PayloadProfile.IDS_ONLY]
+    if active_dbs and all(db in VECTOR_PAYLOAD_SUPPORTED_DBS for db in active_dbs):
+        profiles.append(PayloadProfile.VECTOR)
+    return profiles
 
 
 class Delimiter(Enum):
@@ -56,6 +70,7 @@ class UICaseItem(BaseModel):
     supportedDbs: list[DB] | None = None
     extra_custom_case_config_inputs: list[ConfigInput] = []
     tmp_custom_config: dict = dict()
+    payload_profiles: list[PayloadProfile] = Field(default_factory=lambda: [PayloadProfile.IDS_ONLY])
 
     def __init__(
         self,
@@ -91,20 +106,29 @@ class UICaseItem(BaseModel):
     def __hash__(self) -> int:
         return hash(self.key if self.key else self.label)
 
+    @property
+    def supports_payload_profiles(self) -> bool:
+        return bool(self.cases) and all(isinstance(case.case, PerformanceCase) for case in self.cases)
+
     def get_cases(self) -> list[CaseConfig]:
-        # return self.cases
-        if len(self.extra_custom_case_config_inputs) == 0:
-            return self.cases
-        cases = [
-            CaseConfig(
-                case_id=c.case_id,
-                k=c.k,
-                concurrency_search_config=c.concurrency_search_config,
-                custom_case={**c.custom_case, **self.tmp_custom_config},
-            )
-            for c in self.cases
+        cases = self.cases
+        if self.extra_custom_case_config_inputs:
+            cases = [
+                CaseConfig(
+                    case_id=case.case_id,
+                    k=case.k,
+                    concurrency_search_config=case.concurrency_search_config,
+                    custom_case={**(case.custom_case or {}), **self.tmp_custom_config},
+                )
+                for case in cases
+            ]
+        if not self.supports_payload_profiles:
+            return cases
+        return [
+            CaseConfig.model_validate({**case.model_dump(), "payload_profile": payload_profile})
+            for case in cases
+            for payload_profile in self.payload_profiles
         ]
-        return cases
 
     def supports_dbs(self, dbs: list[DB]) -> bool:
         if self.supportedDbs is None:
@@ -240,9 +264,10 @@ custom_streaming_config: list[ConfigInput] = [
     ),
     ConfigInput(
         label=CaseConfigParamType.insert_rate,
+        displayLabel="Streaming Insert Rate",
         inputType=InputType.Number,
-        inputConfig=dict(step=100, min=100, max=4_000, value=200),
-        inputHelp="fixed insertion rate (rows/s), must be divisible by 100",
+        inputConfig=dict(step=100, min=1, max=MAX_STREAMLIT_INT, value=500),
+        inputHelp="Fixed streaming insertion rate (rows/s); must be at least and divisible by Insert Batch Size.",
     ),
     ConfigInput(
         label=CaseConfigParamType.search_stages,
@@ -288,14 +313,33 @@ def generate_label_filter_cases(dataset_with_size_type: DatasetWithSizeType) -> 
     ]
 
 
-def generate_int_filter_cases(dataset_with_size_type: DatasetWithSizeType) -> list[CaseConfig]:
-    filter_rates = dataset_with_size_type.get_manager().data.scalar_int_rates
+def generate_int_filter_cases(
+    dataset_with_size_type: DatasetWithSizeType,
+    filter_rates: typing.Iterable[float] | None = None,
+) -> list[CaseConfig]:
+    if filter_rates is None:
+        filter_rates = dataset_with_size_type.get_manager().data.scalar_int_rates
     return [
         CaseConfig(
             case_id=CaseType.NewIntFilterPerformanceCase,
             custom_case=dict(dataset_with_size_type=dataset_with_size_type, filter_rate=filter_rate),
         )
         for filter_rate in filter_rates
+    ]
+
+
+def generate_laion_large_topk_filter_items() -> list[UICaseItem]:
+    rates_by_max_k: dict[int, list[float]] = {}
+    for filter_rate, widths in LAION_INT_FILTER_SEARCH_WIDTHS.items():
+        rates_by_max_k.setdefault(widths[-1], []).append(filter_rate)
+
+    return [
+        UICaseItem(
+            label=f"Large LAION Int-Filter - K up to {max_k:,}",
+            description="Filter rates: " + ", ".join(f"{rate * 100:g}%" for rate in filter_rates),
+            cases=generate_int_filter_cases(DatasetWithSizeType.LAIONLarge, filter_rates),
+        )
+        for max_k, filter_rates in rates_by_max_k.items()
     ]
 
 
@@ -331,7 +375,8 @@ UI_CASE_CLUSTERS: list[UICaseItemCluster] = [
     ),
     UICaseItemCluster(
         label="New-Int-Filter Search Performance Test",
-        uiCaseItems=[
+        uiCaseItems=generate_laion_large_topk_filter_items()
+        + [
             UICaseItem(
                 label=f"Int-Filter Search Performance Test - {dataset_with_size_type.value}",
                 description=(

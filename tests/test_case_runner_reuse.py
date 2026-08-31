@@ -1,16 +1,20 @@
 from pydantic import SecretStr
 
+from vectordb_bench import config
 from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.clients.api import EmptyDBCaseConfig, MetricType
 from vectordb_bench.backend.clients.doris.config import DorisCaseConfig, DorisConfig
 from vectordb_bench.backend.clients.pinecone.config import PineconeConfig
 from vectordb_bench.backend.clients.turbopuffer.config import TurboPufferConfig, TurboPufferIndexConfig
+from vectordb_bench.backend.clients.zilliz_cloud.config import AutoIndexConfig, ZillizCloudConfig
 from vectordb_bench.backend.data_source import DatasetSource
 from vectordb_bench.backend.dataset import DatasetWithSizeType
 from vectordb_bench.backend.task_runner import CaseRunner, RunningStatus, TaskRunner
 from vectordb_bench.interface import BenchMarkRunner
 from vectordb_bench.metric import Metric
 from vectordb_bench.models import CaseConfig, CaseType, TaskConfig, TaskStage, TestResult
+
+DEFAULT_INSERT_BATCH_SIZE = config.DEFAULT_INSERT_BATCH_SIZE
 
 
 def make_runner(
@@ -20,7 +24,9 @@ def make_runner(
     db: DB = DB.TurboPuffer,
     db_config=None,
     db_case_config=None,
+    k: int = 100,
     stages: list[TaskStage] | None = None,
+    insert_batch_size: int = DEFAULT_INSERT_BATCH_SIZE,
 ) -> CaseRunner:
     if db_config is None:
         if db == DB.TurboPuffer:
@@ -29,6 +35,8 @@ def make_runner(
             db_config = PineconeConfig(api_key="key", index_name="idx")
         elif db == DB.Doris:
             db_config = DorisConfig(password=SecretStr(""))
+        elif db == DB.ZillizCloud:
+            db_config = ZillizCloudConfig(uri=SecretStr("http://example.invalid"))
         else:
             db_config = DB.Test.config_cls()
     if db_case_config is None:
@@ -36,6 +44,8 @@ def make_runner(
             db_case_config = TurboPufferIndexConfig(metric_type=MetricType.COSINE)
         elif db == DB.Doris:
             db_case_config = DorisCaseConfig(metric_type=MetricType.COSINE)
+        elif db == DB.ZillizCloud:
+            db_case_config = AutoIndexConfig(metric_type=MetricType.COSINE)
         else:
             db_case_config = EmptyDBCaseConfig()
 
@@ -43,8 +53,9 @@ def make_runner(
         db=db,
         db_config=db_config,
         db_case_config=db_case_config,
-        case_config=CaseConfig(case_id=case_id, custom_case=custom_case or {}),
+        case_config=CaseConfig(case_id=case_id, custom_case=custom_case or {}, k=k),
         stages=stages or [TaskStage.DROP_OLD, TaskStage.LOAD, TaskStage.SEARCH_SERIAL],
+        insert_batch_size=insert_batch_size,
     )
     return CaseRunner(
         run_id="run-id",
@@ -109,6 +120,20 @@ def test_reuse_key_preserves_safe_payload_reuse():
 
     assert ids_only == vector
     assert hash(ids_only) == hash(vector)
+
+
+def test_reuse_key_distinguishes_insert_batch_size():
+    assert_not_reusable(
+        make_runner(insert_batch_size=100),
+        make_runner(insert_batch_size=200),
+    )
+
+
+def test_reuse_key_distinguishes_zilliz_default_and_large_topk_modes():
+    assert_not_reusable(
+        make_runner(db=DB.ZillizCloud, case_id=CaseType.Performance768D100M, k=16_384),
+        make_runner(db=DB.ZillizCloud, case_id=CaseType.Performance768D100M, k=16_385),
+    )
 
 
 def test_reuse_key_distinguishes_physical_db_targets():

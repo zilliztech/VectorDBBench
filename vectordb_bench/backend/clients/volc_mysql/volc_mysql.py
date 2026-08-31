@@ -5,6 +5,7 @@ import os
 import struct
 import tempfile
 from contextlib import contextmanager
+from copy import copy
 from pathlib import Path
 
 import mysql.connector as mysql
@@ -205,6 +206,15 @@ class VolcMySQL(VectorDB):
             except mysql.Error:
                 log.debug("Failed to drop binary-probe temp table", exc_info=True)
             cur.close()
+
+    def copy_for_thread(self) -> "VectorDB":
+        # mysql.connector holds an open socket that can't be deep-copied; shallow-copy
+        # and drop the connection so init() reconnects inside the worker thread.
+        db_copy = copy(self)
+        db_copy.conn = None
+        db_copy.cursor = None
+        db_copy.admin_cursor = None
+        return db_copy
 
     @contextmanager
     def init(self):

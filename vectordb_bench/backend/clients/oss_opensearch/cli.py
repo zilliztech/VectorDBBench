@@ -169,6 +169,7 @@ def OSSOpenSearch(**parameters: Unpack[OSSOpenSearchHNSWTypedDict]):
             flush_threshold_size=parameters["flush_threshold_size"],
             index_thread_qty_during_force_merge=parameters["index_thread_qty_during_force_merge"],
             cb_threshold=parameters["cb_threshold"],
+            metric_type_name=parameters["metric_type"],
             efConstruction=parameters["ef_construction"],
             efSearch=parameters["ef_search"],
             M=parameters["m"],

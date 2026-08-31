@@ -6,12 +6,12 @@ from enum import Enum, StrEnum
 from typing import Any, ClassVar, Self
 
 import ujson
+from pydantic import PositiveInt, field_validator, model_validator
 
-from vectordb_bench.backend.cases import type2case
 from vectordb_bench.backend.dataset import DatasetWithSizeMap
 
 from . import config
-from .backend.cases import Case, CaseType
+from .backend.cases import Case, CaseType, PerformanceCase, type2case
 from .backend.clients import (
     DB,
     DBCaseConfig,
@@ -19,6 +19,7 @@ from .backend.clients import (
     EmptyDBCaseConfig,
 )
 from .backend.clients.api import IndexType
+from .backend.payload import PayloadProfile
 from .base import BaseModel
 from .metric import Metric
 
@@ -212,8 +213,33 @@ class CaseConfig(BaseModel):
 
     case_id: CaseType
     custom_case: dict | None = None
+    payload_profile: PayloadProfile | None = None
     k: int | None = config.K_DEFAULT
     concurrency_search_config: ConcurrencySearchConfig = ConcurrencySearchConfig()
+
+    @field_validator("k")
+    @classmethod
+    def validate_k(cls, value: int | None) -> int | None:
+        if value is not None and value <= 0:
+            msg = f"K must be positive, got {value}"
+            raise ValueError(msg)
+        return value
+
+    @model_validator(mode="after")
+    def validate_payload_profile(self) -> Self:
+        if self.payload_profile is None:
+            return self
+
+        case_cls = type2case[self.case_id]
+        if not issubclass(case_cls, PerformanceCase):
+            msg = "Top-level payload_profile is only supported for PerformanceCase cases"
+            raise ValueError(msg)  # noqa: TRY004
+
+        legacy_profile = (self.custom_case or {}).get("payload_profile")
+        if legacy_profile is not None and PayloadProfile(legacy_profile) != self.payload_profile:
+            msg = "Top-level payload_profile conflicts with custom_case payload_profile"
+            raise ValueError(msg)
+        return self
 
     '''
     @property
@@ -232,7 +258,10 @@ class CaseConfig(BaseModel):
 
     @property
     def case(self) -> Case:
-        return self.case_id.case_cls(self.custom_case)
+        custom_case = dict(self.custom_case or {})
+        if self.payload_profile is not None:
+            custom_case["payload_profile"] = self.payload_profile
+        return self.case_id.case_cls(custom_case or None)
 
     @property
     def case_name(self) -> str:
@@ -267,6 +296,38 @@ class TaskConfig(BaseModel):
     case_config: CaseConfig
     stages: list[TaskStage] = ALL_TASK_STAGES
     load_concurrency: int = config.LOAD_CONCURRENCY
+    insert_batch_size: PositiveInt = config.DEFAULT_INSERT_BATCH_SIZE
+
+    @model_validator(mode="after")
+    def validate_streaming_insert_rate(self) -> Self:
+        streaming_case_types = {
+            CaseType.StreamingPerformanceCase,
+            CaseType.StreamingCustomDataset,
+        }
+        if self.case_config.case_id not in streaming_case_types:
+            return self
+
+        custom_case = self.case_config.custom_case or {}
+        insert_rate = custom_case.get("insert_rate", config.DEFAULT_STREAMING_INSERT_RATE)
+        if not isinstance(insert_rate, int) or isinstance(insert_rate, bool) or insert_rate <= 0:
+            raise ValueError("streaming insert_rate must be a positive integer")
+
+        rate_is_too_low = insert_rate < self.insert_batch_size
+        rate_is_divisible = insert_rate % self.insert_batch_size == 0
+
+        if rate_is_too_low:
+            msg = (
+                f"streaming insert_rate ({insert_rate}) must be greater than or equal to "
+                f"insert_batch_size ({self.insert_batch_size})"
+            )
+            raise ValueError(msg)
+        if not rate_is_divisible:
+            msg = (
+                f"streaming insert_rate ({insert_rate}) must be divisible by "
+                f"insert_batch_size ({self.insert_batch_size})"
+            )
+            raise ValueError(msg)
+        return self
 
     @property
     def db_name(self):
@@ -307,7 +368,7 @@ class TestResult(BaseModel):
             return {
                 key: (
                     "**********"
-                    if key.lower() in cls.sensitive_output_fields and item
+                    if isinstance(key, str) and key.lower() in cls.sensitive_output_fields and item
                     else cls._redact_sensitive_fields(item)
                 )
                 for key, item in value.items()
@@ -418,7 +479,7 @@ class TestResult(BaseModel):
         return case_config
 
     @classmethod
-    def read_file(cls, full_path: pathlib.Path, trans_unit: bool = False) -> Self:
+    def read_file(cls, full_path: pathlib.Path, trans_unit: bool = False) -> Self:  # noqa: PLR0912
         if not full_path.exists():
             msg = f"No such file: {full_path}"
             raise ValueError(msg)
@@ -430,7 +491,22 @@ class TestResult(BaseModel):
             for case_result in test_result["results"]:
                 task_config = case_result.get("task_config")
                 case_config = task_config.get("case_config")
+                metrics = case_result.get("metrics")
                 db = DB(task_config.get("db"))
+                if "insert_batch_size" not in task_config:
+                    insert_batch_size = None
+                    if CaseType(case_config.get("case_id")) == CaseType.CloudInsertCase:
+                        custom_case = case_config.get("custom_case") or {}
+                        insert_batch_size = custom_case.get("batch_size")
+                    if insert_batch_size is None and metrics:
+                        additional_parameters = metrics.get("additional_parameters") or {}
+                        insert_batch_size = additional_parameters.get(
+                            "insert_batch_size",
+                            additional_parameters.get("num_per_batch"),
+                        )
+                    if insert_batch_size is not None:
+                        task_config["insert_batch_size"] = insert_batch_size
+
                 task_config["db_config"] = db.config_cls(**task_config["db_config"])
                 # Safely instantiate DBCaseConfig (fallback to EmptyDBCaseConfig on None)
                 raw_case_cfg = task_config.get("db_case_config") or {}
@@ -447,7 +523,6 @@ class TestResult(BaseModel):
 
                 task_config["case_config"] = cls.get_case_config(case_config=case_config)
                 case_result["task_config"] = task_config
-                metrics = case_result.get("metrics")
                 if (
                     metrics
                     and CaseType(case_config.get("case_id")) == CaseType.CloudColdLatencyCase
@@ -472,6 +547,12 @@ class TestResult(BaseModel):
                         )
                     elif "serial_latency_p99" in metrics:
                         metrics["serial_latency_p95"] = 0.0
+
+                    if "serial_latency_p50" in metrics:
+                        cur_latency_p50 = metrics["serial_latency_p50"]
+                        metrics["serial_latency_p50"] = (
+                            cur_latency_p50 * 1000 if cur_latency_p50 > 0 else cur_latency_p50
+                        )
             return TestResult.model_validate(test_result)
 
     def display(self, dbs: list[DB] | None = None):

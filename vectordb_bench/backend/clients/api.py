@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
+from copy import deepcopy
 from enum import StrEnum
 from typing import ClassVar
 
@@ -199,6 +200,17 @@ class VectorDB(ABC):
         (All search tests in a case use consistent filtering conditions.)"""
         return
 
+    def copy_for_thread(self) -> "VectorDB":
+        """Return a per-thread copy of this client for non-thread-safe backends.
+
+        Runners call this (instead of branching on db.name) when thread_safe is
+        False, then init() the copy inside the worker so each thread owns its own
+        connection. Defaults to a deep copy; clients whose live connection can't be
+        deep-copied (e.g. an open DB-API socket) override this to shallow-copy and
+        drop their connection handles so init() re-establishes them per thread.
+        """
+        return deepcopy(self)
+
     @abstractmethod
     def __init__(
         self,
@@ -244,7 +256,8 @@ class VectorDB(ABC):
         """Wheather this database need to normalize dataset to support COSINE"""
         return False
 
-    def supports_payload_profile(self, payload_profile: PayloadProfile) -> bool:
+    @staticmethod
+    def supports_payload_profile(payload_profile: PayloadProfile) -> bool:
         return payload_profile == PayloadProfile.IDS_ONLY
 
     def has_text_field(self) -> bool:
@@ -331,8 +344,7 @@ class VectorDB(ABC):
         tenant_labels_data: list[str] | None = None,
         **kwargs,
     ) -> tuple[int, Exception]:
-        """Insert the embeddings to the vector database. The default number of embeddings for
-        each insert_embeddings is 5000.
+        """Insert one task-configured batch of embeddings into the vector database.
 
         Args:
             embeddings(list[list[float]]): list of embedding to add to the vector database.

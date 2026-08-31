@@ -4,9 +4,11 @@ Usage:
     >>> Dataset.Cohere.get(100_000)
 """
 
+import json
 import logging
 import math
 import pathlib
+import tempfile
 import types
 import typing
 from abc import ABC, abstractmethod
@@ -28,9 +30,10 @@ from vectordb_bench.base import BaseModel
 from . import utils
 from .clients import MetricType
 from .data_source import DatasetReader, DatasetSource
-from .filter import Filter, FilterOp, non_filter
+from .filter import Filter, FilterOp, NewIntFilter, non_filter
 
 log = logging.getLogger(__name__)
+DEFAULT_INSERT_BATCH_SIZE = config.DEFAULT_INSERT_BATCH_SIZE
 
 
 class SizeLabel(NamedTuple):
@@ -153,6 +156,125 @@ class LAION(BaseDataset):
     _size_label: ClassVar[dict[int, SizeLabel]] = {
         100_000_000: SizeLabel(100_000_000, "LARGE", 100),
     }
+
+
+@dataclass(frozen=True)
+class SearchDatasetFiles:
+    test_file: str
+    gt_file: str
+    width: int | None = None
+    query_count: int | None = None
+
+
+LAION_SEARCH_DATASET_FILES = (
+    (1_000, SearchDatasetFiles("test.parquet", "neighbors.parquet", width=1_000, query_count=1_000)),
+    (
+        100_000,
+        SearchDatasetFiles(
+            "test_nq200.parquet",
+            "neighbors_top100k_nq200.parquet",
+            width=100_000,
+            query_count=200,
+        ),
+    ),
+    (
+        1_000_000,
+        SearchDatasetFiles(
+            "test_nq200.parquet",
+            "neighbors_top1m_nq200.parquet",
+            width=1_000_000,
+            query_count=200,
+        ),
+    ),
+)
+
+# Published widths are capped by the population left after applying each ID threshold.
+LAION_INT_FILTER_SEARCH_WIDTHS: dict[float, tuple[int, ...]] = {
+    0.5: (100_000, 1_000_000),
+    0.6: (100_000, 1_000_000),
+    0.7: (100_000, 1_000_000),
+    0.8: (100_000, 1_000_000),
+    0.9: (100_000, 1_000_000),
+    0.95: (100_000, 1_000_000),
+    0.98: (100_000, 1_000_000),
+    0.99: (100_000, 1_000_000),
+    0.995: (100_000, 500_000),
+    0.998: (100_000, 200_000),
+    0.999: (100_000,),
+}
+
+
+@dataclass(frozen=True)
+class ParquetGroundTruth:
+    path: pathlib.Path
+    neighbors_field: str
+    row_count: int
+    width: int
+
+    @classmethod
+    def from_file(
+        cls,
+        path: pathlib.Path,
+        *,
+        id_field: str,
+        neighbors_field: str,
+        expected_query_ids: typing.Sequence[Any],
+        minimum_width: int,
+        expected_width: int | None = None,
+    ) -> "ParquetGroundTruth":
+        if not path.exists():
+            msg = f"No such file: {path}"
+            raise FileNotFoundError(msg)
+
+        parquet_file = ParquetFile(path, memory_map=True, pre_buffer=False)
+        schema_names = parquet_file.schema_arrow.names
+        missing_fields = [field for field in (id_field, neighbors_field) if field not in schema_names]
+        if missing_fields:
+            msg = f"Ground truth file {path} is missing fields: {missing_fields}"
+            raise ValueError(msg)
+
+        query_ids = parquet_file.read(columns=[id_field]).column(0).to_pylist()
+        if query_ids != list(expected_query_ids):
+            msg = f"Ground truth query IDs in {path} do not match the selected query file"
+            raise ValueError(msg)
+
+        row_count = parquet_file.metadata.num_rows
+        minimum_observed_width = None
+        observed_rows = 0
+        for batch in parquet_file.iter_batches(batch_size=1, columns=[neighbors_field]):
+            for row in batch.column(0):
+                if not row.is_valid:
+                    msg = f"Ground truth file {path} contains a null neighbors row"
+                    raise ValueError(msg)
+                width = len(row.values)
+                observed_rows += 1
+                minimum_observed_width = width if minimum_observed_width is None else min(minimum_observed_width, width)
+                if expected_width is not None and width != expected_width:
+                    msg = f"Ground truth width {width} in {path} does not match expected width {expected_width}"
+                    raise ValueError(msg)
+                if width < minimum_width:
+                    msg = f"Ground truth width {width} in {path} is smaller than requested K={minimum_width}"
+                    raise ValueError(msg)
+
+        if observed_rows != row_count or minimum_observed_width is None:
+            msg = f"Ground truth row count in {path} is invalid: expected {row_count}, read {observed_rows}"
+            raise ValueError(msg)
+
+        return cls(
+            path=path,
+            neighbors_field=neighbors_field,
+            row_count=row_count,
+            width=minimum_observed_width,
+        )
+
+    def __len__(self) -> int:
+        return self.row_count
+
+    def iter_rows(self) -> Iterator[Any]:
+        parquet_file = ParquetFile(self.path, memory_map=True, pre_buffer=False)
+        for batch in parquet_file.iter_batches(batch_size=1, columns=[self.neighbors_field]):
+            for row in batch.column(0):
+                yield row.values.to_numpy(zero_copy_only=False)  # noqa: PD011
 
 
 class GIST(BaseDataset):
@@ -316,7 +438,8 @@ class DatasetManager(BaseModel):
 
     data: BaseDataset
     test_data: list[list[float]] | None = None
-    gt_data: list[list[int]] | None = None
+    gt_data: ParquetGroundTruth | list[list[int]] | None = None
+    search_files: SearchDatasetFiles | None = None
     scalar_labels: pl.DataFrame | None = None
     train_files: list[str] = []
     reader: DatasetReader | None = None
@@ -360,6 +483,7 @@ class DatasetManager(BaseModel):
         filters: Filter = non_filter,
         with_train_files: bool = True,
         with_scalar_labels: bool = False,
+        k: int | None = None,
     ) -> bool:
         """Download the dataset from DatasetSource
          url = f"{source}/{self.data.dir_name}"
@@ -368,15 +492,18 @@ class DatasetManager(BaseModel):
             source(DatasetSource): S3 or AliyunOSS, default as S3
             filters(Filter): combined with dataset's with_gt to
               compose the correct ground_truth file
+            k(int | None): requested search depth used to select and validate ground truth
 
         Returns:
             bool: whether the dataset is successfully prepared
 
         """
+        requested_k = config.K_DEFAULT if k is None else k
         self.train_files = self.data.train_files if with_train_files else []
         gt_file, test_file = None, None
         if self.data.with_gt:
-            gt_file, test_file = filters.groundtruth_file, self.data.test_file
+            self.search_files = self.resolve_search_files(k=requested_k, filters=filters)
+            gt_file, test_file = self.search_files.gt_file, self.search_files.test_file
 
         if self.data.with_remote_resource:
             download_files = [file for file in self.train_files]
@@ -397,12 +524,82 @@ class DatasetManager(BaseModel):
             self.scalar_labels = self._read_file(self.data.scalar_labels_file)
 
         if gt_file is not None and test_file is not None:
-            self.test_data = self._read_file(test_file)[self.data.test_vector_field].to_list()
-            self.gt_data = self._read_file(gt_file)[self.data.gt_neighbors_field].to_list()
+            test_frame = self._read_file(test_file)
+            if self.search_files.query_count is not None and len(test_frame) != self.search_files.query_count:
+                msg = (
+                    f"Query row count {len(test_frame)} in {test_file} does not match "
+                    f"expected count {self.search_files.query_count}"
+                )
+                raise ValueError(msg)
+            query_ids = test_frame[self.data.test_id_field].to_list()
+            self.test_data = test_frame[self.data.test_vector_field].to_list()
+            self.gt_data = ParquetGroundTruth.from_file(
+                pathlib.Path(self.data_dir, gt_file),
+                id_field=self.data.gt_id_field,
+                neighbors_field=self.data.gt_neighbors_field,
+                expected_query_ids=query_ids,
+                minimum_width=requested_k,
+                expected_width=self.search_files.width,
+            )
 
         log.debug(f"{self.data.name}: available train files {self.train_files}")
 
         return True
+
+    def max_search_k(self, filters: Filter = non_filter) -> int | None:
+        if not isinstance(self.data, LAION):
+            return None
+        if isinstance(filters, NewIntFilter):
+            widths = LAION_INT_FILTER_SEARCH_WIDTHS.get(filters.filter_rate)
+            return widths[-1] if widths is not None else None
+        if filters.type == FilterOp.NonFilter:
+            return LAION_SEARCH_DATASET_FILES[-1][0]
+        return LAION_SEARCH_DATASET_FILES[0][0]
+
+    def resolve_search_files(self, *, k: int, filters: Filter = non_filter) -> SearchDatasetFiles:
+        if k <= 0:
+            msg = f"{self.data.name} search K must be positive, got {k}"
+            raise ValueError(msg)
+
+        if isinstance(self.data, LAION):
+            max_k = LAION_SEARCH_DATASET_FILES[-1][0]
+            if k > max_k:
+                msg = f"LAION supports K up to {max_k:,}, got {k:,}"
+                raise ValueError(msg)
+
+            if isinstance(filters, NewIntFilter):
+                widths = LAION_INT_FILTER_SEARCH_WIDTHS.get(filters.filter_rate)
+                if widths is None:
+                    supported_rates = ", ".join(f"{rate * 100:g}%" for rate in LAION_INT_FILTER_SEARCH_WIDTHS)
+                    msg = f"LAION supported filter rates are: {supported_rates}; got {filters.filter_rate * 100:g}%"
+                    raise ValueError(msg)
+                if k <= LAION_SEARCH_DATASET_FILES[0][0]:
+                    return SearchDatasetFiles(self.data.test_file, filters.groundtruth_file)
+                for width in widths:
+                    if k <= width:
+                        width_suffix = f"{width // 1_000_000}m" if width >= 1_000_000 else f"{width // 1_000}k"
+                        return SearchDatasetFiles(
+                            "test_nq200.parquet",
+                            f"neighbors_{filters.int_rate}_top{width_suffix}_nq200.parquet",
+                            width=width,
+                            query_count=200,
+                        )
+                msg = (
+                    f"LAION integer filter {filters.filter_rate * 100:g}% supports K up to "
+                    f"{widths[-1]:,}, got {k:,}"
+                )
+                raise ValueError(msg)
+
+            if filters.type != FilterOp.NonFilter:
+                if k > LAION_SEARCH_DATASET_FILES[0][0]:
+                    msg = "LAION large-TopK ground truth is published only for integer filters"
+                    raise ValueError(msg)
+                return SearchDatasetFiles(self.data.test_file, filters.groundtruth_file)
+            for upper_bound, files in LAION_SEARCH_DATASET_FILES:
+                if k <= upper_bound:
+                    return files
+
+        return SearchDatasetFiles(self.data.test_file, filters.groundtruth_file)
 
     def _read_file(self, file_name: str) -> pl.DataFrame:
         """read one file from disk into memory"""
@@ -416,7 +613,10 @@ class DatasetManager(BaseModel):
 
 
 class DataSetIterator:
-    def __init__(self, dataset: DatasetManager, batch_size: int = config.NUM_PER_BATCH):
+    def __init__(self, dataset: DatasetManager, batch_size: int = DEFAULT_INSERT_BATCH_SIZE):
+        if batch_size <= 0:
+            msg = f"insert batch size must be greater than 0, got {batch_size}"
+            raise ValueError(msg)
         self._ds = dataset
         self._batch_size = batch_size
         self._idx = 0  # file number
@@ -790,6 +990,8 @@ class FtsDatasetManager(BaseModel):
     qrel_filter_ids: dict[str, int] = PydanticField(default_factory=dict)
     filter_stats: dict[str, int | float | str] = PydanticField(default_factory=dict)
     _ir_dataset: typing.Any = PrivateAttr(default=None)
+    _prepared_documents_dir: typing.Any = PrivateAttr(default=None)
+    _prepared_documents_path: pathlib.Path | None = PrivateAttr(default=None)
 
     def __init__(self, **data):
         super().__init__(**data)
@@ -860,14 +1062,77 @@ class FtsDatasetManager(BaseModel):
 
         return selected_doc_ids
 
-    def _iter_selected_documents_with_filter_ids(self) -> Iterator[FtsDocument]:
+    def _prepare_qrel_preserving_documents(self) -> None:
+        """Materialize capped documents before timed insertion."""
+        if self._prepared_documents_dir is not None:
+            self._prepared_documents_dir.cleanup()
+        self._prepared_documents_dir = None
+        self._prepared_documents_path = None
+
+        if self.data.size == max(self.data._size_label):
+            return
+
+        required_doc_ids = set(self.required_doc_ids)
+        self._validate_cap(required_doc_ids=required_doc_ids, target_size=self.data.size)
+        filler_limit = self.data.size - len(required_doc_ids)
+        filler_count = 0
+        selected_doc_ids: set[str] = set()
+        found_required_doc_ids: set[str] = set()
+        prepared_dir = tempfile.TemporaryDirectory(prefix="vdbbench_fts_qrel_v1_")
+        prepared_path = pathlib.Path(prepared_dir.name, f"{self.data.dir_name}.jsonl")
+
+        try:
+            with prepared_path.open("w", encoding="utf-8") as output:
+                for doc in self._translator.iter_documents(self._ir_dataset):
+                    doc_id = str(doc.doc_id)
+                    if doc_id in selected_doc_ids:
+                        continue
+                    if doc_id in required_doc_ids:
+                        found_required_doc_ids.add(doc_id)
+                    elif filler_count < filler_limit:
+                        filler_count += 1
+                    else:
+                        continue
+                    selected_doc_ids.add(doc_id)
+                    output.write(json.dumps([doc_id, doc.text], ensure_ascii=False) + "\n")
+                    if len(selected_doc_ids) == self.data.size and found_required_doc_ids == required_doc_ids:
+                        break
+
+            missing_doc_ids = required_doc_ids - found_required_doc_ids
+            if missing_doc_ids:
+                preview = ", ".join(sorted(missing_doc_ids)[:10])
+                msg = (
+                    f"{self.data.full_name} semantic qrel docs missing from corpus: {preview}"
+                    f"{'...' if len(missing_doc_ids) > 10 else ''}"
+                )
+                raise ValueError(msg)  # noqa: TRY301
+            if len(selected_doc_ids) != self.data.size:
+                msg = f"{self.data.full_name} prepared {len(selected_doc_ids)} documents, expected {self.data.size}"
+                raise ValueError(msg)  # noqa: TRY301
+        except Exception:
+            prepared_dir.cleanup()
+            raise
+
+        self._prepared_documents_dir = prepared_dir
+        self._prepared_documents_path = prepared_path
+
+    def _iter_prepared_documents(self) -> Iterator[FtsDocument]:
+        if self._prepared_documents_path is None:
+            yield from self._translator.iter_documents(self._ir_dataset)
+            return
+        with self._prepared_documents_path.open(encoding="utf-8") as prepared:
+            for line in prepared:
+                doc_id, text = json.loads(line)
+                yield FtsDocument(doc_id=doc_id, text=text)
+
+    def _iter_selected_documents_with_filter_ids(self, include_filter_ids: bool = False) -> Iterator[FtsDocument]:
         """Yield selected documents with the exact filter IDs used for insertion and qrels."""
         if self._ir_dataset is None:
             msg = "ir_datasets dataset not loaded. Call prepare() first."
             raise RuntimeError(msg)
 
-        permutation = FtsFilterIdPermutation.for_size(self.data.size)
-        documents = iter(self._translator.iter_documents(self._ir_dataset))
+        permutation = FtsFilterIdPermutation.for_size(self.data.size) if include_filter_ids else None
+        documents = iter(self._iter_prepared_documents())
         emitted_count = 0
         while emitted_count < self.data.size:
             try:
@@ -875,7 +1140,8 @@ class FtsDatasetManager(BaseModel):
                 doc.doc_id = str(doc.doc_id)
                 if self.selected_doc_ids is not None and doc.doc_id not in self.selected_doc_ids:
                     continue
-                doc.filter_id = permutation.map(emitted_count)
+                if permutation is not None:
+                    doc.filter_id = permutation.map(emitted_count)
             except StopIteration:
                 break
             except Exception as e:
@@ -887,13 +1153,13 @@ class FtsDatasetManager(BaseModel):
 
     def _build_qrel_filter_ids(self) -> dict[str, int]:
         """Map qrel doc IDs to their deterministic permuted FTS filter ID."""
-        if self.selected_doc_ids is None:
-            msg = "selected_doc_ids is required before building FTS filter IDs"
+        if self._ir_dataset is None:
+            msg = "ir_datasets dataset not loaded. Call prepare() first."
             raise RuntimeError(msg)
 
         qrel_doc_ids = set(self.required_doc_ids)
         qrel_filter_ids: dict[str, int] = {}
-        for doc in self._iter_selected_documents_with_filter_ids():
+        for doc in self._iter_selected_documents_with_filter_ids(include_filter_ids=True):
             doc_id = doc.doc_id
             if doc_id in qrel_doc_ids:
                 qrel_filter_ids[doc_id] = doc.filter_id
@@ -1046,7 +1312,8 @@ class FtsDatasetManager(BaseModel):
                     raise ValueError(msg)  # noqa: TRY301
 
                 self.required_doc_ids = {doc_id for qrels in self.gt_data for doc_id in qrels}
-                self.selected_doc_ids = self._build_selected_doc_ids()
+                self.selected_doc_ids = None
+                self._prepare_qrel_preserving_documents()
                 self.recall_queries_data, self.recall_gt_data = self._apply_filters_to_qrels(
                     self.queries_data,
                     self.gt_data,
@@ -1057,7 +1324,7 @@ class FtsDatasetManager(BaseModel):
                     "selected %s corpus docs including %s qrel docs",
                     len(self.gt_data),
                     len(self.recall_gt_data),
-                    len(self.selected_doc_ids),
+                    len(self.selected_doc_ids) if self.selected_doc_ids is not None else self.data.size,
                     len(self.required_doc_ids),
                 )
             else:
@@ -1080,7 +1347,7 @@ class FtsDatasetManager(BaseModel):
             log.info(f"FTS dataset preparation completed: {self.data.full_name}")
             return True
 
-    def iter_batches(self, batch_size: int = config.NUM_PER_BATCH):
+    def iter_batches(self, batch_size: int = DEFAULT_INSERT_BATCH_SIZE):
         """Return an iterator for streaming FTS document batches."""
         return FtsDocumentIterator(self, batch_size=batch_size)
 
@@ -1107,7 +1374,10 @@ class FtsDocumentIterator:
     processing of large datasets.
     """
 
-    def __init__(self, dataset: FtsDatasetManager, batch_size: int = config.NUM_PER_BATCH):
+    def __init__(self, dataset: FtsDatasetManager, batch_size: int = DEFAULT_INSERT_BATCH_SIZE):
+        if batch_size <= 0:
+            msg = f"insert batch size must be greater than 0, got {batch_size}"
+            raise ValueError(msg)
         self._ds = dataset
         self._batch_size = batch_size
         self._finished = False
@@ -1129,7 +1399,9 @@ class FtsDocumentIterator:
             raise StopIteration
 
         if self._docs_iter is None:
-            self._docs_iter = self._ds._iter_selected_documents_with_filter_ids()
+            self._docs_iter = self._ds._iter_selected_documents_with_filter_ids(
+                include_filter_ids=bool(self._ds.filter_stats),
+            )
 
         batch = []
         while len(batch) < self._batch_size:
