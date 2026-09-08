@@ -3296,10 +3296,10 @@ AdbpgPerformanceConfig = [
 CaseConfigParamInput_m_QdrantLocal = CaseConfigInput(
     label=CaseConfigParamType.m,
     displayLabel="m",
-    inputHelp="HNSW index parameter m, set 0 to disable the index",
+    inputHelp="HNSW index parameter m, the number of edges per node in the index graph",
     inputType=InputType.Number,
     inputConfig={
-        "min": 0,
+        "min": 2,
         "max": 1000,
         "value": 16,
     },
