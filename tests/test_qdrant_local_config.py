@@ -48,3 +48,12 @@ def test_tuned_values_reach_the_client():
         "on_disk": True,
     }
     assert config.search_param() == {"exact": False, "hnsw_ef": 128}
+
+
+def test_m_input_cannot_disable_the_index():
+    inputs = get_case_config_inputs(DB.QdrantLocal, CaseLabel.Performance)
+    m = next(i for i in inputs if i.label.value == "m")
+
+    # QdrantLocal never passes payload_m, so m=0 leaves the collection without a
+    # vector index instead of the per-tenant one the CLI help used to promise.
+    assert m.inputConfig["min"] >= 2
