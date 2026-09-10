@@ -439,6 +439,11 @@ class PerformanceCustomDataset(PerformanceCase):
             gt_neighbors_field=dataset_config.gt_col_name,
             scalar_labels_file=f"{dataset_config.scalar_labels_name}.parquet",
         )
+        filter_rate = (
+            LabelFilter(label_percentage=label_percentage).filter_rate
+            if (use_filter and label_percentage is not None)
+            else None
+        )
         super().__init__(
             name=name,
             description=description,
@@ -448,6 +453,7 @@ class PerformanceCustomDataset(PerformanceCase):
             dataset=DatasetManager(data=dataset),
             use_filter=use_filter,
             label_percentage=label_percentage,
+            filter_rate=filter_rate,
         )
 
     @property
@@ -647,6 +653,8 @@ class CloudPayloadSearchCase(PerformanceCase):
             "Cloud leaderboard search envelope case with explicit response payload profile. "
             f"Payload profile: {payload_profile.value}; dataset: {dataset_name}."
         )
+        if label_percentage is not None:
+            filter_rate = LabelFilter(label_percentage=label_percentage).filter_rate
         super().__init__(
             name=name,
             description=description,
@@ -716,6 +724,8 @@ class CloudColdLatencyCase(Case):
             "Cloud leaderboard cold/warm serial latency case with explicit response payload profile. "
             f"Payload profile: {payload_profile.value}; dataset: {dataset_name}; query count: {query_count}."
         )
+        if label_percentage is not None:
+            filter_rate = LabelFilter(label_percentage=label_percentage).filter_rate
         super().__init__(
             name=name,
             description=description,
@@ -814,6 +824,8 @@ class CloudMultiTenantSearchCase(PerformanceCase):
             raise ValueError(msg)
 
         dataset = dataset_with_size_type.get_manager()
+        if label_percentage is not None:
+            filter_rate = LabelFilter(label_percentage=label_percentage).filter_rate
         super().__init__(
             name=f"Cloud Multi-Tenant Search - {dataset_with_size_type.value}, {tenant_count} tenants",
             description=(
