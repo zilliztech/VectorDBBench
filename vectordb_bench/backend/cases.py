@@ -16,6 +16,8 @@ from .dataset import (
     DatasetWithSizeType,
     FtsDatasetManager,
     FtsDatasetWithSizeType,
+    ParquetDatasetManager,
+    get_dataset_manager,
 )
 
 log = logging.getLogger(__name__)
@@ -76,6 +78,7 @@ class CaseType(Enum):
 
     NewIntFilterPerformanceCase = 400
     CloudPayloadSearchCase = 500
+    Performance = 501
     FTSBm25Performance = 503
     CloudInsertCase = 600
     CloudColdLatencyCase = 700
@@ -450,7 +453,7 @@ class PerformanceCustomDataset(PerformanceCase):
             load_timeout=load_timeout,
             optimize_timeout=optimize_timeout,
             gt_file=f"{dataset_config.gt_name}.parquet",
-            dataset=DatasetManager(data=dataset),
+            dataset=ParquetDatasetManager(data=dataset),
             use_filter=use_filter,
             label_percentage=label_percentage,
             filter_rate=filter_rate,
@@ -564,7 +567,7 @@ class StreamingCustomDataset(Case):
         super().__init__(
             name=name,
             description=description,
-            dataset=DatasetManager(data=dataset),
+            dataset=ParquetDatasetManager(data=dataset),
             insert_rate=insert_rate,
             search_stages=search_stages,
             concurrencies=concurrencies,
@@ -972,6 +975,32 @@ class FTSBm25Performance(FtsPerformanceCase):
         )
 
 
+class Performance(PerformanceCase):
+    """Run the standard performance workload against a registered dataset."""
+
+    case_id: CaseType = CaseType.Performance
+    dataset_name: str = DatasetWithSizeType.CohereMedium.value
+
+    def __init__(self, dataset_name: str = DatasetWithSizeType.CohereMedium.value, **kwargs):
+        supplied_filters = [name for name in ("filter_rate", "label_percentage") if kwargs.get(name) is not None]
+        if supplied_filters:
+            raise ValueError("Performance does not support filter parameters")
+        dataset = get_dataset_manager(dataset_name)
+        data = dataset.data
+        kwargs.setdefault("load_timeout", dataset.load_timeout)
+        kwargs.setdefault("optimize_timeout", dataset.optimize_timeout)
+        super().__init__(
+            dataset_name=dataset_name,
+            name=f"Search Performance - {dataset_name}",
+            description=(
+                f"Unfiltered search using {data.metric_type.value}, {data.dim} dimensions, "
+                f"and {data.size:,} corpus vectors."
+            ),
+            dataset=dataset,
+            **kwargs,
+        )
+
+
 type2case = {
     CaseType.CapacityDim960: CapacityDim960,
     CaseType.CapacityDim128: CapacityDim128,
@@ -997,6 +1026,7 @@ type2case = {
     CaseType.NewIntFilterPerformanceCase: NewIntFilterPerformanceCase,
     CaseType.LabelFilterPerformanceCase: LabelFilterPerformanceCase,
     CaseType.CloudPayloadSearchCase: CloudPayloadSearchCase,
+    CaseType.Performance: Performance,
     CaseType.FTSBm25Performance: FTSBm25Performance,
     CaseType.CloudInsertCase: CloudInsertCase,
     CaseType.CloudColdLatencyCase: CloudColdLatencyCase,

@@ -58,6 +58,7 @@ def mergeTasks(tasks: list[CaseResult]):
         k = task.task_config.case_config.k
         dataset_name = case.dataset.data.full_name
         filter_rate = case.filter_rate
+        dataset_metadata = task.dataset_metadata.model_dump(mode="json") if task.dataset_metadata is not None else None
         dbCaseMetricsMap[db_name][case_name] = {
             "db": db,
             "db_label": db_label,
@@ -65,6 +66,7 @@ def mergeTasks(tasks: list[CaseResult]):
             "k": k,
             "dataset_name": dataset_name,
             "filter_rate": filter_rate,
+            "dataset_metadata": dataset_metadata,
             "metrics": mergeMetrics(
                 dbCaseMetricsMap[db_name][case_name].get("metrics", {}),
                 asdict(task.metrics),
@@ -87,6 +89,7 @@ def mergeTasks(tasks: list[CaseResult]):
             label = metricInfo["label"]
             dataset_name = metricInfo["dataset_name"]
             filter_rate = metricInfo["filter_rate"]
+            dataset_metadata = metricInfo["dataset_metadata"]
             if label == ResultLabel.NORMAL:
                 mergedTasks.append(
                     {
@@ -95,6 +98,7 @@ def mergeTasks(tasks: list[CaseResult]):
                         "db_label": db_label,
                         "dataset_name": dataset_name,
                         "filter_rate": filter_rate,
+                        "dataset_metadata": dataset_metadata,
                         "version": version,
                         "k": k,
                         "case_name": case_name,

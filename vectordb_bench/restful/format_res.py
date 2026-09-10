@@ -39,6 +39,7 @@ class FormatResult(BaseModel):
     mrr: float = 0
     payload_profile: str = "ids_only"
     payload_estimated_bytes_per_query: int = 0
+    dataset_metadata: dict | None = None
     conc_num_list: list[int] = []
     conc_qps_list: list[float] = []
     conc_latency_p99_list: list[float] = []
@@ -78,6 +79,11 @@ def format_results(test_results: list[TestResult], task_label: str) -> list[dict
                         filter_type=filter_.type.name,
                         filter_rate=filter_.filter_rate,
                         k=task_config.case_config.k,
+                        dataset_metadata=(
+                            case_result.dataset_metadata.model_dump(mode="json")
+                            if case_result.dataset_metadata is not None
+                            else None
+                        ),
                         **metrics,
                     ).model_dump()
                 )

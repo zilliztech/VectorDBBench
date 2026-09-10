@@ -44,6 +44,8 @@ dependencies = [
     "hdrhistogram>=0.10.1",
     "ujson",
     "ir_datasets",
+    "h5py",
+    "huggingface_hub",
 ]
 dynamic = ["version"]
 

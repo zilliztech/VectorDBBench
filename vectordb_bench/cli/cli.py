@@ -21,7 +21,7 @@ from .. import config
 from ..backend.cases import FTS_FILTER_RATES, PerformanceCase, type2case
 from ..backend.clients import DB
 from ..backend.clients.api import IndexType, MetricType
-from ..backend.dataset import DatasetWithSizeType, FtsDatasetWithSizeType
+from ..backend.dataset import REGISTERED_DATASETS, DatasetWithSizeType, FtsDatasetWithSizeType
 from ..backend.payload import PayloadProfile
 from ..interface import benchmark_runner
 from ..models import (
@@ -43,6 +43,7 @@ DEFAULT_DATASET_WITH_SIZE_TYPE = DatasetWithSizeType.CohereMedium.value
 SUPPORTED_DATASET_WITH_SIZE_TYPES = "|".join(dataset.value for dataset in DatasetWithSizeType)
 SUPPORTED_FTS_DATASET_WITH_SIZE_TYPES = "|".join(dataset.value for dataset in FtsDatasetWithSizeType)
 SUPPORTED_FTS_FILTER_RATES = "|".join(f"{rate:g}" for rate in FTS_FILTER_RATES)
+SUPPORTED_DATASET_NAMES = "|".join(REGISTERED_DATASETS)
 
 
 def copy_if_not_none(
@@ -203,7 +204,16 @@ are required """,
     return value
 
 
+def _get_performance_case_config(parameters: dict) -> dict:
+    dataset_name = parameters["dataset_name"]
+    if dataset_name is None:
+        raise click.UsageError("--dataset-name is required for Performance")
+    return {"dataset_name": dataset_name}
+
+
 def get_custom_case_config(parameters: dict) -> dict:
+    if parameters["case_type"] == "Performance":
+        return _get_performance_case_config(parameters)
     custom_case_config = {}
     dataset_with_size_type = parameters["dataset_with_size_type"] or DEFAULT_DATASET_WITH_SIZE_TYPE
     if parameters["case_type"] == "PerformanceCustomDataset":
@@ -650,6 +660,15 @@ class CommonTypedDict(TypedDict):
             f"uses Large Cohere (768dim, 10M). Supported vector values include "
             f"{SUPPORTED_DATASET_WITH_SIZE_TYPES}. For FTSBm25Performance, supported datasets include "
             f"{SUPPORTED_FTS_DATASET_WITH_SIZE_TYPES}.",
+            default=None,
+        ),
+    ]
+    dataset_name: Annotated[
+        str | None,
+        click.option(
+            "--dataset-name",
+            type=click.Choice(list(REGISTERED_DATASETS)),
+            help=f"Registered dataset used by the Performance case: {SUPPORTED_DATASET_NAMES}.",
             default=None,
         ),
     ]

@@ -8,8 +8,10 @@ from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.clients.api import IndexType, MetricType, SQType
 from vectordb_bench.backend.dataset import (
     LAION_INT_FILTER_SEARCH_WIDTHS,
+    DatasetManager,
     DatasetWithSizeType,
     FtsDatasetWithSizeType,
+    get_registered_datasets,
 )
 from vectordb_bench.backend.payload import PayloadProfile
 from vectordb_bench.frontend.components.custom.getCustomConfig import get_custom_configs
@@ -216,6 +218,40 @@ def get_fts_case_items() -> list[UICaseItem]:
     ]
 
 
+def get_vibe_case_items() -> list[UICaseItem]:
+    def item(manager: DatasetManager) -> UICaseItem:
+        data = manager.data
+        return UICaseItem(
+            label=f"{data.name} ({data.distribution.upper()}, {data.metric_type.value}, {data.dim}D)",
+            description=f"VIBE {data.modality} dataset with {data.size:,} corpus vectors.",
+            cases=[
+                CaseConfig(
+                    case_id=CaseType.Performance,
+                    custom_case={"dataset_name": data.name},
+                )
+            ],
+        )
+
+    return [item(manager) for manager in get_registered_datasets(family="VIBE")]
+
+
+def get_vdbbench_multimodal_case_items() -> list[UICaseItem]:
+    def item(manager: DatasetManager) -> UICaseItem:
+        data = manager.data
+        return UICaseItem(
+            label=f"{data.name} ({data.metric_type.value}, {data.dim}D)",
+            description=f"VDBBench multimodal dataset with {data.size:,} corpus vectors.",
+            cases=[
+                CaseConfig(
+                    case_id=CaseType.Performance,
+                    custom_case={"dataset_name": data.name},
+                )
+            ],
+        )
+
+    return [item(manager) for manager in get_registered_datasets(family="VDBBench")]
+
+
 def get_custom_case_cluter() -> UICaseItemCluster:
     return UICaseItemCluster(label="Custom Search Performance Test", uiCaseItems=get_custom_case_items())
 
@@ -372,6 +408,14 @@ UI_CASE_CLUSTERS: list[UICaseItemCluster] = [
             UICaseItem(cases=generate_normal_cases(CaseType.Performance1536D500K1P)),
             UICaseItem(cases=generate_normal_cases(CaseType.Performance1536D500K99P)),
         ],
+    ),
+    UICaseItemCluster(
+        label="VIBE Search Performance",
+        uiCaseItems=get_vibe_case_items(),
+    ),
+    UICaseItemCluster(
+        label="VDBBench Multimodal Search Performance",
+        uiCaseItems=get_vdbbench_multimodal_case_items(),
     ),
     UICaseItemCluster(
         label="New-Int-Filter Search Performance Test",
