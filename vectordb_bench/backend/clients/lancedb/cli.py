@@ -177,6 +177,104 @@ def LanceDBIVFPQ(**parameters: Unpack[LanceDBIVFPQTypedDict]):
     )
 
 
+class LanceDBIVFTypedDict(CommonTypedDict, LanceDBTypedDict):
+    num_partitions: Annotated[
+        int,
+        click.option(
+            "--num-partitions",
+            type=int,
+            default=0,
+            help="Number of IVF partitions, 0 = use LanceDB default",
+            show_default=True,
+        ),
+    ]
+    nprobes: Annotated[
+        int,
+        click.option(
+            "--nprobes",
+            type=int,
+            default=0,
+            help="Number of probes for IVF search, 0 = use LanceDB default",
+            show_default=True,
+        ),
+    ]
+    refine_factor: Annotated[
+        int,
+        click.option(
+            "--refine-factor",
+            type=int,
+            default=0,
+            help="Refine factor for better recall, 0 = disabled",
+            show_default=True,
+        ),
+    ]
+
+
+@cli.command()
+@click_parameter_decorators_from_typed_dict(LanceDBIVFTypedDict)
+def LanceDBIVFFlat(**parameters: Unpack[LanceDBIVFTypedDict]):
+    from .config import LanceDBIVFFlatConfig
+
+    run(
+        db=DB.LanceDB,
+        db_config=_build_db_config(**parameters),
+        db_case_config=LanceDBIVFFlatConfig(
+            num_partitions=parameters["num_partitions"],
+            nprobes=parameters["nprobes"],
+            refine_factor=parameters["refine_factor"],
+        ),
+        **parameters,
+    )
+
+
+@cli.command()
+@click_parameter_decorators_from_typed_dict(LanceDBIVFTypedDict)
+def LanceDBIVFSQ(**parameters: Unpack[LanceDBIVFTypedDict]):
+    from .config import LanceDBIVFSQConfig
+
+    run(
+        db=DB.LanceDB,
+        db_config=_build_db_config(**parameters),
+        db_case_config=LanceDBIVFSQConfig(
+            num_partitions=parameters["num_partitions"],
+            nprobes=parameters["nprobes"],
+            refine_factor=parameters["refine_factor"],
+        ),
+        **parameters,
+    )
+
+
+class LanceDBIVFRQTypedDict(LanceDBIVFTypedDict):
+    nbits: Annotated[
+        int,
+        click.option(
+            "--nbits",
+            type=int,
+            default=1,
+            help="RabitQ bits per dimension (Lance default: 1)",
+            show_default=True,
+        ),
+    ]
+
+
+@cli.command()
+@click_parameter_decorators_from_typed_dict(LanceDBIVFRQTypedDict)
+def LanceDBIVFRQ(**parameters: Unpack[LanceDBIVFRQTypedDict]):
+    from .config import LanceDBIVFRQConfig
+
+    run(
+        db=DB.LanceDB,
+        db_config=_build_db_config(**parameters),
+        db_case_config=LanceDBIVFRQConfig(
+            num_partitions=parameters["num_partitions"],
+            nbits=parameters["nbits"],
+            nprobes=parameters["nprobes"],
+            refine_factor=parameters["refine_factor"],
+        ),
+        **parameters,
+    )
+
+
 class LanceDBIVFHNSWSQTypedDict(CommonTypedDict, LanceDBTypedDict):
     num_partitions: Annotated[
         int,

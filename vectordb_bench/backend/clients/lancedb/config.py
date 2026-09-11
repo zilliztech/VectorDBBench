@@ -220,6 +220,76 @@ class LanceDBIVFHNSWSQConfig(BaseModel, DBCaseConfig):
         return params
 
 
+def _parse_lancedb_metric(metric_type: MetricType) -> str:
+    if metric_type in (MetricType.L2, MetricType.COSINE):
+        return metric_type.value.lower()
+    if metric_type in (MetricType.IP, MetricType.DP):
+        return "dot"
+    msg = f"Metric type {metric_type} is not supported for LanceDB!"
+    raise ValueError(msg)
+
+
+class LanceDBIVFFamilyConfig(BaseModel, DBCaseConfig):
+    """Shared knobs for Lance IVF indexes that are not PQ/HNSW hybrids.
+
+    IVF_FLAT stores raw vectors, IVF_SQ uses scalar quantization, IVF_RQ
+    uses RabitQ. All three take IVF partitions plus nprobes/refine_factor
+    at search time. ``nbits`` is only forwarded for IVF_RQ.
+    """
+
+    index: IndexType = IndexType.IVFFlat
+    metric_type: MetricType = MetricType.L2
+    num_partitions: int = 0
+    sample_rate: int = 256
+    max_iterations: int = 50
+    nprobes: int = 0
+    refine_factor: int = 0
+    nbits: int = 0
+
+    def parse_metric(self) -> str:
+        return _parse_lancedb_metric(self.metric_type)
+
+    def index_param(self) -> dict:
+        params = {
+            "metric": self.parse_metric(),
+            "index_type": self.index.value,
+            "sample_rate": self.sample_rate,
+            "max_iterations": self.max_iterations,
+        }
+        if self.num_partitions > 0:
+            params["num_partitions"] = self.num_partitions
+        if self.nbits > 0:
+            params["num_bits"] = self.nbits
+        return params
+
+    def search_param(self) -> dict:
+        params = {}
+        if self.nprobes > 0:
+            params["nprobes"] = self.nprobes
+        if self.refine_factor > 0:
+            params["refine_factor"] = self.refine_factor
+        return params
+
+
+class LanceDBIVFFlatConfig(LanceDBIVFFamilyConfig):
+    """IVF_FLAT — IVF partitions over uncompressed vectors."""
+
+    index: IndexType = IndexType.IVFFlat
+
+
+class LanceDBIVFSQConfig(LanceDBIVFFamilyConfig):
+    """IVF_SQ — IVF partitions + scalar quantization."""
+
+    index: IndexType = IndexType.IVF_SQ
+
+
+class LanceDBIVFRQConfig(LanceDBIVFFamilyConfig):
+    """IVF_RQ — IVF partitions + RabitQ (random rotation + quantization)."""
+
+    index: IndexType = IndexType.IVF_RQ
+    nbits: int = 1  # Lance default for RabitQ bits-per-dimension
+
+
 class LanceDBIVFHNSWPQConfig(BaseModel, DBCaseConfig):
     """IVF_HNSW_PQ index — IVF partitioning + HNSW graph + product quantization."""
 
@@ -269,6 +339,9 @@ class LanceDBIVFHNSWPQConfig(BaseModel, DBCaseConfig):
 
 _lancedb_case_config = {
     IndexType.IVFPQ: LanceDBIndexConfig,
+    IndexType.IVFFlat: LanceDBIVFFlatConfig,
+    IndexType.IVF_SQ: LanceDBIVFSQConfig,
+    IndexType.IVF_RQ: LanceDBIVFRQConfig,
     IndexType.AUTOINDEX: LanceDBAutoIndexConfig,
     IndexType.IVF_HNSW_SQ: LanceDBIVFHNSWSQConfig,
     IndexType.IVF_HNSW_PQ: LanceDBIVFHNSWPQConfig,

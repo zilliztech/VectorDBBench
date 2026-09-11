@@ -2973,7 +2973,10 @@ CaseConfigParamInput_EFRuntime_KiviDB = CaseConfigInput(
 )
 
 _LANCEDB_IVF_INDEXES = {
+    IndexType.IVFFlat.value,
     IndexType.IVFPQ.value,
+    IndexType.IVF_SQ.value,
+    IndexType.IVF_RQ.value,
     IndexType.IVF_HNSW_SQ.value,
     IndexType.IVF_HNSW_PQ.value,
     IndexType.HNSW.value,  # backward compat alias of IVF_HNSW_SQ
@@ -2981,6 +2984,12 @@ _LANCEDB_IVF_INDEXES = {
 _LANCEDB_PQ_INDEXES = {
     IndexType.IVFPQ.value,
     IndexType.IVF_HNSW_PQ.value,
+}
+_LANCEDB_IVF_TRAINING_INDEXES = {
+    IndexType.IVFFlat.value,
+    IndexType.IVFPQ.value,
+    IndexType.IVF_SQ.value,
+    IndexType.IVF_RQ.value,
 }
 _LANCEDB_HNSW_INDEXES = {
     IndexType.IVF_HNSW_SQ.value,
@@ -2990,13 +2999,16 @@ _LANCEDB_HNSW_INDEXES = {
 
 CaseConfigParamInput_IndexType_LanceDB = CaseConfigInput(
     label=CaseConfigParamType.IndexType,
-    inputHelp="AUTOINDEX = IVFPQ with default parameters; IVF_HNSW_SQ/PQ for GooseFS/Lance hybrid indexes",
+    inputHelp="AUTOINDEX = IVFPQ with default parameters; IVF_FLAT/SQ/RQ/PQ and IVF_HNSW_SQ/PQ for Lance indexes",
     inputType=InputType.Option,
     inputConfig={
         "options": [
             IndexType.NONE.value,
             IndexType.AUTOINDEX.value,
+            IndexType.IVFFlat.value,
             IndexType.IVFPQ.value,
+            IndexType.IVF_SQ.value,
+            IndexType.IVF_RQ.value,
             IndexType.IVF_HNSW_SQ.value,
             IndexType.IVF_HNSW_PQ.value,
         ],
@@ -3040,6 +3052,17 @@ CaseConfigParamInput_num_bits_LanceDB = CaseConfigInput(
     isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.IVFPQ.value,
 )
 
+CaseConfigParamInput_num_bits_LanceDB_RQ = CaseConfigInput(
+    label=CaseConfigParamType.nbits,
+    displayLabel="Number of Bits",
+    inputHelp="RabitQ bits per dimension. Lance default: 1",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [1, 2, 4, 8],
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.IVF_RQ.value,
+)
+
 CaseConfigParamInput_sample_rate_LanceDB = CaseConfigInput(
     label=CaseConfigParamType.sample_rate,
     displayLabel="Sample Rate",
@@ -3050,7 +3073,7 @@ CaseConfigParamInput_sample_rate_LanceDB = CaseConfigInput(
         "max": 1024,
         "value": 256,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.IVFPQ.value,
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) in _LANCEDB_IVF_TRAINING_INDEXES,
 )
 
 CaseConfigParamInput_max_iterations_LanceDB = CaseConfigInput(
@@ -3063,7 +3086,7 @@ CaseConfigParamInput_max_iterations_LanceDB = CaseConfigInput(
         "max": 200,
         "value": 50,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.IVFPQ.value,
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) in _LANCEDB_IVF_TRAINING_INDEXES,
 )
 
 CaseConfigParamInput_m_LanceDB = CaseConfigInput(
@@ -3285,6 +3308,7 @@ LanceDBLoadConfig = [
     CaseConfigParamInput_num_partitions_LanceDB,
     CaseConfigParamInput_num_sub_vectors_LanceDB,
     CaseConfigParamInput_num_bits_LanceDB,
+    CaseConfigParamInput_num_bits_LanceDB_RQ,
     CaseConfigParamInput_sample_rate_LanceDB,
     CaseConfigParamInput_max_iterations_LanceDB,
     CaseConfigParamInput_m_LanceDB,
