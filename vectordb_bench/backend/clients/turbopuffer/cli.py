@@ -110,6 +110,16 @@ class TurboPufferTypedDict(TypedDict):
             help="Disable Turbopuffer write backpressure",
         ),
     ]
+    consistency_level: Annotated[
+        str,
+        click.option(
+            "--consistency-level",
+            type=click.Choice(["strong", "eventual"], case_sensitive=False),
+            help="Query consistency level (strong or eventual)",
+            default="eventual",
+            show_default=True,
+        ),
+    ]
     pin_namespace: Annotated[
         bool,
         click.option(
@@ -221,6 +231,7 @@ def TurboPuffer(**parameters: Unpack[TurboPufferIndexTypedDict]):
             pin_replicas=parameters["pin_replicas"],
             pin_timeout=parameters["pin_timeout"],
             pin_target_namespace_count=pin_target_namespace_count,
+            consistency_level=parameters["consistency_level"].lower(),
         ),
         db_case_config=TurboPufferIndexConfig(
             metric_type=MetricType(parameters["metric_type"]),

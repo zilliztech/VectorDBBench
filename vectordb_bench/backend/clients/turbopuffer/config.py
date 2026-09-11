@@ -22,6 +22,7 @@ class TurboPufferConfig(DBConfig):
     pin_replicas: int = 1
     pin_timeout: int = 45 * 60
     pin_target_namespace_count: int = 0
+    consistency_level: str = "eventual"
 
     def to_dict(self) -> dict:
         return {
@@ -36,6 +37,7 @@ class TurboPufferConfig(DBConfig):
             "pin_replicas": self.pin_replicas,
             "pin_timeout": self.pin_timeout,
             "pin_target_namespace_count": self.pin_target_namespace_count,
+            "consistency_level": self.consistency_level,
         }
 
 

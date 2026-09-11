@@ -1,5 +1,6 @@
 """Wrapper around the TurboPuffer vector database over VectorDB"""
 
+import base64
 import logging
 import os
 import time
@@ -10,6 +11,7 @@ from urllib.error import HTTPError
 from urllib.parse import quote
 from urllib.request import Request, urlopen
 
+import numpy as np
 import turbopuffer as tpuf
 
 from vectordb_bench.backend.clients.turbopuffer.config import (
@@ -102,6 +104,7 @@ class TurboPuffer(VectorDB):
         self.region = db_config.get("region", "")
         self.api_base_url = db_config.get("api_base_url")
         self.namespace = db_config.get("namespace", "")
+        self.consistency_level = db_config.get("consistency_level", "eventual")
         self.multitenant_namespace_prefix = db_config.get("multitenant_namespace_prefix", "vdbbench_mt_")
         self.multitenant_tenant_labels: list[str] = kwargs.get("multitenant_tenant_labels", [])
         self._multitenant_touched_tenants: set[str] = set()
@@ -142,12 +145,14 @@ class TurboPuffer(VectorDB):
             tmp_client = None
 
     def _create_client(self) -> tpuf.Turbopuffer:
-        client_kwargs = {"api_key": self.api_key, "region": self.region}
+        client_kwargs = {"api_key": self.api_key}
+        if self.api_base_url:
+            client_kwargs["base_url"] = self.api_base_url
+        else:
+            client_kwargs["region"] = self.region
         max_retries = os.getenv("TURBOPUFFER_MAX_RETRIES")
         if max_retries is not None:
             client_kwargs["max_retries"] = int(max_retries)
-        if self.api_base_url:
-            client_kwargs["base_url"] = self.api_base_url
         return tpuf.Turbopuffer(**client_kwargs)
 
     def _apply_namespace_pinning(self):
@@ -211,6 +216,15 @@ class TurboPuffer(VectorDB):
         self._ns_cache = {}
         self.ns = self.client.namespace(self.namespace)
         self._apply_namespace_pinning()
+        # Only warm cache if namespace has data (skip during initial load)
+        if not self.multitenant_tenant_labels:
+            try:
+                row_count = getattr(self.ns.metadata(), "approx_row_count", 0) or 0
+                if row_count > 0:
+                    log.debug(f"Namespace has {row_count} rows, ensuring cache is warm...")
+                    self._warm_cache(self.ns)
+            except Exception as e:
+                log.warning(f"Could not check namespace metadata: {e}")
         yield
 
     def supports_multitenant(self) -> bool:
@@ -233,18 +247,43 @@ class TurboPuffer(VectorDB):
         return ns
 
     def optimize(self, data_size: int | None = None):
-        # turbopuffer responds to the request
-        #   once the cache warming operation has been started.
-        # It does not wait for the operation to complete,
-        #   which can take multiple minutes for large namespaces.
         warmed_namespaces = self._warmup_target_namespaces()
-        for namespace in warmed_namespaces:
-            self._namespace_for_tenant(namespace).hint_cache_warm()
         if not warmed_namespaces:
             log.info("TurboPuffer cache warmup skipped")
             return
-        log.info(f"warming up but no api waiting for complete. just sleep {self.db_case_config.time_wait_warmup}s")
-        time.sleep(self.db_case_config.time_wait_warmup)
+        for namespace in warmed_namespaces:
+            ns = self._namespace_for_tenant(namespace)
+            self._wait_for_index(ns)
+            self._warm_cache(ns)
+
+    @staticmethod
+    def _wait_for_index(ns: Any):
+        """Wait for index to be fully built."""
+        while True:
+            index = ns.metadata().index
+            status = getattr(index, "status", None)
+            if status == "up-to-date":
+                log.info("Index is up-to-date")
+                return
+            unindexed = getattr(index, "unindexed_bytes", None)
+            log.info(f"Index status: {status}, unindexed_bytes: {unindexed}. Checking again in 10s...")
+            time.sleep(10)
+
+    @staticmethod
+    def _warm_cache(ns: Any):
+        """Start cache warming and poll until complete."""
+        # First call returns "cache warm hint accepted"
+        # Subsequent calls while warming return "cache is already warming"
+        # When warming is done, calling again returns "cache warm hint accepted"
+        log.debug("Starting cache warm...")
+        ns.hint_cache_warm()
+        while True:
+            time.sleep(5)
+            response = ns.hint_cache_warm()
+            log.debug(f"Cache warm response: {response}")
+            if "accepted" in str(response).lower():
+                log.debug("Cache warming complete")
+                return
 
     def _warmup_target_namespaces(self) -> list[str | None]:
         if not self.multitenant_tenant_labels:
@@ -258,6 +297,16 @@ class TurboPuffer(VectorDB):
             return self.multitenant_tenant_labels
         return []
 
+    @staticmethod
+    def _encode_vector(embedding: list[float] | np.ndarray) -> str:
+        arr = np.ascontiguousarray(np.asarray(embedding, dtype="<f4"))
+        return base64.b64encode(arr.tobytes()).decode("ascii")
+
+    @staticmethod
+    def _encode_vectors(embeddings: list[list[float]]) -> list[str]:
+        arr = np.ascontiguousarray(np.asarray(embeddings, dtype="<f4"))
+        return [TurboPuffer._encode_vector(row) for row in arr]
+
     def insert_embeddings(
         self,
         embeddings: list[list[float]],
@@ -266,7 +315,7 @@ class TurboPuffer(VectorDB):
         tenant_labels_data: list[str] | None = None,
         **kwargs,
     ) -> tuple[int, Exception]:
-        vectors = [embedding.tolist() if hasattr(embedding, "tolist") else embedding for embedding in embeddings]
+        vectors = self._encode_vectors(embeddings)
         if tenant_labels_data is not None:
             inserted = 0
             successful_tenants: dict[str, int] = {}
@@ -432,12 +481,15 @@ class TurboPuffer(VectorDB):
         tenant: str | None = None,
     ) -> list[int]:
         query_kwargs = {
-            "rank_by": ("vector", "ANN", query),
+            "rank_by": ("vector", "ANN", self._encode_vector(query)),
             "top_k": k,
             "filters": self.expr,
         }
+        if self.consistency_level == "eventual":
+            query_kwargs["consistency"] = {"level": "eventual"}
         if payload_profile == PayloadProfile.VECTOR:
             query_kwargs["include_attributes"] = [self._vector_field]
+            query_kwargs["vector_encoding"] = "base64"
         elif payload_profile == PayloadProfile.SCALAR_LABEL:
             query_kwargs["include_attributes"] = [self._scalar_payload_label_field]
         res = self._namespace_for_tenant(tenant).query(**query_kwargs)

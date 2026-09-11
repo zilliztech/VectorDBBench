@@ -426,6 +426,32 @@ Options:
   --help                          Show this message and exit.
 ```
 
+### Run turbopuffer from command line
+
+```shell
+vectordbbench turbopuffer \
+  --api-key "$TURBOPUFFER_API_KEY" --region byoc --api-base-url https://<cluster endpoint> \
+  --case-type Performance768D1M \
+  --insert-batch-size 10000 --load-concurrency 32 --disable-backpressure \
+  --num-concurrency 1,5,10,20,40
+```
+
+For the 10M Cohere dataset use `--case-type Performance768D10M`.
+
+turbopuffer-specific options:
+| Option | Description |
+|--------|-------------|
+| `--region` | turbopuffer region, e.g. `gcp-us-central1`, `aws-us-east-1` (required) |
+| `--namespace` | Namespace to write to (default: `vdbbench_test`) |
+| `--metric-type` | `COSINE` or `L2` (default: `COSINE`) |
+| `--consistency-level` | `strong` or `eventual` (default: `strong`) |
+| `--disable-backpressure` | Don't reject writes when indexing falls behind. Recommended for bulk loads; the benchmark waits for indexing to finish before searching anyway |
+| `--pin-namespace` / `--pin-replicas` | Pin the namespace to dedicated nodes before the run |
+
+Each write is one request, so use a large `--insert-batch-size` (10000 is a good start; batches can be up to 512 MB). Set `--load-concurrency` to about 2x the vCPUs of the client; each worker holds one batch in memory (~400 MB at 1536 dims), so lower it on a small box. Run from the same cloud region as the namespace.
+
+To list all options, run `vectordbbench turbopuffer --help`.
+
 ### Run OceanBase from command line
 
 Execute tests for the index types: HNSW, HNSW_SQ, or HNSW_BQ.
