@@ -252,6 +252,29 @@ class TestLakebaseVectorClient:
         assert restored.table_name == "test_pickle"
         assert restored.case_config.metric_type == MetricType.COSINE
 
+    def test_copy_for_thread(
+        self,
+        mocked_db_connection: tuple[MagicMock, MagicMock],
+    ) -> None:
+        class NonDeepcopyableHandle:
+            def __deepcopy__(self, _memo: dict) -> None:
+                raise TypeError("live handle cannot be deep-copied")
+
+        db = make_db("test_thread_copy", drop_old=False)
+        live_conn = NonDeepcopyableHandle()
+        live_cursor = NonDeepcopyableHandle()
+        db.conn = live_conn
+        db.cursor = live_cursor
+
+        db_copy = db.copy_for_thread()
+
+        assert db_copy is not db
+        assert db_copy.conn is None
+        assert db_copy.cursor is None
+        assert db.conn is live_conn
+        assert db.cursor is live_cursor
+        assert db_copy.connect_config == db.connect_config
+
     @pytest.mark.parametrize(
         ("filters", "expected_sql"),
         [
