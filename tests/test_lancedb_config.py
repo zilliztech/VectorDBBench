@@ -1,12 +1,14 @@
 """Offline unit tests for LanceDB config objects.
 
 These tests don't require a running LanceDB instance. They freeze the
-contract for the three IVF-family indexes (IVF_PQ / IVF_HNSW_SQ /
-IVF_HNSW_PQ) so that any future refactor that accidentally diverges their
-code paths (e.g. introduces index-type-specific branches) will fail CI.
+contract for the IVF-family indexes (IVF_FLAT / IVF_PQ / IVF_SQ / IVF_RQ /
+IVF_HNSW_SQ / IVF_HNSW_PQ) and the BTREE scalar index so that any future
+refactor that accidentally diverges their code paths (e.g. introduces
+index-type-specific branches) will fail CI.
 
-Background: IVF_HNSW_SQ / IVF_HNSW_PQ share the same code path as IVF_PQ
-and the CLI is wired up for all three. These tests encode that claim.
+Background: IVF_FLAT / IVF_SQ / IVF_RQ / IVF_HNSW_SQ / IVF_HNSW_PQ share
+the same search path as IVF_PQ and the CLI is wired up for all of them.
+BTREE is a scalar index on ``id`` (or ``--column``); it is not vector ANN.
 """
 
 import typing
@@ -15,12 +17,44 @@ from typing import Annotated, get_type_hints
 from vectordb_bench.backend.clients.api import IndexType, MetricType
 from vectordb_bench.backend.clients.lancedb.config import (
     LanceDBAutoIndexConfig,
+    LanceDBBTreeConfig,
     LanceDBIndexConfig,
+    LanceDBIVFFlatConfig,
     LanceDBIVFHNSWPQConfig,
     LanceDBIVFHNSWSQConfig,
+    LanceDBIVFRQConfig,
+    LanceDBIVFSQConfig,
     LanceDBNoIndexConfig,
     _lancedb_case_config,
+    build_lancedb_storage_options,
 )
+
+# ---------------------------------------------------------------------------
+# storage_options resolution
+# ---------------------------------------------------------------------------
+
+
+def test_explicit_empty_storage_options_disable_env_inheritance(monkeypatch):
+    """``storage_options={}`` must win over GOOSEFS_*/COS env inheritance."""
+    monkeypatch.setenv("GOOSEFS_AUTH_TYPE", "simple")
+    monkeypatch.setenv("GOOSEFS_AUTH_USERNAME", "bench")
+    assert build_lancedb_storage_options("goosefs://bucket/path", explicit={}) == {}
+
+
+def test_none_storage_options_fall_back_to_env(monkeypatch):
+    monkeypatch.setenv("GOOSEFS_AUTH_TYPE", "simple")
+    monkeypatch.delenv("GOOSEFS_AUTH_USERNAME", raising=False)
+    monkeypatch.delenv("GOOSEFS_WRITE_TYPE", raising=False)
+    monkeypatch.delenv("GOOSEFS_BLOCK_SIZE", raising=False)
+    monkeypatch.delenv("GOOSEFS_CHUNK_SIZE", raising=False)
+    opts = build_lancedb_storage_options("goosefs://bucket/path", explicit=None)
+    assert opts == {"goosefs_auth_type": "simple"}
+
+
+def test_explicit_storage_options_are_returned_unchanged():
+    explicit = {"endpoint": "https://example.invalid"}
+    assert build_lancedb_storage_options("s3://bucket", explicit=explicit) is explicit
+
 
 # ---------------------------------------------------------------------------
 # Registry mapping
@@ -30,16 +64,21 @@ from vectordb_bench.backend.clients.lancedb.config import (
 def test_registry_covers_all_lancedb_index_types():
     """Every LanceDB-supported IndexType must resolve to a config class."""
     required = {
+        IndexType.IVFFlat,
         IndexType.IVFPQ,
+        IndexType.IVF_SQ,
+        IndexType.IVF_RQ,
         IndexType.AUTOINDEX,
         IndexType.IVF_HNSW_SQ,
         IndexType.IVF_HNSW_PQ,
+        IndexType.BTREE,
         IndexType.NONE,
     }
     assert required.issubset(_lancedb_case_config.keys())
 
     # HNSW is kept for backwards compatibility and must map to IVF_HNSW_SQ.
     assert _lancedb_case_config[IndexType.HNSW] is LanceDBIVFHNSWSQConfig
+    assert _lancedb_case_config[IndexType.BTREE] is LanceDBBTreeConfig
 
 
 # ---------------------------------------------------------------------------
@@ -81,6 +120,44 @@ def test_ivfpq_tuned_params_are_forwarded():
         "num_sub_vectors": 96,
     }
     assert cfg.search_param() == {"nprobes": 20, "refine_factor": 10}
+
+
+def test_ivf_flat_sq_rq_params_are_forwarded():
+    flat = LanceDBIVFFlatConfig(
+        metric_type=MetricType.COSINE,
+        num_partitions=256,
+        nprobes=20,
+        refine_factor=10,
+    )
+    assert flat.index_param() == {
+        "metric": "cosine",
+        "index_type": "IVF_FLAT",
+        "sample_rate": 256,
+        "max_iterations": 50,
+        "num_partitions": 256,
+    }
+    assert "num_bits" not in flat.index_param()
+    assert flat.search_param() == {"nprobes": 20, "refine_factor": 10}
+
+    sq = LanceDBIVFSQConfig(metric_type=MetricType.COSINE, num_partitions=128)
+    assert sq.index_param()["index_type"] == "IVF_SQ"
+    assert "num_bits" not in sq.index_param()
+
+    rq = LanceDBIVFRQConfig(
+        metric_type=MetricType.COSINE,
+        num_partitions=64,
+        nbits=1,
+        nprobes=8,
+    )
+    assert rq.index_param() == {
+        "metric": "cosine",
+        "index_type": "IVF_RQ",
+        "sample_rate": 256,
+        "max_iterations": 50,
+        "num_partitions": 64,
+        "num_bits": 1,
+    }
+    assert rq.search_param() == {"nprobes": 8}
 
 
 def test_ivf_hnsw_sq_params_are_forwarded():
@@ -129,6 +206,17 @@ def test_ivf_hnsw_pq_params_are_forwarded():
     }
 
 
+def test_btree_params_are_forwarded():
+    cfg = LanceDBBTreeConfig()
+    assert cfg.index == IndexType.BTREE
+    assert cfg.index_param() == {"index_type": "BTREE", "column": "id"}
+    assert cfg.search_param() == {}
+
+    labeled = LanceDBBTreeConfig(column="label")
+    assert labeled.index_param() == {"index_type": "BTREE", "column": "label"}
+    assert labeled.search_param() == {}
+
+
 # ---------------------------------------------------------------------------
 # Code-path unification
 # ---------------------------------------------------------------------------
@@ -142,10 +230,14 @@ def test_ivf_family_shares_search_knobs():
     allowed = {"nprobes", "ef", "refine_factor"}
 
     ivfpq = LanceDBIndexConfig(nprobes=10, refine_factor=5)
+    flat = LanceDBIVFFlatConfig(nprobes=10, refine_factor=5)
+    ivfsq = LanceDBIVFSQConfig(nprobes=10, refine_factor=5)
+    ivfrq = LanceDBIVFRQConfig(nprobes=10, refine_factor=5)
     sq = LanceDBIVFHNSWSQConfig(nprobes=10, ef=64, refine_factor=5)
     pq = LanceDBIVFHNSWPQConfig(nprobes=10, ef=64, refine_factor=5)
+    btree = LanceDBBTreeConfig()
 
-    for cfg in (ivfpq, sq, pq):
+    for cfg in (ivfpq, flat, ivfsq, ivfrq, sq, pq, btree):
         assert set(cfg.search_param().keys()).issubset(allowed)
 
 
@@ -218,13 +310,26 @@ def test_cli_typed_dicts_define_all_expected_commands():
     # TypedDicts that drive CLI options
     assert {
         "LanceDBTypedDict",
+        "LanceDBIVFTypedDict",
         "LanceDBIVFPQTypedDict",
+        "LanceDBIVFRQTypedDict",
         "LanceDBIVFHNSWSQTypedDict",
         "LanceDBIVFHNSWPQTypedDict",
+        "LanceDBBTreeTypedDict",
     }.issubset(class_names)
 
     # Command functions registered via @cli.command()
-    assert {"LanceDB", "LanceDBAutoIndex", "LanceDBIVFPQ", "LanceDBIVFHNSWSQ", "LanceDBIVFHNSWPQ"}.issubset(func_names)
+    assert {
+        "LanceDB",
+        "LanceDBAutoIndex",
+        "LanceDBIVFFlat",
+        "LanceDBIVFPQ",
+        "LanceDBIVFSQ",
+        "LanceDBIVFRQ",
+        "LanceDBIVFHNSWSQ",
+        "LanceDBIVFHNSWPQ",
+        "LanceDBBTree",
+    }.issubset(func_names)
 
 
 def test_cli_typeddict_ivfpq_has_search_knobs():
@@ -247,6 +352,18 @@ def test_cli_typeddict_ivfpq_has_search_knobs():
 
     ivfpq = _fields_of("LanceDBIVFPQTypedDict")
     assert {"nprobes", "refine_factor", "num_partitions", "num_sub_vectors", "nbits"}.issubset(ivfpq)
+
+    ivf = _fields_of("LanceDBIVFTypedDict")
+    assert {"nprobes", "refine_factor", "num_partitions"}.issubset(ivf)
+    assert "num_sub_vectors" not in ivf
+    assert "nbits" not in ivf
+
+    rq = _fields_of("LanceDBIVFRQTypedDict")
+    assert "nbits" in rq
+    assert "num_sub_vectors" not in rq
+
+    btree = _fields_of("LanceDBBTreeTypedDict")
+    assert btree == {"column"}
 
 
 def test_cli_typeddict_hnsw_variants_are_superset_of_ivfpq():

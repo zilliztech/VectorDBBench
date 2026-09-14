@@ -20,9 +20,13 @@ from ..backend.clients.hologres.cli import HologresHGraph
 from ..backend.clients.lancedb.cli import (
     LanceDB,
     LanceDBAutoIndex,
+    LanceDBBTree,
+    LanceDBIVFFlat,
     LanceDBIVFHNSWPQ,
     LanceDBIVFHNSWSQ,
     LanceDBIVFPQ,
+    LanceDBIVFRQ,
+    LanceDBIVFSQ,
 )
 from ..backend.clients.lindorm.cli import LindormHNSW, LindormIVFBQ, LindormIVFPQ
 from ..backend.clients.mariadb.cli import MariaDBHNSW
@@ -85,7 +89,11 @@ cli.add_command(Clickhouse)
 cli.add_command(Vespa)
 cli.add_command(LanceDB)
 cli.add_command(LanceDBAutoIndex)
+cli.add_command(LanceDBIVFFlat)
 cli.add_command(LanceDBIVFPQ)
+cli.add_command(LanceDBIVFSQ)
+cli.add_command(LanceDBIVFRQ)
+cli.add_command(LanceDBBTree)
 cli.add_command(LanceDBIVFHNSWSQ)
 cli.add_command(LanceDBIVFHNSWPQ)
 cli.add_command(HologresHGraph)

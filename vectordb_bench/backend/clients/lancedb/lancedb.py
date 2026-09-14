@@ -9,7 +9,7 @@ import pyarrow as pa
 
 from vectordb_bench.backend.filter import Filter, FilterOp
 
-from ..api import IndexType, VectorDB
+from ..api import IndexType, PartialInsertError, VectorDB
 from .config import LanceDBIndexConfig
 
 log = logging.getLogger(__name__)
@@ -29,7 +29,12 @@ class LanceDB(VectorDB):
         FilterOp.NumGE,
         FilterOp.StrEqual,
     ]
-    thread_safe: bool = False
+    # LanceDB's Python sync wrapper routes every table.add() through a shared
+    # tokio runtime (LOOP.run), and Lance's Rust core handles concurrent
+    # manifest commits with optimistic-concurrency retries. So multiple worker
+    # threads can share one connection. Set to True to let ConcurrentInsertRunner
+    # use max_workers > 1 for parallel data loading.
+    thread_safe: bool = True
 
     def __init__(
         self,
@@ -133,6 +138,10 @@ class LanceDB(VectorDB):
         **kwargs,
     ) -> tuple[int, Exception | None]:
         assert self.table is not None, "Please call self.init() before"
+        # Track committed rows across multi-fragment adds. A later ``table.add``
+        # failure must not report (0, err): ConcurrentInsertRunner would retry
+        # the whole NUM_PER_BATCH and duplicate already-committed IDs.
+        inserted = 0
         try:
             log.info(
                 f"LanceDB insert_embeddings called with {len(embeddings)} rows, "
@@ -167,10 +176,17 @@ class LanceDB(VectorDB):
                         }
                     )
                 self.table.add(batch_table)
+                inserted += len(batch_ids)
 
             return len(metadata), None
         except Exception as e:
             log.warning(f"Failed to insert data into LanceDB table ({self.table_name}), error: {e}")
+            if inserted > 0:
+                msg = (
+                    f"LanceDB insert failed after committing {inserted}/{len(metadata)} rows "
+                    f"into table ({self.table_name}); refusing retry to avoid duplicate IDs"
+                )
+                return inserted, PartialInsertError(msg, inserted_count=inserted, cause=e)
             return 0, e
 
     def prepare_filter(self, filters: Filter):
@@ -233,7 +249,13 @@ class LanceDB(VectorDB):
         if self.case_config.index != IndexType.NONE:
             index_params = self.case_config.index_param()
             log.info(f"LanceDB creating index on table ({self.table_name}), params: {index_params}")
-            self.table.create_index(**index_params)
+            if self.case_config.index == IndexType.BTREE:
+                from lancedb.index import BTree
+
+                column = index_params.get("column") or self._id_field
+                self.table.create_index(column, config=BTree())
+            else:
+                self.table.create_index(**index_params)
 
         # Compact fragments and clean up old versions for better performance.
         # Prefer the unified ``table.optimize()`` API (lancedb >= 0.10), which
