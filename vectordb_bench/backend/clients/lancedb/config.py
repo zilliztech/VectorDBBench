@@ -290,6 +290,30 @@ class LanceDBIVFRQConfig(LanceDBIVFFamilyConfig):
     nbits: int = 1  # Lance default for RabitQ bits-per-dimension
 
 
+class LanceDBBTreeConfig(BaseModel, DBCaseConfig):
+    """BTREE — Lance scalar index on a numeric/string column (not vector ANN).
+
+    Accelerates equality/range filters. Vector search still scans unless a
+    vector index is also present.
+    """
+
+    index: IndexType = IndexType.BTREE
+    metric_type: MetricType = MetricType.L2
+    column: str = "id"
+
+    def parse_metric(self) -> str:
+        return _parse_lancedb_metric(self.metric_type)
+
+    def index_param(self) -> dict:
+        return {
+            "index_type": "BTREE",
+            "column": self.column or "id",
+        }
+
+    def search_param(self) -> dict:
+        return {}
+
+
 class LanceDBIVFHNSWPQConfig(BaseModel, DBCaseConfig):
     """IVF_HNSW_PQ index — IVF partitioning + HNSW graph + product quantization."""
 
@@ -346,5 +370,6 @@ _lancedb_case_config = {
     IndexType.IVF_HNSW_SQ: LanceDBIVFHNSWSQConfig,
     IndexType.IVF_HNSW_PQ: LanceDBIVFHNSWPQConfig,
     IndexType.HNSW: LanceDBIVFHNSWSQConfig,  # backward compat: HNSW maps to IVF_HNSW_SQ
+    IndexType.BTREE: LanceDBBTreeConfig,
     IndexType.NONE: LanceDBNoIndexConfig,
 }

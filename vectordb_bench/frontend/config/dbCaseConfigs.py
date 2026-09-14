@@ -2999,7 +2999,7 @@ _LANCEDB_HNSW_INDEXES = {
 
 CaseConfigParamInput_IndexType_LanceDB = CaseConfigInput(
     label=CaseConfigParamType.IndexType,
-    inputHelp="AUTOINDEX = IVFPQ with default parameters; IVF_FLAT/SQ/RQ/PQ and IVF_HNSW_SQ/PQ for Lance indexes",
+    inputHelp="AUTOINDEX = IVFPQ with default parameters; IVF_FLAT/SQ/RQ/PQ and IVF_HNSW_SQ/PQ for Lance vector indexes; BTREE is a scalar index on id",
     inputType=InputType.Option,
     inputConfig={
         "options": [
@@ -3011,6 +3011,7 @@ CaseConfigParamInput_IndexType_LanceDB = CaseConfigInput(
             IndexType.IVF_RQ.value,
             IndexType.IVF_HNSW_SQ.value,
             IndexType.IVF_HNSW_PQ.value,
+            IndexType.BTREE.value,
         ],
     },
 )

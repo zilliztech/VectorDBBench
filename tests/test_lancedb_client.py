@@ -15,7 +15,7 @@ pytest.importorskip("pyarrow")
 
 from vectordb_bench.backend.clients.api import PartialInsertError  # noqa: E402
 from vectordb_bench.backend.clients.lancedb import lancedb as lancedb_module  # noqa: E402
-from vectordb_bench.backend.clients.lancedb.config import LanceDBNoIndexConfig  # noqa: E402
+from vectordb_bench.backend.clients.lancedb.config import LanceDBBTreeConfig, LanceDBNoIndexConfig  # noqa: E402
 from vectordb_bench.backend.clients.lancedb.lancedb import LanceDB  # noqa: E402
 from vectordb_bench.backend.runner.concurrent_runner import ConcurrentInsertRunner  # noqa: E402
 
@@ -158,3 +158,22 @@ def test_concurrent_runner_does_not_retry_lancedb_partial_insert(monkeypatch):
             metadata=[1, 2, 3, 4],
         )
     assert db.calls == 1
+
+
+def test_optimize_btree_uses_scalar_create_index_api():
+    """BTREE must call create_index(column, config=BTree()), not the vector API."""
+    from unittest.mock import MagicMock
+
+    db = LanceDB.__new__(LanceDB)
+    db.table_name = "bench"
+    db._id_field = "id"
+    db.case_config = LanceDBBTreeConfig()
+    db.table = MagicMock()
+
+    db.optimize()
+
+    db.table.create_index.assert_called_once()
+    args, kwargs = db.table.create_index.call_args
+    assert args == ("id",)
+    assert kwargs["config"].__class__.__name__ == "BTree"
+    db.table.optimize.assert_called_once()

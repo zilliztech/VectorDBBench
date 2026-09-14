@@ -249,7 +249,13 @@ class LanceDB(VectorDB):
         if self.case_config.index != IndexType.NONE:
             index_params = self.case_config.index_param()
             log.info(f"LanceDB creating index on table ({self.table_name}), params: {index_params}")
-            self.table.create_index(**index_params)
+            if self.case_config.index == IndexType.BTREE:
+                from lancedb.index import BTree
+
+                column = index_params.get("column") or self._id_field
+                self.table.create_index(column, config=BTree())
+            else:
+                self.table.create_index(**index_params)
 
         # Compact fragments and clean up old versions for better performance.
         # Prefer the unified ``table.optimize()`` API (lancedb >= 0.10), which
