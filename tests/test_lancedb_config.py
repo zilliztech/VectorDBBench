@@ -2,12 +2,13 @@
 
 These tests don't require a running LanceDB instance. They freeze the
 contract for the IVF-family indexes (IVF_FLAT / IVF_PQ / IVF_SQ / IVF_RQ /
-IVF_HNSW_SQ / IVF_HNSW_PQ) so that any future refactor that accidentally
-diverges their code paths (e.g. introduces index-type-specific branches)
-will fail CI.
+IVF_HNSW_SQ / IVF_HNSW_PQ) and the BTREE scalar index so that any future
+refactor that accidentally diverges their code paths (e.g. introduces
+index-type-specific branches) will fail CI.
 
 Background: IVF_FLAT / IVF_SQ / IVF_RQ / IVF_HNSW_SQ / IVF_HNSW_PQ share
 the same search path as IVF_PQ and the CLI is wired up for all of them.
+BTREE is a scalar index on ``id`` (or ``--column``); it is not vector ANN.
 """
 
 import typing
@@ -16,6 +17,7 @@ from typing import Annotated, get_type_hints
 from vectordb_bench.backend.clients.api import IndexType, MetricType
 from vectordb_bench.backend.clients.lancedb.config import (
     LanceDBAutoIndexConfig,
+    LanceDBBTreeConfig,
     LanceDBIndexConfig,
     LanceDBIVFFlatConfig,
     LanceDBIVFHNSWPQConfig,
@@ -69,12 +71,14 @@ def test_registry_covers_all_lancedb_index_types():
         IndexType.AUTOINDEX,
         IndexType.IVF_HNSW_SQ,
         IndexType.IVF_HNSW_PQ,
+        IndexType.BTREE,
         IndexType.NONE,
     }
     assert required.issubset(_lancedb_case_config.keys())
 
     # HNSW is kept for backwards compatibility and must map to IVF_HNSW_SQ.
     assert _lancedb_case_config[IndexType.HNSW] is LanceDBIVFHNSWSQConfig
+    assert _lancedb_case_config[IndexType.BTREE] is LanceDBBTreeConfig
 
 
 # ---------------------------------------------------------------------------
@@ -202,6 +206,17 @@ def test_ivf_hnsw_pq_params_are_forwarded():
     }
 
 
+def test_btree_params_are_forwarded():
+    cfg = LanceDBBTreeConfig()
+    assert cfg.index == IndexType.BTREE
+    assert cfg.index_param() == {"index_type": "BTREE", "column": "id"}
+    assert cfg.search_param() == {}
+
+    labeled = LanceDBBTreeConfig(column="label")
+    assert labeled.index_param() == {"index_type": "BTREE", "column": "label"}
+    assert labeled.search_param() == {}
+
+
 # ---------------------------------------------------------------------------
 # Code-path unification
 # ---------------------------------------------------------------------------
@@ -220,8 +235,9 @@ def test_ivf_family_shares_search_knobs():
     ivfrq = LanceDBIVFRQConfig(nprobes=10, refine_factor=5)
     sq = LanceDBIVFHNSWSQConfig(nprobes=10, ef=64, refine_factor=5)
     pq = LanceDBIVFHNSWPQConfig(nprobes=10, ef=64, refine_factor=5)
+    btree = LanceDBBTreeConfig()
 
-    for cfg in (ivfpq, flat, ivfsq, ivfrq, sq, pq):
+    for cfg in (ivfpq, flat, ivfsq, ivfrq, sq, pq, btree):
         assert set(cfg.search_param().keys()).issubset(allowed)
 
 
@@ -299,6 +315,7 @@ def test_cli_typed_dicts_define_all_expected_commands():
         "LanceDBIVFRQTypedDict",
         "LanceDBIVFHNSWSQTypedDict",
         "LanceDBIVFHNSWPQTypedDict",
+        "LanceDBBTreeTypedDict",
     }.issubset(class_names)
 
     # Command functions registered via @cli.command()
@@ -311,6 +328,7 @@ def test_cli_typed_dicts_define_all_expected_commands():
         "LanceDBIVFRQ",
         "LanceDBIVFHNSWSQ",
         "LanceDBIVFHNSWPQ",
+        "LanceDBBTree",
     }.issubset(func_names)
 
 
@@ -343,6 +361,9 @@ def test_cli_typeddict_ivfpq_has_search_knobs():
     rq = _fields_of("LanceDBIVFRQTypedDict")
     assert "nbits" in rq
     assert "num_sub_vectors" not in rq
+
+    btree = _fields_of("LanceDBBTreeTypedDict")
+    assert btree == {"column"}
 
 
 def test_cli_typeddict_hnsw_variants_are_superset_of_ivfpq():

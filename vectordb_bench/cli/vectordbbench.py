@@ -17,6 +17,7 @@ from ..backend.clients.hologres.cli import HologresHGraph
 from ..backend.clients.lancedb.cli import (
     LanceDB,
     LanceDBAutoIndex,
+    LanceDBBTree,
     LanceDBIVFFlat,
     LanceDBIVFHNSWPQ,
     LanceDBIVFHNSWSQ,
@@ -88,6 +89,7 @@ cli.add_command(LanceDBIVFFlat)
 cli.add_command(LanceDBIVFPQ)
 cli.add_command(LanceDBIVFSQ)
 cli.add_command(LanceDBIVFRQ)
+cli.add_command(LanceDBBTree)
 cli.add_command(LanceDBIVFHNSWSQ)
 cli.add_command(LanceDBIVFHNSWPQ)
 cli.add_command(HologresHGraph)

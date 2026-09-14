@@ -426,3 +426,29 @@ def LanceDBIVFHNSWPQ(**parameters: Unpack[LanceDBIVFHNSWPQTypedDict]):
         ),
         **parameters,
     )
+
+
+class LanceDBBTreeTypedDict(CommonTypedDict, LanceDBTypedDict):
+    column: Annotated[
+        str,
+        click.option(
+            "--column",
+            type=str,
+            default="id",
+            help="Scalar column for Lance BTree (not a vector index). Default: id",
+            show_default=True,
+        ),
+    ]
+
+
+@cli.command()
+@click_parameter_decorators_from_typed_dict(LanceDBBTreeTypedDict)
+def LanceDBBTree(**parameters: Unpack[LanceDBBTreeTypedDict]):
+    from .config import LanceDBBTreeConfig
+
+    run(
+        db=DB.LanceDB,
+        db_config=_build_db_config(**parameters),
+        db_case_config=LanceDBBTreeConfig(column=parameters["column"]),
+        **parameters,
+    )

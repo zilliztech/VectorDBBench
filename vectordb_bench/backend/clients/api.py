@@ -59,6 +59,7 @@ class IndexType(StrEnum):
     Hologres_Graph = "Graph"
     IVF_HNSW_SQ = "IVF_HNSW_SQ"
     IVF_HNSW_PQ = "IVF_HNSW_PQ"
+    BTREE = "BTREE"
     NONE = "NONE"
 
 
