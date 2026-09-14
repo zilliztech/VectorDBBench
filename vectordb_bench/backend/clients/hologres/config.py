@@ -32,14 +32,26 @@ class HologresIndexConfig(BaseModel, DBCaseConfig):
     min_flush_proxima_row_count: int = 1000
     min_compaction_proxima_row_count: int = 1000
     max_total_size_to_merge_mb: int = 4096
-    full_compact_max_file_size_mb: int = 4096
+    full_compact_max_file_size_mb: int = 16384
 
-    base_quantization_type: str = "sq8_uniform"
+    # Base quantization type for HGraph index.
+    # Available values: "rabitq", "sq8_uniform", "fp32"
+    # When use_reorder=False, this is ignored and "fp32" is used (no reorder requires full precision).
+    # "rabitq" requires use_reorder=True; rabitq_use_fht is automatically enabled when rabitq is selected.
+    quantization_method: str = "rabitq"
     precise_quantization_type: str = "fp32"
+    # Storage medium for the precise (high-precision) index. Only effective when use_reorder=True.
+    # "block_memory_io": both base and precise indexes in memory.
+    # "reader_io": base index in memory, precise index on disk.
+    precise_io_type: str = "block_memory_io"
     use_reorder: bool = True
     build_thread_count: int = 16
     max_degree: int = 64
     ef_construction: int = 400
+
+    # When True, embeds the primary key ("id") in the HGraph index via extra_columns,
+    # avoiding a base-table lookup during search.
+    use_extra_column_id: bool = True
 
     ef_search: int = 51
 
@@ -55,7 +67,7 @@ class HologresIndexConfig(BaseModel, DBCaseConfig):
         return {
             "distance_function": self.distance_function(),
             "order_direction": self.order_direction(),
-            "searcher_params": self.search_params(),
+            "searcher_params": self.searcher_params(),
         }
 
     def algorithm(self) -> str:
@@ -98,21 +110,28 @@ class HologresIndexConfig(BaseModel, DBCaseConfig):
         return "ASC"
 
     def builder_params(self) -> dict:
-        if self.use_reorder:
-            self.base_quantization_type = "sq8_uniform"
-        else:
-            self.base_quantization_type = "fp32"
+        base_quantization_type = self.quantization_method if self.use_reorder else "fp32"
 
-        return {
+        params = {
             "max_total_size_to_merge_mb": self.max_total_size_to_merge_mb,
             "build_thread_count": self.build_thread_count,
-            "base_quantization_type": self.base_quantization_type,
+            "base_quantization_type": base_quantization_type,
             "max_degree": self.max_degree,
             "ef_construction": self.ef_construction,
             "precise_quantization_type": self.precise_quantization_type,
             "use_reorder": self.use_reorder,
-            "precise_io_type": "reader_io",
         }
+
+        if self.use_reorder:
+            params["precise_io_type"] = self.precise_io_type
+
+        if base_quantization_type == "rabitq":
+            params["rabitq_use_fht"] = True
+
+        if self.use_extra_column_id:
+            params["extra_columns"] = "id"
+
+        return params
 
     def searcher_params(self) -> dict:
         return {
