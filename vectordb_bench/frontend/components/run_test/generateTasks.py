@@ -1,5 +1,6 @@
-from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.cases import CaseLabel
+from vectordb_bench.backend.clients import DB
+from vectordb_bench.backend.db_case_config import finalize_db_case_config
 from vectordb_bench.models import CaseConfig, CaseConfigParamType, TaskConfig
 
 
@@ -35,6 +36,12 @@ def generate_tasks(
                 cfg["index"] = allCaseConfigs[db][case][CaseConfigParamType.IndexType]
 
             db_case_config = db.case_config_cls(index_type)(**cfg)
+            db_case_config = finalize_db_case_config(
+                db,
+                case.case_id.name,
+                db_case_config,
+                dataset=case.case.dataset.data,
+            )
 
             task = TaskConfig(
                 db=db.value,
