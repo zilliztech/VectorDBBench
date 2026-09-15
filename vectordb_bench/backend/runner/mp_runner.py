@@ -49,8 +49,14 @@ class MultiProcessingSearchRunner:
         payload_profile: PayloadProfile = PayloadProfile.IDS_ONLY,
         tenant_labels: list[str] | None = None,
         workload_kind: WorkloadKind = WorkloadKind.VECTOR,
+        nq: int = 1,
     ):
         self.db = db
+        if nq < 1:
+            raise ValueError("nq must be positive")
+        if nq > 1 and (workload_kind != WorkloadKind.VECTOR or not db.supports_batch_search):
+            raise NotImplementedError("nq > 1 requires a backend with batch vector search support")
+        self.nq = nq
         self.k = k
         self.filters = filters
         self.workload_kind = workload_kind
@@ -93,16 +99,19 @@ class MultiProcessingSearchRunner:
             msg = f"Unsupported search workload: {self.workload_kind}"
             raise NotImplementedError(msg)
 
-    def _search_embedding(self, emb: list[float], tenant: str | None = None) -> list[int]:
+    def _search_embedding(
+        self, emb: list[float] | list[list[float]], tenant: str | None = None
+    ) -> list[int] | list[list[int]]:
+        search = self.db.search_embedding if self.nq == 1 else self.db.search_embeddings
         if tenant is None:
             if self.payload_profile == PayloadProfile.IDS_ONLY:
-                return self.db.search_embedding(emb, self.k)
-            return self.db.search_embedding(emb, self.k, payload_profile=self.payload_profile)
+                return search(emb, self.k)
+            return search(emb, self.k, payload_profile=self.payload_profile)
         if self.payload_profile == PayloadProfile.IDS_ONLY:
-            return self.db.search_embedding(emb, self.k, tenant=tenant)
-        return self.db.search_embedding(emb, self.k, payload_profile=self.payload_profile, tenant=tenant)
+            return search(emb, self.k, tenant=tenant)
+        return search(emb, self.k, payload_profile=self.payload_profile, tenant=tenant)
 
-    def _search_once(self, query: list[float] | str, tenant_rng: random.Random | None = None):
+    def _search_once(self, query: list[float] | list[list[float]] | str, tenant_rng: random.Random | None = None):
         if self.workload_kind == WorkloadKind.FULL_TEXT:
             if self.payload_profile == PayloadProfile.IDS_ONLY:
                 return self._search_func(query, self.k)
@@ -112,7 +121,16 @@ class MultiProcessingSearchRunner:
             if tenant_rng is not None and self.tenant_labels
             else None
         )
-        return self._search_func(query, tenant=tenant)
+        results = self._search_func(query, tenant=tenant)
+        if self.nq > 1 and len(results) != len(query):
+            raise RuntimeError("Batch search must return one result list per query")
+        return results
+
+    def _query_at(self, test_data: list, idx: int):
+        if self.nq == 1:
+            return test_data[idx]
+        # Wrap around to keep every throughput request at exactly nq vectors.
+        return [test_data[(idx + offset) % len(test_data)] for offset in range(self.nq)]
 
     def search(
         self,
@@ -141,14 +159,14 @@ class MultiProcessingSearchRunner:
             while time.perf_counter() < start_time + self.duration:
                 s = time.perf_counter()
                 try:
-                    self._search_once(test_data[idx], tenant_rng=tenant_rng)
-                    count += 1
+                    self._search_once(self._query_at(test_data, idx), tenant_rng=tenant_rng)
+                    count += self.nq
                     latencies.append(time.perf_counter() - s)
                 except Exception as e:
                     log.warning(f"VectorDB search_embedding error: {e}")
 
                 # loop through the test data
-                idx = idx + 1 if idx < num - 1 else 0
+                idx = (idx + self.nq) % num
 
                 if count % 500 == 0:
                     log.debug(
@@ -397,8 +415,8 @@ class MultiProcessingSearchRunner:
     ) -> tuple[int, int, dict]:
         """
         Returns:
-            int: successful requests count
-            int: failed requests count
+            int: successful query vectors count (requests for full-text search)
+            int: failed query vectors count (requests for full-text search)
             dict: latency statistics with p99, p95, p50, avg, count (computed via HDR Histogram)
         """
         # sync all process
@@ -419,20 +437,20 @@ class MultiProcessingSearchRunner:
             while time.perf_counter() < start_time + dur:
                 s = time.perf_counter()
                 try:
-                    self._search_once(test_data[idx])
-                    success_count += 1
+                    self._search_once(self._query_at(test_data, idx))
+                    success_count += self.nq
                     latency_us = int((time.perf_counter() - s) * US_TO_SECONDS)
                     histogram.record_value(max(HDR_HISTOGRAM_MIN_US, min(latency_us, HDR_HISTOGRAM_MAX_US)))
                 except Exception as e:
-                    failed_cnt += 1
+                    failed_cnt += self.nq
                     # reduce log
-                    if failed_cnt <= 3:
+                    if failed_cnt <= 3 * self.nq:
                         log.warning(f"VectorDB search_embedding error: {e}")
                     else:
                         log.debug(f"VectorDB search_embedding error: {e}")
 
                 # loop through the test data
-                idx = idx + 1 if idx < num - 1 else 0
+                idx = (idx + self.nq) % num
 
                 if success_count % 500 == 0:
                     log.debug(

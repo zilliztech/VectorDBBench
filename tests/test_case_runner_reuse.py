@@ -1,3 +1,6 @@
+from unittest.mock import Mock
+
+import pytest
 from pydantic import SecretStr
 
 from vectordb_bench import config
@@ -64,6 +67,27 @@ def make_runner(
         status=RunningStatus.PENDING,
         dataset_source=DatasetSource.S3,
     )
+
+
+def test_nq_rejects_unsupported_cases_before_data_loading(monkeypatch):
+    runner = make_runner(db=DB.Test)
+    runner.config.case_config.nq = 2
+    dataset = Mock()
+    init_db = Mock()
+    monkeypatch.setattr(runner.ca, "dataset", dataset)
+    monkeypatch.setattr(CaseRunner, "init_db", init_db)
+
+    with pytest.raises(NotImplementedError, match="nq > 1"):
+        runner._pre_run()
+
+    assert dataset.mock_calls == []
+    init_db.assert_not_called()
+
+    for case_id in (CaseType.FTSBm25Performance, CaseType.CloudMultiTenantSearchCase):
+        runner = make_runner(db=DB.ZillizCloud, case_id=case_id)
+        runner.config.case_config.nq = 2
+        with pytest.raises(ValueError, match="nq > 1"):
+            runner._validate_nq()
 
 
 def assert_not_reusable(left: CaseRunner, right: CaseRunner) -> None:

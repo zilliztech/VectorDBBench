@@ -22,6 +22,7 @@ MILVUS_FORCE_MERGE_RETRY_INTERVAL_SECONDS = 30
 
 
 class Milvus(VectorDB):
+    supports_batch_search = True
     supported_filter_types: list[FilterOp] = [
         FilterOp.NonFilter,
         FilterOp.NumGE,
@@ -532,6 +533,15 @@ class Milvus(VectorDB):
         tenant: str | None = None,
     ) -> list[int]:
         """Perform a search on a query embedding and return results."""
+        return self.search_embeddings([query], k, payload_profile=payload_profile, tenant=tenant)[0]
+
+    def search_embeddings(
+        self,
+        queries: list[list[float]],
+        k: int = 100,
+        payload_profile: PayloadProfile = PayloadProfile.IDS_ONLY,
+        tenant: str | None = None,
+    ) -> list[list[int]]:
         assert self.client is not None
 
         output_fields = None
@@ -548,7 +558,7 @@ class Milvus(VectorDB):
 
         search_kwargs = {
             "collection_name": self.collection_name,
-            "data": [query],
+            "data": queries,
             "anns_field": self._vector_field,
             "search_params": self.case_config.search_param(),
             "limit": k,
@@ -556,8 +566,10 @@ class Milvus(VectorDB):
             "output_fields": output_fields,
         }
         res = self.client.search(**search_kwargs)
+        if len(res) != len(queries):
+            raise RuntimeError("Milvus batch search returned an incomplete response")
 
-        return [result[self._primary_field] for result in res[0]]
+        return [[result[self._primary_field] for result in hits] for hits in res]
 
     def search_documents(
         self,

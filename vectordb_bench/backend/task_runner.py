@@ -251,6 +251,7 @@ class CaseRunner(BaseModel):
 
     def _pre_run(self, drop_old: bool = True):
         try:
+            self._validate_nq()
             self._validate_cloud_cold_latency_config(drop_old)
             requested_k = self.config.case_config.k or config.K_DEFAULT
             ground_truth_k = (
@@ -299,6 +300,15 @@ class CaseRunner(BaseModel):
         except ModuleNotFoundError as e:
             log.warning(f"pre run case error: please install client for db: {self.config.db}, error={e}")
             raise e from None
+
+    def _validate_nq(self) -> None:
+        if self.config.case_config.nq == 1:
+            return
+        if self.ca.label != CaseLabel.Performance or self.ca.is_multitenant:
+            raise ValueError("nq > 1 is only supported for single-tenant vector performance cases")
+        if not self.config.db.init_cls.supports_batch_search:
+            msg = f"{self.config.db.value} does not support nq > 1"
+            raise NotImplementedError(msg)
 
     def _validate_cloud_cold_latency_config(self, drop_old: bool) -> None:
         if getattr(self.ca, "label", None) != CaseLabel.CloudColdLatency:
@@ -695,6 +705,7 @@ class CaseRunner(BaseModel):
                 payload_profile=self.ca.payload_profile,
                 tenant_labels=tenant_labels,
                 workload_kind=WorkloadKind.VECTOR,
+                nq=self.config.case_config.nq,
             )
 
     def _init_fts_search_runner(self):
