@@ -140,6 +140,8 @@ class CaseConfigParamType(Enum):
     mongodb_num_candidates_ratio = "num_candidates_ratio"
     mongodb_exact = "exact"
     use_partition_key = "use_partition_key"
+    force_merge_enabled = "force_merge_enabled"
+    force_merge_target_size_mb = "force_merge_target_size_mb"
     refresh_interval = "refresh_interval"
     use_rescore = "use_rescore"
     oversample_ratio = "oversample_ratio"

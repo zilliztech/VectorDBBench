@@ -55,6 +55,73 @@ def test_milvus_autoindex_cli_enables_partition_key_for_multitenant_case(
     assert captured["db_case_config"].use_partition_key is True
 
 
+def test_milvus_autoindex_cli_defaults_force_merge_to_current_behavior(monkeypatch: MonkeyPatch) -> None:
+    captured = {}
+
+    def fake_run(**kwargs):
+        captured.update(kwargs)
+
+    monkeypatch.setattr(milvus_cli, "run", fake_run)
+
+    result = CliRunner().invoke(
+        milvus_cli.MilvusAutoIndex,
+        ["--uri", "http://localhost:19530", "--dry-run"],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert captured["db_case_config"].force_merge_enabled is True
+    assert captured["db_case_config"].force_merge_target_size_mb is None
+
+
+def test_milvus_autoindex_cli_accepts_force_merge_flags(monkeypatch: MonkeyPatch) -> None:
+    captured = {}
+
+    def fake_run(**kwargs):
+        captured.update(kwargs)
+
+    monkeypatch.setattr(milvus_cli, "run", fake_run)
+
+    result = CliRunner().invoke(
+        milvus_cli.MilvusAutoIndex,
+        [
+            "--uri",
+            "http://localhost:19530",
+            "--force-merge-target-size-mb",
+            "512",
+            "--no-force-merge-enabled",
+            "--dry-run",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert captured["db_case_config"].force_merge_enabled is False
+    assert captured["db_case_config"].force_merge_target_size_mb == 512
+
+
+def test_milvus_fts_cli_accepts_force_merge_flags(monkeypatch: MonkeyPatch) -> None:
+    captured = {}
+
+    def fake_run(**kwargs):
+        captured.update(kwargs)
+
+    monkeypatch.setattr(milvus_cli, "run", fake_run)
+
+    result = CliRunner().invoke(
+        milvus_cli.MilvusFTS,
+        [
+            "--uri",
+            "http://localhost:19530",
+            "--force-merge-target-size-mb",
+            "256",
+            "--dry-run",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert captured["db_case_config"].force_merge_enabled is True
+    assert captured["db_case_config"].force_merge_target_size_mb == 256
+
+
 def test_zilliz_autoindex_cli_enables_partition_key_for_multitenant_case(
     monkeypatch: MonkeyPatch,
 ) -> None:
@@ -80,3 +147,30 @@ def test_zilliz_autoindex_cli_enables_partition_key_for_multitenant_case(
 
     assert result.exit_code == 0, result.output
     assert captured["db_case_config"].use_partition_key is True
+
+
+def test_zilliz_autoindex_cli_accepts_force_merge_flags(monkeypatch: MonkeyPatch) -> None:
+    captured = {}
+
+    def fake_run(**kwargs):
+        captured.update(kwargs)
+
+    monkeypatch.setattr(zilliz_cli, "run", fake_run)
+
+    result = CliRunner().invoke(
+        zilliz_cli.ZillizAutoIndex,
+        [
+            "--uri",
+            "https://example.api.gcp-us-west1.zillizcloud.com",
+            "--token",
+            "secret",
+            "--force-merge-target-size-mb",
+            "1024",
+            "--no-force-merge-enabled",
+            "--dry-run",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert captured["db_case_config"].force_merge_enabled is False
+    assert captured["db_case_config"].force_merge_target_size_mb == 1024

@@ -1999,6 +1999,33 @@ CaseConfigParamInput_Milvus_use_partition_key = CaseConfigInput(
     inputConfig={"options": [False, True]},
 )
 
+CaseConfigParamInput_Milvus_force_merge_enabled = CaseConfigInput(
+    label=CaseConfigParamType.force_merge_enabled,
+    displayLabel="Force Merge Enabled",
+    inputHelp=(
+        "Force-merge compaction during optimize. Disable for a sooner ready-to-search "
+        "state at the cost of segments not merged to their fullest potential."
+    ),
+    inputType=InputType.Bool,
+    inputConfig={"value": True},
+)
+
+CaseConfigParamInput_Milvus_force_merge_target_size_mb = CaseConfigInput(
+    label=CaseConfigParamType.force_merge_target_size_mb,
+    displayLabel="Force Merge Target Size (MB)",
+    inputHelp=(
+        "Target merged segment size in MB for the force-merge compaction during optimize. "
+        "Leave empty to keep the current unbounded single-segment behavior; e.g. 1024 for "
+        "bounded, reproducible segments."
+    ),
+    inputType=InputType.Number,
+    inputConfig={
+        "value": None,
+        "min": 1,
+        "max": MAX_STREAMLIT_INT,
+    },
+)
+
 
 CaseConfigParamInput_MongoDBQuantizationType = CaseConfigInput(
     label=CaseConfigParamType.mongodb_quantization_type,
@@ -2423,6 +2450,8 @@ MilvusLoadConfig = [
     CaseConfigParamInput_RefineType,
     CaseConfigParamInput_NRQ,
     CaseConfigParamInput_Milvus_use_partition_key,
+    CaseConfigParamInput_Milvus_force_merge_enabled,
+    CaseConfigParamInput_Milvus_force_merge_target_size_mb,
 ]
 MilvusPerformanceConfig = [
     CaseConfigParamInput_IndexType,
@@ -2453,6 +2482,8 @@ MilvusPerformanceConfig = [
     CaseConfigParamInput_RefineType,
     CaseConfigParamInput_RefineK,
     CaseConfigParamInput_Milvus_use_partition_key,
+    CaseConfigParamInput_Milvus_force_merge_enabled,
+    CaseConfigParamInput_Milvus_force_merge_target_size_mb,
 ]
 
 
@@ -2466,11 +2497,15 @@ MilvusFtsConfig = [
     CaseConfigParamInput_FTS_analyzer_max_token_length,
     CaseConfigParamInput_FTS_analyzer_stop_words,
     CaseConfigParamInput_FTS_drop_ratio_search,
+    CaseConfigParamInput_Milvus_force_merge_enabled,
+    CaseConfigParamInput_Milvus_force_merge_target_size_mb,
 ]
 
 ZillizCloudFtsConfig = [
     CaseConfigParamInput_IndexType_FTS,
     CaseConfigParamInput_ZillizLevel,
+    CaseConfigParamInput_Milvus_force_merge_enabled,
+    CaseConfigParamInput_Milvus_force_merge_target_size_mb,
 ]
 
 ElasticCloudFtsConfig = []
@@ -2578,6 +2613,8 @@ PgVectoRSPerformanceConfig = [
 
 ZillizCloudPerformanceConfig = [
     CaseConfigParamInput_ZillizLevel,
+    CaseConfigParamInput_Milvus_force_merge_enabled,
+    CaseConfigParamInput_Milvus_force_merge_target_size_mb,
 ]
 
 PgVectorScaleLoadingConfig = [
