@@ -1,3 +1,4 @@
+import pytest
 from click.testing import CliRunner
 from pytest import MonkeyPatch
 
@@ -55,8 +56,14 @@ def test_milvus_autoindex_cli_enables_partition_key_for_multitenant_case(
     assert captured["db_case_config"].use_partition_key is True
 
 
-def test_milvus_autoindex_cli_sets_search_level(
+@pytest.mark.parametrize(
+    ("level_args", "expected_level"),
+    [(["--level", "2"], 2), ([], None)],
+)
+def test_milvus_autoindex_cli_handles_search_level(
     monkeypatch: MonkeyPatch,
+    level_args: list[str],
+    expected_level: int | None,
 ) -> None:
     captured = {}
 
@@ -67,17 +74,36 @@ def test_milvus_autoindex_cli_sets_search_level(
 
     result = CliRunner().invoke(
         milvus_cli.MilvusAutoIndex,
-        [
-            "--uri",
-            "http://localhost:19530",
-            "--level",
-            "2",
-            "--dry-run",
-        ],
+        ["--uri", "http://localhost:19530", *level_args, "--dry-run"],
     )
 
     assert result.exit_code == 0, result.output
-    assert captured["db_case_config"].level == 2
+    config = captured["db_case_config"]
+    assert config.level == expected_level
+    if expected_level is None:
+        assert "params" not in config.search_param()
+
+
+def test_milvus_flat_cli_rejects_search_level() -> None:
+    result = CliRunner().invoke(
+        milvus_cli.MilvusFlat,
+        ["--uri", "http://localhost:19530", "--level", "2", "--dry-run"],
+    )
+
+    assert result.exit_code == 2
+    assert "No such option" in result.output
+    assert "--level" in result.output
+
+
+@pytest.mark.parametrize("level", ["0", "11"])
+def test_milvus_autoindex_cli_rejects_out_of_range_level(level: str) -> None:
+    result = CliRunner().invoke(
+        milvus_cli.MilvusAutoIndex,
+        ["--uri", "http://localhost:19530", "--level", level, "--dry-run"],
+    )
+
+    assert result.exit_code == 2
+    assert "1<=x<=10" in result.output
 
 
 def test_zilliz_autoindex_cli_enables_partition_key_for_multitenant_case(

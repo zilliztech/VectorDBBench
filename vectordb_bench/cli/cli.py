@@ -825,6 +825,18 @@ class HNSWBaseTypedDict(TypedDict):
     ]
 
 
+class AutoIndexLevelTypedDict(TypedDict):
+    level: Annotated[
+        int | None,
+        click.option(
+            "--level",
+            type=click.IntRange(1, 10),
+            default=None,
+            help="AutoIndex search level (1-10).",
+        ),
+    ]
+
+
 class HNSWBaseRequiredTypedDict(TypedDict):
     m: Annotated[int | None, click.option("--m", type=int, help="hnsw m", required=True)]
     ef_construction: Annotated[

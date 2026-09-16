@@ -1,4 +1,4 @@
-from typing import ClassVar
+from typing import Annotated, ClassVar
 
 from pydantic import BaseModel, Field, SecretStr
 
@@ -51,9 +51,12 @@ class MilvusIndexConfig(BaseModel):
         return self.metric_type.value
 
 
+AutoIndexLevel = Annotated[int, Field(ge=1, le=10)]
+
+
 class AutoIndexConfig(MilvusIndexConfig, DBCaseConfig):
     index: IndexType = IndexType.AUTOINDEX
-    level: int | None = Field(default=None, ge=1, le=10)
+    level: AutoIndexLevel | None = None
 
     def index_param(self) -> dict:
         return {

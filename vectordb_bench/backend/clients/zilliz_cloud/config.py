@@ -1,7 +1,12 @@
 from pydantic import SecretStr
 
-from ..api import DBCaseConfig, DBConfig
-from ..milvus.config import IndexType, MilvusFtsConfig, MilvusIndexConfig
+from ..api import DBConfig
+from ..milvus.config import AutoIndexConfig as MilvusAutoIndexConfig
+from ..milvus.config import (
+    AutoIndexLevel,
+    IndexType,
+    MilvusFtsConfig,
+)
 
 
 class ZillizCloudConfig(DBConfig):
@@ -27,9 +32,8 @@ class ZillizCloudConfig(DBConfig):
         }
 
 
-class AutoIndexConfig(MilvusIndexConfig, DBCaseConfig):
-    index: IndexType = IndexType.AUTOINDEX
-    level: int = 1
+class AutoIndexConfig(MilvusAutoIndexConfig):
+    level: AutoIndexLevel = 1
     num_shards: int = 1
 
     def index_param(self) -> dict:
@@ -37,14 +41,6 @@ class AutoIndexConfig(MilvusIndexConfig, DBCaseConfig):
             "metric_type": self.parse_metric(),
             "index_type": self.index.value,
             "params": {"shardsNum": self.num_shards},
-        }
-
-    def search_param(self) -> dict:
-        return {
-            "metric_type": self.parse_metric(),
-            "params": {
-                "level": self.level,
-            },
         }
 
 

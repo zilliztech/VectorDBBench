@@ -5,6 +5,7 @@ from pydantic import BaseModel, SecretStr
 
 from vectordb_bench.backend.clients import DB
 from vectordb_bench.cli.cli import (
+    AutoIndexLevelTypedDict,
     CommonTypedDict,
     HNSWFlavor3,
     IVFFlatTypedDictN,
@@ -100,16 +101,7 @@ class MilvusTypedDict(TypedDict):
     ]
 
 
-class MilvusAutoIndexTypedDict(CommonTypedDict, MilvusTypedDict):
-    level: Annotated[
-        int | None,
-        click.option(
-            "--level",
-            type=click.IntRange(1, 10),
-            default=None,
-            help="AutoIndex search level. Requires server support; omitted by default.",
-        ),
-    ]
+class MilvusAutoIndexTypedDict(CommonTypedDict, MilvusTypedDict, AutoIndexLevelTypedDict): ...
 
 
 @cli.command()
