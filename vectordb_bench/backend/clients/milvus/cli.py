@@ -100,7 +100,16 @@ class MilvusTypedDict(TypedDict):
     ]
 
 
-class MilvusAutoIndexTypedDict(CommonTypedDict, MilvusTypedDict): ...
+class MilvusAutoIndexTypedDict(CommonTypedDict, MilvusTypedDict):
+    level: Annotated[
+        int | None,
+        click.option(
+            "--level",
+            type=click.IntRange(1, 10),
+            default=None,
+            help="AutoIndex search level. Requires server support; omitted by default.",
+        ),
+    ]
 
 
 @cli.command()
@@ -111,14 +120,17 @@ def MilvusAutoIndex(**parameters: Unpack[MilvusAutoIndexTypedDict]):
     run(
         db=DBTYPE,
         db_config=_build_milvus_config(parameters),
-        db_case_config=_with_partition_key(AutoIndexConfig(), parameters),
+        db_case_config=_with_partition_key(AutoIndexConfig(level=parameters["level"]), parameters),
         **parameters,
     )
 
 
+class MilvusFlatTypedDict(CommonTypedDict, MilvusTypedDict): ...
+
+
 @cli.command()
-@click_parameter_decorators_from_typed_dict(MilvusAutoIndexTypedDict)
-def MilvusFlat(**parameters: Unpack[MilvusAutoIndexTypedDict]):
+@click_parameter_decorators_from_typed_dict(MilvusFlatTypedDict)
+def MilvusFlat(**parameters: Unpack[MilvusFlatTypedDict]):
     from .config import FLATConfig
 
     run(

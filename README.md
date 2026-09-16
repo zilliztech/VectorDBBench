@@ -133,6 +133,10 @@ vectordbbench zillizautoindex \
   <other options>
 ```
 
+`milvusautoindex` accepts `--level` from 1 to 10 (YAML: `level`) on servers that
+support AutoIndex search levels. If omitted, no level is sent, preserving the
+server's default behavior. Results record it in `task_config.db_case_config.level`.
+
 ```text
 $ vectordbbench pgvectorhnsw --help
 Usage: vectordbbench pgvectorhnsw [OPTIONS]
