@@ -211,19 +211,30 @@ class IVFPQConfig(MilvusIndexConfig, DBCaseConfig):
     nprobe: int | None = None
     m: int = 32
     nbits: int = 8
+    # knowhere builds `IVFx,PQ,Refine(y)` only when refine is on *and* refine_type is set;
+    # otherwise the extra params are inert, so they are always emitted (as in HNSWPQConfig).
+    refine: bool = False
+    refine_type: SQType = SQType.FP32
+    refine_k: float = 1
     index: IndexType = IndexType.IVFPQ
 
     def index_param(self) -> dict:
         return {
             "metric_type": self.parse_metric(),
             "index_type": self.index.value,
-            "params": {"nlist": self.nlist, "m": self.m, "nbits": self.nbits},
+            "params": {
+                "nlist": self.nlist,
+                "m": self.m,
+                "nbits": self.nbits,
+                "refine": self.refine,
+                "refine_type": self.refine_type.value,
+            },
         }
 
     def search_param(self) -> dict:
         return {
             "metric_type": self.parse_metric(),
-            "params": {"nprobe": self.nprobe},
+            "params": {"nprobe": self.nprobe, "refine_k": self.refine_k},
         }
 
 

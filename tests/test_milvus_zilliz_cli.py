@@ -55,6 +55,58 @@ def test_milvus_autoindex_cli_enables_partition_key_for_multitenant_case(
     assert captured["db_case_config"].use_partition_key is True
 
 
+def test_milvus_ivfpq_cli_maps_options_onto_index_and_search_payloads(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    captured = {}
+
+    def fake_run(**kwargs):
+        captured.update(kwargs)
+
+    monkeypatch.setattr(milvus_cli, "run", fake_run)
+
+    result = CliRunner().invoke(
+        milvus_cli.MilvusIVFPQ,
+        [
+            "--uri",
+            "http://localhost:19530",
+            "--lists",
+            "1024",
+            "--probes",
+            "64",
+            "--pq-m",
+            "128",
+            "--nbits",
+            "8",
+            "--refine",
+            "true",
+            "--refine-type",
+            "FP16",
+            "--refine-k",
+            "5",
+            "--dry-run",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    case_config = captured["db_case_config"]
+    assert case_config.index_param() == {
+        "metric_type": "",
+        "index_type": "IVF_PQ",
+        "params": {
+            "nlist": 1024,
+            "m": 128,
+            "nbits": 8,
+            "refine": True,
+            "refine_type": "FP16",
+        },
+    }
+    assert case_config.search_param() == {
+        "metric_type": "",
+        "params": {"nprobe": 64, "refine_k": 5},
+    }
+
+
 def test_zilliz_autoindex_cli_enables_partition_key_for_multitenant_case(
     monkeypatch: MonkeyPatch,
 ) -> None:
