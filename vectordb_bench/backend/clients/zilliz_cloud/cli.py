@@ -5,6 +5,7 @@ import click
 from pydantic import SecretStr
 
 from vectordb_bench.backend.clients import DB
+from vectordb_bench.backend.clients.milvus.cli import _validate_positive_int_or_none
 from vectordb_bench.cli.cli import (
     CommonTypedDict,
     cli,
@@ -108,10 +109,12 @@ class ZillizTypedDict(CommonTypedDict):
             required=False,
             default=None,
             show_default=True,
+            callback=_validate_positive_int_or_none,
             help=(
-                "Target merged segment size in MB for the force-merge compaction during "
-                "optimize. Defaults to the current unbounded single-segment behavior; set "
-                "e.g. 1024 for bounded, reproducible segments. Must be a positive integer."
+                "Target merged segment size in MB requested for the force-merge compaction "
+                "during optimize; the effective cap depends on the Milvus server. Defaults "
+                "to the current unbounded single-segment behavior; set e.g. 1024 for bounded "
+                "segments. Must be a positive integer."
             ),
         ),
     ]

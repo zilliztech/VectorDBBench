@@ -2014,9 +2014,9 @@ CaseConfigParamInput_Milvus_force_merge_target_size_mb = CaseConfigInput(
     label=CaseConfigParamType.force_merge_target_size_mb,
     displayLabel="Force Merge Target Size (MB)",
     inputHelp=(
-        "Target merged segment size in MB for the force-merge compaction during optimize. "
-        "Leave empty to keep the current unbounded single-segment behavior; e.g. 1024 for "
-        "bounded, reproducible segments."
+        "Target merged segment size in MB requested for the force-merge compaction during "
+        "optimize; the effective cap depends on the Milvus server. Leave empty to keep the "
+        "current unbounded single-segment behavior; e.g. 1024 for bounded segments."
     ),
     inputType=InputType.Number,
     inputConfig={

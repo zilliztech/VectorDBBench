@@ -1,4 +1,4 @@
-from typing import Annotated, TypedDict, Unpack
+from typing import Annotated, Any, TypedDict, Unpack
 
 import click
 from pydantic import BaseModel, SecretStr
@@ -14,6 +14,19 @@ from vectordb_bench.cli.cli import (
 )
 
 DBTYPE = DB.Milvus
+
+
+def _validate_positive_int_or_none(ctx: Any, param: Any, value: int | None) -> int | None:
+    """Click callback accepting ``None`` or a positive integer.
+
+    Guards flags whose values are applied via ``model_copy(update=...)`` in
+    ``_apply_milvus_case_defaults`` — pydantic's ``model_copy`` does not run
+    validators, so the CLI boundary must reject invalid values itself.
+    """
+    if value is not None and value <= 0:
+        message = f"must be a positive integer, got {value}"
+        raise click.BadParameter(message)
+    return value
 
 
 def _use_partition_key(parameters: dict) -> bool:
@@ -126,10 +139,12 @@ class MilvusTypedDict(TypedDict):
             required=False,
             default=None,
             show_default=True,
+            callback=_validate_positive_int_or_none,
             help=(
-                "Target merged segment size in MB for the force-merge compaction during "
-                "optimize. Defaults to the current unbounded single-segment behavior; set "
-                "e.g. 1024 for bounded, reproducible segments. Must be a positive integer."
+                "Target merged segment size in MB requested for the force-merge compaction "
+                "during optimize; the effective cap depends on the Milvus server. Defaults "
+                "to the current unbounded single-segment behavior; set e.g. 1024 for bounded "
+                "segments. Must be a positive integer."
             ),
         ),
     ]

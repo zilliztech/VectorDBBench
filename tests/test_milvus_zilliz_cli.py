@@ -149,6 +149,42 @@ def test_zilliz_autoindex_cli_enables_partition_key_for_multitenant_case(
     assert captured["db_case_config"].use_partition_key is True
 
 
+def test_milvus_autoindex_cli_rejects_non_positive_force_merge_target_size() -> None:
+    result = CliRunner().invoke(
+        milvus_cli.MilvusAutoIndex,
+        ["--uri", "http://localhost:19530", "--force-merge-target-size-mb", "0", "--dry-run"],
+    )
+
+    assert result.exit_code != 0
+    assert "positive integer" in result.output
+
+    result = CliRunner().invoke(
+        milvus_cli.MilvusAutoIndex,
+        ["--uri", "http://localhost:19530", "--force-merge-target-size-mb", "-5", "--dry-run"],
+    )
+
+    assert result.exit_code != 0
+    assert "positive integer" in result.output
+
+
+def test_zilliz_autoindex_cli_rejects_non_positive_force_merge_target_size() -> None:
+    result = CliRunner().invoke(
+        zilliz_cli.ZillizAutoIndex,
+        [
+            "--uri",
+            "https://example.api.gcp-us-west1.zillizcloud.com",
+            "--token",
+            "secret",
+            "--force-merge-target-size-mb",
+            "0",
+            "--dry-run",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "positive integer" in result.output
+
+
 def test_zilliz_autoindex_cli_accepts_force_merge_flags(monkeypatch: MonkeyPatch) -> None:
     captured = {}
 
