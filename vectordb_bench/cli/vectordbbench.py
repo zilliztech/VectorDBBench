@@ -1,5 +1,6 @@
 from ..backend.clients.adbpg.cli import AdbpgNova
 from ..backend.clients.alisql.cli import AliSQLHNSW
+from ..backend.clients.aliyun_elasticsearch.cli import AliyunElasticsearch
 from ..backend.clients.alloydb.cli import AlloyDBScaNN
 from ..backend.clients.aws_opensearch.cli import AWSOpenSearch
 from ..backend.clients.chroma.cli import Chroma
@@ -94,6 +95,7 @@ cli.add_command(ElasticCloudHNSWBBQ)
 cli.add_command(BatchCli)
 cli.add_command(S3Vectors)
 cli.add_command(TencentElasticsearch)
+cli.add_command(AliyunElasticsearch)
 cli.add_command(AliSQLHNSW)
 cli.add_command(Doris)
 cli.add_command(TurboPuffer)

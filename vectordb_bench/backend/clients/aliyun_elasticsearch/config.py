@@ -18,11 +18,13 @@ class AliyunElasticsearchConfig(DBConfig, BaseModel):
     port: int = 9200
     user: str = "elastic"
     password: SecretStr
+    index_name: str | None = None
 
     def to_dict(self) -> dict:
         return {
             "hosts": [{"scheme": self.scheme, "host": self.host, "port": self.port}],
             "basic_auth": (self.user, self.password.get_secret_value()),
+            "index_name": self.index_name,
         }
 
 

@@ -42,11 +42,13 @@ class AliyunElasticsearch(ElasticCloud):
             msg = f"Unsupported Aliyun Elasticsearch query wire format {wire_format!r}; expected one of: {supported}"
             raise ValueError(msg) from exc
 
+        client_config = dict(db_config)
+        index_name = client_config.pop("index_name", None) or indice
         super().__init__(
             dim=dim,
-            db_config=db_config,
+            db_config=client_config,
             db_case_config=db_case_config,
-            indice=os.environ.get("VDBBENCH_ALIYUN_ES_INDEX", os.environ.get("VDBBENCH_ES_INDEX", indice)),
+            indice=os.environ.get("VDBBENCH_ALIYUN_ES_INDEX", os.environ.get("VDBBENCH_ES_INDEX", index_name)),
             id_col_name=os.environ.get(
                 "VDBBENCH_ALIYUN_ES_ID_FIELD",
                 os.environ.get("VDBBENCH_ES_ID_FIELD", id_col_name),
@@ -79,16 +81,27 @@ class AliyunElasticsearch(ElasticCloud):
         serializers = dict(self.db_config.get("serializers", {}))
         serializers[CborSerializer.mimetype] = CborSerializer()
         client_config = {key: value for key, value in self.db_config.items() if key != "serializers"}
+        headers = {"accept": "application/json", "content-type": "application/cbor"}
+        basic_auth = client_config.get("basic_auth")
+        if basic_auth is not None:
+            if isinstance(basic_auth, tuple | list):
+                basic_auth = base64.b64encode(f"{basic_auth[0]}:{basic_auth[1]}".encode()).decode("ascii")
+            # Raw transport calls bypass Elasticsearch client default headers.
+            # Prepare the header once per worker, outside the query loop.
+            headers["authorization"] = f"Basic {basic_auth}"
         self.client = Elasticsearch(
             **client_config,
             request_timeout=180,
             serializers=serializers,
         )
+        self._cbor_headers = headers
         try:
             yield
         finally:
+            self.client.close()
             self.client = None
             del self.client
+            del self._cbor_headers
 
     def search_embedding(
         self,
@@ -137,7 +150,7 @@ class AliyunElasticsearch(ElasticCloud):
             "POST",
             f"/{quote(self.indice, safe='')}/_search?filter_path=hits.hits.fields."
             f"{quote(self.id_col_name, safe='')}",
-            headers={"accept": "application/json", "content-type": "application/cbor"},
+            headers=self._cbor_headers,
             body=cbor2.dumps(
                 {
                     "knn": knn,
@@ -150,4 +163,8 @@ class AliyunElasticsearch(ElasticCloud):
             request_timeout=180,
         )
         payload = response.body if hasattr(response, "body") else response
+        if hasattr(response, "meta") and not 200 <= response.meta.status < 300:
+            from elasticsearch import ApiError
+
+            raise ApiError("CBOR search request failed", meta=response.meta, body=payload)
         return [int(hit["fields"][self.id_col_name][0]) for hit in payload["hits"]["hits"]]
