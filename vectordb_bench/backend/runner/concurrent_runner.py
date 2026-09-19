@@ -33,6 +33,7 @@ if TYPE_CHECKING:
     from .executor import TaskExecutor
 
 log = logging.getLogger(__name__)
+DEFAULT_INSERT_BATCH_SIZE = config.DEFAULT_INSERT_BATCH_SIZE
 
 
 class ExecutorBackend(StrEnum):
@@ -65,12 +66,15 @@ class ConcurrentInsertRunner:
         timeout: float | None = None,
         max_workers: int | None = None,
         backend: ExecutorBackend = ExecutorBackend.THREADING,
-        batch_size: int = config.NUM_PER_BATCH,
+        batch_size: int = DEFAULT_INSERT_BATCH_SIZE,
         duration: float | None = None,
         with_scalar_labels: bool = False,
         tenant_case=None,  # noqa: ANN001
         workload_kind: WorkloadKind = WorkloadKind.VECTOR,
     ):
+        if batch_size <= 0:
+            msg = f"insert batch size must be greater than 0, got {batch_size}"
+            raise ValueError(msg)
         self.timeout = timeout if isinstance(timeout, int | float) else None
         self.dataset: DatasetManager | FtsDatasetManager = dataset
         self.db = db
@@ -224,10 +228,16 @@ class ConcurrentInsertRunner:
 
         doc_ids = []
         texts = []
+        filter_ids = []
         for doc in batch:
             doc_ids.append(doc.doc_id if hasattr(doc, "doc_id") else str(doc["doc_id"]))
             texts.append(doc.text if hasattr(doc, "text") else doc["text"])
-        return {"texts": texts, "doc_ids": doc_ids}
+            filter_id = doc.filter_id if hasattr(doc, "filter_id") else doc.get("filter_id", None)
+            filter_ids.append(filter_id)
+        insert_kwargs = {"texts": texts, "doc_ids": doc_ids}
+        if any(filter_id is not None for filter_id in filter_ids):
+            insert_kwargs["filter_ids"] = filter_ids
+        return insert_kwargs
 
     def _worker_loop(self) -> int:
         """Worker loop: pull batches from the shared iterator and insert them."""

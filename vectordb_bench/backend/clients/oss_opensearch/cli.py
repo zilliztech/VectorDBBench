@@ -11,6 +11,7 @@ from ....cli.cli import (
     click_parameter_decorators_from_typed_dict,
     run,
 )
+from ...cases import CaseType
 from .. import DB
 from .config import OSSOpenSearchQuantization, OSSOS_Engine
 
@@ -18,6 +19,7 @@ log = logging.getLogger(__name__)
 
 
 class OSSOpenSearchTypedDict(TypedDict):
+    index_name: Annotated[str, click.option("--index-name", type=str, help="Db index name", default="vdb_bench_index")]
     host: Annotated[str, click.option("--host", type=str, help="Db host", required=True)]
     port: Annotated[int, click.option("--port", type=int, default=80, help="Db Port")]
     user: Annotated[str, click.option("--user", type=str, help="Db User")]
@@ -29,7 +31,7 @@ class OSSOpenSearchTypedDict(TypedDict):
     number_of_replicas: Annotated[
         int,
         click.option(
-            "--number-of-replicas", type=int, help="Number of replica copies for each primary shard", default=1
+            "--number-of-replicas", type=int, help="Number of replica copies for each primary shard", default=0
         ),
     ]
     index_thread_qty: Annotated[
@@ -147,17 +149,17 @@ class OSSOpenSearchHNSWTypedDict(CommonTypedDict, OSSOpenSearchTypedDict, HNSWFl
 @cli.command()
 @click_parameter_decorators_from_typed_dict(OSSOpenSearchHNSWTypedDict)
 def OSSOpenSearch(**parameters: Unpack[OSSOpenSearchHNSWTypedDict]):
-    from .config import OSSOpenSearchConfig, OSSOpenSearchIndexConfig
+    from .config import OSSOpenSearchConfig, OSSOpenSearchFtsConfig, OSSOpenSearchIndexConfig
 
-    run(
-        db=DB.OSSOpenSearch,
-        db_config=OSSOpenSearchConfig(
-            host=parameters["host"],
-            port=parameters["port"],
-            user=parameters["user"],
-            password=SecretStr(parameters["password"]),
-        ),
-        db_case_config=OSSOpenSearchIndexConfig(
+    if parameters["case_type"] == CaseType.FTSBm25Performance.name:
+        db_case_config = OSSOpenSearchFtsConfig(
+            number_of_shards=parameters["number_of_shards"],
+            number_of_replicas=parameters["number_of_replicas"],
+            refresh_interval=parameters["refresh_interval"],
+            force_merge_enabled=parameters["force_merge_enabled"],
+        )
+    else:
+        db_case_config = OSSOpenSearchIndexConfig(
             number_of_shards=parameters["number_of_shards"],
             number_of_replicas=parameters["number_of_replicas"],
             index_thread_qty=parameters["index_thread_qty"],
@@ -167,6 +169,7 @@ def OSSOpenSearch(**parameters: Unpack[OSSOpenSearchHNSWTypedDict]):
             flush_threshold_size=parameters["flush_threshold_size"],
             index_thread_qty_during_force_merge=parameters["index_thread_qty_during_force_merge"],
             cb_threshold=parameters["cb_threshold"],
+            metric_type_name=parameters["metric_type"],
             efConstruction=parameters["ef_construction"],
             efSearch=parameters["ef_search"],
             M=parameters["m"],
@@ -174,6 +177,17 @@ def OSSOpenSearch(**parameters: Unpack[OSSOpenSearchHNSWTypedDict]):
             quantization_type=OSSOpenSearchQuantization(parameters["quantization_type"]),
             confidence_interval=parameters["confidence_interval"],
             clip=parameters["clip"],
+        )
+
+    run(
+        db=DB.OSSOpenSearch,
+        db_config=OSSOpenSearchConfig(
+            index_name=parameters["index_name"],
+            host=parameters["host"],
+            port=parameters["port"],
+            user=parameters["user"],
+            password=SecretStr(parameters["password"]),
         ),
+        db_case_config=db_case_config,
         **parameters,
     )

@@ -27,6 +27,7 @@ class MongoDBIndexConfig(BaseModel, DBCaseConfig):
     metric_type: MetricType = MetricType.COSINE
     num_candidates_ratio: int = 10  # Default numCandidates ratio for vector search
     quantization: QuantizationType = QuantizationType.NONE  # Quantization type if applicable
+    exact: bool = False  # Atlas $vectorSearch exact (ENN); default ANN
 
     def parse_metric(self) -> str:
         if self.metric_type == MetricType.L2:
@@ -50,4 +51,7 @@ class MongoDBIndexConfig(BaseModel, DBCaseConfig):
         }
 
     def search_param(self) -> dict:
-        return {"num_candidates_ratio": self.num_candidates_ratio}
+        return {
+            "num_candidates_ratio": self.num_candidates_ratio,
+            "exact": self.exact,
+        }

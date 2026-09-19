@@ -33,7 +33,7 @@ class MemoryDB(VectorDB):
         self.case_config = db_case_config
         self.collection_name = INDEX_NAME
         self.target_nodes = RedisCluster.RANDOM if not self.db_config["cmd"] else None
-        self.insert_batch_size = db_case_config.insert_batch_size
+        self.pipeline_batch_size = db_case_config.pipeline_batch_size
         self.dbsize = kwargs.get("num_rows")
 
         # Create a MemoryDB connection, if db has password configured, add it to the connection here and in init():
@@ -191,7 +191,7 @@ class MemoryDB(VectorDB):
                         },
                     )
                     # Execute the pipe so we don't keep too much in memory at once
-                    if (i + 1) % self.insert_batch_size == 0:
+                    if (i + 1) % self.pipeline_batch_size == 0:
                         pipe.execute()
 
                 pipe.execute()

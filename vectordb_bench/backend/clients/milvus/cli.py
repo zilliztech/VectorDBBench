@@ -27,6 +27,20 @@ def _with_partition_key(db_case_config: BaseModel, parameters: dict) -> BaseMode
     return db_case_config.model_copy(update={"use_partition_key": _use_partition_key(parameters)})
 
 
+def _build_milvus_config(parameters: dict) -> BaseModel:
+    from .config import MilvusConfig
+
+    return MilvusConfig(
+        db_label=parameters["db_label"],
+        uri=SecretStr(parameters["uri"]),
+        user=parameters["user_name"],
+        password=SecretStr(parameters["password"]) if parameters["password"] else None,
+        num_shards=int(parameters["num_shards"]),
+        replica_number=int(parameters["replica_number"]),
+        collection_name=parameters["collection_name"],
+    )
+
+
 class MilvusTypedDict(TypedDict):
     uri: Annotated[
         str,
@@ -62,6 +76,17 @@ class MilvusTypedDict(TypedDict):
             show_default=True,
         ),
     ]
+    collection_name: Annotated[
+        str,
+        click.option(
+            "--collection-name",
+            type=str,
+            help="Collection name for Milvus",
+            required=False,
+            default="VDBBench",
+            show_default=True,
+        ),
+    ]
     use_partition_key: Annotated[
         bool | None,
         click.option(
@@ -81,18 +106,11 @@ class MilvusAutoIndexTypedDict(CommonTypedDict, MilvusTypedDict): ...
 @cli.command()
 @click_parameter_decorators_from_typed_dict(MilvusAutoIndexTypedDict)
 def MilvusAutoIndex(**parameters: Unpack[MilvusAutoIndexTypedDict]):
-    from .config import AutoIndexConfig, MilvusConfig
+    from .config import AutoIndexConfig
 
     run(
         db=DBTYPE,
-        db_config=MilvusConfig(
-            db_label=parameters["db_label"],
-            uri=SecretStr(parameters["uri"]),
-            user=parameters["user_name"],
-            password=SecretStr(parameters["password"]) if parameters["password"] else None,
-            num_shards=int(parameters["num_shards"]),
-            replica_number=int(parameters["replica_number"]),
-        ),
+        db_config=_build_milvus_config(parameters),
         db_case_config=_with_partition_key(AutoIndexConfig(), parameters),
         **parameters,
     )
@@ -101,18 +119,11 @@ def MilvusAutoIndex(**parameters: Unpack[MilvusAutoIndexTypedDict]):
 @cli.command()
 @click_parameter_decorators_from_typed_dict(MilvusAutoIndexTypedDict)
 def MilvusFlat(**parameters: Unpack[MilvusAutoIndexTypedDict]):
-    from .config import FLATConfig, MilvusConfig
+    from .config import FLATConfig
 
     run(
         db=DBTYPE,
-        db_config=MilvusConfig(
-            db_label=parameters["db_label"],
-            uri=SecretStr(parameters["uri"]),
-            user=parameters["user_name"],
-            password=SecretStr(parameters["password"]) if parameters["password"] else None,
-            num_shards=int(parameters["num_shards"]),
-            replica_number=int(parameters["replica_number"]),
-        ),
+        db_config=_build_milvus_config(parameters),
         db_case_config=_with_partition_key(FLATConfig(), parameters),
         **parameters,
     )
@@ -124,18 +135,11 @@ class MilvusHNSWTypedDict(CommonTypedDict, MilvusTypedDict, HNSWFlavor3): ...
 @cli.command()
 @click_parameter_decorators_from_typed_dict(MilvusHNSWTypedDict)
 def MilvusHNSW(**parameters: Unpack[MilvusHNSWTypedDict]):
-    from .config import HNSWConfig, MilvusConfig
+    from .config import HNSWConfig
 
     run(
         db=DBTYPE,
-        db_config=MilvusConfig(
-            db_label=parameters["db_label"],
-            uri=SecretStr(parameters["uri"]),
-            user=parameters["user_name"],
-            password=SecretStr(parameters["password"]) if parameters["password"] else None,
-            num_shards=int(parameters["num_shards"]),
-            replica_number=int(parameters["replica_number"]),
-        ),
+        db_config=_build_milvus_config(parameters),
         db_case_config=_with_partition_key(
             HNSWConfig(
                 M=parameters["m"],
@@ -192,18 +196,11 @@ class MilvusHNSWPQTypedDict(CommonTypedDict, MilvusTypedDict, MilvusHNSWTypedDic
 @cli.command()
 @click_parameter_decorators_from_typed_dict(MilvusHNSWPQTypedDict)
 def MilvusHNSWPQ(**parameters: Unpack[MilvusHNSWPQTypedDict]):
-    from .config import HNSWPQConfig, MilvusConfig
+    from .config import HNSWPQConfig
 
     run(
         db=DBTYPE,
-        db_config=MilvusConfig(
-            db_label=parameters["db_label"],
-            uri=SecretStr(parameters["uri"]),
-            user=parameters["user_name"],
-            password=SecretStr(parameters["password"]) if parameters["password"] else None,
-            num_shards=int(parameters["num_shards"]),
-            replica_number=int(parameters["replica_number"]),
-        ),
+        db_config=_build_milvus_config(parameters),
         db_case_config=_with_partition_key(
             HNSWPQConfig(
                 M=parameters["m"],
@@ -239,18 +236,11 @@ class MilvusHNSWPRQTypedDict(
 @cli.command()
 @click_parameter_decorators_from_typed_dict(MilvusHNSWPRQTypedDict)
 def MilvusHNSWPRQ(**parameters: Unpack[MilvusHNSWPRQTypedDict]):
-    from .config import HNSWPRQConfig, MilvusConfig
+    from .config import HNSWPRQConfig
 
     run(
         db=DBTYPE,
-        db_config=MilvusConfig(
-            db_label=parameters["db_label"],
-            uri=SecretStr(parameters["uri"]),
-            user=parameters["user_name"],
-            password=SecretStr(parameters["password"]) if parameters["password"] else None,
-            num_shards=int(parameters["num_shards"]),
-            replica_number=int(parameters["replica_number"]),
-        ),
+        db_config=_build_milvus_config(parameters),
         db_case_config=_with_partition_key(
             HNSWPRQConfig(
                 M=parameters["m"],
@@ -283,18 +273,11 @@ class MilvusHNSWSQTypedDict(CommonTypedDict, MilvusTypedDict, MilvusHNSWTypedDic
 @cli.command()
 @click_parameter_decorators_from_typed_dict(MilvusHNSWSQTypedDict)
 def MilvusHNSWSQ(**parameters: Unpack[MilvusHNSWSQTypedDict]):
-    from .config import HNSWSQConfig, MilvusConfig
+    from .config import HNSWSQConfig
 
     run(
         db=DBTYPE,
-        db_config=MilvusConfig(
-            db_label=parameters["db_label"],
-            uri=SecretStr(parameters["uri"]),
-            user=parameters["user_name"],
-            password=SecretStr(parameters["password"]) if parameters["password"] else None,
-            num_shards=int(parameters["num_shards"]),
-            replica_number=int(parameters["replica_number"]),
-        ),
+        db_config=_build_milvus_config(parameters),
         db_case_config=_with_partition_key(
             HNSWSQConfig(
                 M=parameters["m"],
@@ -317,18 +300,11 @@ class MilvusIVFFlatTypedDict(CommonTypedDict, MilvusTypedDict, IVFFlatTypedDictN
 @cli.command()
 @click_parameter_decorators_from_typed_dict(MilvusIVFFlatTypedDict)
 def MilvusIVFFlat(**parameters: Unpack[MilvusIVFFlatTypedDict]):
-    from .config import IVFFlatConfig, MilvusConfig
+    from .config import IVFFlatConfig
 
     run(
         db=DBTYPE,
-        db_config=MilvusConfig(
-            db_label=parameters["db_label"],
-            uri=SecretStr(parameters["uri"]),
-            user=parameters["user_name"],
-            password=SecretStr(parameters["password"]) if parameters["password"] else None,
-            num_shards=int(parameters["num_shards"]),
-            replica_number=int(parameters["replica_number"]),
-        ),
+        db_config=_build_milvus_config(parameters),
         db_case_config=_with_partition_key(
             IVFFlatConfig(
                 nlist=parameters["nlist"],
@@ -343,18 +319,11 @@ def MilvusIVFFlat(**parameters: Unpack[MilvusIVFFlatTypedDict]):
 @cli.command()
 @click_parameter_decorators_from_typed_dict(MilvusIVFFlatTypedDict)
 def MilvusIVFSQ8(**parameters: Unpack[MilvusIVFFlatTypedDict]):
-    from .config import IVFSQ8Config, MilvusConfig
+    from .config import IVFSQ8Config
 
     run(
         db=DBTYPE,
-        db_config=MilvusConfig(
-            db_label=parameters["db_label"],
-            uri=SecretStr(parameters["uri"]),
-            user=parameters["user_name"],
-            password=SecretStr(parameters["password"]) if parameters["password"] else None,
-            num_shards=int(parameters["num_shards"]),
-            replica_number=int(parameters["replica_number"]),
-        ),
+        db_config=_build_milvus_config(parameters),
         db_case_config=_with_partition_key(
             IVFSQ8Config(
                 nlist=parameters["nlist"],
@@ -408,18 +377,11 @@ class MilvusIVFRABITQTypedDict(CommonTypedDict, MilvusTypedDict, MilvusIVFFlatTy
 @cli.command()
 @click_parameter_decorators_from_typed_dict(MilvusIVFRABITQTypedDict)
 def MilvusIVFRabitQ(**parameters: Unpack[MilvusIVFRABITQTypedDict]):
-    from .config import IVFRABITQConfig, MilvusConfig
+    from .config import IVFRABITQConfig
 
     run(
         db=DBTYPE,
-        db_config=MilvusConfig(
-            db_label=parameters["db_label"],
-            uri=SecretStr(parameters["uri"]),
-            user=parameters["user_name"],
-            password=SecretStr(parameters["password"]) if parameters["password"] else None,
-            num_shards=int(parameters["num_shards"]),
-            replica_number=int(parameters["replica_number"]),
-        ),
+        db_config=_build_milvus_config(parameters),
         db_case_config=_with_partition_key(
             IVFRABITQConfig(
                 nlist=parameters["nlist"],
@@ -442,18 +404,11 @@ class MilvusDISKANNTypedDict(CommonTypedDict, MilvusTypedDict):
 @cli.command()
 @click_parameter_decorators_from_typed_dict(MilvusDISKANNTypedDict)
 def MilvusDISKANN(**parameters: Unpack[MilvusDISKANNTypedDict]):
-    from .config import DISKANNConfig, MilvusConfig
+    from .config import DISKANNConfig
 
     run(
         db=DBTYPE,
-        db_config=MilvusConfig(
-            db_label=parameters["db_label"],
-            uri=SecretStr(parameters["uri"]),
-            user=parameters["user_name"],
-            password=SecretStr(parameters["password"]) if parameters["password"] else None,
-            num_shards=int(parameters["num_shards"]),
-            replica_number=int(parameters["replica_number"]),
-        ),
+        db_config=_build_milvus_config(parameters),
         db_case_config=_with_partition_key(
             DISKANNConfig(
                 search_list=parameters["search_list"],
@@ -475,18 +430,11 @@ class MilvusGPUIVFTypedDict(CommonTypedDict, MilvusTypedDict, MilvusIVFFlatTyped
 @cli.command()
 @click_parameter_decorators_from_typed_dict(MilvusGPUIVFTypedDict)
 def MilvusGPUIVFFlat(**parameters: Unpack[MilvusGPUIVFTypedDict]):
-    from .config import GPUIVFFlatConfig, MilvusConfig
+    from .config import GPUIVFFlatConfig
 
     run(
         db=DBTYPE,
-        db_config=MilvusConfig(
-            db_label=parameters["db_label"],
-            uri=SecretStr(parameters["uri"]),
-            user=parameters["user_name"],
-            password=SecretStr(parameters["password"]) if parameters["password"] else None,
-            num_shards=int(parameters["num_shards"]),
-            replica_number=int(parameters["replica_number"]),
-        ),
+        db_config=_build_milvus_config(parameters),
         db_case_config=_with_partition_key(
             GPUIVFFlatConfig(
                 nlist=parameters["nlist"],
@@ -514,18 +462,11 @@ class MilvusGPUBruteForceTypedDict(CommonTypedDict, MilvusTypedDict):
 @cli.command()
 @click_parameter_decorators_from_typed_dict(MilvusGPUBruteForceTypedDict)
 def MilvusGPUBruteForce(**parameters: Unpack[MilvusGPUBruteForceTypedDict]):
-    from .config import GPUBruteForceConfig, MilvusConfig
+    from .config import GPUBruteForceConfig
 
     run(
         db=DBTYPE,
-        db_config=MilvusConfig(
-            db_label=parameters["db_label"],
-            uri=SecretStr(parameters["uri"]),
-            user=parameters["user_name"],
-            password=SecretStr(parameters["password"]) if parameters["password"] else None,
-            num_shards=int(parameters["num_shards"]),
-            replica_number=int(parameters["replica_number"]),
-        ),
+        db_config=_build_milvus_config(parameters),
         db_case_config=_with_partition_key(
             GPUBruteForceConfig(
                 metric_type=parameters["metric_type"],
@@ -607,18 +548,11 @@ class MilvusSVSVamanaTypedDict(CommonTypedDict, MilvusTypedDict):
 @cli.command()
 @click_parameter_decorators_from_typed_dict(MilvusSVSVamanaTypedDict)
 def MilvusSVSVamana(**parameters: Unpack[MilvusSVSVamanaTypedDict]):
-    from .config import MilvusConfig, SVSVamanaConfig
+    from .config import SVSVamanaConfig
 
     run(
         db=DBTYPE,
-        db_config=MilvusConfig(
-            db_label=parameters["db_label"],
-            uri=SecretStr(parameters["uri"]),
-            user=parameters["user_name"],
-            password=SecretStr(parameters["password"]) if parameters["password"] else None,
-            num_shards=int(parameters["num_shards"]),
-            replica_number=int(parameters["replica_number"]),
-        ),
+        db_config=_build_milvus_config(parameters),
         db_case_config=_with_partition_key(
             SVSVamanaConfig(
                 svs_graph_max_degree=parameters["svs_graph_max_degree"],
@@ -637,18 +571,11 @@ def MilvusSVSVamana(**parameters: Unpack[MilvusSVSVamanaTypedDict]):
 @cli.command()
 @click_parameter_decorators_from_typed_dict(MilvusSVSVamanaTypedDict)
 def MilvusSVSVamanaLVQ(**parameters: Unpack[MilvusSVSVamanaTypedDict]):
-    from .config import MilvusConfig, SVSVamanaLVQConfig
+    from .config import SVSVamanaLVQConfig
 
     run(
         db=DBTYPE,
-        db_config=MilvusConfig(
-            db_label=parameters["db_label"],
-            uri=SecretStr(parameters["uri"]),
-            user=parameters["user_name"],
-            password=SecretStr(parameters["password"]) if parameters["password"] else None,
-            num_shards=int(parameters["num_shards"]),
-            replica_number=int(parameters["replica_number"]),
-        ),
+        db_config=_build_milvus_config(parameters),
         db_case_config=_with_partition_key(
             SVSVamanaLVQConfig(
                 svs_graph_max_degree=parameters["svs_graph_max_degree"],
@@ -681,18 +608,11 @@ class MilvusSVSVamanaLeanVecTypedDict(MilvusSVSVamanaTypedDict):
 @cli.command()
 @click_parameter_decorators_from_typed_dict(MilvusSVSVamanaLeanVecTypedDict)
 def MilvusSVSVamanaLeanVec(**parameters: Unpack[MilvusSVSVamanaLeanVecTypedDict]):
-    from .config import MilvusConfig, SVSVamanaLeanVecConfig
+    from .config import SVSVamanaLeanVecConfig
 
     run(
         db=DBTYPE,
-        db_config=MilvusConfig(
-            db_label=parameters["db_label"],
-            uri=SecretStr(parameters["uri"]),
-            user=parameters["user_name"],
-            password=SecretStr(parameters["password"]) if parameters["password"] else None,
-            num_shards=int(parameters["num_shards"]),
-            replica_number=int(parameters["replica_number"]),
-        ),
+        db_config=_build_milvus_config(parameters),
         db_case_config=_with_partition_key(
             SVSVamanaLeanVecConfig(
                 svs_graph_max_degree=parameters["svs_graph_max_degree"],
@@ -722,18 +642,11 @@ class MilvusGPUIVFPQTypedDict(
 @cli.command()
 @click_parameter_decorators_from_typed_dict(MilvusGPUIVFPQTypedDict)
 def MilvusGPUIVFPQ(**parameters: Unpack[MilvusGPUIVFPQTypedDict]):
-    from .config import GPUIVFPQConfig, MilvusConfig
+    from .config import GPUIVFPQConfig
 
     run(
         db=DBTYPE,
-        db_config=MilvusConfig(
-            db_label=parameters["db_label"],
-            uri=SecretStr(parameters["uri"]),
-            user=parameters["user_name"],
-            password=SecretStr(parameters["password"]) if parameters["password"] else None,
-            num_shards=int(parameters["num_shards"]),
-            replica_number=int(parameters["replica_number"]),
-        ),
+        db_config=_build_milvus_config(parameters),
         db_case_config=_with_partition_key(
             GPUIVFPQConfig(
                 nlist=parameters["nlist"],
@@ -766,18 +679,11 @@ class MilvusGPUCAGRATypedDict(CommonTypedDict, MilvusTypedDict, MilvusGPUIVFType
 @cli.command()
 @click_parameter_decorators_from_typed_dict(MilvusGPUCAGRATypedDict)
 def MilvusGPUCAGRA(**parameters: Unpack[MilvusGPUCAGRATypedDict]):
-    from .config import GPUCAGRAConfig, MilvusConfig
+    from .config import GPUCAGRAConfig
 
     run(
         db=DBTYPE,
-        db_config=MilvusConfig(
-            db_label=parameters["db_label"],
-            uri=SecretStr(parameters["uri"]),
-            user=parameters["user_name"],
-            password=SecretStr(parameters["password"]) if parameters["password"] else None,
-            num_shards=int(parameters["num_shards"]),
-            replica_number=int(parameters["replica_number"]),
-        ),
+        db_config=_build_milvus_config(parameters),
         db_case_config=_with_partition_key(
             GPUCAGRAConfig(
                 intermediate_graph_degree=parameters["intermediate_graph_degree"],
@@ -819,7 +725,7 @@ def MilvusFTS(**parameters: Unpack[MilvusFTSTypedDict]):
 
     This command uses the MS MARCO dev/small dataset for FTS testing.
     """
-    from .config import MilvusConfig, MilvusFtsConfig
+    from .config import MilvusFtsConfig
 
     # Set default case_type to large dataset if not specified
     if parameters.get("case_type") == "Performance1536D50K":  # Default from CommonTypedDict
@@ -827,14 +733,7 @@ def MilvusFTS(**parameters: Unpack[MilvusFTSTypedDict]):
 
     run(
         db=DBTYPE,
-        db_config=MilvusConfig(
-            db_label=parameters["db_label"],
-            uri=SecretStr(parameters["uri"]),
-            user=parameters["user_name"],
-            password=SecretStr(parameters["password"]) if parameters["password"] else None,
-            num_shards=int(parameters["num_shards"]),
-            replica_number=int(parameters["replica_number"]),
-        ),
+        db_config=_build_milvus_config(parameters),
         db_case_config=MilvusFtsConfig(
             drop_ratio_search=parameters.get("drop_ratio_search"),
         ),

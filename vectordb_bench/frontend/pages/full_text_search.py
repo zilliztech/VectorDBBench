@@ -23,14 +23,17 @@ DATASET_ORDER = [
     "HotpotQA Large",
 ]
 # Published FTS results currently cover this cloud/service backend subset.
-BACKEND_ORDER = ["ZillizCloud", "ElasticSearch", "Vespa", "TurboPuffer"]
+BACKEND_ORDER = ["ZillizCloud", "ElasticSearch", "OSSOpenSearch", "TurboPuffer"]
 BACKEND_COLORS = {
     "ZillizCloud": "#0D6EFD",
     "ElasticSearch": "#04D6C8",
-    "Vespa": "#61D790",
+    "OSSOpenSearch": "#61D790",
     "TurboPuffer": "#FF6B2C",
 }
 SIZE_ORDER = ["Small", "Medium", "Large"]
+FILTER_RATE_LABEL_ORDER = ["50%", "75%", "90%", "95%", "99%"]
+CHART_TABS = ["QPS", "Recall", "NDCG", "MRR", "Load", "Filtered QPS"]
+FILTERED_TAB = "Filtered QPS"
 
 
 def _normalize_backend(db: str, result_file: Path) -> str:
@@ -71,6 +74,12 @@ def _dataset_axis_order(data: pd.DataFrame) -> list[str]:
     return labels
 
 
+def _filter_rate_label(value: Any) -> str:
+    if value is None or pd.isna(value):
+        return "Unfiltered"
+    return f"{float(value):.0%}"
+
+
 def _backend_metric_order(data: pd.DataFrame, metric: str, ascending: bool) -> list[str]:
     if data.empty or metric not in data:
         return BACKEND_ORDER
@@ -102,12 +111,16 @@ def _parse_result_file(result_file: Path) -> list[dict[str, Any]]:
         task_config = case_result.get("task_config", {})
         case_config = task_config.get("case_config", {})
         custom_case = case_config.get("custom_case") or {}
+        additional_parameters = metrics.get("additional_parameters") or {}
+        fts_filter = additional_parameters.get("fts_filter") or {}
+        filter_rate = fts_filter.get("filter_rate", custom_case.get("filter_rate"))
         dataset_label = custom_case.get("dataset_with_size_type", "")
         dataset_family, dataset_size, dataset_key = _dataset_parts(dataset_label)
         dataset_doc_count = _dataset_doc_count(dataset_label)
         dataset_axis_label = _dataset_axis_label(dataset_key, dataset_doc_count)
         backend = _normalize_backend(task_config.get("db", ""), result_file)
         payload = metrics.get("payload_profile") or custom_case.get("payload_profile") or "ids_only"
+        row_task_label = task_config.get("task_label") or task_label
 
         rows.append(
             {
@@ -119,10 +132,15 @@ def _parse_result_file(result_file: Path) -> list[dict[str, Any]]:
                 "dataset_axis_label": dataset_axis_label,
                 "payload": payload,
                 "context": _run_context(task_label),
-                "task_label": task_label,
+                "task_label": row_task_label,
+                "filter_rate": filter_rate,
+                "filter_rate_label": _filter_rate_label(filter_rate),
+                "is_filtered": filter_rate is not None,
                 "load_s": metrics.get("load_duration", 0.0),
                 "qps": metrics.get("qps", 0.0),
                 "recall": metrics.get("recall", 0.0),
+                "ndcg": metrics.get("ndcg", 0.0),
+                "mrr": metrics.get("mrr", 0.0),
                 "p95_s": metrics.get("serial_latency_p95", 0.0),
                 "p99_s": metrics.get("serial_latency_p99", 0.0),
                 "concurrency": metrics.get("conc_num_list") or [],
@@ -133,14 +151,8 @@ def _parse_result_file(result_file: Path) -> list[dict[str, Any]]:
     return rows
 
 
-def _latest_backend_result_files(result_dir: Path) -> list[Path]:
-    result_files = []
-    backend_dirs = sorted(path for path in result_dir.iterdir() if path.is_dir())
-    for backend_dir in backend_dirs:
-        backend_files = sorted(backend_dir.glob("result_*.json"))
-        if backend_files:
-            result_files.append(backend_files[-1])
-    return result_files
+def _result_files(result_dir: Path) -> list[Path]:
+    return sorted(result_dir.rglob("result_*.json"))
 
 
 def load_full_text_search_rows(result_dir: Path = RESULT_DIR) -> pd.DataFrame:
@@ -148,7 +160,7 @@ def load_full_text_search_rows(result_dir: Path = RESULT_DIR) -> pd.DataFrame:
         return pd.DataFrame()
 
     rows = []
-    for result_file in _latest_backend_result_files(result_dir):
+    for result_file in _result_files(result_dir):
         rows.extend(_parse_result_file(result_file))
 
     data = pd.DataFrame(rows)
@@ -162,7 +174,8 @@ def load_full_text_search_rows(result_dir: Path = RESULT_DIR) -> pd.DataFrame:
     data["dataset"] = pd.Categorical(data["dataset"], DATASET_ORDER, ordered=True)
     data["backend"] = pd.Categorical(data["backend"], BACKEND_ORDER, ordered=True)
     data["dataset_size"] = pd.Categorical(data["dataset_size"], SIZE_ORDER, ordered=True)
-    return data.sort_values(["dataset", "backend", "payload"]).reset_index(drop=True)
+    data["filter_rate"] = pd.to_numeric(data["filter_rate"], errors="coerce")
+    return data.sort_values(["is_filtered", "dataset", "filter_rate", "backend", "payload"]).reset_index(drop=True)
 
 
 def _filter_data(st: Any, data: pd.DataFrame) -> pd.DataFrame:
@@ -172,12 +185,15 @@ def _filter_data(st: Any, data: pd.DataFrame) -> pd.DataFrame:
             "Dataset",
             [dataset for dataset in DATASET_ORDER if dataset in set(data["dataset"].astype(str))],
             default=[dataset for dataset in DATASET_ORDER if dataset in set(data["dataset"].astype(str))],
+            key="fts-standard-datasets",
         )
         backend_options = [backend for backend in BACKEND_ORDER if backend in set(data["backend"].astype(str))]
-        selected_backends = st.multiselect("Backend", backend_options, default=backend_options)
+        selected_backends = st.multiselect(
+            "Backend", backend_options, default=backend_options, key="fts-standard-backends"
+        )
         payloads = sorted(data["payload"].dropna().unique().tolist())
         default_payloads = ["ids_only"] if "ids_only" in payloads else payloads
-        selected_payloads = st.multiselect("Payload", payloads, default=default_payloads)
+        selected_payloads = st.multiselect("Payload", payloads, default=default_payloads, key="fts-standard-payloads")
 
     filters = (
         data["dataset"].astype(str).isin(selected_datasets)
@@ -185,6 +201,26 @@ def _filter_data(st: Any, data: pd.DataFrame) -> pd.DataFrame:
         & data["payload"].isin(selected_payloads)
     )
 
+    return data[filters].copy()
+
+
+def _filter_filtered_data(st: Any, data: pd.DataFrame) -> pd.DataFrame:
+    with st.sidebar:
+        st.header("Filters")
+        dataset_options = [
+            family for family in ["MS MARCO", "HotpotQA"] if family in set(data["dataset_family"].astype(str))
+        ]
+        selected_dataset = st.selectbox("Dataset", dataset_options, key="fts-filtered-dataset-family")
+        backend_options = [backend for backend in BACKEND_ORDER if backend in set(data["backend"].astype(str))]
+        selected_backends = st.multiselect(
+            "Backend",
+            backend_options,
+            default=backend_options,
+            key="fts-filtered-backends",
+        )
+    filters = data["dataset_family"].astype(str).eq(selected_dataset) & data["backend"].astype(str).isin(
+        selected_backends
+    )
     return data[filters].copy()
 
 
@@ -196,6 +232,8 @@ def _draw_summary_table(st: Any, data: pd.DataFrame) -> None:
         "load_s",
         "qps",
         "recall",
+        "ndcg",
+        "mrr",
         "p95_s",
         "p99_s",
     ]
@@ -207,10 +245,57 @@ def _draw_summary_table(st: Any, data: pd.DataFrame) -> None:
             "load_s": st.column_config.NumberColumn("Load s", format="%.4f"),
             "qps": st.column_config.NumberColumn("QPS", format="%.4f"),
             "recall": st.column_config.NumberColumn("Recall", format="%.4f"),
+            "ndcg": st.column_config.NumberColumn("NDCG", format="%.4f"),
+            "mrr": st.column_config.NumberColumn("MRR", format="%.4f"),
             "p95_s": st.column_config.NumberColumn("p95 s", format="%.4f"),
             "p99_s": st.column_config.NumberColumn("p99 s", format="%.4f"),
         },
     )
+
+
+def _draw_filtered_summary_table(st: Any, data: pd.DataFrame) -> None:
+    concurrency_data = _concurrency_rows(data)
+    if concurrency_data.empty:
+        st.info("No filtered concurrency QPS rows found.")
+        return
+
+    columns = [
+        "dataset",
+        "backend",
+        "filter_rate_label",
+        "concurrency",
+        "qps",
+        "task_label",
+    ]
+    st.dataframe(
+        concurrency_data[columns],
+        hide_index=True,
+        width="stretch",
+        column_config={
+            "filter_rate_label": "Filter",
+            "concurrency": st.column_config.NumberColumn("Concurrency", format="%d"),
+            "qps": st.column_config.NumberColumn("QPS", format="%.4f"),
+        },
+    )
+
+
+def _chart_label(value: Any, metric: str) -> str:
+    if pd.isna(value):
+        return ""
+
+    value = float(value)
+    abs_value = abs(value)
+    if metric in {"recall", "ndcg", "mrr"}:
+        return f"{value:.3f}"
+    if metric == "qps":
+        return f"{value / 1000:.1f}k" if abs_value >= 1000 else f"{value:.0f}"
+    if metric == "load_s":
+        if abs_value >= 3600:
+            return f"{value / 3600:.1f}h"
+        if abs_value >= 60:
+            return f"{value / 60:.1f}m"
+        return f"{value:.1f}s"
+    return f"{value:.1f}"
 
 
 def _draw_metric_chart(
@@ -224,8 +309,12 @@ def _draw_metric_chart(
         backend_order = BACKEND_ORDER
 
     show_text = data["payload"].nunique() <= 1
+    chart_data = data.copy()
+    if show_text:
+        chart_data["_chart_label"] = chart_data[metric].apply(lambda value: _chart_label(value, metric))
+
     fig = px.bar(
-        data,
+        chart_data,
         x="dataset_axis_label",
         y=metric,
         color="backend",
@@ -234,16 +323,15 @@ def _draw_metric_chart(
         category_orders={"dataset_axis_label": _dataset_axis_order(data), "backend": backend_order},
         color_discrete_map=BACKEND_COLORS,
         hover_data=["dataset_doc_count", "payload", "context", "task_label"],
-        text_auto=".4g" if show_text else False,
+        text="_chart_label" if show_text else None,
         title=title,
     )
     if show_text:
-        text_template = "%{y:.4f}" if metric == "recall" else "%{y:.1f}"
         fig.update_traces(
-            texttemplate=text_template,
+            texttemplate="%{text}",
             textposition="outside",
             textangle=0,
-            textfont={"size": 11},
+            textfont={"size": 10},
             cliponaxis=False,
         )
     fig.update_layout(
@@ -263,17 +351,34 @@ def _concurrency_rows(data: pd.DataFrame) -> pd.DataFrame:
             rows.append(
                 {
                     "dataset": row["dataset"],
+                    "dataset_family": row["dataset_family"],
                     "dataset_axis_label": row["dataset_axis_label"],
                     "dataset_doc_count": row["dataset_doc_count"],
                     "backend": row["backend"],
                     "payload": row["payload"],
                     "context": row["context"],
+                    "filter_rate": row["filter_rate"],
+                    "filter_rate_label": row["filter_rate_label"],
                     "concurrency": concurrency,
                     "qps": qps,
                     "task_label": row["task_label"],
                 }
             )
     return pd.DataFrame(rows)
+
+
+def _peak_filtered_qps_rows(data: pd.DataFrame) -> pd.DataFrame:
+    concurrency_data = _concurrency_rows(data)
+    if concurrency_data.empty:
+        return concurrency_data
+
+    concurrency_data["qps"] = pd.to_numeric(concurrency_data["qps"], errors="coerce")
+    concurrency_data = concurrency_data.dropna(subset=["qps"])
+    if concurrency_data.empty:
+        return concurrency_data
+
+    peak_indices = concurrency_data.groupby(["backend", "filter_rate_label"], sort=False, observed=True)["qps"].idxmax()
+    return concurrency_data.loc[peak_indices].reset_index(drop=True)
 
 
 def _draw_concurrency_chart(st: Any, data: pd.DataFrame) -> None:
@@ -303,6 +408,57 @@ def _draw_concurrency_chart(st: Any, data: pd.DataFrame) -> None:
     st.plotly_chart(fig, width="stretch", key="fts-concurrency-qps")
 
 
+def _draw_filtered_qps_tab(st: Any, data: pd.DataFrame) -> None:
+    filtered_data = data[(data["payload"] == "ids_only") & data["filter_rate"].notna()].copy()
+    peak_data = _peak_filtered_qps_rows(filtered_data)
+    if peak_data.empty:
+        st.info("No filtered concurrency QPS rows found.")
+        return
+
+    selected_family = str(peak_data["dataset_family"].iloc[0])
+    peak_data["_chart_label"] = peak_data["qps"].apply(lambda value: _chart_label(value, "qps"))
+    backend_order = _backend_metric_order(peak_data, "qps", ascending=False)
+    filter_rate_order = [label for label in FILTER_RATE_LABEL_ORDER if label in set(peak_data["filter_rate_label"])]
+
+    fig = px.bar(
+        peak_data,
+        x="filter_rate_label",
+        y="qps",
+        color="backend",
+        barmode="group",
+        category_orders={
+            "filter_rate_label": filter_rate_order,
+            "backend": backend_order,
+        },
+        color_discrete_map=BACKEND_COLORS,
+        hover_data=[
+            "dataset",
+            "dataset_doc_count",
+            "payload",
+            "concurrency",
+            "task_label",
+        ],
+        text="_chart_label",
+        title=f"{selected_family} Peak Filtered Concurrent Search QPS",
+    )
+    fig.update_traces(
+        texttemplate="%{text}",
+        textposition="outside",
+        textangle=0,
+        textfont={"size": 10},
+        cliponaxis=False,
+    )
+    fig.update_layout(
+        margin={"l": 0, "r": 0, "t": 56, "b": 12, "pad": 8},
+        legend={"orientation": "h", "yanchor": "bottom", "y": 1, "xanchor": "right", "x": 1, "title": ""},
+        xaxis_title="Filter rate",
+        yaxis_title="QPS",
+        uniformtext={"minsize": 10, "mode": "show"},
+    )
+    fig.update_xaxes(type="category", categoryorder="array", categoryarray=filter_rate_order)
+    st.plotly_chart(fig, width="stretch", key=f"fts-filtered-concurrency-qps-{selected_family}")
+
+
 def main():
     st.set_page_config(
         page_title="Full Text Search Cloud Results",
@@ -314,7 +470,7 @@ def main():
     NavToPages(st)
 
     st.title("Full Text Search Cloud Results")
-    st.caption("Published FTS results for Zilliz Cloud, ElasticSearch, Vespa, and TurboPuffer.")
+    st.caption("Published FTS results for Zilliz Cloud, ElasticSearch, OpenSearch, and TurboPuffer.")
 
     data = load_full_text_search_rows()
     if data.empty:
@@ -322,33 +478,67 @@ def main():
         footer(st.container())
         return
 
-    shown_data = _filter_data(st, data)
-    if shown_data.empty:
+    normal_data = data[~data["is_filtered"]].copy()
+    filtered_data = data[data["is_filtered"]].copy()
+    active_tab = st.session_state.get("fts-chart-tabs", CHART_TABS[0])
+    if active_tab == FILTERED_TAB:
+        shown_data = normal_data
+        shown_filtered_data = _filter_filtered_data(st, filtered_data) if not filtered_data.empty else filtered_data
+    else:
+        shown_data = _filter_data(st, normal_data) if not normal_data.empty else normal_data
+        shown_filtered_data = filtered_data
+
+    if shown_data.empty and shown_filtered_data.empty:
         st.warning("No rows match the selected filters.")
         footer(st.container())
         return
 
-    _draw_summary_table(st, shown_data)
-    chart_tabs = st.tabs(["QPS", "Recall", "Load"])
+    if active_tab == FILTERED_TAB and not shown_filtered_data.empty:
+        _draw_filtered_summary_table(st, shown_filtered_data)
+    elif not shown_data.empty:
+        _draw_summary_table(st, shown_data)
+
+    chart_tabs = st.tabs(CHART_TABS, default=active_tab, key="fts-chart-tabs", on_change="rerun")
     with chart_tabs[0]:
         qps_data = shown_data
-        _draw_metric_chart(
-            st,
-            qps_data,
-            "qps",
-            "Search QPS",
-            _backend_metric_order(qps_data, "qps", ascending=False),
-        )
+        if qps_data.empty:
+            st.info("No standard FTS rows match the selected filters.")
+        else:
+            _draw_metric_chart(
+                st,
+                qps_data,
+                "qps",
+                "Search QPS",
+                _backend_metric_order(qps_data, "qps", ascending=False),
+            )
     with chart_tabs[1]:
         recall_data = shown_data[shown_data["payload"] == "ids_only"]
         _draw_metric_chart(
             st,
             recall_data,
             "recall",
-            "Math-GT Recall",
+            "Semantic Recall",
             _backend_metric_order(recall_data, "recall", ascending=False),
         )
     with chart_tabs[2]:
+        ndcg_data = shown_data[shown_data["payload"] == "ids_only"]
+        _draw_metric_chart(
+            st,
+            ndcg_data,
+            "ndcg",
+            "NDCG",
+            _backend_metric_order(ndcg_data, "ndcg", ascending=False),
+        )
+    with chart_tabs[3]:
+        mrr_data = shown_data[shown_data["payload"] == "ids_only"]
+        _draw_metric_chart(
+            st,
+            mrr_data,
+            "mrr",
+            "MRR",
+            _backend_metric_order(mrr_data, "mrr", ascending=False),
+        )
+    with chart_tabs[4]:
         load_data = shown_data[shown_data["payload"] == "ids_only"]
         _draw_metric_chart(
             st,
@@ -357,6 +547,8 @@ def main():
             "Load Duration",
             _backend_metric_order(load_data, "load_s", ascending=True),
         )
+    with chart_tabs[5]:
+        _draw_filtered_qps_tab(st, shown_filtered_data)
 
     footer(st.container())
 

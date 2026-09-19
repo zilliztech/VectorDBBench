@@ -1,9 +1,14 @@
 import logging
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
+from functools import cache
+from itertools import islice
 
 import numpy as np
 
 log = logging.getLogger(__name__)
+
+RECALL_CUTOFFS = (100, 1_000, 10_000, 100_000, 1_000_000)
 
 
 @dataclass
@@ -22,12 +27,16 @@ class Metric:
     qps: float = 0.0
     serial_latency_p99: float = 0.0
     serial_latency_p95: float = 0.0
+    serial_latency_p50: float = 0.0
     recall: float = 0.0
+    recall_at: dict[int, float] = field(default_factory=dict)
     ndcg: float = 0.0
+    mrr: float = 0.0
     conc_num_list: list[int] = field(default_factory=list)
     conc_qps_list: list[float] = field(default_factory=list)
     conc_latency_p99_list: list[float] = field(default_factory=list)
     conc_latency_p95_list: list[float] = field(default_factory=list)
+    conc_latency_p50_list: list[float] = field(default_factory=list)
     conc_latency_avg_list: list[float] = field(default_factory=list)
     payload_profile: str = "ids_only"
     payload_estimated_bytes_per_query: int = 0
@@ -62,6 +71,7 @@ QURIES_PER_DOLLAR_METRIC = "QP$ (Quries per Dollar)"
 LOAD_DURATION_METRIC = "load_duration"
 SERIAL_LATENCY_P99_METRIC = "serial_latency_p99"
 SERIAL_LATENCY_P95_METRIC = "serial_latency_p95"
+SERIAL_LATENCY_P50_METRIC = "serial_latency_p50"
 MAX_LOAD_COUNT_METRIC = "max_load_count"
 QPS_METRIC = "qps"
 RECALL_METRIC = "recall"
@@ -70,6 +80,7 @@ metric_unit_map = {
     LOAD_DURATION_METRIC: "s",
     SERIAL_LATENCY_P99_METRIC: "ms",
     SERIAL_LATENCY_P95_METRIC: "ms",
+    SERIAL_LATENCY_P50_METRIC: "ms",
     MAX_LOAD_COUNT_METRIC: "K",
     QURIES_PER_DOLLAR_METRIC: "K",
 }
@@ -78,6 +89,7 @@ lower_is_better_metrics = [
     LOAD_DURATION_METRIC,
     SERIAL_LATENCY_P99_METRIC,
     SERIAL_LATENCY_P95_METRIC,
+    SERIAL_LATENCY_P50_METRIC,
 ]
 
 metric_order = [
@@ -86,6 +98,7 @@ metric_order = [
     LOAD_DURATION_METRIC,
     SERIAL_LATENCY_P99_METRIC,
     SERIAL_LATENCY_P95_METRIC,
+    SERIAL_LATENCY_P50_METRIC,
     MAX_LOAD_COUNT_METRIC,
 ]
 
@@ -94,36 +107,119 @@ def isLowerIsBetterMetric(metric: str) -> bool:
     return metric in lower_is_better_metrics
 
 
-def calc_recall(count: int, ground_truth: list[int], got: list[int]) -> float:
-    recalls = np.zeros(count)
-    for i, result in enumerate(got):
-        if result in ground_truth:
-            recalls[i] = 1
+def calc_recall(count: int, ground_truth: Iterable[int], got: Iterable[int]) -> float:
+    if count <= 0:
+        return 0.0
 
-    return np.mean(recalls)
+    ground_truth_ids = set(ground_truth)
+    hits = {result for result in islice(got, count) if result in ground_truth_ids}
+    return len(hits) / count
 
 
+@cache
 def get_ideal_dcg(k: int):
-    ideal_dcg = 0
-    for i in range(k):
-        ideal_dcg += 1 / np.log2(i + 2)
+    if k <= 0:
+        return 0.0
 
-    return ideal_dcg
+    ranks = np.arange(2, k + 2, dtype=np.float64)
+    return float(np.sum(1 / np.log2(ranks)))
 
 
-def calc_ndcg(ground_truth: list[int], got: list[int], ideal_dcg: float) -> float:
-    dcg = 0
-    ground_truth = list(ground_truth)
+def _build_ground_truth_ranks(ground_truth: Iterable[int]) -> dict[int, int]:
+    ranks = {}
+    for rank, neighbor_id in enumerate(ground_truth):
+        ranks.setdefault(neighbor_id, rank)
+    return ranks
+
+
+def _calc_ndcg_from_ranks(ground_truth_ranks: dict[int, int], got: Iterable[int], ideal_dcg: float) -> float:
+    if ideal_dcg <= 0:
+        return 0.0
+
+    dcg = 0.0
     for got_id in set(got):
-        if got_id in ground_truth:
-            idx = ground_truth.index(got_id)
-            dcg += 1 / np.log2(idx + 2)
+        rank = ground_truth_ranks.get(got_id)
+        if rank is not None:
+            dcg += 1 / np.log2(rank + 2)
     return dcg / ideal_dcg
 
 
-def calc_recall_fts(k: int, ground_truth: list[int], got: list[int]) -> float:
-    if not ground_truth or k <= 0:
+def calc_ndcg(ground_truth: Iterable[int], got: Iterable[int], ideal_dcg: float) -> float:
+    return _calc_ndcg_from_ranks(_build_ground_truth_ranks(ground_truth), got, ideal_dcg)
+
+
+def calc_vector_metrics(
+    count: int,
+    ground_truth: Iterable[int],
+    got: Sequence[int],
+    recall_cutoffs: Iterable[int] = RECALL_CUTOFFS,
+) -> tuple[float, float, dict[int, float]]:
+    if count <= 0:
+        return 0.0, 0.0, {}
+
+    ground_truth_ranks = _build_ground_truth_ranks(islice(ground_truth, count))
+    unique_results = set(islice(got, count))
+    recall = len(unique_results.intersection(ground_truth_ranks)) / count
+    ndcg = _calc_ndcg_from_ranks(ground_truth_ranks, unique_results, get_ideal_dcg(count))
+
+    recall_at = {}
+    for cutoff in recall_cutoffs:
+        if cutoff <= 0 or cutoff > count:
+            continue
+        hits = {
+            result
+            for result in islice(got, cutoff)
+            if (rank := ground_truth_ranks.get(result)) is not None and rank < cutoff
+        }
+        recall_at[cutoff] = len(hits) / cutoff
+
+    return recall, ndcg, recall_at
+
+
+def _positive_fts_qrels(ground_truth: dict[str, int] | list[int] | list[str]) -> dict[str, int]:
+    if isinstance(ground_truth, dict):
+        return {str(doc_id): int(rel) for doc_id, rel in ground_truth.items() if int(rel) > 0}
+    return {str(doc_id): 1 for doc_id in ground_truth}
+
+
+def calc_recall_fts(k: int, ground_truth: dict[str, int] | list[int] | list[str], got: list[int] | list[str]) -> float:
+    gt = _positive_fts_qrels(ground_truth)
+    if not gt or k <= 0:
         return 0.0
-    gt_set = set(ground_truth)
-    hits = gt_set & set(got[:k])
-    return calc_recall(len(gt_set), gt_set, hits)
+    got_set = {str(doc_id) for doc_id in got[:k]}
+    return len(set(gt) & got_set) / len(gt)
+
+
+def calc_mrr_fts(k: int, ground_truth: dict[str, int] | list[int] | list[str], got: list[int] | list[str]) -> float:
+    gt = _positive_fts_qrels(ground_truth)
+    if not gt or k <= 0:
+        return 0.0
+    for rank, doc_id in enumerate(got[:k], start=1):
+        if str(doc_id) in gt:
+            return 1 / rank
+    return 0.0
+
+
+def calc_ndcg_fts(k: int, ground_truth: dict[str, int] | list[int] | list[str], got: list[int] | list[str]) -> float:
+    gt = _positive_fts_qrels(ground_truth)
+    if not gt or k <= 0:
+        return 0.0
+
+    dcg = 0.0
+    seen = set()
+    for rank, raw_doc_id in enumerate(got[:k], start=1):
+        doc_id = str(raw_doc_id)
+        if doc_id in seen:
+            continue
+        seen.add(doc_id)
+        rel = gt.get(doc_id, 0)
+        if rel > 0:
+            dcg += rel / np.log2(rank + 1)
+
+    ideal_dcg = 0.0
+    for rank, rel in enumerate(sorted(gt.values(), reverse=True)[:k], start=1):
+        ideal_dcg += rel / np.log2(rank + 1)
+
+    if ideal_dcg == 0:
+        return 0.0
+    return dcg / ideal_dcg

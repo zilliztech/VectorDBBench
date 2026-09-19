@@ -7,7 +7,6 @@ import traceback
 from enum import Enum, auto
 
 import numpy as np
-from pydantic import PrivateAttr
 
 from .. import config
 from ..base import BaseModel
@@ -17,6 +16,7 @@ from . import utils
 from .cases import Case, CaseLabel, StreamingPerformanceCase
 from .clients import DB, MetricType, api
 from .data_source import DatasetSource
+from .filter import FilterOp
 from .runner import (
     ColdWarmSearchRunner,
     ConcurrentInsertRunner,
@@ -29,6 +29,9 @@ from .utils import kill_proc_tree
 from .workload import WorkloadKind
 
 log = logging.getLogger(__name__)
+# Milvus and Zilliz Cloud cap topK at this value unless the collection opts into Large TopK mode.
+MILVUS_DEFAULT_TOPK_LIMIT = 16_384
+LARGE_TOPK_QUERY_MODE_DBS = frozenset({DB.Milvus, DB.ZillizCloud})
 
 
 class RunningStatus(Enum):
@@ -64,8 +67,6 @@ class CaseRunner(BaseModel):
     read_write_runner: ReadWriteRunner | None = None
     cold_warm_search_runner: ColdWarmSearchRunner | None = None
 
-    _fts_manifest_report: dict = PrivateAttr(default_factory=dict)
-
     def __eq__(self, obj: any):
         if isinstance(obj, CaseRunner):
             key = self.load_reuse_key()
@@ -85,6 +86,8 @@ class CaseRunner(BaseModel):
             self._db_case_config_hash_key(),
             self._collection_name_hash_key(),
             self._dataset_hash_key(),
+            self.config.insert_batch_size,
+            self._hashable_value(self._collection_properties()),
             self.ca.with_scalar_labels,
             self.ca.is_multitenant,
             self._multitenant_routing_hash_key(),
@@ -183,6 +186,25 @@ class CaseRunner(BaseModel):
     def is_fts(self) -> bool:
         return self.workload_kind == WorkloadKind.FULL_TEXT
 
+    def _collection_properties(self, *, log_selection: bool = False) -> dict[str, str]:
+        requested_k = self.config.case_config.k or config.K_DEFAULT
+        if (
+            self.config.db not in LARGE_TOPK_QUERY_MODE_DBS
+            or self.ca.label != CaseLabel.Performance
+            or requested_k <= MILVUS_DEFAULT_TOPK_LIMIT
+        ):
+            return {}
+
+        # Large TopK mode must be applied at collection creation, before the vector index is created.
+        if log_selection:
+            log.info(
+                "%s requested K=%d exceeds the default TopK limit %d; using query_mode=large_topk",
+                self.config.db.value,
+                requested_k,
+                MILVUS_DEFAULT_TOPK_LIMIT,
+            )
+        return {"query_mode": "large_topk"}
+
     def init_db(self, drop_old: bool = True) -> None:
         db_cls = self.config.db.init_cls
         # Compose a compact, case-unique collection/table name for Doris to avoid cross-case interference
@@ -203,6 +225,13 @@ class CaseRunner(BaseModel):
             extra_db_kwargs["collection_name"] = collection_name
         if self.ca.is_multitenant:
             extra_db_kwargs["multitenant_tenant_labels"] = self.ca.tenant_labels()
+        if self.is_fts:
+            extra_db_kwargs["fts_filter_enabled"] = self.ca.filters.type != FilterOp.NonFilter
+        if self.config.db is DB.AWSOpenSearch:
+            extra_db_kwargs["insert_batch_size"] = self.config.insert_batch_size
+        collection_properties = self._collection_properties(log_selection=True)
+        if collection_properties:
+            extra_db_kwargs["collection_properties"] = collection_properties
 
         self.db = db_cls(
             dim=getattr(self.ca.dataset.data, "dim", 0),
@@ -213,27 +242,22 @@ class CaseRunner(BaseModel):
             **extra_db_kwargs,
         )
 
-    def _apply_fts_manifest_params(self) -> None:
-        bm25_params = dict(getattr(self.ca.dataset, "bm25_params", {}) or {})
-        analyzer_params = dict(getattr(self.ca.dataset, "analyzer_params", {}) or {})
-        self.config.db_case_config, manifest_report = self.config.db_case_config.apply_fts_manifest(
-            bm25_params=bm25_params,
-            analyzer_params=analyzer_params,
-        )
-        self._fts_manifest_report = {
-            "fts_manifest": {
-                "bm25": bm25_params,
-                "analyzer": analyzer_params,
-            },
-            **manifest_report,
-        }
-
-    def _fts_manifest_additional_parameters(self) -> dict:
-        return dict(self._fts_manifest_report)
+    def _validate_vector_payload_profile(self) -> None:
+        if self.ca.label != CaseLabel.Performance or self.is_fts:
+            return
+        if not self.config.db.init_cls.supports_payload_profile(self.ca.payload_profile):
+            msg = f"{self.config.db_name} does not support payload_profile={self.ca.payload_profile.value}"
+            raise NotImplementedError(msg)
 
     def _pre_run(self, drop_old: bool = True):
         try:
             self._validate_cloud_cold_latency_config(drop_old)
+            requested_k = self.config.case_config.k or config.K_DEFAULT
+            ground_truth_k = (
+                requested_k
+                if self.ca.label == CaseLabel.Performance and getattr(self.ca, "measure_recall", True)
+                else config.K_DEFAULT
+            )
             creates_multitenant_collection = (
                 TaskStage.DROP_OLD in self.config.stages or TaskStage.LOAD in self.config.stages
             )
@@ -247,11 +271,16 @@ class CaseRunner(BaseModel):
                 raise ValueError(msg)
 
             if self.is_fts:
-                self.ca.dataset.prepare(self.dataset_source)
-                self._apply_fts_manifest_params()
+                self.ca.dataset.prepare(
+                    self.dataset_source,
+                    filters=self.ca.filters,
+                )
                 self.init_db(drop_old)
                 return
 
+            self._validate_vector_payload_profile()
+            if self.ca.dataset.data.with_gt:
+                self.ca.dataset.resolve_search_files(k=ground_truth_k, filters=self.ca.filters)
             self.init_db(drop_old)
             if self.ca.is_multitenant and self.db is not None:
                 if not self.db.supports_multitenant():
@@ -265,6 +294,7 @@ class CaseRunner(BaseModel):
                 filters=self.ca.filters,
                 with_train_files=TaskStage.LOAD in self.config.stages,
                 with_scalar_labels=self.ca.with_scalar_labels,
+                k=ground_truth_k,
             )
         except ModuleNotFoundError as e:
             log.warning(f"pre run case error: please install client for db: {self.config.db}, error={e}")
@@ -317,6 +347,7 @@ class CaseRunner(BaseModel):
                 self.normalize,
                 self.ca.filters,
                 self.ca.load_timeout,
+                batch_size=self.config.insert_batch_size,
             )
             count = runner.run_endlessness()
         except Exception as e:
@@ -336,6 +367,14 @@ class CaseRunner(BaseModel):
         log.info("Start performance case")
         try:
             m = Metric()
+            if self.is_fts and getattr(self.ca.dataset, "filter_stats", None):
+                m.additional_parameters["fts_filter"] = dict(self.ca.dataset.filter_stats)
+                m.additional_parameters["fts_recall"] = {
+                    "skipped": bool(getattr(self.ca.dataset, "recall_skipped", False)),
+                    "reason": getattr(self.ca.dataset, "recall_skip_reason", None),
+                    "serial_query_count": len(getattr(self.ca.dataset, "recall_queries_data", []) or []),
+                    "full_query_count": len(getattr(self.ca.dataset, "queries_data", []) or []),
+                }
             if drop_old:
                 if TaskStage.LOAD in self.config.stages:
                     count, load_dur = self._load_data()
@@ -346,7 +385,7 @@ class CaseRunner(BaseModel):
                     m.load_duration = round(load_dur + build_dur, 4)
                     m.additional_parameters.update(
                         {
-                            "num_per_batch": config.NUM_PER_BATCH,
+                            "insert_batch_size": self.config.insert_batch_size,
                             "load_concurrency": self.config.load_concurrency,
                         }
                     )
@@ -368,6 +407,7 @@ class CaseRunner(BaseModel):
                         m.conc_latency_p99_list,
                         m.conc_latency_p95_list,
                         m.conc_latency_avg_list,
+                        m.conc_latency_p50_list,
                     ) = search_results
                 if TaskStage.SEARCH_SERIAL in self.config.stages:
                     cooldown = self.config.case_config.concurrency_search_config.serial_cooldown
@@ -378,17 +418,28 @@ class CaseRunner(BaseModel):
                         time.sleep(cooldown)
                     search_results = self._serial_search()
                     if self.is_fts:
-                        m.recall, m.serial_latency_p99, m.serial_latency_p95 = search_results
+                        m.recall, m.ndcg, m.mrr, m.serial_latency_p99, m.serial_latency_p95 = search_results
                     else:
-                        m.recall, m.ndcg, m.serial_latency_p99, m.serial_latency_p95 = search_results
+                        (
+                            m.recall,
+                            m.ndcg,
+                            m.serial_latency_p99,
+                            m.serial_latency_p95,
+                            m.serial_latency_p50,
+                            m.recall_at,
+                        ) = search_results
+            gt_data = getattr(self.ca.dataset, "gt_data", None)
+            if gt_data is not None and hasattr(gt_data, "path"):
+                m.additional_parameters["ground_truth"] = {
+                    "file": gt_data.path.name,
+                    "query_count": gt_data.row_count,
+                    "width": gt_data.width,
+                }
             if hasattr(self.ca, "payload_profile"):
                 m.payload_profile = self.ca.payload_profile.value
                 m.payload_estimated_bytes_per_query = self.ca.estimated_payload_bytes_per_query(
                     self.config.case_config.k
                 )
-            if self.is_fts:
-                m.additional_parameters.update(self._fts_manifest_additional_parameters())
-
         except Exception as e:
             log.warning(f"Failed to run performance case, reason = {e}")
             traceback.print_exc()
@@ -422,7 +473,7 @@ class CaseRunner(BaseModel):
             self.normalize,
             self.ca.filters,
             max_workers=self.config.load_concurrency or None,
-            batch_size=self.ca.batch_size,
+            batch_size=self.config.insert_batch_size,
             duration=self.ca.duration,
             **runner_kwargs,
         )
@@ -525,6 +576,7 @@ class CaseRunner(BaseModel):
                 self.ca.filters,
                 self.ca.load_timeout,
                 max_workers=self.config.load_concurrency or None,
+                batch_size=self.config.insert_batch_size,
                 with_scalar_labels=self.ca.with_scalar_labels,
                 workload_kind=self.workload_kind,
                 **runner_kwargs,
@@ -540,10 +592,19 @@ class CaseRunner(BaseModel):
         calculate the recall, serial_latency_p99, serial_latency_p95
 
         Returns:
-            tuple[float, ...]: vector cases return recall, ndcg, p99, p95;
-                FTS cases return recall, p99, p95.
+            tuple[float, ...]: vector cases return recall, ndcg, p99, p95, p50, recall_at;
+                FTS cases return recall, p99, p95, p50.
         """
         try:
+            if self.serial_search_runner is None:
+                if self.is_fts and getattr(self.ca.dataset, "recall_skipped", False):
+                    log.warning(
+                        "Skipping FTS serial recall: %s",
+                        getattr(self.ca.dataset, "recall_skip_reason", "unknown"),
+                    )
+                    return (0.0, 0.0, 0.0, 0.0, 0.0)
+                msg = "serial search runner is not initialized"
+                raise RuntimeError(msg)  # noqa: TRY301
             results, _ = self.serial_search_runner.run()
         except Exception as e:
             log.warning(f"search error: {e!s}, {e}")
@@ -643,24 +704,42 @@ class CaseRunner(BaseModel):
             msg = "FTS dataset is missing queries or ground truth. Call prepare() before initializing search."
             raise ValueError(msg)
         test_texts = [q.text for q in fts_dataset.queries_data]
-        ground_truth = fts_dataset.gt_data
-        if len(test_texts) != len(ground_truth):
-            msg = f"FTS query count {len(test_texts)} does not match ground truth row count {len(ground_truth)}"
+        if len(test_texts) != len(fts_dataset.gt_data):
+            msg = f"FTS query count {len(test_texts)} does not match ground truth row count {len(fts_dataset.gt_data)}"
             raise ValueError(msg)
 
-        log.info(f"FTS test will use {len(test_texts)} queries for testing")
+        log.info(f"FTS concurrent test will use {len(test_texts)} queries for testing")
         self.test_texts = test_texts
 
         if TaskStage.SEARCH_SERIAL in self.config.stages:
-            self.serial_search_runner = SerialSearchRunner(
-                db=self.db,
-                test_data=test_texts,
-                ground_truth=ground_truth,
-                filters=self.ca.filters,
-                k=self.config.case_config.k,
-                payload_profile=self.ca.payload_profile,
-                workload_kind=WorkloadKind.FULL_TEXT,
-            )
+            recall_queries = fts_dataset.recall_queries_data
+            recall_ground_truth = fts_dataset.recall_gt_data
+            if recall_queries is None or recall_ground_truth is None:
+                msg = (
+                    "FTS dataset is missing recall queries or ground truth. Call prepare() before initializing search."
+                )
+                raise ValueError(msg)
+            if len(recall_queries) != len(recall_ground_truth):
+                msg = (
+                    f"FTS recall query count {len(recall_queries)} does not match "
+                    f"ground truth row count {len(recall_ground_truth)}"
+                )
+                raise ValueError(msg)
+            if fts_dataset.recall_skipped:
+                log.warning("FTS serial recall will be skipped: %s", fts_dataset.recall_skip_reason)
+                self.serial_search_runner = None
+            else:
+                recall_test_texts = [q.text for q in recall_queries]
+                log.info(f"FTS serial recall will use {len(recall_test_texts)} queries")
+                self.serial_search_runner = SerialSearchRunner(
+                    db=self.db,
+                    test_data=recall_test_texts,
+                    ground_truth=recall_ground_truth,
+                    filters=self.ca.filters,
+                    k=self.config.case_config.k,
+                    payload_profile=self.ca.payload_profile,
+                    workload_kind=WorkloadKind.FULL_TEXT,
+                )
         if TaskStage.SEARCH_CONCURRENT in self.config.stages:
             self.search_runner = MultiProcessingSearchRunner(
                 db=self.db,
@@ -686,6 +765,7 @@ class CaseRunner(BaseModel):
             concurrencies=ca.concurrencies,
             k=self.config.case_config.k,
             normalize=self.normalize,
+            batch_size=self.config.insert_batch_size,
         )
 
     def stop(self):

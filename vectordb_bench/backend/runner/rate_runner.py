@@ -3,7 +3,6 @@ import logging
 import multiprocessing as mp
 import time
 from concurrent.futures import ThreadPoolExecutor
-from copy import copy, deepcopy
 
 from vectordb_bench import config
 from vectordb_bench.backend.clients import api
@@ -13,6 +12,7 @@ from vectordb_bench.backend.utils import time_it
 from .util import get_data
 
 log = logging.getLogger(__name__)
+DEFAULT_INSERT_BATCH_SIZE = config.DEFAULT_INSERT_BATCH_SIZE
 
 
 class RatedMultiThreadingInsertRunner:
@@ -23,13 +23,25 @@ class RatedMultiThreadingInsertRunner:
         dataset_iter: DataSetIterator,
         normalize: bool = False,
         timeout: float | None = None,
+        batch_size: int = DEFAULT_INSERT_BATCH_SIZE,
     ):
+        if batch_size <= 0:
+            msg = f"insert batch size must be greater than 0, got {batch_size}"
+            raise ValueError(msg)
+        if rate <= 0:
+            msg = f"insert rate must be greater than 0, got {rate}"
+            raise ValueError(msg)
+        if rate % batch_size != 0:
+            msg = f"insert rate {rate} must be divisible by insert batch size {batch_size}"
+            raise ValueError(msg)
+
         self.timeout = timeout if isinstance(timeout, int | float) else None
         self.dataset = dataset_iter
         self.db = db
         self.normalize = normalize
         self.insert_rate = rate
-        self.batch_rate = rate // config.NUM_PER_BATCH
+        self.batch_size = batch_size
+        self.batch_rate = rate // batch_size
 
         self.executing_futures = []
         self.sig_idx = 0
@@ -47,49 +59,15 @@ class RatedMultiThreadingInsertRunner:
                     msg = f"Insert failed and retried more than {config.MAX_INSERT_RETRY} times"
                     raise RuntimeError(msg) from None
 
-        if db.name == "PgVector":
-            # pgvector is not thread-safe for concurrent insert,
-            #   so we need to copy the db object, make sure each thread has its own connection
-            db_copy = deepcopy(db)
-            with db_copy.init():
-                _insert_embeddings(db_copy, emb, metadata, retry_idx=0)
-        elif db.name == "Doris":
-            # DorisVectorClient is not thread-safe. Similar to pgvector, create a per-thread client
-            # by deep-copying the wrapper and forcing lazy re-init inside the thread.
-            db_copy = deepcopy(db)
-            # Ensure a fresh client/table will be created in this thread
-            try:
-                db_copy.client = None
-                db_copy.table = None
-            except Exception:
-                log.debug("Failed to reset Doris client or table on thread-local copy", exc_info=True)
-            with db_copy.init():
-                _insert_embeddings(db_copy, emb, metadata, retry_idx=0)
-        elif db.name == "SeekDB":
-            # mysql.connector is not thread-safe; do not share one connection across workers.
-            # deepcopy() fails on an open _conn (socket is not picklable / not copy-safe in spawn workers).
-            db_copy = copy(db)
-            try:
-                db_copy._conn = None
-                db_copy._cursor = None
-            except Exception:
-                log.debug("Failed to reset SeekDB connection on thread-local copy", exc_info=True)
-            with db_copy.init():
-                _insert_embeddings(db_copy, emb, metadata, retry_idx=0)
-        elif db.name == "VolcMySQL":
-            # mysql.connector is not thread-safe; do not share one connection across workers.
-            # deepcopy() fails on an open conn (socket is not picklable / not copy-safe in spawn workers).
-            db_copy = copy(db)
-            try:
-                db_copy.conn = None
-                db_copy.cursor = None
-                db_copy.admin_cursor = None
-            except Exception:
-                log.debug("Failed to reset VolcMySQL connection on thread-local copy", exc_info=True)
-            with db_copy.init():
-                _insert_embeddings(db_copy, emb, metadata, retry_idx=0)
-        else:
+        if db.thread_safe:
             _insert_embeddings(db, emb, metadata, retry_idx=0)
+        else:
+            # Non-thread-safe clients can't share one connection across insert workers.
+            # Each client owns how to make a thread-local copy (see VectorDB.copy_for_thread);
+            # init() then re-establishes its connection inside this thread.
+            db_copy = db.copy_for_thread()
+            with db_copy.init():
+                _insert_embeddings(db_copy, emb, metadata, retry_idx=0)
 
     @time_it
     def run_with_rate(self, q: mp.Queue):

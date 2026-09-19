@@ -5,7 +5,7 @@ Requires a running Milvus instance at localhost:19530.
 
 import logging
 from types import SimpleNamespace
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, call
 
 import pytest
 from pydantic import SecretStr
@@ -13,13 +13,76 @@ from pydantic import SecretStr
 from vectordb_bench.backend.cases import CaseType
 from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.clients.api import IndexType
-from vectordb_bench.backend.clients.milvus.config import MilvusConfig
+from vectordb_bench.backend.clients.milvus.config import MilvusConfig, MilvusFtsConfig
 from vectordb_bench.backend.clients.milvus.milvus import MILVUS_FORCE_MERGE_TARGET_SIZE_MB, Milvus
 from vectordb_bench.backend.payload import PayloadProfile
 from vectordb_bench.interface import BenchMarkRunner
 from vectordb_bench.models import CaseConfig, TaskConfig
 
 log = logging.getLogger(__name__)
+
+
+def test_milvus_vector_payload_requests_vector_field_and_returns_ids():
+    captured = {}
+
+    def search(**kwargs):
+        captured.update(kwargs)
+        return [[{"pk": 1, "vector": [0.1, 0.2]}]]
+
+    db = object.__new__(Milvus)
+    db.client = SimpleNamespace(search=search)
+    db.collection_name = "test_collection"
+    db._vector_field = "vector"
+    db._primary_field = "pk"
+    db._scalar_label_field = "label"
+    db.case_config = SimpleNamespace(search_param=lambda: {"metric_type": "COSINE"})
+    db.expr = ""
+
+    result = db.search_embedding([0.1, 0.2], k=3, payload_profile=PayloadProfile.VECTOR)
+
+    assert result == [1]
+    assert captured["output_fields"] == ["vector"]
+
+
+def _fake_milvus_client(monkeypatch, *, collection_exists=False, properties=None):
+    client = MagicMock()
+    client.has_collection.return_value = collection_exists
+    client.describe_collection.return_value = {"properties": properties or {}}
+    client_cls = MagicMock(return_value=client)
+    client_cls.create_schema.return_value = MagicMock()
+    client_cls.prepare_index_params.return_value = MagicMock()
+    monkeypatch.setattr("vectordb_bench.backend.clients.milvus.milvus.MilvusClient", client_cls)
+    return client
+
+
+def _create_milvus_with_collection_properties(monkeypatch, *, collection_exists=False, properties=None):
+    client = _fake_milvus_client(
+        monkeypatch,
+        collection_exists=collection_exists,
+        properties=properties,
+    )
+    Milvus(
+        dim=2,
+        db_config={"uri": "http://example.invalid"},
+        db_case_config=SimpleNamespace(
+            index_param=lambda: {"index_type": "AUTOINDEX", "metric_type": "COSINE", "params": {}},
+        ),
+        collection_properties={"query_mode": "large_topk"},
+    )
+    return client
+
+
+def test_milvus_creates_collection_properties_before_index(monkeypatch):
+    client = _create_milvus_with_collection_properties(monkeypatch)
+
+    assert client.create_collection.call_args.kwargs["properties"] == {"query_mode": "large_topk"}
+    method_names = [method_call[0] for method_call in client.method_calls]
+    assert method_names.index("create_collection") < method_names.index("create_index")
+
+
+def test_milvus_rejects_existing_collection_with_incompatible_properties(monkeypatch):
+    with pytest.raises(ValueError, match="incompatible collection properties"):
+        _create_milvus_with_collection_properties(monkeypatch, collection_exists=True)
 
 
 class TestMilvusOptimize:
@@ -37,7 +100,7 @@ class TestMilvusOptimize:
         milvus.case_config = SimpleNamespace(is_gpu_index=is_gpu_index)
         milvus.client = MagicMock()
         milvus.client.compact.side_effect = compact_side_effect
-        milvus.client.compact.return_value = 0
+        milvus.client.compact.return_value = 42
         milvus._wait_for_segments_sorted = MagicMock()
         milvus._wait_for_index = MagicMock()
         milvus._wait_for_compaction = MagicMock()
@@ -48,7 +111,7 @@ class TestMilvusOptimize:
 
         milvus._optimize()
 
-        milvus.client.compact.assert_called_once_with("test_collection", target_size=MILVUS_FORCE_MERGE_TARGET_SIZE_MB)
+        milvus.client.compact.assert_any_call("test_collection", target_size=MILVUS_FORCE_MERGE_TARGET_SIZE_MB)
         milvus.client.refresh_load.assert_called_once_with("test_collection")
 
     def test_optimize_compacts_fts_collections(self):
@@ -56,8 +119,204 @@ class TestMilvusOptimize:
 
         milvus._optimize()
 
-        milvus.client.compact.assert_called_once_with("test_collection", target_size=MILVUS_FORCE_MERGE_TARGET_SIZE_MB)
+        milvus.client.compact.assert_any_call("test_collection", target_size=MILVUS_FORCE_MERGE_TARGET_SIZE_MB)
         milvus.client.refresh_load.assert_called_once_with("test_collection")
+
+    def test_optimize_flushes_and_runs_normal_compaction_before_force_merge(self):
+        milvus = self._milvus(compact_side_effect=[41, 42])
+
+        milvus._optimize()
+
+        milvus.client.flush.assert_called_once_with("test_collection")
+        assert milvus.client.compact.call_args_list == [
+            call("test_collection"),
+            call("test_collection", target_size=MILVUS_FORCE_MERGE_TARGET_SIZE_MB),
+        ]
+        assert milvus._wait_for_segments_sorted.call_count == 2
+        assert milvus._wait_for_index.call_count == 3
+        assert milvus._wait_for_compaction.call_args_list == [call(41), call(42)]
+        milvus.client.refresh_load.assert_called_once_with("test_collection")
+
+    def test_optimize_retries_when_compacting_segments_are_missing_from_force_merge_plan(
+        self, monkeypatch: pytest.MonkeyPatch
+    ):
+        class FakeMilvusClient:
+            def __init__(self):
+                self.segment_ids = [1, 2, 3]
+                self.force_merge_completed = False
+
+            def flush(self, _collection_name: str):
+                pass
+
+            def list_persistent_segments(self, _collection_name: str):
+                return [
+                    SimpleNamespace(
+                        segment_id=segment_id,
+                        is_sorted=True,
+                        state_name="Flushed",
+                        level_name="L1",
+                    )
+                    for segment_id in self.segment_ids
+                ]
+
+            def describe_index(self, _collection_name: str, _index_name: str):
+                return {"pending_index_rows": 0}
+
+            def compact(self, _collection_name: str, *, target_size: int | None = None):
+                if target_size is None:
+                    return 90
+                assert target_size == MILVUS_FORCE_MERGE_TARGET_SIZE_MB
+                if self.segment_ids == [1, 2, 3]:
+                    return 100
+                if self.segment_ids == [10, 20]:
+                    return 101
+                message = f"unexpected force merge input: {self.segment_ids}"
+                raise AssertionError(message)
+
+            def get_compaction_state(self, compaction_id: int):
+                if compaction_id == 90:
+                    pass
+                elif compaction_id == 100:
+                    self.segment_ids = [10, 20]
+                elif compaction_id == 101:
+                    self.segment_ids = [30]
+                    self.force_merge_completed = True
+                else:
+                    message = f"unexpected compaction id: {compaction_id}"
+                    raise AssertionError(message)
+                return "Completed"
+
+            def get_compaction_plans(self, compaction_id: int):
+                sources = [1] if compaction_id == 100 else [10, 20]
+                return SimpleNamespace(plans=[SimpleNamespace(sources=sources)])
+
+            def refresh_load(self, _collection_name: str):
+                assert self.force_merge_completed, "refresh started after only a partial force merge"
+
+        milvus = Milvus.__new__(Milvus)
+        milvus.name = "Milvus"
+        milvus.collection_name = "test_collection"
+        milvus._is_fts = False
+        milvus._main_index_name = "vector_idx"
+        milvus.case_config = SimpleNamespace(is_gpu_index=False)
+        milvus.client = FakeMilvusClient()
+        monkeypatch.setattr("vectordb_bench.backend.clients.milvus.milvus.time.sleep", lambda _seconds: None)
+
+        milvus.optimize(data_size=500_000)
+
+        assert milvus.client.force_merge_completed
+
+    def test_optimize_retries_when_all_segments_are_compacting(self, monkeypatch: pytest.MonkeyPatch):
+        class FakeMilvusClient:
+            def __init__(self):
+                self.segment_ids = [1, 2]
+                self.compact_attempts = 0
+                self.force_merge_completed = False
+
+            def flush(self, _collection_name: str):
+                pass
+
+            def list_persistent_segments(self, _collection_name: str):
+                return [
+                    SimpleNamespace(
+                        segment_id=segment_id,
+                        is_sorted=True,
+                        state_name="Flushed",
+                        level_name="L1",
+                    )
+                    for segment_id in self.segment_ids
+                ]
+
+            def describe_index(self, _collection_name: str, _index_name: str):
+                return {"pending_index_rows": 0}
+
+            def compact(self, _collection_name: str, *, target_size: int | None = None):
+                if target_size is None:
+                    return 90
+                assert target_size == MILVUS_FORCE_MERGE_TARGET_SIZE_MB
+                self.compact_attempts += 1
+                if self.compact_attempts == 1:
+                    self.segment_ids = [10]
+                    return -1
+                return 101
+
+            def get_compaction_state(self, compaction_id: int):
+                if compaction_id == 90:
+                    return "Completed"
+                assert compaction_id == 101
+                self.segment_ids = [20]
+                self.force_merge_completed = True
+                return "Completed"
+
+            def get_compaction_plans(self, compaction_id: int):
+                assert compaction_id == 101
+                return SimpleNamespace(plans=[SimpleNamespace(sources=[10])])
+
+            def refresh_load(self, _collection_name: str):
+                assert self.force_merge_completed, "refresh started without a force merge job"
+
+        milvus = Milvus.__new__(Milvus)
+        milvus.name = "Milvus"
+        milvus.collection_name = "test_collection"
+        milvus._is_fts = False
+        milvus._main_index_name = "vector_idx"
+        milvus.case_config = SimpleNamespace(is_gpu_index=False)
+        milvus.client = FakeMilvusClient()
+        monkeypatch.setattr("vectordb_bench.backend.clients.milvus.milvus.time.sleep", lambda _seconds: None)
+
+        milvus.optimize(data_size=500_000)
+
+        assert milvus.client.force_merge_completed
+
+    def test_force_merge_uses_fresh_snapshots_and_stops_after_max_attempts(self, monkeypatch: pytest.MonkeyPatch):
+        class FakeMilvusClient:
+            def __init__(self):
+                self.segment_ids = [1, 2]
+                self.compact_attempts = 0
+
+            def list_persistent_segments(self, _collection_name: str):
+                return [
+                    SimpleNamespace(
+                        segment_id=segment_id,
+                        is_sorted=True,
+                        state_name="Flushed",
+                        level_name="L1",
+                    )
+                    for segment_id in self.segment_ids
+                ]
+
+            def describe_index(self, _collection_name: str, _index_name: str):
+                return {"pending_index_rows": 0}
+
+            def compact(self, _collection_name: str, *, target_size: int):
+                assert target_size == MILVUS_FORCE_MERGE_TARGET_SIZE_MB
+                self.compact_attempts += 1
+                return 100 + self.compact_attempts
+
+            def get_compaction_state(self, _compaction_id: int):
+                next_segment_ids = {
+                    1: [10, 20],
+                    2: [30, 40],
+                    3: [50, 60],
+                }
+                self.segment_ids = next_segment_ids[self.compact_attempts]
+                return "Completed"
+
+            def get_compaction_plans(self, _compaction_id: int):
+                planned_source = {1: 1, 2: 10, 3: 30}[self.compact_attempts]
+                return SimpleNamespace(plans=[SimpleNamespace(sources=[planned_source])])
+
+        milvus = Milvus.__new__(Milvus)
+        milvus.name = "Milvus"
+        milvus.collection_name = "test_collection"
+        milvus._main_index_name = "vector_idx"
+        milvus.client = FakeMilvusClient()
+        monkeypatch.setattr("vectordb_bench.backend.clients.milvus.milvus.time.sleep", lambda _seconds: None)
+
+        with pytest.raises(RuntimeError, match=r"after 3 attempts.*missing segments: \[40\]"):
+            milvus._force_merge(max_attempts=3)
+
+        assert milvus.client.compact_attempts == 3
 
     def test_optimize_skips_gpu_index_compaction(self):
         milvus = self._milvus(is_gpu_index=True)
@@ -247,7 +506,6 @@ def test_milvus_multitenant_insert_writes_tenant_and_scalar_payload_labels() -> 
     db = object.__new__(Milvus)
     db.client = SimpleNamespace(insert=insert)
     db.collection_name = "test_collection"
-    db.batch_size = 100
     db._primary_field = "pk"
     db._scalar_id_field = "id"
     db._vector_field = "vector"
@@ -269,3 +527,94 @@ def test_milvus_multitenant_insert_writes_tenant_and_scalar_payload_labels() -> 
         {"pk": 1, "id": 1, "vector": [0.1, 0.2], "labels": "tenant_0001", "scalar_label": "label_a"},
         {"pk": 2, "id": 2, "vector": [0.3, 0.4], "labels": "tenant_0002", "scalar_label": "label_b"},
     ]
+
+
+def test_milvus_vector_insert_uses_one_client_call_for_runner_batch() -> None:
+    client = MagicMock()
+    client.insert.side_effect = lambda _collection, rows: {"insert_count": len(rows)}
+
+    db = object.__new__(Milvus)
+    db.client = client
+    db.collection_name = "test_collection"
+    db._primary_field = "pk"
+    db._scalar_id_field = "id"
+    db._vector_field = "vector"
+    db.with_scalar_labels = False
+
+    count, err = db.insert_embeddings(
+        embeddings=[[float(i)] for i in range(5)],
+        metadata=list(range(5)),
+    )
+
+    assert count == 5
+    assert err is None
+    client.insert.assert_called_once()
+    assert len(client.insert.call_args.args[1]) == 5
+
+
+def test_milvus_fts_insert_uses_one_client_call_for_runner_batch() -> None:
+    client = MagicMock()
+    client.insert.side_effect = lambda _collection, rows: {"insert_count": len(rows)}
+
+    db = object.__new__(Milvus)
+    db.client = client
+    db.name = "Milvus"
+    db.collection_name = "test_collection"
+    db._is_fts = True
+    db._primary_field = "doc_id"
+    db._text_field = "text"
+    db._filter_id_field = "filter_id"
+    db.with_scalar_labels = False
+
+    count, err = db.insert_documents(
+        texts=[f"document {i}" for i in range(5)],
+        doc_ids=[f"d{i}" for i in range(5)],
+        filter_ids=list(range(5)),
+    )
+
+    assert count == 5
+    assert err is None
+    client.insert.assert_called_once()
+
+
+def test_milvus_fts_filter_index_is_conditional(monkeypatch: pytest.MonkeyPatch) -> None:
+    db = object.__new__(Milvus)
+    db._is_fts = True
+    db._sparse_field = "sparse_vector"
+    db._main_index_name = "sparse_vector_idx"
+    db._sort_index_field = "doc_id"
+    db._sort_index_name = "doc_id_sort_idx"
+    db._filter_id_field = "filter_id"
+    db._filter_id_sort_index_name = "filter_id_sort_idx"
+    db.with_scalar_labels = False
+    db.case_config = SimpleNamespace(sparse_index_param=lambda: {})
+
+    for enabled, expected_fields in (
+        (False, {"sparse_vector", "doc_id"}),
+        (True, {"sparse_vector", "doc_id", "filter_id"}),
+    ):
+        params = MagicMock()
+        monkeypatch.setattr(
+            "vectordb_bench.backend.clients.milvus.milvus.MilvusClient.prepare_index_params",
+            lambda: params,
+        )
+        db._fts_filter_enabled = enabled
+        db._build_index_params()
+        fields = {call.kwargs["field_name"] for call in params.add_index.call_args_list}
+        assert fields == expected_fields
+
+
+def test_milvus_fts_schema_enables_analyzer_without_text_match(monkeypatch: pytest.MonkeyPatch) -> None:
+    client = MagicMock()
+    client.has_collection.return_value = False
+    schema = MagicMock()
+    client_type = MagicMock(return_value=client)
+    client_type.create_schema.return_value = schema
+    client_type.prepare_index_params.return_value = MagicMock()
+    monkeypatch.setattr("vectordb_bench.backend.clients.milvus.milvus.MilvusClient", client_type)
+
+    Milvus(dim=0, db_config={}, db_case_config=MilvusFtsConfig(), collection_name="test_collection")
+
+    text_field = next(call for call in schema.add_field.call_args_list if call.args[0] == "text")
+    assert text_field.kwargs["enable_analyzer"] is True
+    assert "enable_match" not in text_field.kwargs

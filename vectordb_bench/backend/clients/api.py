@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
+from copy import deepcopy
 from enum import StrEnum
 from typing import ClassVar
 
@@ -46,6 +47,7 @@ class IndexType(StrEnum):
     GPU_IVF_PQ = "GPU_IVF_PQ"
     GPU_CAGRA = "GPU_CAGRA"
     SCANN = "scann"
+    LAKEBASE_ANN = "lakebase_ann"
     VCHORDRQ = "vchordrq"
     VCHORDG = "vchordg"
     SCANN_MILVUS = "SCANN_MILVUS"
@@ -151,35 +153,6 @@ class DBCaseConfig(ABC):
     def search_param(self) -> dict:
         raise NotImplementedError
 
-    def apply_fts_manifest(
-        self,
-        bm25_params: dict[str, float],
-        analyzer_params: dict,
-    ) -> tuple["DBCaseConfig", dict]:
-        """Apply FTS dataset manifest parameters to this case config.
-
-        Full-text search datasets may provide BM25 and analyzer settings used to
-        build the mathematical ground truth. Backends that can reproduce those
-        settings should return an updated config with supported parameters
-        applied. Unsupported parameters must be reported in the returned metadata
-        instead of being silently ignored.
-
-        Args:
-            bm25_params(dict[str, float]): BM25 parameters from the dataset
-                manifest, such as k1, b, and avgdl.
-            analyzer_params(dict): analyzer settings from the dataset manifest.
-
-        Returns:
-            tuple[DBCaseConfig, dict]: updated config and a report describing
-            applied and unapplied BM25/analyzer parameters.
-        """
-        return self, {
-            "applied_bm25_params": {},
-            "unapplied_bm25_params": dict(bm25_params),
-            "applied_analyzer_params": {},
-            "unapplied_analyzer_params": dict(analyzer_params),
-        }
-
 
 class EmptyDBCaseConfig(BaseModel, DBCaseConfig):
     """EmptyDBCaseConfig will be used if the vector database has no case specific configs"""
@@ -228,6 +201,17 @@ class VectorDB(ABC):
         (All search tests in a case use consistent filtering conditions.)"""
         return
 
+    def copy_for_thread(self) -> "VectorDB":
+        """Return a per-thread copy of this client for non-thread-safe backends.
+
+        Runners call this (instead of branching on db.name) when thread_safe is
+        False, then init() the copy inside the worker so each thread owns its own
+        connection. Defaults to a deep copy; clients whose live connection can't be
+        deep-copied (e.g. an open DB-API socket) override this to shallow-copy and
+        drop their connection handles so init() re-establishes them per thread.
+        """
+        return deepcopy(self)
+
     @abstractmethod
     def __init__(
         self,
@@ -273,7 +257,8 @@ class VectorDB(ABC):
         """Wheather this database need to normalize dataset to support COSINE"""
         return False
 
-    def supports_payload_profile(self, payload_profile: PayloadProfile) -> bool:
+    @staticmethod
+    def supports_payload_profile(payload_profile: PayloadProfile) -> bool:
         return payload_profile == PayloadProfile.IDS_ONLY
 
     def has_text_field(self) -> bool:
@@ -360,8 +345,7 @@ class VectorDB(ABC):
         tenant_labels_data: list[str] | None = None,
         **kwargs,
     ) -> tuple[int, Exception]:
-        """Insert the embeddings to the vector database. The default number of embeddings for
-        each insert_embeddings is 5000.
+        """Insert one task-configured batch of embeddings into the vector database.
 
         Args:
             embeddings(list[list[float]]): list of embedding to add to the vector database.

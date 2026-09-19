@@ -1,88 +1,90 @@
-from typing import Iterable
-import argparse
-from vectordb_bench.backend.dataset import Dataset, DatasetSource
+from types import SimpleNamespace
+
+import pytest
+
+from vectordb_bench import config
+from vectordb_bench.backend.runner import read_write_runner as read_write_runner_module
+from vectordb_bench.backend.runner.mp_runner import MultiProcessingSearchRunner
 from vectordb_bench.backend.runner.rate_runner import RatedMultiThreadingInsertRunner
 from vectordb_bench.backend.runner.read_write_runner import ReadWriteRunner
-from vectordb_bench.backend.clients import DB, VectorDB
-from vectordb_bench.backend.clients.milvus.config import FLATConfig
-from vectordb_bench.backend.clients.zilliz_cloud.config import AutoIndexConfig
 
-import logging
+DEFAULT_INSERT_BATCH_SIZE = config.DEFAULT_INSERT_BATCH_SIZE
 
-log = logging.getLogger("vectordb_bench")
-log.setLevel(logging.DEBUG)
 
-def get_rate_runner(db):
-    cohere = Dataset.COHERE.manager(100_000)
-    prepared = cohere.prepare(DatasetSource.AliyunOSS)
-    assert prepared
+class FakeDB:
+    name = "FakeDB"
+
+
+def test_rate_runner_uses_explicit_batch_size():
     runner = RatedMultiThreadingInsertRunner(
-        rate = 10,
-        db = db,
-        dataset = cohere,
+        rate=30,
+        db=FakeDB(),
+        dataset_iter=iter(()),
+        batch_size=5,
     )
 
-    return runner
+    assert runner.insert_rate == 30
+    assert runner.batch_size == 5
+    assert runner.batch_rate == 6
 
-def test_rate_runner(db, insert_rate):
-    runner = get_rate_runner(db)
 
-    _, t = runner.run_with_rate()
-    log.info(f"insert run done, time={t}")
-
-def test_read_write_runner(db, insert_rate, conc: list, search_stage: Iterable[float], read_dur_after_write: int, local: bool=False):
-    cohere = Dataset.COHERE.manager(1_000_000)
-    if local is True:
-        source = DatasetSource.AliyunOSS
-    else:
-        source = DatasetSource.S3
-    prepared = cohere.prepare(source)
-    assert prepared
-
-    rw_runner = ReadWriteRunner(
-        db=db,
-        dataset=cohere,
-        insert_rate=insert_rate,
-        search_stage=search_stage,
-        read_dur_after_write=read_dur_after_write,
-        concurrencies=conc
+def test_rate_runner_direct_caller_uses_stable_batch_default():
+    runner = RatedMultiThreadingInsertRunner(
+        rate=DEFAULT_INSERT_BATCH_SIZE,
+        db=FakeDB(),
+        dataset_iter=iter(()),
     )
-    rw_runner.run_read_write()
+
+    assert runner.batch_size == DEFAULT_INSERT_BATCH_SIZE
+    assert runner.batch_rate == 1
 
 
-def get_db(db: str, config: dict) -> VectorDB:
-    if db == DB.Milvus.name:
-        return DB.Milvus.init_cls(dim=768, db_config=config, db_case_config=FLATConfig(metric_type="COSINE"), drop_old=True)
-    elif db == DB.ZillizCloud.name:
-        return DB.ZillizCloud.init_cls(dim=768, db_config=config, db_case_config=AutoIndexConfig(metric_type="COSINE"), drop_old=True)
-    else:
-        raise ValueError(f"unknown db: {db}")
+@pytest.mark.parametrize(
+    ("rate", "batch_size", "message"),
+    [
+        (0, 10, "insert rate must be greater than 0"),
+        (-10, 10, "insert rate must be greater than 0"),
+        (10, 0, "insert batch size must be greater than 0"),
+        (10, -1, "insert batch size must be greater than 0"),
+        (10, 4, "insert rate 10 must be divisible by insert batch size 4"),
+    ],
+)
+def test_rate_runner_rejects_invalid_rate_batch_combinations(rate, batch_size, message):
+    with pytest.raises(ValueError, match=message):
+        RatedMultiThreadingInsertRunner(
+            rate=rate,
+            db=FakeDB(),
+            dataset_iter=iter(()),
+            batch_size=batch_size,
+        )
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-r", "--insert_rate", type=int, default="1000", help="insert entity row count per seconds, cps")
-    parser.add_argument("-d", "--db", type=str, default=DB.Milvus.name, help="db name")
-    parser.add_argument("-t", "--duration", type=int, default=300, help="stage search duration in seconds")
-    parser.add_argument("--use_s3", action='store_true', help="whether to use S3 dataset")
+def test_read_write_runner_requests_task_batch_from_dataset(monkeypatch):
+    requested_batch_sizes = []
 
-    flags = parser.parse_args()
+    class Dataset:
+        data = SimpleNamespace(size=100)
+        test_data = []
+        gt_data = []
 
-    # TODO read uri, user, password from .env
-    config = {
-        "uri": "http://localhost:19530",
-        "user": "",
-        "password": "",
-    }
+        def iter_batches(self, batch_size):
+            requested_batch_sizes.append(batch_size)
+            return iter(())
 
-    conc = (1, 15, 50)
-    search_stage = (0.5, 0.6, 0.7, 0.8, 0.9)
+    class FakeSerialSearchRunner:
+        def __init__(self, **kwargs):
+            pass
 
-    db = get_db(flags.db, config)
-    test_read_write_runner(
-        db=db,
-        insert_rate=flags.insert_rate,
-        conc=conc,
-        search_stage=search_stage,
-        read_dur_after_write=flags.duration,
-        local=flags.use_s3)
+    monkeypatch.setattr(MultiProcessingSearchRunner, "__init__", lambda self, **kwargs: None)
+    monkeypatch.setattr(read_write_runner_module, "SerialSearchRunner", FakeSerialSearchRunner)
+
+    runner = ReadWriteRunner(
+        db=FakeDB(),
+        dataset=Dataset(),
+        insert_rate=30,
+        batch_size=5,
+    )
+
+    assert requested_batch_sizes == [5]
+    assert runner.batch_size == 5
+    assert runner.batch_rate == 6

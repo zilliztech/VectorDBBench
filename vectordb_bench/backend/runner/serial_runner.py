@@ -5,6 +5,7 @@ import multiprocessing as mp
 import random
 import time
 import traceback
+from collections.abc import Iterator
 
 import numpy as np
 
@@ -14,13 +15,13 @@ from vectordb_bench.backend.payload import PayloadProfile
 from vectordb_bench.backend.workload import WorkloadKind
 
 from ... import config
-from ...metric import calc_ndcg, calc_recall, calc_recall_fts, get_ideal_dcg
+from ...metric import calc_mrr_fts, calc_ndcg_fts, calc_recall_fts, calc_vector_metrics
 from ...models import LoadTimeoutError
 from .. import utils
 from ..clients import api
 
-NUM_PER_BATCH = config.NUM_PER_BATCH
 LOAD_MAX_TRY_COUNT = config.LOAD_MAX_TRY_COUNT
+DEFAULT_INSERT_BATCH_SIZE = config.DEFAULT_INSERT_BATCH_SIZE
 
 log = logging.getLogger(__name__)
 
@@ -36,29 +37,34 @@ class SerialInsertRunner:
         normalize: bool,
         filters: Filter = non_filter,
         timeout: float | None = None,
+        batch_size: int = DEFAULT_INSERT_BATCH_SIZE,
     ):
+        if batch_size <= 0:
+            msg = f"insert batch size must be greater than 0, got {batch_size}"
+            raise ValueError(msg)
         self.timeout = timeout if isinstance(timeout, int | float) else None
         self.dataset = dataset
         self.db = db
         self.normalize = normalize
         self.filters = filters
+        self.batch_size = batch_size
 
     def endless_insert_data(self, all_embeddings: list, all_metadata: list, left_id: int = 0) -> int:
         with self.db.init():
             # unique id for endlessness insertion
             all_metadata = [i + left_id for i in all_metadata]
 
-            num_batches = math.ceil(len(all_embeddings) / NUM_PER_BATCH)
+            num_batches = math.ceil(len(all_embeddings) / self.batch_size)
             log.info(
                 f"({mp.current_process().name:16}) Start inserting {len(all_embeddings)} "
-                f"embeddings in batch {NUM_PER_BATCH}"
+                f"embeddings in batch {self.batch_size}"
             )
             count = 0
             for batch_id in range(num_batches):
                 retry_count = 0
                 already_insert_count = 0
-                metadata = all_metadata[batch_id * NUM_PER_BATCH : (batch_id + 1) * NUM_PER_BATCH]
-                embeddings = all_embeddings[batch_id * NUM_PER_BATCH : (batch_id + 1) * NUM_PER_BATCH]
+                metadata = all_metadata[batch_id * self.batch_size : (batch_id + 1) * self.batch_size]
+                embeddings = all_embeddings[batch_id * self.batch_size : (batch_id + 1) * self.batch_size]
 
                 log.debug(
                     f"({mp.current_process().name:16}) batch [{batch_id:3}/{num_batches}], "
@@ -88,7 +94,7 @@ class SerialInsertRunner:
                 count += already_insert_count
             log.info(
                 f"({mp.current_process().name:16}) Finish inserting {len(all_embeddings)} embeddings in "
-                f"batch {NUM_PER_BATCH}"
+                f"batch {self.batch_size}"
             )
         return count
 
@@ -96,7 +102,7 @@ class SerialInsertRunner:
         """run forever util DB raises exception or crash"""
         # datasets for load tests are quite small, can fit into memory
         # only 1 file
-        data_df = next(iter(self.dataset))
+        data_df = next(self.dataset.iter_batches(self.batch_size))
         all_embeddings, all_metadata = (
             np.stack(data_df[self.dataset.data.train_vector_field]).tolist(),
             data_df[self.dataset.data.train_id_field].tolist(),
@@ -133,7 +139,7 @@ class SerialSearchRunner:
         self,
         db: api.VectorDB,
         test_data: list,
-        ground_truth: list[list[int]],
+        ground_truth: list[list[int]] | list[dict[str, int]],
         k: int = 100,
         filters: Filter = non_filter,
         payload_profile: PayloadProfile = PayloadProfile.IDS_ONLY,
@@ -205,19 +211,49 @@ class SerialSearchRunner:
 
         return results
 
-    def search(self, args: tuple[list, list[list[int]]]) -> tuple[float, ...]:
+    def _validate_ground_truth(self, test_data: list, ground_truth: object | None) -> None:
+        if not self.measure_recall or ground_truth is None:
+            return
+        if len(test_data) != len(ground_truth):
+            msg = f"Search query count {len(test_data)} does not match ground truth row count {len(ground_truth)}"
+            raise ValueError(msg)
+        if self._use_fts_metrics:
+            return
+
+        source_width = getattr(ground_truth, "width", None)
+        if source_width is not None:
+            if source_width < self.k:
+                msg = f"Ground truth width {source_width} is smaller than requested K={self.k}"
+                raise ValueError(msg)
+            return
+
+        for row_idx, row in enumerate(ground_truth):
+            if len(row) < self.k:
+                msg = f"Ground truth width {len(row)} at row {row_idx} is smaller than requested K={self.k}"
+                raise ValueError(msg)
+
+    @staticmethod
+    def _iter_ground_truth(ground_truth: object) -> Iterator:
+        if hasattr(ground_truth, "iter_rows"):
+            return ground_truth.iter_rows()
+        return iter(ground_truth)
+
+    def search(self, args: tuple[list, object]) -> tuple[float, ...]:
         log.info(f"{mp.current_process().name:14} start search the entire test_data to get recall and latency")
+        test_data, ground_truth = args
+        self._validate_ground_truth(test_data, ground_truth)
+        ground_truth_iter = self._iter_ground_truth(ground_truth) if ground_truth is not None else None
+
         with self.db.init():
             self.db.prepare_filter(self.filters)
-            test_data, ground_truth = args
-            ideal_dcg = None if self._use_fts_metrics else get_ideal_dcg(self.k)
 
             log.debug(f"test dataset size: {len(test_data)}")
             log.debug(f"ground truth size: {len(ground_truth) if ground_truth is not None else 0}")
 
-            latencies, recalls, ndcgs = [], [], []
+            latencies, recalls, ndcgs, mrrs = [], [], [], []
+            recall_at_samples = {}
             tenant_rng = random.Random(0)
-            for idx, emb in enumerate(test_data):
+            for emb in test_data:
                 tenant = (
                     self.tenant_labels[tenant_rng.randrange(len(self.tenant_labels))]
                     if self.workload_kind == WorkloadKind.VECTOR and self.tenant_labels
@@ -233,16 +269,22 @@ class SerialSearchRunner:
                 latencies.append(time.perf_counter() - s)
 
                 if self.measure_recall and ground_truth is not None:
-                    gt = ground_truth[idx]
+                    gt = next(ground_truth_iter)
                     if self._use_fts_metrics:
                         recalls.append(calc_recall_fts(self.k, gt, results))
+                        ndcgs.append(calc_ndcg_fts(self.k, gt, results))
+                        mrrs.append(calc_mrr_fts(self.k, gt, results))
                     else:
-                        recalls.append(calc_recall(self.k, gt[: self.k], results))
-                        ndcgs.append(calc_ndcg(gt[: self.k], results, ideal_dcg))
+                        recall, ndcg, recall_at = calc_vector_metrics(self.k, gt, results)
+                        recalls.append(recall)
+                        ndcgs.append(ndcg)
+                        for cutoff, value in recall_at.items():
+                            recall_at_samples.setdefault(cutoff, []).append(value)
                 else:
                     recalls.append(0)
-                    if not self._use_fts_metrics:
-                        ndcgs.append(0)
+                    ndcgs.append(0)
+                    if self._use_fts_metrics:
+                        mrrs.append(0)
 
                 if len(latencies) % 100 == 0:
                     log.debug(
@@ -252,22 +294,27 @@ class SerialSearchRunner:
 
         avg_latency = round(np.mean(latencies), 4)
         avg_recall = round(np.mean(recalls), 4)
+        avg_ndcg = round(np.mean(ndcgs), 4)
         cost = round(np.sum(latencies), 4)
         p99 = round(np.percentile(latencies, 99), 4)
         p95 = round(np.percentile(latencies, 95), 4)
+        p50 = round(np.percentile(latencies, 50), 4)
         if self._use_fts_metrics:
+            avg_mrr = round(np.mean(mrrs), 4)
             log.info(
                 f"{mp.current_process().name:14} search entire test_data: "
                 f"cost={cost}s, "
                 f"queries={len(latencies)}, "
                 f"avg_recall={avg_recall}, "
+                f"avg_ndcg={avg_ndcg}, "
+                f"avg_mrr={avg_mrr}, "
                 f"avg_latency={avg_latency}, "
                 f"p99={p99}, "
                 f"p95={p95}"
             )
-            return (avg_recall, p99, p95)
+            return (avg_recall, avg_ndcg, avg_mrr, p99, p95)
 
-        avg_ndcg = round(np.mean(ndcgs), 4)
+        avg_recall_at = {cutoff: round(np.mean(values), 4) for cutoff, values in recall_at_samples.items()}
         log.info(
             f"{mp.current_process().name:14} search entire test_data: "
             f"cost={cost}s, "
@@ -276,9 +323,11 @@ class SerialSearchRunner:
             f"avg_ndcg={avg_ndcg}, "
             f"avg_latency={avg_latency}, "
             f"p99={p99}, "
-            f"p95={p95}"
+            f"p95={p95}, "
+            f"p50={p50}, "
+            f"recall_at={avg_recall_at}"
         )
-        return (avg_recall, avg_ndcg, p99, p95)
+        return (avg_recall, avg_ndcg, p99, p95, p50, avg_recall_at)
 
     def _run_in_subprocess(self) -> tuple[float, ...]:
         with concurrent.futures.ProcessPoolExecutor(max_workers=1) as executor:
