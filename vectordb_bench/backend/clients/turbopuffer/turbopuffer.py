@@ -12,6 +12,7 @@ from urllib.parse import quote
 from urllib.request import Request, urlopen
 
 import numpy as np
+import orjson
 import turbopuffer as tpuf
 
 from vectordb_bench.backend.clients.turbopuffer.config import (
@@ -114,6 +115,7 @@ class TurboPuffer(VectorDB):
         self.pin_timeout = db_config.get("pin_timeout", PINNING_TIMEOUT)
         self._pinning_applied = False
         self.db_case_config = db_case_config
+        self.dim = dim
         self._is_fts = isinstance(db_case_config, TurboPufferFtsConfig)
         self.metric = None if self._is_fts else db_case_config.parse_metric()
 
@@ -297,6 +299,11 @@ class TurboPuffer(VectorDB):
             return self.multitenant_tenant_labels
         return []
 
+    def _vector_schema(self) -> dict | None:
+        if self.db_case_config.vector_type == "f32":
+            return None
+        return {self._vector_field: {"type": f"[{self.dim}]{self.db_case_config.vector_type}", "ann": True}}
+
     @staticmethod
     def _encode_vector(embedding: list[float] | np.ndarray) -> str:
         arr = np.ascontiguousarray(np.asarray(embedding, dtype="<f4"))
@@ -333,6 +340,7 @@ class TurboPuffer(VectorDB):
                         upsert_columns=upsert_columns,
                         distance_metric=self.metric,
                         disable_backpressure=self.db_case_config.disable_backpressure,
+                        **({"schema": schema} if (schema := self._vector_schema()) else {}),
                     )
                 except Exception as e:
                     msg = (
@@ -364,6 +372,7 @@ class TurboPuffer(VectorDB):
                     },
                     distance_metric=self.metric,
                     disable_backpressure=self.db_case_config.disable_backpressure,
+                    **({"schema": schema} if (schema := self._vector_schema()) else {}),
                 )
             else:
                 self.ns.write(
@@ -373,6 +382,7 @@ class TurboPuffer(VectorDB):
                     },
                     distance_metric=self.metric,
                     disable_backpressure=self.db_case_config.disable_backpressure,
+                    **({"schema": schema} if (schema := self._vector_schema()) else {}),
                 )
         except Exception as e:
             log.warning(f"Failed to insert. Error: {e}")
@@ -492,8 +502,13 @@ class TurboPuffer(VectorDB):
             query_kwargs["vector_encoding"] = "base64"
         elif payload_profile == PayloadProfile.SCALAR_LABEL:
             query_kwargs["include_attributes"] = [self._scalar_payload_label_field]
-        res = self._namespace_for_tenant(tenant).query(**query_kwargs)
-        return [int(row.id) for row in res.rows] if res.rows is not None else []
+        if self.db_case_config.probes is not None:
+            n = self.db_case_config.probes
+            query_kwargs["extra_body"] = {"__debug_settings": {"probes_min": n, "probes_max": n}}
+
+        raw = self._namespace_for_tenant(tenant).with_raw_response.query(**query_kwargs)
+        rows = orjson.loads(raw.http_response.content).get("rows")
+        return [int(row["id"]) for row in rows] if rows else []
 
     def search_documents(
         self,

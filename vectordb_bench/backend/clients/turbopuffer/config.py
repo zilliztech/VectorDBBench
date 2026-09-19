@@ -1,4 +1,5 @@
 from enum import StrEnum
+from typing import Literal
 
 from pydantic import BaseModel, SecretStr
 
@@ -43,6 +44,8 @@ class TurboPufferConfig(DBConfig):
 
 class TurboPufferIndexConfig(BaseModel, DBCaseConfig):
     metric_type: MetricType | None = None
+    probes: int | None = None
+    vector_type: Literal["f32", "f16"] = "f32"
     use_multi_ns_for_filter: bool = False
     time_wait_warmup: int = 60 * 1  # 1min
     disable_backpressure: bool = False

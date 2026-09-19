@@ -433,7 +433,8 @@ vectordbbench turbopuffer \
   --api-key "$TURBOPUFFER_API_KEY" --region byoc --api-base-url https://<cluster endpoint> \
   --case-type Performance768D1M \
   --insert-batch-size 10000 --load-concurrency 32 --disable-backpressure \
-  --num-concurrency 1,5,10,20,40
+  --probes 400 --vector-type f16 \
+  --num-concurrency 10,40,80,160
 ```
 
 For the 10M Cohere dataset use `--case-type Performance768D10M`.
@@ -445,6 +446,8 @@ turbopuffer-specific options:
 | `--namespace` | Namespace to write to (default: `vdbbench_test`) |
 | `--metric-type` | `COSINE` or `L2` (default: `COSINE`) |
 | `--consistency-level` | `strong` or `eventual` (default: `strong`) |
+| `--probes` | ANN probes per query. Unset uses the server default (a fixed 200) |
+| `--vector-type` | Stored vector element type, `f32` or `f16` (default: `f32`). `f16` halves storage; the wire format stays `f32` |
 | `--disable-backpressure` | Don't reject writes when indexing falls behind. Recommended for bulk loads; the benchmark waits for indexing to finish before searching anyway |
 | `--pin-namespace` / `--pin-replicas` | Pin the namespace to dedicated nodes before the run |
 
