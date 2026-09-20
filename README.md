@@ -80,6 +80,7 @@ All the database client supported
 | awsopensearch            | `pip install vectordb-bench[opensearch]` |
 | aliyun_opensearch        | `pip install vectordb-bench[aliyun_opensearch]` |
 | mongodb                  | `pip install vectordb-bench[mongodb]`       |
+| oracle                   | `pip install vectordb-bench[oracle]`        |
 | tidb                     | `pip install vectordb-bench[tidb]`          |
 | vespa                    | `pip install vectordb-bench[vespa]`         |
 | oceanbase                | `pip install vectordb-bench[oceanbase]`     |
@@ -118,6 +119,9 @@ Options:
 Commands:
   pgvectorhnsw
   pgvectorivfflat
+  oracleflat
+  oraclehnsw
+  oracleivf
   vectorchordrq
   volcmysqlhnsw
   test

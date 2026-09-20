@@ -32,7 +32,7 @@ from ..backend.clients.oceanbase.cli import OceanBaseHNSW, OceanBaseIVF
 from ..backend.clients.oss_opensearch.cli import OSSOpenSearch
 from ..backend.clients.pgdiskann.cli import PgDiskAnn
 from ..backend.clients.pgvecto_rs.cli import PgVectoRSHNSW, PgVectoRSIVFFlat
-from ..backend.clients.pgvector.cli import PgVectorHNSW
+from ..backend.clients.pgvector.cli import PgVectorFlat, PgVectorHNSW
 from ..backend.clients.pgvectorscale.cli import PgVectorScaleDiskAnn
 from ..backend.clients.pinecone.cli import Pinecone
 from ..backend.clients.pinot.cli import Pinot
@@ -56,10 +56,15 @@ from ..backend.clients.volc_mysql.cli import VolcMySQLHNSW
 from ..backend.clients.weaviate_cloud.cli import Weaviate
 from ..backend.clients.zilliz_cloud.cli import ZillizAutoIndex
 from ..backend.clients.zvec.cli import Zvec
+from ..backend.clients.oracle.cli import oracleflat, oraclehnsw, oracleivf
 from .batch_cli import BatchCli
 from .cli import cli
 
+cli.add_command(oracleflat)
+cli.add_command(oraclehnsw)
+cli.add_command(oracleivf)
 cli.add_command(AdbpgNova)
+cli.add_command(PgVectorFlat)
 cli.add_command(PgVectorHNSW)
 cli.add_command(PgVectoRSHNSW)
 cli.add_command(PgVectoRSIVFFlat)

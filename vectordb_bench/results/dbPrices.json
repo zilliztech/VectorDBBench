@@ -33,6 +33,7 @@
     "p2.x8-1node": 1.31
   },
   "PgVector": {},
+ "Oracle": {},
   "OpenSearch": {
     "16c128g": 1.418,
     "16c128g-force_merge": 1.418

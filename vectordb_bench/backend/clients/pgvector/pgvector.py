@@ -13,7 +13,7 @@ from psycopg import Connection, Cursor, sql
 
 from vectordb_bench.backend.filter import Filter, FilterOp
 
-from ..api import VectorDB
+from ..api import IndexType, VectorDB
 from .config import PgVectorConfigDict, PgVectorIndexConfig
 
 log = logging.getLogger(__name__)
@@ -63,7 +63,8 @@ class PgVector(VectorDB):
         self.conn.commit()
 
         log.info(f"{self.name} config values: {self.connect_config}\n{self.case_config}")
-        if not any(
+        is_flat = getattr(self.case_config, "index", None) in (IndexType.Flat, IndexType.Flat.value)
+        if not is_flat and not any(
             (
                 self.case_config.create_index_before_load,
                 self.case_config.create_index_after_load,
@@ -91,7 +92,13 @@ class PgVector(VectorDB):
     @staticmethod
     def _create_connection(**kwargs) -> tuple[Connection, Cursor]:
         conn = psycopg.connect(**kwargs)
-        register_vector(conn)
+        try:
+            register_vector(conn)
+        except Exception:
+            conn.execute("CREATE EXTENSION IF NOT EXISTS vector")
+            conn.commit()
+            register_vector(conn)
+
         conn.autocommit = False
         cursor = conn.cursor()
 
@@ -268,6 +275,8 @@ class PgVector(VectorDB):
         if self.case_config.create_index_after_load:
             self._drop_index()
             self._create_index()
+        elif getattr(self.case_config, "index", None) in (IndexType.Flat, IndexType.Flat.value):
+            self._drop_index()
 
     def _drop_index(self):
         assert self.conn is not None, "Connection is not initialized"
@@ -343,10 +352,14 @@ class PgVector(VectorDB):
         log.info(f"{self.name} client create index : {self._index_name}")
 
         index_param = self.case_config.index_param()
+        index_type_lower = index_param["index_type"].lower()
+        if index_type_lower in ("flat", "none"):
+            log.info(f"{self.name} client skipping index creation for FLAT configuration")
+            return
+
         self._set_parallel_index_build_param()
         # pgvector registers access methods in lowercase ("hnsw", "ivfflat") but
         # IndexType enum values are uppercase; also IVFFlat maps to "ivfflat" (no underscore).
-        index_type_lower = index_param["index_type"].lower()
         if index_type_lower == "ivf_flat":
             index_type_lower = "ivfflat"
         log.info(f"index_type (original={index_param['index_type']}, normalized={index_type_lower})")

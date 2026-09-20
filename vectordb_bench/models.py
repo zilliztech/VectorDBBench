@@ -199,6 +199,14 @@ class CaseConfigParamType(Enum):
     max_scan_points = "max_scan_points"
     auto_reduction = "auto_reduction"
 
+    # Oracle AI Vector Search
+    neighbors = "neighbors"
+    index_target_accuracy = "index_target_accuracy"
+    search_target_accuracy = "search_target_accuracy"
+    neighbor_partitions = "neighbor_partitions"
+    samples_per_partition = "samples_per_partition"
+    min_vectors_per_partition = "min_vectors_per_partition"
+
 
 class CustomizedCase(BaseModel):
     pass

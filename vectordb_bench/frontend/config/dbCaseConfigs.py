@@ -775,6 +775,7 @@ CaseConfigParamInput_IndexType_PgVector = CaseConfigInput(
         "options": [
             IndexType.HNSW.value,
             IndexType.IVFFlat.value,
+            IndexType.Flat.value,
         ],
     },
 )
@@ -3410,6 +3411,126 @@ AdbpgPerformanceConfig = [
     CaseConfigParamInput_NovaAdaptiveGamma_Adbpg,
 ]
 
+CaseConfigParamInput_IndexType_Oracle = CaseConfigInput(
+    label=CaseConfigParamType.IndexType,
+    inputHelp="Select Index Type",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [
+            IndexType.HNSW.value,
+            IndexType.IVFFlat.value,
+            IndexType.Flat.value,
+        ],
+    },
+)
+
+CaseConfigParamInput_Neighbors_Oracle = CaseConfigInput(
+    label=CaseConfigParamType.neighbors,
+    inputHelp="HNSW graph degree (NEIGHBORS)",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 2,
+        "max": 2048,
+        "value": 32,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_EFConstruction_Oracle = CaseConfigInput(
+    label=CaseConfigParamType.ef_construction,
+    inputHelp="HNSW EFCONSTRUCTION",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 65535,
+        "value": 200,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_IndexTargetAccuracy_Oracle = CaseConfigInput(
+    label=CaseConfigParamType.index_target_accuracy,
+    inputHelp="TARGET ACCURACY used when creating the vector index (percent)",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 100,
+        "value": 95,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    in [IndexType.HNSW.value, IndexType.IVFFlat.value],
+)
+
+CaseConfigParamInput_SearchTargetAccuracy_Oracle = CaseConfigInput(
+    label=CaseConfigParamType.search_target_accuracy,
+    inputHelp="TARGET ACCURACY used for approximate search (percent)",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 100,
+        "value": 95,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    in [IndexType.HNSW.value, IndexType.IVFFlat.value],
+)
+
+CaseConfigParamInput_NeighborPartitions_Oracle = CaseConfigInput(
+    label=CaseConfigParamType.neighbor_partitions,
+    inputHelp="IVF NEIGHBOR PARTITIONS",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 65535,
+        "value": 1024,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.IVFFlat.value,
+)
+
+CaseConfigParamInput_SamplesPerPartition_Oracle = CaseConfigInput(
+    label=CaseConfigParamType.samples_per_partition,
+    inputHelp="IVF SAMPLES_PER_PARTITION",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 1000,
+        "value": 10,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.IVFFlat.value,
+)
+
+CaseConfigParamInput_MinVectorsPerPartition_Oracle = CaseConfigInput(
+    label=CaseConfigParamType.min_vectors_per_partition,
+    inputHelp="IVF MIN_VECTORS_PER_PARTITION",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 1000,
+        "value": 5,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.IVFFlat.value,
+)
+
+OracleLoadingConfig = [
+    CaseConfigParamInput_IndexType_Oracle,
+    CaseConfigParamInput_Neighbors_Oracle,
+    CaseConfigParamInput_EFConstruction_Oracle,
+    CaseConfigParamInput_IndexTargetAccuracy_Oracle,
+    CaseConfigParamInput_NeighborPartitions_Oracle,
+    CaseConfigParamInput_SamplesPerPartition_Oracle,
+    CaseConfigParamInput_MinVectorsPerPartition_Oracle,
+]
+
+OraclePerformanceConfig = [
+    CaseConfigParamInput_IndexType_Oracle,
+    CaseConfigParamInput_Neighbors_Oracle,
+    CaseConfigParamInput_EFConstruction_Oracle,
+    CaseConfigParamInput_IndexTargetAccuracy_Oracle,
+    CaseConfigParamInput_SearchTargetAccuracy_Oracle,
+    CaseConfigParamInput_NeighborPartitions_Oracle,
+    CaseConfigParamInput_SamplesPerPartition_Oracle,
+    CaseConfigParamInput_MinVectorsPerPartition_Oracle,
+]
+
 # Map DB to config
 CASE_CONFIG_MAP = {
     DB.Milvus: {
@@ -3443,6 +3564,10 @@ CASE_CONFIG_MAP = {
     DB.PgVector: {
         CaseLabel.Load: PgVectorLoadingConfig,
         CaseLabel.Performance: PgVectorPerformanceConfig,
+    },
+    DB.Oracle: {
+        CaseLabel.Load: OracleLoadingConfig,
+        CaseLabel.Performance: OraclePerformanceConfig,
     },
     DB.PgVectoRS: {
         CaseLabel.Load: PgVectoRSLoadingConfig,
