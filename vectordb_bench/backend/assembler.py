@@ -1,12 +1,17 @@
-import logging
+from __future__ import annotations
 
-from vectordb_bench.backend.clients import DB, EmptyDBCaseConfig
-from vectordb_bench.backend.data_source import DatasetSource
+import logging
+from typing import TYPE_CHECKING
+
 from vectordb_bench.backend.filter import FilterOp
-from vectordb_bench.models import TaskConfig
 
 from .cases import CaseLabel
 from .task_runner import CaseRunner, RunningStatus, TaskRunner
+
+if TYPE_CHECKING:
+    from vectordb_bench.backend.clients import DB
+    from vectordb_bench.backend.data_source import DatasetSource
+    from vectordb_bench.models import TaskConfig
 
 log = logging.getLogger(__name__)
 
@@ -27,13 +32,6 @@ class Assembler:
             raise ValueError(msg)
 
         actual_source = c.dataset.preferred_source or source
-
-        if (
-            type(task.db_case_config) is not EmptyDBCaseConfig
-            and c.label != CaseLabel.FullTextSearchPerformance
-            and hasattr(c.dataset.data, "metric_type")
-        ):
-            task.db_case_config.metric_type = c.dataset.data.metric_type
 
         return CaseRunner(
             run_id=run_id,

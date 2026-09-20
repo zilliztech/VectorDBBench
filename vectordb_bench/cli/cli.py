@@ -20,8 +20,9 @@ from yaml import load
 from .. import config
 from ..backend.cases import FTS_FILTER_RATES, PerformanceCase, type2case
 from ..backend.clients import DB
-from ..backend.clients.api import IndexType, MetricType
+from ..backend.clients.api import MetricType
 from ..backend.dataset import REGISTERED_DATASETS, DatasetWithSizeType, FtsDatasetWithSizeType
+from ..backend.db_case_config import finalize_db_case_config, select_fts_db_case_config
 from ..backend.payload import PayloadProfile
 from ..interface import benchmark_runner
 from ..models import (
@@ -303,42 +304,6 @@ def get_custom_case_config(parameters: dict) -> dict:
     return custom_case_config
 
 
-def copy_fts_compatible_db_case_fields(source: DBCaseConfig, target: DBCaseConfig) -> DBCaseConfig:
-    """Copy CLI fields that remain meaningful when routing a backend to its FTS config."""
-    preserved_fields = (
-        "number_of_shards",
-        "number_of_replicas",
-        "refresh_interval",
-        "use_force_merge",
-        "force_merge_enabled",
-        "disable_backpressure",
-        "level",
-    )
-    updates = {
-        field: getattr(source, field) for field in preserved_fields if hasattr(source, field) and hasattr(target, field)
-    }
-    if not updates:
-        return target
-    return target.model_copy(update=updates)
-
-
-def apply_fts_cli_db_case_params(
-    db_case_config: DBCaseConfig,
-    parameters: dict[str, Any] | None,
-) -> DBCaseConfig:
-    if not parameters:
-        return db_case_config
-
-    updates = {
-        field: parameters[field]
-        for field in ("bm25_k1", "bm25_b")
-        if parameters.get(field) is not None and hasattr(db_case_config, field)
-    }
-    if not updates:
-        return db_case_config
-    return db_case_config.model_copy(update=updates)
-
-
 def get_case_payload_profile(parameters: dict[str, Any]) -> PayloadProfile | None:
     case_type = CaseType[parameters["case_type"]]
     if not issubclass(type2case[case_type], PerformanceCase):
@@ -352,14 +317,12 @@ def select_cli_db_case_config(
     case_type: str,
     parameters: dict[str, Any] | None = None,
 ) -> DBCaseConfig:
-    if case_type != CaseType.FTSBm25Performance.name:
-        return db_case_config
+    """Backward-compatible wrapper around ``select_fts_db_case_config``.
 
-    fts_case_config_cls = db.case_config_cls(IndexType.FTS)
-    if isinstance(db_case_config, fts_case_config_cls):
-        return apply_fts_cli_db_case_params(db_case_config, parameters)
-    fts_db_case_config = copy_fts_compatible_db_case_fields(db_case_config, fts_case_config_cls())
-    return apply_fts_cli_db_case_params(fts_db_case_config, parameters)
+    Kept for existing callers/tests; new code should use
+    ``finalize_db_case_config`` (the single config finalization choke point).
+    """
+    return select_fts_db_case_config(db, db_case_config, case_type, parameters)
 
 
 log = logging.getLogger(__name__)
@@ -999,22 +962,30 @@ def run(
         update={"note": resolve_db_note(parameters["note"], parameters["note_file"])},
     )
 
+    case_config = CaseConfig(
+        case_id=CaseType[parameters["case_type"]],
+        payload_profile=get_case_payload_profile(parameters),
+        k=parameters["k"],
+        concurrency_search_config=ConcurrencySearchConfig(
+            concurrency_duration=parameters["concurrency_duration"],
+            num_concurrency=[int(s) for s in parameters["num_concurrency"]],
+            concurrency_timeout=parameters["concurrency_timeout"],
+            serial_cooldown=parameters["serial_cooldown"],
+        ),
+        custom_case=get_custom_case_config(parameters),
+    )
+
     task = TaskConfig(
         db=db,
         db_config=db_config,
-        db_case_config=select_cli_db_case_config(db, db_case_config, parameters["case_type"], parameters),
-        case_config=CaseConfig(
-            case_id=CaseType[parameters["case_type"]],
-            payload_profile=get_case_payload_profile(parameters),
-            k=parameters["k"],
-            concurrency_search_config=ConcurrencySearchConfig(
-                concurrency_duration=parameters["concurrency_duration"],
-                num_concurrency=[int(s) for s in parameters["num_concurrency"]],
-                concurrency_timeout=parameters["concurrency_timeout"],
-                serial_cooldown=parameters["serial_cooldown"],
-            ),
-            custom_case=get_custom_case_config(parameters),
+        db_case_config=finalize_db_case_config(
+            db,
+            parameters["case_type"],
+            db_case_config,
+            parameters=parameters,
+            dataset=case_config.case.dataset.data,
         ),
+        case_config=case_config,
         stages=parse_task_stages(
             (False if not parameters["load"] else parameters["drop_old"]),  # only drop old data if loading new data
             parameters["load"],
