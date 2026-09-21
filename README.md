@@ -647,25 +647,64 @@ To list the options for Lindorm, execute `vectordbbench lindormhnsw --help`, The
   --reorder-factor INTEGER        reorder factor
 ```
 
-### Run ADBPG (Aliyun AnalyticDB for PostgreSQL) from command line
+### Run ADBPG (Aliyun AnalyticDB for PostgreSQL)
 
 ADBPG Nova uses the fastann/Nova vector index engine with `USING ann` syntax.
-
-**Example: Run novamr index benchmark (BioASQ 1M, 1024-dim)**
-
-```shell
-vectordbbench adbpgnova --case-type Performance1024D1M --k 10 \
---host <adbpg_host> --port 5432 --db-name postgres \
---user-name <username> --password <password> \
---algorithm novamr --hnsw-m 48 --ef-construction 600 \
---ef-search 130 --max-scan-points 5000 --quantize-rescore-amp 2.0
-```
 
 **Example: Run from config file**
 
 ```shell
-vectordbbench adbpgnova --config-file adbpg_bioasq1m_novamr.yml
+vectordbbench adbpgnova --config-file vectordb_bench/config-files/adbpg_cohere1m_novamr.yml
 ```
+
+**Example: Run from command line with structured parameters**
+
+```shell
+vectordbbench adbpgnova \
+  --case-type Performance1024D1M \
+  --k 10 \
+  --host <adbpg_host> \
+  --port 5432 \
+  --db-name postgres \
+  --user-name <username> \
+  --password <password> \
+  --build-parameters \
+'{
+  "reloption": {
+    "algorithm": "novamr",
+    "hnsw_m": 48,
+    "hnsw_ef_construction": 600
+  },
+  "guc": {
+    "fastann.build_parallel_processes": 32
+  }
+}' \
+  --search-parameters \
+'{
+  "reloption": {
+    "nova_autotune_topk": 10,
+    "nova_autotune_recall": 0.95
+  },
+  "guc": {
+    "fastann.hnsw_ef_search": 130,
+    "fastann.hnsw_max_scan_points": 5000,
+    "fastann.quantize_rescore_amp": 2.0
+  }
+}' \
+  --autotune-parameters \
+'{
+  "topk": [10, 100],
+  "target_recall": [0.90, 0.95, 0.99]
+}'
+```
+
+| Parameter | When it is applied |
+| --- | --- |
+| `build_parameters.reloption` | Added to the index `WITH (...)` clause during index construction. |
+| `build_parameters.guc` | Set in the build session before `CREATE INDEX`. |
+| `search_parameters.reloption` | Set on the index once after a new build and optimize, or once before search when reusing an existing index. |
+| `search_parameters.guc` | Set when each search connection is initialized, before its first query. |
+| `autotune_parameters` | Applied during optimization after a successful index build. Omit it to skip autotune. |
 
 To list the options for ADBPG, execute `vectordbbench adbpgnova --help`. The following are some ADBPG-specific command-line options.
 
@@ -675,14 +714,9 @@ To list the options for ADBPG, execute `vectordbbench adbpgnova --help`. The fol
   --host TEXT                     Db host  [required]
   --port INTEGER                  Postgres database port  [default: 5432]
   --db-name TEXT                  Db name  [required]
-  --algorithm TEXT                algorithm  [default: novamr]
-  --hnsw-m INTEGER                hnsw_m  [default: 16]
-  --ef-construction INTEGER       ef_construction  [default: 200]
-  --ef-search INTEGER             ef_search  [default: 100]
-  --max-scan-points INTEGER       max scan points  [default: 2000]
-  --quantize-rescore-amp FLOAT    fastann.quantize_rescore_amp  [default: 1.0]
-  --nova-adaptive-gamma FLOAT     fastann.nova_adaptive_gamma  [default: 0.0]
-  --auto-reduction/--no-auto-reduction  Index WITH auto_reduction=on  [default: False]
+  --build-parameters YAML_MAPPING     Build reloption/GUC mapping as YAML or JSON
+  --search-parameters YAML_MAPPING    Search reloption/GUC mapping as YAML or JSON
+  --autotune-parameters YAML_MAPPING  Autotune mapping as YAML or JSON; omit to disable
 ```
 
 ### Run PolarDB from command line
