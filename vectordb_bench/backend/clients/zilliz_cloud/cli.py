@@ -5,6 +5,7 @@ import click
 from pydantic import SecretStr
 
 from vectordb_bench.backend.clients import DB
+from vectordb_bench.backend.clients.milvus.cli import _validate_positive_int_or_none
 from vectordb_bench.cli.cli import (
     AutoIndexLevelTypedDict,
     CommonTypedDict,
@@ -83,6 +84,37 @@ class ZillizTypedDict(CommonTypedDict):
             ),
         ),
     ]
+    force_merge_enabled: Annotated[
+        bool,
+        click.option(
+            "--force-merge-enabled/--no-force-merge-enabled",
+            type=bool,
+            default=True,
+            show_default=True,
+            help=(
+                "Whether to force-merge compaction during optimize. Disable for a sooner "
+                "ready-to-search state at the cost of segments not merged to their fullest "
+                "potential (search latency may vary)."
+            ),
+        ),
+    ]
+    force_merge_target_size_mb: Annotated[
+        int | None,
+        click.option(
+            "--force-merge-target-size-mb",
+            type=int,
+            required=False,
+            default=None,
+            show_default=True,
+            callback=_validate_positive_int_or_none,
+            help=(
+                "Target merged segment size in MB requested for the force-merge compaction "
+                "during optimize; the effective cap depends on the Milvus server. Defaults "
+                "to the current unbounded single-segment behavior; set e.g. 1024 for bounded "
+                "segments. Must be a positive integer."
+            ),
+        ),
+    ]
 
 
 class ZillizAutoIndexTypedDict(ZillizTypedDict, AutoIndexLevelTypedDict): ...
@@ -108,6 +140,8 @@ def ZillizAutoIndex(**parameters: Unpack[ZillizAutoIndexTypedDict]):
             level=parameters["level"] if parameters["level"] is not None else 1,
             num_shards=parameters["num_shards"],
             use_partition_key=_use_partition_key(parameters),
+            force_merge_enabled=parameters["force_merge_enabled"],
+            force_merge_target_size_mb=parameters["force_merge_target_size_mb"],
         ),
         **parameters,
     )

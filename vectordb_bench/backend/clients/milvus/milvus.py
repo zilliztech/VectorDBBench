@@ -340,10 +340,14 @@ class Milvus(VectorDB):
             message = "force merge max_attempts must be greater than zero"
             raise ValueError(message)
 
+        target_size_mb = getattr(self.case_config, "force_merge_target_size_mb", None)
+        if target_size_mb is None:
+            target_size_mb = MILVUS_FORCE_MERGE_TARGET_SIZE_MB
+
         for attempt in range(1, max_attempts + 1):
             self._wait_for_compaction_ready()
             expected_source_ids = self._force_merge_source_segment_ids()
-            compaction_id = self.client.compact(self.collection_name, target_size=MILVUS_FORCE_MERGE_TARGET_SIZE_MB)
+            compaction_id = self.client.compact(self.collection_name, target_size=target_size_mb)
             if compaction_id <= 0:
                 failure_detail = f"generated no plan for snapshot {sorted(expected_source_ids)}"
             else:
@@ -360,7 +364,10 @@ class Milvus(VectorDB):
                 message = f"{self.name} force merge failed after {max_attempts} attempts; {failure_detail}"
                 raise RuntimeError(message)
 
-            log.info(f"{self.name} force merge attempt {attempt}/{max_attempts} {failure_detail}; retrying...")
+            log.info(
+                f"{self.name} force merge attempt {attempt}/{max_attempts} "
+                f"(target_size={target_size_mb}MB) {failure_detail}; retrying..."
+            )
             time.sleep(MILVUS_FORCE_MERGE_RETRY_INTERVAL_SECONDS)
 
     def _optimize(self):
@@ -376,8 +383,11 @@ class Milvus(VectorDB):
                     compaction_id = self.client.compact(self.collection_name)
                     if compaction_id > 0:
                         self._wait_for_compaction(compaction_id)
-                    self._force_merge()
-                    log.info(f"{self.name} force merge compaction completed.")
+                    if getattr(self.case_config, "force_merge_enabled", True):
+                        self._force_merge()
+                        log.info(f"{self.name} force merge compaction completed.")
+                    else:
+                        log.info(f"{self.name} force merge compaction disabled; skipping.")
                 except Exception as e:
                     log.warning(f"{self.name} compact or list segments error: {e}")
                     if getattr(getattr(e, "code", None), "name", None) == "PERMISSION_DENIED":
