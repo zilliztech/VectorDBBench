@@ -125,6 +125,19 @@ Commands:
 ```
 To list the options for each command, execute `vectordbbench [command] --help`
 
+`milvusautoindex` and `zillizautoindex` accept `--level` from 1 to 10 (YAML:
+`level`) on servers that support AutoIndex search levels. If omitted, Milvus
+sends no level, preserving the server's default behavior; Zilliz Cloud keeps
+its existing default of 1 and always sends it. Results record the value in
+`task_config.db_case_config.level`.
+
+```shell
+vectordbbench milvusautoindex \
+  --uri http://localhost:19530 \
+  --level 2 \
+  <other options>
+```
+
 Use `--note` or `--note-file` to preserve deployment, resource, client, network, and constraint context in each result JSON under `task_config.db_config.note`. The options are mutually exclusive. Prefer `--note-file` for structured or multiline context, and never include credentials, tokens, or sensitive connection details.
 
 ```shell

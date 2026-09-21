@@ -5,6 +5,7 @@ from pydantic import BaseModel, SecretStr
 
 from vectordb_bench.backend.clients import DB
 from vectordb_bench.cli.cli import (
+    AutoIndexLevelTypedDict,
     CommonTypedDict,
     HNSWFlavor3,
     IVFFlatTypedDictN,
@@ -150,7 +151,7 @@ class MilvusTypedDict(TypedDict):
     ]
 
 
-class MilvusAutoIndexTypedDict(CommonTypedDict, MilvusTypedDict): ...
+class MilvusAutoIndexTypedDict(CommonTypedDict, MilvusTypedDict, AutoIndexLevelTypedDict): ...
 
 
 @cli.command()
@@ -161,14 +162,17 @@ def MilvusAutoIndex(**parameters: Unpack[MilvusAutoIndexTypedDict]):
     run(
         db=DBTYPE,
         db_config=_build_milvus_config(parameters),
-        db_case_config=_apply_milvus_case_defaults(AutoIndexConfig(), parameters),
+        db_case_config=_apply_milvus_case_defaults(AutoIndexConfig(level=parameters["level"]), parameters),
         **parameters,
     )
 
 
+class MilvusFlatTypedDict(CommonTypedDict, MilvusTypedDict): ...
+
+
 @cli.command()
-@click_parameter_decorators_from_typed_dict(MilvusAutoIndexTypedDict)
-def MilvusFlat(**parameters: Unpack[MilvusAutoIndexTypedDict]):
+@click_parameter_decorators_from_typed_dict(MilvusFlatTypedDict)
+def MilvusFlat(**parameters: Unpack[MilvusFlatTypedDict]):
     from .config import FLATConfig
 
     run(

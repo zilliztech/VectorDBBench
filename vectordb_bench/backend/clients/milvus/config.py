@@ -1,6 +1,6 @@
-from typing import ClassVar
+from typing import Annotated, ClassVar
 
-from pydantic import BaseModel, SecretStr, field_validator
+from pydantic import BaseModel, Field, SecretStr, field_validator
 
 from ..api import DBCaseConfig, DBConfig, IndexType, MetricType, SQType
 
@@ -61,8 +61,12 @@ class MilvusIndexConfig(BaseModel):
         return self.metric_type.value
 
 
+AutoIndexLevel = Annotated[int, Field(ge=1, le=10)]
+
+
 class AutoIndexConfig(MilvusIndexConfig, DBCaseConfig):
     index: IndexType = IndexType.AUTOINDEX
+    level: AutoIndexLevel | None = None
 
     def index_param(self) -> dict:
         return {
@@ -72,9 +76,10 @@ class AutoIndexConfig(MilvusIndexConfig, DBCaseConfig):
         }
 
     def search_param(self) -> dict:
-        return {
-            "metric_type": self.parse_metric(),
-        }
+        params = {"metric_type": self.parse_metric()}
+        if self.level is not None:
+            params["params"] = {"level": self.level}
+        return params
 
 
 class HNSWConfig(MilvusIndexConfig, DBCaseConfig):
