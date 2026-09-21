@@ -17,7 +17,7 @@ from vectordb_bench.cli.cli import (
 DBTYPE = DB.Milvus
 
 
-def _validate_positive_int_or_none(ctx: Any, param: Any, value: int | None) -> int | None:
+def _validate_positive_int_or_none(_ctx: Any, _param: Any, value: int | None) -> int | None:
     """Click callback accepting ``None`` or a positive integer.
 
     Guards flags whose values are applied via ``model_copy(update=...)`` in
