@@ -440,8 +440,9 @@ class TurboPuffer(VectorDB):
             query_kwargs["include_attributes"] = [self._vector_field]
         elif payload_profile == PayloadProfile.SCALAR_LABEL:
             query_kwargs["include_attributes"] = [self._scalar_payload_label_field]
-        res = self._namespace_for_tenant(tenant).query(**query_kwargs)
-        return [int(row.id) for row in res.rows] if res.rows is not None else []
+        raw = self._namespace_for_tenant(tenant).with_raw_response.query(**query_kwargs)
+        rows = loads(raw.http_response.content).get("rows")
+        return [int(row["id"]) for row in rows] if rows else []
 
     def search_documents(
         self,
