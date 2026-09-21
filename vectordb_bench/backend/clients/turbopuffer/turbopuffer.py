@@ -330,7 +330,8 @@ class TurboPuffer(VectorDB):
             return 0, e
         return len(embeddings), None
 
-    def supports_payload_profile(self, payload_profile: PayloadProfile) -> bool:
+    @staticmethod
+    def supports_payload_profile(payload_profile: PayloadProfile) -> bool:
         return payload_profile in {
             PayloadProfile.IDS_ONLY,
             PayloadProfile.SCALAR_LABEL,

@@ -4,6 +4,8 @@ Usage:
     >>> Dataset.Cohere.get(100_000)
 """
 
+import fnmatch
+import glob
 import json
 import logging
 import math
@@ -17,7 +19,9 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, ClassVar, NamedTuple
 
+import h5py
 import ir_datasets
+import numpy as np
 import pandas as pd
 import polars as pl
 from pyarrow.parquet import ParquetFile
@@ -30,7 +34,7 @@ from vectordb_bench.base import BaseModel
 from . import utils
 from .clients import MetricType
 from .data_source import DatasetReader, DatasetSource
-from .filter import Filter, FilterOp, non_filter
+from .filter import Filter, FilterOp, NewIntFilter, non_filter
 
 log = logging.getLogger(__name__)
 DEFAULT_INSERT_BATCH_SIZE = config.DEFAULT_INSERT_BATCH_SIZE
@@ -67,6 +71,10 @@ class BaseDataset(BaseModel):
     test_vector_field: str = "emb"
     gt_id_field: str = "id"
     gt_neighbors_field: str = "neighbors_id"
+    source: DatasetSource | None = None
+    source_dataset: str | None = None
+    source_revision: str | None = None
+    dataset_metadata: dict[str, Any] | None = None
 
     @field_validator("size")
     @classmethod
@@ -145,6 +153,42 @@ class CustomDataset(BaseDataset):
         return train_files
 
 
+class ParquetDataset(BaseDataset):
+    """Artifact roles and schema for a Parquet vector dataset."""
+
+    train_selectors: tuple[str, ...]
+    query_selectors: tuple[str, ...]
+    gt_selector: str
+    ground_truth_width: int
+    query_count: int | None = None
+    family: str | None = None
+    point_type: str | None = None
+
+    @field_validator("size")
+    @classmethod
+    def verify_size(cls, value: int) -> int:
+        if value <= 0:
+            msg = f"Dataset size must be positive, got {value}"
+            raise ValueError(msg)
+        return value
+
+    @property
+    def label(self) -> str:
+        return self.family or "Parquet"
+
+    @property
+    def full_name(self) -> str:
+        return self.name
+
+    @property
+    def dir_name(self) -> str:
+        return self.name
+
+    @property
+    def train_files(self) -> list[str]:
+        return list(self.train_selectors)
+
+
 class LAION(BaseDataset):
     name: str = "LAION"
     dim: int = 768
@@ -156,6 +200,131 @@ class LAION(BaseDataset):
     _size_label: ClassVar[dict[int, SizeLabel]] = {
         100_000_000: SizeLabel(100_000_000, "LARGE", 100),
     }
+
+
+@dataclass(frozen=True)
+class SearchDatasetFiles:
+    test_file: str | tuple[str, ...]
+    gt_file: str
+    width: int | None = None
+    query_count: int | None = None
+
+    @property
+    def test_files(self) -> tuple[str, ...]:
+        if isinstance(self.test_file, str):
+            return (self.test_file,)
+        return self.test_file
+
+
+LAION_SEARCH_DATASET_FILES = (
+    (1_000, SearchDatasetFiles("test.parquet", "neighbors.parquet", width=1_000, query_count=1_000)),
+    (
+        100_000,
+        SearchDatasetFiles(
+            "test_nq200.parquet",
+            "neighbors_top100k_nq200.parquet",
+            width=100_000,
+            query_count=200,
+        ),
+    ),
+    (
+        1_000_000,
+        SearchDatasetFiles(
+            "test_nq200.parquet",
+            "neighbors_top1m_nq200.parquet",
+            width=1_000_000,
+            query_count=200,
+        ),
+    ),
+)
+
+# Published widths are capped by the population left after applying each ID threshold.
+LAION_INT_FILTER_SEARCH_WIDTHS: dict[float, tuple[int, ...]] = {
+    0.5: (100_000, 1_000_000),
+    0.6: (100_000, 1_000_000),
+    0.7: (100_000, 1_000_000),
+    0.8: (100_000, 1_000_000),
+    0.9: (100_000, 1_000_000),
+    0.95: (100_000, 1_000_000),
+    0.98: (100_000, 1_000_000),
+    0.99: (100_000, 1_000_000),
+    0.995: (100_000, 500_000),
+    0.998: (100_000, 200_000),
+    0.999: (100_000,),
+}
+
+
+@dataclass(frozen=True)
+class ParquetGroundTruth:
+    path: pathlib.Path
+    neighbors_field: str
+    row_count: int
+    width: int
+
+    @classmethod
+    def from_file(
+        cls,
+        path: pathlib.Path,
+        *,
+        id_field: str,
+        neighbors_field: str,
+        expected_query_ids: typing.Sequence[Any],
+        minimum_width: int,
+        expected_width: int | None = None,
+    ) -> "ParquetGroundTruth":
+        if not path.exists():
+            msg = f"No such file: {path}"
+            raise FileNotFoundError(msg)
+
+        parquet_file = ParquetFile(path, memory_map=True, pre_buffer=False)
+        schema_names = parquet_file.schema_arrow.names
+        missing_fields = [field for field in (id_field, neighbors_field) if field not in schema_names]
+        if missing_fields:
+            msg = f"Ground truth file {path} is missing fields: {missing_fields}"
+            raise ValueError(msg)
+
+        query_ids = parquet_file.read(columns=[id_field]).column(0).to_pylist()
+        if query_ids != list(expected_query_ids):
+            msg = f"Ground truth query IDs in {path} do not match the selected query file"
+            raise ValueError(msg)
+
+        row_count = parquet_file.metadata.num_rows
+        minimum_observed_width = None
+        observed_rows = 0
+        for batch in parquet_file.iter_batches(batch_size=1, columns=[neighbors_field]):
+            for row in batch.column(0):
+                if not row.is_valid:
+                    msg = f"Ground truth file {path} contains a null neighbors row"
+                    raise ValueError(msg)
+                width = len(row.values)
+                observed_rows += 1
+                minimum_observed_width = width if minimum_observed_width is None else min(minimum_observed_width, width)
+                if expected_width is not None and width != expected_width:
+                    msg = f"Ground truth width {width} in {path} does not match expected width {expected_width}"
+                    raise ValueError(msg)
+                if width < minimum_width:
+                    msg = f"Ground truth width {width} in {path} is smaller than requested K={minimum_width}"
+                    raise ValueError(msg)
+
+        if observed_rows != row_count or minimum_observed_width is None:
+            msg = f"Ground truth row count in {path} is invalid: expected {row_count}, read {observed_rows}"
+            raise ValueError(msg)
+
+        return cls(
+            path=path,
+            neighbors_field=neighbors_field,
+            row_count=row_count,
+            width=minimum_observed_width,
+        )
+
+    def __len__(self) -> int:
+        return self.row_count
+
+    def iter_rows(self) -> Iterator[Any]:
+        parquet_file = ParquetFile(self.path, memory_map=True, pre_buffer=False)
+        for batch in parquet_file.iter_batches(batch_size=1, columns=[self.neighbors_field]):
+            for row in batch.column(0):
+                yield row.values.to_numpy(zero_copy_only=False)  # noqa: PD011
 
 
 class GIST(BaseDataset):
@@ -306,23 +475,20 @@ class OpenAI(BaseDataset):
     ]
 
 
-class DatasetManager(BaseModel):
-    """Download dataset if not in the local directory. Provide data for cases.
-
-    DatasetManager is iterable, each iteration will return the next batch of data in pandas.DataFrame
-
-    Examples:
-        >>> cohere = Dataset.COHERE.manager(100_000)
-        >>> for data in cohere:
-        >>>    print(data.columns)
-    """
+class DatasetManager(BaseModel, ABC):
+    """Common in-memory contract consumed by vector benchmark runners."""
 
     data: BaseDataset
+    load_timeout: float | int = config.LOAD_TIMEOUT_DEFAULT
+    optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_DEFAULT
     test_data: list[list[float]] | None = None
-    gt_data: list[list[int]] | None = None
+    gt_data: ParquetGroundTruth | list[list[int]] | None = None
+    search_files: SearchDatasetFiles | None = None
     scalar_labels: pl.DataFrame | None = None
     train_files: list[str] = []
     reader: DatasetReader | None = None
+    resolved_files: dict[str, pathlib.Path] = {}
+    result_metadata: dict[str, Any] | None = None
 
     def __eq__(self, obj: any):
         if isinstance(obj, DatasetManager):
@@ -334,6 +500,10 @@ class DatasetManager(BaseModel):
 
     def set_reader(self, reader: DatasetReader):
         self.reader = reader
+
+    @property
+    def preferred_source(self) -> DatasetSource | None:
+        return self.data.source
 
     @property
     def data_dir(self) -> pathlib.Path:
@@ -351,10 +521,39 @@ class DatasetManager(BaseModel):
         )
 
     def __iter__(self):
-        return DataSetIterator(self)
+        return self.iter_batches(DEFAULT_INSERT_BATCH_SIZE)
+
+    @abstractmethod
+    def iter_batches(self, batch_size: int):
+        """Return insertion batches without materializing the whole corpus."""
+
+    @abstractmethod
+    def prepare(
+        self,
+        source: DatasetSource = DatasetSource.S3,
+        filters: Filter = non_filter,
+        with_train_files: bool = True,
+        with_scalar_labels: bool = False,
+        k: int | None = None,
+    ) -> bool:
+        """Resolve the source and load query and ground-truth data."""
+
+    def max_search_k(self, filters: Filter = non_filter) -> int | None:
+        return None
+
+    @abstractmethod
+    def resolve_search_files(self, *, k: int, filters: Filter = non_filter) -> SearchDatasetFiles:
+        """Validate search inputs and describe the query and ground-truth data."""
+
+    def _local_path(self, file_name: str) -> pathlib.Path:
+        return self.resolved_files.get(file_name, pathlib.Path(self.data_dir, file_name))
+
+
+class ParquetDatasetManager(DatasetManager):
+    """Prepare and stream datasets stored as Parquet files."""
 
     def iter_batches(self, batch_size: int):
-        return DataSetIterator(self, batch_size=batch_size)
+        return ParquetDatasetIterator(self, batch_size=batch_size)
 
     # TODO passing use_shuffle from outside
     def prepare(
@@ -363,6 +562,7 @@ class DatasetManager(BaseModel):
         filters: Filter = non_filter,
         with_train_files: bool = True,
         with_scalar_labels: bool = False,
+        k: int | None = None,
     ) -> bool:
         """Download the dataset from DatasetSource
          url = f"{source}/{self.data.dir_name}"
@@ -371,46 +571,199 @@ class DatasetManager(BaseModel):
             source(DatasetSource): S3 or AliyunOSS, default as S3
             filters(Filter): combined with dataset's with_gt to
               compose the correct ground_truth file
+            k(int | None): requested search depth used to select and validate ground truth
 
         Returns:
             bool: whether the dataset is successfully prepared
 
         """
-        self.train_files = self.data.train_files if with_train_files else []
-        gt_file, test_file = None, None
+        requested_k = config.K_DEFAULT if k is None else k
+        train_selectors = self.data.train_files if with_train_files else []
+        gt_file = None
+        test_selectors = ()
         if self.data.with_gt:
-            gt_file, test_file = filters.groundtruth_file, self.data.test_file
+            self.search_files = self.resolve_search_files(k=requested_k, filters=filters)
+            gt_file, test_selectors = self.search_files.gt_file, self.search_files.test_files
 
+        actual_source = self.preferred_source or source
         if self.data.with_remote_resource:
-            download_files = [file for file in self.train_files]
-            download_files.extend([gt_file, test_file])
+            download_files = [*train_selectors, *test_selectors]
+            if gt_file is not None:
+                download_files.append(gt_file)
             if self.data.with_scalar_labels and self.data.scalar_labels_file_separated:
                 download_files.append(self.data.scalar_labels_file)
-            download_files = [file for file in download_files if file is not None]
-            source.reader().read(
-                dataset=self.data.dir_name.lower(),
+            download_files = list(dict.fromkeys(download_files))
+            self.resolved_files = actual_source.reader().read(
+                dataset=self.data.source_dataset or self.data.dir_name.lower(),
                 files=download_files,
                 local_ds_root=self.data_dir,
+                revision=self.data.source_revision,
             )
 
+        self.train_files = self._resolve_selectors(train_selectors)
+        test_files = self._resolve_selectors(test_selectors)
+        resolved_gt_files = self._resolve_selectors((gt_file,)) if gt_file is not None else []
+        if len(resolved_gt_files) > 1:
+            msg = f"Ground truth selector {gt_file!r} resolved to multiple files"
+            raise ValueError(msg)
+        resolved_gt_file = resolved_gt_files[0] if resolved_gt_files else None
         needs_scalar_labels = filters.type == FilterOp.StrEqual or with_scalar_labels
 
         # read scalar_labels_file if separated
         if needs_scalar_labels and self.data.with_scalar_labels and self.data.scalar_labels_file_separated:
             self.scalar_labels = self._read_file(self.data.scalar_labels_file)
 
-        if gt_file is not None and test_file is not None:
-            self.test_data = self._read_file(test_file)[self.data.test_vector_field].to_list()
-            self.gt_data = self._read_file(gt_file)[self.data.gt_neighbors_field].to_list()
+        if resolved_gt_file is not None and test_files:
+            query_frames = [self._read_file(file) for file in test_files]
+            test_frame = query_frames[0] if len(query_frames) == 1 else pl.concat(query_frames, how="vertical")
+            if self.search_files.query_count is not None and len(test_frame) != self.search_files.query_count:
+                msg = (
+                    f"Query row count {len(test_frame)} in {test_files} does not match "
+                    f"expected count {self.search_files.query_count}"
+                )
+                raise ValueError(msg)
+            query_ids = test_frame[self.data.test_id_field].to_list()
+            self.test_data = test_frame[self.data.test_vector_field].to_list()
+            self.gt_data = ParquetGroundTruth.from_file(
+                self._local_path(resolved_gt_file),
+                id_field=self.data.gt_id_field,
+                neighbors_field=self.data.gt_neighbors_field,
+                expected_query_ids=query_ids,
+                minimum_width=requested_k,
+                expected_width=self.search_files.width,
+            )
 
+        if isinstance(self.data, ParquetDataset):
+            self.result_metadata = self._result_metadata(
+                actual_source,
+                train_files=self.train_files,
+                query_files=test_files,
+                ground_truth_file=resolved_gt_file,
+            )
         log.debug(f"{self.data.name}: available train files {self.train_files}")
 
         return True
 
+    def max_search_k(self, filters: Filter = non_filter) -> int | None:
+        if isinstance(self.data, ParquetDataset):
+            self._validate_registered_filters(filters)
+            return self.data.ground_truth_width
+        if not isinstance(self.data, LAION):
+            return None
+        if isinstance(filters, NewIntFilter):
+            widths = LAION_INT_FILTER_SEARCH_WIDTHS.get(filters.filter_rate)
+            return widths[-1] if widths is not None else None
+        if filters.type == FilterOp.NonFilter:
+            return LAION_SEARCH_DATASET_FILES[-1][0]
+        return LAION_SEARCH_DATASET_FILES[0][0]
+
+    def resolve_search_files(self, *, k: int, filters: Filter = non_filter) -> SearchDatasetFiles:
+        if k <= 0:
+            msg = f"{self.data.name} search K must be positive, got {k}"
+            raise ValueError(msg)
+
+        if isinstance(self.data, ParquetDataset):
+            self._validate_registered_filters(filters)
+            if k > self.data.ground_truth_width:
+                msg = f"{self.data.name} supports K from 1 to {self.data.ground_truth_width}, got {k}"
+                raise ValueError(msg)
+            return SearchDatasetFiles(
+                self.data.query_selectors,
+                self.data.gt_selector,
+                width=self.data.ground_truth_width,
+                query_count=self.data.query_count,
+            )
+
+        if isinstance(self.data, LAION):
+            max_k = LAION_SEARCH_DATASET_FILES[-1][0]
+            if k > max_k:
+                msg = f"LAION supports K up to {max_k:,}, got {k:,}"
+                raise ValueError(msg)
+
+            if isinstance(filters, NewIntFilter):
+                widths = LAION_INT_FILTER_SEARCH_WIDTHS.get(filters.filter_rate)
+                if widths is None:
+                    supported_rates = ", ".join(f"{rate * 100:g}%" for rate in LAION_INT_FILTER_SEARCH_WIDTHS)
+                    msg = f"LAION supported filter rates are: {supported_rates}; got {filters.filter_rate * 100:g}%"
+                    raise ValueError(msg)
+                if k <= LAION_SEARCH_DATASET_FILES[0][0]:
+                    return SearchDatasetFiles(self.data.test_file, filters.groundtruth_file)
+                for width in widths:
+                    if k <= width:
+                        width_suffix = f"{width // 1_000_000}m" if width >= 1_000_000 else f"{width // 1_000}k"
+                        return SearchDatasetFiles(
+                            "test_nq200.parquet",
+                            f"neighbors_{filters.int_rate}_top{width_suffix}_nq200.parquet",
+                            width=width,
+                            query_count=200,
+                        )
+                msg = (
+                    f"LAION integer filter {filters.filter_rate * 100:g}% supports K up to "
+                    f"{widths[-1]:,}, got {k:,}"
+                )
+                raise ValueError(msg)
+
+            if filters.type != FilterOp.NonFilter:
+                if k > LAION_SEARCH_DATASET_FILES[0][0]:
+                    msg = "LAION large-TopK ground truth is published only for integer filters"
+                    raise ValueError(msg)
+                return SearchDatasetFiles(self.data.test_file, filters.groundtruth_file)
+            for upper_bound, files in LAION_SEARCH_DATASET_FILES:
+                if k <= upper_bound:
+                    return files
+
+        return SearchDatasetFiles(self.data.test_file, filters.groundtruth_file)
+
+    @staticmethod
+    def _validate_registered_filters(filters: Filter) -> None:
+        if filters.type != FilterOp.NonFilter:
+            msg = "Parquet dataset does not contain scalar fields or filtered ground truth"
+            raise ValueError(msg)
+
+    def _resolve_selectors(self, selectors: typing.Iterable[str]) -> list[str]:
+        resolved = []
+        for selector in selectors:
+            matches = sorted(name for name in self.resolved_files if fnmatch.fnmatchcase(name, selector))
+            if not matches and not glob.has_magic(selector) and self._local_path(selector).exists():
+                matches = [selector]
+            if not matches:
+                msg = f"No dataset files match selector {selector!r}"
+                raise FileNotFoundError(msg)
+            for name in matches:
+                if name not in resolved:
+                    resolved.append(name)
+        return resolved
+
+    def _result_metadata(
+        self,
+        source: DatasetSource,
+        *,
+        train_files: list[str],
+        query_files: list[str],
+        ground_truth_file: str | None,
+    ) -> dict[str, Any]:
+        metadata = dict(self.data.dataset_metadata or {})
+        metadata.update(
+            {
+                "name": self.data.name,
+                "family": getattr(self.data, "family", None),
+                "source": source.value,
+                "repository": self.data.source_dataset,
+                "revision": self.data.source_revision,
+                "metric_type": self.data.metric_type.value,
+                "point_type": getattr(self.data, "point_type", None),
+                "storage_format": "parquet",
+                "train_files": train_files,
+                "query_files": query_files,
+                "ground_truth_file": ground_truth_file,
+            }
+        )
+        return metadata
+
     def _read_file(self, file_name: str) -> pl.DataFrame:
         """read one file from disk into memory"""
         log.info(f"Read the entire file into memory: {file_name}")
-        p = pathlib.Path(self.data_dir, file_name)
+        p = self._local_path(file_name)
         if not p.exists():
             log.warning(f"No such file: {p}")
             return pl.DataFrame()
@@ -418,8 +771,8 @@ class DatasetManager(BaseModel):
         return pl.read_parquet(p)
 
 
-class DataSetIterator:
-    def __init__(self, dataset: DatasetManager, batch_size: int = DEFAULT_INSERT_BATCH_SIZE):
+class ParquetDatasetIterator:
+    def __init__(self, dataset: ParquetDatasetManager, batch_size: int = DEFAULT_INSERT_BATCH_SIZE):
         if batch_size <= 0:
             msg = f"insert batch size must be greater than 0, got {batch_size}"
             raise ValueError(msg)
@@ -444,7 +797,7 @@ class DataSetIterator:
         return self
 
     def _get_iter(self, file_name: str):
-        p = pathlib.Path(self._ds.data_dir, file_name)
+        p = self._ds._local_path(file_name)
         log.info(f"Get iterator for {p.name}")
         if not p.exists():
             msg = f"No such file: {p}"
@@ -472,6 +825,238 @@ class DataSetIterator:
         raise StopIteration
 
 
+# Backwards-compatible name for callers that imported the Parquet iterator directly.
+DataSetIterator = ParquetDatasetIterator
+
+
+class Hdf5Dataset(BaseDataset):
+    """Schema and source details for an HDF5 vector dataset."""
+
+    file_name: str
+    train_key: str = "train"
+    test_key: str = "test"
+    neighbors_key: str = "neighbors"
+    distances_key: str | None = "distances"
+    dimension_attr: str | None = "dimension"
+    distance_attr: str | None = "distance"
+    point_type_attr: str | None = "point_type"
+    source_distance: str | None = None
+    point_type: str | None = None
+    ground_truth_width: int = 100
+    family: str | None = None
+    distribution: str | None = None
+    modality: str | None = None
+
+    @field_validator("size")
+    @classmethod
+    def verify_size(cls, value: int) -> int:
+        if value <= 0:
+            msg = f"Dataset size must be positive, got {value}"
+            raise ValueError(msg)
+        return value
+
+    @property
+    def label(self) -> str:
+        return self.family or "HDF5"
+
+    @property
+    def full_name(self) -> str:
+        return self.name
+
+    @property
+    def dir_name(self) -> str:
+        return self.name
+
+    @property
+    def train_files(self) -> list[str]:
+        return [self.file_name]
+
+
+class Hdf5DatasetIterator:
+    """Keep one HDF5 file open for the lifetime of an insertion iterator."""
+
+    def __init__(self, dataset: Hdf5Dataset, path: pathlib.Path, batch_size: int):
+        if batch_size <= 0:
+            msg = f"insert batch size must be greater than 0, got {batch_size}"
+            raise ValueError(msg)
+        self._dataset = dataset
+        self._batch_size = batch_size
+        self._offset = 0
+        self._file: h5py.File | None = None
+        self._train: h5py.Dataset | None = None
+        self._file = h5py.File(path, "r")
+        self._train = self._file[dataset.train_key]
+
+    def __iter__(self):
+        return self
+
+    def __next__(self) -> pd.DataFrame:
+        if self._train is None or self._offset >= len(self._train):
+            self.close()
+            raise StopIteration
+
+        end = min(self._offset + self._batch_size, len(self._train))
+        vectors = np.ascontiguousarray(self._train[self._offset : end])
+        batch = pd.DataFrame(
+            {
+                self._dataset.train_id_field: np.arange(self._offset, end, dtype=np.int64),
+                self._dataset.train_vector_field: list(vectors),
+            }
+        )
+        self._offset = end
+        return batch
+
+    def close(self) -> None:
+        self._train = None
+        if self._file is not None:
+            self._file.close()
+            self._file = None
+
+    def __del__(self):
+        self.close()
+
+
+class Hdf5DatasetManager(DatasetManager):
+    """Prepare query data and stream corpus vectors directly from HDF5."""
+
+    data: Hdf5Dataset
+    source_path: pathlib.Path | None = None
+
+    def iter_batches(self, batch_size: int):
+        if not self.train_files:
+            return iter(())
+        if self.source_path is None:
+            raise RuntimeError("HDF5 dataset is not prepared")
+        return Hdf5DatasetIterator(self.data, self.source_path, batch_size)
+
+    def max_search_k(self, filters: Filter = non_filter) -> int | None:
+        self._validate_unfiltered(filters)
+        return self.data.ground_truth_width
+
+    def resolve_search_files(self, *, k: int, filters: Filter = non_filter) -> SearchDatasetFiles:
+        self._validate_unfiltered(filters)
+        if not 1 <= k <= self.data.ground_truth_width:
+            msg = f"{self.data.name} supports K from 1 to {self.data.ground_truth_width}, got {k}"
+            raise ValueError(msg)
+        return SearchDatasetFiles(
+            self.data.file_name,
+            self.data.file_name,
+            width=self.data.ground_truth_width,
+        )
+
+    def prepare(
+        self,
+        source: DatasetSource = DatasetSource.S3,
+        filters: Filter = non_filter,
+        with_train_files: bool = True,
+        with_scalar_labels: bool = False,
+        k: int | None = None,
+    ) -> bool:
+        if with_scalar_labels:
+            msg = f"{self.data.name} does not provide scalar labels"
+            raise ValueError(msg)
+        requested_k = config.K_DEFAULT if k is None else k
+        self.search_files = self.resolve_search_files(k=requested_k, filters=filters)
+        actual_source = self.preferred_source or source
+        if self.data.with_remote_resource:
+            self.resolved_files = actual_source.reader().read(
+                self.data.source_dataset or self.data.dir_name,
+                [self.data.file_name],
+                self.data_dir,
+                revision=self.data.source_revision,
+            )
+        self.source_path = self._local_path(self.data.file_name)
+
+        with h5py.File(self.source_path, "r") as hdf5:
+            self._validate_source(hdf5)
+            queries = np.ascontiguousarray(hdf5[self.data.test_key][:])
+            neighbors = np.ascontiguousarray(hdf5[self.data.neighbors_key][:])
+
+        if neighbors.size and (neighbors.min() < 0 or neighbors.max() >= self.data.size):
+            msg = f"Neighbor ID is outside [0, {self.data.size}) for {self.data.name}"
+            raise ValueError(msg)
+
+        self.test_data = queries.tolist()
+        self.gt_data = neighbors.tolist()
+        self.train_files = self.data.train_files if with_train_files else []
+        self.result_metadata = self._result_metadata(actual_source)
+        return True
+
+    @staticmethod
+    def _validate_unfiltered(filters: Filter) -> None:
+        if filters.type != FilterOp.NonFilter:
+            msg = "HDF5 dataset does not contain scalar fields or filtered ground truth"
+            raise ValueError(msg)
+
+    def _validate_source(self, source: h5py.File) -> None:
+        required_arrays = {self.data.train_key, self.data.test_key, self.data.neighbors_key}
+        if self.data.distances_key is not None:
+            required_arrays.add(self.data.distances_key)
+        missing_arrays = required_arrays - set(source)
+        if missing_arrays:
+            msg = f"Invalid HDF5 {self.data.file_name}: missing arrays={sorted(missing_arrays)}"
+            raise ValueError(msg)
+
+        self._validate_attr(source, self.data.dimension_attr, self.data.dim)
+        self._validate_attr(source, self.data.distance_attr, self.data.source_distance)
+        self._validate_attr(source, self.data.point_type_attr, self.data.point_type)
+
+        train = source[self.data.train_key]
+        test = source[self.data.test_key]
+        neighbors = source[self.data.neighbors_key]
+        if train.shape != (self.data.size, self.data.dim):
+            msg = f"Unexpected train shape for {self.data.name}: {train.shape}"
+            raise ValueError(msg)
+        if test.ndim != 2 or test.shape[1] != self.data.dim:
+            msg = f"Unexpected test shape for {self.data.name}: {test.shape}"
+            raise ValueError(msg)
+        expected_gt_shape = (test.shape[0], self.data.ground_truth_width)
+        if neighbors.shape != expected_gt_shape:
+            msg = f"Unexpected ground-truth shape for {self.data.name}: {neighbors.shape}"
+            raise ValueError(msg)
+        if self.data.distances_key is not None and source[self.data.distances_key].shape != expected_gt_shape:
+            msg = f"Unexpected distance shape for {self.data.name}: {source[self.data.distances_key].shape}"
+            raise ValueError(msg)
+        if train.dtype != test.dtype or not np.issubdtype(train.dtype, np.floating):
+            msg = f"Unsupported vector dtype for {self.data.name}: {train.dtype}/{test.dtype}"
+            raise ValueError(msg)
+        if not np.issubdtype(neighbors.dtype, np.integer):
+            msg = f"Neighbors must be integers, got {neighbors.dtype}"
+            raise ValueError(msg)
+
+    def _validate_attr(self, source: h5py.File, name: str | None, expected: object) -> None:
+        if name is None or expected is None:
+            return
+        if name not in source.attrs:
+            msg = f"Invalid HDF5 {self.data.file_name}: missing attribute {name}"
+            raise ValueError(msg)
+        actual = source.attrs[name]
+        if isinstance(actual, bytes):
+            actual = actual.decode("utf-8")
+        if isinstance(expected, str):
+            actual = str(actual).lower()
+            expected = expected.lower()
+        if actual != expected:
+            msg = f"HDF5 attribute {name}={actual!r} does not match {expected!r} for {self.data.name}"
+            raise ValueError(msg)
+
+    def _result_metadata(self, source: DatasetSource) -> dict[str, Any]:
+        metadata = dict(self.data.dataset_metadata or {})
+        metadata.update(
+            {
+                "name": self.data.name,
+                "source": source.value,
+                "repository": self.data.source_dataset or "",
+                "filename": self.data.file_name,
+                "revision": self.data.source_revision or "",
+                "source_distance": self.data.source_distance or "",
+                "metric_type": self.data.metric_type.value,
+                "point_type": self.data.point_type or "",
+            }
+        )
+        return metadata
+
+
 class Dataset(Enum):
     """
     Value is Dataset classes, DO NOT use it
@@ -492,8 +1077,18 @@ class Dataset(Enum):
     def get(self, size: int) -> BaseDataset:
         return self.value(size=size)
 
-    def manager(self, size: int) -> DatasetManager:
-        return DatasetManager(data=self.get(size))
+    def manager(
+        self,
+        size: int,
+        *,
+        load_timeout: float = config.LOAD_TIMEOUT_DEFAULT,
+        optimize_timeout: float | None = config.OPTIMIZE_TIMEOUT_DEFAULT,
+    ) -> DatasetManager:
+        return ParquetDatasetManager(
+            data=self.get(size),
+            load_timeout=load_timeout,
+            optimize_timeout=optimize_timeout,
+        )
 
 
 class DatasetWithSizeType(Enum):
@@ -539,15 +1134,241 @@ class DatasetWithSizeType(Enum):
 
 DatasetWithSizeMap = {
     DatasetWithSizeType.CohereSmall: Dataset.COHERE.manager(100_000),
-    DatasetWithSizeType.CohereMedium: Dataset.COHERE.manager(1_000_000),
-    DatasetWithSizeType.CohereLarge: Dataset.COHERE.manager(10_000_000),
-    DatasetWithSizeType.LAIONLarge: Dataset.LAION.manager(100_000_000),
-    DatasetWithSizeType.BioasqMedium: Dataset.BIOASQ.manager(1_000_000),
-    DatasetWithSizeType.BioasqLarge: Dataset.BIOASQ.manager(10_000_000),
-    DatasetWithSizeType.OpenAISmall: Dataset.OPENAI.manager(50_000),
-    DatasetWithSizeType.OpenAIMedium: Dataset.OPENAI.manager(500_000),
-    DatasetWithSizeType.OpenAILarge: Dataset.OPENAI.manager(5_000_000),
+    DatasetWithSizeType.CohereMedium: Dataset.COHERE.manager(
+        1_000_000,
+        load_timeout=config.LOAD_TIMEOUT_768D_1M,
+        optimize_timeout=config.OPTIMIZE_TIMEOUT_768D_1M,
+    ),
+    DatasetWithSizeType.CohereLarge: Dataset.COHERE.manager(
+        10_000_000,
+        load_timeout=config.LOAD_TIMEOUT_768D_10M,
+        optimize_timeout=config.OPTIMIZE_TIMEOUT_768D_10M,
+    ),
+    DatasetWithSizeType.LAIONLarge: Dataset.LAION.manager(
+        100_000_000,
+        load_timeout=config.LOAD_TIMEOUT_768D_100M,
+        optimize_timeout=config.OPTIMIZE_TIMEOUT_768D_100M,
+    ),
+    DatasetWithSizeType.BioasqMedium: Dataset.BIOASQ.manager(
+        1_000_000,
+        load_timeout=config.LOAD_TIMEOUT_1024D_1M,
+        optimize_timeout=config.OPTIMIZE_TIMEOUT_1024D_1M,
+    ),
+    DatasetWithSizeType.BioasqLarge: Dataset.BIOASQ.manager(
+        10_000_000,
+        load_timeout=config.LOAD_TIMEOUT_1024D_10M,
+        optimize_timeout=config.OPTIMIZE_TIMEOUT_1024D_10M,
+    ),
+    DatasetWithSizeType.OpenAISmall: Dataset.OPENAI.manager(
+        50_000,
+        load_timeout=3600,
+    ),
+    DatasetWithSizeType.OpenAIMedium: Dataset.OPENAI.manager(
+        500_000,
+        load_timeout=config.LOAD_TIMEOUT_1536D_500K,
+        optimize_timeout=config.OPTIMIZE_TIMEOUT_1536D_500K,
+    ),
+    DatasetWithSizeType.OpenAILarge: Dataset.OPENAI.manager(
+        5_000_000,
+        load_timeout=config.LOAD_TIMEOUT_1536D_5M,
+        optimize_timeout=config.OPTIMIZE_TIMEOUT_1536D_5M,
+    ),
 }
+
+
+def _hdf5_manager(
+    name: str,
+    distribution: str,
+    modality: str,
+    size: int,
+    dimension: int,
+    source_distance: str,
+    *,
+    load_timeout: float = config.LOAD_TIMEOUT_DEFAULT,
+    optimize_timeout: float | None = config.OPTIMIZE_TIMEOUT_DEFAULT,
+) -> Hdf5DatasetManager:
+    metric_type = (
+        MetricType.L2
+        if source_distance == "euclidean"
+        else MetricType.IP if source_distance == "ip" else MetricType.COSINE
+    )
+    return Hdf5DatasetManager(
+        load_timeout=load_timeout,
+        optimize_timeout=optimize_timeout,
+        data=Hdf5Dataset(
+            name=name,
+            size=size,
+            dim=dimension,
+            metric_type=metric_type,
+            use_shuffled=False,
+            with_gt=True,
+            with_remote_resource=True,
+            file_name=f"{name}.hdf5",
+            source=DatasetSource.HuggingFace,
+            source_dataset="vector-index-bench/vibe",
+            source_revision="07b387891a221b7b073b83d2f752b76462e5fa03",
+            source_distance=source_distance,
+            point_type="float",
+            family="VIBE",
+            distribution=distribution,
+            modality=modality,
+            dataset_metadata={"distribution": distribution},
+        ),
+    )
+
+
+def _parquet_manager(
+    name: str,
+    size: int,
+    repository: str,
+    revision: str,
+    train_selectors: tuple[str, ...],
+    query_selectors: tuple[str, ...],
+    gt_selector: str,
+    *,
+    load_timeout: float = config.LOAD_TIMEOUT_DEFAULT,
+    optimize_timeout: float | None = config.OPTIMIZE_TIMEOUT_DEFAULT,
+) -> ParquetDatasetManager:
+    return ParquetDatasetManager(
+        load_timeout=load_timeout,
+        optimize_timeout=optimize_timeout,
+        data=ParquetDataset(
+            name=name,
+            size=size,
+            dim=4096,
+            metric_type=MetricType.IP,
+            use_shuffled=False,
+            with_gt=True,
+            source=DatasetSource.HuggingFace,
+            source_dataset=repository,
+            source_revision=revision,
+            train_selectors=train_selectors,
+            query_selectors=query_selectors,
+            gt_selector=gt_selector,
+            gt_neighbors_field="neighbors",
+            ground_truth_width=100,
+            query_count=10_000,
+            family="VDBBench",
+            point_type="float32",
+            dataset_metadata={
+                "normalization": "l2",
+                "model": "Qwen3-VL-Embedding-8B",
+            },
+        ),
+    )
+
+
+_PARQUET_DATASETS = (
+    _parquet_manager(
+        "multimodal-embedding-1m",
+        1_000_000,
+        "VDBBench/multimodal-embedding-1M",
+        "4a13d5b19c13121c5201f5d4cd8877c082ef6a0c",
+        ("train.parquet",),
+        ("test.parquet",),
+        "neighbors.parquet",
+    ),
+    _parquet_manager(
+        "multimodal-embedding-10m",
+        10_000_000,
+        "VDBBench/multimodal-embedding-10M",
+        "4275de9e83dccfafa044eafad67fb4e8a3a5f6e0",
+        ("data/train-*.parquet",),
+        ("data/test-*.parquet",),
+        "data/neighbors.parquet",
+        load_timeout=config.LOAD_TIMEOUT_768D_10M,
+        optimize_timeout=config.OPTIMIZE_TIMEOUT_768D_10M,
+    ),
+    _parquet_manager(
+        "multimodal-embedding-100m",
+        100_000_000,
+        "VDBBench/multimodal-embedding-100M",
+        "560b5909ed6b03441b0b536485c350a08eee06c5",
+        ("train/shard-*/*.parquet",),
+        ("test/*.parquet",),
+        "neighbors/neighbors.parquet",
+        load_timeout=config.LOAD_TIMEOUT_768D_100M,
+        optimize_timeout=config.OPTIMIZE_TIMEOUT_768D_100M,
+    ),
+)
+
+
+_HDF5_DATASETS = (
+    _hdf5_manager("agnews-mxbai-1024-euclidean", "id", "Text", 769_382, 1024, "euclidean"),
+    _hdf5_manager("arxiv-nomic-768-normalized", "id", "Text", 1_344_643, 768, "normalized"),
+    _hdf5_manager(
+        "dpr-jina-768-normalized",
+        "id",
+        "Text",
+        20_969_760,
+        768,
+        "normalized",
+        load_timeout=config.LOAD_TIMEOUT_768D_10M,
+        optimize_timeout=config.OPTIMIZE_TIMEOUT_768D_10M,
+    ),
+    _hdf5_manager("glove-200-cosine", "id", "Word", 1_192_514, 200, "cosine"),
+    _hdf5_manager("gooaq-distilroberta-768-normalized", "id", "Text", 1_475_024, 768, "normalized"),
+    _hdf5_manager("imagenet-clip-512-normalized", "id", "Image", 1_281_167, 512, "normalized"),
+    _hdf5_manager("inaturalist-resnet-2048-cosine", "id", "Image", 499_000, 2048, "cosine"),
+    _hdf5_manager("landmark-dino-768-cosine", "id", "Image", 760_757, 768, "cosine"),
+    _hdf5_manager("landmark-nomic-768-normalized", "id", "Image", 760_757, 768, "normalized"),
+    _hdf5_manager(
+        "msmarco-qwen-1024-normalized",
+        "id",
+        "Text",
+        8_840_823,
+        1024,
+        "normalized",
+        load_timeout=config.LOAD_TIMEOUT_1024D_10M,
+        optimize_timeout=config.OPTIMIZE_TIMEOUT_1024D_10M,
+    ),
+    _hdf5_manager("yahoo-minilm-384-normalized", "id", "Text", 677_305, 384, "normalized"),
+    _hdf5_manager(
+        "hotpotqa-harrier-640-normalized",
+        "ood",
+        "Text",
+        5_233_329,
+        640,
+        "normalized",
+        load_timeout=config.LOAD_TIMEOUT_768D_10M,
+        optimize_timeout=config.OPTIMIZE_TIMEOUT_768D_10M,
+    ),
+    _hdf5_manager("imagenet-align-640-normalized", "ood", "Text-to-Image", 1_281_167, 640, "normalized"),
+    _hdf5_manager("laion-clip-512-normalized", "ood", "Text-to-Image", 1_000_448, 512, "normalized"),
+    _hdf5_manager("yandex-200-cosine", "ood", "Text-to-Image", 1_000_000, 200, "cosine"),
+    _hdf5_manager("cqadupstack-lemur-2048-ip", "ood", "Multi-vector encoding", 457_149, 2048, "ip"),
+    _hdf5_manager("cqadupstack-muvera-5120-ip", "ood", "Multi-vector encoding", 457_149, 5120, "ip"),
+    _hdf5_manager("yi-128-ip", "ood", "Attention", 187_843, 128, "ip"),
+    _hdf5_manager("llama-128-ip", "ood", "Attention", 256_921, 128, "ip"),
+    _hdf5_manager("ccnews-nomic-768-normalized", "id", "Text", 495_328, 768, "normalized"),
+    _hdf5_manager("celeba-resnet-2048-cosine", "id", "Image", 201_599, 2048, "cosine"),
+    _hdf5_manager("coco-nomic-768-normalized", "ood", "Text-to-Image", 282_360, 768, "normalized"),
+    _hdf5_manager("codesearchnet-jina-768-cosine", "id", "Code", 1_374_067, 768, "cosine"),
+    _hdf5_manager("simplewiki-openai-3072-normalized", "id", "Text", 260_372, 3072, "normalized"),
+)
+
+REGISTERED_DATASETS: dict[str, DatasetManager] = {
+    **{dataset_type.value: manager for dataset_type, manager in DatasetWithSizeMap.items()},
+    **{manager.data.name: manager for manager in _HDF5_DATASETS},
+    **{manager.data.name: manager for manager in _PARQUET_DATASETS},
+}
+
+
+def get_dataset_manager(name: str) -> DatasetManager:
+    try:
+        return REGISTERED_DATASETS[name].model_copy(deep=True)
+    except KeyError as exc:
+        supported = ", ".join(REGISTERED_DATASETS)
+        msg = f"Unknown dataset {name!r}; supported datasets: {supported}"
+        raise ValueError(msg) from exc
+
+
+def get_registered_datasets(*, family: str | None = None) -> list[DatasetManager]:
+    return [
+        manager.model_copy(deep=True)
+        for manager in REGISTERED_DATASETS.values()
+        if (family is None or getattr(manager.data, "family", None) == family)
+    ]
 
 
 # FTS Dataset Translator Pattern
@@ -817,6 +1638,10 @@ class FtsDatasetManager(BaseModel):
 
     def __hash__(self) -> int:
         return hash((self.data.name, self.data.size))
+
+    @property
+    def preferred_source(self) -> DatasetSource:
+        return DatasetSource.IR_DATASETS
 
     @property
     def data_dir(self) -> pathlib.Path:

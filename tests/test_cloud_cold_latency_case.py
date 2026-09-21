@@ -55,7 +55,9 @@ def test_cloud_cold_latency_case_accepts_label_filter():
     case = CloudColdLatencyCase(label_percentage=0.9)
 
     assert case.label_percentage == 0.9
+    assert case.filter_rate == pytest.approx(0.1)
     assert case.filters.type == FilterOp.StrEqual
+    assert case.filters.filter_rate == pytest.approx(0.1)
 
 
 def test_cloud_cold_latency_case_rejects_two_filter_types():

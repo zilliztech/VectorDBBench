@@ -5,6 +5,7 @@ import multiprocessing as mp
 import random
 import time
 import traceback
+from collections.abc import Iterator
 
 import numpy as np
 
@@ -14,7 +15,7 @@ from vectordb_bench.backend.payload import PayloadProfile
 from vectordb_bench.backend.workload import WorkloadKind
 
 from ... import config
-from ...metric import calc_mrr_fts, calc_ndcg, calc_ndcg_fts, calc_recall, calc_recall_fts, get_ideal_dcg
+from ...metric import calc_mrr_fts, calc_ndcg_fts, calc_recall_fts, calc_vector_metrics
 from ...models import LoadTimeoutError
 from .. import utils
 from ..clients import api
@@ -210,19 +211,49 @@ class SerialSearchRunner:
 
         return results
 
-    def search(self, args: tuple[list, list[list[int]] | list[dict[str, int]]]) -> tuple[float, ...]:
+    def _validate_ground_truth(self, test_data: list, ground_truth: object | None) -> None:
+        if not self.measure_recall or ground_truth is None:
+            return
+        if len(test_data) != len(ground_truth):
+            msg = f"Search query count {len(test_data)} does not match ground truth row count {len(ground_truth)}"
+            raise ValueError(msg)
+        if self._use_fts_metrics:
+            return
+
+        source_width = getattr(ground_truth, "width", None)
+        if source_width is not None:
+            if source_width < self.k:
+                msg = f"Ground truth width {source_width} is smaller than requested K={self.k}"
+                raise ValueError(msg)
+            return
+
+        for row_idx, row in enumerate(ground_truth):
+            if len(row) < self.k:
+                msg = f"Ground truth width {len(row)} at row {row_idx} is smaller than requested K={self.k}"
+                raise ValueError(msg)
+
+    @staticmethod
+    def _iter_ground_truth(ground_truth: object) -> Iterator:
+        if hasattr(ground_truth, "iter_rows"):
+            return ground_truth.iter_rows()
+        return iter(ground_truth)
+
+    def search(self, args: tuple[list, object]) -> tuple[float, ...]:
         log.info(f"{mp.current_process().name:14} start search the entire test_data to get recall and latency")
+        test_data, ground_truth = args
+        self._validate_ground_truth(test_data, ground_truth)
+        ground_truth_iter = self._iter_ground_truth(ground_truth) if ground_truth is not None else None
+
         with self.db.init():
             self.db.prepare_filter(self.filters)
-            test_data, ground_truth = args
-            ideal_dcg = None if self._use_fts_metrics else get_ideal_dcg(self.k)
 
             log.debug(f"test dataset size: {len(test_data)}")
             log.debug(f"ground truth size: {len(ground_truth) if ground_truth is not None else 0}")
 
             latencies, recalls, ndcgs, mrrs = [], [], [], []
+            recall_at_samples = {}
             tenant_rng = random.Random(0)
-            for idx, emb in enumerate(test_data):
+            for emb in test_data:
                 tenant = (
                     self.tenant_labels[tenant_rng.randrange(len(self.tenant_labels))]
                     if self.workload_kind == WorkloadKind.VECTOR and self.tenant_labels
@@ -238,14 +269,17 @@ class SerialSearchRunner:
                 latencies.append(time.perf_counter() - s)
 
                 if self.measure_recall and ground_truth is not None:
-                    gt = ground_truth[idx]
+                    gt = next(ground_truth_iter)
                     if self._use_fts_metrics:
                         recalls.append(calc_recall_fts(self.k, gt, results))
                         ndcgs.append(calc_ndcg_fts(self.k, gt, results))
                         mrrs.append(calc_mrr_fts(self.k, gt, results))
                     else:
-                        recalls.append(calc_recall(self.k, gt[: self.k], results))
-                        ndcgs.append(calc_ndcg(gt[: self.k], results, ideal_dcg))
+                        recall, ndcg, recall_at = calc_vector_metrics(self.k, gt, results)
+                        recalls.append(recall)
+                        ndcgs.append(ndcg)
+                        for cutoff, value in recall_at.items():
+                            recall_at_samples.setdefault(cutoff, []).append(value)
                 else:
                     recalls.append(0)
                     ndcgs.append(0)
@@ -264,6 +298,7 @@ class SerialSearchRunner:
         cost = round(np.sum(latencies), 4)
         p99 = round(np.percentile(latencies, 99), 4)
         p95 = round(np.percentile(latencies, 95), 4)
+        p50 = round(np.percentile(latencies, 50), 4)
         if self._use_fts_metrics:
             avg_mrr = round(np.mean(mrrs), 4)
             log.info(
@@ -279,6 +314,7 @@ class SerialSearchRunner:
             )
             return (avg_recall, avg_ndcg, avg_mrr, p99, p95)
 
+        avg_recall_at = {cutoff: round(np.mean(values), 4) for cutoff, values in recall_at_samples.items()}
         log.info(
             f"{mp.current_process().name:14} search entire test_data: "
             f"cost={cost}s, "
@@ -287,9 +323,11 @@ class SerialSearchRunner:
             f"avg_ndcg={avg_ndcg}, "
             f"avg_latency={avg_latency}, "
             f"p99={p99}, "
-            f"p95={p95}"
+            f"p95={p95}, "
+            f"p50={p50}, "
+            f"recall_at={avg_recall_at}"
         )
-        return (avg_recall, avg_ndcg, p99, p95)
+        return (avg_recall, avg_ndcg, p99, p95, p50, avg_recall_at)
 
     def _run_in_subprocess(self) -> tuple[float, ...]:
         with concurrent.futures.ProcessPoolExecutor(max_workers=1) as executor:

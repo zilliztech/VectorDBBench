@@ -35,7 +35,7 @@ class Milvus(VectorDB):
     def has_text_field(self) -> bool:
         return bool(getattr(self, "_is_fts", False) and getattr(self, "_text_field", None))
 
-    def __init__(  # noqa: PLR0915
+    def __init__(  # noqa: PLR0912, PLR0915
         self,
         dim: int,
         db_config: dict,
@@ -52,6 +52,7 @@ class Milvus(VectorDB):
         self.case_config = db_case_config
         self.collection_name = collection_name
         self.with_scalar_labels = with_scalar_labels
+        collection_properties = kwargs.get("collection_properties", {})
 
         self._scalar_label_field = "label"
         self._scalar_payload_label_field = self._scalar_label_field
@@ -115,7 +116,6 @@ class Milvus(VectorDB):
                     DataType.VARCHAR,
                     max_length=65535,
                     enable_analyzer=True,
-                    enable_match=True,
                     analyzer_params=analyzer_params,
                 )
                 schema.add_field(self._sparse_field, DataType.SPARSE_FLOAT_VECTOR)
@@ -159,17 +159,31 @@ class Milvus(VectorDB):
             log.info(f"{self.name} create collection: {self.collection_name}")
 
             index_params = self._build_index_params()
+            create_kwargs = {}
+            if collection_properties:
+                # Large TopK collection properties must be applied before the vector index is created.
+                create_kwargs["properties"] = collection_properties
             client.create_collection(
                 collection_name=self.collection_name,
                 schema=schema,
                 num_shards=self.db_config.get("num_shards", 1),
                 consistency_level="Session",
+                **create_kwargs,
             )
             client.create_index(self.collection_name, index_params)
             client.load_collection(
                 self.collection_name,
                 replica_number=self.db_config.get("replica_number", 1),
             )
+        elif collection_properties:
+            actual_properties = client.describe_collection(self.collection_name).get("properties") or {}
+            if any(actual_properties.get(key) != value for key, value in collection_properties.items()):
+                client.close()
+                msg = (
+                    f"{self.name} collection {self.collection_name} has incompatible collection properties: "
+                    f"expected {collection_properties}, got {actual_properties}. Drop and recreate the collection."
+                )
+                raise ValueError(msg)
 
         client.close()
 
@@ -489,7 +503,8 @@ class Milvus(VectorDB):
             msg = f"Not support Filter for Milvus - {filters}"
             raise ValueError(msg)
 
-    def supports_payload_profile(self, payload_profile: PayloadProfile) -> bool:
+    @staticmethod
+    def supports_payload_profile(payload_profile: PayloadProfile) -> bool:
         return payload_profile in {
             PayloadProfile.IDS_ONLY,
             PayloadProfile.VECTOR,

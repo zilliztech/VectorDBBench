@@ -1,18 +1,34 @@
-from enum import IntEnum, Enum
 import typing
-from pydantic import BaseModel
-from vectordb_bench.backend.cases import CaseLabel, CaseType
+from enum import Enum, IntEnum
+
+from pydantic import BaseModel, Field
+
+from vectordb_bench.backend.cases import CaseLabel, CaseType, PerformanceCase
 from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.clients.api import IndexType, MetricType, SQType
-from vectordb_bench.backend.dataset import DatasetWithSizeType, FtsDatasetWithSizeType
+from vectordb_bench.backend.dataset import (
+    LAION_INT_FILTER_SEARCH_WIDTHS,
+    DatasetManager,
+    DatasetWithSizeType,
+    FtsDatasetWithSizeType,
+    get_registered_datasets,
+)
+from vectordb_bench.backend.payload import PayloadProfile
 from vectordb_bench.frontend.components.custom.getCustomConfig import get_custom_configs
-
 from vectordb_bench.models import CaseConfig, CaseConfigParamType
 
 MAX_STREAMLIT_INT = (1 << 53) - 1
 
 DB_LIST = [d for d in DB if d != DB.Test]
 FTS_SUPPORTED_DBS = {DB.Milvus, DB.ZillizCloud, DB.ElasticCloud, DB.OSSOpenSearch, DB.Vespa, DB.TurboPuffer}
+VECTOR_PAYLOAD_SUPPORTED_DBS = {DB.Milvus, DB.ZillizCloud}
+
+
+def get_payload_profile_options(active_dbs: list[DB]) -> list[PayloadProfile]:
+    profiles = [PayloadProfile.IDS_ONLY]
+    if active_dbs and all(db in VECTOR_PAYLOAD_SUPPORTED_DBS for db in active_dbs):
+        profiles.append(PayloadProfile.VECTOR)
+    return profiles
 
 
 class Delimiter(Enum):
@@ -56,6 +72,7 @@ class UICaseItem(BaseModel):
     supportedDbs: list[DB] | None = None
     extra_custom_case_config_inputs: list[ConfigInput] = []
     tmp_custom_config: dict = dict()
+    payload_profiles: list[PayloadProfile] = Field(default_factory=lambda: [PayloadProfile.IDS_ONLY])
 
     def __init__(
         self,
@@ -91,20 +108,29 @@ class UICaseItem(BaseModel):
     def __hash__(self) -> int:
         return hash(self.key if self.key else self.label)
 
+    @property
+    def supports_payload_profiles(self) -> bool:
+        return bool(self.cases) and all(isinstance(case.case, PerformanceCase) for case in self.cases)
+
     def get_cases(self) -> list[CaseConfig]:
-        # return self.cases
-        if len(self.extra_custom_case_config_inputs) == 0:
-            return self.cases
-        cases = [
-            CaseConfig(
-                case_id=c.case_id,
-                k=c.k,
-                concurrency_search_config=c.concurrency_search_config,
-                custom_case={**c.custom_case, **self.tmp_custom_config},
-            )
-            for c in self.cases
+        cases = self.cases
+        if self.extra_custom_case_config_inputs:
+            cases = [
+                CaseConfig(
+                    case_id=case.case_id,
+                    k=case.k,
+                    concurrency_search_config=case.concurrency_search_config,
+                    custom_case={**(case.custom_case or {}), **self.tmp_custom_config},
+                )
+                for case in cases
+            ]
+        if not self.supports_payload_profiles:
+            return cases
+        return [
+            CaseConfig.model_validate({**case.model_dump(), "payload_profile": payload_profile})
+            for case in cases
+            for payload_profile in self.payload_profiles
         ]
-        return cases
 
     def supports_dbs(self, dbs: list[DB]) -> bool:
         if self.supportedDbs is None:
@@ -190,6 +216,40 @@ def get_fts_case_items() -> list[UICaseItem]:
         )
         for dataset_with_size_type in dataset_with_size_types
     ]
+
+
+def get_vibe_case_items() -> list[UICaseItem]:
+    def item(manager: DatasetManager) -> UICaseItem:
+        data = manager.data
+        return UICaseItem(
+            label=f"{data.name} ({data.distribution.upper()}, {data.metric_type.value}, {data.dim}D)",
+            description=f"VIBE {data.modality} dataset with {data.size:,} corpus vectors.",
+            cases=[
+                CaseConfig(
+                    case_id=CaseType.Performance,
+                    custom_case={"dataset_name": data.name},
+                )
+            ],
+        )
+
+    return [item(manager) for manager in get_registered_datasets(family="VIBE")]
+
+
+def get_vdbbench_multimodal_case_items() -> list[UICaseItem]:
+    def item(manager: DatasetManager) -> UICaseItem:
+        data = manager.data
+        return UICaseItem(
+            label=f"{data.name} ({data.metric_type.value}, {data.dim}D)",
+            description=f"VDBBench multimodal dataset with {data.size:,} corpus vectors.",
+            cases=[
+                CaseConfig(
+                    case_id=CaseType.Performance,
+                    custom_case={"dataset_name": data.name},
+                )
+            ],
+        )
+
+    return [item(manager) for manager in get_registered_datasets(family="VDBBench")]
 
 
 def get_custom_case_cluter() -> UICaseItemCluster:
@@ -289,14 +349,33 @@ def generate_label_filter_cases(dataset_with_size_type: DatasetWithSizeType) -> 
     ]
 
 
-def generate_int_filter_cases(dataset_with_size_type: DatasetWithSizeType) -> list[CaseConfig]:
-    filter_rates = dataset_with_size_type.get_manager().data.scalar_int_rates
+def generate_int_filter_cases(
+    dataset_with_size_type: DatasetWithSizeType,
+    filter_rates: typing.Iterable[float] | None = None,
+) -> list[CaseConfig]:
+    if filter_rates is None:
+        filter_rates = dataset_with_size_type.get_manager().data.scalar_int_rates
     return [
         CaseConfig(
             case_id=CaseType.NewIntFilterPerformanceCase,
             custom_case=dict(dataset_with_size_type=dataset_with_size_type, filter_rate=filter_rate),
         )
         for filter_rate in filter_rates
+    ]
+
+
+def generate_laion_large_topk_filter_items() -> list[UICaseItem]:
+    rates_by_max_k: dict[int, list[float]] = {}
+    for filter_rate, widths in LAION_INT_FILTER_SEARCH_WIDTHS.items():
+        rates_by_max_k.setdefault(widths[-1], []).append(filter_rate)
+
+    return [
+        UICaseItem(
+            label=f"Large LAION Int-Filter - K up to {max_k:,}",
+            description="Filter rates: " + ", ".join(f"{rate * 100:g}%" for rate in filter_rates),
+            cases=generate_int_filter_cases(DatasetWithSizeType.LAIONLarge, filter_rates),
+        )
+        for max_k, filter_rates in rates_by_max_k.items()
     ]
 
 
@@ -331,8 +410,17 @@ UI_CASE_CLUSTERS: list[UICaseItemCluster] = [
         ],
     ),
     UICaseItemCluster(
+        label="VIBE Search Performance",
+        uiCaseItems=get_vibe_case_items(),
+    ),
+    UICaseItemCluster(
+        label="VDBBench Multimodal Search Performance",
+        uiCaseItems=get_vdbbench_multimodal_case_items(),
+    ),
+    UICaseItemCluster(
         label="New-Int-Filter Search Performance Test",
-        uiCaseItems=[
+        uiCaseItems=generate_laion_large_topk_filter_items()
+        + [
             UICaseItem(
                 label=f"Int-Filter Search Performance Test - {dataset_with_size_type.value}",
                 description=(
@@ -1639,6 +1727,56 @@ CaseConfigParamInput_max_parallel_workers_AlloyDB = CaseConfigInput(
     },
 )
 
+CaseConfigParamInput_IndexType_LakebaseVector = CaseConfigInput(
+    label=CaseConfigParamType.IndexType,
+    inputHelp="Select Index Type",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [
+            IndexType.LAKEBASE_ANN.value,
+        ],
+    },
+)
+
+CaseConfigParamInput_max_parallel_workers_LakebaseVector = CaseConfigInput(
+    label=CaseConfigParamType.max_parallel_workers,
+    displayLabel="Max parallel workers",
+    inputHelp="Recommended value: (cpu cores - 1). This will set the parameters: max_parallel_maintenance_workers,"
+    " max_parallel_workers & table(parallel_workers)",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 0,
+        "max": 1024,
+        "value": 16,
+    },
+)
+
+CaseConfigParamInput_Probes_LakebaseVector = CaseConfigInput(
+    label=CaseConfigParamType.probes,
+    displayLabel="Probes",
+    inputHelp=(
+        "Optional positive integer or comma-separated positive integers for lakebase_ann.probes "
+        "(for example: 10 or 54,380); leave empty to use the server default"
+    ),
+    inputType=InputType.Text,
+    inputConfig={
+        "value": "",
+    },
+)
+
+CaseConfigParamInput_Epsilon_LakebaseVector = CaseConfigInput(
+    label=CaseConfigParamType.epsilon,
+    displayLabel="Epsilon",
+    inputHelp="Optional lakebase_ann reranking margin; leave empty to use the server default",
+    inputType=InputType.Float,
+    inputConfig={
+        "min": 0.0,
+        "max": 4.0,
+        "step": 0.1,
+        "value": None,
+    },
+)
+
 CaseConfigParamInput_EFConstruction_AliES = CaseConfigInput(
     label=CaseConfigParamType.EFConstruction,
     inputType=InputType.Number,
@@ -1878,6 +2016,16 @@ CaseConfigParamInput_MongoDBNumCandidatesRatio = CaseConfigInput(
         "min": 10,
         "max": 20,
         "value": 10,
+    },
+)
+
+CaseConfigParamInput_MongoDBExact = CaseConfigInput(
+    label=CaseConfigParamType.mongodb_exact,
+    inputType=InputType.Bool,
+    displayLabel="Exact (ENN)",
+    inputHelp="Atlas $vectorSearch exact nearest neighbor. Default False keeps ANN.",
+    inputConfig={
+        "value": False,
     },
 )
 
@@ -2495,6 +2643,18 @@ AlloyDBPerformanceConfig = [
     CaseConfigParamInput_max_parallel_workers_AlloyDB,
 ]
 
+LakebaseVectorLoadingConfig = [
+    CaseConfigParamInput_IndexType_LakebaseVector,
+    CaseConfigParamInput_max_parallel_workers_LakebaseVector,
+]
+
+LakebaseVectorPerformanceConfig = [
+    CaseConfigParamInput_IndexType_LakebaseVector,
+    CaseConfigParamInput_max_parallel_workers_LakebaseVector,
+    CaseConfigParamInput_Probes_LakebaseVector,
+    CaseConfigParamInput_Epsilon_LakebaseVector,
+]
+
 AliyunElasticsearchLoadingConfig = [
     CaseConfigParamInput_IndexType_ES,
     CaseConfigParamInput_NumShards_ES,
@@ -2533,6 +2693,7 @@ MongoDBLoadingConfig = [
 MongoDBPerformanceConfig = [
     CaseConfigParamInput_MongoDBQuantizationType,
     CaseConfigParamInput_MongoDBNumCandidatesRatio,
+    CaseConfigParamInput_MongoDBExact,
 ]
 
 CockroachDBLoadingConfig = [
@@ -3298,6 +3459,10 @@ CASE_CONFIG_MAP = {
     DB.AlloyDB: {
         CaseLabel.Load: AlloyDBLoadConfig,
         CaseLabel.Performance: AlloyDBPerformanceConfig,
+    },
+    DB.LakebaseVector: {
+        CaseLabel.Load: LakebaseVectorLoadingConfig,
+        CaseLabel.Performance: LakebaseVectorPerformanceConfig,
     },
     DB.AliyunElasticsearch: {
         CaseLabel.Load: AliyunElasticsearchLoadingConfig,

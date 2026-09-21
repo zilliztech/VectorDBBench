@@ -3,6 +3,7 @@ from datetime import datetime
 import streamlit as st
 
 from vectordb_bench import config
+from vectordb_bench.backend.dataset import DatasetManager
 from vectordb_bench.frontend.config import styles
 from vectordb_bench.interface import benchmark_runner
 from vectordb_bench.models import TaskConfig
@@ -35,7 +36,39 @@ def taskLabelInput(container):
     return cols[0].text_input("task_label", defaultTaskLabel, label_visibility="collapsed")
 
 
-def advancedSettings(container):
+def get_max_search_k(tasks: list[TaskConfig]) -> int | None:
+    limits = []
+    for task in tasks:
+        case = task.case_config.case
+        if not isinstance(case.dataset, DatasetManager):
+            continue
+        max_k = case.dataset.max_search_k(case.filters)
+        if max_k is not None:
+            limits.append(max_k)
+    return min(limits, default=None)
+
+
+def apply_run_settings(
+    tasks: list[TaskConfig],
+    *,
+    k: int,
+    concurrencies: list[int],
+    concurrency_duration: int,
+    load_concurrency: int,
+) -> None:
+    for task in tasks:
+        case = task.case_config.case
+        if isinstance(case.dataset, DatasetManager) and case.dataset.data.with_gt:
+            case.dataset.resolve_search_files(k=k, filters=case.filters)
+
+    for task in tasks:
+        task.case_config.k = k
+        task.case_config.concurrency_search_config.num_concurrency = concurrencies
+        task.case_config.concurrency_search_config.concurrency_duration = concurrency_duration
+        task.load_concurrency = load_concurrency
+
+
+def advancedSettings(container, tasks: list[TaskConfig]):
     cols = container.columns([1, 2])
     index_already_exists = cols[0].checkbox("Index already exists", value=False)
     cols[1].caption("if selected, inserting and building will be skipped.")
@@ -45,7 +78,16 @@ def advancedSettings(container):
     cols[1].caption("if selected, the dataset will be downloaded from Aliyun OSS shanghai, default AWS S3 aws-us-west.")
 
     cols = container.columns([1, 2])
-    k = cols[0].number_input("k", min_value=1, value=100, label_visibility="collapsed")
+    max_k = get_max_search_k(tasks)
+    k_config = dict(
+        min_value=1,
+        value=config.K_DEFAULT,
+        label_visibility="collapsed",
+        key=f"search-k-{max_k or 'unbounded'}",
+    )
+    if max_k is not None:
+        k_config["max_value"] = max_k
+    k = cols[0].number_input("k", **k_config)
     cols[1].caption("K value for number of nearest neighbors to search")
 
     cols = container.columns([1, 2])
@@ -69,23 +111,24 @@ def advancedSettings(container):
 
 def controlPanel(container, tasks: list[TaskConfig], taskLabel, isAllValid):
     index_already_exists, use_aliyun, k, concurrentInput, concurrency_duration, load_concurrency = advancedSettings(
-        container
+        container, tasks
     )
 
     def runHandler():
-        benchmark_runner.set_drop_old(not index_already_exists)
-
         try:
             concurrentInput_list = [int(item.strip()) for item in concurrentInput.split(",")]
-        except ValueError:
-            container.write("please input correct number")
+            apply_run_settings(
+                tasks,
+                k=k,
+                concurrencies=concurrentInput_list,
+                concurrency_duration=concurrency_duration,
+                load_concurrency=load_concurrency,
+            )
+        except ValueError as exc:
+            container.write(str(exc))
             return None
 
-        for task in tasks:
-            task.case_config.k = k
-            task.case_config.concurrency_search_config.num_concurrency = concurrentInput_list
-            task.case_config.concurrency_search_config.concurrency_duration = concurrency_duration
-            task.load_concurrency = load_concurrency
+        benchmark_runner.set_drop_old(not index_already_exists)
         benchmark_runner.set_download_address(use_aliyun)
         benchmark_runner.run(tasks, taskLabel)
 
