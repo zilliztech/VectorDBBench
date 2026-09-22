@@ -4,6 +4,7 @@ from pytest import MonkeyPatch
 
 from vectordb_bench.backend.clients.milvus import cli as milvus_cli
 from vectordb_bench.backend.clients.zilliz_cloud import cli as zilliz_cli
+from vectordb_bench.cli import cli as common_cli
 
 
 def test_milvus_cli_builds_shared_connection_config() -> None:
@@ -131,3 +132,34 @@ def test_zilliz_autoindex_cli_enables_partition_key_for_multitenant_case(
 
     assert result.exit_code == 0, result.output
     assert captured["db_case_config"].use_partition_key is True
+
+
+def test_milvus_autoindex_cli_nq(monkeypatch: MonkeyPatch) -> None:
+    captured = {}
+
+    def fake_run(tasks, task_label):
+        captured["task"] = tasks[0]
+
+    monkeypatch.setattr(common_cli.benchmark_runner, "run", fake_run)
+    monkeypatch.setattr(common_cli.benchmark_runner, "has_running", lambda: False)
+
+    result = CliRunner().invoke(
+        milvus_cli.MilvusAutoIndex,
+        ["--uri", "http://localhost:19530"],
+    )
+    assert result.exit_code == 0, result.output
+    assert captured["task"].case_config.nq == 1
+
+    result = CliRunner().invoke(
+        milvus_cli.MilvusAutoIndex,
+        ["--uri", "http://localhost:19530", "--nq", "2"],
+    )
+    assert result.exit_code == 0, result.output
+    assert captured["task"].case_config.nq == 2
+
+    result = CliRunner().invoke(
+        milvus_cli.MilvusAutoIndex,
+        ["--uri", "http://localhost:19530", "--nq", "0", "--dry-run"],
+    )
+    assert result.exit_code == 2, result.output
+    assert "Invalid value for '--nq'" in result.output

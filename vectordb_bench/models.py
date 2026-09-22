@@ -218,6 +218,7 @@ class CaseConfig(BaseModel):
     custom_case: dict | None = None
     payload_profile: PayloadProfile | None = None
     k: int | None = config.K_DEFAULT
+    nq: PositiveInt = 1  # Concurrent search only; serial latency and recall always use one query per request.
     concurrency_search_config: ConcurrencySearchConfig = ConcurrencySearchConfig()
 
     @field_validator("k")

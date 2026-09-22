@@ -506,6 +506,16 @@ class CommonTypedDict(TypedDict):
             help="Number of nearest neighbors. LAION 100M selects tiered GT automatically up to 1,000,000.",
         ),
     ]
+    nq: Annotated[
+        int,
+        click.option(
+            "--nq",
+            type=click.IntRange(min=1),
+            default=1,
+            show_default=True,
+            help="Query vectors per concurrent search request; serial latency and recall always use nq=1.",
+        ),
+    ]
     concurrency_duration: Annotated[
         int,
         click.option(
@@ -1007,6 +1017,7 @@ def run(
             case_id=CaseType[parameters["case_type"]],
             payload_profile=get_case_payload_profile(parameters),
             k=parameters["k"],
+            nq=parameters.get("nq", 1),
             concurrency_search_config=ConcurrencySearchConfig(
                 concurrency_duration=parameters["concurrency_duration"],
                 num_concurrency=[int(s) for s in parameters["num_concurrency"]],
