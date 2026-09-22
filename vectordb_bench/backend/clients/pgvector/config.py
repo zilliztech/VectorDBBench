@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from collections.abc import Mapping, Sequence
-from typing import Any, LiteralString, TypedDict
+from typing import Any, ClassVar, LiteralString, TypedDict
 
 from pydantic import BaseModel, SecretStr
 
@@ -21,8 +21,12 @@ class PgVectorConfigDict(TypedDict):
 
 
 class PgVectorConfig(DBConfig):
+    # An empty password is valid (local trust/peer auth), and it is what a
+    # reloaded result carries when the run used no password — don't reject it.
+    _extra_empty_skip: ClassVar[frozenset[str]] = frozenset({"password"})
+
     user_name: SecretStr = "postgres"
-    password: SecretStr
+    password: SecretStr = SecretStr("")
     host: str = "localhost"
     port: int = 5432
     db_name: str = "vectordb"
