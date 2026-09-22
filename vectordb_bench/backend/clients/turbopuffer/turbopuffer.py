@@ -59,6 +59,33 @@ def namespace_metadata_request(
         raise RuntimeError(msg) from e
 
 
+def namespace_hint_read_only_request(
+    api_key: str,
+    region: str,
+    namespace: str,
+    api_base_url: str | None = None,
+) -> dict:
+    """Hint that a namespace's write workload is done, triggering a full LSM compaction."""
+    base_url = api_base_url or f"https://{region}.turbopuffer.com"
+    url = f"{base_url.rstrip('/')}/v2/namespaces/{quote(namespace, safe='')}/hint_read_only"
+    req = Request(  # noqa: S310
+        url,
+        data=b"",
+        method="POST",
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+    )
+    try:
+        with urlopen(req, timeout=60) as resp:  # noqa: S310
+            return loads(resp.read().decode() or "{}")
+    except HTTPError as e:
+        detail = e.read().decode(errors="replace")
+        msg = f"Failed to send TurboPuffer hint_read_only for namespace {namespace}: {e.code} {detail}"
+        raise RuntimeError(msg) from e
+
+
 def wait_for_namespace_pinning(
     api_key: str,
     region: str,
@@ -249,6 +276,10 @@ class TurboPuffer(VectorDB):
         return ns
 
     def optimize(self, data_size: int | None = None):
+        hint_targets = self._hint_read_only_targets()
+        self._hint_read_only(hint_targets)
+        for tenant in hint_targets:
+            self._wait_for_index(self._namespace_for_tenant(tenant))
         warmed_namespaces = self._warmup_target_namespaces()
         if not warmed_namespaces:
             log.info("TurboPuffer cache warmup skipped")
@@ -257,6 +288,30 @@ class TurboPuffer(VectorDB):
             ns = self._namespace_for_tenant(namespace)
             self._wait_for_index(ns)
             self._warm_cache(ns)
+
+    def _touched_tenant_labels(self) -> list[str]:
+        return sorted(getattr(self, "_multitenant_touched_tenants", set())) or self.multitenant_tenant_labels
+
+    def _hint_read_only_targets(self) -> list[str | None]:
+        if self.multitenant_tenant_labels:
+            return self._touched_tenant_labels()
+        return [None]
+
+    def _hint_read_only(self, targets: list[str | None]) -> None:
+        """Hint each namespace's write workload is done and trigger a full LSM
+        compaction.
+
+        optimize() waits for index.status to report up-to-date afterward, which
+        is a reasonable completion proxy given the typical load-then-optimize
+        sequencing.
+        """
+        for tenant in targets:
+            namespace = self._namespace_name_for_tenant(tenant)
+            try:
+                response = namespace_hint_read_only_request(self.api_key, self.region, namespace, self.api_base_url)
+                log.info(f"TurboPuffer hint_read_only for {namespace}: {response}")
+            except Exception as e:
+                log.warning(f"Failed to send TurboPuffer hint_read_only for {namespace}. Error: {e}")
 
     @staticmethod
     def _wait_for_index(ns: Any):
@@ -400,10 +455,7 @@ class TurboPuffer(VectorDB):
     def poll_insert_readiness(self, expected_count: int) -> dict:
         if getattr(self, "multitenant_tenant_labels", []):
             unindexed_by_tenant = {}
-            tenant_labels = (
-                sorted(getattr(self, "_multitenant_touched_tenants", set())) or self.multitenant_tenant_labels
-            )
-            for tenant in tenant_labels:
+            for tenant in self._touched_tenant_labels():
                 metadata = self._namespace_for_tenant(tenant).metadata()
                 if not isinstance(metadata, dict):
                     metadata = metadata.model_dump() if hasattr(metadata, "model_dump") else vars(metadata)
