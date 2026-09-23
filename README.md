@@ -465,6 +465,35 @@ Options:
   --help                          Show this message and exit.
 ```
 
+### Run turbopuffer from command line
+
+```shell
+vectordbbench turbopuffer \
+  --api-key "$TURBOPUFFER_API_KEY" --region "byoc" --api-base-url "https://<cluster endpoint>" \
+  --case-type Performance768D1M \
+  --insert-batch-size 10000 --load-concurrency 32 --disable-backpressure \
+  --probes 200 --vector-type f16 \
+  --num-concurrency 10,40,80,160
+```
+
+For the 10M Cohere dataset use `--case-type Performance768D10M`.
+
+turbopuffer-specific options:
+| Option | Description |
+|--------|-------------|
+| `--region` | turbopuffer region, e.g. `gcp-us-central1`, `aws-us-east-1` (required) |
+| `--namespace` | Namespace to write to (default: `vdbbench_test`) |
+| `--metric-type` | `COSINE` or `L2` (default: `COSINE`) |
+| `--consistency-level` | `strong` or `eventual` (default: `eventual`) |
+| `--probes` | ANN probes per query. Unset uses the server default (dynamic) |
+| `--vector-type` | Stored vector element type, `f32` or `f16` (default: `f32`). `f16` halves storage; the wire format stays `f32` |
+| `--disable-backpressure` | Don't reject writes when indexing falls behind. Recommended for bulk loads; the benchmark waits for indexing to finish before searching anyway |
+| `--pin-namespace` / `--pin-replicas` | Pin the namespace to dedicated nodes before the run |
+
+Each write is one request, so use a large `--insert-batch-size` (10000 is a good start; batches can be up to 512 MB). Set `--load-concurrency` to about 2x the vCPUs of the client; each worker holds one batch in memory (~400 MB at 1536 dims), so lower it on a small box. Run from the same cloud region as the namespace.
+
+To list all options, run `vectordbbench turbopuffer --help`.
+
 ### Run OceanBase from command line
 
 Execute tests for the index types: HNSW, HNSW_SQ, or HNSW_BQ.
@@ -1208,20 +1237,17 @@ from vectordb_bench.backend.clients import DB
 
 
 class ZillizTypedDict(CommonTypedDict):
-    uri: Annotated[
-        str, click.option("--uri", type=str, help="uri connection string", required=True)
-    ]
-    user_name: Annotated[
-        str, click.option("--user-name", type=str, help="Db username", required=True)
-    ]
+    uri: Annotated[str, click.option("--uri", type=str, help="uri connection string", required=True)]
+    user_name: Annotated[str, click.option("--user-name", type=str, help="Db username", required=True)]
     password: Annotated[
         str,
-        click.option("--password",
-                     type=str,
-                     help="Zilliz password",
-                     default=lambda: os.environ.get("ZILLIZ_PASSWORD", ""),
-                     show_default="$ZILLIZ_PASSWORD",
-                     ),
+        click.option(
+            "--password",
+            type=str,
+            help="Zilliz password",
+            default=lambda: os.environ.get("ZILLIZ_PASSWORD", ""),
+            show_default="$ZILLIZ_PASSWORD",
+        ),
     ]
     level: Annotated[
         str,
