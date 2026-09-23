@@ -430,10 +430,10 @@ Options:
 
 ```shell
 vectordbbench turbopuffer \
-  --api-key "$TURBOPUFFER_API_KEY" --region byoc --api-base-url https://<cluster endpoint> \
+  --api-key "$TURBOPUFFER_API_KEY" --region "byoc" --api-base-url "https://<cluster endpoint>" \
   --case-type Performance768D1M \
   --insert-batch-size 10000 --load-concurrency 32 --disable-backpressure \
-  --probes 400 --vector-type f16 \
+  --probes 200 --vector-type f16 \
   --num-concurrency 10,40,80,160
 ```
 
@@ -445,8 +445,8 @@ turbopuffer-specific options:
 | `--region` | turbopuffer region, e.g. `gcp-us-central1`, `aws-us-east-1` (required) |
 | `--namespace` | Namespace to write to (default: `vdbbench_test`) |
 | `--metric-type` | `COSINE` or `L2` (default: `COSINE`) |
-| `--consistency-level` | `strong` or `eventual` (default: `strong`) |
-| `--probes` | ANN probes per query. Unset uses the server default (a fixed 200) |
+| `--consistency-level` | `strong` or `eventual` (default: `eventual`) |
+| `--probes` | ANN probes per query. Unset uses the server default (dynamic) |
 | `--vector-type` | Stored vector element type, `f32` or `f16` (default: `f32`). `f16` halves storage; the wire format stays `f32` |
 | `--disable-backpressure` | Don't reject writes when indexing falls behind. Recommended for bulk loads; the benchmark waits for indexing to finish before searching anyway |
 | `--pin-namespace` / `--pin-replicas` | Pin the namespace to dedicated nodes before the run |
@@ -1198,20 +1198,17 @@ from vectordb_bench.backend.clients import DB
 
 
 class ZillizTypedDict(CommonTypedDict):
-    uri: Annotated[
-        str, click.option("--uri", type=str, help="uri connection string", required=True)
-    ]
-    user_name: Annotated[
-        str, click.option("--user-name", type=str, help="Db username", required=True)
-    ]
+    uri: Annotated[str, click.option("--uri", type=str, help="uri connection string", required=True)]
+    user_name: Annotated[str, click.option("--user-name", type=str, help="Db username", required=True)]
     password: Annotated[
         str,
-        click.option("--password",
-                     type=str,
-                     help="Zilliz password",
-                     default=lambda: os.environ.get("ZILLIZ_PASSWORD", ""),
-                     show_default="$ZILLIZ_PASSWORD",
-                     ),
+        click.option(
+            "--password",
+            type=str,
+            help="Zilliz password",
+            default=lambda: os.environ.get("ZILLIZ_PASSWORD", ""),
+            show_default="$ZILLIZ_PASSWORD",
+        ),
     ]
     level: Annotated[
         str,
