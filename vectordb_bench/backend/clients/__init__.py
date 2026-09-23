@@ -36,6 +36,7 @@ class DB(Enum):
     AlloyDB = "AlloyDB"
     LakebaseVector = "LakebaseVector"
     Redis = "Redis"
+    Valkey = "Valkey"
     MemoryDB = "MemoryDB"
     Chroma = "Chroma"
     AWSOpenSearch = "OpenSearch"
@@ -129,6 +130,11 @@ class DB(Enum):
             from .redis.redis import Redis
 
             return Redis
+
+        if self == DB.Valkey:
+            from .valkey.valkey import Valkey
+
+            return Valkey
 
         if self == DB.MemoryDB:
             from .memorydb.memorydb import MemoryDB
@@ -352,6 +358,11 @@ class DB(Enum):
             from .redis.config import RedisConfig
 
             return RedisConfig
+
+        if self == DB.Valkey:
+            from .valkey.config import ValkeyConfig
+
+            return ValkeyConfig
 
         if self == DB.MemoryDB:
             from .memorydb.config import MemoryDBConfig
@@ -734,6 +745,11 @@ class DB(Enum):
             from .adbpg.config import AdbpgIndexConfig
 
             return AdbpgIndexConfig
+
+        if self == DB.Valkey:
+            from .valkey.config import ValkeyHNSWConfig
+
+            return ValkeyHNSWConfig
 
         # DB.Pinecone, DB.Redis
         return EmptyDBCaseConfig
