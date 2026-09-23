@@ -177,6 +177,14 @@ class CaseConfigParamType(Enum):
     post_load_index = "post_load_index"
     pq_nbits = "pq_nbits"
 
+    # PolarDB for PostgreSQL parameters
+    hnsw_quantization = "hnsw_quantization"
+    train_samples = "train_samples"
+    quantization_nbits = "quantization_nbits"
+    graph_cache = "graph_cache"
+    graph_cache_timeout = "graph_cache_timeout"
+    iterative_scan = "iterative_scan"
+
     # Lindorm parameters
     efSearch = "efSearch"
     pq_m = "pq_m"

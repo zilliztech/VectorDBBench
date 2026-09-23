@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 from vectordb_bench.backend.cases import CaseLabel, CaseType, PerformanceCase
 from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.clients.api import IndexType, MetricType, SQType
+from vectordb_bench.backend.clients.polardb_pg.config import DEFAULT_GRAPH_CACHE_TIMEOUT_SECONDS
 from vectordb_bench.backend.dataset import (
     LAION_INT_FILTER_SEARCH_WIDTHS,
     DatasetManager,
@@ -1594,6 +1595,96 @@ CaseConfigParamInput_reranking_metric_PgVector = CaseConfigInput(
 )
 
 
+# PolarDB for PostgreSQL HNSW configs
+CaseConfigParamInput_IndexType_PolarDBPG = CaseConfigInput(
+    label=CaseConfigParamType.IndexType,
+    inputHelp="PolarDB for PostgreSQL currently supports the HNSW index in VectorDBBench",
+    inputType=InputType.Option,
+    inputConfig={"options": [IndexType.HNSW.value]},
+)
+
+CaseConfigParamInput_HnswQuantization_PolarDBPG = CaseConfigInput(
+    label=CaseConfigParamType.hnsw_quantization,
+    displayLabel="Internal quantization",
+    inputHelp="PolarDB HNSW internal quantizer; None keeps the standard pgvector code format",
+    inputType=InputType.Option,
+    inputConfig={"options": [None, "pq", "sq4", "sq8", "rabitq"]},
+)
+
+CaseConfigParamInput_PostLoadIndex_PolarDBPG = CaseConfigInput(
+    label=CaseConfigParamType.post_load_index,
+    displayLabel="Create index after load",
+    inputHelp="Disable to build the HNSW index before loading data",
+    inputType=InputType.Bool,
+    inputConfig={"value": True},
+)
+
+CaseConfigParamInput_PQM_PolarDBPG = CaseConfigInput(
+    label=CaseConfigParamType.pq_m,
+    displayLabel="PQ sub-quantizers",
+    inputHelp="Number of sub-quantizers used by PQ",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 2,
+        "max": 4096,
+        "value": 32,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.hnsw_quantization, None) == "pq",
+)
+
+CaseConfigParamInput_TrainSamples_PolarDBPG = CaseConfigInput(
+    label=CaseConfigParamType.train_samples,
+    displayLabel="Quantizer train samples",
+    inputHelp="Number of sampled rows used to train the internal quantizer",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 100,
+        "max": MAX_STREAMLIT_INT,
+        "value": 1000,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.hnsw_quantization, None) is not None,
+)
+
+CaseConfigParamInput_QuantizationNbits_PolarDBPG = CaseConfigInput(
+    label=CaseConfigParamType.quantization_nbits,
+    displayLabel="RaBitQ bits per dimension",
+    inputHelp="RaBitQ code width",
+    inputType=InputType.Option,
+    inputConfig={"options": [1, 4, 8]},
+    isDisplayed=lambda config: config.get(CaseConfigParamType.hnsw_quantization, None) == "rabitq",
+)
+
+CaseConfigParamInput_GraphCache_PolarDBPG = CaseConfigInput(
+    label=CaseConfigParamType.graph_cache,
+    displayLabel="Enable Graph Cache",
+    inputHelp="Build Graph Cache and wait until it is usable before search",
+    inputType=InputType.Bool,
+    inputConfig={"value": True},
+)
+
+CaseConfigParamInput_GraphCacheTimeout_PolarDBPG = CaseConfigInput(
+    label=CaseConfigParamType.graph_cache_timeout,
+    displayLabel="Graph Cache timeout (seconds)",
+    inputHelp="Maximum time to wait for Graph Cache to become usable",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": MAX_STREAMLIT_INT,
+        "value": DEFAULT_GRAPH_CACHE_TIMEOUT_SECONDS,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.graph_cache, True),
+)
+
+CaseConfigParamInput_IterativeScan_PolarDBPG = CaseConfigInput(
+    label=CaseConfigParamType.iterative_scan,
+    displayLabel="Iterative scan",
+    inputHelp="Graph Cache requires iterative scan to remain off",
+    inputType=InputType.Option,
+    inputConfig={"options": ["off", "strict_order", "relaxed_order"]},
+    isDisplayed=lambda config: not config.get(CaseConfigParamType.graph_cache, True),
+)
+
+
 CaseConfigParamInput_IndexType_AlloyDB = CaseConfigInput(
     label=CaseConfigParamType.IndexType,
     inputHelp="Select Index Type",
@@ -2554,6 +2645,45 @@ PgVectorPerformanceConfig = [
     CaseConfigParamInput_quantized_fetch_limit_PgVector,
 ]
 
+PolarDBPgLoadingConfig = [
+    CaseConfigParamInput_IndexType_PolarDBPG,
+    CaseConfigParamInput_PostLoadIndex_PolarDBPG,
+    CaseConfigParamInput_m,
+    CaseConfigParamInput_EFConstruction_PgVector,
+    CaseConfigParamInput_QuantizationType_PgVector,
+    CaseConfigParamInput_TableQuantizationType_PgVector,
+    CaseConfigParamInput_HnswQuantization_PolarDBPG,
+    CaseConfigParamInput_PQM_PolarDBPG,
+    CaseConfigParamInput_TrainSamples_PolarDBPG,
+    CaseConfigParamInput_QuantizationNbits_PolarDBPG,
+    CaseConfigParamInput_maintenance_work_mem_PgVector,
+    CaseConfigParamInput_max_parallel_workers_PgVector,
+    CaseConfigParamInput_GraphCache_PolarDBPG,
+    CaseConfigParamInput_GraphCacheTimeout_PolarDBPG,
+]
+
+PolarDBPgPerformanceConfig = [
+    CaseConfigParamInput_IndexType_PolarDBPG,
+    CaseConfigParamInput_PostLoadIndex_PolarDBPG,
+    CaseConfigParamInput_m,
+    CaseConfigParamInput_EFConstruction_PgVector,
+    CaseConfigParamInput_EFSearch_PgVector,
+    CaseConfigParamInput_QuantizationType_PgVector,
+    CaseConfigParamInput_TableQuantizationType_PgVector,
+    CaseConfigParamInput_HnswQuantization_PolarDBPG,
+    CaseConfigParamInput_PQM_PolarDBPG,
+    CaseConfigParamInput_TrainSamples_PolarDBPG,
+    CaseConfigParamInput_QuantizationNbits_PolarDBPG,
+    CaseConfigParamInput_maintenance_work_mem_PgVector,
+    CaseConfigParamInput_max_parallel_workers_PgVector,
+    CaseConfigParamInput_reranking_PgVector,
+    CaseConfigParamInput_reranking_metric_PgVector,
+    CaseConfigParamInput_quantized_fetch_limit_PgVector,
+    CaseConfigParamInput_GraphCache_PolarDBPG,
+    CaseConfigParamInput_GraphCacheTimeout_PolarDBPG,
+    CaseConfigParamInput_IterativeScan_PolarDBPG,
+]
+
 PgVectoRSLoadingConfig = [
     CaseConfigParamInput_IndexType_PgVectoRS,
     CaseConfigParamInput_m,
@@ -3443,6 +3573,10 @@ CASE_CONFIG_MAP = {
     DB.PgVector: {
         CaseLabel.Load: PgVectorLoadingConfig,
         CaseLabel.Performance: PgVectorPerformanceConfig,
+    },
+    DB.PolarDBPG: {
+        CaseLabel.Load: PolarDBPgLoadingConfig,
+        CaseLabel.Performance: PolarDBPgPerformanceConfig,
     },
     DB.PgVectoRS: {
         CaseLabel.Load: PgVectoRSLoadingConfig,
