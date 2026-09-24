@@ -7,6 +7,7 @@ from opensearchpy import OpenSearch
 
 from vectordb_bench import config
 from vectordb_bench.backend.filter import Filter, FilterOp
+from vectordb_bench.backend.utils import redact_sensitive
 
 from ..api import VectorDB
 from .config import AWSOpenSearchIndexConfig, AWSOS_Engine
@@ -48,7 +49,7 @@ class AWSOpenSearch(VectorDB):
         self.with_scalar_labels = with_scalar_labels
         self._insert_batch_size = kwargs.get("insert_batch_size", config.DEFAULT_INSERT_BATCH_SIZE)
 
-        log.info(f"AWS_OpenSearch client config: {self.db_config}")
+        log.info(f"AWS_OpenSearch client config: {redact_sensitive(self.db_config)}")
         log.info(f"AWS_OpenSearch db case config : {self.case_config}")
         self._is_serverless = ".aoss." in self.db_config.get("hosts", [{}])[0].get("host", "")
         client = OpenSearch(**self.db_config)

@@ -12,6 +12,7 @@ from redis.commands.search.field import NumericField, TagField, VectorField
 from redis.commands.search.indexDefinition import IndexDefinition, IndexType
 from redis.commands.search.query import Query
 
+from ...utils import redact_sensitive
 from ..api import VectorDB
 from .config import MemoryDBIndexConfig
 
@@ -36,7 +37,7 @@ class MemoryDB(VectorDB):
         self.dbsize = kwargs.get("num_rows")
 
         # Create a MemoryDB connection, if db has password configured, add it to the connection here and in init():
-        log.info(f"Establishing connection to: {self.db_config}")
+        log.info(f"Establishing connection to: {redact_sensitive(self.db_config)}")
         conn = self.get_client(primary=True)
         log.info(f"Connection established: {conn}")
         log.info(conn.execute_command("INFO server"))

@@ -10,6 +10,7 @@ import psycopg
 from pgvector.psycopg import register_vector
 from psycopg import Connection, Cursor, sql
 
+from ...utils import redact_sensitive
 from ..api import VectorDB
 from .config import PgVectorScaleConfigDict, PgVectorScaleIndexConfig
 
@@ -46,7 +47,7 @@ class PgVectorScale(VectorDB):
 
         self.conn, self.cursor = self._create_connection(**self.db_config)
 
-        log.info(f"{self.name} config values: {self.db_config}\n{self.case_config}")
+        log.info(f"{self.name} config values: {redact_sensitive(self.db_config)}\n{self.case_config}")
         if not any(
             (
                 self.case_config.create_index_before_load,
@@ -55,7 +56,7 @@ class PgVectorScale(VectorDB):
         ):
             msg = (
                 f"{self.name} config must create an index using create_index_before_load or create_index_after_load"
-                f"{self.name} config values: {self.db_config}\n{self.case_config}"
+                f"{self.name} config values: {redact_sensitive(self.db_config)}\n{self.case_config}"
             )
             log.error(msg)
             raise RuntimeError(msg)

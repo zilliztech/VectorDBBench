@@ -6,6 +6,7 @@ import time
 from collections.abc import Callable
 from contextlib import contextmanager
 from functools import wraps
+from typing import Any
 
 import psutil
 
@@ -147,3 +148,44 @@ def compose_gt_file(filters: float | str | None = None) -> str:
 
     msg = f"Filters not supported: {filters}"
     raise ValueError(msg)
+
+
+MASK = "**********"
+
+SENSITIVE_KEYS = frozenset({"api_key", "password", "token"})
+
+
+def redact_sensitive(value: Any) -> Any:
+    """Recursively replace credentials in a config structure with a fixed mask.
+
+    ``DBConfig.to_dict()`` hands the driver its plaintext credentials, so its result
+    must be redacted before it reaches a log record or a result file.
+
+    Examples:
+        >>> redact_sensitive({"host": "h", "password": "s3cret"})
+        {'host': 'h', 'password': '**********'}
+        >>> redact_sensitive({"http_auth": ("admin", "s3cret")})
+        {'http_auth': ('admin', '**********')}
+    """
+    if isinstance(value, dict):
+        return {key: _redact_entry(key, item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [redact_sensitive(item) for item in value]
+    return value
+
+
+def _redact_entry(key: Any, value: Any) -> Any:
+    name = key.lower() if isinstance(key, str) else key
+    if name in SENSITIVE_KEYS and value:
+        return MASK
+    if name == "http_auth":
+        return _redact_http_auth(value)
+    return redact_sensitive(value)
+
+
+def _redact_http_auth(value: Any) -> Any:
+    """http_auth is either a (user, secret) pair or an opaque auth object (e.g. AWS4Auth)."""
+    if isinstance(value, tuple | list) and len(value) == 2:
+        redacted = (value[0], MASK)
+        return list(redacted) if isinstance(value, list) else redacted
+    return MASK if value else value

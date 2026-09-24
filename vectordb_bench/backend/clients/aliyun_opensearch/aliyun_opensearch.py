@@ -7,6 +7,7 @@ from alibabacloud_ha3engine_vector import models
 from alibabacloud_ha3engine_vector.client import Client
 from alibabacloud_ha3engine_vector.models import QueryRequest
 
+from ...utils import redact_sensitive
 from ..api import MetricType, VectorDB
 from .config import AliyunOpenSearchIndexConfig
 
@@ -52,7 +53,7 @@ class AliyunOpenSearch(VectorDB):
             ),
         )
 
-        log.info(f"Aliyun_OpenSearch client config: {self.db_config}")
+        log.info(f"Aliyun_OpenSearch client config: {redact_sensitive(self.db_config)}")
 
         if drop_old:
             log.info(f"aliyun_OpenSearch client drop old index: {self.collection_name}")
