@@ -25,6 +25,7 @@ class IndexType(StrEnum):
     HNSW_SQ = "HNSW_SQ"
     HNSW_BQ = "HNSW_BQ"
     HNSW_PQ = "HNSW_PQ"
+    HNSW_BF16 = "HNSW_BF16"
     HNSW_PRQ = "HNSW_PRQ"
     DISKANN = "DISKANN"
     STREAMING_DISKANN = "DISKANN"
