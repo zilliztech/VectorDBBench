@@ -2,7 +2,9 @@ import pytest
 from click.testing import CliRunner
 from pytest import MonkeyPatch
 
+from vectordb_bench.backend.clients.api import IndexType
 from vectordb_bench.backend.clients.milvus import cli as milvus_cli
+from vectordb_bench.backend.clients.milvus.config import HNSWBF16Config
 from vectordb_bench.backend.clients.zilliz_cloud import cli as zilliz_cli
 from vectordb_bench.cli import cli as common_cli
 
@@ -55,6 +57,39 @@ def test_milvus_autoindex_cli_enables_partition_key_for_multitenant_case(
 
     assert result.exit_code == 0, result.output
     assert captured["db_case_config"].use_partition_key is True
+
+
+def test_milvus_hnsw_bf16_cli_builds_bf16_case_config(monkeypatch: MonkeyPatch) -> None:
+    captured = {}
+
+    def fake_run(**kwargs):
+        captured.update(kwargs)
+
+    monkeypatch.setattr(milvus_cli, "run", fake_run)
+
+    result = CliRunner().invoke(
+        milvus_cli.MilvusHNSWBF16,
+        [
+            "--uri",
+            "http://localhost:19530",
+            "--collection-name",
+            "bench_bf16",
+            "--m",
+            "30",
+            "--ef-construction",
+            "360",
+            "--ef-search",
+            "100",
+            "--dry-run",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    case_config = captured["db_case_config"]
+    assert isinstance(case_config, HNSWBF16Config)
+    assert case_config.index == IndexType.HNSW_BF16
+    assert (case_config.M, case_config.efConstruction, case_config.ef) == (30, 360, 100)
+    assert captured["db_config"].collection_name == "bench_bf16"
 
 
 @pytest.mark.parametrize(
