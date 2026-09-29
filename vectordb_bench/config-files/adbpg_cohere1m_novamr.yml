@@ -1,0 +1,43 @@
+adbpgnova:
+  # Performance reference:
+  # https://help.aliyun.com/zh/analyticdb/analyticdb-for-postgresql/user-guide/nova-vector-index-performance-white-paper
+  db_label: cohere1m-novamr
+  task_label: cohere1m-top10-r095
+
+  case_type: Performance768D1M
+  k: 10
+  drop_old: true
+  load: true
+  search_serial: true
+  search_concurrent: true
+  num_concurrency: "1,32,48,64,128"
+  concurrency_duration: 100
+
+  host: <adbpg-host>
+  port: 5432
+  db_name: postgres
+  user_name: <adbpg-user>
+  # Set the password with POSTGRES_PASSWORD.
+
+  # Passed to fastann.vectordbbench_build(jsonb).
+  build_parameters:
+    reloption:
+      algorithm: novamr
+      hnsw_m: 48
+      hnsw_ef_construction: 600
+      rabitq_bits: 7
+      auto_reduction: on
+    guc:
+      fastann.build_parallel_processes: 32
+
+  # Persistent index options and per-search-connection GUCs.
+  search_parameters:
+    reloption:
+      nova_autotune_topk: 10
+      nova_autotune_recall: 0.95
+    guc: {}
+
+  # Executed by fastann.vectordbbench_optimize(jsonb) after a new build.
+  autotune_parameters:
+    topk: [10, 100]
+    target_recall: [0.90, 0.95]
