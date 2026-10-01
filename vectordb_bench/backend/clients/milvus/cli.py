@@ -156,6 +156,26 @@ def MilvusHNSW(**parameters: Unpack[MilvusHNSWTypedDict]):
     )
 
 
+@cli.command()
+@click_parameter_decorators_from_typed_dict(MilvusHNSWTypedDict)
+def MilvusHNSWBF16(**parameters: Unpack[MilvusHNSWTypedDict]):
+    from .config import HNSWBF16Config
+
+    run(
+        db=DBTYPE,
+        db_config=_build_milvus_config(parameters),
+        db_case_config=_with_partition_key(
+            HNSWBF16Config(
+                M=parameters["m"],
+                efConstruction=parameters["ef_construction"],
+                ef=parameters["ef_search"],
+            ),
+            parameters,
+        ),
+        **parameters,
+    )
+
+
 class MilvusRefineTypedDict(TypedDict):
     refine: Annotated[
         bool,

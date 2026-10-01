@@ -27,7 +27,7 @@ from ..backend.clients.lancedb.cli import (
 from ..backend.clients.lindorm.cli import LindormHNSW, LindormIVFBQ, LindormIVFPQ
 from ..backend.clients.mariadb.cli import MariaDBHNSW
 from ..backend.clients.memorydb.cli import MemoryDB
-from ..backend.clients.milvus.cli import MilvusAutoIndex, MilvusFTS
+from ..backend.clients.milvus.cli import MilvusAutoIndex, MilvusFTS, MilvusHNSWBF16
 from ..backend.clients.oceanbase.cli import OceanBaseHNSW, OceanBaseIVF
 from ..backend.clients.oss_opensearch.cli import OSSOpenSearch
 from ..backend.clients.pgdiskann.cli import PgDiskAnn
@@ -70,6 +70,7 @@ cli.add_command(Test)
 cli.add_command(ZillizAutoIndex)
 cli.add_command(MilvusAutoIndex)
 cli.add_command(MilvusFTS)
+cli.add_command(MilvusHNSWBF16)
 cli.add_command(AWSOpenSearch)
 cli.add_command(OSSOpenSearch)
 cli.add_command(PgVectorScaleDiskAnn)

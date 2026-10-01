@@ -8,20 +8,168 @@ from contextlib import nullcontext
 from types import SimpleNamespace
 from unittest.mock import MagicMock, call
 
+import numpy as np
 import pytest
 from pydantic import SecretStr
+from pymilvus import DataType
 
 from vectordb_bench.backend.cases import CaseType
 from vectordb_bench.backend.clients import DB
-from vectordb_bench.backend.clients.api import IndexType
-from vectordb_bench.backend.clients.milvus.config import MilvusConfig, MilvusFtsConfig
-from vectordb_bench.backend.clients.milvus.milvus import MILVUS_FORCE_MERGE_TARGET_SIZE_MB, Milvus
+from vectordb_bench.backend.clients.api import IndexType, MetricType
+from vectordb_bench.backend.clients.milvus.config import (
+    HNSWBF16Config,
+    HNSWConfig,
+    MilvusConfig,
+    MilvusFtsConfig,
+)
+from vectordb_bench.backend.clients.milvus.milvus import (
+    MILVUS_FORCE_MERGE_TARGET_SIZE_MB,
+    Milvus,
+    _float32_to_bf16_bytes,
+)
 from vectordb_bench.backend.payload import PayloadProfile
 from vectordb_bench.backend.runner.mp_runner import MultiProcessingSearchRunner
 from vectordb_bench.interface import BenchMarkRunner
 from vectordb_bench.models import CaseConfig, TaskConfig
 
 log = logging.getLogger(__name__)
+
+
+def test_float32_to_bf16_bytes_uses_round_to_nearest_even() -> None:
+    float32_bits = np.array(
+        [
+            [0x3F807FFF, 0x3F808000, 0x3F808001, 0x3F818000],
+            [0x7F800000, 0xFF800000, 0x7FC00001, 0xFFC00001],
+        ],
+        dtype=np.uint32,
+    )
+
+    encoded = _float32_to_bf16_bytes(float32_bits.view(np.float32))
+    actual = np.frombuffer(b"".join(encoded), dtype="<u2").reshape(float32_bits.shape)
+
+    expected = np.array(
+        [
+            [0x3F80, 0x3F80, 0x3F81, 0x3F82],
+            [0x7F80, 0xFF80, 0x7FC0, 0xFFC0],
+        ],
+        dtype=np.uint16,
+    )
+    np.testing.assert_array_equal(actual, expected)
+
+
+def test_hnsw_bf16_config_requests_plain_hnsw_index_type() -> None:
+    config = HNSWBF16Config(M=30, efConstruction=360, ef=100, metric_type=MetricType.COSINE)
+
+    assert config.index == IndexType.HNSW_BF16
+    # Milvus has no HNSW_BF16 index type; BF16 is selected by the field's data type.
+    assert config.index_param() == {
+        "metric_type": "COSINE",
+        "index_type": "HNSW",
+        "params": {"M": 30, "efConstruction": 360},
+    }
+    assert config.search_param() == {"metric_type": "COSINE", "params": {"ef": 100}}
+
+
+def test_hnsw_bf16_index_type_resolves_to_bf16_case_config() -> None:
+    assert DB.Milvus.case_config_cls(IndexType.HNSW_BF16) is HNSWBF16Config
+
+
+def _vector_field_schema_call(
+    monkeypatch: pytest.MonkeyPatch,
+    db_case_config: HNSWConfig,
+    dim: int = 4,
+) -> call:
+    client = MagicMock()
+    client.has_collection.return_value = False
+    client_cls = MagicMock(return_value=client)
+    schema = MagicMock()
+    client_cls.create_schema.return_value = schema
+    client_cls.prepare_index_params.return_value = MagicMock()
+    monkeypatch.setattr("vectordb_bench.backend.clients.milvus.milvus.MilvusClient", client_cls)
+
+    Milvus(dim=dim, db_config={"uri": "http://example.invalid"}, db_case_config=db_case_config)
+
+    return next(c for c in schema.add_field.call_args_list if c.args[0] == "vector")
+
+
+def test_milvus_bf16_case_config_creates_bfloat16_vector_field(monkeypatch: pytest.MonkeyPatch) -> None:
+    field_call = _vector_field_schema_call(
+        monkeypatch,
+        HNSWBF16Config(M=8, efConstruction=64, ef=32, metric_type=MetricType.COSINE),
+    )
+
+    assert field_call.args[1] == DataType.BFLOAT16_VECTOR
+    assert field_call.kwargs["dim"] == 4
+
+
+def test_milvus_fp32_case_config_still_creates_float_vector_field(monkeypatch: pytest.MonkeyPatch) -> None:
+    field_call = _vector_field_schema_call(
+        monkeypatch,
+        HNSWConfig(M=8, efConstruction=64, ef=32, metric_type=MetricType.COSINE),
+    )
+
+    assert field_call.args[1] == DataType.FLOAT_VECTOR
+
+
+def test_milvus_fts_case_config_does_not_enable_bf16(monkeypatch: pytest.MonkeyPatch) -> None:
+    client = MagicMock()
+    client.has_collection.return_value = False
+    client_cls = MagicMock(return_value=client)
+    client_cls.create_schema.return_value = MagicMock()
+    client_cls.prepare_index_params.return_value = MagicMock()
+    monkeypatch.setattr("vectordb_bench.backend.clients.milvus.milvus.MilvusClient", client_cls)
+
+    # An FTS config has no `index` attribute at all, so the BF16 probe must tolerate its absence.
+    db = Milvus(dim=4, db_config={"uri": "http://example.invalid"}, db_case_config=MilvusFtsConfig())
+
+    assert db._use_bf16 is False
+
+
+def test_milvus_bf16_insert_converts_runner_batch_to_bf16_bytes() -> None:
+    client = MagicMock()
+    client.insert.side_effect = lambda _collection, rows: {"insert_count": len(rows)}
+
+    db = object.__new__(Milvus)
+    db.client = client
+    db.collection_name = "test_collection"
+    db._primary_field = "pk"
+    db._scalar_id_field = "id"
+    db._vector_field = "vector"
+    db.with_scalar_labels = False
+    db._use_bf16 = True
+
+    embeddings = [[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]]
+    count, err = db.insert_embeddings(embeddings=embeddings, metadata=[0, 1, 2])
+
+    assert count == 3
+    assert err is None
+    rows = client.insert.call_args.args[1]
+    assert [row["vector"] for row in rows] == _float32_to_bf16_bytes(embeddings)
+    # Two bytes per dimension, where a float32 payload would use four.
+    assert {len(row["vector"]) for row in rows} == {4}
+
+
+def test_milvus_bf16_batch_search_converts_every_query() -> None:
+    captured = {}
+
+    def search(**kwargs):
+        captured.update(kwargs)
+        return [[{"pk": 0}], [{"pk": 1}], [{"pk": 2}]]
+
+    db = object.__new__(Milvus)
+    db.client = SimpleNamespace(search=search)
+    db.collection_name = "test_collection"
+    db._vector_field = "vector"
+    db._primary_field = "pk"
+    db.case_config = SimpleNamespace(search_param=lambda: {"metric_type": "COSINE"})
+    db.expr = ""
+    db._use_bf16 = True
+
+    queries = [[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]]
+
+    assert db.search_embeddings(queries, k=1) == [[0], [1], [2]]
+    # Guards against encoding only the first query of a batch.
+    assert captured["data"] == _float32_to_bf16_bytes(queries)
 
 
 def test_milvus_vector_payload_requests_vector_field_and_returns_ids():

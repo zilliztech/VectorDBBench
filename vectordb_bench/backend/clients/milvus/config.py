@@ -92,6 +92,17 @@ class HNSWConfig(MilvusIndexConfig, DBCaseConfig):
         }
 
 
+class HNSWBF16Config(HNSWConfig):
+    index: IndexType = IndexType.HNSW_BF16
+
+    def index_param(self) -> dict:
+        return {
+            "metric_type": self.parse_metric(),
+            "index_type": "HNSW",
+            "params": {"M": self.M, "efConstruction": self.efConstruction},
+        }
+
+
 class HNSWSQConfig(HNSWConfig, DBCaseConfig):
     index: IndexType = IndexType.HNSW_SQ
     sq_type: SQType = SQType.SQ8
@@ -598,6 +609,7 @@ _milvus_case_config = {
     IndexType.AUTOINDEX: AutoIndexConfig,
     IndexType.FTS: MilvusFtsConfig,
     IndexType.HNSW: HNSWConfig,
+    IndexType.HNSW_BF16: HNSWBF16Config,
     IndexType.HNSW_SQ: HNSWSQConfig,
     IndexType.HNSW_PQ: HNSWPQConfig,
     IndexType.HNSW_PRQ: HNSWPRQConfig,
