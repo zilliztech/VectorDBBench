@@ -14,6 +14,8 @@ def getCaseResultName(task: CaseResult) -> str:
     details = []
     if case_config.k is not None and case_config.k != config.K_DEFAULT:
         details.append(f"K={case_config.k:,}")
+    if case_config.nq != 1:
+        details.append(f"NQ={case_config.nq:,}")
     if (
         isinstance(case, PerformanceCase)
         and case.case_id != CaseType.CloudPayloadSearchCase

@@ -183,6 +183,7 @@ class VectorDB(ABC):
     "The filtering types supported by the VectorDB Client, default only non-filter"
     supported_filter_types: list[FilterOp] = [FilterOp.NonFilter]
     name: str = ""
+    supports_batch_search: bool = False
 
     # Whether the client can share a single connection across threads.
     # If False, concurrent runners will deep-copy the instance and call
@@ -376,6 +377,22 @@ class VectorDB(ABC):
             list[int]: list of k most similar embeddings IDs to the query embedding.
         """
         raise NotImplementedError
+
+    def search_embeddings(
+        self,
+        queries: list[list[float]],
+        k: int = 100,
+        payload_profile: PayloadProfile = PayloadProfile.IDS_ONLY,
+        tenant: str | None = None,
+    ) -> list[list[int]]:
+        """Search a batch in one request, returning one ordered result list per query.
+
+        Implementations must raise on incomplete or failed batch responses. Backends
+        supporting this API must set supports_batch_search=True; sequential calls to
+        search_embedding are not a batch implementation.
+        """
+        msg = f"{self.name} does not support batch vector search"
+        raise NotImplementedError(msg)
 
     @abstractmethod
     def optimize(self, data_size: int | None = None):

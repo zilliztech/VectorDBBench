@@ -152,6 +152,17 @@ def test_merge_tasks_keeps_results_with_different_k_separate():
     assert len({item["case_name"] for item in merged}) == 2
 
 
+def test_results_keep_different_nq_separate():
+    tasks = [_case_result(k=100, qps=10), _case_result(k=100, qps=20, nq=2)]
+    base_name = tasks[0].task_config.case_config.case.name
+    names = [base_name, f"{base_name} (NQ=2)"]
+
+    assert [data.getCaseResultName(task) for task in tasks] == names
+    merged, failed = data.mergeTasks(tasks)
+    assert failed == {}
+    assert {row["case_name"]: row["qps"] for row in merged} == {names[0]: 10, names[1]: 20}
+
+
 def test_merge_tasks_keeps_payload_profiles_separate_for_same_k():
     merged, failed = data.mergeTasks(
         [
@@ -215,6 +226,7 @@ def _case_result(
     *,
     k: int,
     qps: float,
+    nq: int = 1,
     payload_profile: PayloadProfile = PayloadProfile.IDS_ONLY,
 ) -> CaseResult:
     return CaseResult(
@@ -225,6 +237,7 @@ def _case_result(
             case_config=CaseConfig(
                 case_id=CaseType.Performance768D100M,
                 k=k,
+                nq=nq,
                 payload_profile=payload_profile,
             ),
         ),

@@ -138,6 +138,32 @@ vectordbbench milvusautoindex \
   <other options>
 ```
 
+Use `--nq` (default: `1`) to set the number of query vectors per concurrent search request.
+Milvus and Zilliz Cloud support batching for single-tenant vector performance cases,
+including filtered searches. This example reuses a collection containing the selected
+dataset and a matching HNSW index:
+
+```shell
+vectordbbench milvushnsw \
+  --uri http://localhost:19530 --collection-name VDBBench \
+  --case-type Performance768D1M --m 16 --ef-construction 128 --ef-search 128 \
+  --k 10 --nq 2 \
+  --skip-drop-old --skip-load
+```
+
+YAML uses `nq: 2`. The value is saved in `task_config.case_config.nq` in result JSON.
+Result views distinguish non-default NQ values in case names so different batch sizes stay separate.
+Omitting `--num-concurrency` uses the configured concurrency list. Each request contains
+exactly `nq` vectors, wrapping through the query dataset as needed.
+
+- `qps` and `conc_qps_list` count successful query vectors per second. Successful request throughput
+  is QPS divided by `nq`. Failed batches or responses missing a query's result list contribute zero.
+- `conc_latency_*` measures the whole successful batch request.
+- `serial_latency_*` and recall use NQ=1 and concurrency=1.
+
+Other backends and streaming, full-text, cold-latency and multi-tenant cases reject
+`nq > 1` before data loading.
+
 Use `--note` or `--note-file` to preserve deployment, resource, client, network, and constraint context in each result JSON under `task_config.db_config.note`. The options are mutually exclusive. Prefer `--note-file` for structured or multiline context, and never include credentials, tokens, or sensitive connection details.
 
 ```shell
