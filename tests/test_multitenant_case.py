@@ -65,7 +65,9 @@ def test_case_config_constructs_multitenant_case():
 
     assert isinstance(case, CloudMultiTenantSearchCase)
     assert case.payload_profile == PayloadProfile.SCALAR_LABEL
+    assert case.filter_rate == pytest.approx(0.99)
     assert case.filters.type == FilterOp.StrEqual
+    assert case.filters.filter_rate == pytest.approx(0.99)
     assert case.tenant_labels() == ["tenant_0000", "tenant_0001", "tenant_0002", "tenant_0003", "tenant_0004"]
 
 

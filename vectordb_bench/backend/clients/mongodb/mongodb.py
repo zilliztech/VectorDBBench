@@ -162,7 +162,7 @@ class MongoDB(VectorDB):
         vector_search = {"queryVector": query, "index": "vector_index", "path": self.vector_field, "limit": k}
 
         # Add exact search parameter if specified
-        if search_params["exact"]:
+        if search_params.get("exact"):
             vector_search["exact"] = True
         else:
             # Set numCandidates based on k value and data size

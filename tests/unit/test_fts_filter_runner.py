@@ -52,7 +52,7 @@ def test_fts_pre_run_passes_filters_to_dataset(monkeypatch):
     config_obj = type(
         "Config",
         (),
-        {"stages": [TaskStage.LOAD], "case_config": SimpleNamespace(k=10)},
+        {"stages": [TaskStage.LOAD], "case_config": SimpleNamespace(k=10, nq=1)},
     )()
     runner = CaseRunner.construct(ca=Case(), config=config_obj, dataset_source=DatasetSource.S3)
     init_calls = []

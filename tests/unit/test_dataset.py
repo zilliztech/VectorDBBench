@@ -8,7 +8,12 @@ from pydantic import ValidationError
 from vectordb_bench import config
 from vectordb_bench.backend import dataset as dataset_module
 from vectordb_bench.backend.clients import MetricType
-from vectordb_bench.backend.dataset import CustomDataset, Dataset, DatasetManager
+from vectordb_bench.backend.dataset import (
+    CustomDataset,
+    Dataset,
+    DatasetManager,
+    ParquetDatasetManager,
+)
 from vectordb_bench.backend.filter import LabelFilter, NewIntFilter, non_filter
 
 log = logging.getLogger("vectordb_bench")
@@ -166,7 +171,7 @@ def _custom_dataset_manager() -> DatasetManager:
         dir="large_topk_fixture",
         file_num=1,
     )
-    return DatasetManager(data=data)
+    return ParquetDatasetManager(data=data)
 
 
 def _write_vector_fixture(data_dir):

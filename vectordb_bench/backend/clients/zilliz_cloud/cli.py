@@ -6,6 +6,7 @@ from pydantic import SecretStr
 
 from vectordb_bench.backend.clients import DB
 from vectordb_bench.cli.cli import (
+    AutoIndexLevelTypedDict,
     CommonTypedDict,
     cli,
     click_parameter_decorators_from_typed_dict,
@@ -49,10 +50,6 @@ class ZillizTypedDict(CommonTypedDict):
             show_default="$ZILLIZ_TOKEN",
         ),
     ]
-    level: Annotated[
-        str,
-        click.option("--level", type=str, help="Zilliz index level", required=False),
-    ]
     num_shards: Annotated[
         int,
         click.option(
@@ -88,9 +85,12 @@ class ZillizTypedDict(CommonTypedDict):
     ]
 
 
+class ZillizAutoIndexTypedDict(ZillizTypedDict, AutoIndexLevelTypedDict): ...
+
+
 @cli.command()
-@click_parameter_decorators_from_typed_dict(ZillizTypedDict)
-def ZillizAutoIndex(**parameters: Unpack[ZillizTypedDict]):
+@click_parameter_decorators_from_typed_dict(ZillizAutoIndexTypedDict)
+def ZillizAutoIndex(**parameters: Unpack[ZillizAutoIndexTypedDict]):
     from .config import AutoIndexConfig, ZillizCloudConfig
 
     run(
@@ -105,7 +105,7 @@ def ZillizAutoIndex(**parameters: Unpack[ZillizTypedDict]):
             collection_name=parameters["collection_name"],
         ),
         db_case_config=AutoIndexConfig(
-            level=int(parameters["level"]) if parameters["level"] else 1,
+            level=parameters["level"] if parameters["level"] is not None else 1,
             num_shards=parameters["num_shards"],
             use_partition_key=_use_partition_key(parameters),
         ),

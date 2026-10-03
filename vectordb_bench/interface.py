@@ -16,6 +16,7 @@ from .backend.utils import kill_proc_tree
 from .metric import Metric
 from .models import (
     CaseResult,
+    DatasetMetadata,
     LoadTimeoutError,
     PerformanceTimeoutError,
     ResultLabel,
@@ -208,6 +209,9 @@ class BenchMarkRunner:
                     continue
 
                 finally:
+                    metadata = getattr(runner.ca.dataset, "result_metadata", None)
+                    if metadata is not None:
+                        case_res.dataset_metadata = DatasetMetadata.model_validate(metadata)
                     c_results.append(case_res)
                     send_conn.send((SIGNAL.WIP, idx))
 
