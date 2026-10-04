@@ -37,6 +37,7 @@ class DB(Enum):
     LakebaseVector = "LakebaseVector"
     Redis = "Redis"
     MemoryDB = "MemoryDB"
+    KiviDB = "KiviDB"
     Chroma = "Chroma"
     AWSOpenSearch = "OpenSearch"
     OSSOpenSearch = "OSSOpenSearch"
@@ -134,6 +135,11 @@ class DB(Enum):
             from .memorydb.memorydb import MemoryDB
 
             return MemoryDB
+
+        if self == DB.KiviDB:
+            from .kividb.kividb import KiviDB
+
+            return KiviDB
 
         if self == DB.Chroma:
             from .chroma.chroma import ChromaClient
@@ -357,6 +363,11 @@ class DB(Enum):
             from .memorydb.config import MemoryDBConfig
 
             return MemoryDBConfig
+
+        if self == DB.KiviDB:
+            from .kividb.config import KiviDBConfig
+
+            return KiviDBConfig
 
         if self == DB.Chroma:
             from .chroma.config import ChromaConfig
@@ -734,6 +745,11 @@ class DB(Enum):
             from .adbpg.config import AdbpgIndexConfig
 
             return AdbpgIndexConfig
+
+        if self == DB.KiviDB:
+            from .kividb.config import _kividb_case_config
+
+            return _kividb_case_config.get(index_type)
 
         # DB.Pinecone, DB.Redis
         return EmptyDBCaseConfig
