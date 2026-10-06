@@ -114,12 +114,15 @@ class Zvec(VectorDB):
         if Path(self.path).exists():
             option = CollectionOption(read_only=not drop_old, enable_mmap=True)
             collection = zvec.open(self.path, option=option)
+            destroyed = False
             try:
                 self._validate_diskann_collection(collection, require_ready=not drop_old, rebuilding=drop_old)
                 if drop_old:
                     collection.destroy()
+                    destroyed = True
             finally:
-                collection.close()
+                if not destroyed:
+                    collection.close()
         elif not drop_old:
             message = f"DiskANN collection does not exist at {self.path}; build it before search-only benchmarking"
             raise ValueError(message)

@@ -151,14 +151,31 @@ def test_diskann_creation_rejects_hnsw_directory_before_delete(adapter, tmp_path
 def test_diskann_rebuild_allows_changed_build_parameters(adapter, tmp_path):
     client, sdk = adapter
     collection = make_collection(adapter)
+
+    def mark_destroyed():
+        collection.close.side_effect = ValueError("collection is already destroyed.")
+
+    collection.destroy.side_effect = mark_destroyed
     sdk.open.return_value = collection
     config = ZvecDiskANNIndexConfig(max_degree=32, pq_chunk_num=48)
     client(768, {"path": str(tmp_path)}, config, drop_old=True)
     assert not sdk.open.call_args.kwargs["option"].read_only
     collection.destroy.assert_called_once()
-    collection.close.assert_called_once()
+    collection.close.assert_not_called()
     sdk.create_and_open.assert_called_once()
     sdk.create_and_open.return_value.close.assert_called_once()
+
+
+def test_diskann_failed_destroy_closes_collection_without_recreating(adapter, tmp_path):
+    client, sdk = adapter
+    collection = make_collection(adapter)
+    collection.destroy.side_effect = ValueError("destroy failed")
+    sdk.open.return_value = collection
+    with pytest.raises(ValueError, match="destroy failed"):
+        client(768, {"path": str(tmp_path)}, ZvecDiskANNIndexConfig(), drop_old=True)
+    collection.destroy.assert_called_once()
+    collection.close.assert_called_once()
+    sdk.create_and_open.assert_not_called()
 
 
 def test_diskann_validates_pq_dimensions_before_open(adapter, tmp_path):
