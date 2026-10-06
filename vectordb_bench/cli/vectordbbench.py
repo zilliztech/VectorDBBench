@@ -45,6 +45,7 @@ from ..backend.clients.qdrant_cloud.cli import QdrantCloud
 from ..backend.clients.qdrant_local.cli import QdrantLocal
 from ..backend.clients.redis.cli import Redis
 from ..backend.clients.s3_vectors.cli import S3Vectors
+from ..backend.clients.dynamodb.cli import DynamoDB
 from ..backend.clients.seekdb.cli import SeekDBHNSW
 from ..backend.clients.tencent_elasticsearch.cli import TencentElasticsearch
 from ..backend.clients.test.cli import Test
@@ -97,6 +98,7 @@ cli.add_command(ElasticCloudHNSWInt4)
 cli.add_command(ElasticCloudHNSWBBQ)
 cli.add_command(BatchCli)
 cli.add_command(S3Vectors)
+cli.add_command(DynamoDB)
 cli.add_command(TencentElasticsearch)
 cli.add_command(AliSQLHNSW)
 cli.add_command(Doris)
