@@ -572,6 +572,8 @@ Options:
 
 ### Run Zvec from command line
 
+HNSW remains the default, so existing commands are unchanged:
+
 ```bash
 vectordbbench zvec --path Performance768D10M --db-label 16c64g-v0.1 \
     --case-type Performance768D10M --num-concurrency 12,14,16,18,20 \
@@ -590,6 +592,67 @@ To list the options for zvec, execute vectordbbench zvec --help
                                   refine with unquantized vector to `topk`
                                   results
 ```
+
+                  #### Zvec DiskANN
+
+                  DiskANN requires a zvec SDK exposing `DiskAnnIndexParam`, `DiskAnnQueryParam`, and `Collection.close()`.
+                  This adapter uses zvec's native C++ DiskANN, not the Microsoft Rust implementation.
+                  From this updated checkout on Linux, in an environment with benchmark dependencies and the DiskANN-enabled SDK
+                  already installed, install the adapter and run its checks:
+
+                  ```bash
+                  python -m pip install --no-deps -e .
+                  python -m pip install pytest
+                  vectordbbench zvec --help
+                  python -m pytest tests/test_zvec.py -q
+                  ZVEC_NATIVE_TESTS=1 python -m pytest tests/test_zvec.py -k native_diskann -v
+                  ```
+
+                  The native test builds 1,200 32-dimensional vectors in a temporary directory, checks insertion and index completion,
+                  closes/reopens the collection, searches it, and exercises rebuilding. It is a functionality test, not a recall or
+                  performance benchmark. It is skipped unless explicitly enabled on Linux. Run it successfully before a large benchmark.
+
+                  | Option | Default | Meaning |
+                  | --- | --- | --- |
+                  | `--index-type` | hnsw | Select hnsw or diskann |
+                  | `--metric-type` | IP when omitted | IP, COSINE or L2; use the same metric when building and reopening |
+                  | `--max-degree` | 64 | DiskANN graph degree, 1-100 |
+                  | `--build-list-size` | 100 | Construction candidate list, 10-100 |
+                  | `--search-list-size` | 300 | Query candidate list, at least 1; the engine uses at least top-k |
+                  | `--pq-chunk-num` | 0 | PQ bytes per vector; 0 is automatic, otherwise at most min(dimension, 1024) |
+
+                  DiskANN stores FP32 vectors and uses internal PQ for graph traversal. HNSW options (`--m`, `--ef-construction`,
+                  `--ef-search`, `--quantize-type`, `--is-using-refiner`) are rejected in DiskANN mode, and DiskANN options are rejected
+                  in HNSW mode. PQ chunks are not equivalent to HNSW INT8 scalar quantization.
+
+                  After the checks pass, build a separate DiskANN collection. The load stage includes `optimize()`, which builds the
+                  target index; flushing alone does not establish that a DiskANN index was built. `--drop-old` replaces any existing
+                  DiskANN collection at this path. The adapter refuses to use or delete an existing non-DiskANN collection.
+
+                  ```bash
+                  export DATASET_LOCAL_DIR="$PWD/dataset"
+                  vectordbbench zvec --index-type diskann --path Performance768D10M_DiskANN \
+                    --case-type Performance768D10M --metric-type IP \
+                    --max-degree 64 --build-list-size 100 --pq-chunk-num 96 \
+                    --drop-old --load --skip-search-serial --skip-search-concurrent
+                  ```
+
+                  Then search the same index without reloading or rebuilding it:
+
+                  ```bash
+                  vectordbbench zvec --index-type diskann --path Performance768D10M_DiskANN \
+                    --case-type Performance768D10M --metric-type IP \
+                    --max-degree 64 --build-list-size 100 --pq-chunk-num 96 \
+                    --search-list-size 300 --num-concurrency 12,14,16,18,20 \
+                    --skip-drop-old --skip-load --search-serial --search-concurrent
+                  ```
+
+                  Search-only runs validate the stored dimensions, metric, build parameters, positive document count and complete
+                  indexing. Keep build parameters unchanged when reopening; sweep `--search-list-size` to compare QPS at matched recall.
+                  The examples explicitly use IP, the adapter's historical default. A dataset labelled COSINE does not change that
+                  default or prove that its vectors are normalized. For a COSINE comparison, build both algorithms with
+                  `--metric-type COSINE` in separate paths; do not relabel an existing IP index as COSINE. Multiple search processes can
+                  duplicate in-memory PQ codes and metadata, so measure total process memory as well as QPS.
 
 ### Run Doris from command line
 
