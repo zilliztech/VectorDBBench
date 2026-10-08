@@ -14,8 +14,9 @@ class QdrantLocalConfig(DBConfig):
 
 class QdrantLocalIndexConfig(BaseModel, DBCaseConfig):
     metric_type: MetricType | None = None
-    m: int
-    ef_construct: int
+    # same defaults the CLI exposes, so a config built without them still builds
+    m: int = 16
+    ef_construct: int = 200
     hnsw_ef: int | None = 0
     on_disk: bool | None = False
 
