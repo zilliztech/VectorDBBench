@@ -80,6 +80,25 @@ def test_cli_applies_bm25_overrides_after_routing_vector_config_to_fts():
     }
 
 
+def test_cli_preserves_milvus_force_merge_options_when_routing_vector_config_to_fts():
+    from vectordb_bench.backend.clients.milvus.config import MilvusIndexConfig
+
+    selected = select_cli_db_case_config(
+        DB.Milvus,
+        MilvusIndexConfig(
+            index=IndexType.HNSW,
+            force_merge_enabled=False,
+            force_merge_target_size_mb=512,
+        ),
+        "FTSBm25Performance",
+        {},
+    )
+
+    assert isinstance(selected, MilvusFtsConfig)
+    assert selected.force_merge_enabled is False
+    assert selected.force_merge_target_size_mb == 512
+
+
 def test_cli_leaves_fts_bm25_defaults_when_options_are_omitted():
     selected = select_cli_db_case_config(
         DB.Vespa,

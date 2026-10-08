@@ -1,6 +1,6 @@
 from typing import Annotated, ClassVar
 
-from pydantic import BaseModel, Field, SecretStr
+from pydantic import BaseModel, Field, SecretStr, field_validator
 
 from ..api import DBCaseConfig, DBConfig, IndexType, MetricType, SQType
 
@@ -32,6 +32,16 @@ class MilvusIndexConfig(BaseModel):
     index: IndexType
     metric_type: MetricType | None = None
     use_partition_key: bool = False  # for label-filter
+    force_merge_enabled: bool = True
+    force_merge_target_size_mb: int | None = None
+
+    @field_validator("force_merge_target_size_mb")
+    @classmethod
+    def _validate_force_merge_target_size(cls, value: int | None) -> int | None:
+        if value is not None and value <= 0:
+            message = "force_merge_target_size_mb must be a positive integer or None"
+            raise ValueError(message)
+        return value
 
     @property
     def is_gpu_index(self) -> bool:
@@ -542,6 +552,16 @@ class MilvusFtsConfig(BaseModel, DBCaseConfig):
     analyzer_max_token_length: int | None = None
     analyzer_stop_words: str | None = None
     drop_ratio_search: float | None = None
+    force_merge_enabled: bool = True
+    force_merge_target_size_mb: int | None = None
+
+    @field_validator("force_merge_target_size_mb")
+    @classmethod
+    def _validate_force_merge_target_size(cls, value: int | None) -> int | None:
+        if value is not None and value <= 0:
+            message = "force_merge_target_size_mb must be a positive integer or None"
+            raise ValueError(message)
+        return value
 
     def analyzer_param(self) -> dict:
         analyzer_params = {}

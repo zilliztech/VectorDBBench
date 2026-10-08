@@ -311,6 +311,7 @@ def copy_fts_compatible_db_case_fields(source: DBCaseConfig, target: DBCaseConfi
         "refresh_interval",
         "use_force_merge",
         "force_merge_enabled",
+        "force_merge_target_size_mb",
         "disable_backpressure",
         "level",
     )
