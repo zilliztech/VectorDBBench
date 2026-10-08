@@ -66,6 +66,7 @@ class DB(Enum):
     SeekDB = "SeekDB"
     VolcMySQL = "VolcMySQL"
     Adbpg = "AnalyticDB for PostgreSQL"
+    Infino = "Infino"
 
     @property
     def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901, PLR0915
@@ -286,6 +287,11 @@ class DB(Enum):
             from .adbpg.adbpg import Adbpg
 
             return Adbpg
+
+        if self == DB.Infino:
+            from .infino.infino import Infino
+
+            return Infino
 
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
@@ -509,6 +515,11 @@ class DB(Enum):
             from .adbpg.config import AdbpgConfig
 
             return AdbpgConfig
+
+        if self == DB.Infino:
+            from .infino.config import InfinoConfig
+
+            return InfinoConfig
 
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
@@ -734,6 +745,11 @@ class DB(Enum):
             from .adbpg.config import AdbpgIndexConfig
 
             return AdbpgIndexConfig
+
+        if self == DB.Infino:
+            from .infino.config import InfinoIndexConfig
+
+            return InfinoIndexConfig
 
         # DB.Pinecone, DB.Redis
         return EmptyDBCaseConfig
