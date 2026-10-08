@@ -7,6 +7,7 @@ from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.clients.api import EmptyDBCaseConfig
 from vectordb_bench.backend.data_source import DatasetSource
 from vectordb_bench.backend.dataset import DatasetWithSizeType
+from vectordb_bench.backend.filter import FilterOp
 from vectordb_bench.backend.payload import PayloadProfile
 from vectordb_bench.backend.runner.mp_runner import MultiProcessingSearchRunner
 from vectordb_bench.backend.runner.serial_runner import SerialSearchRunner
@@ -146,6 +147,17 @@ def test_case_runner_reuse_key_distinguishes_scalar_label_schema_requirement():
     assert scalar_label_case.with_scalar_labels is True
     assert ids_only_runner != scalar_label_runner
     assert hash(ids_only_runner) != hash(scalar_label_runner)
+
+
+def test_cloud_payload_label_filter_sets_filter_rate():
+    case = CloudPayloadSearchCase(
+        dataset_with_size_type=DatasetWithSizeType.CohereMedium.value,
+        label_percentage=0.2,
+    )
+
+    assert case.filter_rate == pytest.approx(0.8)
+    assert case.filters.type == FilterOp.StrEqual
+    assert case.filters.filter_rate == pytest.approx(0.8)
 
 
 def test_cli_propagates_cloud_payload_dataset_selection():

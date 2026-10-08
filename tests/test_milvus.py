@@ -4,6 +4,7 @@ Requires a running Milvus instance at localhost:19530.
 """
 
 import logging
+from contextlib import nullcontext
 from types import SimpleNamespace
 from unittest.mock import MagicMock, call
 
@@ -16,6 +17,7 @@ from vectordb_bench.backend.clients.api import IndexType
 from vectordb_bench.backend.clients.milvus.config import MilvusConfig, MilvusFtsConfig
 from vectordb_bench.backend.clients.milvus.milvus import MILVUS_FORCE_MERGE_TARGET_SIZE_MB, Milvus
 from vectordb_bench.backend.payload import PayloadProfile
+from vectordb_bench.backend.runner.mp_runner import MultiProcessingSearchRunner
 from vectordb_bench.interface import BenchMarkRunner
 from vectordb_bench.models import CaseConfig, TaskConfig
 
@@ -42,6 +44,47 @@ def test_milvus_vector_payload_requests_vector_field_and_returns_ids():
 
     assert result == [1]
     assert captured["output_fields"] == ["vector"]
+
+
+def test_milvus_batch_search_counts_successful_queries(monkeypatch):
+    queries = [[0.0], [1.0], [2.0]]
+    # Complete zero-hit batch, incomplete batch, SDK failure.
+    responses = [[[], []], [[]], RuntimeError("search failed")]
+    db = object.__new__(Milvus)
+    db.client = SimpleNamespace(search=MagicMock(side_effect=responses))
+    db.collection_name = "test_collection"
+    db._vector_field = "vector"
+    db._primary_field = "pk"
+    db.case_config = SimpleNamespace(search_param=lambda: {"metric_type": "COSINE"})
+    db.expr = ""
+    db.init = lambda: nullcontext()
+    db.prepare_filter = MagicMock()
+    runner = MultiProcessingSearchRunner(db, queries, nq=2, duration=3)
+    monkeypatch.setattr("vectordb_bench.backend.runner.mp_runner.random.randint", lambda _a, _b: 0)
+    # Each SDK request takes one simulated second, regardless of clock reads.
+    clock = MagicMock()
+
+    def perf_counter():
+        assert clock.call_count < 100, "Search loop did not finish"
+        return float(db.client.search.call_count)
+
+    clock.side_effect = perf_counter
+    monkeypatch.setattr("vectordb_bench.backend.runner.mp_runner.time", SimpleNamespace(perf_counter=clock))
+
+    count, _, latencies = runner.search(queries, MagicMock(), MagicMock())
+    assert count == 2
+    assert latencies == [1.0]
+    assert db.client.search.call_count == 3
+    expected_batches = [queries[:2], [queries[2], queries[0]], queries[1:]]
+    assert [c.kwargs["data"] for c in db.client.search.call_args_list] == expected_batches
+
+    db.client.search.reset_mock()
+    db.client.search.side_effect = responses
+    count, failed_count, stats = runner.search_by_dur(3, queries, MagicMock(), MagicMock())
+    assert (count, failed_count) == (2, 4)
+    assert stats["count"] == 1
+    assert stats["avg"] == pytest.approx(1.0, rel=0.01)
+    assert [c.kwargs["data"] for c in db.client.search.call_args_list] == expected_batches
 
 
 def _fake_milvus_client(monkeypatch, *, collection_exists=False, properties=None):

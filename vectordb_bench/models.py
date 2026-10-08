@@ -3,10 +3,10 @@ import pathlib
 from dataclasses import asdict
 from datetime import date, datetime
 from enum import Enum, StrEnum
-from typing import Any, ClassVar, Self
+from typing import Any, ClassVar, Literal, Self
 
 import ujson
-from pydantic import PositiveInt, field_validator, model_validator
+from pydantic import ConfigDict, PositiveInt, field_validator, model_validator
 
 from vectordb_bench.backend.dataset import DatasetWithSizeMap
 
@@ -18,7 +18,8 @@ from .backend.clients import (
     DBConfig,
     EmptyDBCaseConfig,
 )
-from .backend.clients.api import IndexType
+from .backend.clients.api import IndexType, MetricType
+from .backend.data_source import DatasetSource
 from .backend.payload import PayloadProfile
 from .base import BaseModel
 from .metric import Metric
@@ -70,6 +71,7 @@ class CaseConfigParamType(Enum):
     numCandidates = "num_candidates"
     lists = "lists"
     probes = "probes"
+    epsilon = "epsilon"
     quantizationType = "quantization_type"
     quantizationRatio = "quantization_ratio"
     tableQuantizationType = "table_quantization_type"
@@ -136,6 +138,7 @@ class CaseConfigParamType(Enum):
     metric_type_name = "metric_type_name"
     mongodb_quantization_type = "quantization"
     mongodb_num_candidates_ratio = "num_candidates_ratio"
+    mongodb_exact = "exact"
     use_partition_key = "use_partition_key"
     refresh_interval = "refresh_interval"
     use_rescore = "use_rescore"
@@ -215,6 +218,7 @@ class CaseConfig(BaseModel):
     custom_case: dict | None = None
     payload_profile: PayloadProfile | None = None
     k: int | None = config.K_DEFAULT
+    nq: PositiveInt = 1  # Concurrent search only; serial latency and recall always use one query per request.
     concurrency_search_config: ConcurrencySearchConfig = ConcurrencySearchConfig()
 
     @field_validator("k")
@@ -224,6 +228,16 @@ class CaseConfig(BaseModel):
             msg = f"K must be positive, got {value}"
             raise ValueError(msg)
         return value
+
+    @model_validator(mode="after")
+    def validate_case_k(self) -> Self:
+        if self.case_id == CaseType.Performance and self.k is not None:
+            case = self.case_id.case_cls(self.custom_case)
+            max_k = case.dataset.max_search_k(case.filters)
+            if max_k is not None and self.k > max_k:
+                msg = f"{case.dataset.data.name} supports K from 1 to {max_k}, got {self.k}"
+                raise ValueError(msg)
+        return self
 
     @model_validator(mode="after")
     def validate_payload_profile(self) -> Self:
@@ -347,10 +361,25 @@ class ResultLabel(Enum):
     OUTOFRANGE = "?"
 
 
+class DatasetMetadata(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    name: str
+    distribution: Literal["id", "ood"] | None = None
+    source: DatasetSource
+    repository: str | None = None
+    filename: str | None = None
+    revision: str | None = None
+    source_distance: str | None = None
+    metric_type: MetricType | None = None
+    point_type: str | None = None
+
+
 class CaseResult(BaseModel):
     metrics: Metric
     task_config: TaskConfig
     label: ResultLabel = ResultLabel.NORMAL
+    dataset_metadata: DatasetMetadata | None = None
 
 
 class TestResult(BaseModel):

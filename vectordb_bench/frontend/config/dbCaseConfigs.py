@@ -8,8 +8,10 @@ from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.clients.api import IndexType, MetricType, SQType
 from vectordb_bench.backend.dataset import (
     LAION_INT_FILTER_SEARCH_WIDTHS,
+    DatasetManager,
     DatasetWithSizeType,
     FtsDatasetWithSizeType,
+    get_registered_datasets,
 )
 from vectordb_bench.backend.payload import PayloadProfile
 from vectordb_bench.frontend.components.custom.getCustomConfig import get_custom_configs
@@ -216,6 +218,40 @@ def get_fts_case_items() -> list[UICaseItem]:
     ]
 
 
+def get_vibe_case_items() -> list[UICaseItem]:
+    def item(manager: DatasetManager) -> UICaseItem:
+        data = manager.data
+        return UICaseItem(
+            label=f"{data.name} ({data.distribution.upper()}, {data.metric_type.value}, {data.dim}D)",
+            description=f"VIBE {data.modality} dataset with {data.size:,} corpus vectors.",
+            cases=[
+                CaseConfig(
+                    case_id=CaseType.Performance,
+                    custom_case={"dataset_name": data.name},
+                )
+            ],
+        )
+
+    return [item(manager) for manager in get_registered_datasets(family="VIBE")]
+
+
+def get_vdbbench_multimodal_case_items() -> list[UICaseItem]:
+    def item(manager: DatasetManager) -> UICaseItem:
+        data = manager.data
+        return UICaseItem(
+            label=f"{data.name} ({data.metric_type.value}, {data.dim}D)",
+            description=f"VDBBench multimodal dataset with {data.size:,} corpus vectors.",
+            cases=[
+                CaseConfig(
+                    case_id=CaseType.Performance,
+                    custom_case={"dataset_name": data.name},
+                )
+            ],
+        )
+
+    return [item(manager) for manager in get_registered_datasets(family="VDBBench")]
+
+
 def get_custom_case_cluter() -> UICaseItemCluster:
     return UICaseItemCluster(label="Custom Search Performance Test", uiCaseItems=get_custom_case_items())
 
@@ -372,6 +408,14 @@ UI_CASE_CLUSTERS: list[UICaseItemCluster] = [
             UICaseItem(cases=generate_normal_cases(CaseType.Performance1536D500K1P)),
             UICaseItem(cases=generate_normal_cases(CaseType.Performance1536D500K99P)),
         ],
+    ),
+    UICaseItemCluster(
+        label="VIBE Search Performance",
+        uiCaseItems=get_vibe_case_items(),
+    ),
+    UICaseItemCluster(
+        label="VDBBench Multimodal Search Performance",
+        uiCaseItems=get_vdbbench_multimodal_case_items(),
     ),
     UICaseItemCluster(
         label="New-Int-Filter Search Performance Test",
@@ -1683,6 +1727,56 @@ CaseConfigParamInput_max_parallel_workers_AlloyDB = CaseConfigInput(
     },
 )
 
+CaseConfigParamInput_IndexType_LakebaseVector = CaseConfigInput(
+    label=CaseConfigParamType.IndexType,
+    inputHelp="Select Index Type",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [
+            IndexType.LAKEBASE_ANN.value,
+        ],
+    },
+)
+
+CaseConfigParamInput_max_parallel_workers_LakebaseVector = CaseConfigInput(
+    label=CaseConfigParamType.max_parallel_workers,
+    displayLabel="Max parallel workers",
+    inputHelp="Recommended value: (cpu cores - 1). This will set the parameters: max_parallel_maintenance_workers,"
+    " max_parallel_workers & table(parallel_workers)",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 0,
+        "max": 1024,
+        "value": 16,
+    },
+)
+
+CaseConfigParamInput_Probes_LakebaseVector = CaseConfigInput(
+    label=CaseConfigParamType.probes,
+    displayLabel="Probes",
+    inputHelp=(
+        "Optional positive integer or comma-separated positive integers for lakebase_ann.probes "
+        "(for example: 10 or 54,380); leave empty to use the server default"
+    ),
+    inputType=InputType.Text,
+    inputConfig={
+        "value": "",
+    },
+)
+
+CaseConfigParamInput_Epsilon_LakebaseVector = CaseConfigInput(
+    label=CaseConfigParamType.epsilon,
+    displayLabel="Epsilon",
+    inputHelp="Optional lakebase_ann reranking margin; leave empty to use the server default",
+    inputType=InputType.Float,
+    inputConfig={
+        "min": 0.0,
+        "max": 4.0,
+        "step": 0.1,
+        "value": None,
+    },
+)
+
 CaseConfigParamInput_EFConstruction_AliES = CaseConfigInput(
     label=CaseConfigParamType.EFConstruction,
     inputType=InputType.Number,
@@ -1922,6 +2016,16 @@ CaseConfigParamInput_MongoDBNumCandidatesRatio = CaseConfigInput(
         "min": 10,
         "max": 20,
         "value": 10,
+    },
+)
+
+CaseConfigParamInput_MongoDBExact = CaseConfigInput(
+    label=CaseConfigParamType.mongodb_exact,
+    inputType=InputType.Bool,
+    displayLabel="Exact (ENN)",
+    inputHelp="Atlas $vectorSearch exact nearest neighbor. Default False keeps ANN.",
+    inputConfig={
+        "value": False,
     },
 )
 
@@ -2539,6 +2643,18 @@ AlloyDBPerformanceConfig = [
     CaseConfigParamInput_max_parallel_workers_AlloyDB,
 ]
 
+LakebaseVectorLoadingConfig = [
+    CaseConfigParamInput_IndexType_LakebaseVector,
+    CaseConfigParamInput_max_parallel_workers_LakebaseVector,
+]
+
+LakebaseVectorPerformanceConfig = [
+    CaseConfigParamInput_IndexType_LakebaseVector,
+    CaseConfigParamInput_max_parallel_workers_LakebaseVector,
+    CaseConfigParamInput_Probes_LakebaseVector,
+    CaseConfigParamInput_Epsilon_LakebaseVector,
+]
+
 AliyunElasticsearchLoadingConfig = [
     CaseConfigParamInput_IndexType_ES,
     CaseConfigParamInput_NumShards_ES,
@@ -2577,6 +2693,7 @@ MongoDBLoadingConfig = [
 MongoDBPerformanceConfig = [
     CaseConfigParamInput_MongoDBQuantizationType,
     CaseConfigParamInput_MongoDBNumCandidatesRatio,
+    CaseConfigParamInput_MongoDBExact,
 ]
 
 CockroachDBLoadingConfig = [
@@ -3342,6 +3459,10 @@ CASE_CONFIG_MAP = {
     DB.AlloyDB: {
         CaseLabel.Load: AlloyDBLoadConfig,
         CaseLabel.Performance: AlloyDBPerformanceConfig,
+    },
+    DB.LakebaseVector: {
+        CaseLabel.Load: LakebaseVectorLoadingConfig,
+        CaseLabel.Performance: LakebaseVectorPerformanceConfig,
     },
     DB.AliyunElasticsearch: {
         CaseLabel.Load: AliyunElasticsearchLoadingConfig,
