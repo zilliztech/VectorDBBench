@@ -30,6 +30,7 @@ class DB(Enum):
     QdrantLocal = "QdrantLocal"
     WeaviateCloud = "WeaviateCloud"
     PgVector = "PgVector"
+    PolarDBPG = "PolarDBPG"
     PgVectoRS = "PgVectoRS"
     PgVectorScale = "PgVectorScale"
     PgDiskANN = "PgDiskANN"
@@ -109,6 +110,11 @@ class DB(Enum):
             from .pgvector.pgvector import PgVector
 
             return PgVector
+
+        if self == DB.PolarDBPG:
+            from .polardb_pg.polardb_pg import PolarDBPgHNSW
+
+            return PolarDBPgHNSW
 
         if self == DB.PgVectoRS:
             from .pgvecto_rs.pgvecto_rs import PgVectoRS
@@ -332,6 +338,11 @@ class DB(Enum):
             from .pgvector.config import PgVectorConfig
 
             return PgVectorConfig
+
+        if self == DB.PolarDBPG:
+            from .polardb_pg.config import PolarDBPgConfig
+
+            return PolarDBPgConfig
 
         if self == DB.PgVectoRS:
             from .pgvecto_rs.config import PgVectoRSConfig
@@ -559,6 +570,11 @@ class DB(Enum):
             from .pgvector.config import _pgvector_case_config
 
             return _pgvector_case_config.get(index_type)
+
+        if self == DB.PolarDBPG:
+            from .polardb_pg.config import _polardb_pg_case_config
+
+            return _polardb_pg_case_config.get(index_type)
 
         if self == DB.PgVectoRS:
             from .pgvecto_rs.config import _pgvecto_rs_case_config

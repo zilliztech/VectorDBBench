@@ -41,6 +41,7 @@ from ..backend.clients.polardb.cli import (
     PolarDBHNSWPQ,
     PolarDBHNSWSQ,
 )
+from ..backend.clients.polardb_pg.cli import PolarDBPgHNSW
 from ..backend.clients.qdrant_cloud.cli import QdrantCloud
 from ..backend.clients.qdrant_local.cli import QdrantLocal
 from ..backend.clients.redis.cli import Redis
@@ -61,6 +62,7 @@ from .cli import cli
 
 cli.add_command(AdbpgNova)
 cli.add_command(PgVectorHNSW)
+cli.add_command(PolarDBPgHNSW)
 cli.add_command(PgVectoRSHNSW)
 cli.add_command(PgVectoRSIVFFlat)
 cli.add_command(Redis)
