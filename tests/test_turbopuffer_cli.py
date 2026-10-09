@@ -141,6 +141,7 @@ def test_turbopuffer_multitenant_optimize_skips_base_namespace_by_default(
     monkeypatch: MonkeyPatch,
 ) -> None:
     warmed = []
+    hinted = []
 
     class FakeNamespace:
         def __init__(self, name: str):
@@ -148,16 +149,28 @@ def test_turbopuffer_multitenant_optimize_skips_base_namespace_by_default(
 
         def hint_cache_warm(self):
             warmed.append(self.name)
+            return "cache warm hint accepted"
+
+        def metadata(self):
+            return SimpleNamespace(index=SimpleNamespace(status="up-to-date", unindexed_bytes=0))
 
     class FakeClient:
         def namespace(self, name: str):
             return FakeNamespace(name)
 
+    def fake_hint_read_only(api_key, region, namespace, api_base_url=None):
+        hinted.append(namespace)
+        return {"status": "accepted"}
+
     monkeypatch.setattr(turbopuffer_client.time, "sleep", lambda _seconds: None)
+    monkeypatch.setattr(turbopuffer_client, "namespace_hint_read_only_request", fake_hint_read_only)
     db = object.__new__(TurboPuffer)
     db.client = FakeClient()
     db.ns = FakeNamespace("base")
     db.namespace = "base"
+    db.api_key = "secret"
+    db.region = "aws-us-west-2"
+    db.api_base_url = None
     db.multitenant_namespace_prefix = "mt_"
     db.multitenant_tenant_labels = ["tenant_0000", "tenant_0001"]
     db._ns_cache = {}
@@ -166,12 +179,14 @@ def test_turbopuffer_multitenant_optimize_skips_base_namespace_by_default(
     db.optimize()
 
     assert warmed == []
+    assert hinted == ["mt_tenant_0000", "mt_tenant_0001"]
 
 
 def test_turbopuffer_multitenant_optimize_can_warm_all_tenant_namespaces(
     monkeypatch: MonkeyPatch,
 ) -> None:
     warmed = []
+    hinted = []
 
     class FakeNamespace:
         def __init__(self, name: str):
@@ -179,16 +194,28 @@ def test_turbopuffer_multitenant_optimize_can_warm_all_tenant_namespaces(
 
         def hint_cache_warm(self):
             warmed.append(self.name)
+            return "cache warm hint accepted"
+
+        def metadata(self):
+            return SimpleNamespace(index=SimpleNamespace(status="up-to-date", unindexed_bytes=0))
 
     class FakeClient:
         def namespace(self, name: str):
             return FakeNamespace(name)
 
+    def fake_hint_read_only(api_key, region, namespace, api_base_url=None):
+        hinted.append(namespace)
+        return {"status": "accepted"}
+
     monkeypatch.setattr(turbopuffer_client.time, "sleep", lambda _seconds: None)
+    monkeypatch.setattr(turbopuffer_client, "namespace_hint_read_only_request", fake_hint_read_only)
     db = object.__new__(TurboPuffer)
     db.client = FakeClient()
     db.ns = FakeNamespace("base")
     db.namespace = "base"
+    db.api_key = "secret"
+    db.region = "aws-us-west-2"
+    db.api_base_url = None
     db.multitenant_namespace_prefix = "mt_"
     db.multitenant_tenant_labels = ["tenant_0000", "tenant_0001"]
     db._ns_cache = {}
@@ -196,7 +223,8 @@ def test_turbopuffer_multitenant_optimize_can_warm_all_tenant_namespaces(
 
     db.optimize()
 
-    assert warmed == ["mt_tenant_0000", "mt_tenant_0001"]
+    assert warmed == ["mt_tenant_0000", "mt_tenant_0000", "mt_tenant_0001", "mt_tenant_0001"]
+    assert hinted == ["mt_tenant_0000", "mt_tenant_0001"]
 
 
 def test_turbopuffer_cli_skips_multitenant_pin_namespaces_during_dry_run(

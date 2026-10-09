@@ -110,6 +110,16 @@ class TurboPufferTypedDict(TypedDict):
             help="Disable Turbopuffer write backpressure",
         ),
     ]
+    consistency_level: Annotated[
+        str,
+        click.option(
+            "--consistency-level",
+            type=click.Choice(["strong", "eventual"], case_sensitive=False),
+            help="Query consistency level (strong or eventual)",
+            default="eventual",
+            show_default=True,
+        ),
+    ]
     pin_namespace: Annotated[
         bool,
         click.option(
@@ -130,6 +140,28 @@ class TurboPufferTypedDict(TypedDict):
         ),
     ]
     pin_timeout: PinTimeoutOption
+    probes: Annotated[
+        int | None,
+        click.option(
+            "--probes",
+            type=click.IntRange(min=1),
+            default=None,
+            help=(
+                "ANN probes per query. Server default is a fixed 200 (~0.90 recall@100 on "
+                "Cohere 1M); 400 gives ~0.95 and 800 ~0.98, trading throughput for recall."
+            ),
+        ),
+    ]
+    vector_type: Annotated[
+        str,
+        click.option(
+            "--vector-type",
+            type=click.Choice(["f32", "f16"], case_sensitive=False),
+            default="f32",
+            show_default=True,
+            help="Stored vector element type. f16 halves storage; the wire format stays f32.",
+        ),
+    ]
     multitenant_warmup_policy: Annotated[
         str,
         click.option(
@@ -221,9 +253,12 @@ def TurboPuffer(**parameters: Unpack[TurboPufferIndexTypedDict]):
             pin_replicas=parameters["pin_replicas"],
             pin_timeout=parameters["pin_timeout"],
             pin_target_namespace_count=pin_target_namespace_count,
+            consistency_level=parameters["consistency_level"].lower(),
         ),
         db_case_config=TurboPufferIndexConfig(
             metric_type=MetricType(parameters["metric_type"]),
+            probes=parameters["probes"],
+            vector_type=parameters["vector_type"].lower(),
             disable_backpressure=parameters["disable_backpressure"],
             multitenant_warmup_policy=TurboPufferMultitenantWarmupPolicy(parameters["multitenant_warmup_policy"]),
         ),
