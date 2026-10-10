@@ -8,6 +8,7 @@ from typing import Any
 from opensearchpy import OpenSearch
 
 from vectordb_bench.backend.filter import Filter, FilterOp
+from vectordb_bench.backend.utils import redact_sensitive
 
 from ..api import IndexType, VectorDB
 from .config import LindormConfig, LindormIndexConfig
@@ -50,7 +51,7 @@ class LindormVector(VectorDB):
         self.vector_col_name = vector_col_name
         self.with_scalar_labels = with_scalar_labels
         self._pending_post_optimize_sleep = False  # need sleep after optimize
-        log.debug(f"Lindorm client config: {self.db_config}")
+        log.debug(f"Lindorm client config: {redact_sensitive(self.db_config)}")
         log.debug(f"index name: {self.index_name}")
         log.debug(f"Lindorm index config: {self.case_config}")
         client = OpenSearch(**self.db_config)

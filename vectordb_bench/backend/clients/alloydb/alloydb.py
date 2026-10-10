@@ -10,6 +10,7 @@ import psycopg
 from pgvector.psycopg import register_vector
 from psycopg import Connection, Cursor, sql
 
+from ...utils import redact_sensitive
 from ..api import VectorDB
 from .config import AlloyDBConfigDict, AlloyDBIndexConfig
 
@@ -51,7 +52,7 @@ class AlloyDB(VectorDB):
         self.cursor.execute("CREATE EXTENSION IF NOT EXISTS alloydb_scann CASCADE")
         self.conn.commit()
 
-        log.info(f"{self.name} config values: {self.db_config}\n{self.case_config}")
+        log.info(f"{self.name} config values: {redact_sensitive(self.db_config)}\n{self.case_config}")
         if not any(
             (
                 self.case_config.create_index_before_load,
