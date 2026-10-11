@@ -50,6 +50,7 @@ from ..backend.clients.tencent_elasticsearch.cli import TencentElasticsearch
 from ..backend.clients.test.cli import Test
 from ..backend.clients.tidb.cli import TiDB
 from ..backend.clients.turbopuffer.cli import TurboPuffer, TurboPufferUnpin
+from ..backend.clients.valkey.cli import Valkey
 from ..backend.clients.vectorchord.cli import VectorChordGraph, VectorChordRQ
 from ..backend.clients.vespa.cli import Vespa
 from ..backend.clients.volc_mysql.cli import VolcMySQLHNSW
@@ -64,6 +65,7 @@ cli.add_command(PgVectorHNSW)
 cli.add_command(PgVectoRSHNSW)
 cli.add_command(PgVectoRSIVFFlat)
 cli.add_command(Redis)
+cli.add_command(Valkey)
 cli.add_command(MemoryDB)
 cli.add_command(Weaviate)
 cli.add_command(Test)
