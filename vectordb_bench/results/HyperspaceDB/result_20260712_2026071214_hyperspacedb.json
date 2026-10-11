@@ -1,0 +1,794 @@
+{
+  "run_id": "d175f436a74c4a3c9a1615574672b2c4",
+  "task_label": "2026071214",
+  "results": [
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 41.8016,
+        "optimize_duration": 720.6131,
+        "load_duration": 762.4147,
+        "qps": 1067.8766,
+        "serial_latency_p99": 0.0101,
+        "serial_latency_p95": 0.0097,
+        "recall": 0.9452,
+        "ndcg": 0.9586,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20,
+          30,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          128.2479,
+          621.2241,
+          1001.8124,
+          1067.8766,
+          1055.3801,
+          1039.0434,
+          1019.8385,
+          1015.7757
+        ],
+        "conc_latency_p99_list": [
+          0.010083990453276782,
+          0.010413146250648424,
+          0.016113541030790657,
+          0.06342757661768712,
+          0.09159422895754687,
+          0.11477615523152057,
+          0.1589652874844614,
+          0.19226219120319024
+        ],
+        "conc_latency_p95_list": [
+          0.009637802172801456,
+          0.009921776482951828,
+          0.013657417031936347,
+          0.03250307273992803,
+          0.05343252047896385,
+          0.07786878581100606,
+          0.111910516466014,
+          0.1371945830178447
+        ],
+        "conc_latency_avg_list": [
+          0.007789061415357479,
+          0.008038166083478748,
+          0.009966457144400255,
+          0.018674496434089083,
+          0.028335049544428288,
+          0.03831250435274196,
+          0.05830997227731253,
+          0.07793574372611273
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 500000,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "num_per_batch": 100,
+          "load_concurrency": 0
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "HyperspaceDB",
+        "db_config": {
+          "db_label": "",
+          "version": "",
+          "note": "",
+          "host": "localhost:50051",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "index": "HNSW",
+          "metric_type": "COSINE",
+          "m": 16,
+          "ef_construction": 256,
+          "ef_search": 100
+        },
+        "case_config": {
+          "case_id": 10,
+          "custom_case": null,
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600,
+            "serial_cooldown": 0.0
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 762.4147,
+        "qps": 87.368,
+        "serial_latency_p99": 0.1219,
+        "serial_latency_p95": 0.1198,
+        "recall": 0.9449,
+        "ndcg": 0.9584,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20,
+          30,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          8.7914,
+          43.2222,
+          81.1681,
+          87.0161,
+          87.3314,
+          87.368,
+          86.1306,
+          85.2896
+        ],
+        "conc_latency_p99_list": [
+          0.12435946107842029,
+          0.12440010914579035,
+          0.1428588032152038,
+          0.31568611065857105,
+          0.4633241035678657,
+          0.6008124551479703,
+          0.8806899169867393,
+          1.1366911421122492
+        ],
+        "conc_latency_p95_list": [
+          0.12070596071425825,
+          0.1187632750137709,
+          0.1344199998769909,
+          0.28599373381584875,
+          0.42453221703181043,
+          0.558030325139407,
+          0.81015306248446,
+          1.0586211875197478
+        ],
+        "conc_latency_avg_list": [
+          0.1136377588127013,
+          0.11538861729382449,
+          0.12286727616391124,
+          0.22901325840353193,
+          0.3418299061913379,
+          0.4549602876735834,
+          0.6896549737448098,
+          0.9240290041603552
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 0,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {},
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "HyperspaceDB",
+        "db_config": {
+          "db_label": "",
+          "version": "",
+          "note": "",
+          "host": "localhost:50051",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "index": "HNSW",
+          "metric_type": "COSINE",
+          "m": 16,
+          "ef_construction": 256,
+          "ef_search": 100
+        },
+        "case_config": {
+          "case_id": 12,
+          "custom_case": null,
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600,
+            "serial_cooldown": 0.0
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 762.4147,
+        "qps": 137.6545,
+        "serial_latency_p99": 0.0881,
+        "serial_latency_p95": 0.0755,
+        "recall": 0.9547,
+        "ndcg": 0.967,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20,
+          30,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          15.1313,
+          70.5259,
+          130.1996,
+          137.6545,
+          135.879,
+          134.8699,
+          135.3946,
+          134.1785
+        ],
+        "conc_latency_p99_list": [
+          0.0865796018228866,
+          0.1323904192954069,
+          0.09603670298005454,
+          0.24185886844177767,
+          0.39336458531674,
+          0.48749090612051066,
+          0.6436965464020614,
+          0.8053537916531787
+        ],
+        "conc_latency_p95_list": [
+          0.076739620603621,
+          0.07222609551390632,
+          0.08730916701606474,
+          0.2090703397785546,
+          0.3288700754521414,
+          0.4239731668902094,
+          0.5792697667784523,
+          0.7395427252165974
+        ],
+        "conc_latency_avg_list": [
+          0.06601984734022683,
+          0.07082097559372723,
+          0.07663433261946846,
+          0.14481145231143,
+          0.21972085558227972,
+          0.2947143576328986,
+          0.439789550802413,
+          0.5889849021948839
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 0,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {},
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "HyperspaceDB",
+        "db_config": {
+          "db_label": "",
+          "version": "",
+          "note": "",
+          "host": "localhost:50051",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "index": "HNSW",
+          "metric_type": "COSINE",
+          "m": 16,
+          "ef_construction": 256,
+          "ef_search": 100
+        },
+        "case_config": {
+          "case_id": 14,
+          "custom_case": null,
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600,
+            "serial_cooldown": 0.0
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 56.6607,
+        "optimize_duration": 590.751,
+        "load_duration": 647.4117,
+        "qps": 1697.9916,
+        "serial_latency_p99": 0.0062,
+        "serial_latency_p95": 0.006,
+        "recall": 0.9375,
+        "ndcg": 0.9513,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20,
+          30,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          201.1391,
+          954.8265,
+          1555.4045,
+          1697.9916,
+          1674.0102,
+          1628.7735,
+          1620.5734,
+          1606.4271
+        ],
+        "conc_latency_p99_list": [
+          0.006264741737395525,
+          0.006534985173493623,
+          0.010726521257311106,
+          0.039689521398395225,
+          0.047442107308888565,
+          0.07775463489757373,
+          0.10869675248046407,
+          0.12693975201342253
+        ],
+        "conc_latency_p95_list": [
+          0.005941362166777253,
+          0.006238416209816933,
+          0.00855817696719896,
+          0.019839197761029936,
+          0.0337189998012036,
+          0.05039672060520388,
+          0.07125668367079921,
+          0.08725001639686525
+        ],
+        "conc_latency_avg_list": [
+          0.004966687106125332,
+          0.005230420421598983,
+          0.006419391963548976,
+          0.011739309518328777,
+          0.017836923123242556,
+          0.024454370213994076,
+          0.0367946258922899,
+          0.0493751170097713
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 1000000,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "num_per_batch": 100,
+          "load_concurrency": 0
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "HyperspaceDB",
+        "db_config": {
+          "db_label": "",
+          "version": "",
+          "note": "",
+          "host": "localhost:50051",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "index": "HNSW",
+          "metric_type": "COSINE",
+          "m": 16,
+          "ef_construction": 256,
+          "ef_search": 100
+        },
+        "case_config": {
+          "case_id": 5,
+          "custom_case": null,
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600,
+            "serial_cooldown": 0.0
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 647.4117,
+        "qps": 42.6453,
+        "serial_latency_p99": 0.2472,
+        "serial_latency_p95": 0.2439,
+        "recall": 0.9371,
+        "ndcg": 0.951,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20,
+          30,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          4.3189,
+          21.0129,
+          39.5408,
+          42.3425,
+          42.6453,
+          42.2641,
+          41.7798,
+          41.5672
+        ],
+        "conc_latency_p99_list": [
+          0.2474690593208652,
+          0.2658580467908177,
+          0.29754339002771296,
+          0.5694501112378203,
+          0.8323646020406158,
+          1.1200287380896041,
+          1.7879712272487813,
+          2.2624025689018894
+        ],
+        "conc_latency_p95_list": [
+          0.2434065106412163,
+          0.252996079379227,
+          0.2713546002283692,
+          0.542225570496521,
+          0.7949954897339921,
+          1.07067802050733,
+          1.605885081287124,
+          2.170565842158976
+        ],
+        "conc_latency_avg_list": [
+          0.2313373229940995,
+          0.23771138911008996,
+          0.2516548139497921,
+          0.46981396171448586,
+          0.6984242073069007,
+          0.9378588565349406,
+          1.413915318086419,
+          1.8803775400243112
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 0,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {},
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "HyperspaceDB",
+        "db_config": {
+          "db_label": "",
+          "version": "",
+          "note": "",
+          "host": "localhost:50051",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "index": "HNSW",
+          "metric_type": "COSINE",
+          "m": 16,
+          "ef_construction": 256,
+          "ef_search": 100
+        },
+        "case_config": {
+          "case_id": 7,
+          "custom_case": null,
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600,
+            "serial_cooldown": 0.0
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 647.4117,
+        "qps": 59.1148,
+        "serial_latency_p99": 0.2487,
+        "serial_latency_p95": 0.2051,
+        "recall": 0.953,
+        "ndcg": 0.9658,
+        "conc_num_list": [
+          1,
+          5,
+          10,
+          20,
+          30,
+          40,
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          6.1432,
+          30.534,
+          55.1238,
+          58.5733,
+          59.1148,
+          58.4167,
+          58.5262,
+          58.2362
+        ],
+        "conc_latency_p99_list": [
+          0.2185167950368485,
+          0.16940182997728698,
+          0.22048857311485331,
+          0.46404855548054913,
+          0.6568337464763317,
+          0.8519639647612349,
+          1.31608037731261,
+          1.6207599717006087
+        ],
+        "conc_latency_p95_list": [
+          0.18294472519773983,
+          0.167442935728468,
+          0.20541455819038673,
+          0.417507679326809,
+          0.6031129375041928,
+          0.8034419589035678,
+          1.1802631963859311,
+          1.5406029088189825
+        ],
+        "conc_latency_avg_list": [
+          0.1626463760974238,
+          0.16358786664527344,
+          0.18064264668020288,
+          0.3399116292382479,
+          0.5045830063322116,
+          0.6790753035739896,
+          1.0133975636398294,
+          1.3498548400924317
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 0,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {},
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "HyperspaceDB",
+        "db_config": {
+          "db_label": "",
+          "version": "",
+          "note": "",
+          "host": "localhost:50051",
+          "api_key": "**********"
+        },
+        "db_case_config": {
+          "index": "HNSW",
+          "metric_type": "COSINE",
+          "m": 16,
+          "ef_construction": 256,
+          "ef_search": 100
+        },
+        "case_config": {
+          "case_id": 9,
+          "custom_case": null,
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              1,
+              5,
+              10,
+              20,
+              30,
+              40,
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600,
+            "serial_cooldown": 0.0
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_serial",
+          "search_concurrent"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    }
+  ],
+  "file_fmt": "result_{}_{}_{}.json",
+  "timestamp": 1783807200.0
+}
