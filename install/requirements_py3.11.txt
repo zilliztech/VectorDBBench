@@ -1,5 +1,5 @@
-grpcio==1.53.2
-grpcio-tools==1.53.0
+grpcio==1.66.2
+grpcio-tools==1.66.2
 qdrant-client
 pinecone
 weaviate-client
@@ -18,6 +18,7 @@ streamlit>=1.23.0
 streamlit_extras
 tornado>=6.0
 tqdm
+ujson
 s3fs
 psutil
 polars
