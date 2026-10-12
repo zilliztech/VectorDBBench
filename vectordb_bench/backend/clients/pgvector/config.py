@@ -267,8 +267,52 @@ class PgVectorHNSWConfig(PgVectorIndexConfig):
         return {"session_options": self._optionally_build_set_options(session_parameters)}
 
 
+class PgVectorFLATConfig(PgVectorIndexConfig):
+    """
+    FLAT configuration represents exact nearest-neighbor search without creating an ANN vector index.
+    It executes sequential scans directly over normal pgvector vector values.
+    """
+
+    index: IndexType = IndexType.Flat
+    create_index_before_load: bool = False
+    create_index_after_load: bool = False
+    quantization_type: str | None = None
+    table_quantization_type: str | None = None
+    reranking: bool | None = False
+    quantized_fetch_limit: int | None = None
+    reranking_metric: str | None = None
+
+    def index_param(self) -> PgVectorIndexParam:
+        if self.quantization_type == "none" or self.quantization_type is None:
+            self.quantization_type = "vector"
+        if self.table_quantization_type == "none" or self.table_quantization_type is None:
+            self.table_quantization_type = "vector"
+        return {
+            "metric": self.parse_metric(),
+            "index_type": self.index.value,
+            "index_creation_with_options": [],
+            "maintenance_work_mem": None,
+            "max_parallel_workers": None,
+            "quantization_type": self.quantization_type,
+            "table_quantization_type": self.table_quantization_type,
+        }
+
+    def search_param(self) -> PgVectorSearchParam:
+        return {
+            "metric_fun_op": self.parse_metric_fun_op(),
+            "reranking": self.reranking,
+            "reranking_metric_fun_op": self.parse_reranking_metric_fun_op(),
+            "quantized_fetch_limit": self.quantized_fetch_limit,
+        }
+
+    def session_param(self) -> PgVectorSessionCommands:
+        return {"session_options": []}
+
+
 _pgvector_case_config = {
     IndexType.HNSW: PgVectorHNSWConfig,
     IndexType.ES_HNSW: PgVectorHNSWConfig,
     IndexType.IVFFlat: PgVectorIVFFlatConfig,
+    IndexType.Flat: PgVectorFLATConfig,
 }
+
