@@ -1,7 +1,7 @@
 """Wrapper around the Aliyun ADBPG (AnalyticDB for PostgreSQL) vector database."""
 
 import logging
-from collections.abc import Generator, Sequence
+from collections.abc import Generator
 from contextlib import contextmanager
 from copy import copy
 from typing import Any
@@ -10,6 +10,7 @@ import numpy as np
 import psycopg
 from pgvector.psycopg import register_vector
 from psycopg import Connection, Cursor, sql
+from psycopg.types.json import Jsonb
 
 from vectordb_bench.backend.filter import Filter, FilterOp
 
@@ -17,6 +18,12 @@ from ..api import VectorDB
 from .config import AdbpgConfigDict, AdbpgIndexConfig
 
 log = logging.getLogger(__name__)
+
+UDF_CLEANUP_GRACE_SECONDS = 30
+
+
+class AdbpgTimeoutError(RuntimeError):
+    """ADBPG canceled a database statement after its configured timeout."""
 
 
 class Adbpg(VectorDB):
@@ -68,31 +75,20 @@ class Adbpg(VectorDB):
         # construct basic units
         self.conn, self.cursor = self._create_connection(**self.connect_config)
 
-        log.info(f"{self.name} config values: {self.connect_config}\n{self.case_config}")
-        if not any(
-            (
-                self.case_config.create_index_before_load,
-                self.case_config.create_index_after_load,
-            ),
-        ):
-            msg = (
-                f"{self.name} config must create an index using create_index_before_load or create_index_after_load"
-                f"{self.name} config values: {self.connect_config}\n{self.case_config}"
-            )
-            log.error(msg)
-            raise RuntimeError(msg)
-
-        if drop_old:
-            self._drop_index()
-            self._drop_table()
-            self._create_table(dim)
-            if self.case_config.create_index_before_load:
-                self._create_index()
-
-        self.cursor.close()
-        self.conn.close()
-        self.cursor = None
-        self.conn = None
+        log.info("%s case config: %s", self.name, self.case_config)
+        try:
+            if drop_old:
+                self._check_required_udfs()
+                self._drop_index()
+                self._drop_table()
+                self._create_table(dim)
+            else:
+                self._apply_search_reloptions()
+        finally:
+            self.cursor.close()
+            self.conn.close()
+            self.cursor = None
+            self.conn = None
 
     @staticmethod
     def _create_connection(**kwargs) -> tuple[Connection, Cursor]:
@@ -144,20 +140,8 @@ class Adbpg(VectorDB):
 
     @contextmanager
     def init(self) -> Generator[None, None, None]:
-        """Open a session, apply GUCs, yield, then close."""
+        """Open a database session, yield, then close it."""
         self.conn, self.cursor = self._create_connection(**self.connect_config)
-
-        session_options: Sequence[dict[str, Any]] = self.case_config.session_param()["session_options"]
-
-        if len(session_options) > 0:
-            for setting in session_options:
-                command = sql.SQL("SET {setting_name} = {val};").format(
-                    setting_name=sql.Identifier(setting["parameter"]["setting_name"]),
-                    val=sql.Identifier(str(setting["parameter"]["val"])),
-                )
-                log.debug(command.as_string(self.cursor))
-                self.cursor.execute(command)
-            self.conn.commit()
 
         try:
             yield
@@ -180,94 +164,166 @@ class Adbpg(VectorDB):
         self.conn.commit()
 
     def optimize(self, data_size: int | None = None):
-        self._post_insert()
+        payload = self._build_udf_payload()
+        self._call_udf("vectordbbench_build", payload)
+        try:
+            autotune = self.case_config.autotune_parameters
+            statement_timeout = autotune.timeout + UDF_CLEANUP_GRACE_SECONDS if autotune is not None else None
+            self._call_udf("vectordbbench_optimize", payload, timeout=statement_timeout)
+            self._apply_search_reloptions()
+        except Exception:
+            try:
+                self.conn.rollback()
+                self._drop_index()
+            except Exception:
+                log.exception("Failed to remove incomplete ADBPG index %s", self._index_name)
+            raise
 
-    def _post_insert(self):
-        log.info(f"{self.name} post insert before optimize")
-        if self.case_config.create_index_after_load:
-            self._drop_index()
-            self._create_index()
+    def _check_required_udfs(self) -> None:
+        assert self.cursor is not None, "Cursor is not initialized"
+        signatures = (
+            "fastann.vectordbbench_build(jsonb)",
+            "fastann.vectordbbench_optimize(jsonb)",
+        )
+        row = self.cursor.execute(
+            """
+            SELECT to_regprocedure(%s), has_function_privilege(to_regprocedure(%s), 'EXECUTE'),
+                   to_regprocedure(%s), has_function_privilege(to_regprocedure(%s), 'EXECUTE'),
+                   has_schema_privilege(to_regnamespace('fastann'), 'USAGE')
+            """,
+            (signatures[0], signatures[0], signatures[1], signatures[1]),
+        ).fetchone()
+        access = ((row[0], row[1]), (row[2], row[3]))
+        unavailable = [
+            signature
+            for signature, (oid, allowed) in zip(signatures, access, strict=True)
+            if oid is None or not allowed
+        ]
+        if unavailable or not row[-1]:
+            details = list(unavailable)
+            if not row[-1]:
+                details.append("USAGE on schema fastann")
+            msg = f"Required ADBPG UDF access is unavailable: {', '.join(details)}"
+            raise RuntimeError(msg)
 
     def _drop_index(self):
         assert self.conn is not None, "Connection is not initialized"
         assert self.cursor is not None, "Cursor is not initialized"
         log.info(f"{self.name} client drop index : {self._index_name}")
 
-        drop_index_sql = sql.SQL("DROP INDEX IF EXISTS {index_name}").format(
+        drop_index_sql = sql.SQL("DROP INDEX IF EXISTS {schema}.{index_name}").format(
+            schema=sql.Identifier("public"),
             index_name=sql.Identifier(self._index_name),
         )
-        log.debug(drop_index_sql.as_string(self.cursor))
         self.cursor.execute(drop_index_sql)
         self.conn.commit()
 
-    def _set_parallel_index_build_param(self):
+    def _build_udf_payload(self) -> dict[str, Any]:
+        columns = [
+            {"name": self._primary_field, "type": "bigint", "role": "primary_key"},
+            {"name": self._vector_field, "type": f"vector({self.dim})", "role": "vector"},
+        ]
+        if self.with_scalar_labels:
+            columns.append(
+                {"name": self._scalar_label_field, "type": "varchar(64)", "role": "filter"},
+            )
+        parameters = {
+            "build": self.case_config.build_parameters.model_dump(mode="json"),
+            "search": self.case_config.search_parameters.model_dump(mode="json"),
+        }
+        if self.case_config.autotune_parameters is not None:
+            parameters["autotune"] = self.case_config.autotune_parameters.model_dump(mode="json")
+        return {
+            "api_version": 1,
+            "relation": {
+                "schema": "public",
+                "table": self.table_name,
+                "index": self._index_name,
+            },
+            "columns": columns,
+            "metric": self.case_config.parse_metric(),
+            "parameters": parameters,
+        }
+
+    def _call_udf(self, function_name: str, payload: dict[str, Any], timeout: int | None = None) -> list[Any]:
         assert self.conn is not None, "Connection is not initialized"
         assert self.cursor is not None, "Cursor is not initialized"
+        qualified_name = f"fastann.{function_name}"
+        command = sql.SQL("SELECT * FROM {schema}.{function}(%s::jsonb)").format(
+            schema=sql.Identifier("fastann"),
+            function=sql.Identifier(function_name),
+        )
+        try:
+            if timeout is not None:
+                self.cursor.execute(
+                    "SELECT set_config('statement_timeout', %s, true)",
+                    (f"{timeout}s",),
+                )
+            rows = self.cursor.execute(command, (Jsonb(payload),)).fetchall()
+            self.conn.commit()
+        except Exception as exc:
+            self.conn.rollback()
+            cancel_reason = getattr(getattr(exc, "diag", None), "message_primary", None) or str(exc)
+            if (
+                timeout is not None
+                and isinstance(exc, psycopg.errors.QueryCanceled)
+                and "statement timeout" in cancel_reason.lower()
+            ):
+                msg = f"{qualified_name} timed out after {timeout} seconds"
+                raise AdbpgTimeoutError(msg) from exc
+            msg = f"{qualified_name} failed: {exc}"
+            raise RuntimeError(msg) from exc
+        else:
+            log.info("%s returned diagnostic rows: %s", qualified_name, rows)
+            return rows
 
-        index_param = self.case_config.index_param()
-
-        if index_param["build_parallel_processes"] is not None:
-            self.cursor.execute(
-                sql.SQL("SET fastann.build_parallel_processes TO {};").format(
-                    index_param["build_parallel_processes"],
-                ),
+    def _apply_search_reloptions(self) -> None:
+        assert self.conn is not None, "Connection is not initialized"
+        assert self.cursor is not None, "Cursor is not initialized"
+        reloptions = self.case_config.search_parameters.reloption
+        set_options = [(name, value) for name, value in reloptions.items() if value is not None]
+        reset_options = [name for name, value in reloptions.items() if value is None]
+        if set_options:
+            assignments = sql.SQL(", ").join(
+                sql.SQL("{name} = {value}").format(
+                    name=sql.Identifier(name),
+                    value=sql.Literal(value),
+                )
+                for name, value in set_options
             )
+            command = sql.SQL("ALTER INDEX {schema}.{index} SET ({assignments})").format(
+                schema=sql.Identifier("public"),
+                index=sql.Identifier(self._index_name),
+                assignments=assignments,
+            )
+            self.cursor.execute(command)
+        if reset_options:
+            names = sql.SQL(", ").join(sql.Identifier(name) for name in reset_options)
+            command = sql.SQL("ALTER INDEX {schema}.{index} RESET ({names})").format(
+                schema=sql.Identifier("public"),
+                index=sql.Identifier(self._index_name),
+                names=names,
+            )
+            self.cursor.execute(command)
+        if set_options or reset_options:
             self.conn.commit()
 
-        results = self.cursor.execute(sql.SQL("SHOW fastann.build_parallel_processes;")).fetchall()
-        log.info(f"{self.name} parallel index creation parameters: {results}")
-
-    def _create_index(self):
+    def _apply_search_gucs(self) -> None:
         assert self.conn is not None, "Connection is not initialized"
         assert self.cursor is not None, "Cursor is not initialized"
-        log.info(f"{self.name} client create index : {self._index_name}")
-
-        index_param = self.case_config.index_param()
-        self._set_parallel_index_build_param()
-
-        # Pre-build GUC: raise optimizer level before creating the ANN index.
-        self.cursor.execute(sql.SQL("SET fastann.nova_build_optimize_level = 3;"))
-        self.conn.commit()
-
-        options = []
-        options.append(sql.SQL("dim = {dim}").format(dim=sql.Literal(self.dim)))
-        options.append(
-            sql.SQL("distancemeasure = {measure}").format(
-                measure=sql.Identifier(index_param["metric"]),
-            ),
-        )
-
-        for option in index_param["index_creation_with_options"]:
-            if option["val"] is not None:
-                # When `raw` is set, emit the value as a bare SQL token
-                # (e.g. auto_reduction=on) instead of a quoted literal.
-                rendered_val = sql.SQL(str(option["val"])) if option.get("raw") else sql.Literal(option["val"])
-                options.append(
-                    sql.SQL("{option_name} = {val}").format(
-                        option_name=sql.Identifier(option["option_name"]),
-                        val=rendered_val,
-                    ),
+        search_gucs = self.case_config.search_parameters.guc
+        for name, value in search_gucs.items():
+            if value is None:
+                command = sql.SQL("RESET {setting_name}").format(setting_name=sql.Identifier(name))
+                log.debug(command.as_string(self.cursor))
+                self.cursor.execute(command)
+            else:
+                self.cursor.execute(
+                    "SELECT set_config(%s, %s, false)",
+                    (name, str(value)),
                 )
-
-        with_clause = sql.SQL("WITH ({});").format(sql.SQL(", ").join(options)) if options else sql.Composed(())
-
-        # Covering index: always INCLUDE the primary field (e.g. id).
-        index_create_sql = sql.SQL(
-            """
-            CREATE INDEX IF NOT EXISTS {index_name} ON public.{table_name}
-            USING ann ({vector_field}) INCLUDE ({primary_field})
-            """,
-        ).format(
-            index_name=sql.Identifier(self._index_name),
-            table_name=sql.Identifier(self.table_name),
-            vector_field=sql.Identifier(self._vector_field),
-            primary_field=sql.Identifier(self._primary_field),
-        )
-
-        full_sql = (index_create_sql + with_clause).join(" ")
-        log.debug(full_sql.as_string(self.cursor))
-        self.cursor.execute(full_sql)
-        self.conn.commit()
+        if search_gucs:
+            self.conn.commit()
 
     def _create_table(self, dim: int):
         assert self.conn is not None, "Connection is not initialized"
@@ -360,6 +416,7 @@ class Adbpg(VectorDB):
             msg = f"Not support Filter for Adbpg - {filters}"
             raise ValueError(msg)
 
+        self._apply_search_gucs()
         self._search = self._generate_search_query()
 
     def search_embedding(
