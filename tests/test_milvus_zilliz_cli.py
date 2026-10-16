@@ -4,7 +4,7 @@ from pytest import MonkeyPatch
 
 from vectordb_bench.backend.clients.api import IndexType
 from vectordb_bench.backend.clients.milvus import cli as milvus_cli
-from vectordb_bench.backend.clients.milvus.config import HNSWBF16Config
+from vectordb_bench.backend.clients.milvus.config import HNSWConfig, VectorDataType
 from vectordb_bench.backend.clients.zilliz_cloud import cli as zilliz_cli
 from vectordb_bench.cli import cli as common_cli
 
@@ -126,7 +126,15 @@ def test_milvus_fts_cli_accepts_force_merge_flags(monkeypatch: MonkeyPatch) -> N
     assert captured["db_case_config"].force_merge_target_size_mb == 256
 
 
-def test_milvus_hnsw_bf16_cli_builds_bf16_case_config(monkeypatch: MonkeyPatch) -> None:
+@pytest.mark.parametrize(
+    ("vector_data_type_args", "expected"),
+    [([], VectorDataType.FLOAT32), (["--vector-data-type", "bfloat16"], VectorDataType.BFLOAT16)],
+)
+def test_milvus_hnsw_cli_sets_vector_data_type(
+    monkeypatch: MonkeyPatch,
+    vector_data_type_args: list[str],
+    expected: VectorDataType,
+) -> None:
     captured = {}
 
     def fake_run(**kwargs):
@@ -135,28 +143,39 @@ def test_milvus_hnsw_bf16_cli_builds_bf16_case_config(monkeypatch: MonkeyPatch) 
     monkeypatch.setattr(milvus_cli, "run", fake_run)
 
     result = CliRunner().invoke(
-        milvus_cli.MilvusHNSWBF16,
+        milvus_cli.MilvusHNSW,
         [
             "--uri",
             "http://localhost:19530",
-            "--collection-name",
-            "bench_bf16",
             "--m",
             "30",
             "--ef-construction",
             "360",
             "--ef-search",
             "100",
+            *vector_data_type_args,
             "--dry-run",
         ],
     )
 
     assert result.exit_code == 0, result.output
     case_config = captured["db_case_config"]
-    assert isinstance(case_config, HNSWBF16Config)
-    assert case_config.index == IndexType.HNSW_BF16
+    assert isinstance(case_config, HNSWConfig)
+    assert case_config.index == IndexType.HNSW
     assert (case_config.M, case_config.efConstruction, case_config.ef) == (30, 360, 100)
-    assert captured["db_config"].collection_name == "bench_bf16"
+    assert case_config.vector_data_type == expected
+
+
+@pytest.mark.parametrize("command", [milvus_cli.MilvusHNSWSQ, milvus_cli.MilvusHNSWPQ, milvus_cli.MilvusHNSWPRQ])
+def test_milvus_quantized_hnsw_clis_reject_vector_data_type(command) -> None:
+    result = CliRunner().invoke(
+        command,
+        ["--uri", "http://localhost:19530", "--vector-data-type", "BFLOAT16", "--dry-run"],
+    )
+
+    assert result.exit_code == 2
+    assert "No such option" in result.output
+    assert "--vector-data-type" in result.output
 
 
 @pytest.mark.parametrize(

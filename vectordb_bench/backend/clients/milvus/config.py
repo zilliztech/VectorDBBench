@@ -1,3 +1,4 @@
+from enum import StrEnum
 from typing import Annotated, ClassVar
 
 from pydantic import BaseModel, Field, SecretStr, field_validator
@@ -82,11 +83,17 @@ class AutoIndexConfig(MilvusIndexConfig, DBCaseConfig):
         return params
 
 
+class VectorDataType(StrEnum):
+    FLOAT32 = "FLOAT32"
+    BFLOAT16 = "BFLOAT16"
+
+
 class HNSWConfig(MilvusIndexConfig, DBCaseConfig):
     M: int
     efConstruction: int
     ef: int | None = None
     index: IndexType = IndexType.HNSW
+    vector_data_type: VectorDataType = VectorDataType.FLOAT32
 
     def index_param(self) -> dict:
         return {
@@ -99,17 +106,6 @@ class HNSWConfig(MilvusIndexConfig, DBCaseConfig):
         return {
             "metric_type": self.parse_metric(),
             "params": {"ef": self.ef},
-        }
-
-
-class HNSWBF16Config(HNSWConfig):
-    index: IndexType = IndexType.HNSW_BF16
-
-    def index_param(self) -> dict:
-        return {
-            "metric_type": self.parse_metric(),
-            "index_type": "HNSW",
-            "params": {"M": self.M, "efConstruction": self.efConstruction},
         }
 
 
@@ -629,7 +625,6 @@ _milvus_case_config = {
     IndexType.AUTOINDEX: AutoIndexConfig,
     IndexType.FTS: MilvusFtsConfig,
     IndexType.HNSW: HNSWConfig,
-    IndexType.HNSW_BF16: HNSWBF16Config,
     IndexType.HNSW_SQ: HNSWSQConfig,
     IndexType.HNSW_PQ: HNSWPQConfig,
     IndexType.HNSW_PRQ: HNSWPRQConfig,

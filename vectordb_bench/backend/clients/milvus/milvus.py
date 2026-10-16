@@ -12,8 +12,8 @@ from pymilvus import DataType, Function, FunctionType, MilvusClient, MilvusExcep
 from vectordb_bench.backend.filter import Filter, FilterOp
 from vectordb_bench.backend.payload import PayloadProfile
 
-from ..api import IndexType, VectorDB
-from .config import MilvusFtsConfig, MilvusIndexConfig
+from ..api import VectorDB
+from .config import MilvusFtsConfig, MilvusIndexConfig, VectorDataType
 
 log = logging.getLogger(__name__)
 
@@ -51,7 +51,7 @@ class Milvus(VectorDB):
     def has_text_field(self) -> bool:
         return bool(getattr(self, "_is_fts", False) and getattr(self, "_text_field", None))
 
-    def __init__(  # noqa: PLR0912, PLR0915
+    def __init__(  # noqa: PLR0915
         self,
         dim: int,
         db_config: dict,
@@ -104,7 +104,7 @@ class Milvus(VectorDB):
             if self.with_scalar_labels:
                 self._scalar_payload_label_field = "scalar_label"
 
-        self._use_bf16 = getattr(self.case_config, "index", None) == IndexType.HNSW_BF16
+        self._use_bf16 = getattr(self.case_config, "vector_data_type", None) == VectorDataType.BFLOAT16
 
         client = MilvusClient(
             uri=self.db_config.get("uri"),
@@ -197,17 +197,41 @@ class Milvus(VectorDB):
                 self.collection_name,
                 replica_number=self.db_config.get("replica_number", 1),
             )
-        elif collection_properties:
-            actual_properties = client.describe_collection(self.collection_name).get("properties") or {}
-            if any(actual_properties.get(key) != value for key, value in collection_properties.items()):
-                client.close()
-                msg = (
-                    f"{self.name} collection {self.collection_name} has incompatible collection properties: "
-                    f"expected {collection_properties}, got {actual_properties}. Drop and recreate the collection."
-                )
-                raise ValueError(msg)
+        else:
+            self._validate_existing_collection(client, dim, collection_properties)
 
         client.close()
+
+    def _validate_existing_collection(self, client: MilvusClient, dim: int, collection_properties: dict) -> None:
+        desc = client.describe_collection(self.collection_name)
+        actual_properties = desc.get("properties") or {}
+        if any(actual_properties.get(key) != value for key, value in collection_properties.items()):
+            client.close()
+            msg = (
+                f"{self.name} collection {self.collection_name} has incompatible collection properties: "
+                f"expected {collection_properties}, got {actual_properties}. Drop and recreate the collection."
+            )
+            raise ValueError(msg)
+        if self._is_fts:
+            return
+
+        expected_type = DataType.BFLOAT16_VECTOR if self._use_bf16 else DataType.FLOAT_VECTOR
+        fields_by_name = {self._field_property(field, "name"): field for field in desc.get("fields", [])}
+        vector_field = fields_by_name.get(self._vector_field)
+        if vector_field is None:
+            problem = f"has no vector field '{self._vector_field}'"
+        else:
+            actual_type = DataType(self._field_property(vector_field, "type"))
+            actual_dim = self._field_property(vector_field, "dim")
+            if actual_type == expected_type and actual_dim == dim:
+                return
+            problem = (
+                f"has incompatible vector field '{self._vector_field}': "
+                f"expected {expected_type.name} (dim={dim}), got {actual_type.name} (dim={actual_dim})"
+            )
+        client.close()
+        msg = f"{self.name} collection {self.collection_name} {problem}. Drop and recreate the collection."
+        raise ValueError(msg)
 
     def _build_index_params(self):
         index_params = MilvusClient.prepare_index_params()
