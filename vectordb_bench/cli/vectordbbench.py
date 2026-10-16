@@ -24,6 +24,7 @@ from ..backend.clients.lancedb.cli import (
     LanceDBIVFHNSWSQ,
     LanceDBIVFPQ,
 )
+from ..backend.clients.kividb.cli import KiviDB
 from ..backend.clients.lindorm.cli import LindormHNSW, LindormIVFBQ, LindormIVFPQ
 from ..backend.clients.mariadb.cli import MariaDBHNSW
 from ..backend.clients.memorydb.cli import MemoryDB
@@ -65,6 +66,7 @@ cli.add_command(PgVectoRSHNSW)
 cli.add_command(PgVectoRSIVFFlat)
 cli.add_command(Redis)
 cli.add_command(MemoryDB)
+cli.add_command(KiviDB)
 cli.add_command(Weaviate)
 cli.add_command(Test)
 cli.add_command(ZillizAutoIndex)

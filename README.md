@@ -75,6 +75,7 @@ All the database client supported
 | pgvecto.rs               | `pip install vectordb-bench[pgvecto_rs]`    |
 | redis                    | `pip install vectordb-bench[redis]`         |
 | memorydb                 | `pip install vectordb-bench[memorydb]`      |
+| kividb                   | `pip install vectordb-bench[kividb]`        |
 | chromadb                 | `pip install vectordb-bench[chromadb]`      |
 | cockroachdb              | `pip install vectordb-bench[cockroachdb]`   |
 | awsopensearch            | `pip install vectordb-bench[opensearch]` |
