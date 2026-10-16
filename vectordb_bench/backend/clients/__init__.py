@@ -38,6 +38,7 @@ class DB(Enum):
     Redis = "Redis"
     MemoryDB = "MemoryDB"
     Chroma = "Chroma"
+    SQLiteVector = "SQLiteVector"
     AWSOpenSearch = "OpenSearch"
     OSSOpenSearch = "OSSOpenSearch"
     AliyunElasticsearch = "AliyunElasticsearch"
@@ -139,6 +140,11 @@ class DB(Enum):
             from .chroma.chroma import ChromaClient
 
             return ChromaClient
+
+        if self == DB.SQLiteVector:
+            from .sqlite_vector.sqlite_vector import SQLiteVector
+
+            return SQLiteVector
 
         if self == DB.AWSOpenSearch:
             from .aws_opensearch.aws_opensearch import AWSOpenSearch
@@ -362,6 +368,11 @@ class DB(Enum):
             from .chroma.config import ChromaConfig
 
             return ChromaConfig
+
+        if self == DB.SQLiteVector:
+            from .sqlite_vector.config import SQLiteVectorConfig
+
+            return SQLiteVectorConfig
 
         if self == DB.AWSOpenSearch:
             from .aws_opensearch.config import AWSOpenSearchConfig
@@ -700,6 +711,11 @@ class DB(Enum):
             from .chroma.config import ChromaIndexConfig
 
             return ChromaIndexConfig
+
+        if self == DB.SQLiteVector:
+            from .sqlite_vector.config import SQLiteVectorIndexConfig
+
+            return SQLiteVectorIndexConfig
 
         if self == DB.Lindorm:
             from .lindorm.config import _lindorm_vector_case_config
