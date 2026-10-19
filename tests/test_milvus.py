@@ -8,20 +8,239 @@ from contextlib import nullcontext
 from types import SimpleNamespace
 from unittest.mock import MagicMock, call
 
+import numpy as np
 import pytest
 from pydantic import SecretStr
+from pymilvus import DataType
 
 from vectordb_bench.backend.cases import CaseType
 from vectordb_bench.backend.clients import DB
-from vectordb_bench.backend.clients.api import IndexType
-from vectordb_bench.backend.clients.milvus.config import MilvusConfig, MilvusFtsConfig
-from vectordb_bench.backend.clients.milvus.milvus import MILVUS_FORCE_MERGE_TARGET_SIZE_MB, Milvus
+from vectordb_bench.backend.clients.api import DBCaseConfig, IndexType, MetricType
+from vectordb_bench.backend.clients.milvus.config import (
+    AutoIndexConfig,
+    HNSWConfig,
+    MilvusConfig,
+    MilvusFtsConfig,
+    VectorDataType,
+)
+from vectordb_bench.backend.clients.milvus.milvus import (
+    MILVUS_FORCE_MERGE_TARGET_SIZE_MB,
+    Milvus,
+    _float32_to_bf16_bytes,
+)
+from vectordb_bench.backend.data_source import DatasetSource
 from vectordb_bench.backend.payload import PayloadProfile
 from vectordb_bench.backend.runner.mp_runner import MultiProcessingSearchRunner
+from vectordb_bench.backend.task_runner import CaseRunner, RunningStatus
 from vectordb_bench.interface import BenchMarkRunner
 from vectordb_bench.models import CaseConfig, TaskConfig
 
 log = logging.getLogger(__name__)
+
+
+def test_float32_to_bf16_bytes_uses_round_to_nearest_even() -> None:
+    float32_bits = np.array(
+        [
+            [0x3F807FFF, 0x3F808000, 0x3F808001, 0x3F818000],
+            [0x7F800000, 0xFF800000, 0x7FC00001, 0xFFC00001],
+            [0x7F800001, 0x7FFFFFFF, 0xFFFFFFFF, 0xFF800001],
+        ],
+        dtype=np.uint32,
+    )
+
+    encoded = _float32_to_bf16_bytes(float32_bits.view(np.float32))
+    actual = np.frombuffer(b"".join(encoded), dtype="<u2").reshape(float32_bits.shape)
+
+    expected = np.array(
+        [
+            [0x3F80, 0x3F80, 0x3F81, 0x3F82],
+            [0x7F80, 0xFF80, 0x7FC0, 0xFFC0],
+            [0x7FC0, 0x7FFF, 0xFFFF, 0xFFC0],
+        ],
+        dtype=np.uint16,
+    )
+    np.testing.assert_array_equal(actual, expected)
+
+
+def test_hnsw_config_vector_data_type_does_not_change_index_params() -> None:
+    fp32 = HNSWConfig(M=30, efConstruction=360, ef=100, metric_type=MetricType.COSINE)
+    bf16 = HNSWConfig(M=30, efConstruction=360, ef=100, metric_type=MetricType.COSINE, vector_data_type="BFLOAT16")
+
+    assert fp32.vector_data_type == VectorDataType.FLOAT32
+    assert bf16.vector_data_type == VectorDataType.BFLOAT16
+    assert bf16.index == IndexType.HNSW
+    assert bf16.index_param() == fp32.index_param()
+    assert bf16.search_param() == fp32.search_param()
+
+
+def _vector_field_schema_call(
+    monkeypatch: pytest.MonkeyPatch,
+    db_case_config: HNSWConfig,
+    dim: int = 4,
+) -> call:
+    client = MagicMock()
+    client.has_collection.return_value = False
+    client_cls = MagicMock(return_value=client)
+    schema = MagicMock()
+    client_cls.create_schema.return_value = schema
+    client_cls.prepare_index_params.return_value = MagicMock()
+    monkeypatch.setattr("vectordb_bench.backend.clients.milvus.milvus.MilvusClient", client_cls)
+
+    Milvus(dim=dim, db_config={"uri": "http://example.invalid"}, db_case_config=db_case_config)
+
+    return next(c for c in schema.add_field.call_args_list if c.args[0] == "vector")
+
+
+def test_milvus_bf16_case_config_creates_bfloat16_vector_field(monkeypatch: pytest.MonkeyPatch) -> None:
+    field_call = _vector_field_schema_call(
+        monkeypatch,
+        HNSWConfig(
+            M=8,
+            efConstruction=64,
+            ef=32,
+            metric_type=MetricType.COSINE,
+            vector_data_type=VectorDataType.BFLOAT16,
+        ),
+    )
+
+    assert field_call.args[1] == DataType.BFLOAT16_VECTOR
+    assert field_call.kwargs["dim"] == 4
+
+
+def test_milvus_fp32_case_config_still_creates_float_vector_field(monkeypatch: pytest.MonkeyPatch) -> None:
+    field_call = _vector_field_schema_call(
+        monkeypatch,
+        HNSWConfig(M=8, efConstruction=64, ef=32, metric_type=MetricType.COSINE),
+    )
+
+    assert field_call.args[1] == DataType.FLOAT_VECTOR
+
+
+def test_milvus_fts_case_config_does_not_enable_bf16(monkeypatch: pytest.MonkeyPatch) -> None:
+    client = MagicMock()
+    client.has_collection.return_value = False
+    client_cls = MagicMock(return_value=client)
+    client_cls.create_schema.return_value = MagicMock()
+    client_cls.prepare_index_params.return_value = MagicMock()
+    monkeypatch.setattr("vectordb_bench.backend.clients.milvus.milvus.MilvusClient", client_cls)
+
+    # An FTS config has no `vector_data_type` attribute, so the BF16 probe must tolerate its absence.
+    db = Milvus(dim=4, db_config={"uri": "http://example.invalid"}, db_case_config=MilvusFtsConfig())
+
+    assert db._use_bf16 is False
+
+
+def test_milvus_bf16_insert_converts_runner_batch_to_bf16_bytes() -> None:
+    client = MagicMock()
+    client.insert.side_effect = lambda _collection, rows: {"insert_count": len(rows)}
+
+    db = object.__new__(Milvus)
+    db.client = client
+    db.collection_name = "test_collection"
+    db._primary_field = "pk"
+    db._scalar_id_field = "id"
+    db._vector_field = "vector"
+    db.with_scalar_labels = False
+    db._use_bf16 = True
+
+    embeddings = [[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]]
+    count, err = db.insert_embeddings(embeddings=embeddings, metadata=[0, 1, 2])
+
+    assert count == 3
+    assert err is None
+    rows = client.insert.call_args.args[1]
+    assert [row["vector"] for row in rows] == _float32_to_bf16_bytes(embeddings)
+    # Two bytes per dimension, where a float32 payload would use four.
+    assert {len(row["vector"]) for row in rows} == {4}
+
+
+def test_milvus_bf16_batch_search_converts_every_query() -> None:
+    captured = {}
+
+    def search(**kwargs):
+        captured.update(kwargs)
+        return [[{"pk": 0}], [{"pk": 1}], [{"pk": 2}]]
+
+    db = object.__new__(Milvus)
+    db.client = SimpleNamespace(search=search)
+    db.collection_name = "test_collection"
+    db._vector_field = "vector"
+    db._primary_field = "pk"
+    db.case_config = SimpleNamespace(search_param=lambda: {"metric_type": "COSINE"})
+    db.expr = ""
+    db._use_bf16 = True
+
+    queries = [[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]]
+
+    assert db.search_embeddings(queries, k=1) == [[0], [1], [2]]
+    # Guards against encoding only the first query of a batch.
+    assert captured["data"] == _float32_to_bf16_bytes(queries)
+
+
+def _case_runner(db_case_config: DBCaseConfig, case_config: CaseConfig) -> CaseRunner:
+    return CaseRunner(
+        run_id="payload-estimate",
+        config=TaskConfig(
+            db=DB.Milvus,
+            db_config=DB.Milvus.config_cls(),
+            db_case_config=db_case_config,
+            case_config=case_config,
+            stages=[],
+        ),
+        ca=case_config.case,
+        status=RunningStatus.PENDING,
+        dataset_source=DatasetSource.S3,
+    )
+
+
+@pytest.mark.parametrize(
+    ("db_case_config", "expected_bytes"),
+    [
+        (HNSWConfig(M=16, efConstruction=100, ef=64), 30_920),
+        (HNSWConfig(M=16, efConstruction=100, ef=64, vector_data_type=VectorDataType.BFLOAT16), 15_560),
+        (AutoIndexConfig(), 30_920),
+    ],
+)
+def test_milvus_vector_payload_estimate_uses_vector_data_type_width(
+    db_case_config: DBCaseConfig,
+    expected_bytes: int,
+) -> None:
+    case_config = CaseConfig(case_id=CaseType.Performance768D1M, k=10, payload_profile=PayloadProfile.VECTOR)
+
+    metrics = _case_runner(db_case_config, case_config)._run_perf_case(drop_old=False)
+
+    assert metrics.payload_profile == PayloadProfile.VECTOR.value
+    assert metrics.payload_estimated_bytes_per_query == expected_bytes
+
+
+@pytest.mark.parametrize(
+    ("vector_data_type", "expected_bytes"),
+    [(VectorDataType.FLOAT32, 309_200), (VectorDataType.BFLOAT16, 155_600)],
+)
+def test_milvus_cold_latency_payload_estimate_uses_vector_data_type_width(
+    monkeypatch: pytest.MonkeyPatch,
+    vector_data_type: VectorDataType,
+    expected_bytes: int,
+) -> None:
+    runner = _case_runner(
+        HNSWConfig(M=16, efConstruction=100, ef=64, vector_data_type=vector_data_type),
+        CaseConfig(case_id=CaseType.CloudColdLatencyCase, custom_case={"query_count": 1, "payload_profile": "vector"}),
+    )
+    runner.db = MagicMock()
+    monkeypatch.setattr(
+        "vectordb_bench.backend.task_runner.ColdWarmSearchRunner",
+        lambda **_kwargs: SimpleNamespace(run=lambda: {}),
+    )
+
+    metric = runner._run_cloud_cold_latency_case(drop_old=False)
+
+    assert metric.payload_estimated_bytes_per_query == expected_bytes
+
+
+def test_milvus_fts_payload_estimate_accepts_vector_width() -> None:
+    runner = _case_runner(MilvusFtsConfig(), CaseConfig(case_id=CaseType.FTSBm25Performance, k=10))
+
+    assert runner._estimated_payload_bytes_per_query() == 200
 
 
 def test_milvus_vector_payload_requests_vector_field_and_returns_ids():
@@ -87,10 +306,10 @@ def test_milvus_batch_search_counts_successful_queries(monkeypatch):
     assert [c.kwargs["data"] for c in db.client.search.call_args_list] == expected_batches
 
 
-def _fake_milvus_client(monkeypatch, *, collection_exists=False, properties=None):
+def _fake_milvus_client(monkeypatch, *, collection_exists=False, properties=None, fields=None):
     client = MagicMock()
     client.has_collection.return_value = collection_exists
-    client.describe_collection.return_value = {"properties": properties or {}}
+    client.describe_collection.return_value = {"properties": properties or {}, "fields": fields or []}
     client_cls = MagicMock(return_value=client)
     client_cls.create_schema.return_value = MagicMock()
     client_cls.prepare_index_params.return_value = MagicMock()
@@ -126,6 +345,76 @@ def test_milvus_creates_collection_properties_before_index(monkeypatch):
 def test_milvus_rejects_existing_collection_with_incompatible_properties(monkeypatch):
     with pytest.raises(ValueError, match="incompatible collection properties"):
         _create_milvus_with_collection_properties(monkeypatch, collection_exists=True)
+
+
+def _vector_field(data_type: DataType, dim: int = 4) -> dict:
+    return {"name": "vector", "type": data_type, "params": {"dim": dim}}
+
+
+def _reuse_hnsw_collection(vector_data_type: VectorDataType, dim: int = 4) -> Milvus:
+    return Milvus(
+        dim=dim,
+        db_config={"uri": "http://example.invalid"},
+        db_case_config=HNSWConfig(
+            M=8,
+            efConstruction=64,
+            ef=32,
+            metric_type=MetricType.COSINE,
+            vector_data_type=vector_data_type,
+        ),
+    )
+
+
+def test_milvus_reuses_existing_collection_with_matching_vector_field(monkeypatch):
+    client = _fake_milvus_client(
+        monkeypatch,
+        collection_exists=True,
+        fields=[_vector_field(DataType.BFLOAT16_VECTOR)],
+    )
+
+    _reuse_hnsw_collection(VectorDataType.BFLOAT16)
+
+    client.create_collection.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    ("fields", "vector_data_type", "match"),
+    [
+        (
+            [_vector_field(DataType.FLOAT_VECTOR)],
+            VectorDataType.BFLOAT16,
+            r"expected BFLOAT16_VECTOR \(dim=4\), got FLOAT_VECTOR \(dim=4\)",
+        ),
+        (
+            [_vector_field(DataType.BFLOAT16_VECTOR)],
+            VectorDataType.FLOAT32,
+            r"expected FLOAT_VECTOR \(dim=4\), got BFLOAT16_VECTOR \(dim=4\)",
+        ),
+        (
+            [_vector_field(DataType.FLOAT_VECTOR, dim=8)],
+            VectorDataType.FLOAT32,
+            r"expected FLOAT_VECTOR \(dim=4\), got FLOAT_VECTOR \(dim=8\)",
+        ),
+        ([], VectorDataType.FLOAT32, "has no vector field 'vector'"),
+    ],
+)
+def test_milvus_rejects_existing_collection_with_incompatible_vector_field(
+    monkeypatch, fields, vector_data_type, match
+):
+    client = _fake_milvus_client(monkeypatch, collection_exists=True, fields=fields)
+
+    with pytest.raises(ValueError, match=match):
+        _reuse_hnsw_collection(vector_data_type)
+
+    client.close.assert_called_once()
+
+
+def test_milvus_fts_reuse_skips_vector_field_check(monkeypatch):
+    client = _fake_milvus_client(monkeypatch, collection_exists=True)
+
+    Milvus(dim=4, db_config={"uri": "http://example.invalid"}, db_case_config=MilvusFtsConfig())
+
+    client.create_collection.assert_not_called()
 
 
 def test_milvus_force_merge_config_defaults_and_validation():

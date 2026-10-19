@@ -138,6 +138,15 @@ vectordbbench milvusautoindex \
   <other options>
 ```
 
+`milvushnsw` accepts `--vector-data-type` (YAML: `vector_data_type`) to store vectors as `FLOAT32` (default) or `BFLOAT16`. The index type stays `HNSW`. With `--skip-drop-old --skip-load`, the run fails if the vector field of the collection has a different data type or dimension. Results record the value in `task_config.db_case_config.vector_data_type`.
+
+```shell
+vectordbbench milvushnsw \
+  --uri http://localhost:19530 \
+  --vector-data-type BFLOAT16 \
+  <other options>
+```
+
 Use `--nq` (default: `1`) to set the number of query vectors per concurrent search request.
 Milvus and Zilliz Cloud support batching for single-tenant vector performance cases,
 including filtered searches. This example reuses a collection containing the selected
