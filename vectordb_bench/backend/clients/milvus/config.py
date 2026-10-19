@@ -1,14 +1,19 @@
-from pydantic import BaseModel, SecretStr, model_validator
+from typing import Annotated, ClassVar
+
+from pydantic import BaseModel, Field, SecretStr, field_validator
 
 from ..api import DBCaseConfig, DBConfig, IndexType, MetricType, SQType
 
 
 class MilvusConfig(DBConfig):
+    _extra_empty_skip: ClassVar[frozenset[str]] = frozenset({"user", "password"})
+
     uri: SecretStr = "http://localhost:19530"
     user: str | None = None
     password: SecretStr | None = None
     num_shards: int = 1
     replica_number: int = 1
+    collection_name: str = "VDBBench"
 
     def to_dict(self) -> dict:
         return {
@@ -17,20 +22,8 @@ class MilvusConfig(DBConfig):
             "password": self.password.get_secret_value() if self.password else None,
             "num_shards": self.num_shards,
             "replica_number": self.replica_number,
+            "collection_name": self.collection_name,
         }
-
-    @model_validator(mode="before")
-    @classmethod
-    def not_empty_field(cls, data: any) -> any:
-        if not isinstance(data, dict):
-            return data
-        skip = set(cls.common_short_configs()) | set(cls.common_long_configs()) | {"user", "password"}
-        for field_name, v in data.items():
-            if field_name in skip:
-                continue
-            if isinstance(v, str) and not v:
-                raise ValueError("Empty string!")
-        return data
 
 
 class MilvusIndexConfig(BaseModel):
@@ -39,6 +32,16 @@ class MilvusIndexConfig(BaseModel):
     index: IndexType
     metric_type: MetricType | None = None
     use_partition_key: bool = False  # for label-filter
+    force_merge_enabled: bool = True
+    force_merge_target_size_mb: int | None = None
+
+    @field_validator("force_merge_target_size_mb")
+    @classmethod
+    def _validate_force_merge_target_size(cls, value: int | None) -> int | None:
+        if value is not None and value <= 0:
+            message = "force_merge_target_size_mb must be a positive integer or None"
+            raise ValueError(message)
+        return value
 
     @property
     def is_gpu_index(self) -> bool:
@@ -58,8 +61,12 @@ class MilvusIndexConfig(BaseModel):
         return self.metric_type.value
 
 
+AutoIndexLevel = Annotated[int, Field(ge=1, le=10)]
+
+
 class AutoIndexConfig(MilvusIndexConfig, DBCaseConfig):
     index: IndexType = IndexType.AUTOINDEX
+    level: AutoIndexLevel | None = None
 
     def index_param(self) -> dict:
         return {
@@ -69,9 +76,10 @@ class AutoIndexConfig(MilvusIndexConfig, DBCaseConfig):
         }
 
     def search_param(self) -> dict:
-        return {
-            "metric_type": self.parse_metric(),
-        }
+        params = {"metric_type": self.parse_metric()}
+        if self.level is not None:
+            params["params"] = {"level": self.level}
+        return params
 
 
 class HNSWConfig(MilvusIndexConfig, DBCaseConfig):
@@ -501,8 +509,114 @@ class SVSVamanaLeanVecConfig(SVSVamanaConfig):
         }
 
 
+class MilvusFtsConfig(BaseModel, DBCaseConfig):
+    """
+    1. inverted_index_algo: Index algorithm selection
+       - "DAAT_MAXSCORE" (default): Suitable for high k values or queries with many terms, balanced performance
+       - "DAAT_WAND": Suitable for small k values or short queries, faster
+       - "TAAT_NAIVE": Dynamically adapts to collection changes (e.g., avgdl), but slower
+    2. bm25_k1: BM25 term frequency saturation control [1.2, 2.0], default None
+       - None: Do not override Milvus product default
+       - Higher values: Increase importance of term frequency in document ranking
+       - Recommended range: 1.2-1.8, adjust based on query characteristics
+    3. bm25_b: BM25 document length normalization control [0.0, 1.0], default None
+       - None: Do not override Milvus product default
+       - 1.0: No length normalization, longer documents have advantage
+       - 0.0: Full normalization, shorter documents have advantage
+       - 0.75: Balanced length normalization, commonly used default
+    4. analyzer_tokenizer: Tokenizer type, default "standard"
+       - "standard": Standard tokenizer, suitable for English text
+       - "whitespace": Split by whitespace characters
+       - "keyword": No tokenization, preserve original text
+    5. analyzer_enable_lowercase: Enable lowercase conversion, default True
+       - True: Convert all text to lowercase, improve matching rate
+       - False: Preserve original case
+    6. analyzer_max_token_length: Maximum length of individual tokens, default 40
+       - Limit length of overly long words
+       - Set to None to disable this limit
+    7. analyzer_stop_words: Stop words list, default None
+       - Comma-separated stop words, e.g., "of,to,the,and,or"
+       - These words will be filtered out and not participate in indexing/search
+    8. drop_ratio_search: Ratio of minimum values to ignore during search [0.0, 1.0], default None
+       - 0.0: Keep all values, highest recall
+       - 0.1-0.3: Improve search speed by 10-20%, slight impact on recall
+    """
+
+    index_type: str = "SPARSE_INVERTED_INDEX"
+    metric_type: MetricType = MetricType.BM25
+    inverted_index_algo: str = "DAAT_MAXSCORE"  # DAAT_MAXSCORE | DAAT_WAND | TAAT_NAIVE
+    bm25_k1: float | None = None
+    bm25_b: float | None = None
+    analyzer_tokenizer: str = "standard"
+    analyzer_enable_lowercase: bool = True
+    analyzer_max_token_length: int | None = None
+    analyzer_stop_words: str | None = None
+    drop_ratio_search: float | None = None
+    force_merge_enabled: bool = True
+    force_merge_target_size_mb: int | None = None
+
+    @field_validator("force_merge_target_size_mb")
+    @classmethod
+    def _validate_force_merge_target_size(cls, value: int | None) -> int | None:
+        if value is not None and value <= 0:
+            message = "force_merge_target_size_mb must be a positive integer or None"
+            raise ValueError(message)
+        return value
+
+    def analyzer_param(self) -> dict:
+        analyzer_params = {}
+        if self.analyzer_tokenizer:
+            analyzer_params["tokenizer"] = self.analyzer_tokenizer
+
+        filters = []
+        if self.analyzer_enable_lowercase:
+            filters.append("lowercase")
+
+        if self.analyzer_max_token_length:
+            filters.append({"type": "length", "max": self.analyzer_max_token_length})
+
+        if self.analyzer_stop_words:
+            stop_words = [word.strip() for word in self.analyzer_stop_words.split(",") if word.strip()]
+            if stop_words:
+                filters.append({"type": "stop", "stop_words": stop_words})
+
+        if filters:
+            analyzer_params["filter"] = filters
+
+        return analyzer_params or {"tokenizer": "standard"}
+
+    def sparse_index_param(self) -> dict:
+        params = {
+            "inverted_index_algo": self.inverted_index_algo,
+        }
+        if self.bm25_k1 is not None:
+            params["bm25_k1"] = self.bm25_k1
+        if self.bm25_b is not None:
+            params["bm25_b"] = self.bm25_b
+
+        return {
+            "index_type": self.index_type,
+            "metric_type": self.metric_type.value,
+            "params": params,
+        }
+
+    def index_param(self) -> dict:
+        return {**self.sparse_index_param(), "analyzer_params": self.analyzer_param()}
+
+    def search_param(self) -> dict:
+
+        params: dict = {}
+        if self.drop_ratio_search is not None:
+            params["drop_ratio_search"] = self.drop_ratio_search
+        return {
+            "metric_type": self.metric_type.value,
+            "params": params,
+        }
+
+
 _milvus_case_config = {
     IndexType.AUTOINDEX: AutoIndexConfig,
+    IndexType.FTS: MilvusFtsConfig,
     IndexType.HNSW: HNSWConfig,
     IndexType.HNSW_SQ: HNSWSQConfig,
     IndexType.HNSW_PQ: HNSWPQConfig,

@@ -1,19 +1,69 @@
 from enum import StrEnum
+from typing import ClassVar
 
-from pydantic import BaseModel, SecretStr
+from pydantic import BaseModel, SecretStr, model_validator
 
 from ..api import DBCaseConfig, DBConfig, IndexType, MetricType
+from ..elasticsearch_compatible import build_bm25_similarity_settings, build_fts_index_param
 
 
 class ElasticCloudConfig(DBConfig, BaseModel):
-    cloud_id: SecretStr
-    password: SecretStr
+    _extra_empty_skip: ClassVar[frozenset[str]] = frozenset(
+        {"cloud_id", "scheme", "host", "user", "user_name", "password"}
+    )
+
+    cloud_id: SecretStr | None = None
+    scheme: str | None = None
+    host: SecretStr | None = None
+    port: int = 9200
+    user: str | None = None
+    user_name: str | None = None
+    password: SecretStr | None = None
+    use_ssl: bool = False
+    verify_certs: bool = True
+
+    @model_validator(mode="after")
+    def _check_connection_target(self) -> "ElasticCloudConfig":
+        has_cloud_id = bool(self.cloud_id and self.cloud_id.get_secret_value())
+        if not has_cloud_id and not self.host:
+            msg = "Either cloud_id or host must be set"
+            raise ValueError(msg)
+        return self
+
+    def _auth_user(self) -> str:
+        return self.user_name or self.user or "elastic"
 
     def to_dict(self) -> dict:
-        return {
-            "cloud_id": self.cloud_id.get_secret_value(),
-            "basic_auth": ("elastic", self.password.get_secret_value()),
+        if self.cloud_id and self.cloud_id.get_secret_value():
+            if not self.password:
+                msg = "password is required when cloud_id is set"
+                raise ValueError(msg)
+            return {
+                "cloud_id": self.cloud_id.get_secret_value(),
+                "basic_auth": (self._auth_user(), self.password.get_secret_value()),
+            }
+
+        if not self.host:
+            msg = "Either cloud_id or host must be set"
+            raise ValueError(msg)
+
+        host = self.host.get_secret_value()
+        if host.startswith(("http://", "https://")):
+            url = host
+        else:
+            scheme = self.scheme or ("https" if self.use_ssl else "http")
+            url = f"{scheme}://{host}:{self.port}"
+
+        config = {
+            "hosts": [url],
+            "verify_certs": self.verify_certs,
         }
+        if self.password:
+            config["basic_auth"] = (self._auth_user(), self.password.get_secret_value())
+        elif self.user_name or (self.user and self.user != "elastic"):
+            msg = "password is required when user_name is set"
+            raise ValueError(msg)
+        return config
 
 
 class ESElementType(StrEnum):
@@ -85,3 +135,22 @@ class ElasticCloudIndexConfig(BaseModel, DBCaseConfig):
         return {
             "num_candidates": self.num_candidates,
         }
+
+
+class ElasticCloudFtsConfig(BaseModel, DBCaseConfig):
+    number_of_shards: int = 1
+    number_of_replicas: int = 0
+    refresh_interval: str = "30s"
+    use_force_merge: bool = True
+    metric_type: MetricType = MetricType.BM25
+    bm25_k1: float | None = None
+    bm25_b: float | None = None
+
+    def index_param(self) -> dict:
+        return build_fts_index_param(self.bm25_k1, self.bm25_b)
+
+    def search_param(self) -> dict:
+        return {}
+
+    def similarity_settings(self) -> dict:
+        return build_bm25_similarity_settings(self.bm25_k1, self.bm25_b)

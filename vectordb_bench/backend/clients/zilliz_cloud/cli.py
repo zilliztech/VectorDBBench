@@ -5,12 +5,21 @@ import click
 from pydantic import SecretStr
 
 from vectordb_bench.backend.clients import DB
+from vectordb_bench.backend.clients.milvus.cli import _validate_positive_int_or_none
 from vectordb_bench.cli.cli import (
+    AutoIndexLevelTypedDict,
     CommonTypedDict,
     cli,
     click_parameter_decorators_from_typed_dict,
     run,
 )
+
+
+def _use_partition_key(parameters: dict) -> bool:
+    explicit = parameters.get("use_partition_key")
+    if explicit is not None:
+        return explicit
+    return parameters.get("case_type") == "CloudMultiTenantSearchCase"
 
 
 class ZillizTypedDict(CommonTypedDict):
@@ -20,7 +29,7 @@ class ZillizTypedDict(CommonTypedDict):
     ]
     user_name: Annotated[
         str,
-        click.option("--user-name", type=str, help="Db username", required=True),
+        click.option("--user-name", type=str, help="Db username", default=""),
     ]
     password: Annotated[
         str,
@@ -32,9 +41,15 @@ class ZillizTypedDict(CommonTypedDict):
             show_default="$ZILLIZ_PASSWORD",
         ),
     ]
-    level: Annotated[
+    token: Annotated[
         str,
-        click.option("--level", type=str, help="Zilliz index level", required=False),
+        click.option(
+            "--token",
+            type=str,
+            help="Zilliz API token",
+            default=lambda: os.environ.get("ZILLIZ_TOKEN", ""),
+            show_default="$ZILLIZ_TOKEN",
+        ),
     ]
     num_shards: Annotated[
         int,
@@ -58,11 +73,56 @@ class ZillizTypedDict(CommonTypedDict):
             show_default=True,
         ),
     ]
+    use_partition_key: Annotated[
+        bool | None,
+        click.option(
+            "--use-partition-key/--no-use-partition-key",
+            default=None,
+            help=(
+                "Use the Zilliz Cloud partition key on the label field. "
+                "Defaults to enabled for CloudMultiTenantSearchCase and disabled otherwise."
+            ),
+        ),
+    ]
+    force_merge_enabled: Annotated[
+        bool,
+        click.option(
+            "--force-merge-enabled/--no-force-merge-enabled",
+            type=bool,
+            default=True,
+            show_default=True,
+            help=(
+                "Whether to force-merge compaction during optimize. Disable for a sooner "
+                "ready-to-search state at the cost of segments not merged to their fullest "
+                "potential (search latency may vary)."
+            ),
+        ),
+    ]
+    force_merge_target_size_mb: Annotated[
+        int | None,
+        click.option(
+            "--force-merge-target-size-mb",
+            type=int,
+            required=False,
+            default=None,
+            show_default=True,
+            callback=_validate_positive_int_or_none,
+            help=(
+                "Target merged segment size in MB requested for the force-merge compaction "
+                "during optimize; the effective cap depends on the Milvus server. Defaults "
+                "to the current unbounded single-segment behavior; set e.g. 1024 for bounded "
+                "segments. Must be a positive integer."
+            ),
+        ),
+    ]
+
+
+class ZillizAutoIndexTypedDict(ZillizTypedDict, AutoIndexLevelTypedDict): ...
 
 
 @cli.command()
-@click_parameter_decorators_from_typed_dict(ZillizTypedDict)
-def ZillizAutoIndex(**parameters: Unpack[ZillizTypedDict]):
+@click_parameter_decorators_from_typed_dict(ZillizAutoIndexTypedDict)
+def ZillizAutoIndex(**parameters: Unpack[ZillizAutoIndexTypedDict]):
     from .config import AutoIndexConfig, ZillizCloudConfig
 
     run(
@@ -72,12 +132,16 @@ def ZillizAutoIndex(**parameters: Unpack[ZillizTypedDict]):
             uri=SecretStr(parameters["uri"]),
             user=parameters["user_name"],
             password=SecretStr(parameters["password"]),
+            token=SecretStr(parameters["token"]),
             num_shards=parameters["num_shards"],
             collection_name=parameters["collection_name"],
         ),
         db_case_config=AutoIndexConfig(
-            level=int(parameters["level"]) if parameters["level"] else 1,
+            level=parameters["level"] if parameters["level"] is not None else 1,
             num_shards=parameters["num_shards"],
+            use_partition_key=_use_partition_key(parameters),
+            force_merge_enabled=parameters["force_merge_enabled"],
+            force_merge_target_size_mb=parameters["force_merge_target_size_mb"],
         ),
         **parameters,
     )

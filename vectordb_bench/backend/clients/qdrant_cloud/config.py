@@ -1,6 +1,6 @@
-from typing import TypeVar
+from typing import ClassVar, TypeVar
 
-from pydantic import BaseModel, SecretStr, model_validator
+from pydantic import BaseModel, SecretStr
 
 from ..api import DBCaseConfig, DBConfig, MetricType
 
@@ -10,6 +10,8 @@ SearchParams = TypeVar("SearchParams")
 
 # Allowing `api_key` to be left empty, to ensure compatibility with the open-source Qdrant.
 class QdrantConfig(DBConfig):
+    _extra_empty_skip: ClassVar[frozenset[str]] = frozenset({"api_key"})
+
     url: SecretStr
     api_key: SecretStr | None = None
 
@@ -24,19 +26,6 @@ class QdrantConfig(DBConfig):
         return {
             "url": self.url.get_secret_value(),
         }
-
-    @model_validator(mode="before")
-    @classmethod
-    def not_empty_field(cls, data: any) -> any:
-        if not isinstance(data, dict):
-            return data
-        skip = set(cls.common_short_configs()) | set(cls.common_long_configs()) | {"api_key"}
-        for field_name, v in data.items():
-            if field_name in skip:
-                continue
-            if isinstance(v, str) and not v:
-                raise ValueError("Empty string!")
-        return data
 
 
 class QdrantIndexConfig(BaseModel, DBCaseConfig):

@@ -1,12 +1,23 @@
+import glob
 import logging
+import os
 import pathlib
 import typing
 from abc import ABC, abstractmethod
 from enum import Enum
 
+import ir_datasets
 from tqdm import tqdm
 
 from vectordb_bench import config
+
+# Set ir_datasets to use tmp directory for both home and temp
+# This ensures all downloaded files and temporary data are stored in /tmp
+ir_datasets_home = pathlib.Path(config.DATASET_LOCAL_DIR) / "ir_datasets"
+ir_datasets_tmp = pathlib.Path(config.DATASET_LOCAL_DIR) / "ir_datasets_tmp"
+os.environ.setdefault("IR_DATASETS_HOME", str(ir_datasets_home))
+os.environ.setdefault("IR_DATASETS_TMP", str(ir_datasets_tmp))
+
 
 logging.getLogger("s3fs").setLevel(logging.CRITICAL)
 
@@ -18,6 +29,8 @@ DatasetReader = typing.TypeVar("DatasetReader")
 class DatasetSource(Enum):
     S3 = "S3"
     AliyunOSS = "AliyunOSS"
+    IR_DATASETS = "IR_DATASETS"
+    HuggingFace = "HuggingFace"
 
     def reader(self) -> DatasetReader:
         if self == DatasetSource.S3:
@@ -25,6 +38,12 @@ class DatasetSource(Enum):
 
         if self == DatasetSource.AliyunOSS:
             return AliyunOSSReader()
+
+        if self == DatasetSource.IR_DATASETS:
+            return IRDatasetsReader()
+
+        if self == DatasetSource.HuggingFace:
+            return HuggingFaceReader()
 
         return None
 
@@ -34,7 +53,14 @@ class DatasetReader(ABC):
     remote_root: str
 
     @abstractmethod
-    def read(self, dataset: str, files: list[str], local_ds_root: pathlib.Path):
+    def read(
+        self,
+        dataset: str,
+        files: list[str],
+        local_ds_root: pathlib.Path,
+        *,
+        revision: str | None = None,
+    ) -> dict[str, pathlib.Path]:
         """read dataset files from remote_root to local_ds_root,
 
         Args:
@@ -68,7 +94,14 @@ class AliyunOSSReader(DatasetReader):
 
         return True
 
-    def read(self, dataset: str, files: list[str], local_ds_root: pathlib.Path):
+    def read(
+        self,
+        dataset: str,
+        files: list[str],
+        local_ds_root: pathlib.Path,
+        *,
+        revision: str | None = None,
+    ) -> dict[str, pathlib.Path]:
         downloads = []
         if not local_ds_root.exists():
             log.info(f"local dataset root path not exist, creating it: {local_ds_root}")
@@ -91,7 +124,7 @@ class AliyunOSSReader(DatasetReader):
                     downloads.append((remote_file, local_file))
 
         if len(downloads) == 0:
-            return
+            return {file: local_ds_root / file for file in files}
 
         log.info(f"Start to downloading files, total count: {len(downloads)}")
         for remote_file, local_file in tqdm(downloads):
@@ -99,6 +132,7 @@ class AliyunOSSReader(DatasetReader):
             self.bucket.get_object_to_file(remote_file.as_posix(), local_file.absolute())
 
         log.info(f"Succeed to download all files, downloaded file count = {len(downloads)}")
+        return {file: local_ds_root / file for file in files}
 
 
 class AwsS3Reader(DatasetReader):
@@ -118,7 +152,14 @@ class AwsS3Reader(DatasetReader):
             log.info(n)
         return names
 
-    def read(self, dataset: str, files: list[str], local_ds_root: pathlib.Path):
+    def read(
+        self,
+        dataset: str,
+        files: list[str],
+        local_ds_root: pathlib.Path,
+        *,
+        revision: str | None = None,
+    ) -> dict[str, pathlib.Path]:
         downloads = []
         if not local_ds_root.exists():
             log.info(f"local dataset root path not exist, creating it: {local_ds_root}")
@@ -135,7 +176,7 @@ class AwsS3Reader(DatasetReader):
                     downloads.append(remote_file)
 
         if len(downloads) == 0:
-            return
+            return {file: local_ds_root / file for file in files}
 
         log.info(f"Start to downloading files, total count: {len(downloads)}")
         for s3_file in tqdm(downloads):
@@ -143,6 +184,7 @@ class AwsS3Reader(DatasetReader):
             self.fs.download(s3_file, local_ds_root.as_posix())
 
         log.info(f"Succeed to download all files, downloaded file count = {len(downloads)}")
+        return {file: local_ds_root / file for file in files}
 
     def validate_file(self, remote: pathlib.Path, local: pathlib.Path) -> bool:
         # info() uses ls() inside, maybe we only need to ls once
@@ -155,3 +197,112 @@ class AwsS3Reader(DatasetReader):
             return False
 
         return True
+
+
+class IRDatasetsReader(DatasetReader):
+    """Reader for ir_datasets based datasets"""
+
+    source: DatasetSource = DatasetSource.IR_DATASETS
+    remote_root: str = ""  # Not used for ir_datasets
+
+    def __init__(self):
+        self.ir_datasets = ir_datasets
+
+    def read(
+        self,
+        dataset: str,
+        files: list[str],
+        local_ds_root: pathlib.Path,
+        *,
+        revision: str | None = None,
+    ) -> dict[str, pathlib.Path]:
+        """
+        Download FTS dataset using ir_datasets API
+
+        Args:
+            dataset: ir_datasets dataset name
+            files: Expected output files (ignored, not used)
+            local_ds_root: Local directory (not used, ir_datasets handles its own cache)
+        """
+        log.info(f"Downloading FTS dataset '{dataset}' using ir_datasets")
+
+        try:
+            # Load dataset using ir_datasets - this will download if needed
+            # ir_datasets handles caching automatically
+            # Actual data download happens lazily when iterating
+            self.ir_datasets.load(dataset)
+            log.info(f"Successfully loaded dataset: {dataset}")
+
+        except Exception:
+            log.exception(f"Failed to download FTS dataset '{dataset}'")
+            raise
+        return {}
+
+    def validate_file(self, remote: pathlib.Path, local: pathlib.Path) -> bool:
+        """For ir_datasets, we don't validate against remote files"""
+        # ir_datasets handles its own caching and validation
+        return local.exists() and local.stat().st_size > 0
+
+
+class HuggingFaceReader(DatasetReader):
+    """Resolve selected files from a Hugging Face dataset repository."""
+
+    source: DatasetSource = DatasetSource.HuggingFace
+    remote_root: str = "https://huggingface.co/datasets"
+
+    def read(
+        self,
+        dataset: str,
+        files: list[str],
+        local_ds_root: pathlib.Path,
+        *,
+        revision: str | None = None,
+    ) -> dict[str, pathlib.Path]:
+        from huggingface_hub import hf_hub_download, snapshot_download
+
+        if any(glob.has_magic(file) for file in files):
+            try:
+                snapshot_root = pathlib.Path(
+                    snapshot_download(
+                        repo_id=dataset,
+                        repo_type="dataset",
+                        revision=revision,
+                        cache_dir=local_ds_root,
+                        allow_patterns=files,
+                    )
+                )
+            except Exception as exc:
+                msg = f"Failed to download {dataset} at revision {revision or 'default'}"
+                raise RuntimeError(msg) from exc
+
+            resolved = {}
+            for selector in files:
+                matches = sorted(path for path in snapshot_root.glob(selector) if path.is_file())
+                if not matches:
+                    msg = f"No files in {dataset} match selector {selector!r} at revision {revision or 'default'}"
+                    raise RuntimeError(msg)
+                for path in matches:
+                    name = path.relative_to(snapshot_root).as_posix()
+                    resolved.setdefault(name, path)
+            return resolved
+
+        local_ds_root.mkdir(parents=True, exist_ok=True)
+        resolved = {}
+        for file in files:
+            try:
+                resolved[file] = pathlib.Path(
+                    hf_hub_download(
+                        repo_id=dataset,
+                        filename=file,
+                        repo_type="dataset",
+                        revision=revision,
+                        cache_dir=local_ds_root,
+                    )
+                )
+            except Exception as exc:
+                msg = f"Failed to download {dataset}/{file} at revision {revision or 'default'}"
+                raise RuntimeError(msg) from exc
+        return resolved
+
+    def validate_file(self, remote: pathlib.Path, local: pathlib.Path) -> bool:
+        return local.exists() and local.stat().st_size > 0

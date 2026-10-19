@@ -1,5 +1,9 @@
+# ruff: noqa: I001  # Keep Lakebase immediately after AlloyDB in the PG-extension registration order.
+
+from ..backend.clients.adbpg.cli import AdbpgNova
 from ..backend.clients.alisql.cli import AliSQLHNSW
 from ..backend.clients.alloydb.cli import AlloyDBScaNN
+from ..backend.clients.lakebase_vector.cli import LakebaseANN
 from ..backend.clients.aws_opensearch.cli import AWSOpenSearch
 from ..backend.clients.chroma.cli import Chroma
 from ..backend.clients.clickhouse.cli import Clickhouse
@@ -13,11 +17,17 @@ from ..backend.clients.elastic_cloud.cli import (
 )
 from ..backend.clients.endee.cli import Endee
 from ..backend.clients.hologres.cli import HologresHGraph
-from ..backend.clients.lancedb.cli import LanceDB
+from ..backend.clients.lancedb.cli import (
+    LanceDB,
+    LanceDBAutoIndex,
+    LanceDBIVFHNSWPQ,
+    LanceDBIVFHNSWSQ,
+    LanceDBIVFPQ,
+)
 from ..backend.clients.lindorm.cli import LindormHNSW, LindormIVFBQ, LindormIVFPQ
 from ..backend.clients.mariadb.cli import MariaDBHNSW
 from ..backend.clients.memorydb.cli import MemoryDB
-from ..backend.clients.milvus.cli import MilvusAutoIndex
+from ..backend.clients.milvus.cli import MilvusAutoIndex, MilvusFTS
 from ..backend.clients.oceanbase.cli import OceanBaseHNSW, OceanBaseIVF
 from ..backend.clients.oss_opensearch.cli import OSSOpenSearch
 from ..backend.clients.pgdiskann.cli import PgDiskAnn
@@ -25,6 +35,7 @@ from ..backend.clients.pgvecto_rs.cli import PgVectoRSHNSW, PgVectoRSIVFFlat
 from ..backend.clients.pgvector.cli import PgVectorHNSW
 from ..backend.clients.pgvectorscale.cli import PgVectorScaleDiskAnn
 from ..backend.clients.pinecone.cli import Pinecone
+from ..backend.clients.pinot.cli import Pinot
 from ..backend.clients.polardb.cli import (
     PolarDBHNSWFlat,
     PolarDBHNSWPQ,
@@ -34,11 +45,14 @@ from ..backend.clients.qdrant_cloud.cli import QdrantCloud
 from ..backend.clients.qdrant_local.cli import QdrantLocal
 from ..backend.clients.redis.cli import Redis
 from ..backend.clients.s3_vectors.cli import S3Vectors
+from ..backend.clients.seekdb.cli import SeekDBHNSW
 from ..backend.clients.tencent_elasticsearch.cli import TencentElasticsearch
 from ..backend.clients.test.cli import Test
 from ..backend.clients.tidb.cli import TiDB
-from ..backend.clients.turbopuffer.cli import TurboPuffer
+from ..backend.clients.turbopuffer.cli import TurboPuffer, TurboPufferUnpin
+from ..backend.clients.vectorchord.cli import VectorChordGraph, VectorChordRQ
 from ..backend.clients.vespa.cli import Vespa
+from ..backend.clients.volc_mysql.cli import VolcMySQLHNSW
 from ..backend.clients.weaviate_cloud.cli import Weaviate
 from ..backend.clients.zilliz_cloud.cli import ZillizAutoIndex
 from ..backend.clients.zvec.cli import Zvec
@@ -46,6 +60,7 @@ from ..backend.clients.databend.cli import Databend
 from .batch_cli import BatchCli
 from .cli import cli
 
+cli.add_command(AdbpgNova)
 cli.add_command(PgVectorHNSW)
 cli.add_command(PgVectoRSHNSW)
 cli.add_command(PgVectoRSIVFFlat)
@@ -55,11 +70,13 @@ cli.add_command(Weaviate)
 cli.add_command(Test)
 cli.add_command(ZillizAutoIndex)
 cli.add_command(MilvusAutoIndex)
+cli.add_command(MilvusFTS)
 cli.add_command(AWSOpenSearch)
 cli.add_command(OSSOpenSearch)
 cli.add_command(PgVectorScaleDiskAnn)
 cli.add_command(PgDiskAnn)
 cli.add_command(AlloyDBScaNN)
+cli.add_command(LakebaseANN)
 cli.add_command(OceanBaseHNSW)
 cli.add_command(OceanBaseIVF)
 cli.add_command(MariaDBHNSW)
@@ -68,6 +85,10 @@ cli.add_command(CockroachDBCli)
 cli.add_command(Clickhouse)
 cli.add_command(Vespa)
 cli.add_command(LanceDB)
+cli.add_command(LanceDBAutoIndex)
+cli.add_command(LanceDBIVFPQ)
+cli.add_command(LanceDBIVFHNSWSQ)
+cli.add_command(LanceDBIVFHNSWPQ)
 cli.add_command(HologresHGraph)
 cli.add_command(QdrantCloud)
 cli.add_command(QdrantLocal)
@@ -81,6 +102,7 @@ cli.add_command(TencentElasticsearch)
 cli.add_command(AliSQLHNSW)
 cli.add_command(Doris)
 cli.add_command(TurboPuffer)
+cli.add_command(TurboPufferUnpin)
 cli.add_command(Chroma)
 cli.add_command(Zvec)
 cli.add_command(Endee)
@@ -88,9 +110,14 @@ cli.add_command(LindormIVFPQ)
 cli.add_command(LindormHNSW)
 cli.add_command(LindormIVFBQ)
 cli.add_command(Pinecone)
+cli.add_command(VectorChordRQ)
+cli.add_command(VectorChordGraph)
+cli.add_command(Pinot)
 cli.add_command(PolarDBHNSWFlat)
 cli.add_command(PolarDBHNSWPQ)
 cli.add_command(PolarDBHNSWSQ)
+cli.add_command(SeekDBHNSW)
+cli.add_command(VolcMySQLHNSW)
 cli.add_command(Databend)
 
 

@@ -11,6 +11,7 @@ venv/
 .venv/
 .idea/
 logs/
+vectordb_bench/results/cloudleaderboard/
 
 # Worktrees
 .worktrees/

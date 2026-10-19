@@ -21,10 +21,18 @@ class FilterNotSupportedError(ValueError):
 class Assembler:
     @classmethod
     def assemble(cls, run_id: str, task: TaskConfig, source: DatasetSource) -> CaseRunner:
-        c_cls = task.case_config.case_id.case_cls
+        c = task.case_config.case
+        if c.label == CaseLabel.FullTextSearchPerformance and not task.db.init_cls.supports_full_text_search():
+            msg = f"{task.db.value} does not support full-text search"
+            raise ValueError(msg)
 
-        c = c_cls(task.case_config.custom_case)
-        if type(task.db_case_config) is not EmptyDBCaseConfig:
+        actual_source = c.dataset.preferred_source or source
+
+        if (
+            type(task.db_case_config) is not EmptyDBCaseConfig
+            and c.label != CaseLabel.FullTextSearchPerformance
+            and hasattr(c.dataset.data, "metric_type")
+        ):
             task.db_case_config.metric_type = c.dataset.data.metric_type
 
         return CaseRunner(
@@ -32,7 +40,7 @@ class Assembler:
             config=task,
             ca=c,
             status=RunningStatus.PENDING,
-            dataset_source=source,
+            dataset_source=actual_source,
         )
 
     @classmethod
@@ -48,10 +56,15 @@ class Assembler:
         load_runners = [r for r in runners if r.ca.label == CaseLabel.Load]
         perf_runners = [r for r in runners if r.ca.label == CaseLabel.Performance]
         streaming_runners = [r for r in runners if r.ca.label == CaseLabel.Streaming]
+        cloud_insert_runners = [r for r in runners if r.ca.label == CaseLabel.CloudInsert]
+        cloud_cold_latency_runners = [r for r in runners if r.ca.label == CaseLabel.CloudColdLatency]
+        fts_runners = [r for r in runners if r.ca.label == CaseLabel.FullTextSearchPerformance]
+
+        search_filter_runners = [*perf_runners, *cloud_cold_latency_runners]
 
         # group by db
         db2runner: dict[DB, list[CaseRunner]] = {}
-        for r in perf_runners:
+        for r in search_filter_runners:
             db = r.config.db
             if db not in db2runner:
                 db2runner[db] = []
@@ -71,8 +84,10 @@ class Assembler:
         all_runners = []
         all_runners.extend(load_runners)
         all_runners.extend(streaming_runners)
+        all_runners.extend(cloud_insert_runners)
         for v in db2runner.values():
             all_runners.extend(v)
+        all_runners.extend(fts_runners)
 
         return TaskRunner(
             run_id=run_id,

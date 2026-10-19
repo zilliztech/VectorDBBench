@@ -49,3 +49,28 @@ class VespaHNSWConfig(BaseModel, DBCaseConfig):
                 return "hamming"
             case _:
                 raise NotImplementedError
+
+
+class VespaFtsConfig(BaseModel, DBCaseConfig):
+    metric_type: MetricType = MetricType.BM25
+    bm25_k1: float | None = None
+    bm25_b: float | None = None
+    bm25_avgdl: float | None = None
+    feed_client_command: str = "vespa"
+    feed_client_connections: int | None = None
+
+    def index_param(self) -> dict:
+        return {}
+
+    def search_param(self) -> dict:
+        return {}
+
+    def rank_properties(self) -> list[tuple[str, str]]:
+        properties = []
+        if self.bm25_k1 is not None:
+            properties.append(("bm25(text).k1", str(self.bm25_k1)))
+        if self.bm25_b is not None:
+            properties.append(("bm25(text).b", str(self.bm25_b)))
+        if self.bm25_avgdl is not None:
+            properties.append(("bm25(text).averageFieldLength", str(self.bm25_avgdl)))
+        return properties

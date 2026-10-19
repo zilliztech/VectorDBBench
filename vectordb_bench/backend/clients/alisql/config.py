@@ -51,6 +51,8 @@ class AliSQLIndexConfig(BaseModel):
 class AliSQLHNSWConfig(AliSQLIndexConfig, DBCaseConfig):
     M: int | None = None
     ef_search: int | None = None
+    shards: int | None = None
+    quantization: str | None = None
     index: IndexType = IndexType.HNSW
 
     def index_param(self) -> dict:
@@ -58,6 +60,8 @@ class AliSQLHNSWConfig(AliSQLIndexConfig, DBCaseConfig):
             "metric_type": self.parse_metric(),
             "index_type": self.index.value,
             "M": self.M,
+            "shards": self.shards,
+            "quantization": self.quantization,
         }
 
     def search_param(self) -> dict:

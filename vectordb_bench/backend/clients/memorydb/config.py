@@ -1,4 +1,4 @@
-from pydantic import BaseModel, SecretStr
+from pydantic import AliasChoices, BaseModel, Field, PositiveInt, SecretStr
 
 from ..api import DBCaseConfig, DBConfig, IndexType, MetricType
 
@@ -24,7 +24,10 @@ class MemoryDBConfig(DBConfig):
 
 class MemoryDBIndexConfig(BaseModel, DBCaseConfig):
     metric_type: MetricType | None = None
-    insert_batch_size: int | None = None
+    pipeline_batch_size: PositiveInt = Field(
+        default=10,
+        validation_alias=AliasChoices("pipeline_batch_size", "insert_batch_size"),
+    )
 
     def parse_metric(self) -> str:
         if self.metric_type == MetricType.L2:

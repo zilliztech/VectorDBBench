@@ -14,11 +14,15 @@ from typing import (
 )
 
 import click
+from click.core import ParameterSource
 from yaml import load
 
 from .. import config
+from ..backend.cases import FTS_FILTER_RATES, PerformanceCase, type2case
 from ..backend.clients import DB
-from ..backend.clients.api import MetricType
+from ..backend.clients.api import IndexType, MetricType
+from ..backend.dataset import REGISTERED_DATASETS, DatasetWithSizeType, FtsDatasetWithSizeType
+from ..backend.payload import PayloadProfile
 from ..interface import benchmark_runner
 from ..models import (
     CaseConfig,
@@ -35,6 +39,23 @@ try:
 except ImportError:
     from yaml import Loader
 
+DEFAULT_DATASET_WITH_SIZE_TYPE = DatasetWithSizeType.CohereMedium.value
+SUPPORTED_DATASET_WITH_SIZE_TYPES = "|".join(dataset.value for dataset in DatasetWithSizeType)
+SUPPORTED_FTS_DATASET_WITH_SIZE_TYPES = "|".join(dataset.value for dataset in FtsDatasetWithSizeType)
+SUPPORTED_FTS_FILTER_RATES = "|".join(f"{rate:g}" for rate in FTS_FILTER_RATES)
+SUPPORTED_DATASET_NAMES = "|".join(REGISTERED_DATASETS)
+
+
+def copy_if_not_none(
+    custom_case_config: dict[str, Any],
+    parameters: dict[str, Any],
+    key: str,
+    target_key: str | None = None,
+) -> None:
+    value = parameters[key]
+    if value is not None:
+        custom_case_config[target_key or key] = value
+
 
 def click_get_defaults_from_file(ctx, param, value):  # noqa: ANN001, ARG001
     if value:
@@ -48,6 +69,26 @@ def click_get_defaults_from_file(ctx, param, value):  # noqa: ANN001, ARG001
             msg = f"Failed to load config file: {e}"
             raise click.BadParameter(msg) from e
     return value
+
+
+def resolve_db_note(note: str, note_file: Path | None) -> str:
+    ctx = click.get_current_context()
+    note_source = ctx.get_parameter_source("note")
+    note_file_source = ctx.get_parameter_source("note_file")
+    note_supplied = note_source not in {None, ParameterSource.DEFAULT}
+    note_file_supplied = note_file_source not in {None, ParameterSource.DEFAULT}
+
+    if note_supplied and note_file_supplied:
+        raise click.UsageError("--note and --note-file cannot be used together")
+    if note_file is None:
+        return note
+    try:
+        content = note_file.read_text(encoding="utf-8").rstrip("\r\n")
+    except UnicodeDecodeError as e:
+        raise click.BadParameter("Note file is not valid UTF-8", param_hint="--note-file") from e
+    if not content.strip():
+        raise click.BadParameter("Note file is empty", param_hint="--note-file")
+    return content
 
 
 def click_parameter_decorators_from_typed_dict(
@@ -163,8 +204,18 @@ are required """,
     return value
 
 
+def _get_performance_case_config(parameters: dict) -> dict:
+    dataset_name = parameters["dataset_name"]
+    if dataset_name is None:
+        raise click.UsageError("--dataset-name is required for Performance")
+    return {"dataset_name": dataset_name}
+
+
 def get_custom_case_config(parameters: dict) -> dict:
+    if parameters["case_type"] == "Performance":
+        return _get_performance_case_config(parameters)
     custom_case_config = {}
+    dataset_with_size_type = parameters["dataset_with_size_type"] or DEFAULT_DATASET_WITH_SIZE_TYPE
     if parameters["case_type"] == "PerformanceCustomDataset":
         custom_case_config = {
             "name": parameters["custom_case_name"],
@@ -184,15 +235,132 @@ def get_custom_case_config(parameters: dict) -> dict:
         }
     elif parameters["case_type"] == "NewIntFilterPerformanceCase":
         custom_case_config = {
-            "dataset_with_size_type": parameters["dataset_with_size_type"],
+            "dataset_with_size_type": dataset_with_size_type,
             "filter_rate": parameters["filter_rate"],
         }
     elif parameters["case_type"] == "LabelFilterPerformanceCase":
         custom_case_config = {
-            "dataset_with_size_type": parameters["dataset_with_size_type"],
+            "dataset_with_size_type": dataset_with_size_type,
             "label_percentage": parameters["label_percentage"],
         }
+    elif parameters["case_type"] in {
+        "StreamingPerformanceCase",
+        "StreamingCustomDataset",
+    }:
+        custom_case_config = {
+            "insert_rate": parameters["streaming_insert_rate"],
+        }
+    elif parameters["case_type"] == "CloudPayloadSearchCase":
+        custom_case_config = {
+            "payload_profile": parameters["payload_profile"],
+        }
+        copy_if_not_none(custom_case_config, parameters, "dataset_with_size_type")
+        if parameters["cloud_filter_rate"] is not None:
+            custom_case_config["filter_rate"] = parameters["cloud_filter_rate"]
+        if parameters["cloud_label_percentage"] is not None:
+            custom_case_config["label_percentage"] = parameters["cloud_label_percentage"]
+    elif parameters["case_type"] == "CloudColdLatencyCase":
+        custom_case_config = {
+            "payload_profile": parameters["payload_profile"],
+            "query_count": parameters["cloud_cold_query_count"],
+        }
+        copy_if_not_none(custom_case_config, parameters, "dataset_with_size_type")
+        copy_if_not_none(custom_case_config, parameters, "cloud_filter_rate", "filter_rate")
+        copy_if_not_none(custom_case_config, parameters, "cloud_label_percentage", "label_percentage")
+    elif parameters["case_type"] == "CloudInsertCase":
+        custom_case_config = {
+            "duration": parameters["cloud_insert_duration"],
+            "dataset_with_size_type": dataset_with_size_type,
+        }
+        copy_if_not_none(custom_case_config, parameters, "cloud_insert_readiness_timeout", "readiness_timeout")
+        copy_if_not_none(
+            custom_case_config,
+            parameters,
+            "cloud_insert_readiness_poll_interval",
+            "readiness_poll_interval",
+        )
+    elif parameters["case_type"] == "CloudMultiTenantSearchCase":
+        custom_case_config = {
+            "tenant_count": parameters["tenant_count"],
+            "tenant_prefix": parameters["tenant_prefix"],
+            "tenant_id_width": parameters["tenant_id_width"],
+            "payload_profile": parameters["payload_profile"],
+        }
+        copy_if_not_none(custom_case_config, parameters, "dataset_with_size_type")
+        if parameters["cloud_filter_rate"] is not None:
+            custom_case_config["filter_rate"] = parameters["cloud_filter_rate"]
+        if parameters["cloud_label_percentage"] is not None:
+            custom_case_config["label_percentage"] = parameters["cloud_label_percentage"]
+    elif parameters["case_type"] == "FTSBm25Performance":
+        dataset_with_size_type = parameters["dataset_with_size_type"]
+        if dataset_with_size_type not in {dataset.value for dataset in FtsDatasetWithSizeType}:
+            dataset_with_size_type = FtsDatasetWithSizeType.MSMarcoSmall.value
+        custom_case_config = {
+            "dataset_with_size_type": dataset_with_size_type,
+            "payload_profile": parameters.get("payload_profile", PayloadProfile.IDS_ONLY.value),
+        }
+        copy_if_not_none(custom_case_config, parameters, "fts_filter_rate", "filter_rate")
     return custom_case_config
+
+
+def copy_fts_compatible_db_case_fields(source: DBCaseConfig, target: DBCaseConfig) -> DBCaseConfig:
+    """Copy CLI fields that remain meaningful when routing a backend to its FTS config."""
+    preserved_fields = (
+        "number_of_shards",
+        "number_of_replicas",
+        "refresh_interval",
+        "use_force_merge",
+        "force_merge_enabled",
+        "force_merge_target_size_mb",
+        "disable_backpressure",
+        "level",
+    )
+    updates = {
+        field: getattr(source, field) for field in preserved_fields if hasattr(source, field) and hasattr(target, field)
+    }
+    if not updates:
+        return target
+    return target.model_copy(update=updates)
+
+
+def apply_fts_cli_db_case_params(
+    db_case_config: DBCaseConfig,
+    parameters: dict[str, Any] | None,
+) -> DBCaseConfig:
+    if not parameters:
+        return db_case_config
+
+    updates = {
+        field: parameters[field]
+        for field in ("bm25_k1", "bm25_b")
+        if parameters.get(field) is not None and hasattr(db_case_config, field)
+    }
+    if not updates:
+        return db_case_config
+    return db_case_config.model_copy(update=updates)
+
+
+def get_case_payload_profile(parameters: dict[str, Any]) -> PayloadProfile | None:
+    case_type = CaseType[parameters["case_type"]]
+    if not issubclass(type2case[case_type], PerformanceCase):
+        return None
+    return PayloadProfile(parameters["payload_profile"])
+
+
+def select_cli_db_case_config(
+    db: DB,
+    db_case_config: DBCaseConfig,
+    case_type: str,
+    parameters: dict[str, Any] | None = None,
+) -> DBCaseConfig:
+    if case_type != CaseType.FTSBm25Performance.name:
+        return db_case_config
+
+    fts_case_config_cls = db.case_config_cls(IndexType.FTS)
+    if isinstance(db_case_config, fts_case_config_cls):
+        return apply_fts_cli_db_case_params(db_case_config, parameters)
+    fts_db_case_config = copy_fts_compatible_db_case_fields(db_case_config, fts_case_config_cls())
+    return apply_fts_cli_db_case_params(fts_db_case_config, parameters)
 
 
 log = logging.getLogger(__name__)
@@ -240,6 +408,26 @@ class CommonTypedDict(TypedDict):
             help="Number of concurrent workers for data loading in performance cases (0 = cpu_count)",
         ),
     ]
+    insert_batch_size: Annotated[
+        int,
+        click.option(
+            "--insert-batch-size",
+            type=click.IntRange(min=1),
+            default=config.DEFAULT_INSERT_BATCH_SIZE,
+            show_default=True,
+            help="Rows or documents in each logical VDBBench insert batch; backends may split it further",
+        ),
+    ]
+    streaming_insert_rate: Annotated[
+        int,
+        click.option(
+            "--streaming-insert-rate",
+            type=click.IntRange(min=1),
+            default=config.DEFAULT_STREAMING_INSERT_RATE,
+            show_default=True,
+            help="Rows inserted per second for StreamingPerformanceCase",
+        ),
+    ]
     search_serial: Annotated[
         bool,
         click.option(
@@ -280,6 +468,25 @@ class CommonTypedDict(TypedDict):
             default=datetime.now().isoformat(),
         ),
     ]
+    note: Annotated[
+        str,
+        click.option(
+            "--note",
+            type=str,
+            help="Run context stored with each result",
+            default="",
+            show_default=True,
+        ),
+    ]
+    note_file: Annotated[
+        Path | None,
+        click.option(
+            "--note-file",
+            type=click.Path(exists=True, dir_okay=False, readable=True, path_type=Path),
+            help="Read run context from a UTF-8 text file",
+            default=None,
+        ),
+    ]
     dry_run: Annotated[
         bool,
         click.option(
@@ -294,10 +501,20 @@ class CommonTypedDict(TypedDict):
         int,
         click.option(
             "--k",
-            type=int,
+            type=click.IntRange(min=1),
             default=config.K_DEFAULT,
             show_default=True,
-            help="K value for number of nearest neighbors to search",
+            help="Number of nearest neighbors. LAION 100M selects tiered GT automatically up to 1,000,000.",
+        ),
+    ]
+    nq: Annotated[
+        int,
+        click.option(
+            "--nq",
+            type=click.IntRange(min=1),
+            default=1,
+            show_default=True,
+            help="Query vectors per concurrent search request; serial latency and recall always use nq=1.",
         ),
     ]
     concurrency_duration: Annotated[
@@ -330,6 +547,16 @@ class CommonTypedDict(TypedDict):
             show_default=True,
             help="Timeout (in seconds) to wait for a concurrency slot before failing. "
             "Set to a negative value to wait indefinitely.",
+        ),
+    ]
+    serial_cooldown: Annotated[
+        float,
+        click.option(
+            "--serial-cooldown",
+            type=float,
+            default=config.SERIAL_COOLDOWN,
+            show_default=True,
+            help="Cooldown in seconds between concurrent and serial search phases",
         ),
     ]
     custom_case_name: Annotated[
@@ -436,14 +663,24 @@ class CommonTypedDict(TypedDict):
     ]
     task_label: Annotated[str, click.option("--task-label", help="Task label")]
     dataset_with_size_type: Annotated[
-        str,
+        str | None,
         click.option(
             "--dataset-with-size-type",
-            help="Dataset with size type for NewIntFilterPerformanceCase/LabelFilterPerformanceCase, you can use "
-            "Medium Cohere (768dim, 1M)|Large Cohere (768dim, 10M)|Medium Bioasq (1024dim, 1M)|"
-            "Large Bioasq (1024dim, 10M)|Large OpenAI (1536dim, 5M)|Medium OpenAI (1536dim, 500K)",
-            default="Medium Cohere (768dim, 1M)",
-            show_default=True,
+            help="Dataset with size type. When omitted, filter/insert cases use Medium Cohere (768dim, 1M), "
+            "CloudPayloadSearchCase and CloudColdLatencyCase use LAION 100M, and CloudMultiTenantSearchCase "
+            f"uses Large Cohere (768dim, 10M). Supported vector values include "
+            f"{SUPPORTED_DATASET_WITH_SIZE_TYPES}. For FTSBm25Performance, supported datasets include "
+            f"{SUPPORTED_FTS_DATASET_WITH_SIZE_TYPES}.",
+            default=None,
+        ),
+    ]
+    dataset_name: Annotated[
+        str | None,
+        click.option(
+            "--dataset-name",
+            type=click.Choice(list(REGISTERED_DATASETS)),
+            help=f"Registered dataset used by the Performance case: {SUPPORTED_DATASET_NAMES}.",
+            default=None,
         ),
     ]
     filter_rate: Annotated[
@@ -464,6 +701,131 @@ class CommonTypedDict(TypedDict):
             show_default=True,
         ),
     ]
+    payload_profile: Annotated[
+        str,
+        click.option(
+            "--payload-profile",
+            type=click.Choice([profile.value for profile in PayloadProfile]),
+            help="Response payload profile for vector performance, cloud payload, and FTS cases",
+            default="ids_only",
+            show_default=True,
+        ),
+    ]
+    bm25_k1: Annotated[
+        float | None,
+        click.option(
+            "--bm25-k1",
+            type=float,
+            default=None,
+            help="Optional BM25 k1 override for FTS cases. Omit to use the backend default.",
+        ),
+    ]
+    bm25_b: Annotated[
+        float | None,
+        click.option(
+            "--bm25-b",
+            type=float,
+            default=None,
+            help="Optional BM25 b override for FTS cases. Omit to use the backend default.",
+        ),
+    ]
+    fts_filter_rate: Annotated[
+        float | None,
+        click.option(
+            "--fts-filter-rate",
+            type=float,
+            default=None,
+            help=(
+                "Optional FTS integer filter rate for FTSBm25Performance. "
+                f"Only valid for large FTS datasets. Supported values: {SUPPORTED_FTS_FILTER_RATES}."
+            ),
+        ),
+    ]
+    cloud_filter_rate: Annotated[
+        float | None,
+        click.option(
+            "--cloud-filter-rate",
+            type=float,
+            default=None,
+            help="Optional int filter rate for CloudPayloadSearchCase and CloudColdLatencyCase",
+        ),
+    ]
+    cloud_label_percentage: Annotated[
+        float | None,
+        click.option(
+            "--cloud-label-percentage",
+            type=float,
+            default=None,
+            help="Optional label percentage for CloudPayloadSearchCase and CloudColdLatencyCase",
+        ),
+    ]
+    cloud_cold_query_count: Annotated[
+        int,
+        click.option(
+            "--cloud-cold-query-count",
+            type=int,
+            default=1000,
+            show_default=True,
+            help="Number of serial queries per cold/warm pass for CloudColdLatencyCase",
+        ),
+    ]
+    cloud_insert_duration: Annotated[
+        float | None,
+        click.option(
+            "--cloud-insert-duration",
+            type=float,
+            default=None,
+            help="Optional insert duration in seconds for CloudInsertCase",
+        ),
+    ]
+    cloud_insert_readiness_timeout: Annotated[
+        float | None,
+        click.option(
+            "--cloud-insert-readiness-timeout",
+            type=float,
+            default=None,
+            help="Optional readiness polling timeout in seconds for CloudInsertCase",
+        ),
+    ]
+    cloud_insert_readiness_poll_interval: Annotated[
+        float | None,
+        click.option(
+            "--cloud-insert-readiness-poll-interval",
+            type=float,
+            default=None,
+            help="Optional readiness polling interval in seconds for CloudInsertCase",
+        ),
+    ]
+    tenant_count: Annotated[
+        int,
+        click.option(
+            "--tenant-count",
+            type=int,
+            default=1000,
+            show_default=True,
+            help="Tenant count for CloudMultiTenantSearchCase",
+        ),
+    ]
+    tenant_prefix: Annotated[
+        str,
+        click.option(
+            "--tenant-prefix",
+            type=str,
+            default="tenant_",
+            show_default=True,
+            help="Tenant label prefix for CloudMultiTenantSearchCase",
+        ),
+    ]
+    tenant_id_width: Annotated[
+        int,
+        click.option(
+            "--tenant-id-width",
+            type=int,
+            default=4,
+            show_default=True,
+            help="Zero-padding width for CloudMultiTenantSearchCase tenant IDs",
+        ),
+    ]
 
 
 class HNSWBaseTypedDict(TypedDict):
@@ -471,6 +833,18 @@ class HNSWBaseTypedDict(TypedDict):
     ef_construction: Annotated[
         int | None,
         click.option("--ef-construction", type=int, help="hnsw ef-construction"),
+    ]
+
+
+class AutoIndexLevelTypedDict(TypedDict):
+    level: Annotated[
+        int | None,
+        click.option(
+            "--level",
+            type=click.IntRange(1, 10),
+            default=None,
+            help="AutoIndex search level (1-10).",
+        ),
     ]
 
 
@@ -632,17 +1006,24 @@ def run(
         **parameters: expects keys from CommonTypedDict
     """
 
+    db_config = db_config.model_copy(
+        update={"note": resolve_db_note(parameters["note"], parameters["note_file"])},
+    )
+
     task = TaskConfig(
         db=db,
         db_config=db_config,
-        db_case_config=db_case_config,
+        db_case_config=select_cli_db_case_config(db, db_case_config, parameters["case_type"], parameters),
         case_config=CaseConfig(
             case_id=CaseType[parameters["case_type"]],
+            payload_profile=get_case_payload_profile(parameters),
             k=parameters["k"],
+            nq=parameters.get("nq", 1),
             concurrency_search_config=ConcurrencySearchConfig(
                 concurrency_duration=parameters["concurrency_duration"],
                 num_concurrency=[int(s) for s in parameters["num_concurrency"]],
                 concurrency_timeout=parameters["concurrency_timeout"],
+                serial_cooldown=parameters["serial_cooldown"],
             ),
             custom_case=get_custom_case_config(parameters),
         ),
@@ -653,6 +1034,7 @@ def run(
             parameters["search_concurrent"],
         ),
         load_concurrency=parameters["load_concurrency"],
+        insert_batch_size=parameters["insert_batch_size"],
     )
     task_label = parameters["task_label"]
 

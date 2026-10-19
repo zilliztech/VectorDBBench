@@ -119,7 +119,7 @@ def drawLineChart(
     if x_metric == DisplayedMetric.search_time:
         x_title = "Actual Time (s)"
     fig.update_layout(xaxis_title=x_title)
-    st.plotly_chart(fig, use_container_width=True, key=key)
+    st.plotly_chart(fig, width="stretch", key=key)
 
 
 def get_normal_scatter(
@@ -234,7 +234,7 @@ def drawBarChart(
     fig.update_layout(xaxis_title="time (s)")
     fig.update_layout(barmode="stack")
     fig.update_traces(width=0.15)
-    st.plotly_chart(fig, use_container_width=True, key=key)
+    st.plotly_chart(fig, width="stretch", key=key)
 
 
 def get_bar(

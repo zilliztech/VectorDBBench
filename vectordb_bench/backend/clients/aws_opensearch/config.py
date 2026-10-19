@@ -1,7 +1,8 @@
 import logging
 from enum import Enum
+from typing import ClassVar
 
-from pydantic import BaseModel, SecretStr, model_validator
+from pydantic import BaseModel, SecretStr
 
 from ..api import DBCaseConfig, DBConfig, MetricType
 
@@ -9,12 +10,66 @@ log = logging.getLogger(__name__)
 
 
 class AWSOpenSearchConfig(DBConfig, BaseModel):
+    _extra_empty_skip: ClassVar[frozenset[str]] = frozenset({"user", "password", "host"})
+
     host: str = ""
     port: int = 80
     user: str | None = None
     password: SecretStr | None = None
+    is_serverless: bool = False
+    aws_region: str = "us-east-1"
 
     def to_dict(self) -> dict:
+        if self.is_serverless:
+            return self._serverless_config()
+        return self._standard_config()
+
+    def _serverless_config(self) -> dict:
+        """Configuration for OpenSearch Serverless using AWS SigV4 authentication."""
+        log.info(f"Configuring OpenSearch Serverless - Host: {self.host}, Region: {self.aws_region}")
+
+        try:
+            import boto3
+        except ImportError as e:
+            raise ImportError("boto3 is required for OpenSearch Serverless. Install with: pip install boto3") from e
+
+        try:
+            from opensearchpy import RequestsHttpConnection
+            from requests_aws4auth import AWS4Auth
+        except ImportError as e:
+            raise ImportError(
+                "requests-aws4auth is required for OpenSearch Serverless. "
+                "Install with: pip install requests-aws4auth"
+            ) from e
+
+        session = boto3.Session()
+        credentials = session.get_credentials()
+        if not credentials:
+            raise ValueError("AWS credentials not found. Please configure AWS credentials.")
+
+        credentials = credentials.get_frozen_credentials()
+        auth = AWS4Auth(
+            credentials.access_key,
+            credentials.secret_key,
+            self.aws_region,
+            "aoss",
+            session_token=credentials.token,
+        )
+
+        return {
+            "hosts": [{"host": self.host, "port": 443}],
+            "http_auth": auth,
+            "use_ssl": True,
+            "verify_certs": True,
+            "connection_class": RequestsHttpConnection,
+            "timeout": 600,
+            "max_retries": 3,
+            "retry_on_timeout": True,
+            "http_compress": False,
+        }
+
+    def _standard_config(self) -> dict:
+        """Configuration for standard OpenSearch with basic auth."""
         use_ssl = self.port == 443
         http_auth = (
             (self.user, self.password.get_secret_value())
@@ -31,19 +86,6 @@ class AWSOpenSearchConfig(DBConfig, BaseModel):
             "ssl_show_warn": False,
             "timeout": 600,
         }
-
-    @model_validator(mode="before")
-    @classmethod
-    def not_empty_field(cls, data: any) -> any:
-        if not isinstance(data, dict):
-            return data
-        skip = set(cls.common_short_configs()) | set(cls.common_long_configs()) | {"user", "password", "host"}
-        for field_name, v in data.items():
-            if field_name in skip:
-                continue
-            if isinstance(v, str) and not v:
-                raise ValueError("Empty string!")
-        return data
 
 
 class AWSOS_Engine(Enum):

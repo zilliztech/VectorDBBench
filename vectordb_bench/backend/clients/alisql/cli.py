@@ -85,6 +85,26 @@ class AliSQLHNSWTypedDict(AliSQLTypedDict):
         ),
     ]
 
+    shards: Annotated[
+        int | None,
+        click.option(
+            "--shards",
+            type=int,
+            help="Number of shards for the vector index",
+            required=False,
+        ),
+    ]
+
+    quantization: Annotated[
+        str | None,
+        click.option(
+            "--quantization",
+            type=click.Choice(["SQ8", "SQ16"], case_sensitive=False),
+            help="Quantization algorithm for the vector index",
+            required=False,
+        ),
+    ]
+
 
 @cli.command()
 @click_parameter_decorators_from_typed_dict(AliSQLHNSWTypedDict)
@@ -106,6 +126,8 @@ def AliSQLHNSW(
         db_case_config=AliSQLHNSWConfig(
             M=parameters["m"],
             ef_search=parameters["ef_search"],
+            shards=parameters["shards"],
+            quantization=parameters["quantization"].upper() if parameters["quantization"] is not None else None,
         ),
         **parameters,
     )

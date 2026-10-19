@@ -1,7 +1,7 @@
 from collections import defaultdict
 from dataclasses import asdict
 from vectordb_bench.backend.filter import FilterOp
-from vectordb_bench.frontend.components.check_results.data import getFilterTasks
+from vectordb_bench.frontend.components.check_results.data import getCaseResultName, getFilterTasks
 from vectordb_bench.frontend.components.check_results.filters import getShowDbsAndCases, getshownResults
 from vectordb_bench.models import CaseResult, ResultLabel, TestResult
 
@@ -33,7 +33,8 @@ def getChartData(
         db_label = task.task_config.db_config.db_label or ""
         version = task.task_config.db_config.version or ""
         case = task.task_config.case_config.case
-        case_name = case.name
+        case_name = getCaseResultName(task)
+        k = task.task_config.case_config.k
         dataset_name = case.dataset.data.full_name
         filter_rate = case.filter_rate
         metrics = asdict(task.metrics)
@@ -47,6 +48,7 @@ def getChartData(
                     "dataset_name": dataset_name,
                     "filter_rate": filter_rate,
                     "version": version,
+                    "k": k,
                     "case_name": case_name,
                     "metricsSet": set(metrics.keys()),
                     **metrics,

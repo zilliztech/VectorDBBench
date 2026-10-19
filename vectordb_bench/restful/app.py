@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, request
 
+from vectordb_bench import config
 from vectordb_bench.backend.clients import DB
 from vectordb_bench.interface import benchmark_runner
 from vectordb_bench.models import ALL_TASK_STAGES, CaseConfig, TaskConfig, TaskStage
@@ -82,6 +83,7 @@ def run():
                 case_config=case_config,
                 db_case_config=db_case_config,
                 stages=stages,
+                insert_batch_size=task.get("insert_batch_size", config.DEFAULT_INSERT_BATCH_SIZE),
             )
             task_configs.append(task_config)
     except Exception as e:

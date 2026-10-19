@@ -80,7 +80,7 @@ class PgDiskAnnTypedDict(CommonTypedDict):
         click.option(
             "--reranking-metric",
             type=click.Choice(
-                [metric.value for metric in MetricType if metric.value not in ["HAMMING", "JACCARD", "DP"]],
+                [metric.value for metric in MetricType if metric.value not in ["HAMMING", "JACCARD", "DP", "BM25"]],
             ),
             help="Distance metric for reranking",
             default="COSINE",

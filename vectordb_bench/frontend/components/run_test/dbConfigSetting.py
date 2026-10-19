@@ -11,19 +11,18 @@ def dbConfigSettings(st, activedDbList: list[DB]):
     isAllValid = True
     for activeDb in activedDbList:
         dbConfigSettingItemContainer = expander.container()
-        dbConfig = dbConfigSettingItem(dbConfigSettingItemContainer, activeDb)
         try:
+            dbConfig = dbConfigSettingItem(dbConfigSettingItemContainer, activeDb)
             dbConfigs[activeDb] = activeDb.config_cls(**dbConfig)
+            # Probe client module so missing optional deps surface now, not on Run.
+            _ = activeDb.init_cls
+        except ModuleNotFoundError as e:
+            isAllValid = False
+            dbConfigSettingItemContainer.error(f"{activeDb.value} needs `{e.name}` but it is not installed.")
         except ValidationError as e:
             isAllValid = False
-            errTexts = []
-            for err in e.raw_errors:
-                errLocs = err.loc_tuple()
-                errInfo = err.exc
-                errText = f"{', '.join(errLocs)} - {errInfo}"
-                errTexts.append(errText)
-
-            dbConfigSettingItemContainer.error(f"{'; '.join(errTexts)}")
+            errTexts = [f"{', '.join(str(x) for x in err['loc'])} - {err['msg']}" for err in e.errors()]
+            dbConfigSettingItemContainer.error("; ".join(errTexts))
 
     return dbConfigs, isAllValid
 

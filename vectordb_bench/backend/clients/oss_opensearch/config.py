@@ -1,14 +1,19 @@
 import logging
 from enum import Enum
+from typing import ClassVar
 
 from pydantic import BaseModel, SecretStr, field_validator, model_validator
 
 from ..api import DBCaseConfig, DBConfig, MetricType
+from ..elasticsearch_compatible import build_bm25_similarity_settings, build_fts_index_param
 
 log = logging.getLogger(__name__)
 
 
 class OSSOpenSearchConfig(DBConfig, BaseModel):
+    _extra_empty_skip: ClassVar[frozenset[str]] = frozenset({"user", "password", "host"})
+
+    index_name: str = "vdb_bench_index"
     host: str = ""
     port: int = 80
     user: str | None = None
@@ -22,6 +27,7 @@ class OSSOpenSearchConfig(DBConfig, BaseModel):
             else ()
         )
         return {
+            "index_name": self.index_name,
             "hosts": [{"host": self.host, "port": self.port}],
             "http_auth": http_auth,
             "use_ssl": use_ssl,
@@ -31,19 +37,6 @@ class OSSOpenSearchConfig(DBConfig, BaseModel):
             "ssl_show_warn": False,
             "timeout": 600,
         }
-
-    @model_validator(mode="before")
-    @classmethod
-    def not_empty_field(cls, data: any) -> any:
-        if not isinstance(data, dict):
-            return data
-        skip = set(cls.common_short_configs()) | set(cls.common_long_configs()) | {"user", "password", "host"}
-        for field_name, v in data.items():
-            if field_name in skip:
-                continue
-            if isinstance(v, str) and not v:
-                raise ValueError("Empty string!")
-        return data
 
 
 class OSSOS_Engine(Enum):
@@ -257,3 +250,22 @@ class OSSOpenSearchIndexConfig(BaseModel, DBCaseConfig):
 
     def search_param(self) -> dict:
         return {"ef_search": self.efSearch}
+
+
+class OSSOpenSearchFtsConfig(BaseModel, DBCaseConfig):
+    number_of_shards: int = 1
+    number_of_replicas: int = 0
+    refresh_interval: str = "30s"
+    force_merge_enabled: bool = True
+    metric_type: MetricType = MetricType.BM25
+    bm25_k1: float | None = None
+    bm25_b: float | None = None
+
+    def index_param(self) -> dict:
+        return build_fts_index_param(self.bm25_k1, self.bm25_b)
+
+    def search_param(self) -> dict:
+        return {}
+
+    def similarity_settings(self) -> dict:
+        return build_bm25_similarity_settings(self.bm25_k1, self.bm25_b)

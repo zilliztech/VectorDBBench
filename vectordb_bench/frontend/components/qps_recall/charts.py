@@ -69,7 +69,7 @@ def drawlinechart(st, data: list[object], metric, key: str):
     new_data, new_remain_data = drawBestperformance(data, y, group)
     unique_db_names = list(set(item["db_name"] for item in new_data + new_remain_data))
 
-    colors = plt.cm.get_cmap("tab10", len(unique_db_names))
+    colors = plt.get_cmap("tab10", len(unique_db_names))
 
     color_map = {
         db: f"rgb({int(colors(i)[0] * 255)}, {int(colors(i)[1] * 255)}, {int(colors(i)[2] * 255)})"
@@ -115,4 +115,4 @@ def drawlinechart(st, data: list[object], metric, key: str):
         margin=dict(l=0, r=0, t=40, b=0, pad=8),
         legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="right", x=1, title=""),
     )
-    st.plotly_chart(fig, use_container_width=True, key=key)
+    st.plotly_chart(fig, width="stretch", key=key)

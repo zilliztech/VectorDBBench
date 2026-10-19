@@ -1,7 +1,9 @@
+import array
 import logging
-from contextlib import contextmanager
+import queue
+from contextlib import contextmanager, suppress
 
-import mysql.connector as mysql
+import MySQLdb
 import numpy as np
 
 from ..api import VectorDB
@@ -11,6 +13,8 @@ log = logging.getLogger(__name__)
 
 
 class AliSQL(VectorDB):
+    thread_safe = True
+
     def __init__(
         self,
         dim: int,
@@ -25,8 +29,9 @@ class AliSQL(VectorDB):
         self.case_config = db_case_config
         self.table_name = collection_name
         self.dim = dim
+        # Pool of extra connections used to parallelize inserts; built in init().
+        self._insert_pool: queue.SimpleQueue | None = None
 
-        # construct basic units
         self.conn, self.cursor = self._create_connection()
 
         if drop_old:
@@ -39,12 +44,11 @@ class AliSQL(VectorDB):
         self.conn = None
 
     def _create_connection(self):
-        conn = mysql.connect(
+        conn = MySQLdb.connect(
             host=self.db_config["host"],
             user=self.db_config["user"],
             port=self.db_config["port"],
             password=self.db_config["password"],
-            buffered=True,
         )
         cursor = conn.cursor()
 
@@ -53,13 +57,40 @@ class AliSQL(VectorDB):
 
         return conn, cursor
 
+    def _acquire_insert_conn(self):
+        """Borrow a connection from the insert pool, opening a new one if empty.
+
+        The pool grows lazily to the number of concurrent insert workers: with N
+        worker threads at most N connections are checked out at once.
+        """
+        try:
+            return self._insert_pool.get_nowait()
+        except queue.Empty:
+            conn, cursor = self._create_connection()
+            cursor.execute("SET sql_mode = ''")
+            return conn, cursor
+
+    def _drain_insert_pool(self):
+        """Close every pooled insert connection. Called from init()'s finally, after
+        all insert workers have joined, so nothing is checked out at this point.
+        """
+        pool, self._insert_pool = self._insert_pool, None
+        if pool is None:
+            return
+        while True:
+            try:
+                conn, cursor = pool.get_nowait()
+            except queue.Empty:
+                break
+            with suppress(Exception):
+                cursor.close()
+                conn.close()
+
     def _drop_db(self):
         assert self.conn is not None, "Connection is not initialized"
         assert self.cursor is not None, "Cursor is not initialized"
         log.info(f'{self.name} client drop db : {self.db_config["database"]}')
 
-        # flush tables before dropping database to avoid some locking issue
-        self.cursor.execute("FLUSH TABLES")
         self.cursor.execute(f'DROP DATABASE IF EXISTS {self.db_config["database"]}')
         self.cursor.execute("COMMIT")
         self.cursor.execute("FLUSH TABLES")
@@ -117,13 +148,18 @@ class AliSQL(VectorDB):
             f"ORDER by vec_distance_{search_param['metric_type']}(v, %s) LIMIT %s"
         )
 
+        self._search_cursor = self.cursor
+        self._insert_pool = queue.SimpleQueue()
+
         try:
             yield
         finally:
+            self._drain_insert_pool()
             self.cursor.close()
             self.conn.close()
             self.cursor = None
             self.conn = None
+            self._search_cursor = None
 
     def ready_to_load(self) -> bool:
         pass
@@ -138,6 +174,10 @@ class AliSQL(VectorDB):
             index_options = f"DISTANCE={index_param['metric_type']}"
             if index_param["index_type"] == "HNSW" and index_param["M"] is not None:
                 index_options += f" M={index_param['M']}"
+            if index_param.get("shards") is not None:
+                index_options += f" SHARDS={index_param['shards']}"
+            if index_param.get("quantization") is not None:
+                index_options += f" QUANTIZATION={index_param['quantization']}"
 
             self.cursor.execute(f"""
               ALTER TABLE {self.db_config["database"]}.{self.table_name}
@@ -151,7 +191,7 @@ class AliSQL(VectorDB):
 
     @staticmethod
     def vector_to_hex(v):  # noqa: ANN001
-        return np.array(v, "float32").tobytes()
+        return array.array("f", v).tobytes()
 
     def insert_embeddings(
         self,
@@ -159,28 +199,29 @@ class AliSQL(VectorDB):
         metadata: list[int],
         **kwargs,
     ) -> tuple[int, Exception]:
-        """Insert embeddings into the database.
-        Should call self.init() first.
+        """Insert one batch of embeddings. Should call self.init() first.
+
+        thread_safe=True: the concurrent insert runner may call this from several
+        worker threads sharing this instance. Each call borrows its own connection
+        from self._insert_pool, so the workers drive parallel insert streams.
         """
-        assert self.conn is not None, "Connection is not initialized"
-        assert self.cursor is not None, "Cursor is not initialized"
-
+        conn, cursor = self._acquire_insert_conn()
         try:
-            metadata_arr = np.array(metadata)
-            embeddings_arr = np.array(embeddings)
+            embeddings_f32 = np.asarray(embeddings, dtype=np.float32)
+            batch_data = [(int(metadata[i]), embeddings_f32[i].tobytes()) for i in range(len(metadata))]
 
-            batch_data = []
-            for i, row in enumerate(metadata_arr):
-                batch_data.append((int(row), self.vector_to_hex(embeddings_arr[i])))
-
-            self.cursor.executemany(self.insert_sql, batch_data)
-            self.cursor.execute("COMMIT")
-            self.cursor.execute("FLUSH TABLES")
-
-            return len(metadata), None
+            cursor.executemany(self.insert_sql, batch_data)
+            cursor.execute("COMMIT")
         except Exception as e:
             log.warning(f"Failed to insert data into Vector table ({self.table_name}), error: {e}")
+            # the connection may be left in a bad state; drop it instead of reusing
+            with suppress(Exception):
+                cursor.close()
+                conn.close()
             return 0, e
+        else:
+            self._insert_pool.put((conn, cursor))
+            return len(metadata), None
 
     def search_embedding(
         self,
@@ -191,17 +232,17 @@ class AliSQL(VectorDB):
         **kwargs,
     ) -> list[int]:
         assert self.conn is not None, "Connection is not initialized"
-        assert self.cursor is not None, "Cursor is not initialized"
+        assert self._search_cursor is not None, "Cursor is not initialized"
 
-        search_param = self.case_config.search_param()  # noqa: F841
+        query_bytes = self.vector_to_hex(query)
 
         try:
             if filters:
-                self.cursor.execute(self.select_sql_with_filter, (filters.get("id"), self.vector_to_hex(query), k))
+                self._search_cursor.execute(self.select_sql_with_filter, (filters.get("id"), query_bytes, k))
             else:
-                self.cursor.execute(self.select_sql, (self.vector_to_hex(query), k))
-            return [row[0] for row in self.cursor.fetchall()]
+                self._search_cursor.execute(self.select_sql, (query_bytes, k))
+            return [row[0] for row in self._search_cursor.fetchall()]
 
-        except mysql.Error:
+        except MySQLdb.Error:
             log.exception("Failed to execute search query")
             raise
