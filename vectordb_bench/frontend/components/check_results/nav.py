@@ -1,3 +1,6 @@
+from vectordb_bench.frontend.utils import get_page_url_prefix
+
+
 def NavToRunTest(st):
     st.subheader("Run your test")
     st.write("You can set the configs and run your own test.")
@@ -34,9 +37,10 @@ def NavToPages(st):
         {"name": "Custom Dataset", "link": "custom"},
     ]
 
+    url_prefix = get_page_url_prefix(st.get_option("server.baseUrlPath"))
     html = ""
     for i, option in enumerate(options):
-        html += f'<a href="/{option["link"]}" target="_self" style="text-decoration: none; padding: 0.1px 0.2px;">{option["name"]}</a>'
+        html += f'<a href="{url_prefix}{option["link"]}" target="_self" style="text-decoration: none; padding: 0.1px 0.2px;">{option["name"]}</a>'
         if i < len(options) - 1:
             html += '<span style="color: #888; margin: 0 5px;">|</span>'
     st.markdown(html, unsafe_allow_html=True)
