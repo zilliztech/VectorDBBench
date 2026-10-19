@@ -2678,7 +2678,7 @@ _LANCEDB_HNSW_INDEXES = {
 
 CaseConfigParamInput_IndexType_LanceDB = CaseConfigInput(
     label=CaseConfigParamType.IndexType,
-    inputHelp="AUTOINDEX = IVFPQ with default parameters; IVF_FLAT/SQ/RQ/PQ and IVF_HNSW_SQ/PQ for Lance vector indexes; BTREE is a scalar index on id",
+    inputHelp="AUTOINDEX = IVFPQ with default parameters; IVF_FLAT/SQ/RQ/PQ and IVF_HNSW_SQ/PQ for Lance vector indexes. A scalar B-tree is a separate option and can be combined with any of these",
     inputType=InputType.Option,
     inputConfig={
         "options": [
@@ -2690,9 +2690,33 @@ CaseConfigParamInput_IndexType_LanceDB = CaseConfigInput(
             IndexType.IVF_RQ.value,
             IndexType.IVF_HNSW_SQ.value,
             IndexType.IVF_HNSW_PQ.value,
+        ],
+    },
+)
+
+CaseConfigParamInput_ScalarIndex_LanceDB = CaseConfigInput(
+    label=CaseConfigParamType.scalar_index,
+    displayLabel="Scalar Index",
+    inputHelp="Optional B-tree built in addition to the vector index. Accelerates id range filters and label equality filters",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [
+            IndexType.NONE.value,
             IndexType.BTREE.value,
         ],
     },
+)
+
+CaseConfigParamInput_ScalarColumn_LanceDB = CaseConfigInput(
+    label=CaseConfigParamType.scalar_column,
+    displayLabel="Scalar Index Column",
+    inputHelp="Column for the scalar B-tree. Label-filter cases predicate on label; range filters predicate on id",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": ["id", "label"],
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.scalar_index, IndexType.NONE.value)
+    == IndexType.BTREE.value,
 )
 
 CaseConfigParamInput_num_partitions_LanceDB = CaseConfigInput(
@@ -2985,6 +3009,8 @@ CaseConfigParamInput_NumberOfRegions_Lindorm = CaseConfigInput(
 
 LanceDBLoadConfig = [
     CaseConfigParamInput_IndexType_LanceDB,
+    CaseConfigParamInput_ScalarIndex_LanceDB,
+    CaseConfigParamInput_ScalarColumn_LanceDB,
     CaseConfigParamInput_num_partitions_LanceDB,
     CaseConfigParamInput_num_sub_vectors_LanceDB,
     CaseConfigParamInput_num_bits_LanceDB,

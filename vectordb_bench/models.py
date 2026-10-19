@@ -197,6 +197,10 @@ class CaseConfigParamType(Enum):
     max_scan_points = "max_scan_points"
     auto_reduction = "auto_reduction"
 
+    # LanceDB scalar index, independent of the vector index selection.
+    scalar_index = "scalar_index"
+    scalar_column = "scalar_column"
+
 
 class CustomizedCase(BaseModel):
     pass

@@ -1,7 +1,7 @@
 import os
 from typing import ClassVar
 
-from pydantic import BaseModel, SecretStr
+from pydantic import BaseModel, SecretStr, field_validator, model_validator
 
 from ..api import DBCaseConfig, DBConfig, IndexType, MetricType
 
@@ -101,7 +101,45 @@ class LanceDBConfig(DBConfig):
         }
 
 
-class LanceDBIndexConfig(BaseModel, DBCaseConfig):
+class LanceDBScalarIndex(BaseModel):
+    """Optional scalar B-tree, independent of the selected vector index.
+
+    ``scalar_index`` is ``NONE`` or ``BTREE``. ``scalar_column`` is recorded on
+    the case config so a result can show IVF_* + BTREE(id|label) explicitly.
+    """
+
+    scalar_index: IndexType = IndexType.NONE
+    scalar_column: str = "id"
+
+    @field_validator("scalar_index", mode="before")
+    @classmethod
+    def _normalize_scalar_index(cls, value: object) -> IndexType:
+        if value is None or value == "":
+            return IndexType.NONE
+        parsed = value if isinstance(value, IndexType) else IndexType(str(value))
+        if parsed not in (IndexType.NONE, IndexType.BTREE):
+            msg = f"LanceDB scalar index must be NONE or BTREE, got {value}"
+            raise ValueError(msg)
+        return parsed
+
+    @field_validator("scalar_column", mode="before")
+    @classmethod
+    def _normalize_scalar_column(cls, value: object) -> str:
+        column = "id" if value is None else str(value).strip()
+        if column == "":
+            column = "id"
+        if column not in {"id", "label"}:
+            msg = f"LanceDB scalar index column must be id or label, got {value}"
+            raise ValueError(msg)
+        return column
+
+    def scalar_btree_column(self) -> str | None:
+        if self.scalar_index != IndexType.BTREE:
+            return None
+        return self.scalar_column
+
+
+class LanceDBIndexConfig(LanceDBScalarIndex, DBCaseConfig):
     """Default IVF_PQ index configuration."""
 
     index: IndexType = IndexType.IVFPQ
@@ -176,7 +214,7 @@ class LanceDBAutoIndexConfig(LanceDBIndexConfig):
         return params
 
 
-class LanceDBIVFHNSWSQConfig(BaseModel, DBCaseConfig):
+class LanceDBIVFHNSWSQConfig(LanceDBScalarIndex, DBCaseConfig):
     """IVF_HNSW_SQ index — IVF partitioning + HNSW graph + scalar quantization."""
 
     index: IndexType = IndexType.IVF_HNSW_SQ
@@ -229,7 +267,7 @@ def _parse_lancedb_metric(metric_type: MetricType) -> str:
     raise ValueError(msg)
 
 
-class LanceDBIVFFamilyConfig(BaseModel, DBCaseConfig):
+class LanceDBIVFFamilyConfig(LanceDBScalarIndex, DBCaseConfig):
     """Shared knobs for Lance IVF indexes that are not PQ/HNSW hybrids.
 
     IVF_FLAT stores raw vectors, IVF_SQ uses scalar quantization, IVF_RQ
@@ -290,16 +328,33 @@ class LanceDBIVFRQConfig(LanceDBIVFFamilyConfig):
     nbits: int = 1  # Lance default for RabitQ bits-per-dimension
 
 
-class LanceDBBTreeConfig(BaseModel, DBCaseConfig):
-    """BTREE — Lance scalar index on a numeric/string column (not vector ANN).
+class LanceDBBTreeConfig(LanceDBScalarIndex, DBCaseConfig):
+    """Scalar B-tree with no vector index.
 
-    Accelerates equality/range filters. Vector search still scans unless a
-    vector index is also present.
+    Prefer a vector index config plus ``scalar_index=BTREE`` when the
+    benchmark should keep ANN. This class remains for the btree-only CLI
+    command and for results that selected BTREE as the index type.
     """
 
     index: IndexType = IndexType.BTREE
     metric_type: MetricType = MetricType.L2
     column: str = "id"
+    scalar_index: IndexType = IndexType.BTREE
+
+    @model_validator(mode="before")
+    @classmethod
+    def _sync_btree_column(cls, data: object) -> object:
+        if not isinstance(data, dict):
+            return data
+        column = data.get("column")
+        scalar_column = data.get("scalar_column")
+        if column and not scalar_column:
+            data = {**data, "scalar_column": column}
+        elif scalar_column and not column:
+            data = {**data, "column": scalar_column}
+        elif column and scalar_column and column != scalar_column:
+            data = {**data, "scalar_column": column}
+        return data
 
     def parse_metric(self) -> str:
         return _parse_lancedb_metric(self.metric_type)
@@ -314,7 +369,7 @@ class LanceDBBTreeConfig(BaseModel, DBCaseConfig):
         return {}
 
 
-class LanceDBIVFHNSWPQConfig(BaseModel, DBCaseConfig):
+class LanceDBIVFHNSWPQConfig(LanceDBScalarIndex, DBCaseConfig):
     """IVF_HNSW_PQ index — IVF partitioning + HNSW graph + product quantization."""
 
     index: IndexType = IndexType.IVF_HNSW_PQ
