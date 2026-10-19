@@ -48,9 +48,14 @@ class RatedMultiThreadingInsertRunner:
 
     def send_insert_task(self, db: api.VectorDB, emb: list[list[float]], metadata: list[str]):
         def _insert_embeddings(db: api.VectorDB, emb: list[list[float]], metadata: list[str], retry_idx: int = 0):
-            _, error = db.insert_embeddings(emb, metadata)
+            inserted, error = db.insert_embeddings(emb, metadata)
             if error is not None:
                 log.warning(f"Insert Failed, try_idx={retry_idx}, Exception: {error}")
+                # A partial commit is already durable. Retrying the same batch
+                # inserts that prefix a second time.
+                if getattr(error, "non_retryable", False):
+                    msg = f"Non-retryable insert failure after {inserted} inserted rows: {error}"
+                    raise RuntimeError(msg) from error
                 retry_idx += 1
                 if retry_idx <= config.MAX_INSERT_RETRY:
                     time.sleep(retry_idx)
