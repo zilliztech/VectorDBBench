@@ -66,6 +66,7 @@ class DB(Enum):
     SeekDB = "SeekDB"
     VolcMySQL = "VolcMySQL"
     Adbpg = "AnalyticDB for PostgreSQL"
+    Databend = "Databend"
 
     @property
     def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901, PLR0915
@@ -266,6 +267,11 @@ class DB(Enum):
             from .polardb.polardb import PolarDB
 
             return PolarDB
+
+        if self == DB.Databend:
+            from .databend.databend import Databend
+
+            return Databend
 
         if self == DB.Pinot:
             from .pinot.pinot import Pinot
@@ -490,6 +496,11 @@ class DB(Enum):
 
             return PolarDBConfig
 
+        if self == DB.Databend:
+            from .databend.config import DatabendConfig
+
+            return DatabendConfig
+
         if self == DB.Pinot:
             from .pinot.config import PinotConfig
 
@@ -660,7 +671,10 @@ class DB(Enum):
         if self == DB.Hologres:
             from .hologres.config import HologresIndexConfig
 
-            return HologresIndexConfig
+        if self == DB.Databend:
+            from .databend.config import DatabendIndexConfig
+
+            return DatabendIndexConfig
 
         if self == DB.Zvec:
             from .zvec.config import ZvecHNSWIndexConfig

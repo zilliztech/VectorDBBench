@@ -55,6 +55,7 @@ test = [
     "ruff",
     "pytest",
 ]
+
 restful         = [ "flask" ]
 qdrant          = [ "qdrant-client" ]
 pinecone        = [ "pinecone" ]
@@ -90,6 +91,7 @@ seekdb          = [ "mysql-connector-python" ]
 volc_mysql      = [ "mysql-connector-python" ]
 pinot           = [ "requests" ]
 adbpg           = [ "psycopg", "psycopg-binary", "pgvector" ]
+databend        = [ "databend-driver" ]
 
 [project.urls]
 Repository  = "https://github.com/zilliztech/VectorDBBench"

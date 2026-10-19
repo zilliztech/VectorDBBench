@@ -35,3 +35,4 @@ hdrhistogram>=0.10.1
 ir_datasets
 h5py
 huggingface_hub
+databend-driver
