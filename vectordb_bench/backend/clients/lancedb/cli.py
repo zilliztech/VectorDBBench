@@ -1,4 +1,4 @@
-from typing import Annotated, Unpack
+from typing import Annotated, TypedDict, Unpack
 
 import click
 from pydantic import SecretStr
@@ -60,6 +60,40 @@ class LanceDBTypedDict(CommonTypedDict):
     ]
 
 
+class LanceDBScalarTypedDict(TypedDict):
+    scalar_index: Annotated[
+        str,
+        click.option(
+            "--scalar-index",
+            type=click.Choice(["NONE", "BTREE"]),
+            default="NONE",
+            help="Optional scalar B-tree built in addition to the vector index",
+            show_default=True,
+        ),
+    ]
+    scalar_column: Annotated[
+        str,
+        click.option(
+            "--scalar-column",
+            type=click.Choice(["id", "label"]),
+            default="id",
+            help="Column for the scalar B-tree. Label-filter cases predicate on label; range filters predicate on id",
+            show_default=True,
+        ),
+    ]
+
+
+class LanceDBWithScalarTypedDict(LanceDBTypedDict, LanceDBScalarTypedDict):
+    pass
+
+
+def _scalar_case_kwargs(parameters: dict) -> dict:
+    return {
+        "scalar_index": parameters.get("scalar_index", "NONE"),
+        "scalar_column": parameters.get("scalar_column", "id"),
+    }
+
+
 def _build_db_config(**parameters):
     from .config import LanceDBConfig, build_lancedb_storage_options
 
@@ -79,32 +113,32 @@ def _build_db_config(**parameters):
 
 
 @cli.command()
-@click_parameter_decorators_from_typed_dict(LanceDBTypedDict)
-def LanceDB(**parameters: Unpack[LanceDBTypedDict]):
+@click_parameter_decorators_from_typed_dict(LanceDBWithScalarTypedDict)
+def LanceDB(**parameters: Unpack[LanceDBWithScalarTypedDict]):
     from .config import LanceDBNoIndexConfig
 
     run(
         db=DB.LanceDB,
         db_config=_build_db_config(**parameters),
-        db_case_config=LanceDBNoIndexConfig(),
+        db_case_config=LanceDBNoIndexConfig(**_scalar_case_kwargs(parameters)),
         **parameters,
     )
 
 
 @cli.command()
-@click_parameter_decorators_from_typed_dict(LanceDBTypedDict)
-def LanceDBAutoIndex(**parameters: Unpack[LanceDBTypedDict]):
+@click_parameter_decorators_from_typed_dict(LanceDBWithScalarTypedDict)
+def LanceDBAutoIndex(**parameters: Unpack[LanceDBWithScalarTypedDict]):
     from .config import LanceDBAutoIndexConfig
 
     run(
         db=DB.LanceDB,
         db_config=_build_db_config(**parameters),
-        db_case_config=LanceDBAutoIndexConfig(),
+        db_case_config=LanceDBAutoIndexConfig(**_scalar_case_kwargs(parameters)),
         **parameters,
     )
 
 
-class LanceDBIVFPQTypedDict(CommonTypedDict, LanceDBTypedDict):
+class LanceDBIVFPQTypedDict(CommonTypedDict, LanceDBTypedDict, LanceDBScalarTypedDict):
     num_partitions: Annotated[
         int,
         click.option(
@@ -172,12 +206,13 @@ def LanceDBIVFPQ(**parameters: Unpack[LanceDBIVFPQTypedDict]):
             nbits=parameters["nbits"],
             nprobes=parameters["nprobes"],
             refine_factor=parameters["refine_factor"],
+            **_scalar_case_kwargs(parameters),
         ),
         **parameters,
     )
 
 
-class LanceDBIVFTypedDict(CommonTypedDict, LanceDBTypedDict):
+class LanceDBIVFTypedDict(CommonTypedDict, LanceDBTypedDict, LanceDBScalarTypedDict):
     num_partitions: Annotated[
         int,
         click.option(
@@ -222,6 +257,7 @@ def LanceDBIVFFlat(**parameters: Unpack[LanceDBIVFTypedDict]):
             num_partitions=parameters["num_partitions"],
             nprobes=parameters["nprobes"],
             refine_factor=parameters["refine_factor"],
+            **_scalar_case_kwargs(parameters),
         ),
         **parameters,
     )
@@ -239,6 +275,7 @@ def LanceDBIVFSQ(**parameters: Unpack[LanceDBIVFTypedDict]):
             num_partitions=parameters["num_partitions"],
             nprobes=parameters["nprobes"],
             refine_factor=parameters["refine_factor"],
+            **_scalar_case_kwargs(parameters),
         ),
         **parameters,
     )
@@ -270,12 +307,13 @@ def LanceDBIVFRQ(**parameters: Unpack[LanceDBIVFRQTypedDict]):
             nbits=parameters["nbits"],
             nprobes=parameters["nprobes"],
             refine_factor=parameters["refine_factor"],
+            **_scalar_case_kwargs(parameters),
         ),
         **parameters,
     )
 
 
-class LanceDBIVFHNSWSQTypedDict(CommonTypedDict, LanceDBTypedDict):
+class LanceDBIVFHNSWSQTypedDict(CommonTypedDict, LanceDBTypedDict, LanceDBScalarTypedDict):
     num_partitions: Annotated[
         int,
         click.option(
@@ -341,12 +379,13 @@ def LanceDBIVFHNSWSQ(**parameters: Unpack[LanceDBIVFHNSWSQTypedDict]):
             ef=parameters["ef"],
             nprobes=parameters["nprobes"],
             refine_factor=parameters["refine_factor"],
+            **_scalar_case_kwargs(parameters),
         ),
         **parameters,
     )
 
 
-class LanceDBIVFHNSWPQTypedDict(CommonTypedDict, LanceDBTypedDict):
+class LanceDBIVFHNSWPQTypedDict(CommonTypedDict, LanceDBTypedDict, LanceDBScalarTypedDict):
     num_partitions: Annotated[
         int,
         click.option(
@@ -423,6 +462,7 @@ def LanceDBIVFHNSWPQ(**parameters: Unpack[LanceDBIVFHNSWPQTypedDict]):
             ef=parameters["ef"],
             nprobes=parameters["nprobes"],
             refine_factor=parameters["refine_factor"],
+            **_scalar_case_kwargs(parameters),
         ),
         **parameters,
     )
@@ -433,9 +473,9 @@ class LanceDBBTreeTypedDict(CommonTypedDict, LanceDBTypedDict):
         str,
         click.option(
             "--column",
-            type=str,
+            type=click.Choice(["id", "label"]),
             default="id",
-            help="Scalar column for Lance BTree (not a vector index). Default: id",
+            help="Scalar column for a B-tree with no vector index. Label-filter cases use label",
             show_default=True,
         ),
     ]
@@ -449,6 +489,10 @@ def LanceDBBTree(**parameters: Unpack[LanceDBBTreeTypedDict]):
     run(
         db=DB.LanceDB,
         db_config=_build_db_config(**parameters),
-        db_case_config=LanceDBBTreeConfig(column=parameters["column"]),
+        db_case_config=LanceDBBTreeConfig(
+            column=parameters["column"],
+            scalar_index=IndexType.BTREE,
+            scalar_column=parameters["column"],
+        ),
         **parameters,
     )

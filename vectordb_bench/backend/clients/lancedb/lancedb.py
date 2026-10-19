@@ -245,17 +245,19 @@ class LanceDB(VectorDB):
     def optimize(self, data_size: int | None = None):
         assert self.table is not None, "Please call self.init() before"
 
-        # Build index if configured
-        if self.case_config.index != IndexType.NONE:
+        # The vector index and the scalar B-tree are independent. A table can
+        # have IVF_* (or no ANN index) and also a B-tree on id or label.
+        if self.case_config.index not in (IndexType.NONE, IndexType.BTREE):
             index_params = self.case_config.index_param()
-            log.info(f"LanceDB creating index on table ({self.table_name}), params: {index_params}")
-            if self.case_config.index == IndexType.BTREE:
-                from lancedb.index import BTree
+            log.info(f"LanceDB creating vector index on table ({self.table_name}), params: {index_params}")
+            self.table.create_index(**index_params)
 
-                column = index_params.get("column") or self._id_field
-                self.table.create_index(column, config=BTree())
-            else:
-                self.table.create_index(**index_params)
+        scalar_column = self.case_config.scalar_btree_column()
+        if scalar_column:
+            from lancedb.index import BTree
+
+            log.info(f"LanceDB creating scalar BTree on table ({self.table_name}), column: {scalar_column}")
+            self.table.create_index(scalar_column, config=BTree())
 
         # Compact fragments and clean up old versions for better performance.
         # Prefer the unified ``table.optimize()`` API (lancedb >= 0.10), which

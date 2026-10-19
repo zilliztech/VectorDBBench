@@ -161,7 +161,7 @@ def test_concurrent_runner_does_not_retry_lancedb_partial_insert(monkeypatch):
 
 
 def test_optimize_btree_uses_scalar_create_index_api():
-    """BTREE must call create_index(column, config=BTree()), not the vector API."""
+    """A btree-only config calls create_index(column, config=BTree()), not the vector API."""
     from unittest.mock import MagicMock
 
     db = LanceDB.__new__(LanceDB)
@@ -177,3 +177,67 @@ def test_optimize_btree_uses_scalar_create_index_api():
     assert args == ("id",)
     assert kwargs["config"].__class__.__name__ == "BTree"
     db.table.optimize.assert_called_once()
+
+
+def test_optimize_keeps_vector_index_and_adds_scalar_btree():
+    """IVF_* and BTREE(label) are both created, on the vector column and on label."""
+    from unittest.mock import MagicMock
+
+    from vectordb_bench.backend.clients.api import IndexType
+    from vectordb_bench.backend.clients.lancedb.config import LanceDBIVFFlatConfig
+
+    db = LanceDB.__new__(LanceDB)
+    db.table_name = "bench"
+    db._id_field = "id"
+    db.case_config = LanceDBIVFFlatConfig(scalar_index=IndexType.BTREE, scalar_column="label")
+    db.table = MagicMock()
+
+    db.optimize()
+
+    assert db.table.create_index.call_count == 2
+    vector_call, scalar_call = db.table.create_index.call_args_list
+    assert vector_call.kwargs["index_type"] == "IVF_FLAT"
+    assert "config" not in vector_call.kwargs
+    assert scalar_call.args == ("label",)
+    assert scalar_call.kwargs["config"].__class__.__name__ == "BTree"
+    db.table.optimize.assert_called_once()
+
+
+def test_streaming_runner_does_not_retry_lancedb_partial_insert(tmp_path, monkeypatch):
+    """A committed fragment must not be inserted again by the streaming retry loop.
+
+    The first attempt commits ids [0, 1] and then fails. Retrying the same
+    batch would insert [0, 1, 2, 3] and leave [0, 1, 0, 1, 2, 3].
+    """
+    from vectordb_bench.backend.runner import rate_runner as rate_runner_module
+    from vectordb_bench.backend.runner.rate_runner import RatedMultiThreadingInsertRunner
+
+    monkeypatch.setattr(lancedb_module, "LANCEDB_BATCH_SIZE", 2)
+    monkeypatch.setattr(rate_runner_module.time, "sleep", lambda _seconds: None)
+    db = LanceDB(
+        dim=2,
+        db_config={"uri": str(tmp_path / "db")},
+        db_case_config=LanceDBNoIndexConfig(),
+        collection_name="bench",
+        drop_old=True,
+    )
+    embeddings = [[0.1, 0.2], [0.3, 0.4], [0.5, 0.6], [0.7, 0.8]]
+    metadata = [0, 1, 2, 3]
+
+    with db.init():
+        real_add = db.table.add
+        calls = {"n": 0}
+
+        def flaky_add(batch):
+            calls["n"] += 1
+            if calls["n"] == 2:
+                raise RuntimeError("simulated fragment commit failure")
+            return real_add(batch)
+
+        db.table.add = flaky_add
+        runner = RatedMultiThreadingInsertRunner(rate=4, db=db, dataset_iter=iter(()), batch_size=4)
+        with pytest.raises(RuntimeError, match="Non-retryable insert failure"):
+            runner.send_insert_task(db, embeddings, metadata)
+
+        assert calls["n"] == 2
+        assert sorted(db.table.to_pandas()["id"].tolist()) == [0, 1]

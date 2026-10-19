@@ -8,11 +8,15 @@ index-type-specific branches) will fail CI.
 
 Background: IVF_FLAT / IVF_SQ / IVF_RQ / IVF_HNSW_SQ / IVF_HNSW_PQ share
 the same search path as IVF_PQ and the CLI is wired up for all of them.
-BTREE is a scalar index on ``id`` (or ``--column``); it is not vector ANN.
+A scalar B-tree is optional and independent of the vector index, so IVF_* +
+BTREE(id|label) stays expressible. The btree-only config remains for a
+table with no ANN index.
 """
 
 import typing
 from typing import Annotated, get_type_hints
+
+import pytest
 
 from vectordb_bench.backend.clients.api import IndexType, MetricType
 from vectordb_bench.backend.clients.lancedb.config import (
@@ -210,11 +214,43 @@ def test_btree_params_are_forwarded():
     cfg = LanceDBBTreeConfig()
     assert cfg.index == IndexType.BTREE
     assert cfg.index_param() == {"index_type": "BTREE", "column": "id"}
+    assert cfg.scalar_btree_column() == "id"
     assert cfg.search_param() == {}
+    assert cfg.model_dump(mode="json")["scalar_index"] == "BTREE"
+    assert cfg.model_dump(mode="json")["scalar_column"] == "id"
 
     labeled = LanceDBBTreeConfig(column="label")
     assert labeled.index_param() == {"index_type": "BTREE", "column": "label"}
+    assert labeled.scalar_column == "label"
     assert labeled.search_param() == {}
+
+
+def test_scalar_btree_is_independent_of_the_vector_index():
+    cfg = LanceDBIVFFlatConfig(scalar_index="BTREE", scalar_column="label")
+    assert cfg.index == IndexType.IVFFlat
+    assert cfg.scalar_btree_column() == "label"
+    assert cfg.index_param()["index_type"] == "IVF_FLAT"
+    assert "column" not in cfg.index_param()
+    recorded = cfg.model_dump(mode="json")
+    assert recorded["index"] == "IVF_FLAT"
+    assert recorded["scalar_index"] == "BTREE"
+    assert recorded["scalar_column"] == "label"
+
+    bare = LanceDBNoIndexConfig(scalar_index=IndexType.BTREE, scalar_column="id")
+    assert bare.index == IndexType.NONE
+    assert bare.index_param() == {}
+    assert bare.scalar_btree_column() == "id"
+
+    unset = LanceDBIVFSQConfig()
+    assert unset.scalar_btree_column() is None
+    assert unset.model_dump(mode="json")["scalar_index"] == "NONE"
+
+
+def test_scalar_index_rejects_unknown_values():
+    with pytest.raises(ValueError, match="NONE or BTREE"):
+        LanceDBIVFFlatConfig(scalar_index="IVF_FLAT")
+    with pytest.raises(ValueError, match="id or label"):
+        LanceDBIVFFlatConfig(scalar_index="BTREE", scalar_column="vector")
 
 
 # ---------------------------------------------------------------------------
@@ -310,6 +346,8 @@ def test_cli_typed_dicts_define_all_expected_commands():
     # TypedDicts that drive CLI options
     assert {
         "LanceDBTypedDict",
+        "LanceDBScalarTypedDict",
+        "LanceDBWithScalarTypedDict",
         "LanceDBIVFTypedDict",
         "LanceDBIVFPQTypedDict",
         "LanceDBIVFRQTypedDict",
@@ -317,6 +355,21 @@ def test_cli_typed_dicts_define_all_expected_commands():
         "LanceDBIVFHNSWPQTypedDict",
         "LanceDBBTreeTypedDict",
     }.issubset(class_names)
+
+    def _bases(cls_name: str) -> set[str]:
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ClassDef) and node.name == cls_name:
+                return {base.id for base in node.bases if isinstance(base, ast.Name)}
+        return set()
+
+    for vector_command in (
+        "LanceDBIVFTypedDict",
+        "LanceDBIVFPQTypedDict",
+        "LanceDBIVFHNSWSQTypedDict",
+        "LanceDBIVFHNSWPQTypedDict",
+    ):
+        assert "LanceDBScalarTypedDict" in _bases(vector_command)
+    assert "LanceDBScalarTypedDict" in _bases("LanceDBWithScalarTypedDict")
 
     # Command functions registered via @cli.command()
     assert {
