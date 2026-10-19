@@ -27,10 +27,12 @@ from vectordb_bench.backend.clients.milvus.milvus import (
     Milvus,
     _float32_to_bf16_bytes,
 )
+from vectordb_bench.backend.data_source import DatasetSource
 from vectordb_bench.backend.payload import PayloadProfile
 from vectordb_bench.backend.runner.mp_runner import MultiProcessingSearchRunner
+from vectordb_bench.backend.task_runner import CaseRunner, RunningStatus
 from vectordb_bench.interface import BenchMarkRunner
-from vectordb_bench.models import CaseConfig, TaskConfig
+from vectordb_bench.models import CaseConfig, TaskConfig, TaskStage
 
 log = logging.getLogger(__name__)
 
@@ -170,6 +172,53 @@ def test_milvus_bf16_batch_search_converts_every_query() -> None:
     assert db.search_embeddings(queries, k=1) == [[0], [1], [2]]
     # Guards against encoding only the first query of a batch.
     assert captured["data"] == _float32_to_bf16_bytes(queries)
+
+
+@pytest.mark.parametrize(
+    ("vector_data_type", "expected_bytes"),
+    [(VectorDataType.FLOAT32, 30_920), (VectorDataType.BFLOAT16, 15_560)],
+)
+def test_milvus_vector_payload_estimate_uses_vector_data_type_width(
+    monkeypatch: pytest.MonkeyPatch,
+    vector_data_type: VectorDataType,
+    expected_bytes: int,
+) -> None:
+    case_config = CaseConfig(case_id=CaseType.Performance768D1M, k=10, payload_profile=PayloadProfile.VECTOR)
+    runner = CaseRunner(
+        run_id="bf16-payload",
+        config=TaskConfig(
+            db=DB.Milvus,
+            db_config=DB.Milvus.config_cls(),
+            db_case_config=HNSWConfig(M=16, efConstruction=100, ef=64, vector_data_type=vector_data_type),
+            case_config=case_config,
+            stages=[TaskStage.SEARCH_CONCURRENT, TaskStage.SEARCH_SERIAL],
+        ),
+        ca=case_config.case,
+        status=RunningStatus.PENDING,
+        dataset_source=DatasetSource.S3,
+    )
+
+    class SerialRunner:
+        def run(self):
+            return (0.9, 0.9, 0.01, 0.01, 0.01, {10: 0.9}), 0.1
+
+    class ConcurrentRunner:
+        def run(self):
+            return 100.0, [1], [100.0], [0.01], [0.01], [0.01], [0.01]
+
+        def stop(self):
+            return None
+
+    def fake_init_search_runners(self):
+        self.serial_search_runner = SerialRunner()
+        self.search_runner = ConcurrentRunner()
+
+    monkeypatch.setattr(CaseRunner, "_init_search_runners", fake_init_search_runners)
+
+    metrics = runner._run_perf_case(drop_old=False)
+
+    assert metrics.payload_profile == PayloadProfile.VECTOR.value
+    assert metrics.payload_estimated_bytes_per_query == expected_bytes
 
 
 def test_milvus_vector_payload_requests_vector_field_and_returns_ids():

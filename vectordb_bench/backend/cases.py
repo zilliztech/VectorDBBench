@@ -138,10 +138,14 @@ class Case(BaseModel):
     def filters(self) -> Filter:
         return non_filter
 
-    def estimated_payload_bytes_per_query(self, k: int | None) -> int:
+    def estimated_payload_bytes_per_query(self, k: int | None, vector_bytes_per_dim: int = 4) -> int:
         if k is None:
             k = config.K_DEFAULT
-        return self.payload_profile.estimated_bytes_per_query(k=k, dim=self.dataset.data.dim)
+        return self.payload_profile.estimated_bytes_per_query(
+            k=k,
+            dim=self.dataset.data.dim,
+            vector_bytes_per_dim=vector_bytes_per_dim,
+        )
 
     @property
     def is_multitenant(self) -> bool:
@@ -925,10 +929,10 @@ class FtsPerformanceCase(Case):
         int_value = int(self.dataset.data.size * self.filter_rate)
         return NewIntFilter(filter_rate=self.filter_rate, int_field=FTS_FILTER_ID_FIELD, int_value=int_value)
 
-    def estimated_payload_bytes_per_query(self, k: int | None) -> int:
+    def estimated_payload_bytes_per_query(self, k: int | None, vector_bytes_per_dim: int = 4) -> int:
         if k is None:
             k = config.K_DEFAULT
-        return self.payload_profile.estimated_bytes_per_query(k=k, dim=0)
+        return self.payload_profile.estimated_bytes_per_query(k=k, dim=0, vector_bytes_per_dim=vector_bytes_per_dim)
 
 
 class FTSBm25Performance(FtsPerformanceCase):

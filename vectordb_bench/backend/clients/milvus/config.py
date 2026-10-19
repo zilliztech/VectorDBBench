@@ -95,6 +95,10 @@ class HNSWConfig(MilvusIndexConfig, DBCaseConfig):
     index: IndexType = IndexType.HNSW
     vector_data_type: VectorDataType = VectorDataType.FLOAT32
 
+    @property
+    def vector_bytes_per_dim(self) -> int:
+        return 2 if self.vector_data_type == VectorDataType.BFLOAT16 else 4
+
     def index_param(self) -> dict:
         return {
             "metric_type": self.parse_metric(),

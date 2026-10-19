@@ -7,15 +7,15 @@ class PayloadProfile(StrEnum):
     SCALAR_LABEL = "scalar_label"
     TEXT = "text"
 
-    def estimated_bytes_per_query(self, *, k: int, dim: int) -> int:
+    def estimated_bytes_per_query(self, *, k: int, dim: int, vector_bytes_per_dim: int = 4) -> int:
         # Approximate payload size used for cloud leaderboard cost expansion.
-        # ID + distance is about 20 bytes per hit; vector is float32.
+        # ID + distance is about 20 bytes per hit; vectors default to float32 width.
         id_distance_bytes = 20
         scalar_label_bytes = 16
         if self == PayloadProfile.IDS_ONLY:
             return k * id_distance_bytes
         if self == PayloadProfile.VECTOR:
-            return k * (id_distance_bytes + dim * 4)
+            return k * (id_distance_bytes + dim * vector_bytes_per_dim)
         if self == PayloadProfile.SCALAR_LABEL:
             return k * (id_distance_bytes + scalar_label_bytes)
         if self == PayloadProfile.TEXT:

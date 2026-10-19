@@ -367,6 +367,12 @@ class CaseRunner(BaseModel):
             log.info(f"Capacity case loading dataset reaches VectorDB's limit: max capacity = {count}")
             return Metric(max_load_count=count)
 
+    def _estimated_payload_bytes_per_query(self) -> int:
+        return self.ca.estimated_payload_bytes_per_query(
+            self.config.case_config.k,
+            vector_bytes_per_dim=getattr(self.config.db_case_config, "vector_bytes_per_dim", 4),
+        )
+
     def _run_perf_case(self, drop_old: bool = True) -> Metric:
         """run performance cases
 
@@ -447,9 +453,7 @@ class CaseRunner(BaseModel):
                 }
             if hasattr(self.ca, "payload_profile"):
                 m.payload_profile = self.ca.payload_profile.value
-                m.payload_estimated_bytes_per_query = self.ca.estimated_payload_bytes_per_query(
-                    self.config.case_config.k
-                )
+                m.payload_estimated_bytes_per_query = self._estimated_payload_bytes_per_query()
         except Exception as e:
             log.warning(f"Failed to run performance case, reason = {e}")
             traceback.print_exc()
@@ -560,7 +564,7 @@ class CaseRunner(BaseModel):
                 "cold_latency": self.cold_warm_search_runner.run(),
             }
             m.payload_profile = self.ca.payload_profile.value
-            m.payload_estimated_bytes_per_query = self.ca.estimated_payload_bytes_per_query(self.config.case_config.k)
+            m.payload_estimated_bytes_per_query = self._estimated_payload_bytes_per_query()
         except Exception as e:
             log.warning(f"Failed to run cloud cold latency case, reason = {e}")
             traceback.print_exc()
