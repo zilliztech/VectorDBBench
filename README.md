@@ -138,7 +138,7 @@ vectordbbench milvusautoindex \
   <other options>
 ```
 
-`milvushnsw` accepts `--vector-data-type` (YAML: `vector_data_type`) to store vectors as `FLOAT32` (default) or `BFLOAT16`. The index type stays `HNSW`. With `--skip-drop-old` or `--skip-load`, the run fails if the vector field of the collection has a different data type or dimension. Results record the value in `task_config.db_case_config.vector_data_type`.
+`milvushnsw` accepts `--vector-data-type` (YAML: `vector_data_type`) to store vectors as `FLOAT32` (default) or `BFLOAT16`. The index type stays `HNSW`. With `--skip-drop-old --skip-load`, the run fails if the vector field of the collection has a different data type or dimension. Results record the value in `task_config.db_case_config.vector_data_type`.
 
 ```shell
 vectordbbench milvushnsw \

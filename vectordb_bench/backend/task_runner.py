@@ -17,6 +17,7 @@ from .cases import Case, CaseLabel, StreamingPerformanceCase
 from .clients import DB, MetricType, api
 from .data_source import DatasetSource
 from .filter import FilterOp
+from .payload import FLOAT32_BYTES_PER_DIM
 from .runner import (
     ColdWarmSearchRunner,
     ConcurrentInsertRunner,
@@ -370,7 +371,7 @@ class CaseRunner(BaseModel):
     def _estimated_payload_bytes_per_query(self) -> int:
         return self.ca.estimated_payload_bytes_per_query(
             self.config.case_config.k,
-            vector_bytes_per_dim=getattr(self.config.db_case_config, "vector_bytes_per_dim", 4),
+            vector_bytes_per_dim=getattr(self.config.db_case_config, "vector_bytes_per_dim", FLOAT32_BYTES_PER_DIM),
         )
 
     def _run_perf_case(self, drop_old: bool = True) -> Metric:

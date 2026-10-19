@@ -1,5 +1,7 @@
 from enum import StrEnum
 
+FLOAT32_BYTES_PER_DIM = 4
+
 
 class PayloadProfile(StrEnum):
     IDS_ONLY = "ids_only"
@@ -7,7 +9,7 @@ class PayloadProfile(StrEnum):
     SCALAR_LABEL = "scalar_label"
     TEXT = "text"
 
-    def estimated_bytes_per_query(self, *, k: int, dim: int, vector_bytes_per_dim: int = 4) -> int:
+    def estimated_bytes_per_query(self, *, k: int, dim: int, vector_bytes_per_dim: int = FLOAT32_BYTES_PER_DIM) -> int:
         # Approximate payload size used for cloud leaderboard cost expansion.
         # ID + distance is about 20 bytes per hit; vectors default to float32 width.
         id_distance_bytes = 20

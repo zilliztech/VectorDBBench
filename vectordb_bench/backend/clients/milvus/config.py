@@ -3,6 +3,8 @@ from typing import Annotated, ClassVar
 
 from pydantic import BaseModel, Field, SecretStr, field_validator
 
+from vectordb_bench.backend.payload import FLOAT32_BYTES_PER_DIM
+
 from ..api import DBCaseConfig, DBConfig, IndexType, MetricType, SQType
 
 
@@ -87,6 +89,10 @@ class VectorDataType(StrEnum):
     FLOAT32 = "FLOAT32"
     BFLOAT16 = "BFLOAT16"
 
+    @property
+    def bytes_per_dim(self) -> int:
+        return {VectorDataType.FLOAT32: FLOAT32_BYTES_PER_DIM, VectorDataType.BFLOAT16: 2}[self]
+
 
 class HNSWConfig(MilvusIndexConfig, DBCaseConfig):
     M: int
@@ -97,7 +103,7 @@ class HNSWConfig(MilvusIndexConfig, DBCaseConfig):
 
     @property
     def vector_bytes_per_dim(self) -> int:
-        return 2 if self.vector_data_type == VectorDataType.BFLOAT16 else 4
+        return self.vector_data_type.bytes_per_dim
 
     def index_param(self) -> dict:
         return {

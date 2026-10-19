@@ -15,8 +15,9 @@ from pymilvus import DataType
 
 from vectordb_bench.backend.cases import CaseType
 from vectordb_bench.backend.clients import DB
-from vectordb_bench.backend.clients.api import IndexType, MetricType
+from vectordb_bench.backend.clients.api import DBCaseConfig, IndexType, MetricType
 from vectordb_bench.backend.clients.milvus.config import (
+    AutoIndexConfig,
     HNSWConfig,
     MilvusConfig,
     MilvusFtsConfig,
@@ -32,7 +33,7 @@ from vectordb_bench.backend.payload import PayloadProfile
 from vectordb_bench.backend.runner.mp_runner import MultiProcessingSearchRunner
 from vectordb_bench.backend.task_runner import CaseRunner, RunningStatus
 from vectordb_bench.interface import BenchMarkRunner
-from vectordb_bench.models import CaseConfig, TaskConfig, TaskStage
+from vectordb_bench.models import CaseConfig, TaskConfig
 
 log = logging.getLogger(__name__)
 
@@ -42,6 +43,7 @@ def test_float32_to_bf16_bytes_uses_round_to_nearest_even() -> None:
         [
             [0x3F807FFF, 0x3F808000, 0x3F808001, 0x3F818000],
             [0x7F800000, 0xFF800000, 0x7FC00001, 0xFFC00001],
+            [0x7F800001, 0x7FFFFFFF, 0xFFFFFFFF, 0xFF800001],
         ],
         dtype=np.uint32,
     )
@@ -53,6 +55,7 @@ def test_float32_to_bf16_bytes_uses_round_to_nearest_even() -> None:
         [
             [0x3F80, 0x3F80, 0x3F81, 0x3F82],
             [0x7F80, 0xFF80, 0x7FC0, 0xFFC0],
+            [0x7FC0, 0x7FFF, 0xFFFF, 0xFFC0],
         ],
         dtype=np.uint16,
     )
@@ -174,51 +177,70 @@ def test_milvus_bf16_batch_search_converts_every_query() -> None:
     assert captured["data"] == _float32_to_bf16_bytes(queries)
 
 
-@pytest.mark.parametrize(
-    ("vector_data_type", "expected_bytes"),
-    [(VectorDataType.FLOAT32, 30_920), (VectorDataType.BFLOAT16, 15_560)],
-)
-def test_milvus_vector_payload_estimate_uses_vector_data_type_width(
-    monkeypatch: pytest.MonkeyPatch,
-    vector_data_type: VectorDataType,
-    expected_bytes: int,
-) -> None:
-    case_config = CaseConfig(case_id=CaseType.Performance768D1M, k=10, payload_profile=PayloadProfile.VECTOR)
-    runner = CaseRunner(
-        run_id="bf16-payload",
+def _case_runner(db_case_config: DBCaseConfig, case_config: CaseConfig) -> CaseRunner:
+    return CaseRunner(
+        run_id="payload-estimate",
         config=TaskConfig(
             db=DB.Milvus,
             db_config=DB.Milvus.config_cls(),
-            db_case_config=HNSWConfig(M=16, efConstruction=100, ef=64, vector_data_type=vector_data_type),
+            db_case_config=db_case_config,
             case_config=case_config,
-            stages=[TaskStage.SEARCH_CONCURRENT, TaskStage.SEARCH_SERIAL],
+            stages=[],
         ),
         ca=case_config.case,
         status=RunningStatus.PENDING,
         dataset_source=DatasetSource.S3,
     )
 
-    class SerialRunner:
-        def run(self):
-            return (0.9, 0.9, 0.01, 0.01, 0.01, {10: 0.9}), 0.1
 
-    class ConcurrentRunner:
-        def run(self):
-            return 100.0, [1], [100.0], [0.01], [0.01], [0.01], [0.01]
+@pytest.mark.parametrize(
+    ("db_case_config", "expected_bytes"),
+    [
+        (HNSWConfig(M=16, efConstruction=100, ef=64), 30_920),
+        (HNSWConfig(M=16, efConstruction=100, ef=64, vector_data_type=VectorDataType.BFLOAT16), 15_560),
+        (AutoIndexConfig(), 30_920),
+    ],
+)
+def test_milvus_vector_payload_estimate_uses_vector_data_type_width(
+    db_case_config: DBCaseConfig,
+    expected_bytes: int,
+) -> None:
+    case_config = CaseConfig(case_id=CaseType.Performance768D1M, k=10, payload_profile=PayloadProfile.VECTOR)
 
-        def stop(self):
-            return None
-
-    def fake_init_search_runners(self):
-        self.serial_search_runner = SerialRunner()
-        self.search_runner = ConcurrentRunner()
-
-    monkeypatch.setattr(CaseRunner, "_init_search_runners", fake_init_search_runners)
-
-    metrics = runner._run_perf_case(drop_old=False)
+    metrics = _case_runner(db_case_config, case_config)._run_perf_case(drop_old=False)
 
     assert metrics.payload_profile == PayloadProfile.VECTOR.value
     assert metrics.payload_estimated_bytes_per_query == expected_bytes
+
+
+@pytest.mark.parametrize(
+    ("vector_data_type", "expected_bytes"),
+    [(VectorDataType.FLOAT32, 309_200), (VectorDataType.BFLOAT16, 155_600)],
+)
+def test_milvus_cold_latency_payload_estimate_uses_vector_data_type_width(
+    monkeypatch: pytest.MonkeyPatch,
+    vector_data_type: VectorDataType,
+    expected_bytes: int,
+) -> None:
+    runner = _case_runner(
+        HNSWConfig(M=16, efConstruction=100, ef=64, vector_data_type=vector_data_type),
+        CaseConfig(case_id=CaseType.CloudColdLatencyCase, custom_case={"query_count": 1, "payload_profile": "vector"}),
+    )
+    runner.db = MagicMock()
+    monkeypatch.setattr(
+        "vectordb_bench.backend.task_runner.ColdWarmSearchRunner",
+        lambda **_kwargs: SimpleNamespace(run=lambda: {}),
+    )
+
+    metric = runner._run_cloud_cold_latency_case(drop_old=False)
+
+    assert metric.payload_estimated_bytes_per_query == expected_bytes
+
+
+def test_milvus_fts_payload_estimate_accepts_vector_width() -> None:
+    runner = _case_runner(MilvusFtsConfig(), CaseConfig(case_id=CaseType.FTSBm25Performance, k=10))
+
+    assert runner._estimated_payload_bytes_per_query() == 200
 
 
 def test_milvus_vector_payload_requests_vector_field_and_returns_ids():

@@ -29,7 +29,7 @@ def _float32_to_bf16_bytes(vectors: Iterable[list[float]]) -> list[bytes]:
     rounding_bias = np.uint32(0x7FFF) + ((bits >> np.uint32(16)) & np.uint32(1))
     bf16 = ((bits + rounding_bias) >> np.uint32(16)).astype("<u2")
 
-    # Preserve NaNs instead of allowing payload rounding to overflow to infinity.
+    # Preserve NaNs; plain rounding can turn them into infinity or a signed zero.
     nan_mask = (bits & np.uint32(0x7FFFFFFF)) > np.uint32(0x7F800000)
     bf16[nan_mask] = ((bits[nan_mask] >> np.uint32(16)) | np.uint32(0x40)).astype("<u2")
     return [row.tobytes() for row in bf16]
