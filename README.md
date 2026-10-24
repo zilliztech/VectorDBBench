@@ -598,18 +598,20 @@ To list the options for zvec, execute vectordbbench zvec --help
 
                   #### Zvec DiskANN
 
-                  DiskANN requires a zvec SDK exposing `DiskAnnIndexParam`, `DiskAnnQueryParam`, and `Collection.close()`.
+                  DiskANN requires `zvec>=0.7.0`, which provides `Collection.close()`. The SDK must also expose
+                  `DiskAnnIndexParam` and `DiskAnnQueryParam`.
                   This adapter uses zvec's native C++ DiskANN, not the Microsoft Rust implementation.
-                  From this updated checkout on Linux, in an environment with benchmark dependencies and the DiskANN-enabled SDK
-                  already installed, install the adapter and run its checks:
+                  From this updated checkout on Linux, install the adapter with its Zvec and test dependencies, then run the checks:
 
                   ```bash
-                  python -m pip install --no-deps -e .
-                  python -m pip install pytest
+                  python -m pip install -e ".[zvec,test]"
                   vectordbbench zvec --help
                   python -m pytest tests/test_zvec.py -q
                   ZVEC_NATIVE_TESTS=1 python -m pytest tests/test_zvec.py -k native_diskann -v
                   ```
+
+                  The `zvec` extra enforces the SDK minimum. `--no-deps` bypasses dependency resolution; use it only after
+                  independently verifying the installed SDK version and required APIs.
 
                   The native test builds 1,200 32-dimensional vectors in a temporary directory, checks insertion and index completion,
                   closes/reopens the collection, searches it, and exercises rebuilding. It is a functionality test, not a recall or

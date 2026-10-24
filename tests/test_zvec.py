@@ -4,6 +4,7 @@ from pathlib import Path
 import pickle
 import random
 import sys
+import tomllib
 from types import ModuleType, SimpleNamespace
 from unittest.mock import Mock
 
@@ -15,6 +16,14 @@ from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.clients.api import IndexType, MetricType
 from vectordb_bench.backend.clients.zvec.config import ZvecDiskANNIndexConfig, ZvecHNSWIndexConfig
 from vectordb_bench.backend.filter import non_filter
+
+
+def test_zvec_dependency_floor_requires_collection_close() -> None:
+    repo_root = Path(__file__).resolve().parents[1]
+    with (repo_root / "pyproject.toml").open("rb") as source:
+        dependencies = tomllib.load(source)["project"]["optional-dependencies"]["zvec"]
+
+    assert "zvec>=0.7.0" in dependencies
 
 
 def test_diskann_config_and_registry_roundtrip():
