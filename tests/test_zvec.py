@@ -300,8 +300,6 @@ def test_cli_defaults_and_diskann_selection(monkeypatch):
             "unused",
             "--index-type",
             "diskann",
-            "--metric-type",
-            "cosine",
             "--max-degree",
             "64",
             "--build-list-size",
@@ -320,9 +318,80 @@ def test_cli_defaults_and_diskann_selection(monkeypatch):
     assert result.exit_code == 0, result.output
     config = captured["db_case_config"]
     assert isinstance(config, ZvecDiskANNIndexConfig)
-    assert config.metric_type == MetricType.COSINE
+    assert config.metric_type is None
     assert config.search_list_size == 400 and config.build_list_size == 100
     assert captured["drop_old"] is False and captured["load"] is False
+
+
+def test_cli_help_documents_dataset_metric():
+    from vectordb_bench.backend.clients.zvec import cli as zvec_cli
+
+    result = CliRunner().invoke(zvec_cli.Zvec, ["--help"])
+    assert result.exit_code == 0, result.output
+    assert "--metric-type" not in result.output
+    assert "selected dataset's distance metric" in " ".join(result.output.split())
+
+
+@pytest.mark.parametrize("index_type", ["hnsw", "diskann"])
+@pytest.mark.parametrize("metric_type", ["IP", "COSINE", "L2"])
+def test_cli_rejects_metric_override(monkeypatch: pytest.MonkeyPatch, index_type: str, metric_type: str):
+    from vectordb_bench.backend.clients.zvec import cli as zvec_cli
+
+    run = Mock()
+    monkeypatch.setattr(zvec_cli, "run", run)
+    result = CliRunner().invoke(
+        zvec_cli.Zvec,
+        ["--path", "unused", "--index-type", index_type, "--metric-type", metric_type, "--dry-run"],
+    )
+    assert result.exit_code == 2, result.output
+    assert "No such option: --metric-type" in result.output
+    run.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    ("index_type", "config_cls"),
+    [("hnsw", ZvecHNSWIndexConfig), ("diskann", ZvecDiskANNIndexConfig)],
+)
+@pytest.mark.parametrize(
+    ("case_type", "expected_metric"),
+    [("Performance768D10M", MetricType.COSINE), ("Performance768D100M", MetricType.L2)],
+)
+def test_cli_task_uses_dataset_metric_after_assembly(
+    monkeypatch: pytest.MonkeyPatch,
+    index_type: str,
+    config_cls: type[ZvecHNSWIndexConfig] | type[ZvecDiskANNIndexConfig],
+    case_type: str,
+    expected_metric: MetricType,
+):
+    from vectordb_bench.backend.assembler import Assembler
+    from vectordb_bench.backend.clients.zvec import cli as zvec_cli
+    from vectordb_bench.backend.data_source import DatasetSource
+    from vectordb_bench.cli import cli as common_cli
+    from vectordb_bench.models import TaskConfig
+
+    captured_tasks: list[TaskConfig] = []
+
+    def capture_tasks(tasks: list[TaskConfig], _task_label: str | None) -> bool:
+        captured_tasks.extend(tasks)
+        return True
+
+    monkeypatch.setattr(common_cli.benchmark_runner, "run", capture_tasks)
+    monkeypatch.setattr(common_cli.benchmark_runner, "has_running", lambda: False)
+    result = CliRunner().invoke(
+        zvec_cli.Zvec,
+        ["--path", "unused", "--index-type", index_type, "--case-type", case_type, "--skip-drop-old", "--skip-load"],
+    )
+    assert result.exit_code == 0, result.output
+    assert len(captured_tasks) == 1
+    task = captured_tasks[0]
+    assert isinstance(task.db_case_config, config_cls)
+    assert task.db_case_config.metric_type is None
+
+    runner = Assembler.assemble("test-zvec-metric", task, DatasetSource.S3)
+
+    assert runner.ca.dataset.data.metric_type == expected_metric
+    assert runner.config.db_case_config.metric_type == expected_metric
+    assert runner.db is None
 
 
 @pytest.mark.parametrize(

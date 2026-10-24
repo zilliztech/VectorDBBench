@@ -572,7 +572,10 @@ Options:
 
 ### Run Zvec from command line
 
-HNSW remains the default, so existing commands are unchanged:
+HNSW remains the default. For both HNSW and DiskANN, the distance metric is determined by the selected dataset during task
+assembly, not by a Zvec CLI option. For example, `Performance768D10M` uses COSINE.
+
+Existing HNSW commands are unchanged:
 
 ```bash
 vectordbbench zvec --path Performance768D10M --db-label 16c64g-v0.1 \
@@ -615,7 +618,6 @@ To list the options for zvec, execute vectordbbench zvec --help
                   | Option | Default | Meaning |
                   | --- | --- | --- |
                   | `--index-type` | hnsw | Select hnsw or diskann |
-                  | `--metric-type` | IP when omitted | IP, COSINE or L2; use the same metric when building and reopening |
                   | `--max-degree` | 64 | DiskANN graph degree, 1-100 |
                   | `--build-list-size` | 100 | Construction candidate list, 10-100 |
                   | `--search-list-size` | 300 | Query candidate list, at least 1; the engine uses at least top-k |
@@ -632,7 +634,7 @@ To list the options for zvec, execute vectordbbench zvec --help
                   ```bash
                   export DATASET_LOCAL_DIR="$PWD/dataset"
                   vectordbbench zvec --index-type diskann --path Performance768D10M_DiskANN \
-                    --case-type Performance768D10M --metric-type IP \
+                    --case-type Performance768D10M \
                     --max-degree 64 --build-list-size 100 --pq-chunk-num 96 \
                     --drop-old --load --skip-search-serial --skip-search-concurrent
                   ```
@@ -641,7 +643,7 @@ To list the options for zvec, execute vectordbbench zvec --help
 
                   ```bash
                   vectordbbench zvec --index-type diskann --path Performance768D10M_DiskANN \
-                    --case-type Performance768D10M --metric-type IP \
+                    --case-type Performance768D10M \
                     --max-degree 64 --build-list-size 100 --pq-chunk-num 96 \
                     --search-list-size 300 --num-concurrency 12,14,16,18,20 \
                     --skip-drop-old --skip-load --search-serial --search-concurrent
@@ -649,10 +651,10 @@ To list the options for zvec, execute vectordbbench zvec --help
 
                   Search-only runs validate the stored dimensions, metric, build parameters, positive document count and complete
                   indexing. Keep build parameters unchanged when reopening; sweep `--search-list-size` to compare QPS at matched recall.
-                  The examples explicitly use IP, the adapter's historical default. A dataset labelled COSINE does not change that
-                  default or prove that its vectors are normalized. For a COSINE comparison, build both algorithms with
-                  `--metric-type COSINE` in separate paths; do not relabel an existing IP index as COSINE. Multiple search processes can
-                  duplicate in-memory PQ codes and metadata, so measure total process memory as well as QPS.
+                  These examples use the Cohere dataset's COSINE metric for both building and searching. For an HNSW/DiskANN
+                  comparison, use the same dataset and separate collection paths; do not relabel an existing IP index as COSINE.
+                  Multiple search processes can duplicate in-memory PQ codes and metadata, so measure total process memory as well
+                  as QPS.
 
 ### Run Doris from command line
 

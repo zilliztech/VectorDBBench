@@ -9,7 +9,7 @@ from ....cli.cli import (
     click_parameter_decorators_from_typed_dict,
     run,
 )
-from .. import DB, MetricType
+from .. import DB
 from .config import ZvecConfig, ZvecDiskANNIndexConfig, ZvecHNSWIndexConfig
 
 
@@ -60,15 +60,6 @@ class ZvecAlgorithmTypedDict(ZvecHNSWTypedDict):
             help="Zvec vector index algorithm.",
         ),
     ]
-    metric_type: Annotated[
-        str | None,
-        click.option(
-            "--metric-type",
-            type=click.Choice(["IP", "COSINE", "L2"], case_sensitive=False),
-            default=None,
-            help="Distance metric; omitted keeps the existing IP default.",
-        ),
-    ]
     max_degree: Annotated[
         int,
         click.option("--max-degree", type=click.IntRange(1, 100), default=64, help="DiskANN graph out-degree."),
@@ -105,6 +96,7 @@ class ZvecAlgorithmTypedDict(ZvecHNSWTypedDict):
 @cli.command()
 @click_parameter_decorators_from_typed_dict(ZvecAlgorithmTypedDict)
 def Zvec(**parameters: Unpack[ZvecAlgorithmTypedDict]):
+    """Run Zvec using the selected dataset's distance metric."""
     index_type = parameters["index_type"].lower()
     context = click.get_current_context()
     unsupported = (
@@ -117,11 +109,8 @@ def Zvec(**parameters: Unpack[ZvecAlgorithmTypedDict]):
             message = f"--{parameter.replace('_', '-')} does not apply to {index_type}"
             raise click.UsageError(message)
 
-    metric_type = parameters["metric_type"]
-    metric_type = MetricType(metric_type.upper()) if metric_type else None
     if index_type == "diskann":
         case_config = ZvecDiskANNIndexConfig(
-            metric_type=metric_type,
             max_degree=parameters["max_degree"],
             build_list_size=parameters["build_list_size"],
             search_list_size=parameters["search_list_size"],
@@ -129,7 +118,6 @@ def Zvec(**parameters: Unpack[ZvecAlgorithmTypedDict]):
         )
     else:
         case_config = ZvecHNSWIndexConfig(
-            metric_type=metric_type,
             M=parameters["m"],
             ef_construction=parameters["ef_construction"],
             ef_search=parameters["ef_search"],
