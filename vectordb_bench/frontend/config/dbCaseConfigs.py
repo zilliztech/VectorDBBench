@@ -2865,6 +2865,86 @@ CaseConfigParamInput_ef_construction_LanceDB = CaseConfigInput(
     isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
 )
 
+CaseConfigParamInput_IndexType_Zvec = CaseConfigInput(
+    label=CaseConfigParamType.IndexType,
+    inputType=InputType.Option,
+    inputConfig={"options": [IndexType.HNSW.value, IndexType.DISKANN.value]},
+    inputHelp="Select the Zvec index algorithm. HNSW is the default; use separate paths for different algorithms.",
+)
+
+CaseConfigParamInput_M_Zvec = CaseConfigInput(
+    label=CaseConfigParamType.M,
+    inputType=InputType.Number,
+    inputConfig={"min": 1, "max": MAX_STREAMLIT_INT, "value": 50},
+    inputHelp="HNSW graph parameter M.",
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, IndexType.HNSW.value) == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_ef_construction_Zvec = CaseConfigInput(
+    label=CaseConfigParamType.ef_construction,
+    inputType=InputType.Number,
+    inputConfig={"min": 1, "max": MAX_STREAMLIT_INT, "value": 500},
+    inputHelp="HNSW construction candidate list size.",
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, IndexType.HNSW.value) == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_ef_search_Zvec = CaseConfigInput(
+    label=CaseConfigParamType.ef_search,
+    inputType=InputType.Number,
+    inputConfig={"min": 1, "max": MAX_STREAMLIT_INT, "value": 300},
+    inputHelp="HNSW query candidate list size.",
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, IndexType.HNSW.value) == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_quantize_type_Zvec = CaseConfigInput(
+    label=CaseConfigParamType.quantize_type,
+    displayLabel="quantize_type (empty = FP32)",
+    inputType=InputType.Option,
+    inputConfig={"options": ["", "fp16", "int8"]},
+    inputHelp="HNSW scalar quantization. Leave empty for unquantized FP32 vectors.",
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, IndexType.HNSW.value) == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_is_using_refiner_Zvec = CaseConfigInput(
+    label=CaseConfigParamType.is_using_refiner,
+    inputType=InputType.Bool,
+    inputConfig={"value": False},
+    inputHelp="Refine HNSW ef_search candidates to top-k with unquantized vectors.",
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, IndexType.HNSW.value) == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_max_degree_Zvec = CaseConfigInput(
+    label=CaseConfigParamType.max_degree,
+    inputType=InputType.Number,
+    inputConfig={"min": 1, "max": 100, "value": 64},
+    inputHelp="DiskANN graph out-degree.",
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType) == IndexType.DISKANN.value,
+)
+
+CaseConfigParamInput_build_list_size_Zvec = CaseConfigInput(
+    label=CaseConfigParamType.build_list_size,
+    inputType=InputType.Number,
+    inputConfig={"min": 10, "max": 100, "value": 100},
+    inputHelp="DiskANN construction candidate list size.",
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType) == IndexType.DISKANN.value,
+)
+
+CaseConfigParamInput_search_list_size_Zvec = CaseConfigInput(
+    label=CaseConfigParamType.search_list_size,
+    inputType=InputType.Number,
+    inputConfig={"min": 1, "max": MAX_STREAMLIT_INT, "value": 300},
+    inputHelp="DiskANN query candidate list size; the engine uses at least top-k.",
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType) == IndexType.DISKANN.value,
+)
+
+CaseConfigParamInput_pq_chunk_num_Zvec = CaseConfigInput(
+    label=CaseConfigParamType.pq_chunk_num,
+    inputType=InputType.Number,
+    inputConfig={"min": 0, "max": 1024, "value": 0},
+    inputHelp="DiskANN PQ bytes per vector. 0 selects automatically; nonzero must not exceed the vector dimension.",
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType) == IndexType.DISKANN.value,
+)
+
 CaseConfigParamInput_IndexType_Lindorm = CaseConfigInput(
     label=CaseConfigParamType.IndexType,
     inputHelp="Select Index Type",
@@ -3065,6 +3145,23 @@ LanceDBLoadConfig = [
 ]
 
 LanceDBPerformanceConfig = LanceDBLoadConfig
+
+ZvecLoadConfig = [
+    CaseConfigParamInput_IndexType_Zvec,
+    CaseConfigParamInput_M_Zvec,
+    CaseConfigParamInput_ef_construction_Zvec,
+    CaseConfigParamInput_quantize_type_Zvec,
+    CaseConfigParamInput_max_degree_Zvec,
+    CaseConfigParamInput_build_list_size_Zvec,
+    CaseConfigParamInput_pq_chunk_num_Zvec,
+]
+
+ZvecPerformanceConfig = [
+    *ZvecLoadConfig,
+    CaseConfigParamInput_ef_search_Zvec,
+    CaseConfigParamInput_is_using_refiner_Zvec,
+    CaseConfigParamInput_search_list_size_Zvec,
+]
 
 AWSOpensearchLoadingConfig = [
     CaseConfigParamInput_REFRESH_INTERVAL_AWSOpensearch,
@@ -3488,6 +3585,10 @@ CASE_CONFIG_MAP = {
     DB.LanceDB: {
         CaseLabel.Load: LanceDBLoadConfig,
         CaseLabel.Performance: LanceDBPerformanceConfig,
+    },
+    DB.Zvec: {
+        CaseLabel.Load: ZvecLoadConfig,
+        CaseLabel.Performance: ZvecPerformanceConfig,
     },
     DB.TencentElasticsearch: {
         CaseLabel.Load: TencentElasticsearchLoadingConfig,

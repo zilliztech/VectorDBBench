@@ -575,6 +575,11 @@ Options:
 HNSW remains the default. For both HNSW and DiskANN, the distance metric is determined by the selected dataset during task
 assembly, not by a Zvec CLI option. For example, `Performance768D10M` uses COSINE.
 
+In the run-test UI, select Zvec and choose HNSW or DISKANN in the case settings. Only parameters for the selected algorithm
+are displayed. Load cases expose build parameters; performance and streaming cases also expose search parameters. Defaults
+match the CLI. Use separate collection paths for HNSW and DiskANN, and keep DiskANN build parameters unchanged for search-only
+runs.
+
 Existing HNSW commands are unchanged:
 
 ```bash
