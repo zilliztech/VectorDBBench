@@ -344,7 +344,8 @@ def test_cli_rejects_metric_override(monkeypatch: pytest.MonkeyPatch, index_type
         ["--path", "unused", "--index-type", index_type, "--metric-type", metric_type, "--dry-run"],
     )
     assert result.exit_code == 2, result.output
-    assert "No such option: --metric-type" in result.output
+    assert "No such option" in result.output
+    assert "--metric-type" in result.output
     run.assert_not_called()
 
 
