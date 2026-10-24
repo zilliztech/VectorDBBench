@@ -663,8 +663,10 @@ class DB(Enum):
             return HologresIndexConfig
 
         if self == DB.Zvec:
-            from .zvec.config import ZvecHNSWIndexConfig
+            from .zvec.config import ZvecDiskANNIndexConfig, ZvecHNSWIndexConfig
 
+            if index_type == IndexType.DISKANN:
+                return ZvecDiskANNIndexConfig
             return ZvecHNSWIndexConfig
 
         if self == DB.TencentElasticsearch:
