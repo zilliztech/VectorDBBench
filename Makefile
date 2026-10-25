@@ -1,5 +1,10 @@
-unittest:
-	PYTHONPATH=`pwd` python3 -m pytest tests/test_dataset.py::TestDataSet::test_download_small -svv
+unit-test:
+	python -m pytest --disable-socket tests/unit
+
+unittest: unit-test
+
+e2e-test:
+	python -m pytest tests/e2e -svv
 
 format:
 	PYTHONPATH=`pwd` python3 -m black vectordb_bench
