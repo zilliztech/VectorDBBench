@@ -1,4 +1,4 @@
-import datetime
+import datetime as dt
 import json
 import logging
 import math
@@ -490,7 +490,7 @@ class Vespa(VectorDB):
             ValidationID,
         )
 
-        tomorrow = datetime.date.today() + datetime.timedelta(days=1)
+        tomorrow = dt.date.today() + dt.timedelta(days=1)
 
         if self._is_fts:
             fields = [
