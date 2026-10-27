@@ -123,9 +123,11 @@ class KiviDB(VectorDB):
         self.conn = self._connect()
         ef_runtime = self.case_config.search_param()["ef_runtime"]
         self.ef_clause = f" EF_RUNTIME {ef_runtime}" if ef_runtime else ""
-        yield
-        self.conn.close()
-        self.conn = None
+        try:
+            yield
+        finally:
+            self.conn.close()
+            self.conn = None
 
     def insert_embeddings(
         self,

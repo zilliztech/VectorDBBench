@@ -17,11 +17,16 @@ from collections.abc import Callable
 import numpy as np
 import pytest
 import redis
+from pydantic import SecretStr
 
+from vectordb_bench.backend.cases import CaseType
 from vectordb_bench.backend.clients import DB, IndexType, MetricType
-from vectordb_bench.backend.clients.kividb.config import KiviDBFLATConfig, KiviDBHNSWConfig
+from vectordb_bench.backend.clients.kividb.config import KiviDBConfig, KiviDBFLATConfig, KiviDBHNSWConfig
 from vectordb_bench.backend.clients.kividb.kividb import escape_tag_value
 from vectordb_bench.backend.filter import FilterOp, IntFilter, LabelFilter, non_filter
+from vectordb_bench.frontend.components.run_test.generateTasks import generate_tasks
+from vectordb_bench.frontend.config.dbCaseConfigs import InputType, get_case_config_inputs
+from vectordb_bench.models import CaseConfig
 
 HOST = os.environ.get("KIVIDB_HOST", "localhost")
 PORT = int(os.environ.get("KIVIDB_PORT", "6380"))
@@ -52,6 +57,58 @@ def test_metric_mapping():
 def test_tag_values_are_escaped():
     assert escape_tag_value("label_5p") == "label_5p"
     assert escape_tag_value("a-b c|d") == "a\\-b\\ c\\|d"
+
+
+def test_autoindex_falls_back_to_hnsw():
+    assert DB.KiviDB.case_config_cls(IndexType.AUTOINDEX) is KiviDBHNSWConfig
+
+
+@pytest.mark.parametrize(
+    ("index", "expected"),
+    [(None, KiviDBHNSWConfig), (IndexType.HNSW.value, KiviDBHNSWConfig), (IndexType.Flat.value, KiviDBFLATConfig)],
+    ids=["default", "hnsw", "flat"],
+)
+def test_frontend_generates_tasks(index: str | None, expected: type):
+    """Fill the KiviDB inputs with their defaults, as the run-test page does, then generate the task."""
+    case = CaseConfig(case_id=CaseType.Performance768D1M)
+    ui: dict = {}
+    for inp in get_case_config_inputs(DB.KiviDB, case.case.label):
+        if inp.isDisplayed(ui):
+            if inp.inputType == InputType.Option:
+                ui[inp.label] = index or inp.inputConfig["options"][0]
+            else:
+                ui[inp.label] = inp.inputConfig["value"]
+    db_config = KiviDBConfig(db_label="test", host=SecretStr("localhost"))
+    (task,) = generate_tasks([DB.KiviDB], {DB.KiviDB: db_config}, [case], {DB.KiviDB: {case: ui}}, batch_size=100)
+    assert type(task.db_case_config) is expected
+    if expected is KiviDBHNSWConfig:
+        assert task.db_case_config.index_param()["m"] == 16
+        assert task.db_case_config.index_param()["ef_construction"] == 200
+        assert task.db_case_config.search_param() == {"ef_runtime": 10}
+
+
+class _FakeConn:
+    closed = False
+
+    def close(self):
+        self.closed = True
+
+
+def test_init_closes_connection_when_body_raises(monkeypatch: pytest.MonkeyPatch):
+    db = DB.KiviDB.init_cls.__new__(DB.KiviDB.init_cls)
+    db.case_config = KiviDBHNSWConfig()
+    conn = _FakeConn()
+    monkeypatch.setattr(db, "_connect", lambda: conn)
+
+    def insert_fails():
+        with db.init():
+            assert db.conn is conn
+            raise RuntimeError("boom")
+
+    with pytest.raises(RuntimeError, match="boom"):
+        insert_fails()
+    assert conn.closed
+    assert db.conn is None
 
 
 # ---------------------------------------------------------- integration tests

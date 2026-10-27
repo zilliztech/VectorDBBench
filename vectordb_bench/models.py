@@ -65,6 +65,7 @@ class CaseConfigParamType(Enum):
     EF = "ef"
     SearchList = "search_list"
     ef_search = "ef_search"
+    ef_runtime = "ef_runtime"
     Nlist = "nlist"
     Nprobe = "nprobe"
     MaxConnections = "maxConnections"

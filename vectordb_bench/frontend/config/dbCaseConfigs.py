@@ -2924,6 +2924,54 @@ AliSQLPerformanceConfig = [
     CaseConfigParamInput_EFSearch_AliSQL,
 ]
 
+CaseConfigParamInput_IndexType_KiviDB = CaseConfigInput(
+    label=CaseConfigParamType.IndexType,
+    inputHelp="Select Index Type",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [
+            IndexType.HNSW.value,
+            IndexType.Flat.value,
+        ],
+    },
+)
+
+CaseConfigParamInput_M_KiviDB = CaseConfigInput(
+    label=CaseConfigParamType.M,
+    inputHelp="HNSW M: max neighbors per node",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 4,
+        "max": 64,
+        "value": 16,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_EFConstruction_KiviDB = CaseConfigInput(
+    label=CaseConfigParamType.ef_construction,
+    inputHelp="HNSW EF_CONSTRUCTION: candidate list size while building",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 8,
+        "max": 1024,
+        "value": 200,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_EFRuntime_KiviDB = CaseConfigInput(
+    label=CaseConfigParamType.ef_runtime,
+    inputHelp="HNSW EF_RUNTIME: candidate list size per query (server default 10)",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": MAX_STREAMLIT_INT,
+        "value": 10,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
+)
+
 CaseConfigParamInput_IndexType_LanceDB = CaseConfigInput(
     label=CaseConfigParamType.IndexType,
     inputHelp="AUTOINDEX = IVFPQ with default parameters",
@@ -3232,6 +3280,18 @@ LanceDBLoadConfig = [
 ]
 
 LanceDBPerformanceConfig = LanceDBLoadConfig
+
+KiviDBLoadConfig = [
+    CaseConfigParamInput_IndexType_KiviDB,
+    CaseConfigParamInput_M_KiviDB,
+    CaseConfigParamInput_EFConstruction_KiviDB,
+]
+KiviDBPerformanceConfig = [
+    CaseConfigParamInput_IndexType_KiviDB,
+    CaseConfigParamInput_M_KiviDB,
+    CaseConfigParamInput_EFConstruction_KiviDB,
+    CaseConfigParamInput_EFRuntime_KiviDB,
+]
 
 AWSOpensearchLoadingConfig = [
     CaseConfigParamInput_REFRESH_INTERVAL_AWSOpensearch,
@@ -3690,6 +3750,10 @@ CASE_CONFIG_MAP = {
     DB.Adbpg: {
         CaseLabel.Load: AdbpgLoadConfig,
         CaseLabel.Performance: AdbpgPerformanceConfig,
+    },
+    DB.KiviDB: {
+        CaseLabel.Load: KiviDBLoadConfig,
+        CaseLabel.Performance: KiviDBPerformanceConfig,
     },
 }
 

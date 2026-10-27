@@ -779,9 +779,9 @@ class DB(Enum):
             return ValkeyHNSWConfig
 
         if self == DB.KiviDB:
-            from .kividb.config import _kividb_case_config
+            from .kividb.config import KiviDBHNSWConfig, _kividb_case_config
 
-            return _kividb_case_config.get(index_type)
+            return _kividb_case_config.get(index_type, KiviDBHNSWConfig)
 
         # DB.Pinecone, DB.Redis
         return EmptyDBCaseConfig
