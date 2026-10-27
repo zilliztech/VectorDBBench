@@ -3,7 +3,7 @@
 The unit tests need nothing. The `integration` tests need a KiviDB server
 (>= 1.0.5) and are skipped when none is reachable:
 
-    docker run -d -p 6380:6380 quay.io/kividbio/kividb:v1.0.5-full
+    docker run -d -p 6380:6380 ghcr.io/kividbio/kividb:v1.1.2-full
     KIVIDB_HOST=localhost KIVIDB_PORT=6380 pytest tests/test_kividb.py -v
 
 Recall is checked against brute-force ground truth over the exact vectors
