@@ -19,9 +19,17 @@ from .config import PgVectorConfigDict, PgVectorIndexConfig
 log = logging.getLogger(__name__)
 
 
+def _redact_connect_config(connect_config: dict[str, Any]) -> dict[str, Any]:
+    redacted = dict(connect_config)
+    if "password" in redacted:
+        redacted["password"] = "**********"  # noqa: S105
+    return redacted
+
+
 class PgVector(VectorDB):
     """Use psycopg instructions"""
 
+    name = "PgVector"
     thread_safe: bool = False
     supported_filter_types: list[FilterOp] = [
         FilterOp.NonFilter,
@@ -43,7 +51,6 @@ class PgVector(VectorDB):
         with_scalar_labels: bool = False,
         **kwargs,
     ):
-        self.name = "PgVector"
         self.case_config = db_case_config
         self.table_name = db_config["table_name"]
         self.connect_config = db_config["connect_config"]
@@ -62,7 +69,8 @@ class PgVector(VectorDB):
         self.cursor.execute("CREATE EXTENSION IF NOT EXISTS vector")
         self.conn.commit()
 
-        log.info(f"{self.name} config values: {self.connect_config}\n{self.case_config}")
+        redacted_connect_config = _redact_connect_config(self.connect_config)
+        log.info("%s config values: %s\n%s", self.name, redacted_connect_config, self.case_config)
         if not any(
             (
                 self.case_config.create_index_before_load,
@@ -71,7 +79,7 @@ class PgVector(VectorDB):
         ):
             msg = (
                 f"{self.name} config must create an index using create_index_before_load or create_index_after_load"
-                f"{self.name} config values: {self.connect_config}\n{self.case_config}"
+                f"{self.name} config values: {redacted_connect_config}\n{self.case_config}"
             )
             log.error(msg)
             raise RuntimeError(msg)
