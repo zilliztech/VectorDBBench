@@ -6,19 +6,33 @@ from collections.abc import Iterable
 from contextlib import contextmanager
 from typing import Any
 
+import numpy as np
 from pymilvus import DataType, Function, FunctionType, MilvusClient, MilvusException
 
 from vectordb_bench.backend.filter import Filter, FilterOp
 from vectordb_bench.backend.payload import PayloadProfile
 
 from ..api import VectorDB
-from .config import MilvusFtsConfig, MilvusIndexConfig
+from .config import MilvusFtsConfig, MilvusIndexConfig, VectorDataType
 
 log = logging.getLogger(__name__)
 
 MILVUS_FORCE_MERGE_TARGET_SIZE_MB = ((1 << 63) - 1) // (1024**2)
 MILVUS_FORCE_MERGE_MAX_ATTEMPTS = 10
 MILVUS_FORCE_MERGE_RETRY_INTERVAL_SECONDS = 30
+
+
+def _float32_to_bf16_bytes(vectors: Iterable[list[float]]) -> list[bytes]:
+    """Convert float32 vectors to round-to-nearest-even BF16 byte strings."""
+    # pymilvus accepts raw BF16 bytes; keep this tested bit encoding to avoid an ml_dtypes dependency.
+    bits = np.asarray(vectors, dtype="<f4").view("<u4")
+    rounding_bias = np.uint32(0x7FFF) + ((bits >> np.uint32(16)) & np.uint32(1))
+    bf16 = ((bits + rounding_bias) >> np.uint32(16)).astype("<u2")
+
+    # Preserve NaNs; plain rounding can turn them into infinity or a signed zero.
+    nan_mask = (bits & np.uint32(0x7FFFFFFF)) > np.uint32(0x7F800000)
+    bf16[nan_mask] = ((bits[nan_mask] >> np.uint32(16)) | np.uint32(0x40)).astype("<u2")
+    return [row.tobytes() for row in bf16]
 
 
 class Milvus(VectorDB):
@@ -28,6 +42,7 @@ class Milvus(VectorDB):
         FilterOp.NumGE,
         FilterOp.StrEqual,
     ]
+    _use_bf16: bool = False
 
     @classmethod
     def supports_full_text_search(cls) -> bool:
@@ -36,7 +51,7 @@ class Milvus(VectorDB):
     def has_text_field(self) -> bool:
         return bool(getattr(self, "_is_fts", False) and getattr(self, "_text_field", None))
 
-    def __init__(  # noqa: PLR0912, PLR0915
+    def __init__(  # noqa: PLR0915
         self,
         dim: int,
         db_config: dict,
@@ -89,6 +104,8 @@ class Milvus(VectorDB):
             if self.with_scalar_labels:
                 self._scalar_payload_label_field = "scalar_label"
 
+        self._use_bf16 = getattr(self.case_config, "vector_data_type", None) == VectorDataType.BFLOAT16
+
         client = MilvusClient(
             uri=self.db_config.get("uri"),
             user=self.db_config.get("user"),
@@ -134,7 +151,11 @@ class Milvus(VectorDB):
             else:
                 schema.add_field(self._primary_field, DataType.INT64, is_primary=True)
                 schema.add_field(self._scalar_id_field, DataType.INT64)
-                schema.add_field(self._vector_field, DataType.FLOAT_VECTOR, dim=dim)
+                schema.add_field(
+                    self._vector_field,
+                    DataType.BFLOAT16_VECTOR if self._use_bf16 else DataType.FLOAT_VECTOR,
+                    dim=dim,
+                )
 
                 if self.multitenant_tenant_labels:
                     schema.add_field(
@@ -176,17 +197,41 @@ class Milvus(VectorDB):
                 self.collection_name,
                 replica_number=self.db_config.get("replica_number", 1),
             )
-        elif collection_properties:
-            actual_properties = client.describe_collection(self.collection_name).get("properties") or {}
-            if any(actual_properties.get(key) != value for key, value in collection_properties.items()):
-                client.close()
-                msg = (
-                    f"{self.name} collection {self.collection_name} has incompatible collection properties: "
-                    f"expected {collection_properties}, got {actual_properties}. Drop and recreate the collection."
-                )
-                raise ValueError(msg)
+        else:
+            self._validate_existing_collection(client, dim, collection_properties)
 
         client.close()
+
+    def _validate_existing_collection(self, client: MilvusClient, dim: int, collection_properties: dict) -> None:
+        desc = client.describe_collection(self.collection_name)
+        actual_properties = desc.get("properties") or {}
+        if any(actual_properties.get(key) != value for key, value in collection_properties.items()):
+            client.close()
+            msg = (
+                f"{self.name} collection {self.collection_name} has incompatible collection properties: "
+                f"expected {collection_properties}, got {actual_properties}. Drop and recreate the collection."
+            )
+            raise ValueError(msg)
+        if self._is_fts:
+            return
+
+        expected_type = DataType.BFLOAT16_VECTOR if self._use_bf16 else DataType.FLOAT_VECTOR
+        fields_by_name = {self._field_property(field, "name"): field for field in desc.get("fields", [])}
+        vector_field = fields_by_name.get(self._vector_field)
+        if vector_field is None:
+            problem = f"has no vector field '{self._vector_field}'"
+        else:
+            actual_type = DataType(self._field_property(vector_field, "type"))
+            actual_dim = self._field_property(vector_field, "dim")
+            if actual_type == expected_type and actual_dim == dim:
+                return
+            problem = (
+                f"has incompatible vector field '{self._vector_field}': "
+                f"expected {expected_type.name} (dim={dim}), got {actual_type.name} (dim={actual_dim})"
+            )
+        client.close()
+        msg = f"{self.name} collection {self.collection_name} {problem}. Drop and recreate the collection."
+        raise ValueError(msg)
 
     def _build_index_params(self):
         index_params = MilvusClient.prepare_index_params()
@@ -429,12 +474,13 @@ class Milvus(VectorDB):
         assert self.client is not None
         assert len(embeddings) == len(metadata)
 
+        vectors = _float32_to_bf16_bytes(embeddings) if self._use_bf16 else embeddings
         rows = []
         for i in range(len(embeddings)):
             row = {
                 self._primary_field: metadata[i],
                 self._scalar_id_field: metadata[i],
-                self._vector_field: embeddings[i],
+                self._vector_field: vectors[i],
             }
             if tenant_labels_data is not None:
                 row[self._multitenant_partition_key_field] = tenant_labels_data[i]
@@ -566,9 +612,10 @@ class Milvus(VectorDB):
             tenant_expr = f"{tenant_field} == '{tenant}'"
             expr = tenant_expr if not expr else f"({expr}) and ({tenant_expr})"
 
+        search_data = _float32_to_bf16_bytes(queries) if self._use_bf16 else queries
         search_kwargs = {
             "collection_name": self.collection_name,
-            "data": queries,
+            "data": search_data,
             "anns_field": self._vector_field,
             "search_params": self.case_config.search_param(),
             "limit": k,

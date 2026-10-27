@@ -1,6 +1,9 @@
+from enum import StrEnum
 from typing import Annotated, ClassVar
 
 from pydantic import BaseModel, Field, SecretStr, field_validator
+
+from vectordb_bench.backend.payload import FLOAT32_BYTES_PER_DIM
 
 from ..api import DBCaseConfig, DBConfig, IndexType, MetricType, SQType
 
@@ -82,11 +85,25 @@ class AutoIndexConfig(MilvusIndexConfig, DBCaseConfig):
         return params
 
 
+class VectorDataType(StrEnum):
+    FLOAT32 = "FLOAT32"
+    BFLOAT16 = "BFLOAT16"
+
+    @property
+    def bytes_per_dim(self) -> int:
+        return {VectorDataType.FLOAT32: FLOAT32_BYTES_PER_DIM, VectorDataType.BFLOAT16: 2}[self]
+
+
 class HNSWConfig(MilvusIndexConfig, DBCaseConfig):
     M: int
     efConstruction: int
     ef: int | None = None
     index: IndexType = IndexType.HNSW
+    vector_data_type: VectorDataType = VectorDataType.FLOAT32
+
+    @property
+    def vector_bytes_per_dim(self) -> int:
+        return self.vector_data_type.bytes_per_dim
 
     def index_param(self) -> dict:
         return {

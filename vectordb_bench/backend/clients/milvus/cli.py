@@ -186,9 +186,22 @@ def MilvusFlat(**parameters: Unpack[MilvusFlatTypedDict]):
 class MilvusHNSWTypedDict(CommonTypedDict, MilvusTypedDict, HNSWFlavor3): ...
 
 
+class MilvusHNSWCommandTypedDict(MilvusHNSWTypedDict):
+    vector_data_type: Annotated[
+        str,
+        click.option(
+            "--vector-data-type",
+            type=click.Choice(["FLOAT32", "BFLOAT16"], case_sensitive=False),
+            default="FLOAT32",
+            show_default=True,
+            help="Data type of the stored vectors. Supported values: FLOAT32,BFLOAT16",
+        ),
+    ]
+
+
 @cli.command()
-@click_parameter_decorators_from_typed_dict(MilvusHNSWTypedDict)
-def MilvusHNSW(**parameters: Unpack[MilvusHNSWTypedDict]):
+@click_parameter_decorators_from_typed_dict(MilvusHNSWCommandTypedDict)
+def MilvusHNSW(**parameters: Unpack[MilvusHNSWCommandTypedDict]):
     from .config import HNSWConfig
 
     run(
@@ -199,6 +212,7 @@ def MilvusHNSW(**parameters: Unpack[MilvusHNSWTypedDict]):
                 M=parameters["m"],
                 efConstruction=parameters["ef_construction"],
                 ef=parameters["ef_search"],
+                vector_data_type=parameters["vector_data_type"],
             ),
             parameters,
         ),
