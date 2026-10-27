@@ -11,6 +11,7 @@ pgvector
 pgvecto_rs[psycopg3]>=0.2.1
 sqlalchemy
 redis
+valkey-glide-sync>=2.5.1
 chromadb
 pytz
 streamlit-autorefresh
