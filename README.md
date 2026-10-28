@@ -845,6 +845,44 @@ To list the options for VolcMySQL, execute `vectordbbench volcmysqlhnsw --help`.
 
 > Note: vectors are loaded and queried over the raw-binary `VECTOR` path by default; the client auto-probes server support and falls back to `to_vector()` text when unavailable. Set `VDB_BINARY_VEC=0` to force the text path or `1` to force binary.
 
+### Run HouyiDB from command line
+
+HouyiDB is a memory-first vector database with an HNSW index, a PostgreSQL-compatible pgwire endpoint and an HTTP benchmark API. Install the optional client dependencies with `pip install vectordb-bench[houyidb]`. The client loads and searches over pgwire by default and switches to the HTTP API for filtered cases or when `--transport http` is selected. Start HouyiDB from an empty data directory for a cold run.
+
+```shell
+vectordbbench houyidb \
+  --case-type Performance1536D50K \
+  --host <db_host> \
+  --port 15432 \
+  --http-port 17000 \
+  --transport pgwire \
+  --m 24 \
+  --ef-construction 400 \
+  --ef-search 256 \
+  --num-concurrency '10,20,40,60,80' \
+  --concurrency-duration 30 \
+  --task-label <task_label> \
+  --db-label <db_label>
+```
+
+To list the options for HouyiDB, execute `vectordbbench houyidb --help`. The following are some HouyiDB-specific command-line options.
+
+```text
+  --host TEXT                      HouyiDB host  [required]
+  --port INTEGER                   HouyiDB pgwire port  [default: 15432]
+  --http-port INTEGER              Benchmark HTTP port  [default: 17000]
+  --transport [pgwire|http]        Data plane  [default: pgwire]
+  --use-tls / --no-use-tls         Use HTTPS for HTTP requests  [default: no-use-tls]
+  --api-key TEXT                   Optional token: HTTP Bearer or pgwire password
+  --timeout-sec INTEGER            Per-request timeout in seconds  [default: 600]
+  --metric-type [L2|COSINE|IP]     Distance metric  [default: COSINE]
+  --m INTEGER                      HNSW m  [default: 24]
+  --ef-construction INTEGER        HNSW ef_construction  [default: 400]
+  --ef-search INTEGER              HNSW ef_search  [default: 256]
+```
+
+Filtered cases use the HTTP data plane because that is where HouyiDB accepts scalar labels and id filters.
+
 #### Using a configuration file.
 
 The vectordbbench command can optionally read some or all the options from a yaml formatted configuration file.
