@@ -17,6 +17,7 @@ from ..backend.clients.elastic_cloud.cli import (
 )
 from ..backend.clients.endee.cli import Endee
 from ..backend.clients.hologres.cli import HologresHGraph
+from ..backend.clients.houyidb.cli import HouyiDB
 from ..backend.clients.lancedb.cli import (
     LanceDB,
     LanceDBAutoIndex,
@@ -123,6 +124,7 @@ cli.add_command(PolarDBHNSWPQ)
 cli.add_command(PolarDBHNSWSQ)
 cli.add_command(SeekDBHNSW)
 cli.add_command(VolcMySQLHNSW)
+cli.add_command(HouyiDB)
 
 
 if __name__ == "__main__":
