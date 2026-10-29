@@ -847,7 +847,9 @@ To list the options for VolcMySQL, execute `vectordbbench volcmysqlhnsw --help`.
 
 ### Run HouyiDB from command line
 
-HouyiDB is a memory-first vector database with an HNSW index, a PostgreSQL-compatible pgwire endpoint and an HTTP benchmark API. Install the optional client dependencies with `pip install vectordb-bench[houyidb]`. The client loads and searches over pgwire by default and switches to the HTTP API for filtered cases or when `--transport http` is selected. Start HouyiDB from an empty data directory for a cold run.
+HouyiDB is a memory-first vector database with an HNSW index, a PostgreSQL-compatible pgwire endpoint and an HTTP benchmark API. Install the optional client dependencies with `pip install vectordb-bench[houyidb]`. The client loads and searches over pgwire by default and switches to the HTTP API for filtered cases or when `--transport http` is selected.
+
+HouyiDB builds a cosine index, so the client rejects datasets whose distance metric is not `COSINE`. Because the server has no remote drop for the main index, a `drop_old=True` case is rejected when the index is not empty: start HouyiDB from an empty data directory (and empty WAL) before a fresh load. Before measuring, the client reads the effective `hnsw_m`, `hnsw_ef_construction` and `distance_metric` from `/v1/index/status` and aborts the run if they do not match the case configuration. With `--transport pgwire`, start the server with matching build parameters, e.g. `--pgwire-hnsw-m 24 --pgwire-hnsw-efc 400`; `--no-verify-build-params` is available only for older servers that do not report these fields.
 
 ```shell
 vectordbbench houyidb \
@@ -874,8 +876,10 @@ To list the options for HouyiDB, execute `vectordbbench houyidb --help`. The fol
   --transport [pgwire|http]        Data plane  [default: pgwire]
   --use-tls / --no-use-tls         Use HTTPS for HTTP requests  [default: no-use-tls]
   --api-key TEXT                   Optional token: HTTP Bearer or pgwire password
-  --timeout-sec INTEGER            Per-request timeout in seconds  [default: 600]
-  --metric-type [L2|COSINE|IP]     Distance metric  [default: COSINE]
+  --timeout-sec INTEGER            Per-request timeout in seconds, including pgwire statement execution  [default: 600]
+  --verify-build-params / --no-verify-build-params
+                                   Verify the server's effective HNSW build parameters before measuring  [default: verify]
+  --metric-type [COSINE]           Distance metric (HouyiDB builds a cosine index)  [default: COSINE]
   --m INTEGER                      HNSW m  [default: 24]
   --ef-construction INTEGER        HNSW ef_construction  [default: 400]
   --ef-search INTEGER              HNSW ef_search  [default: 256]

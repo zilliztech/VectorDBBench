@@ -76,20 +76,29 @@ class HouyiDBTypedDict(CommonTypedDict):
             type=int,
             default=600,
             show_default=True,
-            help="Per-request timeout in seconds",
+            help="Per-request timeout in seconds (also bounds pgwire statement execution)",
+        ),
+    ]
+    verify_build_params: Annotated[
+        bool,
+        click.option(
+            "--verify-build-params/--no-verify-build-params",
+            default=True,
+            show_default=True,
+            help=(
+                "Verify the server's effective HNSW m/ef_construction match the case config "
+                "before measuring; disable only for servers that do not report them"
+            ),
         ),
     ]
     metric_type: Annotated[
         str,
         click.option(
             "--metric-type",
-            type=click.Choice(
-                [metric.name for metric in (MetricType.L2, MetricType.COSINE, MetricType.IP)],
-                case_sensitive=True,
-            ),
+            type=click.Choice([MetricType.COSINE.name], case_sensitive=True),
             default=MetricType.COSINE.name,
             show_default=True,
-            help="Distance metric",
+            help="Distance metric (HouyiDB builds a cosine index)",
         ),
     ]
     m: Annotated[
@@ -136,6 +145,7 @@ def HouyiDB(**parameters: Unpack[HouyiDBTypedDict]):
             transport=parameters["transport"].lower(),
             api_key=SecretStr(parameters["api_key"]) if parameters["api_key"] else None,
             timeout_sec=parameters["timeout_sec"],
+            verify_build_params=parameters["verify_build_params"],
         ),
         db_case_config=HouyiDBIndexConfig(
             metric_type=MetricType[parameters["metric_type"]],

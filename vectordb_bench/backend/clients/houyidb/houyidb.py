@@ -10,11 +10,19 @@ HouyiDB exposes two data planes:
 This client uses pgwire for unfiltered workloads and the HTTP API when scalar
 labels or id filters are required. Both paths target the same server-side
 index. A fresh server (empty WAL) is required for a cold run because the
-server has no client-side "drop collection" operation for the main index.
+server has no client-side "drop collection" operation for the main index:
+``drop_old=True`` is enforced by rejecting an occupied index instead of
+silently loading on top of stale data.
+
+Search failures are propagated to VectorDBBench's runner so a failed request
+is never counted as a successful (and extremely fast) query. HouyiDB builds a
+cosine index, so datasets using another distance metric are rejected instead
+of being benchmarked against incompatible ground truth.
 """
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import struct
 import threading
@@ -61,6 +69,119 @@ def _encode_query_vector(values: list[float]) -> bytes:
     return bytes(out)
 
 
+class _InflightPgwireQuery:
+    """One pgwire statement under a hard client-side deadline."""
+
+    __slots__ = ("cancel_called", "close_called", "close_deadline", "conn", "deadline", "timed_out")
+
+    def __init__(self, conn: Any, deadline: float, close_deadline: float) -> None:
+        self.conn = conn
+        self.deadline = deadline
+        self.close_deadline = close_deadline
+        self.timed_out = threading.Event()
+        self.cancel_called = False
+        self.close_called = False
+
+    def abort(self, now: float) -> None:
+        if now >= self.deadline and not self.cancel_called:
+            self.cancel_called = True
+            self.timed_out.set()
+            self._cancel()
+        # A cancellation that does not unblock libpq (dead peer, half-open
+        # socket) is followed by closing the connection: the only remaining
+        # way to bound the call.
+        if now >= self.close_deadline and not self.close_called:
+            self.close_called = True
+            with contextlib.suppress(Exception):
+                # Best-effort unblock; close is the last resort.
+                self.conn.close()
+
+    def _cancel(self) -> None:
+        cancel_safe = getattr(self.conn, "cancel_safe", None)
+        if callable(cancel_safe):
+            try:
+                cancel_safe(timeout=5)
+            except TypeError:
+                try:
+                    cancel_safe()
+                except Exception:
+                    log.debug("HouyiDB pgwire cancel_safe() failed", exc_info=True)
+                else:
+                    return
+            except Exception:
+                log.debug("HouyiDB pgwire cancel_safe(timeout=5) failed", exc_info=True)
+            else:
+                return
+        cancel = getattr(self.conn, "cancel", None)
+        if callable(cancel):
+            with contextlib.suppress(Exception):
+                # Legacy psycopg 3.1 fallback; abort() closes the connection
+                # after the grace period if cancellation does not unblock.
+                cancel()
+
+
+class _PgwireWatchdog:
+    """Cancel pgwire statements that outlive ``timeout_sec``.
+
+    psycopg's ``connect_timeout`` only bounds connection establishment, so a
+    blocked statement would otherwise never expire. One daemon thread per
+    client instance scans the in-flight statements, which is much cheaper
+    than creating a timer thread per query at benchmark rates.
+    """
+
+    _POLL_SECONDS = 0.05
+    _CLOSE_GRACE_SECONDS = 5.0
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._inflight: dict[int, _InflightPgwireQuery] = {}
+        self._stop = threading.Event()
+        self._thread: threading.Thread | None = None
+
+    def start(self) -> None:
+        with self._lock:
+            if self._thread is not None and self._thread.is_alive():
+                return
+            self._stop.clear()
+            self._thread = threading.Thread(
+                target=self._run,
+                name="houyidb-pgwire-watchdog",
+                daemon=True,
+            )
+            self._thread.start()
+
+    def stop(self) -> None:
+        self._stop.set()
+        thread = self._thread
+        if thread is not None and thread is not threading.current_thread():
+            thread.join(timeout=1.0)
+        self._thread = None
+
+    def register(self, conn: Any, timeout_sec: float) -> _InflightPgwireQuery:
+        now = time.monotonic()
+        token = _InflightPgwireQuery(
+            conn,
+            now + timeout_sec,
+            now + timeout_sec + self._CLOSE_GRACE_SECONDS,
+        )
+        with self._lock:
+            self._inflight[id(token)] = token
+        return token
+
+    def unregister(self, token: _InflightPgwireQuery) -> None:
+        with self._lock:
+            self._inflight.pop(id(token), None)
+
+    def _run(self) -> None:
+        while not self._stop.wait(self._POLL_SECONDS):
+            now = time.monotonic()
+            with self._lock:
+                tokens = list(self._inflight.values())
+            for token in tokens:
+                if now >= token.deadline:
+                    token.abort(now)
+
+
 class HouyiDB(VectorDB):
     """VectorDBBench client for HouyiDB."""
 
@@ -92,7 +213,15 @@ class HouyiDB(VectorDB):
             msg = f"unsupported HouyiDB transport={self.transport!r}; expected 'pgwire' or 'http'"
             raise ValueError(msg)
         self.metric = self.case_config.metric_type or MetricType.COSINE
+        if self.metric is not MetricType.COSINE:
+            msg = (
+                f"HouyiDB builds a cosine index; dataset metric {self.metric.name} is not supported. "
+                "VectorDBBench would otherwise measure cosine search against "
+                f"{self.metric.name} ground truth."
+            )
+            raise ValueError(msg)
         self.timeout_sec = int(db_config.get("timeout_sec", 600))
+        self.verify_build_params = bool(db_config.get("verify_build_params", True))
         raw_api_key = db_config.get("api_key")
         self.api_key = raw_api_key.get_secret_value() if hasattr(raw_api_key, "get_secret_value") else raw_api_key
         scheme = "https" if db_config.get("use_tls", False) else "http"
@@ -108,14 +237,18 @@ class HouyiDB(VectorDB):
         self._http_sessions: list[requests.Session] = []
         self._pgwire_sessions_lock = threading.Lock()
         self._pgwire_sessions: list[Any] = []
+        self._pgwire_watchdog = _PgwireWatchdog()
         self._filter: Filter = non_filter
         self._connected = False
+        self._build_params_verified = False
+        self._build_params_warned = False
 
+        # VectorDBBench constructs the client once per fresh load and pickles
+        # it into search workers afterwards, so the emptiness check belongs
+        # here: `init()` also runs inside those workers, where the index is
+        # legitimately populated.
         if drop_old:
-            log.warning(
-                "HouyiDB has no client-side drop for the main index; start a fresh "
-                "server with an empty WAL for a cold run."
-            )
+            self._ensure_empty_index()
         log.info(
             "HouyiDB initialized transport=%s dim=%s index=%s",
             self.transport,
@@ -132,6 +265,7 @@ class HouyiDB(VectorDB):
             "_http_sessions",
             "_pgwire_sessions_lock",
             "_pgwire_sessions",
+            "_pgwire_watchdog",
         ):
             state.pop(key, None)
         return state
@@ -143,6 +277,11 @@ class HouyiDB(VectorDB):
         self._http_sessions = []
         self._pgwire_sessions_lock = threading.Lock()
         self._pgwire_sessions = []
+        self._pgwire_watchdog = _PgwireWatchdog()
+        # Each worker process must observe the server's effective parameters
+        # itself; a parent-process success is not a proof for this process.
+        self._build_params_verified = False
+        self._build_params_warned = False
 
     def _http_session(self) -> requests.Session:
         if not hasattr(self._thread_local, "session"):
@@ -164,6 +303,127 @@ class HouyiDB(VectorDB):
             self._thread_local.session = session
         return self._thread_local.session
 
+    def _index_status(self) -> dict[str, Any]:
+        """Fetch the main-index status (hot/indexed/pending plus HNSW config)."""
+        session = self._http_session()
+        response = session.get(f"{self.base_url}/v1/index/status", timeout=self.timeout_sec)
+        response.raise_for_status()
+        payload = response.json()
+        if not isinstance(payload, dict):
+            msg = f"unexpected HouyiDB index status payload: {payload!r}"
+            raise TypeError(msg)
+        return payload
+
+    def _ensure_empty_index(self) -> None:
+        """Enforce ``drop_old``: refuse a populated index instead of contaminating a run.
+
+        HouyiDB has no remote drop operation for the main index. A fresh load
+        on an occupied index would keep stale rows from an earlier case and
+        silently mix two datasets, so the client fails loudly and tells the
+        operator how to obtain a clean server.
+        """
+        status = self._index_status()
+        occupied = sum(int(status.get(key, 0)) for key in ("hot_count", "indexed_count", "pending_count"))
+        if occupied:
+            msg = (
+                "drop_old=True but the HouyiDB main index is not empty "
+                f"(hot={status.get('hot_count')}, indexed={status.get('indexed_count')}, "
+                f"pending={status.get('pending_count')}, collection={self.collection_name!r}). "
+                "HouyiDB has no remote drop: stop the server, remove its WAL/data directory, "
+                "restart it, and rerun the case."
+            )
+            raise RuntimeError(msg)
+
+    def _verify_build_params(self) -> None:
+        """Verify that the server's effective HNSW parameters match the case config.
+
+        pgwire applies build parameters only from the server's startup flags
+        (``--pgwire-hnsw-m`` / ``--pgwire-hnsw-efc``); the HTTP path applies the
+        per-request hints. Either way, recording ``m``/``ef_construction`` from
+        the case config without checking the server would mislabel the run, so
+        this probes ``/v1/index/status`` after the load and before search.
+        """
+        if self._build_params_verified:
+            return
+        if not self.verify_build_params:
+            if not self._build_params_warned:
+                log.warning(
+                    "HouyiDB build-parameter verification is disabled; recorded m=%s "
+                    "ef_construction=%s may differ from the server's effective graph",
+                    self.case_config.m,
+                    self.case_config.ef_construction,
+                )
+                self._build_params_warned = True
+            self._build_params_verified = True
+            return
+
+        status = self._index_status()
+        missing = [key for key in ("hnsw_m", "hnsw_ef_construction") if key not in status]
+        if missing:
+            msg = (
+                "HouyiDB server does not report the effective HNSW build parameters "
+                f"({', '.join(missing)} missing from /v1/index/status); cannot verify that "
+                f"m={self.case_config.m} and ef_construction={self.case_config.ef_construction} "
+                "were applied. Upgrade HouyiDB, or set verify_build_params=False to accept "
+                "the unverified configuration."
+            )
+            raise RuntimeError(msg)
+
+        expected_m = int(self.case_config.m)
+        expected_efc = int(self.case_config.ef_construction)
+        actual_m = int(status["hnsw_m"])
+        actual_efc = int(status["hnsw_ef_construction"])
+        if actual_m != expected_m or actual_efc != expected_efc:
+            hint = ""
+            if self.transport == "pgwire":
+                hint = f" Restart houyi-server with --pgwire-hnsw-m {expected_m} --pgwire-hnsw-efc {expected_efc}."
+            msg = (
+                f"HouyiDB effective HNSW parameters m={actual_m}, ef_construction={actual_efc} "
+                f"do not match the case configuration m={expected_m}, ef_construction={expected_efc}."
+                f"{hint}"
+            )
+            raise RuntimeError(msg)
+
+        metric = status.get("distance_metric")
+        if metric is not None and str(metric).lower() not in ("cosine", "cos"):
+            msg = f"HouyiDB index metric is {metric!r}, expected cosine"
+            raise RuntimeError(msg)
+
+        self._build_params_verified = True
+
+    def _execute_bounded(self, conn: Any, sql: str, params: Any) -> Any:
+        """Run ``conn.execute`` under the client-side statement deadline."""
+        self._pgwire_watchdog.start()
+        token = self._pgwire_watchdog.register(conn, float(self.timeout_sec))
+        try:
+            result = conn.execute(sql, params)
+        except Exception as exc:
+            if token.timed_out.is_set():
+                self._discard_pgwire_conn(conn)
+                msg = f"HouyiDB pgwire query exceeded timeout_sec={self.timeout_sec}"
+                raise TimeoutError(msg) from exc
+            raise
+        finally:
+            self._pgwire_watchdog.unregister(token)
+        if token.timed_out.is_set():
+            self._discard_pgwire_conn(conn)
+            msg = f"HouyiDB pgwire query exceeded timeout_sec={self.timeout_sec}"
+            raise TimeoutError(msg)
+        return result
+
+    def _discard_pgwire_conn(self, conn: Any) -> None:
+        """Drop a cancelled connection so the next call reconnects cleanly."""
+        with self._pgwire_sessions_lock:
+            if conn in self._pgwire_sessions:
+                self._pgwire_sessions.remove(conn)
+        if getattr(self._thread_local, "pg_conn", None) is conn:
+            for attr in ("pg_conn", "pg_binary"):
+                if hasattr(self._thread_local, attr):
+                    delattr(self._thread_local, attr)
+        with contextlib.suppress(Exception):
+            # The connection is already unusable; closing is best-effort.
+            conn.close()
+
     def _pgwire_conn(self) -> Any:
         if not hasattr(self._thread_local, "pg_conn"):
             try:
@@ -181,10 +441,14 @@ class HouyiDB(VectorDB):
             }
             if self.api_key:
                 params["password"] = str(self.api_key)
+            conn = None
             try:
                 conn = psycopg.connect(make_conninfo(**params), autocommit=True)
-                conn.execute("SELECT 1")
+                self._execute_bounded(conn, "SELECT 1", None)
             except Exception as exc:
+                if conn is not None:
+                    with contextlib.suppress(Exception):
+                        conn.close()
                 msg = f"failed to connect HouyiDB pgwire {self.db_config['host']}:{self.db_config['port']}: {exc}"
                 raise RuntimeError(msg) from exc
             with self._pgwire_sessions_lock:
@@ -196,6 +460,8 @@ class HouyiDB(VectorDB):
     @contextmanager
     def init(self) -> Generator[None, None, None]:
         self._connected = True
+        if self.transport == "pgwire":
+            self._pgwire_watchdog.start()
         try:
             if self.transport == "http":
                 self._http_session()
@@ -204,6 +470,7 @@ class HouyiDB(VectorDB):
             yield
         finally:
             self._connected = False
+            self._pgwire_watchdog.stop()
             with self._http_sessions_lock:
                 for session in self._http_sessions:
                     try:
@@ -231,6 +498,7 @@ class HouyiDB(VectorDB):
         if not self._connected:
             msg = "Please call init() before optimize"
             raise RuntimeError(msg)
+        self._verify_build_params()
         session = self._http_session()
         response = session.post(
             f"{self.base_url}/v1/optimize",
@@ -327,7 +595,8 @@ class HouyiDB(VectorDB):
                         return inserted, ValueError(f"dim mismatch, expected {self.dim}, got {len(vector)}")
                     chunk.append((int(metadata[idx]), vector))
                 payload = _encode_upsert_batch(self.dim, chunk)
-                row = conn.execute(
+                row = self._execute_bounded(
+                    conn,
                     "/* houyi:upsert_batch=%s */ SELECT 1",
                     (pg_binary(payload),),
                 ).fetchone()
@@ -347,18 +616,14 @@ class HouyiDB(VectorDB):
             payload["filter_gt_id"] = int(self._filter.int_value) - 1
         elif self._filter.type == FilterOp.StrEqual:
             payload["filter_label"] = self._filter.label_value
-        try:
-            session = self._http_session()
-            response = session.post(
-                f"{self.base_url}/v1/vectors/search",
-                json=payload,
-                timeout=self.timeout_sec,
-            )
-            response.raise_for_status()
-            return [int(item) for item in response.json().get("ids", [])]
-        except Exception as exc:
-            log.warning("HouyiDB HTTP search failed: %s", exc, exc_info=True)
-            return []
+        session = self._http_session()
+        response = session.post(
+            f"{self.base_url}/v1/vectors/search",
+            json=payload,
+            timeout=self.timeout_sec,
+        )
+        response.raise_for_status()
+        return [int(item) for item in response.json().get("ids", [])]
 
     def search_embedding(
         self,
@@ -369,20 +634,21 @@ class HouyiDB(VectorDB):
         **kwargs: Any,
     ) -> list[int]:
         del payload_profile, tenant, kwargs
-        if not self._connected or len(query) != self.dim:
-            return []
+        if not self._connected:
+            msg = "Please call init() before search"
+            raise RuntimeError(msg)
+        if len(query) != self.dim:
+            msg = f"query dim mismatch, expected {self.dim}, got {len(query)}"
+            raise ValueError(msg)
+        self._verify_build_params()
         if self._filter.type != FilterOp.NonFilter:
             return self._search_http(query, k)
         if self.transport == "http":
             return self._search_http(query, k)
-        try:
-            conn = self._pgwire_conn()
-            pg_binary = self._thread_local.pg_binary
-            vector_payload = _encode_query_vector(query)
-            ef_search = int(self.case_config.ef_search)
-            sql = f"/* houyi:ef_search={ef_search} */ /* houyi:vector=%s */ SELECT id FROM docs LIMIT {int(k)}"
-            rows = conn.execute(sql, (pg_binary(vector_payload),)).fetchall()
-            return [int(row[0]) for row in rows]
-        except Exception as exc:
-            log.warning("HouyiDB pgwire search failed: %s", exc, exc_info=True)
-            return []
+        conn = self._pgwire_conn()
+        pg_binary = self._thread_local.pg_binary
+        vector_payload = _encode_query_vector(query)
+        ef_search = int(self.case_config.ef_search)
+        sql = f"/* houyi:ef_search={ef_search} */ /* houyi:vector=%s */ SELECT id FROM docs LIMIT {int(k)}"
+        rows = self._execute_bounded(conn, sql, (pg_binary(vector_payload),)).fetchall()
+        return [int(row[0]) for row in rows]
