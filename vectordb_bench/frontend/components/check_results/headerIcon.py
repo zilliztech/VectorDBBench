@@ -1,10 +1,12 @@
 from vectordb_bench.frontend.config.styles import HEADER_ICON
+from vectordb_bench.frontend.utils import get_page_url_prefix
 
 
 def drawHeaderIcon(st):
+    url_prefix = get_page_url_prefix(st.get_option("server.baseUrlPath"))
     st.markdown(
         f"""
-    <a href="/vdbbench" target="_self">
+    <a href="{url_prefix}vdbbench" target="_self">
         <div class="headerIconContainer"></div>
     </a>
 
