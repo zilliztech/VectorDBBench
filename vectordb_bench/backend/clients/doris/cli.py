@@ -7,7 +7,6 @@ from vectordb_bench.backend.clients import DB
 
 from ....cli.cli import (
     CommonTypedDict,
-    HNSWBaseTypedDict,
     cli,
     click_parameter_decorators_from_typed_dict,
     run,
@@ -42,7 +41,7 @@ def _parse_kv_list(_ctx, _param, values):  # noqa: ANN001
     return parsed
 
 
-class DorisTypedDict(CommonTypedDict, HNSWBaseTypedDict):
+class DorisTypedDict(CommonTypedDict):
     user_name: Annotated[
         str,
         click.option(
@@ -166,13 +165,8 @@ def Doris(
 ):
     from .config import DorisCaseConfig, DorisConfig
 
-    # Merge explicit HNSW params into index properties using Doris naming
     index_properties: dict[str, str] = {}
     index_properties.update(parameters.get("index_prop", {}) or {})
-    if parameters.get("m") is not None:
-        index_properties.setdefault("max_degree", str(parameters["m"]))
-    if parameters.get("ef_construction") is not None:
-        index_properties.setdefault("ef_construction", str(parameters["ef_construction"]))
 
     session_vars: dict[str, str] = parameters.get("session_var", {}) or {}
 
