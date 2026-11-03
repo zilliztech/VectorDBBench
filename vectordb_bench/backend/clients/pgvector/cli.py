@@ -2,7 +2,7 @@ import os
 from typing import Annotated, Unpack
 
 import click
-from pydantic import SecretStr
+from pydantic import SecretStr, ValidationError
 
 from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.clients.api import MetricType
@@ -223,17 +223,8 @@ def PgVectorSVS(
     from .config import PgVectorConfig, PgVectorSVSVamanaConfig
 
     parameters["custom_case"] = get_custom_case_config(parameters)
-    run(
-        db=DB.PgVector,
-        db_config=PgVectorConfig(
-            db_label=parameters["db_label"],
-            user_name=SecretStr(parameters["user_name"]),
-            password=SecretStr(parameters["password"]),
-            host=parameters["host"],
-            port=parameters["port"],
-            db_name=parameters["db_name"],
-        ),
-        db_case_config=PgVectorSVSVamanaConfig(
+    try:
+        case_config = PgVectorSVSVamanaConfig(
             graph_degree=parameters["graph_degree"],
             alpha=parameters["alpha"],
             search_window_size=parameters["search_window_size"],
@@ -246,7 +237,24 @@ def PgVectorSVS(
             maintenance_work_mem=parameters["maintenance_work_mem"],
             max_parallel_workers=parameters["max_parallel_workers"],
             normalize_cosine=parameters["normalize_cosine"],
+            quantization_type=parameters["quantization_type"],
+            table_quantization_type=parameters["table_quantization_type"],
+            reranking=parameters["reranking"],
+            quantized_fetch_limit=parameters["quantized_fetch_limit"],
+        )
+    except ValidationError as e:
+        raise click.UsageError(str(e)) from e
+    run(
+        db=DB.PgVector,
+        db_config=PgVectorConfig(
+            db_label=parameters["db_label"],
+            user_name=SecretStr(parameters["user_name"]),
+            password=SecretStr(parameters["password"]),
+            host=parameters["host"],
+            port=parameters["port"],
+            db_name=parameters["db_name"],
         ),
+        db_case_config=case_config,
         **parameters,
     )
 

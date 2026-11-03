@@ -2,7 +2,7 @@ from abc import abstractmethod
 from collections.abc import Mapping, Sequence
 from typing import Any, LiteralString, TypedDict
 
-from pydantic import BaseModel, SecretStr
+from pydantic import BaseModel, SecretStr, root_validator, validator
 
 from ..api import DBCaseConfig, DBConfig, IndexType, MetricType
 
@@ -297,6 +297,25 @@ class PgVectorSVSVamanaConfig(PgVectorIndexConfig):
     quantized_fetch_limit: int | None = None
     reranking_metric: str | None = None
     normalize_cosine: bool = False
+
+    @validator("quantization_type", "table_quantization_type")
+    def reject_bit_quantization(cls, value: str | None, field: Any):
+        # vamana has no bit opclass; CREATE INDEX would fail only after the full data load
+        if value == "bit":
+            msg = f"{field.name}=bit is not supported for svs (vamana has no bit operator class); use none or halfvec"
+            raise ValueError(msg)
+        return value
+
+    @root_validator(skip_on_failure=True)
+    def reject_reranking(cls, values: dict):
+        # pgvector-level reranking only applies to bit indexes; svs reranks internally via compression_secondary
+        if values.get("reranking"):
+            msg = "reranking is not supported for svs; svs reranks internally via compression_secondary"
+            raise ValueError(msg)
+        if values.get("quantized_fetch_limit") is not None:
+            msg = "quantized_fetch_limit is not supported for svs (it only applies to bit quantization with reranking)"
+            raise ValueError(msg)
+        return values
 
     def _effective_metric_type(self) -> MetricType | None:
         if self.normalize_cosine and self.metric_type == MetricType.COSINE:
