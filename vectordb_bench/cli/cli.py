@@ -828,44 +828,85 @@ class CommonTypedDict(TypedDict):
     ]
 
 class SVSBaseTypedDict(TypedDict):
-    graph_degree: Annotated[int | None, click.option("--graph_degree", type=int, help="svs graph_degree")]
+    graph_degree: Annotated[
+        int | None,
+        click.option(
+            "--graph_degree",
+            type=int,
+            help="Vamana graph degree (R parameter); valid range 16-256, default 64",
+        ),
+    ]
     alpha: Annotated[
         int | None,
-        click.option("--alpha", type=int, help="svs alpha"),
+        click.option(
+            "--alpha",
+            type=int,
+            help="Pruning alpha, encoded as alpha*100 (e.g. 120 = 1.2); "
+            "-1 = SVS library default; valid range -1 or 0-200",
+        ),
     ]
     compression_type: Annotated[
         int | None,
-        click.option("--compression_type", type=int, help="svs compression_type"),
+        click.option(
+            "--compression_type",
+            type=int,
+            help="Internal vector compression: 0=none, 1=leanvec, 2=lvq; default 0",
+        ),
     ]
     compression_primary: Annotated[
         int | None,
-        click.option("--compression_primary", type=int, help="svs compression_primary"),
+        click.option(
+            "--compression_primary",
+            type=int,
+            help="Primary quantization width: 4=UINT4, -4=INT4, 8=UINT8, -8=INT8",
+        ),
     ]
     compression_secondary: Annotated[
         int | None,
-        click.option("--compression_secondary", type=int, help="svs compression_secondary"),
+        click.option(
+            "--compression_secondary",
+            type=int,
+            help="LeanVec secondary quantization / LVQ residual width: "
+            "4=UINT4, -4=INT4, 8=UINT8, -8=INT8, 0=no residual (LVQ only)",
+        ),
     ]
     build_window_size: Annotated[
         int | None,
-        click.option("--build_window_size", type=int, help="svs build_window_size"),
+        click.option(
+            "--build_window_size",
+            type=int,
+            help="Build-time search window size; -1 = 2 * graph_degree (default)",
+        ),
     ]
     search_window_size: Annotated[
         int | None,
-        click.option("--search_window_size", type=int, help="svs search_window_size", is_eager=True),
+        click.option(
+            "--search_window_size",
+            type=int,
+            help="Query-time search window size, applied via the svs.search_window_size session "
+            "setting (not forwarded to index build); -1 = 100 (default), valid range 10-10000",
+            is_eager=True,
+        ),
     ]
     use_search_history: Annotated[
         bool | None,
         click.option(
-            "--use_search_history/--skip-use_search_history",
+            "--use-search-history/--skip-use-search-history",
             type=bool,
             default=None,
-            help="svs use_search_history",
+            help="Maintain visited-node history during search; default true",
             show_default=True,
         ),
     ]
     leanvec_dims: Annotated[
         int | None,
-        click.option("--leanvec_dims", type=int, help="svs leanvec_dims", is_eager=True),
+        click.option(
+            "--leanvec_dims",
+            type=int,
+            help="LeanVec reduced dimensions; -1 = dimensions/2 (default); "
+            "ignored unless compression_type=1 (leanvec)",
+            is_eager=True,
+        ),
     ]
     maintenance_work_mem: Annotated[
         str | None,
