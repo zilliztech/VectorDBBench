@@ -884,7 +884,8 @@ class SVSBaseTypedDict(TypedDict):
             "--search_window_size",
             type=int,
             help="Query-time search window size, applied via the svs.search_window_size session "
-            "setting (not forwarded to index build); -1 = 100 (default), valid range 10-10000",
+            "setting (not forwarded to index build); valid range 10-10000, default 100 "
+            "(no -1-means-default sentinel here, unlike build_window_size)",
             is_eager=True,
         ),
     ]

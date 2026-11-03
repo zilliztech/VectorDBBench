@@ -209,6 +209,80 @@ class PgSVSVamanaConfig(PgSVSIndexConfig):
             raise ValueError(msg)
         return values
 
+    @validator("graph_degree")
+    def validate_graph_degree(cls, value: int | None):
+        # matches the vamana_relopt_kind "graph_degree" reloption bound (vamana.h VAMANA_MIN/MAX_GRAPH_DEGREE)
+        if value is not None and not (16 <= value <= 256):
+            msg = f"graph_degree={value} is out of range for svs; valid range is 16-256"
+            raise ValueError(msg)
+        return value
+
+    @validator("alpha")
+    def validate_alpha(cls, value: int | None):
+        # matches the "alpha" reloption bound; -1 or 0 both mean "use the SVS library default"
+        if value is not None and not (-1 <= value <= 200):
+            msg = f"alpha={value} is out of range for svs; valid values are -1 (library default) or 0-200 (alpha*100)"
+            raise ValueError(msg)
+        return value
+
+    @validator("build_window_size")
+    def validate_build_window_size(cls, value: int | None):
+        # matches the "build_window_size" reloption bound
+        if value is not None and not (-1 <= value <= 1000):
+            msg = f"build_window_size={value} is out of range for svs; valid values are -1 (2 * graph_degree) or 0-1000"
+            raise ValueError(msg)
+        return value
+
+    @validator("search_window_size")
+    def validate_search_window_size(cls, value: int | None):
+        # matches the "search_window_size" reloption/GUC bound; unlike build_window_size there is no -1
+        # sentinel here despite the reloption's description string claiming one -- Postgres's own bound
+        # check (VAMANA_MIN_SEARCH_WINDOW=10) would reject -1 before it ever reached that fallback.
+        if value is not None and not (10 <= value <= 10000):
+            msg = f"search_window_size={value} is out of range for svs; valid range is 10-10000"
+            raise ValueError(msg)
+        return value
+
+    @validator("compression_type")
+    def validate_compression_type(cls, value: int | None):
+        if value is not None and value not in (0, 1, 2):
+            msg = f"compression_type={value} is invalid for svs; valid values are 0 (none), 1 (leanvec), 2 (lvq)"
+            raise ValueError(msg)
+        return value
+
+    @validator("compression_primary")
+    def validate_compression_primary(cls, value: int | None):
+        # svs only accepts these four discrete codes (MapCompressionParamToSVSType in svs_wrapper.c);
+        # the reloption's numeric bound (-8 to 8) is wider than what's actually accepted
+        if value is not None and value not in (-8, -4, 4, 8):
+            msg = f"compression_primary={value} is invalid for svs; valid values are -8, -4, 4, 8"
+            raise ValueError(msg)
+        return value
+
+    @validator("leanvec_dims")
+    def validate_leanvec_dims(cls, value: int | None):
+        # matches the "leanvec_dims" reloption bound
+        if value is not None and not (-1 <= value <= 2000):
+            msg = f"leanvec_dims={value} is out of range for svs; valid values are -1 (dimensions/2) or 0-2000"
+            raise ValueError(msg)
+        return value
+
+    @root_validator(skip_on_failure=True)
+    def validate_compression_secondary(cls, values: dict):
+        secondary = values.get("compression_secondary")
+        if secondary is None:
+            return values
+        # 0 ("no residual") is only accepted for LVQ's residual slot, not LeanVec's secondary encoding
+        if secondary == 0 and values.get("compression_type") == 2:
+            return values
+        if secondary not in (-8, -4, 4, 8):
+            msg = (
+                f"compression_secondary={secondary} is invalid for svs; valid values are -8, -4, 4, 8"
+                " (or 0 for no residual, only when compression_type=2/lvq)"
+            )
+            raise ValueError(msg)
+        return values
+
     def _effective_metric_type(self) -> MetricType | None:
         if self.normalize_cosine and self.metric_type == MetricType.COSINE:
             return MetricType.L2
