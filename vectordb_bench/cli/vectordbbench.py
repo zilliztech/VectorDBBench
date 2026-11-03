@@ -37,8 +37,9 @@ from ..backend.clients.milvus.cli import MilvusAutoIndex, MilvusFTS
 from ..backend.clients.oceanbase.cli import OceanBaseHNSW, OceanBaseIVF
 from ..backend.clients.oss_opensearch.cli import OSSOpenSearch
 from ..backend.clients.pgdiskann.cli import PgDiskAnn
+from ..backend.clients.pgsvs.cli import PgSVS
 from ..backend.clients.pgvecto_rs.cli import PgVectoRSHNSW, PgVectoRSIVFFlat
-from ..backend.clients.pgvector.cli import PgVectorHNSW, PgVectorSVS
+from ..backend.clients.pgvector.cli import PgVectorHNSW
 from ..backend.clients.pgvectorscale.cli import PgVectorScaleDiskAnn
 from ..backend.clients.pinecone.cli import Pinecone
 from ..backend.clients.pinot.cli import Pinot
@@ -71,7 +72,7 @@ from .cli import cli
 
 cli.add_command(AdbpgNova)
 cli.add_command(PgVectorHNSW)
-cli.add_command(PgVectorSVS)
+cli.add_command(PgSVS)
 cli.add_command(PolarDBPgHNSW)
 cli.add_command(PgVectoRSHNSW)
 cli.add_command(PgVectoRSIVFFlat)

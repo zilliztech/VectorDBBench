@@ -2,7 +2,7 @@ from abc import abstractmethod
 from collections.abc import Mapping, Sequence
 from typing import Any, LiteralString, TypedDict
 
-from pydantic import BaseModel, SecretStr, root_validator, validator
+from pydantic import BaseModel, SecretStr
 
 from ..api import DBCaseConfig, DBConfig, IndexType, MetricType
 
@@ -278,96 +278,8 @@ class PgVectorHNSWConfig(PgVectorIndexConfig):
         session_parameters = {"hnsw.ef_search": self.ef_search, "hnsw.iterative_scan": self.iterative_scan}
         return {"session_options": self._optionally_build_set_options(session_parameters)}
 
-class PgVectorSVSVamanaConfig(PgVectorIndexConfig):
-    compression_type: int | None = None
-    compression_primary: int | None = None
-    compression_secondary: int | None = None
-    alpha: int | None = None
-    build_window_size: int | None
-    search_window_size: int | None
-    use_search_history: bool | None = None
-    graph_degree: int | None = None
-    leanvec_dims: int | None = None
-    index: IndexType = IndexType.SVS_VAMANA
-    quantization_type: str | None = None
-    table_quantization_type: str | None
-    maintenance_work_mem: str | None = None
-    max_parallel_workers: int | None = None
-    reranking: bool | None = None
-    quantized_fetch_limit: int | None = None
-    reranking_metric: str | None = None
-    normalize_cosine: bool = False
-
-    @validator("quantization_type", "table_quantization_type")
-    def reject_bit_quantization(cls, value: str | None, field: Any):
-        # vamana has no bit opclass; CREATE INDEX would fail only after the full data load
-        if value == "bit":
-            msg = f"{field.name}=bit is not supported for svs (vamana has no bit operator class); use none or halfvec"
-            raise ValueError(msg)
-        return value
-
-    @root_validator(skip_on_failure=True)
-    def reject_reranking(cls, values: dict):
-        # pgvector-level reranking only applies to bit indexes; svs reranks internally via compression_secondary
-        if values.get("reranking"):
-            msg = "reranking is not supported for svs; svs reranks internally via compression_secondary"
-            raise ValueError(msg)
-        if values.get("quantized_fetch_limit") is not None:
-            msg = "quantized_fetch_limit is not supported for svs (it only applies to bit quantization with reranking)"
-            raise ValueError(msg)
-        return values
-
-    def _effective_metric_type(self) -> MetricType | None:
-        if self.normalize_cosine and self.metric_type == MetricType.COSINE:
-            return MetricType.L2
-        return self.metric_type
-
-    def index_param(self) -> PgVectorIndexParam:
-        index_parameters = {
-            "alpha": self.alpha,
-            "graph_degree": self.graph_degree,
-            "leanvec_dims": self.leanvec_dims,
-            "build_window_size": self.build_window_size,
-            "use_search_history": self.use_search_history,
-            "compression_type": self.compression_type,
-            "compression_primary": self.compression_primary,
-            "compression_secondary": self.compression_secondary,
-        }
-        if self.quantization_type == "none" or self.quantization_type is None:
-            self.quantization_type = "vector"
-        if self.table_quantization_type == "none" or self.table_quantization_type is None:
-            self.table_quantization_type = "vector"
-        if self.table_quantization_type == "bit":
-            self.quantization_type = "bit"
-        effective_metric_type = self._effective_metric_type()
-        return {
-            "metric": self.parse_metric(metric_type=effective_metric_type),
-            "index_type": self.index.value,
-            "index_creation_with_options": self._optionally_build_with_options(index_parameters),
-            "maintenance_work_mem": self.maintenance_work_mem,
-            "max_parallel_workers": self.max_parallel_workers,
-            "quantization_type": self.quantization_type,
-            "table_quantization_type": self.table_quantization_type,
-        }
-
-    def search_param(self) -> PgVectorSearchParam:
-        effective_metric_type = self._effective_metric_type()
-        return {
-            "metric_fun_op": self.parse_metric_fun_op(metric_type=effective_metric_type),
-            "reranking": self.reranking,
-            "reranking_metric_fun_op": self.parse_reranking_metric_fun_op(),
-            "quantized_fetch_limit": self.quantized_fetch_limit,
-            "search_window_size": self.search_window_size,
-            "use_search_history": self.use_search_history,
-        }
-
-    def session_param(self) -> PgVectorSessionCommands:
-        session_parameters = {"svs.search_window_size": self.search_window_size}
-        return {"session_options": self._optionally_build_set_options(session_parameters)}
-
 _pgvector_case_config = {
     IndexType.HNSW: PgVectorHNSWConfig,
     IndexType.ES_HNSW: PgVectorHNSWConfig,
     IndexType.IVFFlat: PgVectorIVFFlatConfig,
-    IndexType.SVS_VAMANA: PgVectorSVSVamanaConfig,
 }

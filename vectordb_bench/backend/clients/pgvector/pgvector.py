@@ -14,7 +14,7 @@ from psycopg import Connection, Cursor, sql
 from vectordb_bench.backend.filter import Filter, FilterOp
 
 from ..api import MetricType, VectorDB
-from .config import PgVectorConfigDict, PgVectorHNSWConfig, PgVectorIndexConfig, PgVectorSVSVamanaConfig
+from .config import PgVectorConfigDict, PgVectorHNSWConfig, PgVectorIndexConfig
 
 log = logging.getLogger(__name__)
 
@@ -65,19 +65,8 @@ class PgVector(VectorDB):
         # construct basic units
         self.conn, self.cursor = self._create_connection(**self.connect_config)
 
-        if isinstance(self.case_config, PgVectorSVSVamanaConfig):
-            # svs is a superuser-only C extension; verify it's pre-installed rather than attempting CREATE
-            installed = self.cursor.execute(
-                "SELECT 1 FROM pg_extension WHERE extname = 'svs'"
-            ).fetchone()
-            if not installed:
-                raise RuntimeError(
-                    "Extension 'svs' is not installed. "
-                    "Run 'CREATE EXTENSION svs;' as a PostgreSQL superuser first."
-                )
-        else:
-            self.cursor.execute("CREATE EXTENSION IF NOT EXISTS vector")
-            self.conn.commit()
+        self.cursor.execute("CREATE EXTENSION IF NOT EXISTS vector")
+        self.conn.commit()
 
         redacted_connect_config = _redact_connect_config(self.connect_config)
         log.info("%s config values: %s\n%s", self.name, redacted_connect_config, self.case_config)
@@ -468,7 +457,7 @@ class PgVector(VectorDB):
 
     def need_normalize_cosine(self) -> bool:
         if (
-            isinstance(self.case_config, (PgVectorSVSVamanaConfig, PgVectorHNSWConfig))
+            isinstance(self.case_config, PgVectorHNSWConfig)
             and self.case_config.normalize_cosine
             and self.case_config.metric_type == MetricType.COSINE
         ):
