@@ -69,6 +69,7 @@ class DB(Enum):
     SeekDB = "SeekDB"
     VolcMySQL = "VolcMySQL"
     Adbpg = "AnalyticDB for PostgreSQL"
+    HouyiDB = "HouyiDB"
 
     @property
     def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901, PLR0915
@@ -304,6 +305,11 @@ class DB(Enum):
             from .adbpg.adbpg import Adbpg
 
             return Adbpg
+
+        if self == DB.HouyiDB:
+            from .houyidb.houyidb import HouyiDB
+
+            return HouyiDB
 
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
@@ -542,6 +548,11 @@ class DB(Enum):
             from .adbpg.config import AdbpgConfig
 
             return AdbpgConfig
+
+        if self == DB.HouyiDB:
+            from .houyidb.config import HouyiDBConfig
+
+            return HouyiDBConfig
 
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
@@ -782,6 +793,11 @@ class DB(Enum):
             from .kividb.config import KiviDBHNSWConfig, _kividb_case_config
 
             return _kividb_case_config.get(index_type, KiviDBHNSWConfig)
+
+        if self == DB.HouyiDB:
+            from .houyidb.config import HouyiDBIndexConfig
+
+            return HouyiDBIndexConfig
 
         # DB.Pinecone, DB.Redis
         return EmptyDBCaseConfig
