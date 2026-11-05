@@ -1,6 +1,9 @@
+from enum import StrEnum
 from typing import Annotated, ClassVar
 
-from pydantic import BaseModel, Field, SecretStr
+from pydantic import BaseModel, Field, SecretStr, field_validator
+
+from vectordb_bench.backend.payload import FLOAT32_BYTES_PER_DIM
 
 from ..api import DBCaseConfig, DBConfig, IndexType, MetricType, SQType
 
@@ -32,6 +35,16 @@ class MilvusIndexConfig(BaseModel):
     index: IndexType
     metric_type: MetricType | None = None
     use_partition_key: bool = False  # for label-filter
+    force_merge_enabled: bool = True
+    force_merge_target_size_mb: int | None = None
+
+    @field_validator("force_merge_target_size_mb")
+    @classmethod
+    def _validate_force_merge_target_size(cls, value: int | None) -> int | None:
+        if value is not None and value <= 0:
+            message = "force_merge_target_size_mb must be a positive integer or None"
+            raise ValueError(message)
+        return value
 
     @property
     def is_gpu_index(self) -> bool:
@@ -72,11 +85,25 @@ class AutoIndexConfig(MilvusIndexConfig, DBCaseConfig):
         return params
 
 
+class VectorDataType(StrEnum):
+    FLOAT32 = "FLOAT32"
+    BFLOAT16 = "BFLOAT16"
+
+    @property
+    def bytes_per_dim(self) -> int:
+        return {VectorDataType.FLOAT32: FLOAT32_BYTES_PER_DIM, VectorDataType.BFLOAT16: 2}[self]
+
+
 class HNSWConfig(MilvusIndexConfig, DBCaseConfig):
     M: int
     efConstruction: int
     ef: int | None = None
     index: IndexType = IndexType.HNSW
+    vector_data_type: VectorDataType = VectorDataType.FLOAT32
+
+    @property
+    def vector_bytes_per_dim(self) -> int:
+        return self.vector_data_type.bytes_per_dim
 
     def index_param(self) -> dict:
         return {
@@ -542,6 +569,16 @@ class MilvusFtsConfig(BaseModel, DBCaseConfig):
     analyzer_max_token_length: int | None = None
     analyzer_stop_words: str | None = None
     drop_ratio_search: float | None = None
+    force_merge_enabled: bool = True
+    force_merge_target_size_mb: int | None = None
+
+    @field_validator("force_merge_target_size_mb")
+    @classmethod
+    def _validate_force_merge_target_size(cls, value: int | None) -> int | None:
+        if value is not None and value <= 0:
+            message = "force_merge_target_size_mb must be a positive integer or None"
+            raise ValueError(message)
+        return value
 
     def analyzer_param(self) -> dict:
         analyzer_params = {}

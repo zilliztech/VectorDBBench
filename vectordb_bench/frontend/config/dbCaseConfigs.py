@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 from vectordb_bench.backend.cases import CaseLabel, CaseType, PerformanceCase
 from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.clients.api import IndexType, MetricType, SQType
+from vectordb_bench.backend.clients.polardb_pg.config import DEFAULT_GRAPH_CACHE_TIMEOUT_SECONDS
 from vectordb_bench.backend.dataset import (
     LAION_INT_FILTER_SEARCH_WIDTHS,
     DatasetManager,
@@ -1594,6 +1595,96 @@ CaseConfigParamInput_reranking_metric_PgVector = CaseConfigInput(
 )
 
 
+# PolarDB for PostgreSQL HNSW configs
+CaseConfigParamInput_IndexType_PolarDBPG = CaseConfigInput(
+    label=CaseConfigParamType.IndexType,
+    inputHelp="PolarDB for PostgreSQL currently supports the HNSW index in VectorDBBench",
+    inputType=InputType.Option,
+    inputConfig={"options": [IndexType.HNSW.value]},
+)
+
+CaseConfigParamInput_HnswQuantization_PolarDBPG = CaseConfigInput(
+    label=CaseConfigParamType.hnsw_quantization,
+    displayLabel="Internal quantization",
+    inputHelp="PolarDB HNSW internal quantizer; None keeps the standard pgvector code format",
+    inputType=InputType.Option,
+    inputConfig={"options": [None, "pq", "sq4", "sq8", "rabitq"]},
+)
+
+CaseConfigParamInput_PostLoadIndex_PolarDBPG = CaseConfigInput(
+    label=CaseConfigParamType.post_load_index,
+    displayLabel="Create index after load",
+    inputHelp="Disable to build the HNSW index before loading data",
+    inputType=InputType.Bool,
+    inputConfig={"value": True},
+)
+
+CaseConfigParamInput_PQM_PolarDBPG = CaseConfigInput(
+    label=CaseConfigParamType.pq_m,
+    displayLabel="PQ sub-quantizers",
+    inputHelp="Number of sub-quantizers used by PQ",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 2,
+        "max": 4096,
+        "value": 32,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.hnsw_quantization, None) == "pq",
+)
+
+CaseConfigParamInput_TrainSamples_PolarDBPG = CaseConfigInput(
+    label=CaseConfigParamType.train_samples,
+    displayLabel="Quantizer train samples",
+    inputHelp="Number of sampled rows used to train the internal quantizer",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 100,
+        "max": MAX_STREAMLIT_INT,
+        "value": 1000,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.hnsw_quantization, None) is not None,
+)
+
+CaseConfigParamInput_QuantizationNbits_PolarDBPG = CaseConfigInput(
+    label=CaseConfigParamType.quantization_nbits,
+    displayLabel="RaBitQ bits per dimension",
+    inputHelp="RaBitQ code width",
+    inputType=InputType.Option,
+    inputConfig={"options": [1, 4, 8]},
+    isDisplayed=lambda config: config.get(CaseConfigParamType.hnsw_quantization, None) == "rabitq",
+)
+
+CaseConfigParamInput_GraphCache_PolarDBPG = CaseConfigInput(
+    label=CaseConfigParamType.graph_cache,
+    displayLabel="Enable Graph Cache",
+    inputHelp="Build Graph Cache and wait until it is usable before search",
+    inputType=InputType.Bool,
+    inputConfig={"value": True},
+)
+
+CaseConfigParamInput_GraphCacheTimeout_PolarDBPG = CaseConfigInput(
+    label=CaseConfigParamType.graph_cache_timeout,
+    displayLabel="Graph Cache timeout (seconds)",
+    inputHelp="Maximum time to wait for Graph Cache to become usable",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": MAX_STREAMLIT_INT,
+        "value": DEFAULT_GRAPH_CACHE_TIMEOUT_SECONDS,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.graph_cache, True),
+)
+
+CaseConfigParamInput_IterativeScan_PolarDBPG = CaseConfigInput(
+    label=CaseConfigParamType.iterative_scan,
+    displayLabel="Iterative scan",
+    inputHelp="Graph Cache requires iterative scan to remain off",
+    inputType=InputType.Option,
+    inputConfig={"options": ["off", "strict_order", "relaxed_order"]},
+    isDisplayed=lambda config: not config.get(CaseConfigParamType.graph_cache, True),
+)
+
+
 CaseConfigParamInput_IndexType_AlloyDB = CaseConfigInput(
     label=CaseConfigParamType.IndexType,
     inputHelp="Select Index Type",
@@ -1997,6 +2088,33 @@ CaseConfigParamInput_Milvus_use_partition_key = CaseConfigInput(
     inputType=InputType.Option,
     inputHelp="whether to use partition_key for label-filter cases. only works in label-filter cases",
     inputConfig={"options": [False, True]},
+)
+
+CaseConfigParamInput_Milvus_force_merge_enabled = CaseConfigInput(
+    label=CaseConfigParamType.force_merge_enabled,
+    displayLabel="Force Merge Enabled",
+    inputHelp=(
+        "Force-merge compaction during optimize. Disable for a sooner ready-to-search "
+        "state at the cost of segments not merged to their fullest potential."
+    ),
+    inputType=InputType.Bool,
+    inputConfig={"value": True},
+)
+
+CaseConfigParamInput_Milvus_force_merge_target_size_mb = CaseConfigInput(
+    label=CaseConfigParamType.force_merge_target_size_mb,
+    displayLabel="Force Merge Target Size (MB)",
+    inputHelp=(
+        "Target merged segment size in MB requested for the force-merge compaction during "
+        "optimize; the effective cap depends on the Milvus server. Leave empty to keep the "
+        "current unbounded single-segment behavior; e.g. 1024 for bounded segments."
+    ),
+    inputType=InputType.Number,
+    inputConfig={
+        "value": None,
+        "min": 1,
+        "max": MAX_STREAMLIT_INT,
+    },
 )
 
 
@@ -2423,6 +2541,8 @@ MilvusLoadConfig = [
     CaseConfigParamInput_RefineType,
     CaseConfigParamInput_NRQ,
     CaseConfigParamInput_Milvus_use_partition_key,
+    CaseConfigParamInput_Milvus_force_merge_enabled,
+    CaseConfigParamInput_Milvus_force_merge_target_size_mb,
 ]
 MilvusPerformanceConfig = [
     CaseConfigParamInput_IndexType,
@@ -2453,6 +2573,8 @@ MilvusPerformanceConfig = [
     CaseConfigParamInput_RefineType,
     CaseConfigParamInput_RefineK,
     CaseConfigParamInput_Milvus_use_partition_key,
+    CaseConfigParamInput_Milvus_force_merge_enabled,
+    CaseConfigParamInput_Milvus_force_merge_target_size_mb,
 ]
 
 
@@ -2466,11 +2588,15 @@ MilvusFtsConfig = [
     CaseConfigParamInput_FTS_analyzer_max_token_length,
     CaseConfigParamInput_FTS_analyzer_stop_words,
     CaseConfigParamInput_FTS_drop_ratio_search,
+    CaseConfigParamInput_Milvus_force_merge_enabled,
+    CaseConfigParamInput_Milvus_force_merge_target_size_mb,
 ]
 
 ZillizCloudFtsConfig = [
     CaseConfigParamInput_IndexType_FTS,
     CaseConfigParamInput_ZillizLevel,
+    CaseConfigParamInput_Milvus_force_merge_enabled,
+    CaseConfigParamInput_Milvus_force_merge_target_size_mb,
 ]
 
 ElasticCloudFtsConfig = []
@@ -2554,6 +2680,45 @@ PgVectorPerformanceConfig = [
     CaseConfigParamInput_quantized_fetch_limit_PgVector,
 ]
 
+PolarDBPgLoadingConfig = [
+    CaseConfigParamInput_IndexType_PolarDBPG,
+    CaseConfigParamInput_PostLoadIndex_PolarDBPG,
+    CaseConfigParamInput_m,
+    CaseConfigParamInput_EFConstruction_PgVector,
+    CaseConfigParamInput_QuantizationType_PgVector,
+    CaseConfigParamInput_TableQuantizationType_PgVector,
+    CaseConfigParamInput_HnswQuantization_PolarDBPG,
+    CaseConfigParamInput_PQM_PolarDBPG,
+    CaseConfigParamInput_TrainSamples_PolarDBPG,
+    CaseConfigParamInput_QuantizationNbits_PolarDBPG,
+    CaseConfigParamInput_maintenance_work_mem_PgVector,
+    CaseConfigParamInput_max_parallel_workers_PgVector,
+    CaseConfigParamInput_GraphCache_PolarDBPG,
+    CaseConfigParamInput_GraphCacheTimeout_PolarDBPG,
+]
+
+PolarDBPgPerformanceConfig = [
+    CaseConfigParamInput_IndexType_PolarDBPG,
+    CaseConfigParamInput_PostLoadIndex_PolarDBPG,
+    CaseConfigParamInput_m,
+    CaseConfigParamInput_EFConstruction_PgVector,
+    CaseConfigParamInput_EFSearch_PgVector,
+    CaseConfigParamInput_QuantizationType_PgVector,
+    CaseConfigParamInput_TableQuantizationType_PgVector,
+    CaseConfigParamInput_HnswQuantization_PolarDBPG,
+    CaseConfigParamInput_PQM_PolarDBPG,
+    CaseConfigParamInput_TrainSamples_PolarDBPG,
+    CaseConfigParamInput_QuantizationNbits_PolarDBPG,
+    CaseConfigParamInput_maintenance_work_mem_PgVector,
+    CaseConfigParamInput_max_parallel_workers_PgVector,
+    CaseConfigParamInput_reranking_PgVector,
+    CaseConfigParamInput_reranking_metric_PgVector,
+    CaseConfigParamInput_quantized_fetch_limit_PgVector,
+    CaseConfigParamInput_GraphCache_PolarDBPG,
+    CaseConfigParamInput_GraphCacheTimeout_PolarDBPG,
+    CaseConfigParamInput_IterativeScan_PolarDBPG,
+]
+
 PgVectoRSLoadingConfig = [
     CaseConfigParamInput_IndexType_PgVectoRS,
     CaseConfigParamInput_m,
@@ -2578,6 +2743,8 @@ PgVectoRSPerformanceConfig = [
 
 ZillizCloudPerformanceConfig = [
     CaseConfigParamInput_ZillizLevel,
+    CaseConfigParamInput_Milvus_force_merge_enabled,
+    CaseConfigParamInput_Milvus_force_merge_target_size_mb,
 ]
 
 PgVectorScaleLoadingConfig = [
@@ -2756,6 +2923,54 @@ AliSQLPerformanceConfig = [
     CaseConfigParamInput_M_AliSQL,
     CaseConfigParamInput_EFSearch_AliSQL,
 ]
+
+CaseConfigParamInput_IndexType_KiviDB = CaseConfigInput(
+    label=CaseConfigParamType.IndexType,
+    inputHelp="Select Index Type",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [
+            IndexType.HNSW.value,
+            IndexType.Flat.value,
+        ],
+    },
+)
+
+CaseConfigParamInput_M_KiviDB = CaseConfigInput(
+    label=CaseConfigParamType.M,
+    inputHelp="HNSW M: max neighbors per node",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 4,
+        "max": 64,
+        "value": 16,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_EFConstruction_KiviDB = CaseConfigInput(
+    label=CaseConfigParamType.ef_construction,
+    inputHelp="HNSW EF_CONSTRUCTION: candidate list size while building",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 8,
+        "max": 1024,
+        "value": 200,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_EFRuntime_KiviDB = CaseConfigInput(
+    label=CaseConfigParamType.ef_runtime,
+    inputHelp="HNSW EF_RUNTIME: candidate list size per query (server default 10)",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": MAX_STREAMLIT_INT,
+        "value": 10,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
+)
 
 CaseConfigParamInput_IndexType_LanceDB = CaseConfigInput(
     label=CaseConfigParamType.IndexType,
@@ -3161,6 +3376,16 @@ ZvecPerformanceConfig = [
     CaseConfigParamInput_ef_search_Zvec,
     CaseConfigParamInput_is_using_refiner_Zvec,
     CaseConfigParamInput_search_list_size_Zvec,
+KiviDBLoadConfig = [
+    CaseConfigParamInput_IndexType_KiviDB,
+    CaseConfigParamInput_M_KiviDB,
+    CaseConfigParamInput_EFConstruction_KiviDB,
+]
+KiviDBPerformanceConfig = [
+    CaseConfigParamInput_IndexType_KiviDB,
+    CaseConfigParamInput_M_KiviDB,
+    CaseConfigParamInput_EFConstruction_KiviDB,
+    CaseConfigParamInput_EFRuntime_KiviDB,
 ]
 
 AWSOpensearchLoadingConfig = [
@@ -3507,6 +3732,63 @@ AdbpgPerformanceConfig = [
     CaseConfigParamInput_NovaAdaptiveGamma_Adbpg,
 ]
 
+CaseConfigParamInput_m_QdrantLocal = CaseConfigInput(
+    label=CaseConfigParamType.m,
+    displayLabel="m",
+    inputHelp="HNSW index parameter m, the number of edges per node in the index graph",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 2,
+        "max": 1000,
+        "value": 16,
+    },
+)
+
+CaseConfigParamInput_ef_construct_QdrantLocal = CaseConfigInput(
+    label=CaseConfigParamType.ef_construct,
+    displayLabel="ef_construct",
+    inputHelp="HNSW index parameter ef_construct",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 4,
+        "max": 4096,
+        "value": 200,
+    },
+)
+
+CaseConfigParamInput_on_disk_QdrantLocal = CaseConfigInput(
+    label=CaseConfigParamType.on_disk,
+    displayLabel="on_disk",
+    inputHelp="Store the vectors and the HNSW index on disk",
+    inputType=InputType.Bool,
+    inputConfig={
+        "value": False,
+    },
+)
+
+CaseConfigParamInput_hnsw_ef_QdrantLocal = CaseConfigInput(
+    label=CaseConfigParamType.hnsw_ef,
+    displayLabel="hnsw_ef",
+    inputHelp="HNSW search parameter hnsw_ef, set 0 to use ef_construct for search",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 0,
+        "max": 4096,
+        "value": 0,
+    },
+)
+
+QdrantLocalLoadConfig = [
+    CaseConfigParamInput_m_QdrantLocal,
+    CaseConfigParamInput_ef_construct_QdrantLocal,
+    CaseConfigParamInput_on_disk_QdrantLocal,
+]
+
+QdrantLocalPerformanceConfig = [
+    *QdrantLocalLoadConfig,
+    CaseConfigParamInput_hnsw_ef_QdrantLocal,
+]
+
 # Map DB to config
 CASE_CONFIG_MAP = {
     DB.Milvus: {
@@ -3540,6 +3822,10 @@ CASE_CONFIG_MAP = {
     DB.PgVector: {
         CaseLabel.Load: PgVectorLoadingConfig,
         CaseLabel.Performance: PgVectorPerformanceConfig,
+    },
+    DB.PolarDBPG: {
+        CaseLabel.Load: PolarDBPgLoadingConfig,
+        CaseLabel.Performance: PolarDBPgPerformanceConfig,
     },
     DB.PgVectoRS: {
         CaseLabel.Load: PgVectoRSLoadingConfig,
@@ -3589,6 +3875,9 @@ CASE_CONFIG_MAP = {
     DB.Zvec: {
         CaseLabel.Load: ZvecLoadConfig,
         CaseLabel.Performance: ZvecPerformanceConfig,
+    DB.QdrantLocal: {
+        CaseLabel.Load: QdrantLocalLoadConfig,
+        CaseLabel.Performance: QdrantLocalPerformanceConfig,
     },
     DB.TencentElasticsearch: {
         CaseLabel.Load: TencentElasticsearchLoadingConfig,
@@ -3620,6 +3909,10 @@ CASE_CONFIG_MAP = {
     DB.Adbpg: {
         CaseLabel.Load: AdbpgLoadConfig,
         CaseLabel.Performance: AdbpgPerformanceConfig,
+    },
+    DB.KiviDB: {
+        CaseLabel.Load: KiviDBLoadConfig,
+        CaseLabel.Performance: KiviDBPerformanceConfig,
     },
 }
 

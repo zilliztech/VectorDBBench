@@ -1,5 +1,5 @@
 import logging
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 
 import chromadb
 
@@ -34,11 +34,8 @@ class ChromaClient(VectorDB):
         assert client.heartbeat() is not None
 
         if drop_old:
-            try:
-                client.reset()
-            except Exception:
-                drop_old = False
-                log.info(f"Chroma client drop_old collection: {self.collection_name}")
+            with suppress(chromadb.errors.NotFoundError):
+                client.delete_collection(name=self.collection_name)
 
         self.client = None
         self.collection = None

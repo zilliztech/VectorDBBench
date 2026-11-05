@@ -62,11 +62,14 @@ class CaseConfigParamType(Enum):
     M = "M"
     EFConstruction = "efConstruction"
     ef_construction = "ef_construction"
+    ef_construct = "ef_construct"
     EF = "ef"
+    hnsw_ef = "hnsw_ef"
     SearchList = "search_list"
     ef_search = "ef_search"
     quantize_type = "quantize_type"
     is_using_refiner = "is_using_refiner"
+    ef_runtime = "ef_runtime"
     Nlist = "nlist"
     Nprobe = "nprobe"
     MaxConnections = "maxConnections"
@@ -145,6 +148,8 @@ class CaseConfigParamType(Enum):
     mongodb_num_candidates_ratio = "num_candidates_ratio"
     mongodb_exact = "exact"
     use_partition_key = "use_partition_key"
+    force_merge_enabled = "force_merge_enabled"
+    force_merge_target_size_mb = "force_merge_target_size_mb"
     refresh_interval = "refresh_interval"
     use_rescore = "use_rescore"
     oversample_ratio = "oversample_ratio"
@@ -181,6 +186,14 @@ class CaseConfigParamType(Enum):
     insert_workers = "insert_workers"
     post_load_index = "post_load_index"
     pq_nbits = "pq_nbits"
+
+    # PolarDB for PostgreSQL parameters
+    hnsw_quantization = "hnsw_quantization"
+    train_samples = "train_samples"
+    quantization_nbits = "quantization_nbits"
+    graph_cache = "graph_cache"
+    graph_cache_timeout = "graph_cache_timeout"
+    iterative_scan = "iterative_scan"
 
     # Lindorm parameters
     efSearch = "efSearch"

@@ -1,4 +1,4 @@
-from typing import Annotated, TypedDict, Unpack
+from typing import Annotated, Any, TypedDict, Unpack
 
 import click
 from pydantic import BaseModel, SecretStr
@@ -17,6 +17,19 @@ from vectordb_bench.cli.cli import (
 DBTYPE = DB.Milvus
 
 
+def _validate_positive_int_or_none(_ctx: Any, _param: Any, value: int | None) -> int | None:
+    """Click callback accepting ``None`` or a positive integer.
+
+    Guards flags whose values are applied via ``model_copy(update=...)`` in
+    ``_apply_milvus_case_defaults`` — pydantic's ``model_copy`` does not run
+    validators, so the CLI boundary must reject invalid values itself.
+    """
+    if value is not None and value <= 0:
+        message = f"must be a positive integer, got {value}"
+        raise click.BadParameter(message)
+    return value
+
+
 def _use_partition_key(parameters: dict) -> bool:
     explicit = parameters.get("use_partition_key")
     if explicit is not None:
@@ -24,8 +37,14 @@ def _use_partition_key(parameters: dict) -> bool:
     return parameters.get("case_type") == "CloudMultiTenantSearchCase"
 
 
-def _with_partition_key(db_case_config: BaseModel, parameters: dict) -> BaseModel:
-    return db_case_config.model_copy(update={"use_partition_key": _use_partition_key(parameters)})
+def _apply_milvus_case_defaults(db_case_config: BaseModel, parameters: dict) -> BaseModel:
+    return db_case_config.model_copy(
+        update={
+            "use_partition_key": _use_partition_key(parameters),
+            "force_merge_enabled": parameters["force_merge_enabled"],
+            "force_merge_target_size_mb": parameters["force_merge_target_size_mb"],
+        }
+    )
 
 
 def _build_milvus_config(parameters: dict) -> BaseModel:
@@ -99,6 +118,37 @@ class MilvusTypedDict(TypedDict):
             ),
         ),
     ]
+    force_merge_enabled: Annotated[
+        bool,
+        click.option(
+            "--force-merge-enabled/--no-force-merge-enabled",
+            type=bool,
+            default=True,
+            show_default=True,
+            help=(
+                "Whether to force-merge compaction during optimize. Disable for a sooner "
+                "ready-to-search state at the cost of segments not merged to their fullest "
+                "potential (search latency may vary)."
+            ),
+        ),
+    ]
+    force_merge_target_size_mb: Annotated[
+        int | None,
+        click.option(
+            "--force-merge-target-size-mb",
+            type=int,
+            required=False,
+            default=None,
+            show_default=True,
+            callback=_validate_positive_int_or_none,
+            help=(
+                "Target merged segment size in MB requested for the force-merge compaction "
+                "during optimize; the effective cap depends on the Milvus server. Defaults "
+                "to the current unbounded single-segment behavior; set e.g. 1024 for bounded "
+                "segments. Must be a positive integer."
+            ),
+        ),
+    ]
 
 
 class MilvusAutoIndexTypedDict(CommonTypedDict, MilvusTypedDict, AutoIndexLevelTypedDict): ...
@@ -112,7 +162,7 @@ def MilvusAutoIndex(**parameters: Unpack[MilvusAutoIndexTypedDict]):
     run(
         db=DBTYPE,
         db_config=_build_milvus_config(parameters),
-        db_case_config=_with_partition_key(AutoIndexConfig(level=parameters["level"]), parameters),
+        db_case_config=_apply_milvus_case_defaults(AutoIndexConfig(level=parameters["level"]), parameters),
         **parameters,
     )
 
@@ -128,7 +178,7 @@ def MilvusFlat(**parameters: Unpack[MilvusFlatTypedDict]):
     run(
         db=DBTYPE,
         db_config=_build_milvus_config(parameters),
-        db_case_config=_with_partition_key(FLATConfig(), parameters),
+        db_case_config=_apply_milvus_case_defaults(FLATConfig(), parameters),
         **parameters,
     )
 
@@ -136,19 +186,33 @@ def MilvusFlat(**parameters: Unpack[MilvusFlatTypedDict]):
 class MilvusHNSWTypedDict(CommonTypedDict, MilvusTypedDict, HNSWFlavor3): ...
 
 
+class MilvusHNSWCommandTypedDict(MilvusHNSWTypedDict):
+    vector_data_type: Annotated[
+        str,
+        click.option(
+            "--vector-data-type",
+            type=click.Choice(["FLOAT32", "BFLOAT16"], case_sensitive=False),
+            default="FLOAT32",
+            show_default=True,
+            help="Data type of the stored vectors. Supported values: FLOAT32,BFLOAT16",
+        ),
+    ]
+
+
 @cli.command()
-@click_parameter_decorators_from_typed_dict(MilvusHNSWTypedDict)
-def MilvusHNSW(**parameters: Unpack[MilvusHNSWTypedDict]):
+@click_parameter_decorators_from_typed_dict(MilvusHNSWCommandTypedDict)
+def MilvusHNSW(**parameters: Unpack[MilvusHNSWCommandTypedDict]):
     from .config import HNSWConfig
 
     run(
         db=DBTYPE,
         db_config=_build_milvus_config(parameters),
-        db_case_config=_with_partition_key(
+        db_case_config=_apply_milvus_case_defaults(
             HNSWConfig(
                 M=parameters["m"],
                 efConstruction=parameters["ef_construction"],
                 ef=parameters["ef_search"],
+                vector_data_type=parameters["vector_data_type"],
             ),
             parameters,
         ),
@@ -205,7 +269,7 @@ def MilvusHNSWPQ(**parameters: Unpack[MilvusHNSWPQTypedDict]):
     run(
         db=DBTYPE,
         db_config=_build_milvus_config(parameters),
-        db_case_config=_with_partition_key(
+        db_case_config=_apply_milvus_case_defaults(
             HNSWPQConfig(
                 M=parameters["m"],
                 efConstruction=parameters["ef_construction"],
@@ -245,7 +309,7 @@ def MilvusHNSWPRQ(**parameters: Unpack[MilvusHNSWPRQTypedDict]):
     run(
         db=DBTYPE,
         db_config=_build_milvus_config(parameters),
-        db_case_config=_with_partition_key(
+        db_case_config=_apply_milvus_case_defaults(
             HNSWPRQConfig(
                 M=parameters["m"],
                 efConstruction=parameters["ef_construction"],
@@ -282,7 +346,7 @@ def MilvusHNSWSQ(**parameters: Unpack[MilvusHNSWSQTypedDict]):
     run(
         db=DBTYPE,
         db_config=_build_milvus_config(parameters),
-        db_case_config=_with_partition_key(
+        db_case_config=_apply_milvus_case_defaults(
             HNSWSQConfig(
                 M=parameters["m"],
                 efConstruction=parameters["ef_construction"],
@@ -309,7 +373,7 @@ def MilvusIVFFlat(**parameters: Unpack[MilvusIVFFlatTypedDict]):
     run(
         db=DBTYPE,
         db_config=_build_milvus_config(parameters),
-        db_case_config=_with_partition_key(
+        db_case_config=_apply_milvus_case_defaults(
             IVFFlatConfig(
                 nlist=parameters["nlist"],
                 nprobe=parameters["nprobe"],
@@ -328,7 +392,7 @@ def MilvusIVFSQ8(**parameters: Unpack[MilvusIVFFlatTypedDict]):
     run(
         db=DBTYPE,
         db_config=_build_milvus_config(parameters),
-        db_case_config=_with_partition_key(
+        db_case_config=_apply_milvus_case_defaults(
             IVFSQ8Config(
                 nlist=parameters["nlist"],
                 nprobe=parameters["nprobe"],
@@ -386,7 +450,7 @@ def MilvusIVFRabitQ(**parameters: Unpack[MilvusIVFRABITQTypedDict]):
     run(
         db=DBTYPE,
         db_config=_build_milvus_config(parameters),
-        db_case_config=_with_partition_key(
+        db_case_config=_apply_milvus_case_defaults(
             IVFRABITQConfig(
                 nlist=parameters["nlist"],
                 nprobe=parameters["nprobe"],
@@ -413,7 +477,7 @@ def MilvusDISKANN(**parameters: Unpack[MilvusDISKANNTypedDict]):
     run(
         db=DBTYPE,
         db_config=_build_milvus_config(parameters),
-        db_case_config=_with_partition_key(
+        db_case_config=_apply_milvus_case_defaults(
             DISKANNConfig(
                 search_list=parameters["search_list"],
             ),
@@ -439,7 +503,7 @@ def MilvusGPUIVFFlat(**parameters: Unpack[MilvusGPUIVFTypedDict]):
     run(
         db=DBTYPE,
         db_config=_build_milvus_config(parameters),
-        db_case_config=_with_partition_key(
+        db_case_config=_apply_milvus_case_defaults(
             GPUIVFFlatConfig(
                 nlist=parameters["nlist"],
                 nprobe=parameters["nprobe"],
@@ -471,7 +535,7 @@ def MilvusGPUBruteForce(**parameters: Unpack[MilvusGPUBruteForceTypedDict]):
     run(
         db=DBTYPE,
         db_config=_build_milvus_config(parameters),
-        db_case_config=_with_partition_key(
+        db_case_config=_apply_milvus_case_defaults(
             GPUBruteForceConfig(
                 metric_type=parameters["metric_type"],
                 limit=parameters["limit"],  # top-k for search
@@ -557,7 +621,7 @@ def MilvusSVSVamana(**parameters: Unpack[MilvusSVSVamanaTypedDict]):
     run(
         db=DBTYPE,
         db_config=_build_milvus_config(parameters),
-        db_case_config=_with_partition_key(
+        db_case_config=_apply_milvus_case_defaults(
             SVSVamanaConfig(
                 svs_graph_max_degree=parameters["svs_graph_max_degree"],
                 svs_construction_window_size=parameters["svs_construction_window_size"],
@@ -580,7 +644,7 @@ def MilvusSVSVamanaLVQ(**parameters: Unpack[MilvusSVSVamanaTypedDict]):
     run(
         db=DBTYPE,
         db_config=_build_milvus_config(parameters),
-        db_case_config=_with_partition_key(
+        db_case_config=_apply_milvus_case_defaults(
             SVSVamanaLVQConfig(
                 svs_graph_max_degree=parameters["svs_graph_max_degree"],
                 svs_construction_window_size=parameters["svs_construction_window_size"],
@@ -617,7 +681,7 @@ def MilvusSVSVamanaLeanVec(**parameters: Unpack[MilvusSVSVamanaLeanVecTypedDict]
     run(
         db=DBTYPE,
         db_config=_build_milvus_config(parameters),
-        db_case_config=_with_partition_key(
+        db_case_config=_apply_milvus_case_defaults(
             SVSVamanaLeanVecConfig(
                 svs_graph_max_degree=parameters["svs_graph_max_degree"],
                 svs_construction_window_size=parameters["svs_construction_window_size"],
@@ -651,7 +715,7 @@ def MilvusGPUIVFPQ(**parameters: Unpack[MilvusGPUIVFPQTypedDict]):
     run(
         db=DBTYPE,
         db_config=_build_milvus_config(parameters),
-        db_case_config=_with_partition_key(
+        db_case_config=_apply_milvus_case_defaults(
             GPUIVFPQConfig(
                 nlist=parameters["nlist"],
                 nprobe=parameters["nprobe"],
@@ -688,7 +752,7 @@ def MilvusGPUCAGRA(**parameters: Unpack[MilvusGPUCAGRATypedDict]):
     run(
         db=DBTYPE,
         db_config=_build_milvus_config(parameters),
-        db_case_config=_with_partition_key(
+        db_case_config=_apply_milvus_case_defaults(
             GPUCAGRAConfig(
                 intermediate_graph_degree=parameters["intermediate_graph_degree"],
                 graph_degree=parameters["graph_degree"],
@@ -740,6 +804,8 @@ def MilvusFTS(**parameters: Unpack[MilvusFTSTypedDict]):
         db_config=_build_milvus_config(parameters),
         db_case_config=MilvusFtsConfig(
             drop_ratio_search=parameters.get("drop_ratio_search"),
+            force_merge_enabled=parameters["force_merge_enabled"],
+            force_merge_target_size_mb=parameters["force_merge_target_size_mb"],
         ),
         **parameters,
     )

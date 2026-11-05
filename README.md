@@ -74,7 +74,9 @@ All the database client supported
 | pgvector, pgvectorscale, pgdiskann, alloydb, vectorchord, lakebase_vector | `pip install vectordb-bench[pgvector]`      |
 | pgvecto.rs               | `pip install vectordb-bench[pgvecto_rs]`    |
 | redis                    | `pip install vectordb-bench[redis]`         |
+| valkey                   | `pip install vectordb-bench[valkey]`        |
 | memorydb                 | `pip install vectordb-bench[memorydb]`      |
+| kividb                   | `pip install vectordb-bench[kividb]`        |
 | chromadb                 | `pip install vectordb-bench[chromadb]`      |
 | cockroachdb              | `pip install vectordb-bench[cockroachdb]`   |
 | awsopensearch            | `pip install vectordb-bench[opensearch]` |
@@ -87,6 +89,7 @@ All the database client supported
 | tencent_es               | `pip install vectordb-bench[tencent_es]`    |
 | alisql                   | `pip install vectordb-bench[alisql]`      |
 | polardb                  | `pip install vectordb-bench[polardb]`       |
+| polardb_pg               | `pip install vectordb-bench[pgvector]`      |
 | doris                    | `pip install vectordb-bench[doris]`         |
 | zvec                     | `pip install vectordb-bench[zvec]`          |
 | endee                    | `pip install vectordb-bench[endee]`         |
@@ -116,6 +119,7 @@ Options:
   --help  Show this message and exit.
 
 Commands:
+  polardbpghnsw
   pgvectorhnsw
   pgvectorivfflat
   vectorchordrq
@@ -135,6 +139,15 @@ its existing default of 1 and always sends it. Results record the value in
 vectordbbench milvusautoindex \
   --uri http://localhost:19530 \
   --level 2 \
+  <other options>
+```
+
+`milvushnsw` accepts `--vector-data-type` (YAML: `vector_data_type`) to store vectors as `FLOAT32` (default) or `BFLOAT16`. The index type stays `HNSW`. With `--skip-drop-old --skip-load`, the run fails if the vector field of the collection has a different data type or dimension. Results record the value in `task_config.db_case_config.vector_data_type`.
+
+```shell
+vectordbbench milvushnsw \
+  --uri http://localhost:19530 \
+  --vector-data-type BFLOAT16 \
   <other options>
 ```
 
@@ -261,6 +274,47 @@ Options:
                                   Custom dataset with ground truth or skip  [default: custom-dataset-
                                   with-gt]
   --help                          Show this message and exit.
+```
+
+### Run polardb_pg from command line
+
+polardb_pg supports HNSW with PQ, SQ4, SQ8, RaBitQ, and Graph Cache.
+This PostgreSQL client is separate from the existing MySQL-compatible PolarDB
+commands and reuses the `pgvector` dependency extra:
+
+```shell
+pip install 'vectordb-bench[pgvector]'
+```
+
+PolarDB-specific internal quantization and Graph Cache options require PolarDB
+vector extension 0.8.3.1 or later. Use `--skip-graph-cache` when Graph Cache is
+not configured on the server.
+
+**Example: Run hnsw index test**
+
+```shell
+vectordbbench polardbpghnsw \
+  --case-type Performance1024D1M \
+  --db-label polardb-pg-rabitq8 \
+  --user-name postgres --password '<password>' \
+  --host localhost --port 5432 --db-name vectordb \
+  --m 16 --ef-construction 256 --ef-search 200 \
+  --quantization rabitq --quantization-nbits 8 \
+  --iterative-scan off --graph-cache
+```
+
+To list the options for polardb_pg, execute
+`vectordbbench polardbpghnsw --help`. The following are some PolarDB-specific
+command-line options.
+
+```text
+  --quantization [pq|sq4|sq8|rabitq]
+  --pq-m INTEGER
+  --train-samples INTEGER
+  --quantization-nbits [1|4|8]
+  --graph-cache / --skip-graph-cache
+  --graph-cache-timeout INTEGER
+  --iterative-scan [off|strict_order|relaxed_order]
 ```
 
 ### Run VectorChord (vchordrq) from command line
@@ -862,6 +916,48 @@ To list the options for VolcMySQL, execute `vectordbbench volcmysqlhnsw --help`.
 ```
 
 > Note: vectors are loaded and queried over the raw-binary `VECTOR` path by default; the client auto-probes server support and falls back to `to_vector()` text when unavailable. Set `VDB_BINARY_VEC=0` to force the text path or `1` to force binary.
+
+### Run HouyiDB from command line
+
+HouyiDB is a memory-first vector database with an HNSW index, a PostgreSQL-compatible pgwire endpoint and an HTTP benchmark API. Install the optional client dependencies with `pip install vectordb-bench[houyidb]`. The client loads and searches over pgwire by default and switches to the HTTP API for filtered cases or when `--transport http` is selected.
+
+HouyiDB builds a cosine index, so the client rejects datasets whose distance metric is not `COSINE`. Because the server has no remote drop for the main index, a `drop_old=True` case is rejected when the index is not empty: start HouyiDB from an empty data directory (and empty WAL) before a fresh load. Before measuring, the client reads the effective `hnsw_m`, `hnsw_ef_construction` and `distance_metric` from `/v1/index/status` and aborts the run if they do not match the case configuration. With `--transport pgwire`, start the server with matching build parameters, e.g. `--pgwire-hnsw-m 24 --pgwire-hnsw-efc 400`; `--no-verify-build-params` is available only for older servers that do not report these fields.
+
+```shell
+vectordbbench houyidb \
+  --case-type Performance1536D50K \
+  --host <db_host> \
+  --port 15432 \
+  --http-port 17000 \
+  --transport pgwire \
+  --m 24 \
+  --ef-construction 400 \
+  --ef-search 256 \
+  --num-concurrency '10,20,40,60,80' \
+  --concurrency-duration 30 \
+  --task-label <task_label> \
+  --db-label <db_label>
+```
+
+To list the options for HouyiDB, execute `vectordbbench houyidb --help`. The following are some HouyiDB-specific command-line options.
+
+```text
+  --host TEXT                      HouyiDB host  [required]
+  --port INTEGER                   HouyiDB pgwire port  [default: 15432]
+  --http-port INTEGER              Benchmark HTTP port  [default: 17000]
+  --transport [pgwire|http]        Data plane  [default: pgwire]
+  --use-tls / --no-use-tls         Use HTTPS for HTTP requests  [default: no-use-tls]
+  --api-key TEXT                   Optional token: HTTP Bearer or pgwire password
+  --timeout-sec INTEGER            Per-request timeout in seconds, including pgwire statement execution  [default: 600]
+  --verify-build-params / --no-verify-build-params
+                                   Verify the server's effective HNSW build parameters before measuring  [default: verify]
+  --metric-type [COSINE]           Distance metric (HouyiDB builds a cosine index)  [default: COSINE]
+  --m INTEGER                      HNSW m  [default: 24]
+  --ef-construction INTEGER        HNSW ef_construction  [default: 400]
+  --ef-search INTEGER              HNSW ef_search  [default: 256]
+```
+
+Filtered cases use the HTTP data plane because that is where HouyiDB accepts scalar labels and id filters.
 
 #### Using a configuration file.
 

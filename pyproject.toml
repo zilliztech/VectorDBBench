@@ -54,6 +54,9 @@ test = [
     "black",
     "ruff",
     "pytest",
+    "psycopg",
+    "psycopg-binary",
+    "pgvector",
 ]
 restful         = [ "flask" ]
 qdrant          = [ "qdrant-client" ]
@@ -63,11 +66,13 @@ elastic         = [ "elasticsearch" ]
 # For elastic and aliyun_elasticsearch
 
 pgvector        = [ "psycopg", "psycopg-binary", "pgvector" ]
-# for pgvector, pgvectorscale, pgdiskann, alloydb, and lakebase_vector
+# for pgvector, pgvectorscale, pgdiskann, alloydb, lakebase_vector, and PolarDB for PostgreSQL HNSW
 
 pgvecto_rs      = [ "pgvecto_rs[psycopg3]>=0.2.2" ]
 redis           = [ "redis" ]
+valkey          = [ "valkey-glide-sync>=2.5.1" ]
 memorydb        = [ "memorydb" ]
+kividb          = [ "redis" ]
 chromadb        = [ "chromadb" ]
 opensearch      = [ "opensearch-py", "boto3", "requests-aws4auth" ]
 aliyun_opensearch = [ "alibabacloud_ha3engine_vector" ]
@@ -90,6 +95,7 @@ seekdb          = [ "mysql-connector-python" ]
 volc_mysql      = [ "mysql-connector-python" ]
 pinot           = [ "requests" ]
 adbpg           = [ "psycopg", "psycopg-binary", "pgvector" ]
+houyidb         = [ "requests", "psycopg[binary]>=3.1" ]
 
 [project.urls]
 Repository  = "https://github.com/zilliztech/VectorDBBench"

@@ -25,7 +25,9 @@ class QdrantLocalTypedDict(CommonTypedDict):
     ]
     m: Annotated[
         int,
-        click.option("--m", type=int, default=16, help="HNSW index parameter m, set 0 to disable the index"),
+        click.option(
+            "--m", type=int, default=16, help="HNSW index parameter m, the number of edges per node in the index graph"
+        ),
     ]
     ef_construct: Annotated[
         int,

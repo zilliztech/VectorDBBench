@@ -30,13 +30,16 @@ class DB(Enum):
     QdrantLocal = "QdrantLocal"
     WeaviateCloud = "WeaviateCloud"
     PgVector = "PgVector"
+    PolarDBPG = "PolarDBPG"
     PgVectoRS = "PgVectoRS"
     PgVectorScale = "PgVectorScale"
     PgDiskANN = "PgDiskANN"
     AlloyDB = "AlloyDB"
     LakebaseVector = "LakebaseVector"
     Redis = "Redis"
+    Valkey = "Valkey"
     MemoryDB = "MemoryDB"
+    KiviDB = "KiviDB"
     Chroma = "Chroma"
     AWSOpenSearch = "OpenSearch"
     OSSOpenSearch = "OSSOpenSearch"
@@ -66,6 +69,7 @@ class DB(Enum):
     SeekDB = "SeekDB"
     VolcMySQL = "VolcMySQL"
     Adbpg = "AnalyticDB for PostgreSQL"
+    HouyiDB = "HouyiDB"
 
     @property
     def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901, PLR0915
@@ -110,6 +114,11 @@ class DB(Enum):
 
             return PgVector
 
+        if self == DB.PolarDBPG:
+            from .polardb_pg.polardb_pg import PolarDBPgHNSW
+
+            return PolarDBPgHNSW
+
         if self == DB.PgVectoRS:
             from .pgvecto_rs.pgvecto_rs import PgVectoRS
 
@@ -130,10 +139,20 @@ class DB(Enum):
 
             return Redis
 
+        if self == DB.Valkey:
+            from .valkey.valkey import Valkey
+
+            return Valkey
+
         if self == DB.MemoryDB:
             from .memorydb.memorydb import MemoryDB
 
             return MemoryDB
+
+        if self == DB.KiviDB:
+            from .kividb.kividb import KiviDB
+
+            return KiviDB
 
         if self == DB.Chroma:
             from .chroma.chroma import ChromaClient
@@ -287,6 +306,11 @@ class DB(Enum):
 
             return Adbpg
 
+        if self == DB.HouyiDB:
+            from .houyidb.houyidb import HouyiDB
+
+            return HouyiDB
+
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
 
@@ -333,6 +357,11 @@ class DB(Enum):
 
             return PgVectorConfig
 
+        if self == DB.PolarDBPG:
+            from .polardb_pg.config import PolarDBPgConfig
+
+            return PolarDBPgConfig
+
         if self == DB.PgVectoRS:
             from .pgvecto_rs.config import PgVectoRSConfig
 
@@ -353,10 +382,20 @@ class DB(Enum):
 
             return RedisConfig
 
+        if self == DB.Valkey:
+            from .valkey.config import ValkeyConfig
+
+            return ValkeyConfig
+
         if self == DB.MemoryDB:
             from .memorydb.config import MemoryDBConfig
 
             return MemoryDBConfig
+
+        if self == DB.KiviDB:
+            from .kividb.config import KiviDBConfig
+
+            return KiviDBConfig
 
         if self == DB.Chroma:
             from .chroma.config import ChromaConfig
@@ -510,6 +549,11 @@ class DB(Enum):
 
             return AdbpgConfig
 
+        if self == DB.HouyiDB:
+            from .houyidb.config import HouyiDBConfig
+
+            return HouyiDBConfig
+
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
 
@@ -559,6 +603,11 @@ class DB(Enum):
             from .pgvector.config import _pgvector_case_config
 
             return _pgvector_case_config.get(index_type)
+
+        if self == DB.PolarDBPG:
+            from .polardb_pg.config import _polardb_pg_case_config
+
+            return _polardb_pg_case_config.get(index_type)
 
         if self == DB.PgVectoRS:
             from .pgvecto_rs.config import _pgvecto_rs_case_config
@@ -736,6 +785,21 @@ class DB(Enum):
             from .adbpg.config import AdbpgIndexConfig
 
             return AdbpgIndexConfig
+
+        if self == DB.Valkey:
+            from .valkey.config import ValkeyHNSWConfig
+
+            return ValkeyHNSWConfig
+
+        if self == DB.KiviDB:
+            from .kividb.config import KiviDBHNSWConfig, _kividb_case_config
+
+            return _kividb_case_config.get(index_type, KiviDBHNSWConfig)
+
+        if self == DB.HouyiDB:
+            from .houyidb.config import HouyiDBIndexConfig
+
+            return HouyiDBIndexConfig
 
         # DB.Pinecone, DB.Redis
         return EmptyDBCaseConfig

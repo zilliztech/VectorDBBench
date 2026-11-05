@@ -5,7 +5,7 @@ from enum import Enum, auto
 from vectordb_bench import config
 from vectordb_bench.backend.clients.api import MetricType
 from vectordb_bench.backend.filter import Filter, FilterOp, IntFilter, LabelFilter, NewIntFilter, NonFilter, non_filter
-from vectordb_bench.backend.payload import PayloadProfile
+from vectordb_bench.backend.payload import FLOAT32_BYTES_PER_DIM, PayloadProfile
 from vectordb_bench.base import BaseModel
 from vectordb_bench.frontend.components.custom.getCustomConfig import CustomDatasetConfig
 
@@ -138,10 +138,16 @@ class Case(BaseModel):
     def filters(self) -> Filter:
         return non_filter
 
-    def estimated_payload_bytes_per_query(self, k: int | None) -> int:
+    def estimated_payload_bytes_per_query(
+        self, k: int | None, vector_bytes_per_dim: int = FLOAT32_BYTES_PER_DIM
+    ) -> int:
         if k is None:
             k = config.K_DEFAULT
-        return self.payload_profile.estimated_bytes_per_query(k=k, dim=self.dataset.data.dim)
+        return self.payload_profile.estimated_bytes_per_query(
+            k=k,
+            dim=self.dataset.data.dim,
+            vector_bytes_per_dim=vector_bytes_per_dim,
+        )
 
     @property
     def is_multitenant(self) -> bool:
@@ -925,10 +931,12 @@ class FtsPerformanceCase(Case):
         int_value = int(self.dataset.data.size * self.filter_rate)
         return NewIntFilter(filter_rate=self.filter_rate, int_field=FTS_FILTER_ID_FIELD, int_value=int_value)
 
-    def estimated_payload_bytes_per_query(self, k: int | None) -> int:
+    def estimated_payload_bytes_per_query(
+        self, k: int | None, vector_bytes_per_dim: int = FLOAT32_BYTES_PER_DIM
+    ) -> int:
         if k is None:
             k = config.K_DEFAULT
-        return self.payload_profile.estimated_bytes_per_query(k=k, dim=0)
+        return self.payload_profile.estimated_bytes_per_query(k=k, dim=0, vector_bytes_per_dim=vector_bytes_per_dim)
 
 
 class FTSBm25Performance(FtsPerformanceCase):

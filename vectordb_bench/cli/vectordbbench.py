@@ -17,6 +17,7 @@ from ..backend.clients.elastic_cloud.cli import (
 )
 from ..backend.clients.endee.cli import Endee
 from ..backend.clients.hologres.cli import HologresHGraph
+from ..backend.clients.houyidb.cli import HouyiDB
 from ..backend.clients.lancedb.cli import (
     LanceDB,
     LanceDBAutoIndex,
@@ -24,6 +25,7 @@ from ..backend.clients.lancedb.cli import (
     LanceDBIVFHNSWSQ,
     LanceDBIVFPQ,
 )
+from ..backend.clients.kividb.cli import KiviDB
 from ..backend.clients.lindorm.cli import LindormHNSW, LindormIVFBQ, LindormIVFPQ
 from ..backend.clients.mariadb.cli import MariaDBHNSW
 from ..backend.clients.memorydb.cli import MemoryDB
@@ -41,6 +43,7 @@ from ..backend.clients.polardb.cli import (
     PolarDBHNSWPQ,
     PolarDBHNSWSQ,
 )
+from ..backend.clients.polardb_pg.cli import PolarDBPgHNSW
 from ..backend.clients.qdrant_cloud.cli import QdrantCloud
 from ..backend.clients.qdrant_local.cli import QdrantLocal
 from ..backend.clients.redis.cli import Redis
@@ -50,6 +53,7 @@ from ..backend.clients.tencent_elasticsearch.cli import TencentElasticsearch
 from ..backend.clients.test.cli import Test
 from ..backend.clients.tidb.cli import TiDB
 from ..backend.clients.turbopuffer.cli import TurboPuffer, TurboPufferUnpin
+from ..backend.clients.valkey.cli import Valkey
 from ..backend.clients.vectorchord.cli import VectorChordGraph, VectorChordRQ
 from ..backend.clients.vespa.cli import Vespa
 from ..backend.clients.volc_mysql.cli import VolcMySQLHNSW
@@ -61,10 +65,13 @@ from .cli import cli
 
 cli.add_command(AdbpgNova)
 cli.add_command(PgVectorHNSW)
+cli.add_command(PolarDBPgHNSW)
 cli.add_command(PgVectoRSHNSW)
 cli.add_command(PgVectoRSIVFFlat)
 cli.add_command(Redis)
+cli.add_command(Valkey)
 cli.add_command(MemoryDB)
+cli.add_command(KiviDB)
 cli.add_command(Weaviate)
 cli.add_command(Test)
 cli.add_command(ZillizAutoIndex)
@@ -117,6 +124,7 @@ cli.add_command(PolarDBHNSWPQ)
 cli.add_command(PolarDBHNSWSQ)
 cli.add_command(SeekDBHNSW)
 cli.add_command(VolcMySQLHNSW)
+cli.add_command(HouyiDB)
 
 
 if __name__ == "__main__":
