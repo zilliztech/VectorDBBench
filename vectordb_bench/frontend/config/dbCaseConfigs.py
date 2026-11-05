@@ -3694,6 +3694,61 @@ QdrantLocalPerformanceConfig = [
     CaseConfigParamInput_hnsw_ef_QdrantLocal,
 ]
 
+CaseConfigParamInput_IndexType_SeekDB = CaseConfigInput(
+    label=CaseConfigParamType.IndexType,
+    inputHelp="Select SeekDB index type",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [IndexType.HNSW.value],
+    },
+)
+
+# SeekDB runs on the OceanBase vector engine, so the HNSW bounds match the OceanBase inputs.
+CaseConfigParamInput_m_SeekDB = CaseConfigInput(
+    label=CaseConfigParamType.m,
+    inputHelp="HNSW graph degree (m) for SeekDB",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 4,
+        "max": 128,
+        "value": 16,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_ef_construction_SeekDB = CaseConfigInput(
+    label=CaseConfigParamType.ef_construction,
+    inputHelp="HNSW ef_construction for SeekDB",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 8,
+        "max": 65535,
+        "value": 256,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_ef_search_SeekDB = CaseConfigInput(
+    label=CaseConfigParamType.ef_search,
+    inputHelp="HNSW ef_search (session var ob_hnsw_ef_search) for SeekDB",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 65535,
+        "value": 100,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
+)
+
+# SeekDBHNSWConfig requires ef_search even for load-only cases.
+SeekDBLoadConfig = [
+    CaseConfigParamInput_IndexType_SeekDB,
+    CaseConfigParamInput_m_SeekDB,
+    CaseConfigParamInput_ef_construction_SeekDB,
+    CaseConfigParamInput_ef_search_SeekDB,
+]
+SeekDBPerformanceConfig = SeekDBLoadConfig
+
 # Map DB to config
 CASE_CONFIG_MAP = {
     DB.Milvus: {
@@ -3780,6 +3835,10 @@ CASE_CONFIG_MAP = {
     DB.QdrantLocal: {
         CaseLabel.Load: QdrantLocalLoadConfig,
         CaseLabel.Performance: QdrantLocalPerformanceConfig,
+    },
+    DB.SeekDB: {
+        CaseLabel.Load: SeekDBLoadConfig,
+        CaseLabel.Performance: SeekDBPerformanceConfig,
     },
     DB.TencentElasticsearch: {
         CaseLabel.Load: TencentElasticsearchLoadingConfig,
