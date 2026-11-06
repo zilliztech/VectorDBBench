@@ -444,7 +444,8 @@ class Milvus(VectorDB):
                         log.info(f"{self.name} force merge compaction disabled; skipping.")
                     if self._compaction_jobs:
                         self.optimization_metrics = {
-                            "compaction_status": "completed", "compaction_duration": self._compaction_elapsed,
+                            "compaction_status": "completed",
+                            "compaction_duration": self._compaction_elapsed,
                         }
                 except Exception as e:
                     self.optimization_metrics = {"compaction_status": "failed", "compaction_duration": None}

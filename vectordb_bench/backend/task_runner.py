@@ -653,8 +653,11 @@ class CaseRunner(BaseModel):
 
     def _optimize(self) -> float:
         # Keep failed/timed-out runs explicit; success replaces this with child-process observations.
-        self.optimization_metrics = ({"compaction_status": "failed", "compaction_duration": None}
-                                     if self.config.db in {DB.Milvus, DB.ZillizCloud} else None)
+        self.optimization_metrics = (
+            {"compaction_status": "failed", "compaction_duration": None}
+            if self.config.db in {DB.Milvus, DB.ZillizCloud}
+            else None
+        )
         if self.is_fts:
             try:
                 with utils.timeout(self.ca.optimize_timeout, PerformanceTimeoutError):
@@ -667,7 +670,6 @@ class CaseRunner(BaseModel):
             future = executor.submit(self._optimize_task)
             try:
                 self.optimization_metrics, duration = future.result(timeout=self.ca.optimize_timeout)
-                return duration
             except TimeoutError as e:
                 log.warning(f"VectorDB optimize timeout in {self.ca.optimize_timeout}")
                 kill_proc_tree(pids=list(executor._processes.keys()))
@@ -675,6 +677,8 @@ class CaseRunner(BaseModel):
             except Exception as e:
                 log.warning(f"VectorDB optimize error: {e}")
                 raise e from None
+            else:
+                return duration
 
     def _init_search_runners(self):
         if self.is_fts:
