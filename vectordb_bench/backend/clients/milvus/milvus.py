@@ -371,6 +371,15 @@ class Milvus(VectorDB):
                 break
             time.sleep(0.5)
 
+    def _compact(self, **kwargs) -> int:
+        started = time.perf_counter()
+        compaction_id = self.client.compact(self.collection_name, **kwargs)
+        if compaction_id > 0:
+            self._wait_for_compaction(compaction_id)
+            self._compaction_jobs = getattr(self, "_compaction_jobs", 0) + 1
+        self._compaction_elapsed = getattr(self, "_compaction_elapsed", 0.0) + time.perf_counter() - started
+        return compaction_id
+
     def _force_merge_source_segment_ids(self) -> set[int]:
         # isCompacting is not exposed by MilvusClient, so verify plan coverage
         # against every persistent data segment that force merge should consume.
@@ -393,11 +402,10 @@ class Milvus(VectorDB):
         for attempt in range(1, max_attempts + 1):
             self._wait_for_compaction_ready()
             expected_source_ids = self._force_merge_source_segment_ids()
-            compaction_id = self.client.compact(self.collection_name, target_size=target_size_mb)
+            compaction_id = self._compact(target_size=target_size_mb)
             if compaction_id <= 0:
                 failure_detail = f"generated no plan for snapshot {sorted(expected_source_ids)}"
             else:
-                self._wait_for_compaction(compaction_id)
                 plans = self.client.get_compaction_plans(compaction_id)
                 actual_source_ids = {source_id for plan in plans.plans for source_id in plan.sources}
                 attempt_missing_source_ids = expected_source_ids - actual_source_ids
@@ -418,6 +426,8 @@ class Milvus(VectorDB):
 
     def _optimize(self):
         log.info(f"{self.name} optimizing before search")
+        self._compaction_elapsed, self._compaction_jobs = 0.0, 0
+        self.optimization_metrics = {"compaction_status": "skipped", "compaction_duration": None}
         try:
             self.client.flush(self.collection_name)
 
@@ -426,15 +436,19 @@ class Milvus(VectorDB):
             else:
                 try:
                     self._wait_for_compaction_ready()
-                    compaction_id = self.client.compact(self.collection_name)
-                    if compaction_id > 0:
-                        self._wait_for_compaction(compaction_id)
+                    self._compact()
                     if getattr(self.case_config, "force_merge_enabled", True):
                         self._force_merge()
                         log.info(f"{self.name} force merge compaction completed.")
                     else:
                         log.info(f"{self.name} force merge compaction disabled; skipping.")
+                    if self._compaction_jobs:
+                        self.optimization_metrics = {
+                            "compaction_status": "completed",
+                            "compaction_duration": self._compaction_elapsed,
+                        }
                 except Exception as e:
+                    self.optimization_metrics = {"compaction_status": "failed", "compaction_duration": None}
                     log.warning(f"{self.name} compact or list segments error: {e}")
                     if getattr(getattr(e, "code", None), "name", None) == "PERMISSION_DENIED":
                         log.warning("Skip compact due to list segments or compact permission denied.")
@@ -445,6 +459,7 @@ class Milvus(VectorDB):
             self._wait_for_index()
             self.client.refresh_load(self.collection_name)
         except Exception as e:
+            self.optimization_metrics = {"compaction_status": "failed", "compaction_duration": None}
             log.warning(f"{self.name} optimize error: {e}")
             raise e from None
 
@@ -591,6 +606,13 @@ class Milvus(VectorDB):
         """Perform a search on a query embedding and return results."""
         return self.search_embeddings([query], k, payload_profile=payload_profile, tenant=tenant)[0]
 
+    def search_output_fields(self, payload_profile: PayloadProfile) -> list[str]:
+        if payload_profile == PayloadProfile.VECTOR:
+            return [self._vector_field]
+        if payload_profile == PayloadProfile.SCALAR_LABEL:
+            return [getattr(self, "_scalar_payload_label_field", self._scalar_label_field)]
+        return []
+
     def search_embeddings(
         self,
         queries: list[list[float]],
@@ -600,11 +622,7 @@ class Milvus(VectorDB):
     ) -> list[list[int]]:
         assert self.client is not None
 
-        output_fields = None
-        if payload_profile == PayloadProfile.VECTOR:
-            output_fields = [self._vector_field]
-        elif payload_profile == PayloadProfile.SCALAR_LABEL:
-            output_fields = [getattr(self, "_scalar_payload_label_field", self._scalar_label_field)]
+        output_fields = self.search_output_fields(payload_profile) or None
 
         expr = self.expr
         if tenant is not None:

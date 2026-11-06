@@ -11,7 +11,7 @@ from . import config
 from .backend.assembler import Assembler, FilterNotSupportedError
 from .backend.data_source import DatasetSource
 from .backend.result_collector import ResultCollector
-from .backend.task_runner import TaskRunner
+from .backend.task_runner import CaseRunner, TaskRunner
 from .backend.utils import kill_proc_tree
 from .metric import Metric
 from .models import (
@@ -28,6 +28,29 @@ from .models import (
 log = logging.getLogger(__name__)
 
 global_result_future: concurrent.futures.Future | None = None
+
+
+def dataset_metadata(runner: CaseRunner) -> DatasetMetadata:
+    data = runner.ca.dataset.data
+    metadata = {
+        "name": data.name,
+        "size": getattr(data, "size", None),
+        "dim": getattr(data, "dim", None),
+        "metric_type": getattr(data, "metric_type", None),
+        "source": runner.dataset_source,
+        "revision": getattr(data, "source_revision", None),
+    }
+    metadata.update(getattr(runner.ca.dataset, "result_metadata", None) or {})
+    return DatasetMetadata.model_validate(metadata)
+
+
+def record_observations(runner: CaseRunner, result: CaseResult) -> None:
+    result.dataset_metadata = dataset_metadata(runner)
+    if runner.optimization_metrics:
+        result.metrics.compaction_status = runner.optimization_metrics["compaction_status"]
+        result.metrics.compaction_duration = runner.optimization_metrics["compaction_duration"]
+    if runner.db is not None and hasattr(runner.db, "search_output_fields") and not runner.is_fts:
+        result.metrics.output_fields = runner.db.search_output_fields(runner.ca.payload_profile)
 
 
 class SIGNAL(Enum):
@@ -209,9 +232,7 @@ class BenchMarkRunner:
                     continue
 
                 finally:
-                    metadata = getattr(runner.ca.dataset, "result_metadata", None)
-                    if metadata is not None:
-                        case_res.dataset_metadata = DatasetMetadata.model_validate(metadata)
+                    record_observations(runner, case_res)
                     c_results.append(case_res)
                     send_conn.send((SIGNAL.WIP, idx))
 

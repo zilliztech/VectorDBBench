@@ -21,6 +21,9 @@ class Metric:
     # for both performace and streaming cases
     insert_duration: float = 0.0
     optimize_duration: float = 0.0
+    compaction_duration: float | None = None  # Sum of compact RPC + completion waits, seconds.
+    compaction_status: str = "not_recorded"
+    output_fields: list[str] | None = None  # Extra fields requested from the backend; [] means IDs only.
     load_duration: float = 0.0  # insert + optimize
 
     # for performance cases

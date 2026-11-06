@@ -60,6 +60,7 @@ class CaseRunner(BaseModel):
     dataset_source: DatasetSource
 
     db: api.VectorDB | None = None
+    optimization_metrics: dict | None = None
     test_emb: list[list[float]] | None = None
     test_texts: list[str] | None = None
     serial_search_runner: SerialSearchRunner | None = None
@@ -326,6 +327,7 @@ class CaseRunner(BaseModel):
 
     def run(self, drop_old: bool = True) -> Metric:
         log.info("Starting run")
+        self.optimization_metrics = None
 
         self._pre_run(drop_old)
 
@@ -644,15 +646,22 @@ class CaseRunner(BaseModel):
             self.stop()
 
     @utils.time_it
-    def _optimize_task(self) -> None:
+    def _optimize_task(self) -> dict | None:
         with self.db.init():
             self.db.optimize(data_size=self.ca.dataset.data.size)
+            return getattr(self.db, "optimization_metrics", None)
 
     def _optimize(self) -> float:
+        # Keep failed/timed-out runs explicit; success replaces this with child-process observations.
+        self.optimization_metrics = (
+            {"compaction_status": "failed", "compaction_duration": None}
+            if self.config.db in {DB.Milvus, DB.ZillizCloud}
+            else None
+        )
         if self.is_fts:
             try:
                 with utils.timeout(self.ca.optimize_timeout, PerformanceTimeoutError):
-                    _, duration = self._optimize_task()
+                    self.optimization_metrics, duration = self._optimize_task()
                     return duration
             except PerformanceTimeoutError:
                 log.warning(f"VectorDB optimize timeout in {self.ca.optimize_timeout}")
@@ -660,7 +669,7 @@ class CaseRunner(BaseModel):
         with concurrent.futures.ProcessPoolExecutor(max_workers=1) as executor:
             future = executor.submit(self._optimize_task)
             try:
-                return future.result(timeout=self.ca.optimize_timeout)[1]
+                self.optimization_metrics, duration = future.result(timeout=self.ca.optimize_timeout)
             except TimeoutError as e:
                 log.warning(f"VectorDB optimize timeout in {self.ca.optimize_timeout}")
                 kill_proc_tree(pids=list(executor._processes.keys()))
@@ -668,6 +677,8 @@ class CaseRunner(BaseModel):
             except Exception as e:
                 log.warning(f"VectorDB optimize error: {e}")
                 raise e from None
+            else:
+                return duration
 
     def _init_search_runners(self):
         if self.is_fts:
