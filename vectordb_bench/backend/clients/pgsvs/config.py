@@ -2,7 +2,7 @@ from abc import abstractmethod
 from collections.abc import Mapping, Sequence
 from typing import Any, LiteralString, TypedDict
 
-from pydantic import BaseModel, SecretStr, root_validator, validator
+from pydantic import BaseModel, SecretStr, ValidationInfo, field_validator, model_validator
 
 from ..api import DBCaseConfig, DBConfig, IndexType, MetricType
 
@@ -180,7 +180,7 @@ class PgSVSVamanaConfig(PgSVSIndexConfig):
     use_search_history: bool | None = None
     graph_degree: int | None = None
     leanvec_dims: int | None = None
-    index: IndexType = IndexType.SVS_VAMANA
+    index: IndexType = IndexType.PGSVS_VAMANA
     quantization_type: str | None = None
     table_quantization_type: str | None
     maintenance_work_mem: str | None = None
@@ -190,26 +190,31 @@ class PgSVSVamanaConfig(PgSVSIndexConfig):
     reranking_metric: str | None = None
     normalize_cosine: bool = False
 
-    @validator("quantization_type", "table_quantization_type")
-    def reject_bit_quantization(cls, value: str | None, field: Any):
+    @field_validator("quantization_type", "table_quantization_type")
+    @classmethod
+    def reject_bit_quantization(cls, value: str | None, info: ValidationInfo):
         # vamana has no bit opclass; CREATE INDEX would fail only after the full data load
         if value == "bit":
-            msg = f"{field.name}=bit is not supported for svs (vamana has no bit operator class); use none or halfvec"
+            msg = (
+                f"{info.field_name}=bit is not supported for svs (vamana has no bit operator class); "
+                "use none or halfvec"
+            )
             raise ValueError(msg)
         return value
 
-    @root_validator(skip_on_failure=True)
-    def reject_reranking(cls, values: dict):
+    @model_validator(mode="after")
+    def reject_reranking(self):
         # pgvector-level reranking only applies to bit indexes; svs reranks internally via compression_secondary
-        if values.get("reranking"):
+        if self.reranking:
             msg = "reranking is not supported for svs; svs reranks internally via compression_secondary"
             raise ValueError(msg)
-        if values.get("quantized_fetch_limit") is not None:
+        if self.quantized_fetch_limit is not None:
             msg = "quantized_fetch_limit is not supported for svs (it only applies to bit quantization with reranking)"
             raise ValueError(msg)
-        return values
+        return self
 
-    @validator("graph_degree")
+    @field_validator("graph_degree")
+    @classmethod
     def validate_graph_degree(cls, value: int | None):
         # matches the vamana_relopt_kind "graph_degree" reloption bound (vamana.h VAMANA_MIN/MAX_GRAPH_DEGREE)
         if value is not None and not (16 <= value <= 256):
@@ -217,7 +222,8 @@ class PgSVSVamanaConfig(PgSVSIndexConfig):
             raise ValueError(msg)
         return value
 
-    @validator("alpha")
+    @field_validator("alpha")
+    @classmethod
     def validate_alpha(cls, value: int | None):
         # matches the "alpha" reloption bound; -1 or 0 both mean "use the SVS library default"
         if value is not None and not (-1 <= value <= 200):
@@ -225,7 +231,8 @@ class PgSVSVamanaConfig(PgSVSIndexConfig):
             raise ValueError(msg)
         return value
 
-    @validator("build_window_size")
+    @field_validator("build_window_size")
+    @classmethod
     def validate_build_window_size(cls, value: int | None):
         # matches the "build_window_size" reloption bound
         if value is not None and not (-1 <= value <= 1000):
@@ -233,7 +240,8 @@ class PgSVSVamanaConfig(PgSVSIndexConfig):
             raise ValueError(msg)
         return value
 
-    @validator("search_window_size")
+    @field_validator("search_window_size")
+    @classmethod
     def validate_search_window_size(cls, value: int | None):
         # matches the "search_window_size" reloption/GUC bound; unlike build_window_size there is no -1
         # sentinel here despite the reloption's description string claiming one -- Postgres's own bound
@@ -243,14 +251,16 @@ class PgSVSVamanaConfig(PgSVSIndexConfig):
             raise ValueError(msg)
         return value
 
-    @validator("compression_type")
+    @field_validator("compression_type")
+    @classmethod
     def validate_compression_type(cls, value: int | None):
         if value is not None and value not in (0, 1, 2):
             msg = f"compression_type={value} is invalid for svs; valid values are 0 (none), 1 (leanvec), 2 (lvq)"
             raise ValueError(msg)
         return value
 
-    @validator("compression_primary")
+    @field_validator("compression_primary")
+    @classmethod
     def validate_compression_primary(cls, value: int | None):
         # svs only accepts these four discrete codes (MapCompressionParamToSVSType in svs_wrapper.c);
         # the reloption's numeric bound (-8 to 8) is wider than what's actually accepted
@@ -259,7 +269,8 @@ class PgSVSVamanaConfig(PgSVSIndexConfig):
             raise ValueError(msg)
         return value
 
-    @validator("leanvec_dims")
+    @field_validator("leanvec_dims")
+    @classmethod
     def validate_leanvec_dims(cls, value: int | None):
         # matches the "leanvec_dims" reloption bound
         if value is not None and not (-1 <= value <= 2000):
@@ -267,21 +278,21 @@ class PgSVSVamanaConfig(PgSVSIndexConfig):
             raise ValueError(msg)
         return value
 
-    @root_validator(skip_on_failure=True)
-    def validate_compression_secondary(cls, values: dict):
-        secondary = values.get("compression_secondary")
+    @model_validator(mode="after")
+    def validate_compression_secondary(self):
+        secondary = self.compression_secondary
         if secondary is None:
-            return values
+            return self
         # 0 ("no residual") is only accepted for LVQ's residual slot, not LeanVec's secondary encoding
-        if secondary == 0 and values.get("compression_type") == 2:
-            return values
+        if secondary == 0 and self.compression_type == 2:
+            return self
         if secondary not in (-8, -4, 4, 8):
             msg = (
                 f"compression_secondary={secondary} is invalid for svs; valid values are -8, -4, 4, 8"
                 " (or 0 for no residual, only when compression_type=2/lvq)"
             )
             raise ValueError(msg)
-        return values
+        return self
 
     def _effective_metric_type(self) -> MetricType | None:
         if self.normalize_cosine and self.metric_type == MetricType.COSINE:
@@ -333,5 +344,5 @@ class PgSVSVamanaConfig(PgSVSIndexConfig):
 
 
 _pgsvs_case_config = {
-    IndexType.SVS_VAMANA: PgSVSVamanaConfig,
+    IndexType.PGSVS_VAMANA: PgSVSVamanaConfig,
 }
