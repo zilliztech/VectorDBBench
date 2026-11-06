@@ -30,6 +30,17 @@ log = logging.getLogger(__name__)
 global_result_future: concurrent.futures.Future | None = None
 
 
+def dataset_metadata(runner) -> DatasetMetadata:
+    data = runner.ca.dataset.data
+    metadata = {
+        "name": data.name, "size": getattr(data, "size", None), "dim": getattr(data, "dim", None),
+        "metric_type": getattr(data, "metric_type", None), "source": runner.dataset_source,
+        "revision": getattr(data, "source_revision", None),
+    }
+    metadata.update(getattr(runner.ca.dataset, "result_metadata", None) or {})
+    return DatasetMetadata.model_validate(metadata)
+
+
 class SIGNAL(Enum):
     SUCCESS = 0
     ERROR = 1
@@ -209,9 +220,12 @@ class BenchMarkRunner:
                     continue
 
                 finally:
-                    metadata = getattr(runner.ca.dataset, "result_metadata", None)
-                    if metadata is not None:
-                        case_res.dataset_metadata = DatasetMetadata.model_validate(metadata)
+                    case_res.dataset_metadata = dataset_metadata(runner)
+                    if runner.optimization_metrics:
+                        case_res.metrics.compaction_status = runner.optimization_metrics["compaction_status"]
+                        case_res.metrics.compaction_duration = runner.optimization_metrics["compaction_duration"]
+                    if runner.db is not None and hasattr(runner.db, "search_output_fields") and not runner.is_fts:
+                        case_res.metrics.output_fields = runner.db.search_output_fields(runner.ca.payload_profile)
                     c_results.append(case_res)
                     send_conn.send((SIGNAL.WIP, idx))
 
