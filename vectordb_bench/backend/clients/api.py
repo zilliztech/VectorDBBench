@@ -32,6 +32,8 @@ class IndexType(StrEnum):
     IVFPQ = "IVF_PQ"
     IVFBQ = "IVF_BQ"
     IVFSQ8 = "IVF_SQ8"
+    IVF_SQ = "IVF_SQ"
+    IVF_RQ = "IVF_RQ"
     IVF_RABITQ = "IVF_RABITQ"
     Flat = "FLAT"
     AUTOINDEX = "AUTOINDEX"
@@ -58,6 +60,7 @@ class IndexType(StrEnum):
     Hologres_Graph = "Graph"
     IVF_HNSW_SQ = "IVF_HNSW_SQ"
     IVF_HNSW_PQ = "IVF_HNSW_PQ"
+    BTREE = "BTREE"
     NONE = "NONE"
 
 
