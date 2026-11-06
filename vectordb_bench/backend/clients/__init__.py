@@ -61,6 +61,7 @@ class DB(Enum):
     Doris = "Doris"
     TurboPuffer = "TurboPuffer"
     Zvec = "Zvec"
+    Warm = "Warm"
     Endee = "Endee"
     Lindorm = "Lindorm"
     VectorChord = "VectorChord"
@@ -271,6 +272,11 @@ class DB(Enum):
             from .zvec.zvec import Zvec
 
             return Zvec
+
+        if self == DB.Warm:
+            from .warm.warm import Warm
+
+            return Warm
 
         if self == DB.Lindorm:
             from .lindorm.lindorm_search import LindormVector
@@ -515,6 +521,11 @@ class DB(Enum):
 
             return ZvecConfig
 
+        if self == DB.Warm:
+            from .warm.config import WarmConfig
+
+            return WarmConfig
+
         if self == DB.Lindorm:
             from .lindorm.config import LindormConfig
 
@@ -715,6 +726,11 @@ class DB(Enum):
             from .zvec.config import ZvecHNSWIndexConfig
 
             return ZvecHNSWIndexConfig
+
+        if self == DB.Warm:
+            from .warm.config import WarmIndexConfig
+
+            return WarmIndexConfig
 
         if self == DB.TencentElasticsearch:
             from .tencent_elasticsearch.config import TencentElasticsearchIndexConfig

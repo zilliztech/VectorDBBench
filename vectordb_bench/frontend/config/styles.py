@@ -97,6 +97,7 @@ COLOR_MAP = {
     DB.Vespa.value: "#61d790",
     DB.Doris.value: "#52CAA3",
     DB.Zvec.value: "#219FFF",
+    DB.Warm.value: "#E8590C",
 }
 
 COLORS_10 = [
