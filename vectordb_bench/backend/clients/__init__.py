@@ -70,6 +70,7 @@ class DB(Enum):
     VolcMySQL = "VolcMySQL"
     Adbpg = "AnalyticDB for PostgreSQL"
     HouyiDB = "HouyiDB"
+    RaBitQLib = "RaBitQLib"
 
     @property
     def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901, PLR0915
@@ -310,6 +311,11 @@ class DB(Enum):
             from .houyidb.houyidb import HouyiDB
 
             return HouyiDB
+
+        if self == DB.RaBitQLib:
+            from .rabitqlib.rabitqlib_client import RaBitQLib
+
+            return RaBitQLib
 
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
@@ -553,6 +559,11 @@ class DB(Enum):
             from .houyidb.config import HouyiDBConfig
 
             return HouyiDBConfig
+
+        if self == DB.RaBitQLib:
+            from .rabitqlib.config import RaBitQLibConfig
+
+            return RaBitQLibConfig
 
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
@@ -798,6 +809,11 @@ class DB(Enum):
             from .houyidb.config import HouyiDBIndexConfig
 
             return HouyiDBIndexConfig
+
+        if self == DB.RaBitQLib:
+            from .rabitqlib.config import RaBitQLibHNSWConfig, _rabitqlib_case_config
+
+            return _rabitqlib_case_config.get(index_type, RaBitQLibHNSWConfig)
 
         # DB.Pinecone, DB.Redis
         return EmptyDBCaseConfig
