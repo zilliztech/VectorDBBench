@@ -3376,6 +3376,8 @@ ZvecPerformanceConfig = [
     CaseConfigParamInput_ef_search_Zvec,
     CaseConfigParamInput_is_using_refiner_Zvec,
     CaseConfigParamInput_search_list_size_Zvec,
+]
+
 KiviDBLoadConfig = [
     CaseConfigParamInput_IndexType_KiviDB,
     CaseConfigParamInput_M_KiviDB,
@@ -3875,6 +3877,7 @@ CASE_CONFIG_MAP = {
     DB.Zvec: {
         CaseLabel.Load: ZvecLoadConfig,
         CaseLabel.Performance: ZvecPerformanceConfig,
+    },
     DB.QdrantLocal: {
         CaseLabel.Load: QdrantLocalLoadConfig,
         CaseLabel.Performance: QdrantLocalPerformanceConfig,
