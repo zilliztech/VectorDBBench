@@ -7,6 +7,7 @@ index. WARM returns the row number of each neighbour in the fitted matrix; rows 
 ascending id order and `ids.npy` maps a row back to the dataset id.
 """
 
+import json
 import logging
 import shutil
 import uuid
@@ -23,6 +24,7 @@ log = logging.getLogger(__name__)
 INDEX_FILE = "index.warm"
 IDS_FILE = "ids.npy"
 CHUNK_DIR = "chunks"
+MANIFEST_FILE = "manifest.json"
 
 
 class Warm(VectorDB):
@@ -37,8 +39,11 @@ class Warm(VectorDB):
         db_case_config: DBCaseConfig | None,
         collection_name: str = "vector_bench_test",
         drop_old: bool = False,
+        dataset_identity: dict | None = None,
         **kwargs,
     ):
+        if not isinstance(dataset_identity, dict) or not dataset_identity:
+            raise ValueError("WARM requires a dataset identity to validate saved-index reuse")
         self.name = "Warm"
         self.dim = dim
         self.case_config = db_case_config if db_case_config is not None else WarmIndexConfig()
@@ -46,10 +51,48 @@ class Warm(VectorDB):
         self._index = None
         self._ids = None
         self._k = None
+        self._identity = json.loads(
+            json.dumps(
+                {
+                    "version": 1,
+                    "dataset": dataset_identity,
+                    "dim": dim,
+                    "build": self.case_config.index_param(),
+                }
+            )
+        )
 
-        if drop_old:
-            shutil.rmtree(self.root, ignore_errors=True)
+        if drop_old and self.root.exists():
+            shutil.rmtree(self.root)
+        if (self.root / MANIFEST_FILE).exists():
+            self._read_manifest()
+        elif self.root.exists() and any(self.root.iterdir()):
+            raise ValueError("WARM index has no identity manifest; rebuild without --skip-drop-old")
+        else:
+            self.root.mkdir(parents=True, exist_ok=True)
+            self._write_manifest(built=False)
         (self.root / CHUNK_DIR).mkdir(parents=True, exist_ok=True)
+
+    def _read_manifest(self) -> dict:
+        try:
+            manifest = json.loads((self.root / MANIFEST_FILE).read_text())
+        except (OSError, ValueError) as exc:
+            raise ValueError("WARM identity manifest is unreadable; rebuild without --skip-drop-old") from exc
+        if not isinstance(manifest, dict) or manifest.get("identity") != self._identity:
+            raise ValueError("WARM dataset or build settings do not match; rebuild without --skip-drop-old")
+        built = manifest.get("built")
+        files_present = [(self.root / name).is_file() for name in (INDEX_FILE, IDS_FILE)]
+        if type(built) is not bool or any(present != built for present in files_present):
+            raise ValueError("WARM saved index is incomplete; rebuild without --skip-drop-old")
+        return manifest
+
+    def _write_manifest(self, *, built: bool) -> None:
+        path = self.root / f"{uuid.uuid4().hex}.manifest.tmp"
+        try:
+            path.write_text(json.dumps({"identity": self._identity, "built": built}, sort_keys=True) + "\n")
+            path.replace(self.root / MANIFEST_FILE)
+        finally:
+            path.unlink(missing_ok=True)
 
     def __getstate__(self) -> dict:
         state = self.__dict__.copy()
@@ -65,13 +108,12 @@ class Warm(VectorDB):
 
     @contextmanager
     def init(self):
-        index_path = self.root / INDEX_FILE
-        if index_path.exists():
-            self._index = self._new_index()
-            self._index.load(index_path)
-            self._ids = np.load(self.root / IDS_FILE)
-        self._k = None
         try:
+            if self._read_manifest()["built"]:
+                self._index = self._new_index()
+                self._index.load(self.root / INDEX_FILE)
+                self._ids = np.load(self.root / IDS_FILE, allow_pickle=False)
+            self._k = None
             yield
         finally:
             self._index = None
@@ -85,6 +127,9 @@ class Warm(VectorDB):
         **kwargs,
     ) -> tuple[int, Exception | None]:
         try:
+            if self._read_manifest()["built"]:
+                msg = "WARM cannot insert into a saved index; rebuild without --skip-drop-old"
+                raise ValueError(msg)  # noqa: TRY301
             vectors = np.asarray(embeddings, dtype=np.float32)
             ids = np.asarray(metadata, dtype=np.int64)
             if vectors.ndim != 2 or vectors.shape != (len(ids), self.dim):
@@ -103,10 +148,11 @@ class Warm(VectorDB):
         return len(ids), None
 
     def optimize(self, data_size: int | None = None):
+        manifest = self._read_manifest()
         chunk_dir = self.root / CHUNK_DIR
         names = sorted(p.name[: -len(".ids.npy")] for p in chunk_dir.glob("*.ids.npy") if ".tmp." not in p.name)
         if not names:
-            if (self.root / INDEX_FILE).exists():
+            if manifest["built"]:
                 return
             msg = "no inserted vectors to build the WARM index from"
             raise RuntimeError(msg)
@@ -132,10 +178,14 @@ class Warm(VectorDB):
         del matrix
         index.save(self.root / INDEX_FILE)
         np.save(self.root / IDS_FILE, sorted_ids)
+        # Publish readiness only after both files are complete; interrupted builds fail closed.
+        self._write_manifest(built=True)
         shutil.rmtree(chunk_dir, ignore_errors=True)
         log.info(f"WARM index built over {len(ids)} vectors: {index.index_bytes} payload bytes")
 
     def _set_search_args(self, k: int) -> None:
+        if self._index is None:
+            raise RuntimeError("WARM index is not built; run the load stage before searching")
         if self._k != k:
             params = self.case_config.search_param()
             self._index.set_query_arguments(ef=params["ef"], rerank=params["rerank"] or max(params["ef"], k))

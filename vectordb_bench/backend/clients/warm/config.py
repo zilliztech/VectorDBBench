@@ -1,7 +1,8 @@
 import tempfile
 from pathlib import Path
+from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, NonNegativeInt, PositiveInt
 
 from ..api import DBCaseConfig, DBConfig, MetricType
 
@@ -29,13 +30,13 @@ class WarmIndexConfig(BaseModel, DBCaseConfig):
     """
 
     metric_type: MetricType | None = None
-    m: int = 16
-    ef_construction: int = 300
-    ef_search: int = 128
-    rerank: int = 0
-    code_bits: int = 4
-    residual_bits: int = 8
-    threads: int = 0
+    m: PositiveInt = 16
+    ef_construction: PositiveInt = 300
+    ef_search: PositiveInt = 128
+    rerank: NonNegativeInt = 0
+    code_bits: Literal[4, 8] = 4
+    residual_bits: Literal[0, 4, 8] = 8
+    threads: NonNegativeInt = 0
 
     def parse_metric(self) -> str:
         if self.metric_type == MetricType.L2:

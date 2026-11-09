@@ -1,4 +1,8 @@
 from enum import Enum
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..cases import CaseLabel
 
 from .api import (
     DBCaseConfig,
@@ -71,6 +75,11 @@ class DB(Enum):
     VolcMySQL = "VolcMySQL"
     Adbpg = "AnalyticDB for PostgreSQL"
     HouyiDB = "HouyiDB"
+
+    def supports_case_label(self, label: "CaseLabel") -> bool:
+        from ..cases import CaseLabel
+
+        return self != DB.Warm or label == CaseLabel.Performance
 
     @property
     def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901, PLR0915
