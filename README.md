@@ -13,8 +13,8 @@ VectorDBBench provides repeatable workloads for insertion, vector search,
 filtered search, and full-text search. Its registered vector datasets range
 from classic [SIFT](http://corpus-texmex.irisa.fr/) and
 [GIST](http://corpus-texmex.irisa.fr/) corpora to
-[Cohere](https://huggingface.co/datasets/Cohere/wikipedia-22-12/tree/main/en)
-embeddings, OpenAI embeddings generated from the public
+[Cohere Wikipedia embedding archives](https://cohere.com/blog/embedding-archives-wikipedia),
+OpenAI embeddings generated from the public
 [C4 dataset](https://huggingface.co/datasets/allenai/c4), and the
 [VIBE and VDBBench multimodal datasets](docs/release/2026-09-hugging-face-datasets.md)
 hosted on Hugging Face. Together, these datasets cover different corpus sizes,
