@@ -49,6 +49,7 @@ def record_observations(runner: CaseRunner, result: CaseResult) -> None:
     if runner.optimization_metrics:
         result.metrics.compaction_status = runner.optimization_metrics["compaction_status"]
         result.metrics.compaction_duration = runner.optimization_metrics["compaction_duration"]
+        result.metrics.compaction_segments = runner.optimization_metrics.get("compaction_segments")
     if runner.db is not None and hasattr(runner.db, "search_output_fields") and not runner.is_fts:
         result.metrics.output_fields = runner.db.search_output_fields(runner.ca.payload_profile)
 

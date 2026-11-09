@@ -4,6 +4,7 @@ import logging
 import time
 from collections.abc import Iterable
 from contextlib import contextmanager
+from datetime import UTC, datetime
 from typing import Any
 
 import numpy as np
@@ -11,6 +12,7 @@ from pymilvus import DataType, Function, FunctionType, MilvusClient, MilvusExcep
 
 from vectordb_bench.backend.filter import Filter, FilterOp
 from vectordb_bench.backend.payload import PayloadProfile
+from vectordb_bench.backend.stage_events import emit, enabled, stage
 
 from ..api import VectorDB
 from .config import MilvusFtsConfig, MilvusIndexConfig, VectorDataType
@@ -345,7 +347,7 @@ class Milvus(VectorDB):
 
     def _wait_for_segments_sorted(self):
         while True:
-            segments = self.client.list_persistent_segments(self.collection_name)
+            segments = self.client.list_persistent_segments(self.collection_name, timeout=10)
             unsorted = [s for s in segments if not s.is_sorted]
             if not unsorted:
                 log.info(f"{self.name} all persistent segments are sorted.")
@@ -372,18 +374,38 @@ class Milvus(VectorDB):
             time.sleep(0.5)
 
     def _compact(self, **kwargs) -> int:
-        started = time.perf_counter()
-        compaction_id = self.client.compact(self.collection_name, **kwargs)
-        if compaction_id > 0:
-            self._wait_for_compaction(compaction_id)
-            self._compaction_jobs = getattr(self, "_compaction_jobs", 0) + 1
-        self._compaction_elapsed = getattr(self, "_compaction_elapsed", 0.0) + time.perf_counter() - started
-        return compaction_id
+        before = self._segment_snapshot() if enabled() else None
+        span_id = None
+        compaction_id = None
+        try:
+            with stage("compaction") as span_id:
+                started = time.perf_counter()
+                compaction_id = self.client.compact(self.collection_name, **kwargs)
+                if compaction_id > 0:
+                    self._wait_for_compaction(compaction_id)
+                    self._compaction_jobs = getattr(self, "_compaction_jobs", 0) + 1
+                self._compaction_elapsed = getattr(self, "_compaction_elapsed", 0.0) + time.perf_counter() - started
+            return compaction_id
+        finally:
+            if enabled():
+                observation = {"span_id": span_id, "compaction_id": compaction_id,
+                               "before": before, "after": self._segment_snapshot()}
+                self._compaction_segments = [*getattr(self, "_compaction_segments", []), observation]
+                emit("compaction", "segments", span_id, observation=observation)
+
+    def _segment_snapshot(self):
+        observed_at = datetime.now(UTC).isoformat()
+        try:
+            segments = self.client.list_persistent_segments(self.collection_name, timeout=10)
+            return {"status": "complete", "count": len(segments), "observed_at": observed_at}
+        except Exception:
+            log.warning("Could not observe persistent segment count")
+            return {"status": "unavailable", "count": None, "observed_at": observed_at}
 
     def _force_merge_source_segment_ids(self) -> set[int]:
         # isCompacting is not exposed by MilvusClient, so verify plan coverage
         # against every persistent data segment that force merge should consume.
-        segments = self.client.list_persistent_segments(self.collection_name)
+        segments = self.client.list_persistent_segments(self.collection_name, timeout=10)
         return {
             segment.segment_id
             for segment in segments
@@ -427,6 +449,7 @@ class Milvus(VectorDB):
     def _optimize(self):
         log.info(f"{self.name} optimizing before search")
         self._compaction_elapsed, self._compaction_jobs = 0.0, 0
+        self._compaction_segments = []
         self.optimization_metrics = {"compaction_status": "skipped", "compaction_duration": None}
         try:
             self.client.flush(self.collection_name)
@@ -462,6 +485,9 @@ class Milvus(VectorDB):
             self.optimization_metrics = {"compaction_status": "failed", "compaction_duration": None}
             log.warning(f"{self.name} optimize error: {e}")
             raise e from None
+        finally:
+            if enabled():
+                self.optimization_metrics["compaction_segments"] = self._compaction_segments
 
     def optimize(self, data_size: int | None = None):
         assert self.client, "Please call self.init() before"

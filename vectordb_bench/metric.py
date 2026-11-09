@@ -23,6 +23,7 @@ class Metric:
     optimize_duration: float = 0.0
     compaction_duration: float | None = None  # Sum of compact RPC + completion waits, seconds.
     compaction_status: str = "not_recorded"
+    compaction_segments: list[dict] | None = None  # Per-job persistent segment observations.
     output_fields: list[str] | None = None  # Extra fields requested from the backend; [] means IDs only.
     load_duration: float = 0.0  # insert + optimize
 

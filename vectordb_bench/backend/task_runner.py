@@ -26,6 +26,7 @@ from .runner import (
     SerialInsertRunner,
     SerialSearchRunner,
 )
+from .stage_events import stage
 from .utils import kill_proc_tree
 from .workload import WorkloadKind
 
@@ -396,7 +397,8 @@ class CaseRunner(BaseModel):
                 }
             if drop_old:
                 if TaskStage.LOAD in self.config.stages:
-                    count, load_dur = self._load_data()
+                    with stage("insert"):
+                        count, load_dur = self._load_data()
                     build_dur = self._optimize()
                     m.inserted_count = count
                     m.insert_duration = round(load_dur, 4)
@@ -435,7 +437,8 @@ class CaseRunner(BaseModel):
                             f"Cooldown {cooldown}s before serial search to ensure a stable measurement environment"
                         )
                         time.sleep(cooldown)
-                    search_results = self._serial_search()
+                    with stage("search_serial"):
+                        search_results = self._serial_search()
                     if self.is_fts:
                         m.recall, m.ndcg, m.mrr, m.serial_latency_p99, m.serial_latency_p95 = search_results
                     else:

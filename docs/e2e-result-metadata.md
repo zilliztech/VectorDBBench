@@ -35,3 +35,23 @@ python -m pytest -q tests/test_e2e_metadata.py tests/test_milvus.py::TestMilvusO
 ```
 
 Expected: targeted metadata, serialization, worker, timing and optimize tests pass.
+
+## Opt-in stage events and compaction segment counts
+
+The E2E orchestrator can set `E2E_STAGE_EVENTS=1`, `E2E_RUN_ID`, `E2E_CASE_ID`
+and `E2E_ATTEMPT`. Benchmark workers emit bounded atomic stdout lines prefixed
+`E2E_STAGE ` followed by versioned JSON. A unique span ID links `start`, `end`
+or `failed` for insertion, each actual compaction RPC and wait, serial search,
+and each concurrent-search setting. Events carry UTC and monotonic timestamps;
+search events include concurrency. Compaction worker stdout is inherited by the
+parent runner. Other VDBBench usage emits no stage events by default.
+
+With events enabled, each compaction also samples persistent segment counts just
+before and just after the compaction span. The `segments` observation and native
+`compaction_segments` metric retain both timestamps and mark an unavailable
+read explicitly. These observations add two bounded metadata reads and are not
+part of the measured compaction duration. They do not count segments for historical
+results or promise that background segment state cannot change between the reads.
+
+The consumer's field definitions and retention policy are described in the
+[orchestrator telemetry contract](https://github.com/jamesgao-jpg/milvus-benchmark-orchestrator/blob/codex/orchestrator-mvp/collector/CONTRACT.md).

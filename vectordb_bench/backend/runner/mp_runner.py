@@ -13,6 +13,7 @@ from hdrh.histogram import HdrHistogram
 
 from vectordb_bench.backend.filter import Filter, non_filter
 from vectordb_bench.backend.payload import PayloadProfile
+from vectordb_bench.backend.stage_events import stage
 from vectordb_bench.backend.workload import WorkloadKind
 
 from ... import config
@@ -209,15 +210,16 @@ class MultiProcessingSearchRunner:
                         # Sync all processes
                         self._wait_for_queue_fill(q, size=conc)
 
-                        with cond:
-                            cond.notify_all()
-                            log.info(f"Syncing all process and start concurrency search, concurrency={conc}")
+                        with stage("search_concurrent", concurrency=conc):
+                            with cond:
+                                cond.notify_all()
+                                log.info(f"Syncing all process and start concurrency search, concurrency={conc}")
 
-                        start = time.perf_counter()
-                        all_count = sum([r.result()[0] for r in future_iter])
-                        latencies = sum([r.result()[2] for r in future_iter], start=[])
-                        latency_p99, latency_p95, latency_p50, latency_avg = self._latency_summary(latencies)
-                        cost = time.perf_counter() - start
+                            start = time.perf_counter()
+                            all_count = sum([r.result()[0] for r in future_iter])
+                            latencies = sum([r.result()[2] for r in future_iter], start=[])
+                            latency_p99, latency_p95, latency_p50, latency_avg = self._latency_summary(latencies)
+                            cost = time.perf_counter() - start
 
                         qps = round(all_count / cost, 4)
                         conc_num_list.append(conc)
@@ -354,17 +356,18 @@ class MultiProcessingSearchRunner:
                             sleep_t = conc if conc < 10 else 10
                             time.sleep(sleep_t)
 
-                        with cond:
-                            cond.notify_all()
-                            log.info(f"Syncing all process and start concurrency search, concurrency={conc}")
+                        with stage("search_concurrent", concurrency=conc):
+                            with cond:
+                                cond.notify_all()
+                                log.info(f"Syncing all process and start concurrency search, concurrency={conc}")
 
-                        start = time.perf_counter()
-                        res = [r.result() for r in future_iter]
-                        all_success_count = sum([r[0] for r in res])
-                        all_failed_count = sum([r[1] for r in res])
-                        total_count = all_failed_count + all_success_count
-                        failed_rate = all_failed_count / total_count if total_count > 0 else 0
-                        cost = time.perf_counter() - start
+                            start = time.perf_counter()
+                            res = [r.result() for r in future_iter]
+                            all_success_count = sum([r[0] for r in res])
+                            all_failed_count = sum([r[1] for r in res])
+                            total_count = all_failed_count + all_success_count
+                            failed_rate = all_failed_count / total_count if total_count > 0 else 0
+                            cost = time.perf_counter() - start
 
                         qps = round(all_success_count / cost, 4)
 
