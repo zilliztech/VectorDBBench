@@ -347,7 +347,7 @@ class Milvus(VectorDB):
 
     def _wait_for_segments_sorted(self):
         while True:
-            segments = self.client.list_persistent_segments(self.collection_name, timeout=10)
+            segments = self.client.list_persistent_segments(self.collection_name)
             unsorted = [s for s in segments if not s.is_sorted]
             if not unsorted:
                 log.info(f"{self.name} all persistent segments are sorted.")
@@ -405,7 +405,7 @@ class Milvus(VectorDB):
     def _force_merge_source_segment_ids(self) -> set[int]:
         # isCompacting is not exposed by MilvusClient, so verify plan coverage
         # against every persistent data segment that force merge should consume.
-        segments = self.client.list_persistent_segments(self.collection_name, timeout=10)
+        segments = self.client.list_persistent_segments(self.collection_name)
         return {
             segment.segment_id
             for segment in segments
