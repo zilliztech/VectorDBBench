@@ -135,3 +135,26 @@ def test_search_requires_completed_build(tmp_path: Path):
 
 def test_batch_search_is_advertised():
     assert DB.Warm.init_cls.supports_batch_search is True
+
+
+@pytest.mark.parametrize("shape", [(0, DIM), (1, DIM), (3, DIM), (2, DIM - 1), (2, DIM + 1)])
+def test_mismatched_vector_chunk_rejected_before_build(tmp_path: Path, shape: tuple):
+    from vectordb_bench.backend.clients.warm.warm import CHUNK_DIR
+
+    db = DB.Warm.init_cls(DIM, {"path": str(tmp_path)}, WarmIndexConfig(), dataset_identity={"name": "chunks"})
+    assert db.insert_embeddings(np.ones((2, DIM)).tolist(), [10, 20]) == (2, None)
+    chunk = next((db.root / CHUNK_DIR).glob("*.vec.npy"))
+    np.save(chunk, np.ones(shape, dtype=np.float32))
+    with pytest.raises(ValueError, match="WARM vector chunk has shape"):
+        db.optimize()
+
+
+def test_malformed_id_chunk_rejected_before_build(tmp_path: Path):
+    from vectordb_bench.backend.clients.warm.warm import CHUNK_DIR
+
+    db = DB.Warm.init_cls(DIM, {"path": str(tmp_path)}, WarmIndexConfig(), dataset_identity={"name": "chunks"})
+    assert db.insert_embeddings(np.ones((2, DIM)).tolist(), [10, 20]) == (2, None)
+    chunk = next((db.root / CHUNK_DIR).glob("*.ids.npy"))
+    np.save(chunk, np.array([[10, 20]], dtype=np.int64))
+    with pytest.raises(ValueError, match="id chunks must be one-dimensional"):
+        db.optimize()

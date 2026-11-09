@@ -157,21 +157,32 @@ class Warm(VectorDB):
             msg = "no inserted vectors to build the WARM index from"
             raise RuntimeError(msg)
 
-        ids = np.concatenate([np.load(chunk_dir / f"{n}.ids.npy") for n in names])
+        id_parts = [np.load(chunk_dir / f"{n}.ids.npy", allow_pickle=False) for n in names]
+        if any(part.ndim != 1 for part in id_parts):
+            msg = "WARM id chunks must be one-dimensional"
+            raise ValueError(msg)
+        counts = [len(part) for part in id_parts]
+        ids = np.concatenate(id_parts)
+        del id_parts
         order = np.argsort(ids, kind="stable")
         sorted_ids = ids[order]
         if len(sorted_ids) > 1 and np.any(sorted_ids[1:] == sorted_ids[:-1]):
             msg = "duplicate ids inserted"
             raise ValueError(msg)
 
-        matrix = np.empty((len(ids), self.dim), dtype=np.float32)
+        total_rows = len(ids)
+        destination = np.empty_like(order)
+        destination[order] = np.arange(total_rows)
+        del ids, order
+        matrix = np.empty((total_rows, self.dim), dtype=np.float32)
         row = 0
-        for n in names:
-            part = np.load(chunk_dir / f"{n}.vec.npy", mmap_mode="r")
-            matrix[row : row + len(part)] = part
-            row += len(part)
-        # Fit in id order so the row number is the rank of the id.
-        matrix = matrix[order]
+        for name, count in zip(names, counts, strict=True):
+            part = np.load(chunk_dir / f"{name}.vec.npy", mmap_mode="r", allow_pickle=False)
+            if part.shape != (count, self.dim):
+                msg = f"WARM vector chunk has shape {part.shape}, expected ({count}, {self.dim})"
+                raise ValueError(msg)
+            matrix[destination[row : row + count]] = part
+            row += count
 
         index = self._new_index()
         index.fit(matrix)
@@ -181,7 +192,7 @@ class Warm(VectorDB):
         # Publish readiness only after both files are complete; interrupted builds fail closed.
         self._write_manifest(built=True)
         shutil.rmtree(chunk_dir, ignore_errors=True)
-        log.info(f"WARM index built over {len(ids)} vectors: {index.index_bytes} payload bytes")
+        log.info(f"WARM index built over {total_rows} vectors: {index.index_bytes} payload bytes")
 
     def _set_search_args(self, k: int) -> None:
         if self._index is None:
