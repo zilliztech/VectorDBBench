@@ -5,9 +5,11 @@ import os
 import time
 import uuid
 from contextlib import contextmanager
+from contextvars import ContextVar
 from datetime import UTC, datetime
 
 PREFIX = "E2E_STAGE "
+_parent = ContextVar("e2e_stage_parent", default=None)
 
 
 def enabled():
@@ -42,7 +44,10 @@ def stage(name: str, **fields):
         yield None
         return
     span_id = uuid.uuid4().hex
+    if _parent.get():
+        fields["parent_span_id"] = _parent.get()
     emit(name, "start", span_id, **fields)
+    token = _parent.set(span_id)
     try:
         yield span_id
     except BaseException:
@@ -50,3 +55,5 @@ def stage(name: str, **fields):
         raise
     else:
         emit(name, "end", span_id, **fields)
+    finally:
+        _parent.reset(token)

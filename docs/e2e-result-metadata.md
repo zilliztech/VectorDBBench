@@ -46,6 +46,16 @@ and each concurrent-search setting. Events carry UTC and monotonic timestamps;
 search events include concurrency. Compaction worker stdout is inherited by the
 parent runner. Other VDBBench usage emits no stage events by default.
 
+The E2E orchestrator can additionally opt in with `E2E_COLLECTION_RELOAD=1`.
+The Milvus/Zilliz Cloud optimization then emits one `index_compaction` parent
+span around flush, index waits and compaction. Child `index` and `compaction`
+spans include `parent_span_id`; their durations are observations and must not
+be added to infer the parent duration. Afterward, `collection_unload` measures
+release through `NotLoad`, and `collection_load` measures load through `Loaded`;
+the events share a `reload_id`. A failed or timed-out release or load fails the
+case. This explicit reload changes the workload and does not guarantee a cold
+cache. With the option absent, the existing refresh-load behavior is retained.
+
 With events enabled, each compaction also samples persistent segment counts just
 before and just after the compaction span. The `segments` observation and native
 `compaction_segments` metric retain both timestamps and mark an unavailable

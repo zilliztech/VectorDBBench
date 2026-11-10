@@ -1,14 +1,17 @@
 """Wrapper around the Milvus vector database over VectorDB"""
 
 import logging
+import os
 import time
+import uuid
 from collections.abc import Iterable
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from datetime import UTC, datetime
 from typing import Any
 
 import numpy as np
 from pymilvus import DataType, Function, FunctionType, MilvusClient, MilvusException
+from pymilvus.client.types import LoadState
 
 from vectordb_bench.backend.filter import Filter, FilterOp
 from vectordb_bench.backend.payload import PayloadProfile
@@ -22,6 +25,8 @@ log = logging.getLogger(__name__)
 MILVUS_FORCE_MERGE_TARGET_SIZE_MB = ((1 << 63) - 1) // (1024**2)
 MILVUS_FORCE_MERGE_MAX_ATTEMPTS = 10
 MILVUS_FORCE_MERGE_RETRY_INTERVAL_SECONDS = 30
+E2E_RELOAD_CONTRACT = 1
+E2E_LOAD_TIMEOUT_SECONDS = 300
 
 
 def _float32_to_bf16_bytes(vectors: Iterable[list[float]]) -> list[bytes]:
@@ -356,11 +361,13 @@ class Milvus(VectorDB):
             time.sleep(5)
 
     def _wait_for_index(self):
-        while True:
-            info = self.client.describe_index(self.collection_name, self._main_index_name)
-            if info.get("pending_index_rows", -1) == 0:
-                break
-            time.sleep(5)
+        # Client-observed readiness wait, not server-side index build CPU time.
+        with stage("index", index_name=self._main_index_name):
+            while True:
+                info = self.client.describe_index(self.collection_name, self._main_index_name)
+                if info.get("pending_index_rows", -1) == 0:
+                    break
+                time.sleep(5)
 
     def _wait_for_compaction_ready(self):
         self._wait_for_segments_sorted()
@@ -451,43 +458,78 @@ class Milvus(VectorDB):
         self._compaction_elapsed, self._compaction_jobs = 0.0, 0
         self._compaction_segments = []
         self.optimization_metrics = {"compaction_status": "skipped", "compaction_duration": None}
+        reload_enabled = os.environ.get("E2E_COLLECTION_RELOAD") == "1"
+        prepared = False
         try:
-            self.client.flush(self.collection_name)
-
-            if getattr(self.case_config, "is_gpu_index", False):
-                log.debug("skip force merge compaction for gpu index type.")
+            combined = stage("index_compaction") if reload_enabled else nullcontext()
+            with combined:
+                self._prepare_index_compaction()
+            prepared = True
+            if reload_enabled:
+                self._reload_collection()
             else:
-                try:
-                    self._wait_for_compaction_ready()
-                    self._compact()
-                    if getattr(self.case_config, "force_merge_enabled", True):
-                        self._force_merge()
-                        log.info(f"{self.name} force merge compaction completed.")
-                    else:
-                        log.info(f"{self.name} force merge compaction disabled; skipping.")
-                    if self._compaction_jobs:
-                        self.optimization_metrics = {
-                            "compaction_status": "completed",
-                            "compaction_duration": self._compaction_elapsed,
-                        }
-                except Exception as e:
-                    self.optimization_metrics = {"compaction_status": "failed", "compaction_duration": None}
-                    log.warning(f"{self.name} compact or list segments error: {e}")
-                    if getattr(getattr(e, "code", None), "name", None) == "PERMISSION_DENIED":
-                        log.warning("Skip compact due to list segments or compact permission denied.")
-                    else:
-                        raise e from None
-
-            # wait for index no matter what
-            self._wait_for_index()
-            self.client.refresh_load(self.collection_name)
+                self.client.refresh_load(self.collection_name)
         except Exception as e:
-            self.optimization_metrics = {"compaction_status": "failed", "compaction_duration": None}
+            if not prepared or not reload_enabled:
+                self.optimization_metrics["compaction_status"] = "failed"
+                self.optimization_metrics["compaction_duration"] = None
             log.warning(f"{self.name} optimize error: {e}")
             raise e from None
         finally:
             if enabled():
                 self.optimization_metrics["compaction_segments"] = self._compaction_segments
+
+    def _prepare_index_compaction(self):
+        self.client.flush(self.collection_name)
+        if getattr(self.case_config, "is_gpu_index", False):
+            log.debug("skip force merge compaction for gpu index type.")
+        else:
+            try:
+                self._wait_for_compaction_ready()
+                self._compact()
+                if getattr(self.case_config, "force_merge_enabled", True):
+                    self._force_merge()
+                    log.info(f"{self.name} force merge compaction completed.")
+                else:
+                    log.info(f"{self.name} force merge compaction disabled; skipping.")
+                if self._compaction_jobs:
+                    self.optimization_metrics = {
+                        "compaction_status": "completed", "compaction_duration": self._compaction_elapsed
+                    }
+            except Exception as e:
+                self.optimization_metrics = {"compaction_status": "failed", "compaction_duration": None}
+                log.warning(f"{self.name} compact or list segments error: {e}")
+                if (
+                    getattr(getattr(e, "code", None), "name", None) == "PERMISSION_DENIED"
+                    and os.environ.get("E2E_COLLECTION_RELOAD") != "1"
+                ):
+                    log.warning("Skip compact due to list segments or compact permission denied.")
+                else:
+                    raise e from None
+        self._wait_for_index()
+
+    def _wait_collection_state(self, expected: LoadState, deadline: float):
+        while True:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise TimeoutError(f"Collection did not reach {expected} before timeout")
+            state = self.client.get_load_state(self.collection_name, timeout=min(remaining, 10))["state"]
+            if state == expected:
+                return
+            if state == LoadState.NotExist:
+                raise RuntimeError("Collection disappeared during reload")
+            time.sleep(min(0.5, max(0, deadline - time.monotonic())))
+
+    def _reload_collection(self):
+        reload_id = uuid.uuid4().hex
+        with stage("collection_unload", profile=False, reload_id=reload_id):
+            deadline = time.monotonic() + E2E_LOAD_TIMEOUT_SECONDS
+            self.client.release_collection(self.collection_name, timeout=E2E_LOAD_TIMEOUT_SECONDS)
+            self._wait_collection_state(LoadState.NotLoad, deadline)
+        with stage("collection_load", reload_id=reload_id):
+            deadline = time.monotonic() + E2E_LOAD_TIMEOUT_SECONDS
+            self.client.load_collection(self.collection_name, timeout=E2E_LOAD_TIMEOUT_SECONDS)
+            self._wait_collection_state(LoadState.Loaded, deadline)
 
     def optimize(self, data_size: int | None = None):
         assert self.client, "Please call self.init() before"
