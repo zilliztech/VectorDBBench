@@ -35,7 +35,7 @@ class CaseType(StrEnum):
 class LabelSpec(BaseModel):
     """One categorical value per row, written to the `labels` column."""
 
-    # The default Zipf spread (about 19% down to 0.1%) gives each default target its own label value.
+    # The default Zipf spread (about 23% down to 0.15%) gives each default target its own label value.
     num_values: int = Field(default=100, ge=1)
     distribution: Distribution = Distribution.ZIPF
     zipf_s: float = Field(default=1.1, gt=0)

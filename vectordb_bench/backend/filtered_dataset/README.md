@@ -15,7 +15,8 @@ python -m vectordb_bench.backend.filtered_dataset verify ./filtered_fixture
 `generate` prints each filter case with its target and actual selectivity. `verify` re-evaluates
 every filter from the written metadata and recomputes the nearest neighbors with an independent
 exact search (`--sample N` checks the distances for N random queries only). Without `--config`
-the defaults below are used.
+the values below are used, except that the default `cases` are
+label equality at 0.01, 0.05 and 0.2 and int ranges at 0.01, 0.1 and 0.5.
 
 ## Spec
 
@@ -39,7 +40,7 @@ int_attr:                # one integer per row in [low, high] -> column `int_att
   high: 9999
   distribution: uniform
   correlation: 0.0
-cases:
+cases:                   # example; see the defaults above
   - {type: label_equal, target_selectivity: 0.01}
   - {type: int_range, target_selectivity: 0.1, start_quantile: 0.0}
 ```
