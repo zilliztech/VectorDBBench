@@ -1,4 +1,5 @@
 from enum import StrEnum
+from typing import Literal
 
 from pydantic import BaseModel, SecretStr
 
@@ -22,6 +23,7 @@ class TurboPufferConfig(DBConfig):
     pin_replicas: int = 1
     pin_timeout: int = 45 * 60
     pin_target_namespace_count: int = 0
+    consistency_level: str = "eventual"
 
     def to_dict(self) -> dict:
         return {
@@ -36,11 +38,14 @@ class TurboPufferConfig(DBConfig):
             "pin_replicas": self.pin_replicas,
             "pin_timeout": self.pin_timeout,
             "pin_target_namespace_count": self.pin_target_namespace_count,
+            "consistency_level": self.consistency_level,
         }
 
 
 class TurboPufferIndexConfig(BaseModel, DBCaseConfig):
     metric_type: MetricType | None = None
+    probes: int | None = None
+    vector_type: Literal["f32", "f16"] = "f32"
     use_multi_ns_for_filter: bool = False
     time_wait_warmup: int = 60 * 1  # 1min
     disable_backpressure: bool = False

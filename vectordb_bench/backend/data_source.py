@@ -4,6 +4,7 @@ import os
 import pathlib
 import typing
 from abc import ABC, abstractmethod
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from enum import Enum
 
 import ir_datasets
@@ -178,10 +179,11 @@ class AwsS3Reader(DatasetReader):
         if len(downloads) == 0:
             return {file: local_ds_root / file for file in files}
 
-        log.info(f"Start to downloading files, total count: {len(downloads)}")
-        for s3_file in tqdm(downloads):
-            log.debug(f"downloading file {s3_file} to {local_ds_root}")
-            self.fs.download(s3_file, local_ds_root.as_posix())
+        log.info(f"Start to downloading files in parallel, total count: {len(downloads)}")
+        with ThreadPoolExecutor(max_workers=12) as pool:
+            futures = [pool.submit(self.fs.download, s3_file, local_ds_root.as_posix()) for s3_file in downloads]
+            for future in tqdm(as_completed(futures), total=len(futures), desc="Downloading"):
+                future.result()
 
         log.info(f"Succeed to download all files, downloaded file count = {len(downloads)}")
         return {file: local_ds_root / file for file in files}
