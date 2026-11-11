@@ -70,6 +70,7 @@ class DB(Enum):
     VolcMySQL = "VolcMySQL"
     Adbpg = "AnalyticDB for PostgreSQL"
     HouyiDB = "HouyiDB"
+    DXMT = "DXMT"
 
     @property
     def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901, PLR0915
@@ -310,6 +311,11 @@ class DB(Enum):
             from .houyidb.houyidb import HouyiDB
 
             return HouyiDB
+
+        if self == DB.DXMT:
+            from .dxmt.dxmt import DXMT
+
+            return DXMT
 
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
@@ -553,6 +559,11 @@ class DB(Enum):
             from .houyidb.config import HouyiDBConfig
 
             return HouyiDBConfig
+
+        if self == DB.DXMT:
+            from .dxmt.config import DXMTConfig
+
+            return DXMTConfig
 
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
@@ -800,6 +811,11 @@ class DB(Enum):
             from .houyidb.config import HouyiDBIndexConfig
 
             return HouyiDBIndexConfig
+
+        if self == DB.DXMT:
+            from .dxmt.config import DXMTAutoIndexConfig, DXMTHNSWConfig
+
+            return DXMTHNSWConfig if index_type == IndexType.HNSW else DXMTAutoIndexConfig
 
         # DB.Pinecone, DB.Redis
         return EmptyDBCaseConfig

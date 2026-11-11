@@ -15,6 +15,7 @@ from ..backend.clients.elastic_cloud.cli import (
     ElasticCloudHNSWInt4,
     ElasticCloudHNSWInt8,
 )
+from ..backend.clients.dxmt.cli import DXMT, DXMTHNSW
 from ..backend.clients.endee.cli import Endee
 from ..backend.clients.hologres.cli import HologresHGraph
 from ..backend.clients.houyidb.cli import HouyiDB
@@ -125,6 +126,8 @@ cli.add_command(PolarDBHNSWSQ)
 cli.add_command(SeekDBHNSW)
 cli.add_command(VolcMySQLHNSW)
 cli.add_command(HouyiDB)
+cli.add_command(DXMT)
+cli.add_command(DXMTHNSW)
 
 
 if __name__ == "__main__":
