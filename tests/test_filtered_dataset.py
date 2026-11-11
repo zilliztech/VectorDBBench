@@ -225,6 +225,8 @@ def test_refuses_to_overwrite_a_non_empty_directory(tmp_path):
         {"int_attr": {"low": 10, "high": 5}},
         {"labels": {"num_values": 5_000}},
         {"cases": [{"type": "label_equal", "target_selectivity": 0}]},
+        {"num_train": 1_000_000, "dim": 64},
+        {"int_attr": {"low": 0, "high": 10**12}},
     ],
 )
 def test_invalid_specs_are_rejected(overrides):
@@ -277,3 +279,18 @@ def test_fixture_loads_through_the_custom_dataset_reader(tmp_path):
     # The runners look labels up by train id, so row i must describe id i.
     written = pq.read_table(tmp_path / "scalar_labels.parquet").column("labels").to_pylist()
     assert dataset.scalar_labels["labels"][[0, 7, 599]].to_list() == [written[0], written[7], written[599]]
+
+
+def test_cli_accepts_an_empty_config_with_a_seed(tmp_path):
+    config = tmp_path / "empty.yaml"
+    config.write_text("")
+    out = tmp_path / "out"
+    with pytest.MonkeyPatch.context() as mp:
+        # The default spec is 100k vectors; build the small one with the CLI's parsed fields instead.
+        mp.setattr(
+            "vectordb_bench.backend.filtered_dataset.__main__.FilteredDatasetSpec",
+            lambda **raw: small_spec(**raw),
+        )
+        result = CliRunner().invoke(cli, ["generate", "--config", str(config), "--out", str(out), "--seed", "5"])
+    assert result.exit_code == 0, result.output
+    assert json.loads((out / "manifest.json").read_text())["spec"]["seed"] == 5

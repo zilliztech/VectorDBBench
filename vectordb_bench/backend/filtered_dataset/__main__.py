@@ -30,13 +30,17 @@ def cli():
 )
 @click.option("--out", required=True, type=click.Path(file_okay=False, path_type=pathlib.Path))
 @click.option("--seed", type=int, help="Override the spec's seed.")
-@click.option("--overwrite", is_flag=True, help="Replace the contents of a non-empty --out directory.")
+@click.option(
+    "--overwrite",
+    is_flag=True,
+    help="Allow writing into a non-empty --out directory; existing files may be overwritten.",
+)
 def generate(config: pathlib.Path | None, out: pathlib.Path, seed: int | None, overwrite: bool):
     """Write vectors, metadata, filter cases, exact ground truth and manifest.json to --out."""
-    raw = yaml.safe_load(config.read_text()) if config else {}
+    raw = (yaml.safe_load(config.read_text()) if config else None) or {}
     if seed is not None:
         raw["seed"] = seed
-    spec = FilteredDatasetSpec(**(raw or {}))
+    spec = FilteredDatasetSpec(**raw)
     manifest = generate_dataset(spec, out, overwrite=overwrite)
     for case in manifest["cases"]:
         click.echo(

@@ -1,7 +1,7 @@
 """Specification of a generated filtered-search fixture.
 
-A spec fully determines the output: the same spec and seed always produce byte-identical
-vectors, metadata, filter cases and ground truth.
+A spec fully determines the output: the same spec and seed produce identical files with the
+same numpy and pyarrow versions on the same platform.
 """
 
 from enum import StrEnum
@@ -13,9 +13,13 @@ from ..clients.api import MetricType
 
 FORMAT_VERSION = 1
 SUPPORTED_METRICS = (MetricType.L2, MetricType.COSINE, MetricType.IP)
-# Keeps the brute-force ground truth and the in-memory arrays bounded on a laptop.
+# Keeps the brute-force ground truth and the in-memory arrays bounded on a laptop: at the element cap
+# (e.g. 390k x 128) generation peaks around 1.3 GB, and the cap stays below the int32 list offsets
+# Arrow uses for the vector column.
 MAX_TRAIN_VECTORS = 2_000_000
 MAX_TEST_VECTORS = 100_000
+MAX_TRAIN_ELEMENTS = 50_000_000
+MAX_INT_DOMAIN = 10_000_000
 
 
 class Distribution(StrEnum):
@@ -52,6 +56,9 @@ class IntSpec(BaseModel):
     def check_bounds(self) -> "IntSpec":
         if self.high < self.low:
             msg = f"int_attr high ({self.high}) must be >= low ({self.low})"
+            raise ValueError(msg)
+        if self.high - self.low + 1 > MAX_INT_DOMAIN:
+            msg = f"int_attr spans {self.high - self.low + 1} values; at most {MAX_INT_DOMAIN} are supported"
             raise ValueError(msg)
         return self
 
@@ -98,6 +105,12 @@ class FilteredDatasetSpec(BaseModel):
 
     @model_validator(mode="after")
     def check_sizes(self) -> "FilteredDatasetSpec":
+        if self.num_train * self.dim > MAX_TRAIN_ELEMENTS:
+            msg = (
+                f"num_train * dim is {self.num_train * self.dim}; at most {MAX_TRAIN_ELEMENTS} elements are "
+                "supported, so reduce num_train or dim"
+            )
+            raise ValueError(msg)
         if self.labels.num_values > self.num_train:
             msg = f"labels.num_values ({self.labels.num_values}) cannot exceed num_train ({self.num_train})"
             raise ValueError(msg)

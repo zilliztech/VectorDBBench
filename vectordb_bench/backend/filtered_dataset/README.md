@@ -48,7 +48,9 @@ Selectivity is the fraction of rows that match a filter (`filter_rate` in Vector
 `1 - selectivity`). Each case becomes the closest filter the data allows: `label_equal` picks
 the label value whose frequency is closest to the target, and `int_range` picks a half-open
 range `[low, high)` starting at `start_quantile`. The achieved selectivity is recorded, and is
-never zero.
+never zero. `low` is the value at `start_quantile`, so it includes every row tied with that
+value: on heavily skewed integers the achieved selectivity can be far from the target, and the
+manifest shows by how much.
 
 Metadata is assigned by ranking rows on a score that mixes a random projection of the vector
 with noise, so the marginal distribution is exact while `correlation` sets how closely the
@@ -65,7 +67,9 @@ neighbors_<case_id>.parquet    id, neighbors_id       top-k over the rows that m
 manifest.json
 ```
 
-The layout is the one the custom-dataset reader already loads. Ground truth is ranked by
+`train`, `test`, `scalar_labels` and `neighbors.parquet` load through the custom-dataset reader
+as they are. Running the per-case filters needs runner support for these filter types (catalog
+V02), including ground-truth rows shorter than `k`. Ground truth is ranked by
 (distance, id), with distances computed in float64, so equal distances are broken by the
 smaller id. A query gets fewer than `k` neighbors when fewer rows match.
 
@@ -75,11 +79,19 @@ smaller id. A query gets fewer than `k` neighbors when fewer rows match.
 - `target_selectivity`, `actual_selectivity`, `filter_rate` and `matching_rows`
 - `min_groundtruth_width` and `queries_with_fewer_than_k`
 - `queries_with_boundary_ties`: queries whose k-th and (k+1)-th distances are equal, so
-  another top-k is equally valid
+  another top-k is equally valid (rare with continuous Gaussian vectors; mostly relevant to
+  duplicate or quantized data)
 - `unfiltered_topk_pass_rate`: the share of each query's unfiltered top-k that passes
 - `queries_with_no_unfiltered_match`, next to the count expected if the metadata were
   independent of the vectors. Compare the two to see how much the metadata is correlated
   with vector position.
 - `same_condition_as`, set when two targets resolve to the same filter
 
-The same spec and seed always produce identical files.
+The same spec and seed produce identical files with the same numpy and pyarrow versions on
+the same platform; the manifest records both versions.
+
+Sizes are capped at `num_train * dim <= 50,000,000` and an int domain of at most 10,000,000
+values. At the cap (for example 390,000 x 128 with the default 1,000 queries and 6 cases),
+generation peaked at about 1.3 GB of memory and took about a minute on an Apple M-series laptop.
+Ground truth is a brute-force pass per case over `num_test * num_train` pairs, so time grows with
+both.

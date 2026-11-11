@@ -1,6 +1,8 @@
 """Generate a filtered-search fixture: vectors, metadata, filter cases and exact ground truth.
 
-Output layout (the custom-dataset layout VectorDBBench already reads):
+Output layout. train, test, scalar_labels and neighbors.parquet load through CustomDataset as they
+are; the per-case ground truth needs runner support for these filters (catalog V02), including
+rows shorter than k when fewer rows match.
 
     train.parquet          id (0..N-1), emb
     test.parquet           id, emb
@@ -182,7 +184,7 @@ def generate_dataset(spec: FilteredDatasetSpec, out_dir: str | pathlib.Path, ove
     """Write the fixture to `out_dir` and return the manifest."""
     out = pathlib.Path(out_dir)
     if out.exists() and any(out.iterdir()) and not overwrite:
-        msg = f"{out} is not empty; pass overwrite=True to replace its contents"
+        msg = f"{out} is not empty; pass overwrite=True to write into it anyway"
         raise FileExistsError(msg)
     out.mkdir(parents=True, exist_ok=True)
 
@@ -257,6 +259,8 @@ def generate_dataset(spec: FilteredDatasetSpec, out_dir: str | pathlib.Path, ove
     manifest = {
         "format_version": FORMAT_VERSION,
         "generator": "vectordb_bench.backend.filtered_dataset",
+        # Byte-identical output is only promised for the same library versions and platform.
+        "library_versions": {"numpy": np.__version__, "pyarrow": pa.__version__},
         "spec": spec.model_dump(mode="json"),
         "files": {
             "train": "train.parquet",
