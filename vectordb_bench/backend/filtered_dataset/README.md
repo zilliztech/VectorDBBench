@@ -69,8 +69,7 @@ manifest.json
 ```
 
 `train`, `test`, `scalar_labels` and `neighbors.parquet` load through the custom-dataset reader
-as they are. Running the per-case filters needs runner support for these filter types (catalog
-V02), including ground-truth rows shorter than `k`. Ground truth is ranked by
+as they are; the per-case files are run with the `FilteredFixtureCase` below. Ground truth is ranked by
 (distance, id), with distances computed in float64, so equal distances are broken by the
 smaller id. A query gets fewer than `k` neighbors when fewer rows match.
 
@@ -96,3 +95,25 @@ values. At the cap (for example 390,000 x 128 with the default 1,000 queries and
 generation peaked at about 1.3 GB of memory and took about a minute on an Apple M-series laptop.
 Ground truth is a brute-force pass per case over `num_test * num_train` pairs, so time grows with
 both.
+
+## Run a case against a database
+
+Each manifest case runs as one `FilteredFixtureCase`:
+
+```shell
+vectordbbench milvushnsw --uri http://localhost:19530 \
+    --case-type FilteredFixtureCase --fixture-dir ./filtered_fixture --fixture-case 00_label_equal_0.01
+```
+
+- Label cases become a label-equality filter on the `labels` column, so every client that
+  supports label filters runs them unchanged. Int-range cases need the `NumRange` filter type;
+  Milvus supports it by adding an `int_attr` INT64 field with an `STL_SORT` index, the same index
+  its id field gets for `NumGE`.
+- A client that does not support a case's filter type skips that case with a warning instead of
+  rewriting the predicate or failing the whole run.
+- Recall is scored against the neighbors the filter allows: a query with 50 matching rows is
+  scored out of 50, not out of `k`. `--k` must not exceed the fixture's `k`, or the case fails to
+  load (its ground truth is too narrow to score it).
+- The result's `additional_parameters["filtered_fixture"]` records the case, its expression,
+  target and actual selectivity, matching rows and the fixture's metadata distributions, so
+  results from different cases can be compared on what was actually run.

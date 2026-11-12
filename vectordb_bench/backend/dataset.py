@@ -629,7 +629,10 @@ class ParquetDatasetManager(DatasetManager):
                 id_field=self.data.gt_id_field,
                 neighbors_field=self.data.gt_neighbors_field,
                 expected_query_ids=query_ids,
-                minimum_width=requested_k,
+                # A fixture case's ground truth is narrower than K only when fewer rows match its filter.
+                minimum_width=(
+                    min(requested_k, filters.matching_rows) if filters.allows_short_groundtruth else requested_k
+                ),
                 expected_width=self.search_files.width,
             )
 

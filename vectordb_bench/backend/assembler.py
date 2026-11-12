@@ -5,7 +5,7 @@ from vectordb_bench.backend.data_source import DatasetSource
 from vectordb_bench.backend.filter import FilterOp
 from vectordb_bench.models import TaskConfig
 
-from .cases import CaseLabel
+from .cases import CaseLabel, FilteredFixtureCase
 from .task_runner import CaseRunner, RunningStatus, TaskRunner
 
 log = logging.getLogger(__name__)
@@ -73,9 +73,19 @@ class Assembler:
         # check
         for db, runners in db2runner.items():
             db_instance = db.init_cls
-            for runner in runners:
-                if not db_instance.filter_supported(runner.ca.filters):
-                    raise FilterNotSupportedError(db.value, runner.ca.filters.type)
+            for runner in list(runners):
+                if db_instance.filter_supported(runner.ca.filters):
+                    continue
+                if isinstance(runner.ca, FilteredFixtureCase):
+                    # A fixture holds several filter types; skip the ones this client cannot run instead of
+                    # rewriting the predicate or failing the whole task.
+                    log.warning(
+                        f"Skipping {runner.ca.name} on {db.value}: {runner.ca.filters.type.value} filters "
+                        f"({runner.ca.fixture_case['expr']}) are not supported by this client"
+                    )
+                    runners.remove(runner)
+                    continue
+                raise FilterNotSupportedError(db.value, runner.ca.filters.type)
 
         # sort by dataset size
         for _, runner in db2runner.items():
