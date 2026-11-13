@@ -60,7 +60,13 @@ class DXMTHNSWTypedDict(DXMTTypedDict):
     ]
     ef_construction: Annotated[
         int,
-        click.option("--ef-construction", type=int, default=200, show_default=True, help="HNSW ef_construction"),
+        click.option(
+            "--ef-construction",
+            type=int,
+            default=2000,
+            show_default=True,
+            help="HNSW ef_construction: build effort; higher builds a better graph more slowly",
+        ),
     ]
     ef_search: Annotated[
         int,

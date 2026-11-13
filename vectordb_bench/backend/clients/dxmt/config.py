@@ -49,7 +49,7 @@ class DXMTHNSWConfig(DXMTIndexConfig):
     """An HNSW index with explicit graph parameters, set per table at creation."""
 
     m: int = 16
-    ef_construction: int = 200
+    ef_construction: int = 2000
     ef_search: int = 128
 
     def index_param(self) -> dict:
