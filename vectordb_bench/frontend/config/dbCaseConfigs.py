@@ -134,6 +134,9 @@ class UICaseItem(BaseModel):
         ]
 
     def supports_dbs(self, dbs: list[DB]) -> bool:
+        labels = {case.case.label for case in self.cases} or {self.caseLabel}
+        if any(not db.supports_case_label(label) for db in dbs for label in labels):
+            return False
         if self.supportedDbs is None:
             return True
         return all(db in self.supportedDbs for db in dbs)
@@ -3792,7 +3795,55 @@ QdrantLocalPerformanceConfig = [
 ]
 
 # Map DB to config
+WarmPerformanceConfig = [
+    CaseConfigInput(
+        label=CaseConfigParamType.m,
+        inputType=InputType.Number,
+        inputConfig={"min": 1, "max": MAX_STREAMLIT_INT, "value": 16},
+        inputHelp="WARM graph degree is 2*m (matching the HNSW layer-0 degree).",
+    ),
+    CaseConfigInput(
+        label=CaseConfigParamType.ef_construction,
+        inputType=InputType.Number,
+        inputConfig={"min": 1, "max": MAX_STREAMLIT_INT, "value": 300},
+        inputHelp="Candidate pool size during index construction.",
+    ),
+    CaseConfigInput(
+        label=CaseConfigParamType.ef_search,
+        inputType=InputType.Number,
+        inputConfig={"min": 1, "max": MAX_STREAMLIT_INT, "value": 128},
+        inputHelp="Search candidate pool size; sweep this parameter for the recall/throughput trade-off.",
+    ),
+    CaseConfigInput(
+        label=CaseConfigParamType.rerank,
+        inputType=InputType.Number,
+        inputConfig={"min": 0, "max": MAX_STREAMLIT_INT, "value": 0},
+        inputHelp="Candidates rescored with residual codes; 0 uses max(ef_search, k).",
+    ),
+    CaseConfigInput(
+        label=CaseConfigParamType.code_bits,
+        inputType=InputType.Option,
+        inputConfig={"options": [4, 8]},
+        inputHelp="Traversal code width in bits.",
+    ),
+    CaseConfigInput(
+        label=CaseConfigParamType.residual_bits,
+        inputType=InputType.Option,
+        inputConfig={"options": [8, 4, 0]},
+        inputHelp="Residual code width in bits; 0 disables residual codes.",
+    ),
+    CaseConfigInput(
+        label=CaseConfigParamType.threads,
+        inputType=InputType.Number,
+        inputConfig={"min": 0, "max": MAX_STREAMLIT_INT, "value": 0},
+        inputHelp="Build threads; 0 uses one per core.",
+    ),
+]
+
 CASE_CONFIG_MAP = {
+    DB.Warm: {
+        CaseLabel.Performance: WarmPerformanceConfig,
+    },
     DB.Milvus: {
         CaseLabel.Load: MilvusLoadConfig,
         CaseLabel.Performance: MilvusPerformanceConfig,
