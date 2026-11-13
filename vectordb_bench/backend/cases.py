@@ -1,10 +1,21 @@
 import json
 import logging
+import pathlib
 from enum import Enum, auto
 
 from vectordb_bench import config
 from vectordb_bench.backend.clients.api import MetricType
-from vectordb_bench.backend.filter import Filter, FilterOp, IntFilter, LabelFilter, NewIntFilter, NonFilter, non_filter
+from vectordb_bench.backend.filter import (
+    Filter,
+    FilterOp,
+    FixtureLabelFilter,
+    IntFilter,
+    IntRangeFilter,
+    LabelFilter,
+    NewIntFilter,
+    NonFilter,
+    non_filter,
+)
 from vectordb_bench.backend.payload import FLOAT32_BYTES_PER_DIM, PayloadProfile
 from vectordb_bench.base import BaseModel
 from vectordb_bench.frontend.components.custom.getCustomConfig import CustomDatasetConfig
@@ -19,6 +30,8 @@ from .dataset import (
     ParquetDatasetManager,
     get_dataset_manager,
 )
+from .filtered_dataset.generator import MANIFEST_FILE
+from .filtered_dataset.spec import FORMAT_VERSION
 
 log = logging.getLogger(__name__)
 
@@ -70,6 +83,7 @@ class CaseType(Enum):
 
     Custom = 100
     PerformanceCustomDataset = 101
+    FilteredFixtureCase = 102
 
     StreamingPerformanceCase = 200
     StreamingCustomDataset = 201
@@ -470,6 +484,125 @@ class PerformanceCustomDataset(PerformanceCase):
         if self.use_filter is True:
             return LabelFilter(label_percentage=self.label_percentage)
         return NonFilter(gt_file_name=self.gt_file)
+
+
+def fixture_manifest_for_case(fixture_dir: str, fixture_case_id: str) -> dict:
+    """The parts of a fixture's manifest.json that FilteredFixtureCase needs for one case."""
+    manifest = json.loads((pathlib.Path(fixture_dir) / MANIFEST_FILE).read_text())
+    return {
+        "format_version": manifest.get("format_version"),
+        "spec": manifest["spec"],
+        "files": manifest["files"],
+        "cases": [case for case in manifest["cases"] if case["case_id"] == fixture_case_id],
+    }
+
+
+class FilteredFixtureCase(PerformanceCase):
+    """One filter case of a fixture written by `vectordb_bench.backend.filtered_dataset`.
+
+    The fixture's base files load as a custom dataset; the filter, its ground truth and the
+    distribution metadata come from the case's entry in manifest.json.
+    """
+
+    case_id: CaseType = CaseType.FilteredFixtureCase
+    fixture_dir: str
+    fixture_case_id: str
+    fixture_case: dict
+    fixture_report: dict
+
+    def __init__(
+        self,
+        fixture_dir: str,
+        fixture_case_id: str,
+        fixture_manifest: dict | None = None,
+        load_timeout: float = config.LOAD_TIMEOUT_DEFAULT,
+        optimize_timeout: float | None = config.OPTIMIZE_TIMEOUT_DEFAULT,
+        **kwargs,
+    ):
+        # A saved result carries the manifest entries it needs (see fixture_manifest_for_case), so it can be
+        # rebuilt after the fixture directory moves; a fresh run reads manifest.json.
+        manifest_path = pathlib.Path(fixture_dir) / MANIFEST_FILE
+        manifest = fixture_manifest or json.loads(manifest_path.read_text())
+        if manifest.get("format_version") != FORMAT_VERSION:
+            msg = f"{manifest_path}: unsupported format_version {manifest.get('format_version')!r}"
+            raise ValueError(msg)
+        cases = {case["case_id"]: case for case in manifest["cases"]}
+        if fixture_case_id not in cases:
+            msg = f"{manifest_path} has no case {fixture_case_id!r}; available: {', '.join(cases)}"
+            raise ValueError(msg)
+        case = cases[fixture_case_id]
+        spec = manifest["spec"]
+        dataset = CustomDataset(
+            name=spec["name"],
+            size=spec["num_train"],
+            dim=spec["dim"],
+            metric_type=metric_type_map(spec["metric_type"]),
+            use_shuffled=False,
+            with_gt=True,
+            dir=str(fixture_dir),
+            file_num=1,
+            train_file=manifest["files"]["train"].removesuffix(".parquet"),
+            test_file=manifest["files"]["test"],
+            scalar_labels_file=manifest["files"]["scalar_labels"],
+        )
+        fixture_report = {
+            "fixture": spec["name"],
+            "case_id": fixture_case_id,
+            "expr": case["expr"],
+            "target_selectivity": case["target_selectivity"],
+            "actual_selectivity": case["actual_selectivity"],
+            "matching_rows": case["matching_rows"],
+            "queries_with_fewer_than_k": case["queries_with_fewer_than_k"],
+            "queries_with_no_unfiltered_match": case["queries_with_no_unfiltered_match"],
+            "expected_queries_with_no_unfiltered_match_if_independent": case[
+                "expected_queries_with_no_unfiltered_match_if_independent"
+            ],
+            "labels": spec["labels"],
+            "int_attr": spec["int_attr"],
+            "seed": spec["seed"],
+        }
+        super().__init__(
+            name=f"Filtered fixture {fixture_case_id} - {spec['name']}",
+            description=f"{case['expr']} (actual selectivity {case['actual_selectivity'] * 100:.2f}%)",
+            dataset=ParquetDatasetManager(data=dataset),
+            load_timeout=load_timeout,
+            optimize_timeout=optimize_timeout,
+            filter_rate=case["filter_rate"],
+            fixture_dir=str(fixture_dir),
+            fixture_case_id=fixture_case_id,
+            fixture_case=case,
+            fixture_report=fixture_report,
+            **kwargs,
+        )
+
+    @property
+    def filters(self) -> Filter:
+        condition = self.fixture_case["condition"]
+        gt_file = self.fixture_case["groundtruth_file"]
+        if condition["op"] == "==":
+            return FixtureLabelFilter(
+                label_value=condition["value"],
+                selectivity=self.fixture_case["actual_selectivity"],
+                gt_file_name=gt_file,
+                matching_rows=self.fixture_case["matching_rows"],
+                label_field=condition["field"],
+            )
+        if condition["op"] == "range":
+            return IntRangeFilter(
+                int_field=condition["field"],
+                low=condition["low"],
+                high_exclusive=condition["high_exclusive"],
+                filter_rate=self.fixture_case["filter_rate"],
+                gt_file_name=gt_file,
+                matching_rows=self.fixture_case["matching_rows"],
+            )
+        msg = f"Unknown fixture filter op {condition['op']!r}"
+        raise ValueError(msg)
+
+    @property
+    def with_scalar_labels(self) -> bool:
+        # An int range reads its column from scalar_labels too.
+        return True
 
 
 class StreamingPerformanceCase(Case):
@@ -1029,6 +1162,7 @@ type2case = {
     CaseType.Performance1024D10M: Performance1024D10M,
     CaseType.Performance1536D50K: Performance1536D50K,
     CaseType.PerformanceCustomDataset: PerformanceCustomDataset,
+    CaseType.FilteredFixtureCase: FilteredFixtureCase,
     CaseType.StreamingPerformanceCase: StreamingPerformanceCase,
     CaseType.StreamingCustomDataset: StreamingCustomDataset,
     CaseType.NewIntFilterPerformanceCase: NewIntFilterPerformanceCase,

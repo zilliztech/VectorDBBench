@@ -41,8 +41,11 @@ class Milvus(VectorDB):
         FilterOp.NonFilter,
         FilterOp.NumGE,
         FilterOp.StrEqual,
+        FilterOp.NumRange,
     ]
     _use_bf16: bool = False
+    # INT64 column for int-range filters from a generated filtered fixture; set from range_filter_field.
+    _range_filter_field: str | None = None
 
     @classmethod
     def supports_full_text_search(cls) -> bool:
@@ -51,7 +54,7 @@ class Milvus(VectorDB):
     def has_text_field(self) -> bool:
         return bool(getattr(self, "_is_fts", False) and getattr(self, "_text_field", None))
 
-    def __init__(  # noqa: PLR0915
+    def __init__(  # noqa: PLR0912, PLR0915
         self,
         dim: int,
         db_config: dict,
@@ -76,6 +79,7 @@ class Milvus(VectorDB):
         self._scalar_labels_index_name = "labels_idx"
         self._is_fts = isinstance(self.case_config, MilvusFtsConfig)
         self._fts_filter_enabled = bool(kwargs.get("fts_filter_enabled", self._is_fts))
+        self._range_filter_field = kwargs.get("range_filter_field")
 
         if self._is_fts:
             self._primary_field = "doc_id"
@@ -151,6 +155,8 @@ class Milvus(VectorDB):
             else:
                 schema.add_field(self._primary_field, DataType.INT64, is_primary=True)
                 schema.add_field(self._scalar_id_field, DataType.INT64)
+                if self._range_filter_field:
+                    schema.add_field(self._range_filter_field, DataType.INT64)
                 schema.add_field(
                     self._vector_field,
                     DataType.BFLOAT16_VECTOR if self._use_bf16 else DataType.FLOAT_VECTOR,
@@ -262,6 +268,13 @@ class Milvus(VectorDB):
             index_name=self._sort_index_name,
             index_type="STL_SORT",
         )
+        if self._range_filter_field:
+            # Same index as the id field gets for NumGE, so range and NumGE cases compare fairly.
+            index_params.add_index(
+                field_name=self._range_filter_field,
+                index_name=f"{self._range_filter_field}_sort_idx",
+                index_type="STL_SORT",
+            )
         if self._is_fts and self._fts_filter_enabled:
             index_params.add_index(
                 field_name=self._filter_id_field,
@@ -486,6 +499,8 @@ class Milvus(VectorDB):
                 row[self._multitenant_partition_key_field] = tenant_labels_data[i]
             if self.with_scalar_labels:
                 row[self._scalar_payload_label_field] = labels_data[i]
+            if self._range_filter_field:
+                row[self._range_filter_field] = kwargs["int_data"][self._range_filter_field][i]
             rows.append(row)
 
         try:
@@ -556,6 +571,11 @@ class Milvus(VectorDB):
             self.expr = f"{self._scalar_id_field} >= {filters.int_value}"
         elif filters.type == FilterOp.StrEqual:
             self.expr = f"{self._scalar_payload_label_field} == '{filters.label_value}'"
+        elif filters.type == FilterOp.NumRange:
+            if filters.int_field != self._range_filter_field:
+                msg = f"Milvus collection has no range field {filters.int_field!r}; create it with range_filter_field"
+                raise ValueError(msg)
+            self.expr = f"{filters.int_field} >= {filters.low} and {filters.int_field} < {filters.high_exclusive}"
         else:
             msg = f"Not support Filter for Milvus - {filters}"
             raise ValueError(msg)

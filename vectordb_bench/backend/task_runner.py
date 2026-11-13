@@ -92,7 +92,13 @@ class CaseRunner(BaseModel):
             self.ca.with_scalar_labels,
             self.ca.is_multitenant,
             self._multitenant_routing_hash_key(),
+            # A range case's collection has an extra int column, so it cannot reuse a label case's load.
+            self._range_filter_field(),
         )
+
+    def _range_filter_field(self) -> str | None:
+        filters = self.ca.filters
+        return filters.int_field if filters.type == FilterOp.NumRange else None
 
     @classmethod
     def _hashable_value(cls, value: object) -> object:
@@ -228,6 +234,9 @@ class CaseRunner(BaseModel):
             extra_db_kwargs["multitenant_tenant_labels"] = self.ca.tenant_labels()
         if self.is_fts:
             extra_db_kwargs["fts_filter_enabled"] = self.ca.filters.type != FilterOp.NonFilter
+        if self._range_filter_field():
+            # Only clients that list NumRange get here; the others are skipped at assembly.
+            extra_db_kwargs["range_filter_field"] = self._range_filter_field()
         if self.config.db is DB.AWSOpenSearch:
             extra_db_kwargs["insert_batch_size"] = self.config.insert_batch_size
         collection_properties = self._collection_properties(log_selection=True)
@@ -445,6 +454,9 @@ class CaseRunner(BaseModel):
                             m.serial_latency_p50,
                             m.recall_at,
                         ) = search_results
+            fixture_report = getattr(self.ca, "fixture_report", None)
+            if fixture_report is not None:
+                m.additional_parameters["filtered_fixture"] = dict(fixture_report)
             gt_data = getattr(self.ca.dataset, "gt_data", None)
             if gt_data is not None and hasattr(gt_data, "path"):
                 m.additional_parameters["ground_truth"] = {
