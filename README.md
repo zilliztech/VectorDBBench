@@ -96,6 +96,7 @@ All the database client supported
 | lindorm                  | `pip install vectordb-bench[lindorm]`       |
 | volc_mysql               | `pip install vectordb-bench[volc_mysql]`    |
 | adbpg                    | `pip install vectordb-bench[adbpg]`         |
+| dxmt                     | `pip install vectordb-bench[dxmt]`          |
 
 ### Run
 
@@ -958,6 +959,36 @@ To list the options for HouyiDB, execute `vectordbbench houyidb --help`. The fol
 ```
 
 Filtered cases use the HTTP data plane because that is where HouyiDB accepts scalar labels and id filters.
+
+### Run DXMT from command line
+
+[DXMT](https://github.com/dxmt/dxmt) is a vector database served over a REST API. Install the client dependencies with `pip install vectordb-bench[dxmt]` and start a server, e.g. `docker run -d -p 9999:9999 -v dxmt:/data dxmtai/dxmt:latest`.
+
+Two commands are available. `dxmt` creates the table with the server's own index choice and parameters; `dxmthnsw` creates it with explicit HNSW graph parameters, and the client aborts if the server reports different ones. After the load both call `POST /tables/{name}/index/rebuild`, which rebuilds only if the server would choose a different index for the table's final size, so the search stages always measure that index.
+
+```shell
+vectordbbench dxmt \
+  --url http://<db_host>:9999 \
+  --case-type Performance768D1M \
+  --num-concurrency '1,5,10,20,30,40,60,80' \
+  --concurrency-duration 30 \
+  --db-label <db_label>
+```
+
+To list the options, execute `vectordbbench dxmt --help` or `vectordbbench dxmthnsw --help`. The DXMT-specific options are:
+
+```text
+  --url TEXT                      DXMT server URL  [default: http://localhost:9999]
+  --api-key TEXT                  API key, when the server sets DXMT_API_KEY  [env: DXMT_API_KEY]
+  --timeout-sec INTEGER           Per-request timeout in seconds  [default: 600]
+  --search-mode [fast|normal|accurate]
+                                  Per-query search effort; the server default is normal
+  --m INTEGER                     HNSW m, edges per node (dxmthnsw)  [default: 16]
+  --ef-construction INTEGER       HNSW ef_construction (dxmthnsw)  [default: 200]
+  --ef-search INTEGER             HNSW ef_search (dxmthnsw)  [default: 128]
+```
+
+Every record is written with its integer id in the payload field `id_num`, and with its label in `label` for label-filter cases, so the integer and label filter cases run against the same load path as the unfiltered ones.
 
 #### Using a configuration file.
 
