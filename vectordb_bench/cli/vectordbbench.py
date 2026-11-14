@@ -46,6 +46,7 @@ from ..backend.clients.polardb.cli import (
 from ..backend.clients.polardb_pg.cli import PolarDBPgHNSW
 from ..backend.clients.qdrant_cloud.cli import QdrantCloud
 from ..backend.clients.qdrant_local.cli import QdrantLocal
+from ..backend.clients.rabitqlib.cli import RaBitQLibHNSW
 from ..backend.clients.redis.cli import Redis
 from ..backend.clients.s3_vectors.cli import S3Vectors
 from ..backend.clients.seekdb.cli import SeekDBHNSW
@@ -125,6 +126,7 @@ cli.add_command(PolarDBHNSWSQ)
 cli.add_command(SeekDBHNSW)
 cli.add_command(VolcMySQLHNSW)
 cli.add_command(HouyiDB)
+cli.add_command(RaBitQLibHNSW)
 
 
 if __name__ == "__main__":
