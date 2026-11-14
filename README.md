@@ -24,7 +24,7 @@ Prepare to delve into the world of VDBBench, and let it guide you in uncovering 
 
 VDBBench is sponsored by Zilliz，the leading opensource vectorDB company behind Milvus. Choose smarter with VDBBench - start your free test on [zilliz cloud](https://zilliz.com/) today!
 
-**Leaderboard:** https://zilliz.com/benchmark
+**[Leaderboard](https://zilliz.com/vdbbench-leaderboard)** · **[Cost leaderboard](https://zilliz.com/vdbbench-leaderboard-v2)**
 
 ## 🎈 Announcement 🎈
 
@@ -275,6 +275,29 @@ Options:
                                   with-gt]
   --help                          Show this message and exit.
 ```
+
+### Run VDBBench against Zilliz Cloud (managed Milvus)
+
+Zilliz Cloud is the managed Milvus service, and its client is included in the
+default `pip install vectordb-bench`. To reproduce leaderboard cases on your own
+cluster:
+
+1. [Sign up for Zilliz Cloud](https://cloud.zilliz.com/signup?utm_source=github&utm_medium=referral&utm_campaign=vdbbench&utm_content=readme)
+   (a free tier is available) and create a cluster.
+2. From the cluster details page, copy the public endpoint (URI) and an API key (token).
+3. Run a case. The token is read from `$ZILLIZ_TOKEN` if `--token` is omitted:
+
+```shell
+export ZILLIZ_TOKEN=<your-api-key>
+vectordbbench zillizautoindex \
+  --uri <your-cluster-public-endpoint> \
+  --case-type Performance768D1M \
+  --db-label my-zilliz-cluster
+```
+
+Run `vectordbbench zillizautoindex --help` for all options (for example `--level`,
+`--num-concurrency`, `--k`). To benchmark your own embeddings instead of a
+registered dataset, see [Custom local datasets](#custom-local-datasets).
 
 ### Run polardb_pg from command line
 

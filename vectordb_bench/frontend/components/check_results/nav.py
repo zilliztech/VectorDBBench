@@ -16,6 +16,20 @@ def NavToQuriesPerDollar(st):
         st.switch_page("pages/quries_per_dollar.py")
 
 
+ZILLIZ_CLOUD_SIGNUP_URL = (
+    "https://cloud.zilliz.com/signup"
+    "?utm_source=github&utm_medium=referral&utm_campaign=vdbbench&utm_content=app_results"
+)
+PUBLIC_LEADERBOARD_URL = "https://zilliz.com/vdbbench-leaderboard"
+
+
+def NavToExternalLinks(st):
+    st.markdown(
+        f"[View the public leaderboard]({PUBLIC_LEADERBOARD_URL})  \n"
+        f"[Run these cases on Zilliz Cloud]({ZILLIZ_CLOUD_SIGNUP_URL})"
+    )
+
+
 def NavToResults(st, key="nav-to-results"):
     navClick = st.button("< &nbsp;&nbsp;Back to Results", key=key)
     if navClick:
