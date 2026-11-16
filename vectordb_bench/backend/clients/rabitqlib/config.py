@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from pydantic import BaseModel
+from pydantic import AliasChoices, BaseModel, Field
 
 from ..api import DBCaseConfig, DBConfig, IndexType, MetricType
 
@@ -82,7 +82,8 @@ class RaBitQLibHNSWConfig(RaBitQLibIndexConfig):
 
     index: IndexType = IndexType.RABITQLIB_HNSW
     nbits: int = 9
-    num_clusters: int = 16
+    # The web UI passes this under the shared "nlist" parameter key.
+    num_clusters: int = Field(16, validation_alias=AliasChoices("num_clusters", "nlist"))
     M: int = 16
     ef_construction: int = 200
     ef_search: int = 128

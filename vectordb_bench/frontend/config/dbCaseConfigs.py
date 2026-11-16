@@ -3694,6 +3694,75 @@ QdrantLocalPerformanceConfig = [
     CaseConfigParamInput_hnsw_ef_QdrantLocal,
 ]
 
+CaseConfigParamInput_nbits_RaBitQLib = CaseConfigInput(
+    label=CaseConfigParamType.nbits,
+    displayLabel="nbits",
+    inputHelp="Total RaBitQ bits per coordinate, including the sign bit; 9 (sign + 8) is the fastest kernel",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 9,
+        "value": 9,
+    },
+)
+
+CaseConfigParamInput_num_clusters_RaBitQLib = CaseConfigInput(
+    label=CaseConfigParamType.Nlist,
+    displayLabel="num_clusters",
+    inputHelp="Centroids trained by the library over the whole dataset",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 65536,
+        "value": 16,
+    },
+)
+
+CaseConfigParamInput_M_RaBitQLib = CaseConfigInput(
+    label=CaseConfigParamType.M,
+    displayLabel="M",
+    inputHelp="HNSW graph degree M",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 2,
+        "max": 1024,
+        "value": 16,
+    },
+)
+
+CaseConfigParamInput_ef_construction_RaBitQLib = CaseConfigInput(
+    label=CaseConfigParamType.ef_construction,
+    displayLabel="ef_construction",
+    inputHelp="HNSW construction search breadth",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 4096,
+        "value": 200,
+    },
+)
+
+CaseConfigParamInput_ef_search_RaBitQLib = CaseConfigInput(
+    label=CaseConfigParamType.ef_search,
+    displayLabel="ef_search",
+    inputHelp="HNSW search breadth; raised to k when smaller",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 65536,
+        "value": 128,
+    },
+)
+
+# Only performance cases: the index is built once, after all vectors are loaded.
+RaBitQLibPerformanceConfig = [
+    CaseConfigParamInput_nbits_RaBitQLib,
+    CaseConfigParamInput_num_clusters_RaBitQLib,
+    CaseConfigParamInput_M_RaBitQLib,
+    CaseConfigParamInput_ef_construction_RaBitQLib,
+    CaseConfigParamInput_ef_search_RaBitQLib,
+]
+
 # Map DB to config
 CASE_CONFIG_MAP = {
     DB.Milvus: {
@@ -3780,6 +3849,9 @@ CASE_CONFIG_MAP = {
     DB.QdrantLocal: {
         CaseLabel.Load: QdrantLocalLoadConfig,
         CaseLabel.Performance: QdrantLocalPerformanceConfig,
+    },
+    DB.RaBitQLib: {
+        CaseLabel.Performance: RaBitQLibPerformanceConfig,
     },
     DB.TencentElasticsearch: {
         CaseLabel.Load: TencentElasticsearchLoadingConfig,
