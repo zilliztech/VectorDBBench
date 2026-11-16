@@ -8,7 +8,23 @@ from ....cli.cli import (
     click_parameter_decorators_from_typed_dict,
     run,
 )
+from ...cases import CaseLabel, CaseType, type2case
 from .. import DB
+
+
+def require_performance_case(case_type: str) -> None:
+    """Refuse cases other than static performance before any data is written.
+
+    The index is built once after loading, so capacity cases would only grow the
+    load buffer, and streaming cases would search before an index exists.
+    """
+    label = type2case[CaseType[case_type]].model_fields["label"].default
+    if label != CaseLabel.Performance:
+        msg = (
+            f"rabitqlib indexes support performance cases only, not {case_type} ({label.name}): "
+            "the index is built once, after all vectors are loaded"
+        )
+        raise click.BadParameter(msg, param_hint="'--case-type'")
 
 
 class RaBitQLibTypedDict(CommonTypedDict):
@@ -86,6 +102,7 @@ class RaBitQLibHNSWTypedDict(RaBitQLibTypedDict):
 def RaBitQLibHNSW(**parameters: Unpack[RaBitQLibHNSWTypedDict]):
     from .config import RaBitQLibConfig, RaBitQLibHNSWConfig
 
+    require_performance_case(parameters["case_type"])
     run(
         db=DB.RaBitQLib,
         db_config=RaBitQLibConfig(

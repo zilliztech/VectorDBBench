@@ -16,9 +16,11 @@ from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
 import pytest
+from click.testing import CliRunner
 
 pytest.importorskip("rabitqlib")
 
+from vectordb_bench.backend.cases import CaseLabel, CaseType, type2case
 from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.clients.api import MetricType, NonRetryableInsertError
 from vectordb_bench.backend.clients.api import IndexType
@@ -26,8 +28,10 @@ from vectordb_bench.backend.clients.rabitqlib.config import (
     RaBitQLibConfig,
     RaBitQLibHNSWConfig,
 )
+from vectordb_bench.backend.clients.rabitqlib import cli as rabitqlib_cli
 from vectordb_bench.backend.clients.rabitqlib.rabitqlib_client import RaBitQLib
 from vectordb_bench.backend.filter import IntFilter, non_filter
+from vectordb_bench.cli.vectordbbench import cli
 
 DIM = 128
 N = 2000
@@ -232,6 +236,39 @@ class TestReuseAndRejection:
         assert not RaBitQLib.filter_supported(IntFilter(filter_rate=0.01, int_value=100))
         with pytest.raises(ValueError, match="does not support filtered search"):
             make_db(tmp_path).prepare_filter(IntFilter(filter_rate=0.01, int_value=100))
+
+    @pytest.mark.parametrize(
+        "case_type",
+        [
+            "CapacityDim128",
+            "CapacityDim960",
+            "StreamingPerformanceCase",
+            "StreamingCustomDataset",
+            "CloudInsertCase",
+            "CloudColdLatencyCase",
+            "FTSBm25Performance",
+        ],
+    )
+    def test_cli_rejects_non_performance_cases_before_running(self, tmp_path, monkeypatch, case_type):
+        # Capacity would only grow the buffer; streaming would search before the build.
+        called = []
+        monkeypatch.setattr(rabitqlib_cli, "run", lambda **kwargs: called.append(kwargs))
+        result = CliRunner().invoke(cli, ["rabitqlibhnsw", "--path", str(tmp_path), "--case-type", case_type])
+        assert result.exit_code == 2, result.output
+        assert "performance cases only" in result.output
+        assert not called
+        assert not any(tmp_path.iterdir())
+
+    @pytest.mark.parametrize(
+        "case_type",
+        [
+            ct.name
+            for ct in CaseType
+            if ct in type2case and type2case[ct].model_fields["label"].default == CaseLabel.Performance
+        ],
+    )
+    def test_cli_accepts_performance_cases(self, case_type):
+        rabitqlib_cli.require_performance_case(case_type)
 
     def test_search_without_index_raises(self, tmp_path):
         db = make_db(tmp_path)
