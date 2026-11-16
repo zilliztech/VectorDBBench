@@ -8,6 +8,7 @@ These tests need neither rabitqlib nor a browser.
 from vectordb_bench.backend.cases import CaseLabel, CaseType
 from vectordb_bench.backend.clients import DB
 from vectordb_bench.backend.clients.api import MetricType
+from vectordb_bench.backend.clients.rabitqlib.cli import RaBitQLibHNSW
 from vectordb_bench.backend.clients.rabitqlib.config import RaBitQLibConfig, RaBitQLibHNSWConfig
 from vectordb_bench.frontend.components.run_test.generateTasks import generate_tasks
 from vectordb_bench.frontend.config.dbCaseConfigs import CASE_CONFIG_MAP, get_case_config_inputs
@@ -53,7 +54,7 @@ def test_ui_defaults_match_the_config_defaults():
 
 
 def test_tuned_values_reach_the_client():
-    config = ui_task({"nbits": 5, "nlist": 64, "M": 32, "ef_construction": 400, "ef_search": 256})
+    config = ui_task({"nbits": 5, "num_clusters": 64, "M": 32, "ef_construction": 400, "ef_search": 256})
 
     assert config.index_param() == {
         "metric": "ip",
@@ -66,11 +67,11 @@ def test_tuned_values_reach_the_client():
     assert config.search_param() == {"ef": 256}
 
 
-def test_input_ranges_match_the_cli():
-    inputs = {i.displayLabel: i.inputConfig for i in get_case_config_inputs(DB.RaBitQLib, CaseLabel.Performance)}
+def test_input_ranges_and_defaults_match_the_cli():
+    inputs = {i.label.value: i.inputConfig for i in get_case_config_inputs(DB.RaBitQLib, CaseLabel.Performance)}
+    # The CLI option for the M parameter is --m.
+    options = {("M" if p.name == "m" else p.name): p for p in RaBitQLibHNSW.params}
 
-    assert (inputs["nbits"]["min"], inputs["nbits"]["max"]) == (1, 9)
-    assert inputs["num_clusters"]["min"] == 1
-    assert inputs["M"]["min"] == 2
-    assert inputs["ef_construction"]["min"] == 1
-    assert inputs["ef_search"]["min"] == 1
+    for name, ui in inputs.items():
+        option = options[name]
+        assert (ui["min"], ui["max"], ui["value"]) == (option.type.min, option.type.max, option.default), name

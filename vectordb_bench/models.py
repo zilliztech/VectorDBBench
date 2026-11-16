@@ -83,6 +83,7 @@ class CaseConfigParamType(Enum):
     quantizedFetchLimit = "quantized_fetch_limit"
     m = "m"
     nbits = "nbits"
+    num_clusters = "num_clusters"
     nrq = "nrq"
     intermediate_graph_degree = "intermediate_graph_degree"
     graph_degree = "graph_degree"

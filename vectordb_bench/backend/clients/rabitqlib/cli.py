@@ -59,6 +59,8 @@ class RaBitQLibTypedDict(CommonTypedDict):
     ]
 
 
+# Not HNSWBaseTypedDict: its options have no defaults or ranges, and these mirror the
+# library's defaults and the web UI's limits (dbCaseConfigs.py).
 class RaBitQLibHNSWTypedDict(RaBitQLibTypedDict):
     nbits: Annotated[
         int,
@@ -74,7 +76,7 @@ class RaBitQLibHNSWTypedDict(RaBitQLibTypedDict):
         int,
         click.option(
             "--num-clusters",
-            type=click.IntRange(min=1),
+            type=click.IntRange(1, 65536),
             default=16,
             show_default=True,
             help="Centroids, trained with k-means on a sample of up to 256 x num-clusters vectors",
@@ -82,13 +84,13 @@ class RaBitQLibHNSWTypedDict(RaBitQLibTypedDict):
     ]
     m: Annotated[
         int,
-        click.option("--m", type=click.IntRange(min=2), default=16, show_default=True, help="HNSW graph degree M"),
+        click.option("--m", type=click.IntRange(2, 1024), default=16, show_default=True, help="HNSW graph degree M"),
     ]
     ef_construction: Annotated[
         int,
         click.option(
             "--ef-construction",
-            type=click.IntRange(min=1),
+            type=click.IntRange(1, 4096),
             default=200,
             show_default=True,
             help="HNSW construction search breadth",
@@ -98,7 +100,7 @@ class RaBitQLibHNSWTypedDict(RaBitQLibTypedDict):
         int,
         click.option(
             "--ef-search",
-            type=click.IntRange(min=1),
+            type=click.IntRange(1, 65536),
             default=128,
             show_default=True,
             help="HNSW search breadth; raised to k when smaller",

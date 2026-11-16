@@ -919,13 +919,14 @@ To list the options for HNSW-RaBitQ, execute `vectordbbench rabitqlibhnsw --help
                                   precision  [default: 9; 1<=x<=9]
   --num-clusters INTEGER RANGE    Centroids, trained with k-means on a sample
                                   of up to 256 x num-clusters vectors
-                                  [default: 16; x>=1]
-  --m INTEGER RANGE               HNSW graph degree M  [default: 16; x>=2]
+                                  [default: 16; 1<=x<=65536]
+  --m INTEGER RANGE               HNSW graph degree M  [default: 16;
+                                  2<=x<=1024]
   --ef-construction INTEGER RANGE
                                   HNSW construction search breadth  [default:
-                                  200; x>=1]
+                                  200; 1<=x<=4096]
   --ef-search INTEGER RANGE       HNSW search breadth; raised to k when
-                                  smaller  [default: 128; x>=1]
+                                  smaller  [default: 128; 1<=x<=65536]
 ```
 
 #### Using a configuration file.

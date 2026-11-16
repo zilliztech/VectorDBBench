@@ -313,7 +313,7 @@ class DB(Enum):
             return HouyiDB
 
         if self == DB.RaBitQLib:
-            from .rabitqlib.rabitqlib_client import RaBitQLib
+            from .rabitqlib.rabitqlib import RaBitQLib
 
             return RaBitQLib
 

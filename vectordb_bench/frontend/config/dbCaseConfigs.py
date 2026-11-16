@@ -3707,7 +3707,7 @@ CaseConfigParamInput_nbits_RaBitQLib = CaseConfigInput(
 )
 
 CaseConfigParamInput_num_clusters_RaBitQLib = CaseConfigInput(
-    label=CaseConfigParamType.Nlist,
+    label=CaseConfigParamType.num_clusters,
     displayLabel="num_clusters",
     inputHelp="Centroids, trained with k-means on a sample of up to 256 x num_clusters vectors",
     inputType=InputType.Number,

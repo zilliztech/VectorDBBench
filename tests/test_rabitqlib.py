@@ -35,7 +35,7 @@ from vectordb_bench.backend.clients.rabitqlib.config import (
     RaBitQLibHNSWConfig,
 )
 from vectordb_bench.backend.clients.rabitqlib import cli as rabitqlib_cli
-from vectordb_bench.backend.clients.rabitqlib.rabitqlib_client import RaBitQLib
+from vectordb_bench.backend.clients.rabitqlib.rabitqlib import RaBitQLib
 from vectordb_bench.backend.filter import IntFilter, non_filter
 from vectordb_bench.cli.vectordbbench import cli
 
