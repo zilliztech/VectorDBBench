@@ -78,6 +78,8 @@ class RaBitQLib(VectorDB):
         self.case_config = db_case_config
         self.index_type = db_case_config.index.value
         self.index_param = db_case_config.index_param()
+        # COSINE and IP both build an "ip" index, but COSINE vectors are normalized first.
+        self.metric_type = db_case_config.metric_type.value
         self.path = Path(db_config["path"])
         self.path.mkdir(parents=True, exist_ok=True)
         self.index_file = f"{self.index_type}.index"
@@ -135,14 +137,19 @@ class RaBitQLib(VectorDB):
         self._index = self.case_config.load(str(self._file(self.index_file)))
         self._id_map = np.load(self._file(self.id_map_file))
 
+    def _build_identity(self) -> dict:
+        """What a reused index must match; search parameters such as ef may differ."""
+        return {"dim": self.dim, "metric_type": self.metric_type, "index_param": self.index_param}
+
     def _check_manifest(self) -> None:
-        """Refuse to reuse an index built with other parameters or data."""
+        """Refuse to reuse an index built with other parameters, dim or metric."""
         manifest = json.loads(self._file(self.manifest_file).read_text())
-        if manifest.get("dim") != self.dim or manifest.get("index_param") != self.index_param:
+        expected = self._build_identity()
+        found = {key: manifest.get(key) for key in expected}
+        if found != expected:
             msg = (
-                f"{self.name}: the {self.index_type} index under {self.path} was built with "
-                f"dim={manifest.get('dim')}, {manifest.get('index_param')}; "
-                f"this case needs dim={self.dim}, {self.index_param}. Rerun with drop_old to rebuild."
+                f"{self.name}: the {self.index_type} index under {self.path} was built with {found}; "
+                f"this case needs {expected}. Rerun with drop_old to rebuild."
             )
             raise ValueError(msg)
         log.info(f"{self.name}: reusing {self.index_type} index under {self.path} ({manifest.get('count')} vectors)")
@@ -248,9 +255,8 @@ class RaBitQLib(VectorDB):
             "version": MANIFEST_VERSION,
             "rabitqlib_version": rabitqlib.__version__,
             "index_type": self.index_type,
-            "dim": self.dim,
+            **self._build_identity(),
             "count": n,
-            "index_param": self.index_param,
             "build_threads": build_threads or os.cpu_count(),
             "build_seconds": round(build_seconds, 3),
             "index_bytes": index_bytes,

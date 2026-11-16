@@ -169,6 +169,27 @@ class TestReuseAndRejection:
         with pytest.raises(ValueError, match="Rerun with drop_old"):
             make_db(path, drop_old=False, nbits=4)
 
+    def test_reuse_rejects_other_dim(self, built):
+        path, _, _ = built
+        with pytest.raises(ValueError, match="Rerun with drop_old"):
+            make_db(path, drop_old=False, dim=DIM * 2)
+
+    @pytest.mark.parametrize(
+        ("built_as", "reused_as"),
+        [(MetricType.COSINE, MetricType.IP), (MetricType.IP, MetricType.COSINE)],
+    )
+    def test_reuse_rejects_cosine_ip_swap(self, tmp_path, built_as, reused_as):
+        # Both build an "ip" index with equal build params; only COSINE stores normalized vectors.
+        assert (
+            RaBitQLibHNSWConfig(metric_type=built_as).index_param()
+            == RaBitQLibHNSWConfig(metric_type=reused_as).index_param()
+        )
+        vectors, ids = dataset()
+        load(make_db(tmp_path, metric_type=built_as), vectors, ids)
+        with pytest.raises(ValueError, match=f"'metric_type': '{reused_as.value}'"):
+            make_db(tmp_path, drop_old=False, metric_type=reused_as)
+        make_db(tmp_path, drop_old=False, metric_type=built_as, ef_search=300)
+
     def test_insert_after_build_is_rejected(self, built):
         path, vectors, _ = built
         db = make_db(path, drop_old=False)
