@@ -92,6 +92,7 @@ All the database client supported
 | polardb_pg               | `pip install vectordb-bench[pgvector]`      |
 | doris                    | `pip install vectordb-bench[doris]`         |
 | zvec                     | `pip install vectordb-bench[zvec]`          |
+| warm                     | `pip install vectordb-bench[warm]`          |
 | endee                    | `pip install vectordb-bench[endee]`         |
 | lindorm                  | `pip install vectordb-bench[lindorm]`       |
 | volc_mysql               | `pip install vectordb-bench[volc_mysql]`    |

@@ -1,4 +1,8 @@
 from enum import Enum
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..cases import CaseLabel
 
 from .api import (
     DBCaseConfig,
@@ -61,6 +65,7 @@ class DB(Enum):
     Doris = "Doris"
     TurboPuffer = "TurboPuffer"
     Zvec = "Zvec"
+    Warm = "Warm"
     Endee = "Endee"
     Lindorm = "Lindorm"
     VectorChord = "VectorChord"
@@ -70,6 +75,11 @@ class DB(Enum):
     VolcMySQL = "VolcMySQL"
     Adbpg = "AnalyticDB for PostgreSQL"
     HouyiDB = "HouyiDB"
+
+    def supports_case_label(self, label: "CaseLabel") -> bool:
+        from ..cases import CaseLabel
+
+        return self != DB.Warm or label == CaseLabel.Performance
 
     @property
     def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901, PLR0915
@@ -271,6 +281,11 @@ class DB(Enum):
             from .zvec.zvec import Zvec
 
             return Zvec
+
+        if self == DB.Warm:
+            from .warm.warm import Warm
+
+            return Warm
 
         if self == DB.Lindorm:
             from .lindorm.lindorm_search import LindormVector
@@ -515,6 +530,11 @@ class DB(Enum):
 
             return ZvecConfig
 
+        if self == DB.Warm:
+            from .warm.config import WarmConfig
+
+            return WarmConfig
+
         if self == DB.Lindorm:
             from .lindorm.config import LindormConfig
 
@@ -717,6 +737,11 @@ class DB(Enum):
             if index_type == IndexType.DISKANN:
                 return ZvecDiskANNIndexConfig
             return ZvecHNSWIndexConfig
+
+        if self == DB.Warm:
+            from .warm.config import WarmIndexConfig
+
+            return WarmIndexConfig
 
         if self == DB.TencentElasticsearch:
             from .tencent_elasticsearch.config import TencentElasticsearchIndexConfig
