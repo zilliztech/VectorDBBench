@@ -10,6 +10,7 @@ They build small real indexes with rabitqlib (no server) and cover:
 
 from __future__ import annotations
 
+import os
 import pickle
 import random
 from concurrent.futures import ThreadPoolExecutor
@@ -18,7 +19,11 @@ import numpy as np
 import pytest
 from click.testing import CliRunner
 
-pytest.importorskip("rabitqlib")
+# CI sets RABITQLIB_REQUIRED where the extra is installed, so a broken install fails instead of skipping.
+if os.environ.get("RABITQLIB_REQUIRED"):
+    import rabitqlib  # noqa: F401
+else:
+    pytest.importorskip("rabitqlib")
 
 from vectordb_bench.backend.cases import CaseLabel, CaseType, type2case
 from vectordb_bench.backend.clients import DB
