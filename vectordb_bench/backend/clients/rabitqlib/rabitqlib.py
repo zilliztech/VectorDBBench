@@ -90,7 +90,6 @@ class RaBitQLib(VectorDB):
         self._writers: tuple | None = None
         self._index: Any = None
         self._id_map: np.ndarray | None = None
-        self._search_kwargs: dict[int, dict] = {}
 
         if drop_old:
             # Remove only this index type's files: the path may hold other data.
@@ -125,8 +124,10 @@ class RaBitQLib(VectorDB):
         The concurrent search runner calls ``init`` only after its start barrier, so
         loading there would count every process's index load (seconds per GB, all
         processes reading at once) as search time and understate QPS. Unpickling
-        happens before the barrier. Load and optimize processes find no built index
-        and skip this.
+        happens before the barrier: ``MultiProcessingSearchRunner`` submits its bound
+        ``search`` method to a ``ProcessPoolExecutor`` (mp_runner.py), which pickles
+        the runner and this client into each worker, and the barrier is inside
+        ``search``. Load and optimize processes find no built index and skip this.
         """
         self.__dict__.update(state)
         if self._built():
@@ -192,6 +193,7 @@ class RaBitQLib(VectorDB):
         embeddings: list[list[float]],
         metadata: list[int],
         labels_data: list[str] | None = None,
+        tenant_labels_data: list[str] | None = None,
         **kwargs,
     ) -> tuple[int, Exception | None]:
         if self._built():
@@ -247,10 +249,10 @@ class RaBitQLib(VectorDB):
         build_threads = self.case_config.build_threads or None
         log.info(
             f"{self.name}: building {self.index_type} over {n} vectors, {self.index_param}, "
-            f"build_threads={build_threads or 'all'}"
+            f"build_threads={build_threads or 'auto'}"
         )
         start = time.perf_counter()
-        index, point_ids = self.case_config.build(self.dim, vectors)
+        index, point_ids = self.case_config.build(self.dim, vectors, self.index_param, build_threads)
         build_seconds = time.perf_counter() - start
 
         # Library point IDs index id_map; each maps to the dataset ID of its row.
@@ -285,11 +287,9 @@ class RaBitQLib(VectorDB):
             raise RuntimeError(msg)
         return self._index
 
-    def _kwargs_for(self, k: int) -> dict:
-        kwargs = self._search_kwargs.get(k)
-        if kwargs is None:
-            kwargs = self._search_kwargs[k] = {**self.case_config.search_kwargs(k), "num_threads": 1}
-        return kwargs
+    def _search_kwargs(self, k: int) -> dict:
+        # One thread per query: concurrency comes from the runner's processes.
+        return {**self.case_config.search_kwargs(k), "num_threads": 1}
 
     def search_embedding(
         self,
@@ -297,7 +297,6 @@ class RaBitQLib(VectorDB):
         k: int = 100,
         payload_profile: PayloadProfile = PayloadProfile.IDS_ONLY,
         tenant: str | None = None,
-        **kwargs,
     ) -> list[int]:
         index = self._require_index()
         # array.array converts a list of floats to float32 faster than np.asarray,
@@ -305,7 +304,7 @@ class RaBitQLib(VectorDB):
         point_ids, _ = index.search(
             np.frombuffer(array.array("f", query), dtype=np.float32).reshape(1, -1),
             k,
-            **self._kwargs_for(k),
+            **self._search_kwargs(k),
         )
         row = point_ids[0]
         return self._id_map[row[row != MISSING_ID]].tolist()
@@ -318,5 +317,5 @@ class RaBitQLib(VectorDB):
         tenant: str | None = None,
     ) -> list[list[int]]:
         index = self._require_index()
-        point_ids, _ = index.search(np.asarray(queries, dtype=np.float32), k, **self._kwargs_for(k))
+        point_ids, _ = index.search(np.asarray(queries, dtype=np.float32), k, **self._search_kwargs(k))
         return [self._id_map[row[row != MISSING_ID]].tolist() for row in point_ids]

@@ -7,6 +7,7 @@ in search processes, ID mapping) is shared by the client.
 
 from __future__ import annotations
 
+from abc import abstractmethod
 from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel
@@ -34,6 +35,11 @@ class RaBitQLibIndexConfig(BaseModel, DBCaseConfig):
     """Shared settings of every rabitqlib index type.
 
     ``build_threads=0`` uses every available CPU, capped by ``OMP_NUM_THREADS``.
+
+    Unlike most case configs, each index type also builds, loads and searches its
+    library index here, so adding an index type does not grow the shared client.
+    The class stays abstract: ``index_param`` and ``search_param`` come from
+    ``DBCaseConfig``.
     """
 
     index: IndexType
@@ -54,23 +60,19 @@ class RaBitQLibIndexConfig(BaseModel, DBCaseConfig):
         msg = f"rabitqlib indexes support L2, IP and COSINE datasets, not {self.metric_type}"
         raise ValueError(msg)
 
-    def index_param(self) -> dict:
-        """Build parameters; everything here is fixed into the saved index."""
-        raise NotImplementedError
+    @abstractmethod
+    def build(
+        self, dim: int, vectors: np.ndarray, index_param: dict, num_threads: int | None
+    ) -> tuple[Any, np.ndarray]:
+        """Build the index over all vectors from ``index_param()``; return it and each row's point ID."""
 
-    def search_param(self) -> dict:
-        raise NotImplementedError
-
-    def build(self, dim: int, vectors: np.ndarray) -> tuple[Any, np.ndarray]:
-        """Build the index over all vectors; return it and the point ID of each row."""
-        raise NotImplementedError
-
+    @abstractmethod
     def load(self, path: str) -> Any:
-        raise NotImplementedError
+        """Load an index saved by the client."""
 
+    @abstractmethod
     def search_kwargs(self, k: int) -> dict:
-        """Keyword arguments of the index's ``search`` besides queries and k."""
-        raise NotImplementedError
+        """Keyword arguments of the index's ``search`` besides queries and k, from ``search_param()``."""
 
 
 class RaBitQLibHNSWConfig(RaBitQLibIndexConfig):
@@ -103,20 +105,13 @@ class RaBitQLibHNSWConfig(RaBitQLibIndexConfig):
     def search_param(self) -> dict:
         return {"ef": self.ef_search}
 
-    def build(self, dim: int, vectors: np.ndarray) -> tuple[Any, np.ndarray]:
+    def build(
+        self, dim: int, vectors: np.ndarray, index_param: dict, num_threads: int | None
+    ) -> tuple[Any, np.ndarray]:
         import rabitqlib
 
-        p = self.index_param()
-        index = rabitqlib.HnswIndex(
-            dim,
-            nbits=p["nbits"],
-            num_clusters=p["num_clusters"],
-            M=p["M"],
-            ef_construction=p["ef_construction"],
-            metric=p["metric"],
-            seed=p["seed"],
-        )
-        point_ids = index.add(vectors, num_threads=self.build_threads or None)
+        index = rabitqlib.HnswIndex(dim, **index_param)
+        point_ids = index.add(vectors, num_threads=num_threads)
         return index, point_ids
 
     def load(self, path: str) -> Any:
@@ -125,7 +120,8 @@ class RaBitQLibHNSWConfig(RaBitQLibIndexConfig):
         return rabitqlib.HnswIndex.load(path)
 
     def search_kwargs(self, k: int) -> dict:
-        return {"ef": max(self.ef_search, k)}
+        # HNSW needs a candidate list of at least k.
+        return {"ef": max(self.search_param()["ef"], k)}
 
 
 _rabitqlib_case_config: dict[IndexType, type[RaBitQLibIndexConfig]] = {

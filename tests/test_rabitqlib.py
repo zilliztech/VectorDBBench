@@ -33,6 +33,7 @@ from vectordb_bench.backend.clients.api import IndexType
 from vectordb_bench.backend.clients.rabitqlib.config import (
     RaBitQLibConfig,
     RaBitQLibHNSWConfig,
+    RaBitQLibIndexConfig,
 )
 from vectordb_bench.backend.clients.rabitqlib import cli as rabitqlib_cli
 from vectordb_bench.backend.clients.rabitqlib.rabitqlib import RaBitQLib
@@ -115,6 +116,15 @@ class TestConfig:
         config = RaBitQLibHNSWConfig(metric_type=MetricType.L2, ef_search=300)
         assert config.search_param() == {"ef": 300}
         assert "ef" not in config.index_param()
+
+    def test_base_config_is_abstract(self):
+        with pytest.raises(TypeError, match="abstract"):
+            RaBitQLibIndexConfig(index=IndexType.RABITQLIB_HNSW)
+
+    def test_search_kwargs_come_from_search_param(self):
+        config = RaBitQLibHNSWConfig(metric_type=MetricType.L2, ef_search=300)
+        assert config.search_kwargs(k=10) == {"ef": 300}
+        assert config.search_kwargs(k=500) == {"ef": 500}
 
     def test_registration(self):
         assert DB.RaBitQLib.init_cls is RaBitQLib
