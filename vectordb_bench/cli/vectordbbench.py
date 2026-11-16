@@ -21,9 +21,13 @@ from ..backend.clients.houyidb.cli import HouyiDB
 from ..backend.clients.lancedb.cli import (
     LanceDB,
     LanceDBAutoIndex,
+    LanceDBBTree,
+    LanceDBIVFFlat,
     LanceDBIVFHNSWPQ,
     LanceDBIVFHNSWSQ,
     LanceDBIVFPQ,
+    LanceDBIVFRQ,
+    LanceDBIVFSQ,
 )
 from ..backend.clients.kividb.cli import KiviDB
 from ..backend.clients.lindorm.cli import LindormHNSW, LindormIVFBQ, LindormIVFPQ
@@ -54,10 +58,12 @@ from ..backend.clients.tencent_elasticsearch.cli import TencentElasticsearch
 from ..backend.clients.test.cli import Test
 from ..backend.clients.tidb.cli import TiDB
 from ..backend.clients.turbopuffer.cli import TurboPuffer, TurboPufferUnpin
+from ..backend.clients.turso.cli import Turso
 from ..backend.clients.valkey.cli import Valkey
 from ..backend.clients.vectorchord.cli import VectorChordGraph, VectorChordRQ
 from ..backend.clients.vespa.cli import Vespa
 from ..backend.clients.volc_mysql.cli import VolcMySQLHNSW
+from ..backend.clients.warm.cli import Warm
 from ..backend.clients.weaviate_cloud.cli import Weaviate
 from ..backend.clients.zilliz_cloud.cli import ZillizAutoIndex
 from ..backend.clients.zvec.cli import Zvec
@@ -93,7 +99,11 @@ cli.add_command(Clickhouse)
 cli.add_command(Vespa)
 cli.add_command(LanceDB)
 cli.add_command(LanceDBAutoIndex)
+cli.add_command(LanceDBIVFFlat)
 cli.add_command(LanceDBIVFPQ)
+cli.add_command(LanceDBIVFSQ)
+cli.add_command(LanceDBIVFRQ)
+cli.add_command(LanceDBBTree)
 cli.add_command(LanceDBIVFHNSWSQ)
 cli.add_command(LanceDBIVFHNSWPQ)
 cli.add_command(HologresHGraph)
@@ -110,8 +120,10 @@ cli.add_command(AliSQLHNSW)
 cli.add_command(Doris)
 cli.add_command(TurboPuffer)
 cli.add_command(TurboPufferUnpin)
+cli.add_command(Turso)
 cli.add_command(Chroma)
 cli.add_command(Zvec)
+cli.add_command(Warm)
 cli.add_command(Endee)
 cli.add_command(LindormIVFPQ)
 cli.add_command(LindormHNSW)

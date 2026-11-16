@@ -134,6 +134,9 @@ class UICaseItem(BaseModel):
         ]
 
     def supports_dbs(self, dbs: list[DB]) -> bool:
+        labels = {case.case.label for case in self.cases} or {self.caseLabel}
+        if any(not db.supports_case_label(label) for db in dbs for label in labels):
+            return False
         if self.supportedDbs is None:
             return True
         return all(db in self.supportedDbs for db in dbs)
@@ -2972,32 +2975,85 @@ CaseConfigParamInput_EFRuntime_KiviDB = CaseConfigInput(
     isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
 )
 
+_LANCEDB_IVF_INDEXES = {
+    IndexType.IVFFlat.value,
+    IndexType.IVFPQ.value,
+    IndexType.IVF_SQ.value,
+    IndexType.IVF_RQ.value,
+    IndexType.IVF_HNSW_SQ.value,
+    IndexType.IVF_HNSW_PQ.value,
+    IndexType.HNSW.value,  # backward compat alias of IVF_HNSW_SQ
+}
+_LANCEDB_PQ_INDEXES = {
+    IndexType.IVFPQ.value,
+    IndexType.IVF_HNSW_PQ.value,
+}
+_LANCEDB_IVF_TRAINING_INDEXES = {
+    IndexType.IVFFlat.value,
+    IndexType.IVFPQ.value,
+    IndexType.IVF_SQ.value,
+    IndexType.IVF_RQ.value,
+}
+_LANCEDB_HNSW_INDEXES = {
+    IndexType.IVF_HNSW_SQ.value,
+    IndexType.IVF_HNSW_PQ.value,
+    IndexType.HNSW.value,
+}
+
 CaseConfigParamInput_IndexType_LanceDB = CaseConfigInput(
     label=CaseConfigParamType.IndexType,
-    inputHelp="AUTOINDEX = IVFPQ with default parameters",
+    inputHelp="AUTOINDEX = IVFPQ with default parameters; IVF_FLAT/SQ/RQ/PQ and IVF_HNSW_SQ/PQ for Lance vector indexes. A scalar B-tree is a separate option and can be combined with any of these",
     inputType=InputType.Option,
     inputConfig={
         "options": [
             IndexType.NONE.value,
             IndexType.AUTOINDEX.value,
+            IndexType.IVFFlat.value,
             IndexType.IVFPQ.value,
-            IndexType.HNSW.value,
+            IndexType.IVF_SQ.value,
+            IndexType.IVF_RQ.value,
+            IndexType.IVF_HNSW_SQ.value,
+            IndexType.IVF_HNSW_PQ.value,
         ],
     },
+)
+
+CaseConfigParamInput_ScalarIndex_LanceDB = CaseConfigInput(
+    label=CaseConfigParamType.scalar_index,
+    displayLabel="Scalar Index",
+    inputHelp="Optional B-tree built in addition to the vector index. Accelerates id range filters and label equality filters",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [
+            IndexType.NONE.value,
+            IndexType.BTREE.value,
+        ],
+    },
+)
+
+CaseConfigParamInput_ScalarColumn_LanceDB = CaseConfigInput(
+    label=CaseConfigParamType.scalar_column,
+    displayLabel="Scalar Index Column",
+    inputHelp="Column for the scalar B-tree. Label-filter cases predicate on label; range filters predicate on id",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": ["id", "label"],
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.scalar_index, IndexType.NONE.value)
+    == IndexType.BTREE.value,
 )
 
 CaseConfigParamInput_num_partitions_LanceDB = CaseConfigInput(
     label=CaseConfigParamType.num_partitions,
     displayLabel="Number of Partitions",
-    inputHelp="Number of partitions (clusters) for IVF_PQ. Default (when 0): sqrt(num_rows)",
+    inputHelp="Number of partitions (clusters) for IVF indexes. Default (when 0): sqrt(num_rows)",
     inputType=InputType.Number,
     inputConfig={
         "min": 0,
         "max": 10000,
         "value": 0,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.IVFPQ.value
-    or config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) in _LANCEDB_IVF_INDEXES,
 )
 
 CaseConfigParamInput_num_sub_vectors_LanceDB = CaseConfigInput(
@@ -3010,8 +3066,7 @@ CaseConfigParamInput_num_sub_vectors_LanceDB = CaseConfigInput(
         "max": 1000,
         "value": 0,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.IVFPQ.value
-    or config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) in _LANCEDB_PQ_INDEXES,
 )
 
 CaseConfigParamInput_num_bits_LanceDB = CaseConfigInput(
@@ -3022,8 +3077,18 @@ CaseConfigParamInput_num_bits_LanceDB = CaseConfigInput(
     inputConfig={
         "options": [4, 8],
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.IVFPQ.value
-    or config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.IVFPQ.value,
+)
+
+CaseConfigParamInput_num_bits_LanceDB_RQ = CaseConfigInput(
+    label=CaseConfigParamType.nbits,
+    displayLabel="Number of Bits",
+    inputHelp="RabitQ bits per dimension. Lance default: 1",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [1, 2, 4, 8],
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.IVF_RQ.value,
 )
 
 CaseConfigParamInput_sample_rate_LanceDB = CaseConfigInput(
@@ -3036,8 +3101,7 @@ CaseConfigParamInput_sample_rate_LanceDB = CaseConfigInput(
         "max": 1024,
         "value": 256,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.IVFPQ.value
-    or config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) in _LANCEDB_IVF_TRAINING_INDEXES,
 )
 
 CaseConfigParamInput_max_iterations_LanceDB = CaseConfigInput(
@@ -3050,8 +3114,7 @@ CaseConfigParamInput_max_iterations_LanceDB = CaseConfigInput(
         "max": 200,
         "value": 50,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.IVFPQ.value
-    or config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) in _LANCEDB_IVF_TRAINING_INDEXES,
 )
 
 CaseConfigParamInput_m_LanceDB = CaseConfigInput(
@@ -3064,7 +3127,7 @@ CaseConfigParamInput_m_LanceDB = CaseConfigInput(
         "max": 1000,
         "value": 0,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) in _LANCEDB_HNSW_INDEXES,
 )
 
 CaseConfigParamInput_ef_construction_LanceDB = CaseConfigInput(
@@ -3077,7 +3140,87 @@ CaseConfigParamInput_ef_construction_LanceDB = CaseConfigInput(
         "max": 1000,
         "value": 0,
     },
-    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) in _LANCEDB_HNSW_INDEXES,
+)
+
+CaseConfigParamInput_IndexType_Zvec = CaseConfigInput(
+    label=CaseConfigParamType.IndexType,
+    inputType=InputType.Option,
+    inputConfig={"options": [IndexType.HNSW.value, IndexType.DISKANN.value]},
+    inputHelp="Select the Zvec index algorithm. HNSW is the default; use separate paths for different algorithms.",
+)
+
+CaseConfigParamInput_M_Zvec = CaseConfigInput(
+    label=CaseConfigParamType.M,
+    inputType=InputType.Number,
+    inputConfig={"min": 1, "max": MAX_STREAMLIT_INT, "value": 50},
+    inputHelp="HNSW graph parameter M.",
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, IndexType.HNSW.value) == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_ef_construction_Zvec = CaseConfigInput(
+    label=CaseConfigParamType.ef_construction,
+    inputType=InputType.Number,
+    inputConfig={"min": 1, "max": MAX_STREAMLIT_INT, "value": 500},
+    inputHelp="HNSW construction candidate list size.",
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, IndexType.HNSW.value) == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_ef_search_Zvec = CaseConfigInput(
+    label=CaseConfigParamType.ef_search,
+    inputType=InputType.Number,
+    inputConfig={"min": 1, "max": MAX_STREAMLIT_INT, "value": 300},
+    inputHelp="HNSW query candidate list size.",
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, IndexType.HNSW.value) == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_quantize_type_Zvec = CaseConfigInput(
+    label=CaseConfigParamType.quantize_type,
+    displayLabel="quantize_type (empty = FP32)",
+    inputType=InputType.Option,
+    inputConfig={"options": ["", "fp16", "int8"]},
+    inputHelp="HNSW scalar quantization. Leave empty for unquantized FP32 vectors.",
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, IndexType.HNSW.value) == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_is_using_refiner_Zvec = CaseConfigInput(
+    label=CaseConfigParamType.is_using_refiner,
+    inputType=InputType.Bool,
+    inputConfig={"value": False},
+    inputHelp="Refine HNSW ef_search candidates to top-k with unquantized vectors.",
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, IndexType.HNSW.value) == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_max_degree_Zvec = CaseConfigInput(
+    label=CaseConfigParamType.max_degree,
+    inputType=InputType.Number,
+    inputConfig={"min": 1, "max": 100, "value": 64},
+    inputHelp="DiskANN graph out-degree.",
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType) == IndexType.DISKANN.value,
+)
+
+CaseConfigParamInput_build_list_size_Zvec = CaseConfigInput(
+    label=CaseConfigParamType.build_list_size,
+    inputType=InputType.Number,
+    inputConfig={"min": 10, "max": 100, "value": 100},
+    inputHelp="DiskANN construction candidate list size.",
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType) == IndexType.DISKANN.value,
+)
+
+CaseConfigParamInput_search_list_size_Zvec = CaseConfigInput(
+    label=CaseConfigParamType.search_list_size,
+    inputType=InputType.Number,
+    inputConfig={"min": 1, "max": MAX_STREAMLIT_INT, "value": 300},
+    inputHelp="DiskANN query candidate list size; the engine uses at least top-k.",
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType) == IndexType.DISKANN.value,
+)
+
+CaseConfigParamInput_pq_chunk_num_Zvec = CaseConfigInput(
+    label=CaseConfigParamType.pq_chunk_num,
+    inputType=InputType.Number,
+    inputConfig={"min": 0, "max": 1024, "value": 0},
+    inputHelp="DiskANN PQ bytes per vector. 0 selects automatically; nonzero must not exceed the vector dimension.",
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType) == IndexType.DISKANN.value,
 )
 
 CaseConfigParamInput_IndexType_Lindorm = CaseConfigInput(
@@ -3270,9 +3413,12 @@ CaseConfigParamInput_NumberOfRegions_Lindorm = CaseConfigInput(
 
 LanceDBLoadConfig = [
     CaseConfigParamInput_IndexType_LanceDB,
+    CaseConfigParamInput_ScalarIndex_LanceDB,
+    CaseConfigParamInput_ScalarColumn_LanceDB,
     CaseConfigParamInput_num_partitions_LanceDB,
     CaseConfigParamInput_num_sub_vectors_LanceDB,
     CaseConfigParamInput_num_bits_LanceDB,
+    CaseConfigParamInput_num_bits_LanceDB_RQ,
     CaseConfigParamInput_sample_rate_LanceDB,
     CaseConfigParamInput_max_iterations_LanceDB,
     CaseConfigParamInput_m_LanceDB,
@@ -3280,6 +3426,23 @@ LanceDBLoadConfig = [
 ]
 
 LanceDBPerformanceConfig = LanceDBLoadConfig
+
+ZvecLoadConfig = [
+    CaseConfigParamInput_IndexType_Zvec,
+    CaseConfigParamInput_M_Zvec,
+    CaseConfigParamInput_ef_construction_Zvec,
+    CaseConfigParamInput_quantize_type_Zvec,
+    CaseConfigParamInput_max_degree_Zvec,
+    CaseConfigParamInput_build_list_size_Zvec,
+    CaseConfigParamInput_pq_chunk_num_Zvec,
+]
+
+ZvecPerformanceConfig = [
+    *ZvecLoadConfig,
+    CaseConfigParamInput_ef_search_Zvec,
+    CaseConfigParamInput_is_using_refiner_Zvec,
+    CaseConfigParamInput_search_list_size_Zvec,
+]
 
 KiviDBLoadConfig = [
     CaseConfigParamInput_IndexType_KiviDB,
@@ -3764,7 +3927,55 @@ RaBitQLibPerformanceConfig = [
 ]
 
 # Map DB to config
+WarmPerformanceConfig = [
+    CaseConfigInput(
+        label=CaseConfigParamType.m,
+        inputType=InputType.Number,
+        inputConfig={"min": 1, "max": MAX_STREAMLIT_INT, "value": 16},
+        inputHelp="WARM graph degree is 2*m (matching the HNSW layer-0 degree).",
+    ),
+    CaseConfigInput(
+        label=CaseConfigParamType.ef_construction,
+        inputType=InputType.Number,
+        inputConfig={"min": 1, "max": MAX_STREAMLIT_INT, "value": 300},
+        inputHelp="Candidate pool size during index construction.",
+    ),
+    CaseConfigInput(
+        label=CaseConfigParamType.ef_search,
+        inputType=InputType.Number,
+        inputConfig={"min": 1, "max": MAX_STREAMLIT_INT, "value": 128},
+        inputHelp="Search candidate pool size; sweep this parameter for the recall/throughput trade-off.",
+    ),
+    CaseConfigInput(
+        label=CaseConfigParamType.rerank,
+        inputType=InputType.Number,
+        inputConfig={"min": 0, "max": MAX_STREAMLIT_INT, "value": 0},
+        inputHelp="Candidates rescored with residual codes; 0 uses max(ef_search, k).",
+    ),
+    CaseConfigInput(
+        label=CaseConfigParamType.code_bits,
+        inputType=InputType.Option,
+        inputConfig={"options": [4, 8]},
+        inputHelp="Traversal code width in bits.",
+    ),
+    CaseConfigInput(
+        label=CaseConfigParamType.residual_bits,
+        inputType=InputType.Option,
+        inputConfig={"options": [8, 4, 0]},
+        inputHelp="Residual code width in bits; 0 disables residual codes.",
+    ),
+    CaseConfigInput(
+        label=CaseConfigParamType.threads,
+        inputType=InputType.Number,
+        inputConfig={"min": 0, "max": MAX_STREAMLIT_INT, "value": 0},
+        inputHelp="Build threads; 0 uses one per core.",
+    ),
+]
+
 CASE_CONFIG_MAP = {
+    DB.Warm: {
+        CaseLabel.Performance: WarmPerformanceConfig,
+    },
     DB.Milvus: {
         CaseLabel.Load: MilvusLoadConfig,
         CaseLabel.Performance: MilvusPerformanceConfig,
@@ -3845,6 +4056,10 @@ CASE_CONFIG_MAP = {
     DB.LanceDB: {
         CaseLabel.Load: LanceDBLoadConfig,
         CaseLabel.Performance: LanceDBPerformanceConfig,
+    },
+    DB.Zvec: {
+        CaseLabel.Load: ZvecLoadConfig,
+        CaseLabel.Performance: ZvecPerformanceConfig,
     },
     DB.QdrantLocal: {
         CaseLabel.Load: QdrantLocalLoadConfig,

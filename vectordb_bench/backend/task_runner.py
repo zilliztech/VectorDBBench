@@ -222,6 +222,8 @@ class CaseRunner(BaseModel):
             collection_name = db_config_dict.pop("collection_name")
 
         extra_db_kwargs = {}
+        if self.config.db is DB.Warm:
+            extra_db_kwargs["dataset_identity"] = self.ca.dataset.data.model_dump(mode="json")
         if collection_name:
             extra_db_kwargs["collection_name"] = collection_name
         if self.ca.is_multitenant:
