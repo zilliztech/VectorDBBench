@@ -10,6 +10,7 @@ They build small real indexes with rabitqlib (no server) and cover:
 
 from __future__ import annotations
 
+import json
 import os
 import pickle
 import random
@@ -219,11 +220,42 @@ class TestReuseAndRejection:
 
     def test_drop_old_keeps_unrelated_files(self, tmp_path):
         # Other data and other index types' files may share the path.
-        kept = ["keep.txt", "rabitqlib_ivf.index", "rabitqlib_ivf.manifest.json"]
+        kept = [
+            "keep.txt",
+            "rabitqlib_ivf.index",
+            "rabitqlib_ivf.manifest.json",
+            "rabitqlib_ivf.buffer.vectors.f32",
+            "rabitqlib_ivf.buffer.ids.i64",
+        ]
         for name in kept:
             (tmp_path / name).write_text("not ours")
         make_db(tmp_path)
         assert all((tmp_path / name).exists() for name in kept)
+
+    def test_another_index_types_buffer_is_not_stale(self, tmp_path):
+        # An unbuilt load of another index type at the same path is not ours to refuse.
+        (tmp_path / "rabitqlib_ivf.buffer.ids.i64").write_bytes(b"")
+        make_db(tmp_path, drop_old=False)
+
+    def test_manifest_from_another_version_is_rejected(self, built):
+        path, _, _ = built
+        manifest_file = path / "rabitqlib_hnsw.manifest.json"
+        original = manifest_file.read_text()
+        try:
+            manifest_file.write_text(json.dumps({**json.loads(original), "version": 0}))
+            with pytest.raises(ValueError, match="has version 0"):
+                make_db(path, drop_old=False)
+        finally:
+            manifest_file.write_text(original)
+
+    def test_manifest_records_build_threads_as_given(self, built):
+        path, _, _ = built
+        assert json.loads((path / "rabitqlib_hnsw.manifest.json").read_text())["build_threads"] == "auto"
+
+    def test_optimize_without_loading_explains(self, tmp_path):
+        db = make_db(tmp_path)
+        with db.init(), pytest.raises(RuntimeError, match="no load buffer"):
+            db.optimize()
 
     def test_wrong_vector_dim_is_rejected(self, tmp_path):
         db = make_db(tmp_path)

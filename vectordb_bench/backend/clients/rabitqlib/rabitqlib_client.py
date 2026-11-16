@@ -4,8 +4,8 @@ The library runs in-process, while VectorDBBench loads, optimizes and searches i
 separate processes, so all state lives in files under ``db_config["path"]``:
 
 - load: ``insert_embeddings`` appends each batch to a raw buffer
-  (``buffer.vectors.f32`` and ``buffer.ids.i64``, row-aligned under one lock,
-  since up to four insert threads share the client);
+  (``<index type>.buffer.vectors.f32`` and ``<index type>.buffer.ids.i64``,
+  row-aligned under one lock, since up to four insert threads share the client);
 - optimize: the index type's config builds the buffer into one index in a single
   ``add``, which also trains any centroids, on a sample of the data. The client saves
   it with the map from library point IDs to dataset IDs and a manifest of the
@@ -24,7 +24,6 @@ from __future__ import annotations
 import array
 import json
 import logging
-import os
 import threading
 import time
 from contextlib import contextmanager
@@ -49,10 +48,6 @@ MISSING_ID = np.iinfo(np.uint32).max
 # The rabitqlib indexes reject smaller dimensions.
 MIN_DIM = 64
 MANIFEST_VERSION = 1
-
-VECTORS_FILE = "buffer.vectors.f32"
-IDS_FILE = "buffer.ids.i64"
-BUFFER_FILES = (VECTORS_FILE, IDS_FILE)
 
 
 class RaBitQLib(VectorDB):
@@ -82,6 +77,10 @@ class RaBitQLib(VectorDB):
         self.metric_type = db_case_config.metric_type.value
         self.path = Path(db_config["path"])
         self.path.mkdir(parents=True, exist_ok=True)
+        # Every file is named after the index type, so index types can share a path.
+        self.vectors_file = f"{self.index_type}.buffer.vectors.f32"
+        self.ids_file = f"{self.index_type}.buffer.ids.i64"
+        self.buffer_files = (self.vectors_file, self.ids_file)
         self.index_file = f"{self.index_type}.index"
         self.id_map_file = f"{self.index_type}.id_map.npy"
         self.manifest_file = f"{self.index_type}.manifest.json"
@@ -94,13 +93,13 @@ class RaBitQLib(VectorDB):
         self._search_kwargs: dict[int, dict] = {}
 
         if drop_old:
-            # Remove only the buffer and this index type's files: the path may hold other data.
-            for name in (*BUFFER_FILES, self.index_file, self.id_map_file, self.manifest_file):
+            # Remove only this index type's files: the path may hold other data.
+            for name in (*self.buffer_files, self.index_file, self.id_map_file, self.manifest_file):
                 self._file(name).unlink(missing_ok=True)
             log.info(f"{self.name}: cleared {self.index_type} files under {self.path}")
         elif self._file(self.manifest_file).exists():
             self._check_manifest()
-        elif any(self._file(name).exists() for name in BUFFER_FILES):
+        elif any(self._file(name).exists() for name in self.buffer_files):
             msg = (
                 f"{self.name}: {self.path} holds an unbuilt load buffer from an earlier run; "
                 "rerun with drop_old so it is not loaded twice"
@@ -144,6 +143,12 @@ class RaBitQLib(VectorDB):
     def _check_manifest(self) -> None:
         """Refuse to reuse an index built with other parameters, dim or metric."""
         manifest = json.loads(self._file(self.manifest_file).read_text())
+        if manifest.get("version") != MANIFEST_VERSION:
+            msg = (
+                f"{self.name}: the {self.index_type} manifest under {self.path} has version "
+                f"{manifest.get('version')}, this client writes {MANIFEST_VERSION}. Rerun with drop_old to rebuild."
+            )
+            raise ValueError(msg)
         expected = self._build_identity()
         found = {key: manifest.get(key) for key in expected}
         if found != expected:
@@ -207,8 +212,8 @@ class RaBitQLib(VectorDB):
             with self._lock:
                 if self._writers is None:
                     self._writers = (
-                        self._file(VECTORS_FILE).open("ab"),
-                        self._file(IDS_FILE).open("ab"),
+                        self._file(self.vectors_file).open("ab"),
+                        self._file(self.ids_file).open("ab"),
                     )
                 vectors_out, ids_out = self._writers
                 vectors_out.write(vectors.tobytes())
@@ -225,16 +230,19 @@ class RaBitQLib(VectorDB):
             log.info(f"{self.name}: {self.index_type} index already built under {self.path}")
             return
 
-        ids = np.fromfile(self._file(IDS_FILE), dtype=np.int64)
+        if not all(self._file(name).exists() for name in self.buffer_files):
+            msg = f"{self.name}: no load buffer under {self.path}; load vectors before optimize"
+            raise RuntimeError(msg)
+        ids = np.fromfile(self._file(self.ids_file), dtype=np.int64)
         n = len(ids)
-        vectors_bytes = self._file(VECTORS_FILE).stat().st_size
+        vectors_bytes = self._file(self.vectors_file).stat().st_size
         if n == 0 or vectors_bytes != n * self.dim * 4:
             msg = f"{self.name}: load buffer holds {n} ids but {vectors_bytes} vector bytes (dim {self.dim})"
             raise RuntimeError(msg)
         if len(np.unique(ids)) != n:
             msg = f"{self.name}: load buffer holds duplicate ids"
             raise RuntimeError(msg)
-        vectors = np.memmap(self._file(VECTORS_FILE), dtype=np.float32, mode="r", shape=(n, self.dim))
+        vectors = np.memmap(self._file(self.vectors_file), dtype=np.float32, mode="r", shape=(n, self.dim))
 
         build_threads = self.case_config.build_threads or None
         log.info(
@@ -257,13 +265,14 @@ class RaBitQLib(VectorDB):
             "index_type": self.index_type,
             **self._build_identity(),
             "count": n,
-            "build_threads": build_threads or os.cpu_count(),
+            # The library resolves "auto" itself (CPUs available, capped by OMP_NUM_THREADS).
+            "build_threads": build_threads or "auto",
             "build_seconds": round(build_seconds, 3),
             "index_bytes": index_bytes,
         }
         # Written last: its presence marks a complete build.
         self._file(self.manifest_file).write_text(json.dumps(manifest, indent=2))
-        for name in BUFFER_FILES:
+        for name in self.buffer_files:
             self._file(name).unlink(missing_ok=True)
         log.info(
             f"{self.name}: built {self.index_type} in {build_seconds:.1f}s; "
