@@ -18,7 +18,7 @@ from click.core import ParameterSource
 from yaml import load
 
 from .. import config
-from ..backend.cases import FTS_FILTER_RATES, PerformanceCase, type2case
+from ..backend.cases import FTS_FILTER_RATES, PerformanceCase, fixture_manifest_for_case, type2case
 from ..backend.clients import DB
 from ..backend.clients.api import IndexType, MetricType
 from ..backend.dataset import REGISTERED_DATASETS, DatasetWithSizeType, FtsDatasetWithSizeType
@@ -211,9 +211,24 @@ def _get_performance_case_config(parameters: dict) -> dict:
     return {"dataset_name": dataset_name}
 
 
-def get_custom_case_config(parameters: dict) -> dict:
+def _get_filtered_fixture_case_config(parameters: dict) -> dict:
+    if not parameters.get("fixture_dir") or not parameters.get("fixture_case"):
+        msg = "FilteredFixtureCase needs --fixture-dir and --fixture-case"
+        raise click.UsageError(msg)
+    fixture_dir = str(Path(parameters["fixture_dir"]).resolve())
+    return {
+        "fixture_dir": fixture_dir,
+        "fixture_case_id": parameters["fixture_case"],
+        # Saved with the result, so the result still loads if the fixture directory moves.
+        "fixture_manifest": fixture_manifest_for_case(fixture_dir, parameters["fixture_case"]),
+    }
+
+
+def get_custom_case_config(parameters: dict) -> dict:  # noqa: PLR0912
     if parameters["case_type"] == "Performance":
         return _get_performance_case_config(parameters)
+    if parameters["case_type"] == "FilteredFixtureCase":
+        return _get_filtered_fixture_case_config(parameters)
     custom_case_config = {}
     dataset_with_size_type = parameters["dataset_with_size_type"] or DEFAULT_DATASET_WITH_SIZE_TYPE
     if parameters["case_type"] == "PerformanceCustomDataset":
@@ -699,6 +714,24 @@ class CommonTypedDict(TypedDict):
             help="Filter rate for LabelFilterPerformanceCase",
             default=0.01,
             show_default=True,
+        ),
+    ]
+    fixture_dir: Annotated[
+        str | None,
+        click.option(
+            "--fixture-dir",
+            type=str,
+            default=None,
+            help="FilteredFixtureCase: directory written by `python -m vectordb_bench.backend.filtered_dataset`",
+        ),
+    ]
+    fixture_case: Annotated[
+        str | None,
+        click.option(
+            "--fixture-case",
+            type=str,
+            default=None,
+            help="FilteredFixtureCase: case_id from the fixture's manifest.json, e.g. 00_label_equal_0.01",
         ),
     ]
     payload_profile: Annotated[

@@ -205,6 +205,9 @@ class ConcurrentInsertRunner:
         }
         if tenant_labels_data is not None:
             insert_kwargs["tenant_labels_data"] = tenant_labels_data
+        if self.filters.type == FilterOp.NumRange:
+            field = self.filters.int_field
+            insert_kwargs["int_data"] = {field: self.dataset.scalar_labels[field][all_metadata].to_list()}
         return insert_kwargs
 
     def _next_fts_batch(self) -> dict | None:

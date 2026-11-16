@@ -217,7 +217,7 @@ class SerialSearchRunner:
         if len(test_data) != len(ground_truth):
             msg = f"Search query count {len(test_data)} does not match ground truth row count {len(ground_truth)}"
             raise ValueError(msg)
-        if self._use_fts_metrics:
+        if self._use_fts_metrics or self.filters.allows_short_groundtruth:
             return
 
         source_width = getattr(ground_truth, "width", None)
@@ -275,7 +275,10 @@ class SerialSearchRunner:
                         ndcgs.append(calc_ndcg_fts(self.k, gt, results))
                         mrrs.append(calc_mrr_fts(self.k, gt, results))
                     else:
-                        recall, ndcg, recall_at = calc_vector_metrics(self.k, gt, results)
+                        # Score against what the filter allows: a fixture case with 5 matching rows has
+                        # at most 5 true neighbors, so K=100 would cap a perfect answer at 0.05.
+                        count = min(self.k, len(gt)) if self.filters.allows_short_groundtruth else self.k
+                        recall, ndcg, recall_at = calc_vector_metrics(count, gt, results)
                         recalls.append(recall)
                         ndcgs.append(ndcg)
                         for cutoff, value in recall_at.items():
