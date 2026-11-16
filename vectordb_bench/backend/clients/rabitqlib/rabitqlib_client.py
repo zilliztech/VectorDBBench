@@ -7,7 +7,7 @@ separate processes, so all state lives in files under ``db_config["path"]``:
   (``buffer.vectors.f32`` and ``buffer.ids.i64``, row-aligned under one lock,
   since up to four insert threads share the client);
 - optimize: the index type's config builds the buffer into one index in a single
-  ``add``, which also trains any centroids on the whole dataset. The client saves
+  ``add``, which also trains any centroids, on a sample of the data. The client saves
   it with the map from library point IDs to dataset IDs and a manifest of the
   build parameters, all named after the index type (``rabitqlib_hnsw.*``), so
   index types can share a path;

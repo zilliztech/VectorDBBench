@@ -77,7 +77,10 @@ class RaBitQLibHNSWConfig(RaBitQLibIndexConfig):
     """HNSW-RaBitQ: an HNSW graph searched over RaBitQ codes.
 
     ``num_clusters`` centroids are trained by the library on the first ``add``,
-    over the whole dataset. ``nbits=9`` (sign bit + 8) is the fastest kernel.
+    with k-means on a sample of up to 256 x ``num_clusters`` vectors (the
+    library's defaults); every vector is then encoded against its nearest
+    centroid. ``nbits=9`` (sign bit + 8) is the highest precision; the library
+    defaults to 7.
     """
 
     index: IndexType = IndexType.RABITQLIB_HNSW

@@ -892,9 +892,9 @@ Filtered cases use the HTTP data plane because that is where HouyiDB accepts sca
 
 [RaBitQ-Library](https://github.com/VectorDB-NTU/RaBitQ-Library) (`rabitqlib`) runs embedded in the benchmark process, with no server. Install it with `pip install vectordb-bench[rabitqlib]`. The `rabitqlibhnsw` command benchmarks its HNSW-RaBitQ index, an HNSW graph searched over RaBitQ-quantized vectors.
 
-The client keeps everything under `--path`, in files named after the index type (`rabitqlib_hnsw.*`), so index types can share a path. The load stage only appends vectors to a buffer file there. The optimize stage then builds the whole index in one call, training `--num-clusters` centroids over the full dataset, and saves it. So the build time appears as `optimize_duration`, and `insert_duration` is small. Every search process loads the saved index into its own memory, before the concurrent-search timer starts: size `--num-concurrency` so that the index file size times the largest concurrency fits in RAM.
+The client keeps everything under `--path`, in files named after the index type (`rabitqlib_hnsw.*`), so index types can share a path. The load stage only appends vectors to a buffer file there. The optimize stage then builds the whole index in one call, training `--num-clusters` centroids with k-means on a sample of up to 256 × `--num-clusters` vectors (the library's defaults), and saves it. So the build time appears as `optimize_duration`, and `insert_duration` is small. Every search process loads the saved index into its own memory, before the concurrent-search timer starts: size `--num-concurrency` so that the index file size times the largest concurrency fits in RAM.
 
-Only unfiltered static performance cases are supported. Filtered cases are rejected before the run starts, and vectors inserted after the build (streaming and read/write cases) fail with an error. Cosine datasets run as inner product on normalized vectors. The dataset dimension must be at least 64.
+Only unfiltered static performance cases are supported. Filtered cases are rejected before the run starts, the `rabitqlibhnsw` command refuses capacity, streaming and other non-performance case types, and vectors inserted after the build fail with an error. Cosine datasets run as inner product on normalized vectors. The dataset dimension must be at least 64.
 
 ```bash
 vectordbbench rabitqlibhnsw --path /data/rabitqlib/Performance768D1M --db-label 16c64g \
@@ -907,15 +907,19 @@ To list the options for HNSW-RaBitQ, execute `vectordbbench rabitqlibhnsw --help
 ```text
   --path TEXT                     Directory for the load buffer and the built
                                   index  [required]
-  --seed INTEGER                  Rotation and graph seed  [default: 100]
+  --seed INTEGER                  Seed for the rotation, k-means and graph
+                                  levels; the graph also depends on load order
+                                  and build threads, so builds are not bit-
+                                  for-bit reproducible  [default: 100]
   --build-threads INTEGER RANGE   Build worker threads; 0 uses every CPU,
                                   capped by OMP_NUM_THREADS  [default: 0;
                                   x>=0]
   --nbits INTEGER RANGE           Total RaBitQ bits per coordinate, including
-                                  the sign bit; 9 (sign + 8) is the fastest
-                                  kernel  [default: 9; 1<=x<=9]
-  --num-clusters INTEGER RANGE    Centroids trained by the library over the
-                                  whole dataset  [default: 16; x>=1]
+                                  the sign bit; 9 (sign + 8) is the highest
+                                  precision  [default: 9; 1<=x<=9]
+  --num-clusters INTEGER RANGE    Centroids, trained with k-means on a sample
+                                  of up to 256 x num-clusters vectors
+                                  [default: 16; x>=1]
   --m INTEGER RANGE               HNSW graph degree M  [default: 16; x>=2]
   --ef-construction INTEGER RANGE
                                   HNSW construction search breadth  [default:

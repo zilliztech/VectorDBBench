@@ -3697,7 +3697,7 @@ QdrantLocalPerformanceConfig = [
 CaseConfigParamInput_nbits_RaBitQLib = CaseConfigInput(
     label=CaseConfigParamType.nbits,
     displayLabel="nbits",
-    inputHelp="Total RaBitQ bits per coordinate, including the sign bit; 9 (sign + 8) is the fastest kernel",
+    inputHelp="Total RaBitQ bits per coordinate, including the sign bit; 9 (sign + 8) is the highest precision",
     inputType=InputType.Number,
     inputConfig={
         "min": 1,
@@ -3709,7 +3709,7 @@ CaseConfigParamInput_nbits_RaBitQLib = CaseConfigInput(
 CaseConfigParamInput_num_clusters_RaBitQLib = CaseConfigInput(
     label=CaseConfigParamType.Nlist,
     displayLabel="num_clusters",
-    inputHelp="Centroids trained by the library over the whole dataset",
+    inputHelp="Centroids, trained with k-means on a sample of up to 256 x num_clusters vectors",
     inputType=InputType.Number,
     inputConfig={
         "min": 1,
@@ -3754,7 +3754,7 @@ CaseConfigParamInput_ef_search_RaBitQLib = CaseConfigInput(
     },
 )
 
-# Only performance cases: the index is built once, after all vectors are loaded.
+# Inputs for performance cases; the rabitqlibhnsw CLI command refuses other case types.
 RaBitQLibPerformanceConfig = [
     CaseConfigParamInput_nbits_RaBitQLib,
     CaseConfigParamInput_num_clusters_RaBitQLib,

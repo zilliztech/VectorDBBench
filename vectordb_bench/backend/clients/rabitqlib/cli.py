@@ -36,7 +36,16 @@ class RaBitQLibTypedDict(CommonTypedDict):
     ]
     seed: Annotated[
         int,
-        click.option("--seed", type=int, default=100, show_default=True, help="Rotation and graph seed"),
+        click.option(
+            "--seed",
+            type=int,
+            default=100,
+            show_default=True,
+            help=(
+                "Seed for the rotation, k-means and graph levels; the graph also depends on load order "
+                "and build threads, so builds are not bit-for-bit reproducible"
+            ),
+        ),
     ]
     build_threads: Annotated[
         int,
@@ -58,7 +67,7 @@ class RaBitQLibHNSWTypedDict(RaBitQLibTypedDict):
             type=click.IntRange(1, 9),
             default=9,
             show_default=True,
-            help="Total RaBitQ bits per coordinate, including the sign bit; 9 (sign + 8) is the fastest kernel",
+            help="Total RaBitQ bits per coordinate, including the sign bit; 9 (sign + 8) is the highest precision",
         ),
     ]
     num_clusters: Annotated[
@@ -68,7 +77,7 @@ class RaBitQLibHNSWTypedDict(RaBitQLibTypedDict):
             type=click.IntRange(min=1),
             default=16,
             show_default=True,
-            help="Centroids trained by the library over the whole dataset",
+            help="Centroids, trained with k-means on a sample of up to 256 x num-clusters vectors",
         ),
     ]
     m: Annotated[

@@ -31,14 +31,15 @@ def ui_task(values: dict) -> RaBitQLibHNSWConfig:
     return config
 
 
-def test_ui_exposes_every_build_and_search_param():
+def test_ui_exposes_the_tunable_params():
+    # seed and build_threads stay at their defaults in the UI.
     labels = {i.displayLabel for i in get_case_config_inputs(DB.RaBitQLib, CaseLabel.Performance)}
 
     assert labels == {"nbits", "num_clusters", "M", "ef_construction", "ef_search"}
 
 
-def test_ui_offers_performance_cases_only():
-    # Capacity and streaming cases need an index that is searchable while loading.
+def test_ui_declares_inputs_for_performance_cases_only():
+    # The UI still lets other case types be picked; only the CLI command refuses them.
     assert set(CASE_CONFIG_MAP[DB.RaBitQLib]) == {CaseLabel.Performance}
 
 
