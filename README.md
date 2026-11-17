@@ -82,7 +82,7 @@ All the database client supported
 | awsopensearch            | `pip install vectordb-bench[opensearch]` |
 | aliyun_opensearch        | `pip install vectordb-bench[aliyun_opensearch]` |
 | mongodb                  | `pip install vectordb-bench[mongodb]`       |
-| tidb (TiFlash / [SPFresh](docs/tidb-spfresh.md)) | `pip install vectordb-bench[tidb]` |
+| tidb (TiFlash / [SPFresh](#run-tidb-spfresh-from-command-line)) | `pip install vectordb-bench[tidb]` |
 | vespa                    | `pip install vectordb-bench[vespa]`         |
 | oceanbase                | `pip install vectordb-bench[oceanbase]`     |
 | hologres                 | `pip install vectordb-bench[hologres]`      |
@@ -610,6 +610,55 @@ Options:
                                   vector is divided into during IVF-PQ
   --help                          Show this message and exit.                       Show this message and exit.
   ```
+
+### Run TiDB SPFresh from command line
+
+Use `vectordbbench tidbspfresh` with a TiDB deployment supporting `USING SPFRESH`,
+`ALTER INDEX ... SET VECTOR_INDEX_PARAM`, and `information_schema.TIDB_SPFRESH_INDEX_STATUS`.
+The existing `vectordbbench tidb` command continues to use TiFlash. Both use the `tidb` dependency extra:
+
+```shell
+pip install 'vectordb-bench[tidb]'
+
+vectordbbench tidbspfresh \
+  --host 127.0.0.1 --port 4000 --username root --password '' \
+  --db-name test --case-type Performance768D1M --k 100 \
+  --min-partition-size 64 --max-partition-size 512 --write-beam-size 8 \
+  --search-beam-size 174 --oversample-factor 1 --hamming-factor 96 --rabitq4-factor 4
+```
+
+The database must already exist. The load stage replaces the benchmark table.
+These are example settings; measure recall and QPS for your dataset when tuning them.
+Run `vectordbbench tidbspfresh --help` to list all options.
+
+| Option | Behavior |
+| --- | --- |
+| `--spfresh-build-mode inline\|non-inline` | Defaults to `inline`: create the index with the empty table. `non-inline` creates it after loading rows. |
+| `--min-partition-size`, `--max-partition-size` | Partition size bounds, applied only when creating the index. |
+| `--write-beam-size` | Write routing beam size, applied only when creating the index. |
+| `--search-beam-size` | Search beam size. |
+| `--oversample-factor` | Rerank candidate oversampling factor. |
+| `--hamming-factor`, `--rabitq4-factor` | Candidate factors for Hamming and four-bit scoring; `rabitq4_factor <= hamming_factor`. |
+| `--spfresh-wait-timeout` | Checkpoint wait limit after loading, in seconds (default: `600`); the case's optimize timeout also applies. |
+
+Omitted tuning parameters use server defaults for a new index. To reuse an existing index and change
+search settings, add `--skip-load`; the client applies the supplied search parameters before benchmarking:
+
+```shell
+vectordbbench tidbspfresh \
+  --host 127.0.0.1 --port 4000 --username root --password '' \
+  --db-name test --case-type Performance768D1M --k 100 --skip-load \
+  --search-beam-size 256 --oversample-factor 2
+```
+
+Search-only runs keep unspecified parameters unchanged and do not apply build parameters.
+Search settings are persisted on the index, so run parameter sweeps sequentially against the same index.
+YAML batches use `tidbspfresh` as the command key and underscore option names such as `search_beam_size`.
+
+The dataset selects L2 or cosine distance. Numeric (`id >= ...`) and label equality cases are supported;
+label cases store the `labels` column in the vector index. Both build modes use the standard load and
+search stages. After loading, the client waits for a ready index whose checkpoint covers all committed
+inserts before starting search. Missing or invalid status and checkpoint timeouts fail the benchmark.
 
 ### Run Hologres from command line
 

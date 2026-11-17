@@ -1,4 +1,5 @@
 import json
+import pickle
 from contextlib import contextmanager
 from types import SimpleNamespace
 from unittest.mock import Mock
@@ -26,17 +27,18 @@ from vectordb_bench.metric import Metric
 from vectordb_bench.models import CaseConfig, CaseResult, CaseType, TaskConfig, TestResult as BenchResult
 
 
-def make_client(*, labels=False, mode="inline", param=None, metric=MetricType.COSINE, timeout=10):
+def make_client(*, labels=False, mode="inline", metric=MetricType.COSINE, timeout=10, drop_old=False, **params):
     return TiDBSPFresh(
         dim=2,
         db_config={},
         db_case_config=TiDBSPFreshIndexConfig(
             metric_type=metric,
             spfresh_build_mode=mode,
-            spfresh_vector_index_param=param,
             spfresh_wait_timeout=timeout,
+            **params,
         ),
         with_scalar_labels=labels,
+        drop_old=drop_old,
     )
 
 
@@ -45,7 +47,7 @@ def mock_connection(monkeypatch, client, rows=()):
     cursor.fetchone.side_effect = list(rows)
 
     @contextmanager
-    def connect():
+    def connect(*_args):
         yield conn, cursor
 
     monkeypatch.setattr(client, "_get_connection", connect)
@@ -89,11 +91,25 @@ def test_original_tidb_still_creates_tiflash_index_and_uses_tiflash_optimize(mon
 @pytest.mark.parametrize("metric", [MetricType.L2, MetricType.COSINE])
 @pytest.mark.parametrize("mode", ["inline", "non-inline"])
 def test_spfresh_ddl_and_checkpoint_barrier(monkeypatch, metric, mode):
-    param = "min_partition_size=64,max_partition_size=512,write_beam_size=8"
-    client = make_client(labels=True, metric=metric, mode=mode, param=param)
-    conn, cursor = mock_connection(monkeypatch, client, [(100,), ready(99), ready(100)])
+    param = (
+        "min_partition_size=64,max_partition_size=512,write_beam_size=8,"
+        "search_beam_size=174,oversample_factor=1.25,hamming_factor=96,rabitq4_factor=4"
+    )
+    conn, cursor = mock_connection(monkeypatch, TiDBSPFresh, [(100,), ready(99), ready(100)])
     clock = fake_clock(monkeypatch)
-    client._create_table()
+    client = make_client(
+        labels=True,
+        metric=metric,
+        mode=mode,
+        drop_old=True,
+        min_partition_size=64,
+        max_partition_size=512,
+        write_beam_size=8,
+        search_beam_size=174,
+        oversample_factor=1.25,
+        hamming_factor=96,
+        rabitq4_factor=4,
+    )
     create_sql, create_params = cursor.execute.call_args.args
     assert "labels VARCHAR(64) NOT NULL" in create_sql
     assert ("USING SPFRESH" in create_sql) == (mode == "inline")
@@ -106,20 +122,35 @@ def test_spfresh_ddl_and_checkpoint_barrier(monkeypatch, metric, mode):
     assert "STORING (labels) VECTOR_INDEX_PARAM %s" in ddl[0].args[0]
     assert f"idx_embedding_spfresh_{metric.value.lower()}" in ddl[0].args[0]
     assert ddl[0].args[1] == (param,)
+    assert not any("ALTER INDEX" in call.args[0] for call in calls)
     assert not any("DROP INDEX" in call.args[0] or "tiflash" in call.args[0].lower() for call in calls)
     assert clock[0] == 1.0
-    assert conn.commit.call_count == (3 if mode == "non-inline" else 2)
+    assert conn.commit.call_count == (4 if mode == "non-inline" else 3)
 
 
-def test_vector_index_param_uses_driver_binding(monkeypatch):
-    param = "key='value\\with quote'"
-    client = make_client(param=param)
-    _, cursor = mock_connection(monkeypatch, client)
-    client._create_table()
+def test_omitted_parameters_use_server_defaults_on_creation(monkeypatch):
+    _, cursor = mock_connection(monkeypatch, TiDBSPFresh)
+    make_client(drop_old=True)
     sql, args = cursor.execute.call_args.args
-    assert param not in sql
-    assert args == (param,)
-    assert TiDBSPFreshIndexConfig(spfresh_vector_index_param="  ").spfresh_vector_index_param is None
+    assert "USING SPFRESH" in sql
+    assert "VECTOR_INDEX_PARAM" not in sql
+    assert args is None
+
+
+def test_reuse_without_search_parameters_does_not_touch_database(monkeypatch):
+    connect = Mock(side_effect=AssertionError("No SQL expected when keeping existing search settings"))
+    monkeypatch.setattr(TiDBSPFresh, "_get_connection", connect)
+    make_client(min_partition_size=64, max_partition_size=512, write_beam_size=8)
+    connect.assert_not_called()
+
+
+def test_search_parameter_update_failure_aborts_initialization(monkeypatch):
+    conn, cursor = mock_connection(monkeypatch, TiDBSPFresh)
+    cursor.execute.side_effect = RuntimeError("ALTER failed")
+    with pytest.raises(RuntimeError, match="ALTER failed"):
+        make_client(search_beam_size=174)
+    cursor.execute.assert_called_once()
+    conn.commit.assert_not_called()
 
 
 @pytest.mark.parametrize(
@@ -280,7 +311,13 @@ def test_batch_cli_passes_spfresh_parameters(monkeypatch):
                 {
                     "db_name": "cohere_1m",
                     "spfresh_build_mode": "non-inline",
-                    "spfresh_vector_index_param": "search_beam_size=174",
+                    "min_partition_size": 64,
+                    "max_partition_size": 512,
+                    "write_beam_size": 8,
+                    "search_beam_size": 174,
+                    "oversample_factor": 1.25,
+                    "hamming_factor": 96,
+                    "rabitq4_factor": 4,
                     "spfresh_wait_timeout": 30,
                     "dry_run": True,
                 }
@@ -291,11 +328,36 @@ def test_batch_cli_passes_spfresh_parameters(monkeypatch):
     assert result.exit_code == 0, result.output
     config = run.call_args.kwargs["db_case_config"]
     assert config.spfresh_build_mode == "non-inline"
-    assert config.spfresh_vector_index_param == "search_beam_size=174"
+    assert (config.min_partition_size, config.max_partition_size, config.write_beam_size) == (64, 512, 8)
+    assert (config.search_beam_size, config.oversample_factor, config.hamming_factor, config.rabitq4_factor) == (
+        174,
+        1.25,
+        96,
+        4,
+    )
     assert config.spfresh_wait_timeout == 30
 
 
-def test_search_only_keeps_existing_index_and_common_task_stages(monkeypatch):
+@pytest.mark.parametrize(
+    "search_options,expected_params",
+    [
+        (["--search-beam-size", "174"], "search_beam_size=174"),
+        (
+            [
+                "--search-beam-size",
+                "256",
+                "--oversample-factor",
+                "2",
+                "--hamming-factor",
+                "64",
+                "--rabitq4-factor",
+                "3",
+            ],
+            "search_beam_size=256,oversample_factor=2.0,hamming_factor=64,rabitq4_factor=3",
+        ),
+    ],
+)
+def test_search_only_updates_parameters_once_before_workers(monkeypatch, search_options, expected_params):
     tasks = []
 
     def capture_task(**kwargs):
@@ -304,10 +366,45 @@ def test_search_only_keeps_existing_index_and_common_task_stages(monkeypatch):
         return task
 
     monkeypatch.setattr(core_cli, "TaskConfig", capture_task)
-    result = CliRunner().invoke(tidb_cli.TiDBSPFresh, ["--skip-load", "--dry-run", "--k", "100"])
+    result = CliRunner().invoke(
+        tidb_cli.TiDBSPFresh,
+        [
+            "--skip-load",
+            "--dry-run",
+            "--case-type",
+            "Performance768D1M",
+            "--k",
+            "100",
+            "--min-partition-size",
+            "64",
+            "--max-partition-size",
+            "512",
+            "--write-beam-size",
+            "8",
+            *search_options,
+        ],
+    )
     assert result.exit_code == 0, result.output
     assert tasks[0].stages == ["search_serial", "search_concurrent"]
     assert tasks[0].case_config.k == 100
+    conn, cursor = mock_connection(monkeypatch, TiDBSPFresh)
+    cursor.fetchall.return_value = [(7,)]
+    runner = Assembler.assemble_all("test", "test", tasks, DatasetSource.S3).case_runners[0]
+    runner.init_db(drop_old=False)
+    cursor.execute.assert_called_once_with(
+        "ALTER TABLE vector_bench_test ALTER INDEX idx_embedding_spfresh_cosine SET VECTOR_INDEX_PARAM %s",
+        (expected_params,),
+    )
+    conn.commit.assert_called_once()
+    # Workers receive a copy of the initialized client, then open their own sessions.
+    for _ in range(2):
+        worker_client = pickle.loads(pickle.dumps(runner.db))
+        with worker_client.init():
+            worker_client.prepare_filter(non_filter)
+            assert worker_client.search_embedding([1, 0]) == [7]
+    calls = [call.args[0] for call in cursor.execute.call_args_list]
+    assert len(calls) == 3
+    assert all(sql.startswith("SELECT id") for sql in calls[1:])
 
 
 def test_original_command_does_not_accept_spfresh_options():
@@ -344,8 +441,21 @@ def test_existing_cases_assemble_and_initialize_spfresh_without_runner_changes(c
     runner.db.prepare_filter(runner.ca.filters)
 
 
-@pytest.mark.parametrize("args", [["--spfresh-build-mode", "split"], ["--spfresh-wait-timeout", "0"]])
-def test_cli_rejects_unsupported_mode_and_invalid_timeout(args):
+@pytest.mark.parametrize(
+    "args",
+    [
+        ["--spfresh-build-mode", "split"],
+        ["--spfresh-wait-timeout", "0"],
+        ["--min-partition-size", "0"],
+        ["--max-partition-size", "1"],
+        ["--write-beam-size", "4097"],
+        ["--search-beam-size", "0"],
+        ["--oversample-factor", "0.5"],
+        ["--hamming-factor", "257"],
+        ["--rabitq4-factor", "0"],
+    ],
+)
+def test_cli_rejects_unsupported_mode_and_invalid_parameters(args):
     result = CliRunner().invoke(tidb_cli.TiDBSPFresh, ["--dry-run", *args])
     assert result.exit_code == 2
 
@@ -356,11 +466,34 @@ def test_config_rejects_invalid_timeout(timeout):
         TiDBSPFreshIndexConfig(spfresh_wait_timeout=timeout)
 
 
+@pytest.mark.parametrize(
+    "params",
+    [
+        {"min_partition_size": 0},
+        {"max_partition_size": 1},
+        {"write_beam_size": 0},
+        {"search_beam_size": 4097},
+        {"oversample_factor": float("nan")},
+        {"oversample_factor": float("inf")},
+        {"oversample_factor": 17},
+        {"hamming_factor": 0},
+        {"rabitq4_factor": 257},
+        {"min_partition_size": 256, "max_partition_size": 64},
+        {"hamming_factor": 3, "rabitq4_factor": 4},
+    ],
+)
+def test_config_rejects_invalid_tuning_parameters(params):
+    with pytest.raises(ValueError):
+        TiDBSPFreshIndexConfig(**params)
+
+
 def test_spfresh_result_round_trip_preserves_configuration(tmp_path):
     case_config = TiDBSPFreshIndexConfig(
         metric_type=MetricType.COSINE,
         spfresh_build_mode="non-inline",
-        spfresh_vector_index_param="search_beam_size=174",
+        min_partition_size=64,
+        search_beam_size=174,
+        oversample_factor=1.25,
     )
     task = TaskConfig(
         db=DB.TiDBSPFresh,

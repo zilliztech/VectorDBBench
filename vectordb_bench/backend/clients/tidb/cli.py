@@ -91,13 +91,67 @@ class TiDBSPFreshTypedDict(TiDBTypedDict):
             help="Create the SPFresh index with the table or after loading the data",
         ),
     ]
-    spfresh_vector_index_param: Annotated[
-        str | None,
+    min_partition_size: Annotated[
+        int | None,
         click.option(
-            "--spfresh-vector-index-param",
-            type=str,
+            "--min-partition-size",
+            type=click.IntRange(min=1),
             default=None,
-            help="Raw VECTOR_INDEX_PARAM for index creation; does not update an index with --skip-load",
+            help="Minimum partition size at index creation; omitted uses the server default",
+        ),
+    ]
+    max_partition_size: Annotated[
+        int | None,
+        click.option(
+            "--max-partition-size",
+            type=click.IntRange(min=2),
+            default=None,
+            help="Maximum partition size at index creation; omitted uses the server default",
+        ),
+    ]
+    write_beam_size: Annotated[
+        int | None,
+        click.option(
+            "--write-beam-size",
+            type=click.IntRange(1, 4096),
+            default=None,
+            help="Write routing beam size at index creation; omitted uses the server default",
+        ),
+    ]
+    search_beam_size: Annotated[
+        int | None,
+        click.option(
+            "--search-beam-size",
+            type=click.IntRange(1, 4096),
+            default=None,
+            help="Search beam size; also updates the existing index with --skip-load",
+        ),
+    ]
+    oversample_factor: Annotated[
+        float | None,
+        click.option(
+            "--oversample-factor",
+            type=click.FloatRange(1, 16),
+            default=None,
+            help="Rerank candidate oversampling factor; also applied with --skip-load",
+        ),
+    ]
+    hamming_factor: Annotated[
+        int | None,
+        click.option(
+            "--hamming-factor",
+            type=click.IntRange(1, 256),
+            default=None,
+            help="Hamming candidate factor, >= rabitq4-factor; also applied with --skip-load",
+        ),
+    ]
+    rabitq4_factor: Annotated[
+        int | None,
+        click.option(
+            "--rabitq4-factor",
+            type=click.IntRange(1, 256),
+            default=None,
+            help="Four-bit candidate factor, <= hamming-factor; also applied with --skip-load",
         ),
     ]
     spfresh_wait_timeout: Annotated[
@@ -119,8 +173,14 @@ def TiDBSPFresh(**parameters: Unpack[TiDBSPFreshTypedDict]):
         DB.TiDBSPFresh,
         TiDBSPFreshIndexConfig(
             spfresh_build_mode=parameters["spfresh_build_mode"],
-            spfresh_vector_index_param=parameters["spfresh_vector_index_param"],
             spfresh_wait_timeout=parameters["spfresh_wait_timeout"],
+            min_partition_size=parameters["min_partition_size"],
+            max_partition_size=parameters["max_partition_size"],
+            write_beam_size=parameters["write_beam_size"],
+            search_beam_size=parameters["search_beam_size"],
+            oversample_factor=parameters["oversample_factor"],
+            hamming_factor=parameters["hamming_factor"],
+            rabitq4_factor=parameters["rabitq4_factor"],
         ),
         parameters,
     )

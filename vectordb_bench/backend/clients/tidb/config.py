@@ -1,7 +1,7 @@
 from enum import StrEnum
 from typing import ClassVar, TypedDict
 
-from pydantic import BaseModel, Field, SecretStr, field_validator
+from pydantic import BaseModel, Field, SecretStr, model_validator
 
 from ..api import DBCaseConfig, DBConfig, MetricType
 
@@ -68,19 +68,45 @@ class SPFreshBuildMode(StrEnum):
 
 class TiDBSPFreshIndexConfig(TiDBIndexConfig):
     spfresh_build_mode: SPFreshBuildMode = SPFreshBuildMode.INLINE
-    spfresh_vector_index_param: str | None = None
     spfresh_wait_timeout: float = Field(default=600.0, gt=0, allow_inf_nan=False)
+    min_partition_size: int | None = Field(default=None, ge=1)
+    max_partition_size: int | None = Field(default=None, ge=2)
+    write_beam_size: int | None = Field(default=None, ge=1, le=4096)
+    search_beam_size: int | None = Field(default=None, ge=1, le=4096)
+    oversample_factor: float | None = Field(default=None, ge=1, le=16, allow_inf_nan=False)
+    hamming_factor: int | None = Field(default=None, ge=1, le=256)
+    rabitq4_factor: int | None = Field(default=None, ge=1, le=256)
 
-    @field_validator("spfresh_vector_index_param")
-    @classmethod
-    def normalize_vector_index_param(cls, value: str | None) -> str | None:
-        if value is None:
-            return None
-        return value.strip() or None
+    @model_validator(mode="after")
+    def validate_parameter_pairs(self):
+        # Unspecified values come from the server (or the existing index).
+        # Only compare pairs that the user explicitly supplied.
+        if (
+            self.min_partition_size is not None
+            and self.max_partition_size is not None
+            and self.min_partition_size > self.max_partition_size
+        ):
+            raise ValueError("min_partition_size must be <= max_partition_size")
+        if (
+            self.hamming_factor is not None
+            and self.rabitq4_factor is not None
+            and self.rabitq4_factor > self.hamming_factor
+        ):
+            raise ValueError("rabitq4_factor must be <= hamming_factor")
+        return self
 
     def index_param(self) -> dict:
         return {
             **super().index_param(),
-            "spfresh_build_mode": self.spfresh_build_mode.value,
-            "spfresh_vector_index_param": self.spfresh_vector_index_param,
+            **self.model_dump(
+                include={"min_partition_size", "max_partition_size", "write_beam_size"}, exclude_none=True
+            ),
+        }
+
+    def search_param(self) -> dict:
+        return {
+            **super().search_param(),
+            **self.model_dump(
+                include={"search_beam_size", "oversample_factor", "hamming_factor", "rabitq4_factor"}, exclude_none=True
+            ),
         }

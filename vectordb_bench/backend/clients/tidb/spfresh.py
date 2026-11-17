@@ -28,6 +28,17 @@ class TiDBSPFresh(TiDB):
         self.where_params: tuple[Any, ...] = ()
         super().__init__(dim, db_config, db_case_config, collection_name, drop_old, **kwargs)
         self.name = "TiDBSPFresh"
+        if not drop_old:
+            params = self._index_params(search_only=True)
+            if params:
+                # Construction runs once in the parent, before search workers.
+                # init() also runs in workers, so it must not repeat this DDL.
+                with self._get_connection() as (conn, cursor):
+                    cursor.execute(
+                        f"ALTER TABLE {self.table_name} ALTER INDEX {self._index_name()} SET VECTOR_INDEX_PARAM %s",
+                        params,
+                    )
+                    conn.commit()
 
     @staticmethod
     def supports_payload_profile(payload_profile: PayloadProfile) -> bool:
@@ -40,13 +51,15 @@ class TiDBSPFresh(TiDB):
         sql = f"VECTOR INDEX {self._index_name()} (({self.search_fn}(embedding))) USING SPFRESH"
         if self.with_scalar_labels:
             sql += " STORING (labels)"
-        if self.case_config.spfresh_vector_index_param:
+        if self._index_params():
             sql += " VECTOR_INDEX_PARAM %s"
         return sql
 
-    def _index_params(self) -> tuple[str] | None:
-        param = self.case_config.spfresh_vector_index_param
-        return (param,) if param else None
+    def _index_params(self, *, search_only: bool = False) -> tuple[str] | None:
+        params = {} if search_only else self.case_config.index_param()
+        params.update(self.case_config.search_param())
+        params.pop("metric_fn")
+        return (",".join(f"{key}={value}" for key, value in params.items()),) if params else None
 
     def _create_table(self) -> None:
         columns = ["id BIGINT PRIMARY KEY", f"embedding VECTOR({self.dim}) NOT NULL"]
