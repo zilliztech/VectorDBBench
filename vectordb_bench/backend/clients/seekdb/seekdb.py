@@ -70,8 +70,9 @@ class SeekDB(VectorDB):
         self._vector_field = "embedding"
         self.expr = ""
 
+        redacted_db_config = {**self.db_config, "password": "******"}
         log.info(
-            f"{self.name} initialized with config:\nDatabase: {self.db_config}\nCase Config: {self.db_case_config}"
+            f"{self.name} initialized with config:\nDatabase: {redacted_db_config}\nCase Config: {self.db_case_config}"
         )
 
         self._conn = None
@@ -79,11 +80,14 @@ class SeekDB(VectorDB):
 
         try:
             self._connect()
-            self._apply_system_settings()
+            if self.db_case_config.reset_resource_limits:
+                self._apply_system_settings()
             if drop_old:
                 self._drop_table()
                 self._create_table()
                 self._create_index()
+            else:
+                self._check_existing_index()
         finally:
             self._disconnect()
 
@@ -195,6 +199,35 @@ class SeekDB(VectorDB):
         except mysql.Error:
             log.exception("Failed to create HNSW index")
             raise
+
+    def _check_existing_index(self):
+        """Refuse to reuse an index whose build settings differ from the case config."""
+        if not self._cursor:
+            raise ValueError("Cursor is not initialized")
+
+        self._cursor.execute(f"SHOW CREATE TABLE {self.table_name}")
+        row = self._cursor.fetchone()
+        ddl = row[1] if row else ""
+        m = re.search(rf"VECTOR KEY `?{self._index_name}`?\s*\([^)]*\)\s*WITH\s*\(([^)]*)\)", ddl, re.IGNORECASE)
+        if not m:
+            msg = f"Cannot verify vector index {self._index_name} on {self.table_name}, rerun without reusing the index"
+            raise ValueError(msg)
+
+        actual = {}
+        for item in m.group(1).split(","):
+            key, _, value = item.partition("=")
+            actual[key.strip().lower()] = value.strip().lower()
+
+        index_params = self.db_case_config.index_param()
+        expected = {
+            "distance": index_params["metric_type"],
+            "type": index_params["index_type"].lower(),
+            **{k: str(v) for k, v in index_params["params"].items()},
+        }
+        mismatched = {k: f"expected {v}, found {actual.get(k)}" for k, v in expected.items() if actual.get(k) != v}
+        if mismatched:
+            msg = f"Existing index {self._index_name} on {self.table_name} does not match the case config: {mismatched}"
+            raise ValueError(msg)
 
     def optimize(self, data_size: int | None = None):
         """Post-load hook: refresh index metadata on SeekDB >= 1.3.0 when available.

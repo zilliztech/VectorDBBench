@@ -3740,12 +3740,23 @@ CaseConfigParamInput_ef_search_SeekDB = CaseConfigInput(
     isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
 )
 
+CaseConfigParamInput_reset_resource_limits_SeekDB = CaseConfigInput(
+    label=CaseConfigParamType.reset_resource_limits,
+    inputType=InputType.Bool,
+    displayLabel="Reset resource limits",
+    inputHelp="Set the instance-wide memory_limit and cpu_count to 0 (auto) before the run",
+    inputConfig={
+        "value": False,
+    },
+)
+
 # SeekDBHNSWConfig requires ef_search even for load-only cases.
 SeekDBLoadConfig = [
     CaseConfigParamInput_IndexType_SeekDB,
     CaseConfigParamInput_m_SeekDB,
     CaseConfigParamInput_ef_construction_SeekDB,
     CaseConfigParamInput_ef_search_SeekDB,
+    CaseConfigParamInput_reset_resource_limits_SeekDB,
 ]
 SeekDBPerformanceConfig = SeekDBLoadConfig
 
