@@ -265,20 +265,6 @@ class VectorDB(ABC):
     def supports_payload_profile(payload_profile: PayloadProfile) -> bool:
         return payload_profile == PayloadProfile.IDS_ONLY
 
-    def validate_search(
-        self,
-        query: list[float],
-        k: int,
-        filters: Filter,
-        payload_profile: PayloadProfile,
-    ) -> None:
-        """Validate a representative vector query before search runners start.
-
-        Called in the parent without an active init() context. Clients that need
-        database checks should open their own context; the default is a no-op.
-        """
-        return
-
     def has_text_field(self) -> bool:
         return False
 

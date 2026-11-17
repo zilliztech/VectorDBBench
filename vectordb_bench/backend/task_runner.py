@@ -538,7 +538,6 @@ class CaseRunner(BaseModel):
         else:
             self.test_emb = self.ca.dataset.test_data
 
-        self.db.validate_search(self.test_emb[0], self.config.case_config.k, self.ca.filters, self.ca.payload_profile)
         self.cold_warm_search_runner = ColdWarmSearchRunner(
             db=self.db,
             test_data=self.test_emb,
@@ -689,7 +688,6 @@ class CaseRunner(BaseModel):
         measure_recall = getattr(self.ca, "measure_recall", True)
         gt_df = self.ca.dataset.gt_data if measure_recall else None
 
-        self.db.validate_search(self.test_emb[0], self.config.case_config.k, self.ca.filters, self.ca.payload_profile)
         if TaskStage.SEARCH_SERIAL in self.config.stages:
             self.serial_search_runner = SerialSearchRunner(
                 db=self.db,

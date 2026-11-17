@@ -30,15 +30,16 @@ class TiDBSPFresh(TiDB):
         self.name = "TiDBSPFresh"
         if not drop_old:
             params = self._index_params(search_only=True)
-            if params:
-                # Construction runs once in the parent, before search workers.
-                # init() also runs in workers, so it must not repeat this DDL.
-                with self._get_connection() as (conn, cursor):
-                    cursor.execute(
+            # Check the reused index and apply settings once in the parent.
+            # The optimizer remains free to choose a scalar or vector access path.
+            with self.init():
+                self._read_ready_status()
+                if params:
+                    self.cursor.execute(
                         f"ALTER TABLE {self.table_name} ALTER INDEX {self._index_name()} SET VECTOR_INDEX_PARAM %s",
                         params,
                     )
-                    conn.commit()
+                    self.conn.commit()
 
     @staticmethod
     def supports_payload_profile(payload_profile: PayloadProfile) -> bool:
@@ -194,39 +195,6 @@ class TiDBSPFresh(TiDB):
             msg = f"Unsupported TiDB SPFresh filter or missing scalar labels: {filters}"
             raise ValueError(msg)
 
-    def _search_statement(self, query: list[float], k: int, payload_profile: PayloadProfile) -> tuple[str, tuple]:
-        if not self.supports_payload_profile(payload_profile):
-            msg = f"Unsupported TiDB SPFresh payload profile: {payload_profile}"
-            raise ValueError(msg)
-        if payload_profile == PayloadProfile.SCALAR_LABEL and not self.with_scalar_labels:
-            raise ValueError("scalar_label payload requires a table with scalar labels")
-        columns = "id, labels" if payload_profile == PayloadProfile.SCALAR_LABEL else "id"
-        sql = (
-            f"SELECT {columns} FROM {self.table_name} {self.where_clause} "
-            f"ORDER BY {self.search_fn}(embedding, %s) LIMIT %s"
-        )
-        return sql, (*self.where_params, str(query), k)
-
-    def validate_search(self, query: list[float], k: int, filters: Filter, payload_profile: PayloadProfile) -> None:
-        self.prepare_filter(filters)
-        sql, params = self._search_statement(query, k, payload_profile)
-        with self.init():
-            self._read_ready_status()
-            self.cursor.execute(f"EXPLAIN FORMAT = 'brief' {sql}", params)
-            plan = self.cursor.fetchall()
-        expected_access = f"table:{self.table_name}, index:{self._index_name()}("
-        if not any(
-            len(row) >= 5
-            and str(row[0]).lstrip(" \t│├└─").split("_", 1)[0] == "SPFreshVectorScan"
-            and str(row[3]).startswith(expected_access)
-            for row in plan
-        ):
-            msg = (
-                f"Query does not use the expected SPFresh index: table={self.table_name} "
-                f"index={self._index_name()} k={k} payload_profile={payload_profile}; plan={plan}"
-            )
-            raise RuntimeError(msg)
-
     def search_embedding(
         self,
         query: list[float],
@@ -236,5 +204,15 @@ class TiDBSPFresh(TiDB):
         payload_profile: PayloadProfile = PayloadProfile.IDS_ONLY,
         **kwargs: Any,
     ) -> list[int]:
-        self.cursor.execute(*self._search_statement(query, k, payload_profile))
+        if not self.supports_payload_profile(payload_profile):
+            msg = f"Unsupported TiDB SPFresh payload profile: {payload_profile}"
+            raise ValueError(msg)
+        if payload_profile == PayloadProfile.SCALAR_LABEL and not self.with_scalar_labels:
+            raise ValueError("scalar_label payload requires a table with scalar labels")
+        columns = "id, labels" if payload_profile == PayloadProfile.SCALAR_LABEL else "id"
+        self.cursor.execute(
+            f"SELECT {columns} FROM {self.table_name} {self.where_clause} "
+            f"ORDER BY {self.search_fn}(embedding, %s) LIMIT %s",
+            (*self.where_params, str(query), k),
+        )
         return [int(row[0]) for row in self.cursor.fetchall()]

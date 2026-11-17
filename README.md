@@ -652,6 +652,7 @@ vectordbbench tidbspfresh \
 ```
 
 Search-only runs keep unspecified parameters unchanged and do not apply build parameters.
+They require an existing, ready SPFresh index and skip loading, index creation, and optimization.
 Search settings are persisted on the index, so run parameter sweeps sequentially against the same index.
 YAML batches use `tidbspfresh` as the command key and underscore option names such as `search_beam_size`.
 
@@ -659,9 +660,9 @@ The dataset selects L2 or cosine distance. Numeric (`id >= ...`) and label equal
 label cases store the `labels` column in the vector index. Both build modes use the standard load and
 search stages. `--payload-profile scalar_label` returns both IDs and labels; label filtering also works
 with the default ID-only response. After loading, the client waits for a ready index whose checkpoint
-covers all committed inserts. Before search (including `--skip-load`), it checks the matching index status
-and explains a representative query with the case's filter, top-k, and payload. Missing or invalid status,
-checkpoint timeouts, and plans that do not use the expected SPFresh index fail the benchmark before timing.
+covers all committed inserts. Missing or invalid index status and checkpoint timeouts fail the benchmark.
+Queries use ordinary SQL and let the TiDB optimizer choose the access path, including scalar filtering.
+Results measure the database's execution of the requested query; the client does not enforce a physical plan.
 
 ### Run Hologres from command line
 

@@ -22,7 +22,6 @@ from vectordb_bench.backend.filter import IntFilter, LabelFilter, non_filter
 from vectordb_bench.backend.data_source import DatasetSource
 from vectordb_bench.backend.payload import PayloadProfile
 from vectordb_bench.backend.runner.concurrent_runner import ConcurrentInsertRunner
-from vectordb_bench.backend import task_runner as task_runner_module
 from vectordb_bench.cli import cli as core_cli
 from vectordb_bench.cli.batch_cli import build_sub_cmd_args
 from vectordb_bench.metric import Metric
@@ -60,10 +59,12 @@ def ready(ts):
     return ts, "READY", 1, 0, None, "2026-11-17 00:00:00"
 
 
-def spfresh_plan(index="idx_embedding_spfresh_cosine", operator="└─SPFreshVectorScan", table="vector_bench_test"):
-    return [
-        (operator, "3.00", "root", f"table:{table}, index:{index}(vec_cosine_distance(`embedding`))", "spfresh:COSINE")
-    ]
+@pytest.fixture(autouse=True)
+def existing_spfresh_index(monkeypatch):
+    conn, cursor = mock_connection(monkeypatch, TiDBSPFresh)
+    cursor.fetchone.side_effect = None
+    cursor.fetchone.return_value = ready(100)
+    return conn, cursor
 
 
 def make_search_case(*, case_id=CaseType.Performance768D1M, custom=None, profile=PayloadProfile.IDS_ONLY):
@@ -95,8 +96,6 @@ def test_original_tidb_still_creates_tiflash_index_and_uses_tiflash_optimize(mon
     sql = cursor.execute.call_args.args[0]
     assert "VECTOR INDEX ((vec_l2_distance(embedding)))" in sql
     assert "SPFRESH" not in sql
-    client.validate_search([1, 0], 100, non_filter, PayloadProfile.IDS_ONLY)
-    cursor.execute.assert_called_once()
     hooks = {
         "_optimize_check_tiflash_replica_progress": 1,
         "_optimize_wait_tiflash_catch_up": 10,
@@ -162,19 +161,23 @@ def test_omitted_parameters_use_server_defaults_on_creation(monkeypatch):
     assert args is None
 
 
-def test_reuse_without_search_parameters_does_not_touch_database(monkeypatch):
-    connect = Mock(side_effect=AssertionError("No SQL expected when keeping existing search settings"))
-    monkeypatch.setattr(TiDBSPFresh, "_get_connection", connect)
+def test_reuse_without_search_parameters_only_checks_existing_index(existing_spfresh_index):
+    conn, cursor = existing_spfresh_index
     make_client(min_partition_size=64, max_partition_size=512, write_beam_size=8)
-    connect.assert_not_called()
+    cursor.execute.assert_called_once()
+    sql, params = cursor.execute.call_args.args
+    assert "FROM information_schema.TIDB_SPFRESH_INDEX_STATUS" in sql
+    assert params == ("vector_bench_test", "idx_embedding_spfresh_cosine")
+    conn.commit.assert_not_called()
 
 
 def test_search_parameter_update_failure_aborts_initialization(monkeypatch):
-    conn, cursor = mock_connection(monkeypatch, TiDBSPFresh)
-    cursor.execute.side_effect = RuntimeError("ALTER failed")
+    conn, cursor = mock_connection(monkeypatch, TiDBSPFresh, [ready(100)])
+    cursor.execute.side_effect = [None, RuntimeError("ALTER failed")]
     with pytest.raises(RuntimeError, match="ALTER failed"):
         make_client(search_beam_size=174)
-    cursor.execute.assert_called_once()
+    assert cursor.execute.call_count == 2
+    assert cursor.execute.call_args.args[0].startswith("ALTER TABLE")
     conn.commit.assert_not_called()
 
 
@@ -325,68 +328,49 @@ def test_search_binds_filters_and_can_reset_them(filters, expected):
         ),
     ],
 )
-def test_search_preflight_and_payload_use_actual_case_query(monkeypatch, profile, case_id, custom):
+def test_search_uses_standard_runners_and_payload_without_plan_checks(monkeypatch, profile, case_id, custom):
     runner = make_search_case(case_id=case_id, custom=custom, profile=profile)
-    _, cursor = mock_connection(monkeypatch, runner.db, [ready(100)])
-    cursor.fetchall.return_value = spfresh_plan()
+    _, cursor = mock_connection(monkeypatch, runner.db)
     runner._init_search_runners()
-    status_call, explain_call = cursor.execute.call_args_list
-    assert status_call.args[1] == ("vector_bench_test", "idx_embedding_spfresh_cosine")
-    sql, params = explain_call.args
-    columns = "id, labels" if profile == PayloadProfile.SCALAR_LABEL else "id"
-    assert sql.startswith(f"EXPLAIN FORMAT = 'brief' SELECT {columns} FROM ")
-    assert params[-2:] == ("[1.0, 0.0]", 3)
-    if case_id == CaseType.LabelFilterPerformanceCase:
-        assert "WHERE labels = %s" in sql
-        assert params[0] == "label_1p"
-    elif case_id == CaseType.NewIntFilterPerformanceCase:
-        assert "WHERE id >= %s" in sql
-        assert params[0] == runner.ca.filters.int_value
-    else:
-        assert "WHERE" not in sql
+    cursor.execute.assert_not_called()
     cursor.fetchall.return_value = (
         [(7, "label_1p"), (9, "label_10p")] if profile == PayloadProfile.SCALAR_LABEL else [(7,), (9,)]
     )
     # Both standard runners request the selected payload; only IDs enter recall scoring.
     for search_runner in (runner.serial_search_runner, runner.search_runner):
         with runner.db.init():
+            runner.db.prepare_filter(runner.ca.filters)
             assert search_runner._search_embedding([1.0, 0.0]) == [7, 9]
-        assert cursor.execute.call_args.args == (sql.removeprefix("EXPLAIN FORMAT = 'brief' "), params)
-    assert cursor.execute.call_count == 4  # status + EXPLAIN + two measured queries
+        sql, params = cursor.execute.call_args.args
+        columns = "id, labels" if profile == PayloadProfile.SCALAR_LABEL else "id"
+        assert sql.startswith(f"SELECT {columns} FROM ")
+        assert "EXPLAIN" not in sql and "USE INDEX" not in sql and "FORCE INDEX" not in sql
+        assert params[-2:] == ("[1.0, 0.0]", 3)
+        if case_id == CaseType.LabelFilterPerformanceCase:
+            assert "WHERE labels = %s" in sql
+            assert params[0] == "label_1p"
+        elif case_id == CaseType.NewIntFilterPerformanceCase:
+            assert "WHERE id >= %s" in sql
+            assert params[0] == runner.ca.filters.int_value
+        else:
+            assert "WHERE" not in sql
+    assert cursor.execute.call_count == 2
 
 
 @pytest.mark.parametrize(
-    "status,plan,error",
+    "status,error",
     [
-        (None, [], "Missing or invalid SPFresh status"),
-        ((100, "NEEDS_REBUILD", 0, 0, None, "now"), [], "not ready"),
-        (
-            ready(100),
-            [("TableFullScan", "3", "cop[tikv]", "table:vector_bench_test", "keep order:false")],
-            "does not use",
-        ),
-        (ready(100), spfresh_plan(index="idx_embedding_spfresh_cosine_other"), "does not use"),
-        (ready(100), spfresh_plan(table="other_table"), "does not use"),
-        (ready(100), spfresh_plan(operator="TableFullScan"), "does not use"),
-        (ready(100), [], "does not use"),
-        (ready(100), RuntimeError("EXPLAIN failed"), "EXPLAIN failed"),
+        (None, "Missing or invalid SPFresh status"),
+        ((100, "NEEDS_REBUILD", 0, 0, None, "now"), "not ready"),
     ],
 )
-def test_search_only_fails_before_search_runners_start(monkeypatch, status, plan, error):
-    runner = make_search_case()
-    _, cursor = mock_connection(monkeypatch, runner.db, [status])
-    if isinstance(plan, Exception):
-        cursor.fetchall.side_effect = plan
-    else:
-        cursor.fetchall.return_value = plan
-    serial, concurrent = Mock(), Mock()
-    monkeypatch.setattr(task_runner_module, "SerialSearchRunner", serial)
-    monkeypatch.setattr(task_runner_module, "MultiProcessingSearchRunner", concurrent)
+def test_reuse_rejects_invalid_index_before_applying_search_parameters(monkeypatch, status, error):
+    conn, cursor = mock_connection(monkeypatch, TiDBSPFresh, [status])
     with pytest.raises(RuntimeError, match=error):
-        runner._init_search_runners()
-    serial.assert_not_called()
-    concurrent.assert_not_called()
-    assert not any(call.args[0].startswith("SELECT id") for call in cursor.execute.call_args_list)
+        make_client(search_beam_size=174)
+    cursor.execute.assert_called_once()
+    assert "TIDB_SPFRESH_INDEX_STATUS" in cursor.execute.call_args.args[0]
+    conn.commit.assert_not_called()
 
 
 def test_scalar_label_payload_requires_labels_and_rejects_other_profiles():
@@ -397,20 +381,6 @@ def test_scalar_label_payload_requires_labels_and_rejects_other_profiles():
     with pytest.raises(ValueError, match="Unsupported.*payload"):
         client.search_embedding([1, 0], payload_profile=PayloadProfile.VECTOR)
     client.cursor.execute.assert_not_called()
-
-
-def test_cold_warm_search_also_validates_before_runner_creation(monkeypatch):
-    runner = make_search_case(
-        case_id=CaseType.CloudColdLatencyCase,
-        custom={"dataset_with_size_type": "Medium Cohere (768dim, 1M)", "query_count": 1},
-        profile=None,
-    )
-    mock_connection(monkeypatch, runner.db, [None])
-    cold_warm = Mock()
-    monkeypatch.setattr(task_runner_module, "ColdWarmSearchRunner", cold_warm)
-    with pytest.raises(RuntimeError, match="Missing or invalid SPFresh status"):
-        runner._init_cold_warm_search_runner()
-    cold_warm.assert_not_called()
 
 
 @pytest.mark.parametrize("filters", [IntFilter(int_field="other", int_value=1), LabelFilter(label_percentage=0.01)])
@@ -515,11 +485,12 @@ def test_search_only_updates_parameters_once_before_workers(monkeypatch, search_
     assert result.exit_code == 0, result.output
     assert tasks[0].stages == ["search_serial", "search_concurrent"]
     assert tasks[0].case_config.k == 100
-    conn, cursor = mock_connection(monkeypatch, TiDBSPFresh)
+    conn, cursor = mock_connection(monkeypatch, TiDBSPFresh, [ready(100)])
     cursor.fetchall.return_value = [(7,)]
     runner = Assembler.assemble_all("test", "test", tasks, DatasetSource.S3).case_runners[0]
     runner.init_db(drop_old=False)
-    cursor.execute.assert_called_once_with(
+    assert cursor.execute.call_count == 2
+    cursor.execute.assert_called_with(
         "ALTER TABLE vector_bench_test ALTER INDEX idx_embedding_spfresh_cosine SET VECTOR_INDEX_PARAM %s",
         (expected_params,),
     )
@@ -531,8 +502,9 @@ def test_search_only_updates_parameters_once_before_workers(monkeypatch, search_
             worker_client.prepare_filter(non_filter)
             assert worker_client.search_embedding([1, 0]) == [7]
     calls = [call.args[0] for call in cursor.execute.call_args_list]
-    assert len(calls) == 3
-    assert all(sql.startswith("SELECT id") for sql in calls[1:])
+    assert len(calls) == 4
+    assert "TIDB_SPFRESH_INDEX_STATUS" in calls[0]
+    assert all(sql.startswith("SELECT id") for sql in calls[2:])
 
 
 def test_original_command_does_not_accept_spfresh_options():
