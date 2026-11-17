@@ -125,13 +125,24 @@ def test_serial_runner_reports_p50_and_prefix_correct_recall():
         k=1_000,
     )
 
-    recall, ndcg, p99, p95, p50, recall_at = runner.search((runner.test_data, runner.ground_truth))
+    recall, ndcg, p99, p95, p50, recall_at, recall_stats = runner.search((runner.test_data, runner.ground_truth))
 
     assert recall == 1.0
     assert ndcg == 1.0
     assert p99 >= p50 >= 0
     assert p95 >= p50
     assert recall_at == {100: 0.5, 1_000: 1.0}
+    assert recall_stats == {"recall_min": 1.0, "recall_p1": 1.0, "recall_p5": 1.0, "recall_p10": 1.0}
+
+
+def test_serial_runner_reports_lower_tail_recall():
+    db = SearchProbeDB(results=[[], [1], [1, 2]])
+    runner = SerialSearchRunner(db=db, test_data=[[0], [1], [2]], ground_truth=[[1, 2]] * 3, k=2)
+
+    result = runner.search((runner.test_data, runner.ground_truth))
+
+    assert result[0] == 0.5
+    assert result[-1] == {"recall_min": 0.0, "recall_p1": 0.01, "recall_p5": 0.05, "recall_p10": 0.1}
 
 
 def test_concurrent_latency_aggregation_includes_p50():
@@ -252,7 +263,7 @@ def test_case_runner_propagates_large_topk_metrics(monkeypatch):
 
     class SerialRunner:
         def run(self):
-            return (0.8, 0.7, 0.9, 0.8, 0.5, {100: 0.9, 1_000: 0.8}), 0.1
+            return (0.8, 0.7, 0.9, 0.8, 0.5, {100: 0.9, 1_000: 0.8}, {"recall_min": 0.2}), 0.1
 
     class ConcurrentRunner:
         def run(self):
@@ -277,6 +288,7 @@ def test_case_runner_propagates_large_topk_metrics(monkeypatch):
     assert metrics.serial_latency_p50 == 0.5
     assert metrics.conc_latency_p50_list == [0.5]
     assert metrics.recall_at == {100: 0.9, 1_000: 0.8}
+    assert metrics.recall_min == 0.2
     assert metrics.additional_parameters["ground_truth"] == {
         "file": "neighbors_top100k_nq200.parquet",
         "query_count": 200,

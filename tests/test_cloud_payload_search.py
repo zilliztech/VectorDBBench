@@ -119,7 +119,7 @@ def test_serial_search_runner_passes_tenant_and_skips_recall():
         measure_recall=False,
     )
 
-    recall, ndcg, p99, p95, p50, recall_at = runner.search((runner.test_data, runner.ground_truth))
+    recall, ndcg, p99, p95, p50, recall_at, recall_stats = runner.search((runner.test_data, runner.ground_truth))
 
     assert recall == 0
     assert ndcg == 0
@@ -127,5 +127,6 @@ def test_serial_search_runner_passes_tenant_and_skips_recall():
     assert p95 >= 0
     assert p50 >= 0
     assert recall_at == {}
+    assert recall_stats == {}
     assert set(db.tenants).issubset({"tenant_0000", "tenant_0001"})
     assert db.tenants
