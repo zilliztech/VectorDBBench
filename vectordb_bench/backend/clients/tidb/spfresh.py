@@ -100,41 +100,45 @@ class TiDBSPFresh(TiDB):
             raise RuntimeError("Failed to read a positive TSO from @@tidb_current_ts")
         return int(row[0])
 
+    def _read_ready_status(self) -> tuple:
+        context = f"table={self.table_name} index={self._index_name()}"
+        try:
+            self.cursor.execute(
+                "SELECT applied_base_ts, index_state, is_ready, lag_seconds, owner_lease_expire_ts, observed_at "
+                "FROM information_schema.TIDB_SPFRESH_INDEX_STATUS "
+                "WHERE table_schema = DATABASE() AND table_name = %s AND index_name = %s",
+                (self.table_name, self._index_name()),
+            )
+            status = self.cursor.fetchone()
+        except Exception as e:
+            msg = f"SPFresh status query failed: {context}; error={e}"
+            raise RuntimeError(msg) from e
+        if status is None or len(status) != 6:
+            msg = f"Missing or invalid SPFresh status: {context}; status={status}"
+            raise RuntimeError(msg)
+        applied_ts, index_state, is_ready, _, _, observed_at = status
+        if (
+            str(index_state).upper() != "READY"
+            or is_ready != 1
+            or applied_ts is None
+            or int(applied_ts) <= 0
+            or observed_at is None
+        ):
+            msg = f"SPFresh index is not ready or has an invalid checkpoint: {context}; status={status}"
+            raise RuntimeError(msg)
+        return status
+
     def _wait_for_checkpoint(self, barrier_ts: int) -> None:
         start = time.monotonic()
         deadline = start + self.case_config.spfresh_wait_timeout
         status = None
         context = f"table={self.table_name} index={self._index_name()} barrier_ts={barrier_ts}"
         while time.monotonic() < deadline:
-            try:
-                self.cursor.execute(
-                    "SELECT applied_base_ts, index_state, is_ready, lag_seconds, owner_lease_expire_ts, observed_at "
-                    "FROM information_schema.TIDB_SPFRESH_INDEX_STATUS "
-                    "WHERE table_schema = DATABASE() AND table_name = %s AND index_name = %s",
-                    (self.table_name, self._index_name()),
-                )
-                status = self.cursor.fetchone()
-            except Exception as e:
-                msg = f"SPFresh status query failed: {context}; last_status={status}; error={e}"
-                raise RuntimeError(msg) from e
-
+            status = self._read_ready_status()
             now = time.monotonic()
             if now >= deadline:
                 break
-            if status is None or len(status) != 6:
-                msg = f"Missing or invalid SPFresh status: {context}; status={status}"
-                raise RuntimeError(msg)
-            applied_ts, index_state, is_ready, _, _, observed_at = status
-            if (
-                str(index_state).upper() != "READY"
-                or is_ready != 1
-                or applied_ts is None
-                or int(applied_ts) <= 0
-                or observed_at is None
-            ):
-                msg = f"SPFresh index is not ready or has an invalid checkpoint: {context}; status={status}"
-                raise RuntimeError(msg)
-            if int(applied_ts) >= barrier_ts:
+            if int(status[0]) >= barrier_ts:
                 log.info("SPFresh checkpoint reached: %s; status=%s", context, status)
                 return
             log.info("Waiting for SPFresh checkpoint: %s; status=%s", context, status)
@@ -190,17 +194,47 @@ class TiDBSPFresh(TiDB):
             msg = f"Unsupported TiDB SPFresh filter or missing scalar labels: {filters}"
             raise ValueError(msg)
 
+    def _search_statement(self, query: list[float], k: int, payload_profile: PayloadProfile) -> tuple[str, tuple]:
+        if not self.supports_payload_profile(payload_profile):
+            msg = f"Unsupported TiDB SPFresh payload profile: {payload_profile}"
+            raise ValueError(msg)
+        if payload_profile == PayloadProfile.SCALAR_LABEL and not self.with_scalar_labels:
+            raise ValueError("scalar_label payload requires a table with scalar labels")
+        columns = "id, labels" if payload_profile == PayloadProfile.SCALAR_LABEL else "id"
+        sql = (
+            f"SELECT {columns} FROM {self.table_name} {self.where_clause} "
+            f"ORDER BY {self.search_fn}(embedding, %s) LIMIT %s"
+        )
+        return sql, (*self.where_params, str(query), k)
+
+    def validate_search(self, query: list[float], k: int, filters: Filter, payload_profile: PayloadProfile) -> None:
+        self.prepare_filter(filters)
+        sql, params = self._search_statement(query, k, payload_profile)
+        with self.init():
+            self._read_ready_status()
+            self.cursor.execute(f"EXPLAIN FORMAT = 'brief' {sql}", params)
+            plan = self.cursor.fetchall()
+        expected_access = f"table:{self.table_name}, index:{self._index_name()}("
+        if not any(
+            len(row) >= 5
+            and str(row[0]).lstrip(" \t│├└─").split("_", 1)[0] == "SPFreshVectorScan"
+            and str(row[3]).startswith(expected_access)
+            for row in plan
+        ):
+            msg = (
+                f"Query does not use the expected SPFresh index: table={self.table_name} "
+                f"index={self._index_name()} k={k} payload_profile={payload_profile}; plan={plan}"
+            )
+            raise RuntimeError(msg)
+
     def search_embedding(
         self,
         query: list[float],
         k: int = 100,
         filters: dict | None = None,
         timeout: int | None = None,
+        payload_profile: PayloadProfile = PayloadProfile.IDS_ONLY,
         **kwargs: Any,
     ) -> list[int]:
-        self.cursor.execute(
-            f"SELECT id FROM {self.table_name} {self.where_clause} "
-            f"ORDER BY {self.search_fn}(embedding, %s) LIMIT %s",
-            (*self.where_params, str(query), k),
-        )
+        self.cursor.execute(*self._search_statement(query, k, payload_profile))
         return [int(row[0]) for row in self.cursor.fetchall()]

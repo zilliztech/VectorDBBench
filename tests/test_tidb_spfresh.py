@@ -20,7 +20,9 @@ from vectordb_bench.backend.clients.tidb.spfresh import TiDBSPFresh
 from vectordb_bench.backend.clients.tidb.tidb import TiDB
 from vectordb_bench.backend.filter import IntFilter, LabelFilter, non_filter
 from vectordb_bench.backend.data_source import DatasetSource
+from vectordb_bench.backend.payload import PayloadProfile
 from vectordb_bench.backend.runner.concurrent_runner import ConcurrentInsertRunner
+from vectordb_bench.backend import task_runner as task_runner_module
 from vectordb_bench.cli import cli as core_cli
 from vectordb_bench.cli.batch_cli import build_sub_cmd_args
 from vectordb_bench.metric import Metric
@@ -58,6 +60,27 @@ def ready(ts):
     return ts, "READY", 1, 0, None, "2026-11-17 00:00:00"
 
 
+def spfresh_plan(index="idx_embedding_spfresh_cosine", operator="└─SPFreshVectorScan", table="vector_bench_test"):
+    return [
+        (operator, "3.00", "root", f"table:{table}, index:{index}(vec_cosine_distance(`embedding`))", "spfresh:COSINE")
+    ]
+
+
+def make_search_case(*, case_id=CaseType.Performance768D1M, custom=None, profile=PayloadProfile.IDS_ONLY):
+    task = TaskConfig(
+        db=DB.TiDBSPFresh,
+        db_config=TiDBConfig(password=""),
+        db_case_config=TiDBSPFreshIndexConfig(),
+        case_config=CaseConfig(case_id=case_id, custom_case=custom or {}, payload_profile=profile, k=3),
+        stages=["search_serial", "search_concurrent"],
+    )
+    runner = Assembler.assemble_all("test", "test", [task], DatasetSource.S3).case_runners[0]
+    runner.ca.dataset.test_data = [[1.0, 0.0]]
+    runner.ca.dataset.gt_data = [[7, 9, 11]]
+    runner.init_db(drop_old=False)
+    return runner
+
+
 def fake_clock(monkeypatch):
     now = [0.0]
     monkeypatch.setattr(spfresh_module.time, "monotonic", lambda: now[0])
@@ -72,6 +95,8 @@ def test_original_tidb_still_creates_tiflash_index_and_uses_tiflash_optimize(mon
     sql = cursor.execute.call_args.args[0]
     assert "VECTOR INDEX ((vec_l2_distance(embedding)))" in sql
     assert "SPFRESH" not in sql
+    client.validate_search([1, 0], 100, non_filter, PayloadProfile.IDS_ONLY)
+    cursor.execute.assert_called_once()
     hooks = {
         "_optimize_check_tiflash_replica_progress": 1,
         "_optimize_wait_tiflash_catch_up": 10,
@@ -285,6 +310,109 @@ def test_search_binds_filters_and_can_reset_them(filters, expected):
     assert "WHERE" not in client.cursor.execute.call_args.args[0]
 
 
+@pytest.mark.parametrize("profile", [PayloadProfile.IDS_ONLY, PayloadProfile.SCALAR_LABEL])
+@pytest.mark.parametrize(
+    "case_id,custom",
+    [
+        (CaseType.Performance768D1M, {}),
+        (
+            CaseType.NewIntFilterPerformanceCase,
+            {"dataset_with_size_type": "Medium Cohere (768dim, 1M)", "filter_rate": 0.99},
+        ),
+        (
+            CaseType.LabelFilterPerformanceCase,
+            {"dataset_with_size_type": "Medium Cohere (768dim, 1M)", "label_percentage": 0.01},
+        ),
+    ],
+)
+def test_search_preflight_and_payload_use_actual_case_query(monkeypatch, profile, case_id, custom):
+    runner = make_search_case(case_id=case_id, custom=custom, profile=profile)
+    _, cursor = mock_connection(monkeypatch, runner.db, [ready(100)])
+    cursor.fetchall.return_value = spfresh_plan()
+    runner._init_search_runners()
+    status_call, explain_call = cursor.execute.call_args_list
+    assert status_call.args[1] == ("vector_bench_test", "idx_embedding_spfresh_cosine")
+    sql, params = explain_call.args
+    columns = "id, labels" if profile == PayloadProfile.SCALAR_LABEL else "id"
+    assert sql.startswith(f"EXPLAIN FORMAT = 'brief' SELECT {columns} FROM ")
+    assert params[-2:] == ("[1.0, 0.0]", 3)
+    if case_id == CaseType.LabelFilterPerformanceCase:
+        assert "WHERE labels = %s" in sql
+        assert params[0] == "label_1p"
+    elif case_id == CaseType.NewIntFilterPerformanceCase:
+        assert "WHERE id >= %s" in sql
+        assert params[0] == runner.ca.filters.int_value
+    else:
+        assert "WHERE" not in sql
+    cursor.fetchall.return_value = (
+        [(7, "label_1p"), (9, "label_10p")] if profile == PayloadProfile.SCALAR_LABEL else [(7,), (9,)]
+    )
+    # Both standard runners request the selected payload; only IDs enter recall scoring.
+    for search_runner in (runner.serial_search_runner, runner.search_runner):
+        with runner.db.init():
+            assert search_runner._search_embedding([1.0, 0.0]) == [7, 9]
+        assert cursor.execute.call_args.args == (sql.removeprefix("EXPLAIN FORMAT = 'brief' "), params)
+    assert cursor.execute.call_count == 4  # status + EXPLAIN + two measured queries
+
+
+@pytest.mark.parametrize(
+    "status,plan,error",
+    [
+        (None, [], "Missing or invalid SPFresh status"),
+        ((100, "NEEDS_REBUILD", 0, 0, None, "now"), [], "not ready"),
+        (
+            ready(100),
+            [("TableFullScan", "3", "cop[tikv]", "table:vector_bench_test", "keep order:false")],
+            "does not use",
+        ),
+        (ready(100), spfresh_plan(index="idx_embedding_spfresh_cosine_other"), "does not use"),
+        (ready(100), spfresh_plan(table="other_table"), "does not use"),
+        (ready(100), spfresh_plan(operator="TableFullScan"), "does not use"),
+        (ready(100), [], "does not use"),
+        (ready(100), RuntimeError("EXPLAIN failed"), "EXPLAIN failed"),
+    ],
+)
+def test_search_only_fails_before_search_runners_start(monkeypatch, status, plan, error):
+    runner = make_search_case()
+    _, cursor = mock_connection(monkeypatch, runner.db, [status])
+    if isinstance(plan, Exception):
+        cursor.fetchall.side_effect = plan
+    else:
+        cursor.fetchall.return_value = plan
+    serial, concurrent = Mock(), Mock()
+    monkeypatch.setattr(task_runner_module, "SerialSearchRunner", serial)
+    monkeypatch.setattr(task_runner_module, "MultiProcessingSearchRunner", concurrent)
+    with pytest.raises(RuntimeError, match=error):
+        runner._init_search_runners()
+    serial.assert_not_called()
+    concurrent.assert_not_called()
+    assert not any(call.args[0].startswith("SELECT id") for call in cursor.execute.call_args_list)
+
+
+def test_scalar_label_payload_requires_labels_and_rejects_other_profiles():
+    client = make_client()
+    client.cursor = Mock()
+    with pytest.raises(ValueError, match="requires a table with scalar labels"):
+        client.search_embedding([1, 0], payload_profile=PayloadProfile.SCALAR_LABEL)
+    with pytest.raises(ValueError, match="Unsupported.*payload"):
+        client.search_embedding([1, 0], payload_profile=PayloadProfile.VECTOR)
+    client.cursor.execute.assert_not_called()
+
+
+def test_cold_warm_search_also_validates_before_runner_creation(monkeypatch):
+    runner = make_search_case(
+        case_id=CaseType.CloudColdLatencyCase,
+        custom={"dataset_with_size_type": "Medium Cohere (768dim, 1M)", "query_count": 1},
+        profile=None,
+    )
+    mock_connection(monkeypatch, runner.db, [None])
+    cold_warm = Mock()
+    monkeypatch.setattr(task_runner_module, "ColdWarmSearchRunner", cold_warm)
+    with pytest.raises(RuntimeError, match="Missing or invalid SPFresh status"):
+        runner._init_cold_warm_search_runner()
+    cold_warm.assert_not_called()
+
+
 @pytest.mark.parametrize("filters", [IntFilter(int_field="other", int_value=1), LabelFilter(label_percentage=0.01)])
 def test_unsupported_filter_schema_is_rejected(filters):
     with pytest.raises(ValueError, match="Unsupported"):
@@ -426,7 +554,7 @@ def test_original_command_does_not_accept_spfresh_options():
         ),
     ],
 )
-def test_existing_cases_assemble_and_initialize_spfresh_without_runner_changes(case_id, custom):
+def test_existing_cases_assemble_and_initialize_spfresh_with_standard_runner(case_id, custom):
     task = TaskConfig(
         db=DB.TiDBSPFresh,
         db_config=TiDBConfig(password=""),

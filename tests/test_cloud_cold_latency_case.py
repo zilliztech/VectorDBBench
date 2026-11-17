@@ -230,6 +230,9 @@ class FakeColdWarmDB:
     def prepare_filter(self, filters: Filter):
         self.prepare_filter_calls.append(filters)
 
+    def validate_search(self, query, k, filters, payload_profile):
+        self.validated_query = (query, k, filters, payload_profile)
+
     def search_embedding(self, query: list[float], k: int = 100, **kwargs) -> list[int]:
         self.calls.append((query, k, kwargs))
         return list(range(k))
@@ -410,6 +413,7 @@ def test_case_runner_stores_cloud_cold_latency_metric(monkeypatch: pytest.Monkey
     metric = runner._run_cloud_cold_latency_case(drop_old=False)
 
     assert metric.additional_parameters["cold_latency"] == expected
+    assert runner.db.validated_query == ([0.1], task.case_config.k, case.filters, case.payload_profile)
     assert metric.payload_profile == "ids_only"
     assert metric.payload_estimated_bytes_per_query == case.estimated_payload_bytes_per_query(task.case_config.k)
     assert captured_kwargs == {

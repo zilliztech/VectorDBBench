@@ -657,8 +657,11 @@ YAML batches use `tidbspfresh` as the command key and underscore option names su
 
 The dataset selects L2 or cosine distance. Numeric (`id >= ...`) and label equality cases are supported;
 label cases store the `labels` column in the vector index. Both build modes use the standard load and
-search stages. After loading, the client waits for a ready index whose checkpoint covers all committed
-inserts before starting search. Missing or invalid status and checkpoint timeouts fail the benchmark.
+search stages. `--payload-profile scalar_label` returns both IDs and labels; label filtering also works
+with the default ID-only response. After loading, the client waits for a ready index whose checkpoint
+covers all committed inserts. Before search (including `--skip-load`), it checks the matching index status
+and explains a representative query with the case's filter, top-k, and payload. Missing or invalid status,
+checkpoint timeouts, and plans that do not use the expected SPFresh index fail the benchmark before timing.
 
 ### Run Hologres from command line
 
