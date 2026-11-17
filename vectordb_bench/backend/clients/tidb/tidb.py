@@ -168,6 +168,7 @@ class TiDB(VectorDB):
         metadata: list[int],
         offset: int,
         size: int,
+        **kwargs: Any,
     ) -> Exception:
         try:
             with self._get_connection() as (conn, cursor):
@@ -192,14 +193,13 @@ class TiDB(VectorDB):
         workers = 10
         # Avoid exceeding MAX_ALLOWED_PACKET (default=64MB)
         max_batch_size = 64 * 1024 * 1024 // 24 // self.dim
-        batch_size = len(embeddings) // workers
-        batch_size = min(batch_size, max_batch_size)
+        batch_size = max(1, min(len(embeddings) // workers, max_batch_size))
         with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as executor:
             futures = []
             for i in range(0, len(embeddings), batch_size):
                 offset = i
                 size = min(batch_size, len(embeddings) - i)
-                future = executor.submit(self._insert_embeddings_serial, embeddings, metadata, offset, size)
+                future = executor.submit(self._insert_embeddings_serial, embeddings, metadata, offset, size, **kwargs)
                 futures.append(future)
             done, pending = concurrent.futures.wait(futures, return_when=concurrent.futures.FIRST_EXCEPTION)
             executor.shutdown(wait=False)

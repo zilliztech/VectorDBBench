@@ -1,6 +1,7 @@
+from enum import StrEnum
 from typing import ClassVar, TypedDict
 
-from pydantic import BaseModel, SecretStr
+from pydantic import BaseModel, Field, SecretStr, field_validator
 
 from ..api import DBCaseConfig, DBConfig, MetricType
 
@@ -57,4 +58,29 @@ class TiDBIndexConfig(BaseModel, DBCaseConfig):
     def search_param(self) -> dict:
         return {
             "metric_fn": self.get_metric_fn(),
+        }
+
+
+class SPFreshBuildMode(StrEnum):
+    INLINE = "inline"
+    NON_INLINE = "non-inline"
+
+
+class TiDBSPFreshIndexConfig(TiDBIndexConfig):
+    spfresh_build_mode: SPFreshBuildMode = SPFreshBuildMode.INLINE
+    spfresh_vector_index_param: str | None = None
+    spfresh_wait_timeout: float = Field(default=600.0, gt=0, allow_inf_nan=False)
+
+    @field_validator("spfresh_vector_index_param")
+    @classmethod
+    def normalize_vector_index_param(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        return value.strip() or None
+
+    def index_param(self) -> dict:
+        return {
+            **super().index_param(),
+            "spfresh_build_mode": self.spfresh_build_mode.value,
+            "spfresh_vector_index_param": self.spfresh_vector_index_param,
         }

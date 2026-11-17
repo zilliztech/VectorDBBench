@@ -53,6 +53,7 @@ class DB(Enum):
     AliyunOpenSearch = "AliyunOpenSearch"
     MongoDB = "MongoDB"
     TiDB = "TiDB"
+    TiDBSPFresh = "TiDBSPFresh"
     CockroachDB = "CockroachDB"
     Clickhouse = "Clickhouse"
     Vespa = "Vespa"
@@ -224,6 +225,11 @@ class DB(Enum):
             from .tidb.tidb import TiDB
 
             return TiDB
+
+        if self == DB.TiDBSPFresh:
+            from .tidb.spfresh import TiDBSPFresh
+
+            return TiDBSPFresh
 
         if self == DB.CockroachDB:
             from .cockroachdb.cockroachdb import CockroachDB
@@ -473,7 +479,7 @@ class DB(Enum):
 
             return MariaDBConfig
 
-        if self == DB.TiDB:
+        if self in {DB.TiDB, DB.TiDBSPFresh}:
             from .tidb.config import TiDBConfig
 
             return TiDBConfig
@@ -713,6 +719,11 @@ class DB(Enum):
             from .tidb.config import TiDBIndexConfig
 
             return TiDBIndexConfig
+
+        if self == DB.TiDBSPFresh:
+            from .tidb.config import TiDBSPFreshIndexConfig
+
+            return TiDBSPFreshIndexConfig
 
         if self == DB.CockroachDB:
             from .cockroachdb.config import _cockroachdb_case_config

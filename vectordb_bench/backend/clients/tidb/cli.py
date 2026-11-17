@@ -6,6 +6,7 @@ from pydantic import SecretStr
 from vectordb_bench.backend.clients import DB
 
 from ....cli.cli import CommonTypedDict, cli, click_parameter_decorators_from_typed_dict, run
+from .config import TiDBConfig, TiDBIndexConfig, TiDBSPFreshIndexConfig
 
 
 class TiDBTypedDict(CommonTypedDict):
@@ -76,10 +77,58 @@ class TiDBTypedDict(CommonTypedDict):
 def TiDB(
     **parameters: Unpack[TiDBTypedDict],
 ):
-    from .config import TiDBConfig, TiDBIndexConfig
+    _run_tidb(DB.TiDB, TiDBIndexConfig(), parameters)
 
+
+class TiDBSPFreshTypedDict(TiDBTypedDict):
+    spfresh_build_mode: Annotated[
+        str,
+        click.option(
+            "--spfresh-build-mode",
+            type=click.Choice(["inline", "non-inline"]),
+            default="inline",
+            show_default=True,
+            help="Create the SPFresh index with the table or after loading the data",
+        ),
+    ]
+    spfresh_vector_index_param: Annotated[
+        str | None,
+        click.option(
+            "--spfresh-vector-index-param",
+            type=str,
+            default=None,
+            help="Raw VECTOR_INDEX_PARAM for index creation; does not update an index with --skip-load",
+        ),
+    ]
+    spfresh_wait_timeout: Annotated[
+        float,
+        click.option(
+            "--spfresh-wait-timeout",
+            type=click.FloatRange(min=0, min_open=True),
+            default=600.0,
+            show_default=True,
+            help="Maximum seconds to wait for the SPFresh checkpoint after loading",
+        ),
+    ]
+
+
+@cli.command()
+@click_parameter_decorators_from_typed_dict(TiDBSPFreshTypedDict)
+def TiDBSPFresh(**parameters: Unpack[TiDBSPFreshTypedDict]):
+    _run_tidb(
+        DB.TiDBSPFresh,
+        TiDBSPFreshIndexConfig(
+            spfresh_build_mode=parameters["spfresh_build_mode"],
+            spfresh_vector_index_param=parameters["spfresh_vector_index_param"],
+            spfresh_wait_timeout=parameters["spfresh_wait_timeout"],
+        ),
+        parameters,
+    )
+
+
+def _run_tidb(db: DB, db_case_config: TiDBIndexConfig, parameters: dict):
     run(
-        db=DB.TiDB,
+        db=db,
         db_config=TiDBConfig(
             db_label=parameters["db_label"],
             user_name=parameters["username"],
@@ -89,6 +138,6 @@ def TiDB(
             db_name=parameters["db_name"],
             ssl=parameters["ssl"],
         ),
-        db_case_config=TiDBIndexConfig(),
+        db_case_config=db_case_config,
         **parameters,
     )
