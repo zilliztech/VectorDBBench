@@ -998,7 +998,7 @@ vectordbbench rabitqlibhnsw --path /data/rabitqlib/Performance768D1M --db-label 
     --case-type Performance768D1M --nbits 9 --num-clusters 16 --m 16 --ef-construction 200 --ef-search 128
 ```
 
-To rerun only the search stages against a built index with another `--ef-search`, add `--skip-drop-old --skip-load` and keep the same `--path` and build options; the client refuses an index built with different build options, dimension or metric (a COSINE index is not reused for an IP case).
+To rerun only the search stages against a built index with another `--ef-search`, add `--skip-drop-old --skip-load` and keep the same `--path` and build options; the client refuses an index built from another dataset or with different build options, dimension or metric (a Cohere 1M index is not reused for Cohere 10M, nor a COSINE index for an IP case).
 
 To list the options for HNSW-RaBitQ, execute `vectordbbench rabitqlibhnsw --help`:
 ```text

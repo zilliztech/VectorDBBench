@@ -37,15 +37,28 @@ from vectordb_bench.backend.clients.rabitqlib.config import (
     RaBitQLibIndexConfig,
 )
 from vectordb_bench.backend.clients.rabitqlib.rabitqlib import RaBitQLib
+from vectordb_bench.backend.data_source import DatasetSource
 from vectordb_bench.backend.filter import IntFilter, non_filter
+from vectordb_bench.backend.task_runner import CaseRunner, RunningStatus
 from vectordb_bench.cli.vectordbbench import cli
+from vectordb_bench.models import CaseConfig, TaskConfig
 
 DIM = 128
 N = 2000
 K = 10
 
 
-def make_db(path: Path, *, drop_old: bool = True, dim: int = DIM, **case: object) -> RaBitQLib:
+SYNTHETIC = {"name": "Synthetic", "size": N}
+
+
+def dataset_identity(case_type: CaseType) -> dict:
+    """What the case runner passes for a case (task_runner.py, CaseRunner.init_db)."""
+    return type2case[case_type]().dataset.data.model_dump(mode="json")
+
+
+def make_db(
+    path: Path, *, drop_old: bool = True, dim: int = DIM, identity: dict = SYNTHETIC, **case: object
+) -> RaBitQLib:
     case.setdefault("metric_type", MetricType.L2)
     case.setdefault("ef_search", 128)
     case.setdefault("nbits", 7)
@@ -54,6 +67,7 @@ def make_db(path: Path, *, drop_old: bool = True, dim: int = DIM, **case: object
         db_config=RaBitQLibConfig(path=str(path)).to_dict(),
         db_case_config=RaBitQLibHNSWConfig(**case),
         drop_old=drop_old,
+        dataset_identity=identity,
     )
 
 
@@ -214,9 +228,65 @@ class TestReuseAndRejection:
         )
         vectors, ids = dataset()
         load(make_db(tmp_path, metric_type=built_as), vectors, ids)
-        with pytest.raises(ValueError, match=f"'metric_type': '{reused_as.value}'"):
+        with pytest.raises(
+            ValueError, match=f"metric_type: built with {built_as.value}, this case needs {reused_as.value}"
+        ):
             make_db(tmp_path, drop_old=False, metric_type=reused_as)
         make_db(tmp_path, drop_old=False, metric_type=built_as, ef_search=300)
+
+    def test_reuse_rejects_another_dataset_of_same_dim_and_metric(self, tmp_path: Path):
+        # Cohere 1M and 10M share dim, metric and build params; only the dataset identity differs.
+        built_for, reused_for = (
+            dataset_identity(CaseType.Performance768D1M),
+            dataset_identity(CaseType.Performance768D10M),
+        )
+        assert (built_for["dim"], built_for["metric_type"]) == (reused_for["dim"], reused_for["metric_type"])
+        vectors, ids = dataset()
+        load(make_db(tmp_path, identity=built_for), vectors, ids)
+
+        with pytest.raises(
+            ValueError,
+            match="dataset: built with the Cohere dataset of 1000000 vectors, "
+            "this case needs the Cohere dataset of 10000000 vectors",
+        ):
+            make_db(tmp_path, drop_old=False, identity=reused_for)
+        make_db(tmp_path, drop_old=False, identity=built_for, ef_search=300)
+
+    def test_reuse_rejects_dataset_with_other_settings(self, built: Built):
+        path, _, _ = built
+        with pytest.raises(ValueError, match="built with the Synthetic dataset of 2000 vectors with other settings"):
+            make_db(path, drop_old=False, identity={**SYNTHETIC, "use_shuffled": False})
+
+    def test_reuse_rejects_index_without_recorded_dataset(self, tmp_path: Path):
+        # Indexes built before the manifest recorded the dataset.
+        vectors, ids = dataset()
+        load(make_db(tmp_path), vectors, ids)
+        manifest_file = tmp_path / "rabitqlib_hnsw.manifest.json"
+        manifest = json.loads(manifest_file.read_text())
+        del manifest["dataset"]
+        manifest_file.write_text(json.dumps(manifest))
+        with pytest.raises(ValueError, match="dataset: built with no recorded dataset"):
+            make_db(tmp_path, drop_old=False)
+
+    def test_requires_dataset_identity(self, tmp_path: Path):
+        for identity in (None, {}):
+            with pytest.raises(ValueError, match="requires a dataset identity"):
+                make_db(tmp_path, identity=identity)
+        assert not any(tmp_path.iterdir())
+
+    def test_case_runner_passes_dataset_identity(self, tmp_path: Path):
+        case = CaseConfig(case_id=CaseType.Performance768D1M)
+        task = TaskConfig(
+            db=DB.RaBitQLib,
+            db_config=RaBitQLibConfig(path=str(tmp_path)),
+            db_case_config=RaBitQLibHNSWConfig(metric_type=MetricType.COSINE),
+            case_config=case,
+        )
+        runner = CaseRunner(
+            run_id="test", config=task, ca=case.case, status=RunningStatus.PENDING, dataset_source=DatasetSource.S3
+        )
+        runner.init_db()
+        assert runner.db.dataset_identity == dataset_identity(CaseType.Performance768D1M)
 
     def test_insert_after_build_is_rejected(self, built: Built):
         path, vectors, _ = built

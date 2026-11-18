@@ -78,6 +78,15 @@ class DB(Enum):
     HouyiDB = "HouyiDB"
     RaBitQLib = "RaBitQLib"
 
+    @property
+    def builds_static_index(self) -> bool:
+        """Embedded clients that build one saved index after loading and reuse it.
+
+        They run only performance cases, and need the dataset identity to check
+        that a reused index was built from the same dataset.
+        """
+        return self in {DB.Warm, DB.RaBitQLib}
+
     def supports_case_label(self, label: "CaseLabel") -> bool:
         from ..cases import CaseLabel
 

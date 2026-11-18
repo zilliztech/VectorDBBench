@@ -50,6 +50,15 @@ MIN_DIM = 64
 MANIFEST_VERSION = 1
 
 
+def _describe(key: str, value: Any) -> str:
+    """A short form of a manifest value for error messages; dataset dumps are long."""
+    if key == "dataset":
+        if not isinstance(value, dict):
+            return "no recorded dataset"
+        return f"the {value.get('name')} dataset of {value.get('size')} vectors"
+    return str(value)
+
+
 class RaBitQLib(VectorDB):
     supported_filter_types: list[FilterOp] = [FilterOp.NonFilter]
     supports_batch_search: bool = True
@@ -63,9 +72,13 @@ class RaBitQLib(VectorDB):
         db_case_config: RaBitQLibIndexConfig,
         collection_name: str = "",
         drop_old: bool = False,
+        dataset_identity: dict | None = None,
         **kwargs,
     ):
         self.name = "RaBitQLib"
+        if not dataset_identity:
+            msg = f"{self.name} requires a dataset identity to validate saved-index reuse"
+            raise ValueError(msg)
         if dim < MIN_DIM:
             msg = f"{self.name} requires dim >= {MIN_DIM}, got {dim}"
             raise ValueError(msg)
@@ -75,6 +88,8 @@ class RaBitQLib(VectorDB):
         self.index_param = db_case_config.index_param()
         # COSINE and IP both build an "ip" index, but COSINE vectors are normalized first.
         self.metric_type = db_case_config.metric_type.value
+        # Round-trip through JSON so it compares equal to the copy read back from the manifest.
+        self.dataset_identity = json.loads(json.dumps(dataset_identity))
         self.path = Path(db_config["path"])
         self.path.mkdir(parents=True, exist_ok=True)
         # Every file is named after the index type, so index types can share a path.
@@ -139,10 +154,15 @@ class RaBitQLib(VectorDB):
 
     def _build_identity(self) -> dict:
         """What a reused index must match; search parameters such as ef may differ."""
-        return {"dim": self.dim, "metric_type": self.metric_type, "index_param": self.index_param}
+        return {
+            "dataset": self.dataset_identity,
+            "dim": self.dim,
+            "metric_type": self.metric_type,
+            "index_param": self.index_param,
+        }
 
     def _check_manifest(self) -> None:
-        """Refuse to reuse an index built with other parameters, dim or metric."""
+        """Refuse to reuse an index built from another dataset or with other parameters, dim or metric."""
         manifest = json.loads(self._file(self.manifest_file).read_text())
         if manifest.get("version") != MANIFEST_VERSION:
             msg = (
@@ -152,10 +172,19 @@ class RaBitQLib(VectorDB):
             raise ValueError(msg)
         expected = self._build_identity()
         found = {key: manifest.get(key) for key in expected}
-        if found != expected:
+        mismatches = []
+        for key, needed in expected.items():
+            if found[key] == needed:
+                continue
+            built, wanted = _describe(key, found[key]), _describe(key, needed)
+            if built == wanted:
+                # Same name and size, but other fields differ (another custom dataset, other settings).
+                built += " with other settings"
+            mismatches.append(f"{key}: built with {built}, this case needs {wanted}")
+        if mismatches:
             msg = (
-                f"{self.name}: the {self.index_type} index under {self.path} was built with {found}; "
-                f"this case needs {expected}. Rerun with drop_old to rebuild."
+                f"{self.name}: the {self.index_type} index under {self.path} does not match this case "
+                f"({'; '.join(mismatches)}). Rerun with drop_old to rebuild."
             )
             raise ValueError(msg)
         log.info(f"{self.name}: reusing {self.index_type} index under {self.path} ({manifest.get('count')} vectors)")
