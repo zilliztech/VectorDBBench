@@ -89,6 +89,7 @@ class CaseConfigParamType(Enum):
     quantizedFetchLimit = "quantized_fetch_limit"
     m = "m"
     nbits = "nbits"
+    num_clusters = "num_clusters"
     nrq = "nrq"
     intermediate_graph_degree = "intermediate_graph_degree"
     graph_degree = "graph_degree"
@@ -346,7 +347,7 @@ class TaskConfig(BaseModel):
             CaseType.StreamingPerformanceCase,
             CaseType.StreamingCustomDataset,
         }
-        if self.db is DB.Warm and (
+        if self.db.builds_static_index and (
             self.case_config.case_id in unsupported or not self.db.supports_case_label(self.case_config.case.label)
         ):
             msg = f"{self.db.value} supports only performance cases; streaming and capacity cases are unsupported"

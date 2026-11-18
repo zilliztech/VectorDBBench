@@ -61,6 +61,7 @@ class IndexType(StrEnum):
     IVF_HNSW_SQ = "IVF_HNSW_SQ"
     IVF_HNSW_PQ = "IVF_HNSW_PQ"
     BTREE = "BTREE"
+    RABITQLIB_HNSW = "rabitqlib_hnsw"
     NONE = "NONE"
 
 

@@ -39,3 +39,13 @@ jobs:
       - name: Test with pytest
         run: |
           make unittest
+
+      # rabitqlib is an optional extra: install its declared minimum version and
+      # fail, rather than skip, if the client tests cannot import it.
+      - name: Test the rabitqlib client
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
+        env:
+          RABITQLIB_REQUIRED: "1"
+        run: |
+          pip install -e ".[test,rabitqlib]" "rabitqlib==0.8.3"
+          python -m pytest tests/test_rabitqlib.py tests/test_rabitqlib_ui_config.py -q

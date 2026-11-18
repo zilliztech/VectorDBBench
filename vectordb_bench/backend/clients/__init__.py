@@ -76,11 +76,21 @@ class DB(Enum):
     VolcMySQL = "VolcMySQL"
     Adbpg = "AnalyticDB for PostgreSQL"
     HouyiDB = "HouyiDB"
+    RaBitQLib = "RaBitQLib"
+
+    @property
+    def builds_static_index(self) -> bool:
+        """Embedded clients that build one saved index after loading and reuse it.
+
+        They run only performance cases, and need the dataset identity to check
+        that a reused index was built from the same dataset.
+        """
+        return self in {DB.Warm, DB.RaBitQLib}
 
     def supports_case_label(self, label: "CaseLabel") -> bool:
         from ..cases import CaseLabel
 
-        return self != DB.Warm or label == CaseLabel.Performance
+        return not self.builds_static_index or label == CaseLabel.Performance
 
     @property
     def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901, PLR0915
@@ -331,6 +341,11 @@ class DB(Enum):
             from .houyidb.houyidb import HouyiDB
 
             return HouyiDB
+
+        if self == DB.RaBitQLib:
+            from .rabitqlib.rabitqlib import RaBitQLib
+
+            return RaBitQLib
 
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
@@ -584,6 +599,11 @@ class DB(Enum):
             from .houyidb.config import HouyiDBConfig
 
             return HouyiDBConfig
+
+        if self == DB.RaBitQLib:
+            from .rabitqlib.config import RaBitQLibConfig
+
+            return RaBitQLibConfig
 
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
@@ -841,6 +861,11 @@ class DB(Enum):
             from .houyidb.config import HouyiDBIndexConfig
 
             return HouyiDBIndexConfig
+
+        if self == DB.RaBitQLib:
+            from .rabitqlib.config import RaBitQLibHNSWConfig, _rabitqlib_case_config
+
+            return _rabitqlib_case_config.get(index_type, RaBitQLibHNSWConfig)
 
         # DB.Pinecone, DB.Redis
         return EmptyDBCaseConfig
