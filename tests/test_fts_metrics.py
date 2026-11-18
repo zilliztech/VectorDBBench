@@ -60,10 +60,11 @@ def test_serial_runner_returns_semantic_fts_metrics():
         workload_kind=WorkloadKind.FULL_TEXT,
     )
 
-    recall, ndcg, mrr, p99, p95 = runner.search((runner.test_data, runner.ground_truth))
+    recall, ndcg, mrr, p99, p95, recall_stats = runner.search((runner.test_data, runner.ground_truth))
 
     assert recall == 1.0
     assert ndcg == 0.5869
     assert mrr == 0.5
     assert p99 >= 0
     assert p95 >= 0
+    assert recall_stats == {"recall_min": 1.0, "recall_p1": 1.0, "recall_p5": 1.0, "recall_p10": 1.0}

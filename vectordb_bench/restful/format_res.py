@@ -34,6 +34,14 @@ class FormatResult(BaseModel):
     serial_latency_p95: float = 0
     serial_latency_p50: float = 0
     recall: float = 0
+    recall_min: float | None = None
+    recall_p1: float | None = None
+    recall_p5: float | None = None
+    recall_p10: float | None = None
+    st_recall_min_list: list[float | None] = []
+    st_recall_p1_list: list[float | None] = []
+    st_recall_p5_list: list[float | None] = []
+    st_recall_p10_list: list[float | None] = []
     recall_at: dict[int, float] = {}
     ndcg: float = 0
     mrr: float = 0

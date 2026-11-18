@@ -179,6 +179,10 @@ exactly `nq` vectors, wrapping through the query dataset as needed.
 Other backends and streaming, full-text, cold-latency and multi-tenant cases reject
 `nq > 1` before data loading.
 
+Result JSON also records `recall_min`, `recall_p1`, `recall_p5`, and `recall_p10` across serial-search queries.
+Percentiles use linear interpolation; lower values describe the worst-recall queries. These fields are `null` when
+recall is not measured. Streaming results record the corresponding per-stage values in `st_recall_*_list`.
+
 Use `--note` or `--note-file` to preserve deployment, resource, client, network, and constraint context in each result JSON under `task_config.db_config.note`. The options are mutually exclusive. Prefer `--note-file` for structured or multiline context, and never include credentials, tokens, or sensitive connection details.
 
 ```shell

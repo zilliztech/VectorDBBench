@@ -132,6 +132,29 @@ def test_old_result_defaults_large_topk_metrics(tmp_path: Path):
     assert loaded.results[0].metrics.payload_estimated_bytes_per_query == 0
 
 
+def test_recall_tail_result_round_trip_and_legacy_defaults(tmp_path: Path):
+    values = {"recall_min": 0.0, "recall_p1": 0.1, "recall_p5": 0.2, "recall_p10": 0.3}
+    stage_values = {f"st_{key}_list": [value, None] for key, value in values.items()}
+    result = _large_topk_test_result(Metric(**values, **stage_values))
+    path = tmp_path / "result.json"
+    payload = result.model_dump_for_output()
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+    loaded = TestResult.read_file(path, trans_unit=True).results[0].metrics
+    assert {key: getattr(loaded, key) for key in values} == values
+    assert {key: getattr(loaded, key) for key in stage_values} == stage_values
+    formatted = format_results([result], task_label="large-topk")[0]
+    assert {key: formatted[key] for key in values} == values
+    assert {key: formatted[key] for key in stage_values} == stage_values
+
+    for key in (*values, *stage_values):
+        payload["results"][0]["metrics"].pop(key)
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    legacy = TestResult.read_file(path).results[0].metrics
+    assert all(getattr(legacy, key) is None for key in values)
+    assert all(getattr(legacy, key) == [] for key in stage_values)
+
+
 def test_large_topk_metrics_round_trip_and_convert_serial_p50(tmp_path: Path):
     test_result = _large_topk_test_result(
         Metric(

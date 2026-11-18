@@ -436,6 +436,7 @@ class CaseRunner(BaseModel):
                         )
                         time.sleep(cooldown)
                     search_results = self._serial_search()
+                    *search_results, recall_stats = search_results
                     if self.is_fts:
                         m.recall, m.ndcg, m.mrr, m.serial_latency_p99, m.serial_latency_p95 = search_results
                     else:
@@ -447,6 +448,8 @@ class CaseRunner(BaseModel):
                             m.serial_latency_p50,
                             m.recall_at,
                         ) = search_results
+                    for name, value in recall_stats.items():
+                        setattr(m, name, value)
             gt_data = getattr(self.ca.dataset, "gt_data", None)
             if gt_data is not None and hasattr(gt_data, "path"):
                 m.additional_parameters["ground_truth"] = {
@@ -604,13 +607,13 @@ class CaseRunner(BaseModel):
         finally:
             runner = None
 
-    def _serial_search(self) -> tuple[float, ...]:
+    def _serial_search(self) -> tuple:
         """Performance serial tests, search the entire test data once,
         calculate the recall, serial_latency_p99, serial_latency_p95
 
         Returns:
-            tuple[float, ...]: vector cases return recall, ndcg, p99, p95, p50, recall_at;
-                FTS cases return recall, p99, p95, p50.
+            tuple: vector cases return recall, ndcg, latency percentiles, recall_at and recall stats;
+                FTS cases return recall, ndcg, mrr, latency percentiles and recall stats.
         """
         try:
             if self.serial_search_runner is None:
@@ -619,7 +622,7 @@ class CaseRunner(BaseModel):
                         "Skipping FTS serial recall: %s",
                         getattr(self.ca.dataset, "recall_skip_reason", "unknown"),
                     )
-                    return (0.0, 0.0, 0.0, 0.0, 0.0)
+                    return (0.0, 0.0, 0.0, 0.0, 0.0, {})
                 msg = "serial search runner is not initialized"
                 raise RuntimeError(msg)  # noqa: TRY301
             results, _ = self.serial_search_runner.run()

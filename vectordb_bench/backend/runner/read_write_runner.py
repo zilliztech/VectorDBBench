@@ -102,7 +102,7 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
         log.info("Search after write - Serial search start")
         test_time = round(time.perf_counter(), 4)
         res, ssearch_dur = self.serial_search_runner.run()
-        recall, ndcg, p99_latency, p95_latency, p50_latency, _ = res
+        recall, ndcg, p99_latency, p95_latency, p50_latency, _, recall_stats = res
         log.info(
             f"Search after write - Serial search - recall={recall}, ndcg={ndcg}, "
             f"p99={p99_latency}, p95={p95_latency}, p50={p50_latency}, dur={ssearch_dur:.4f}",
@@ -135,6 +135,7 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
                 conc_latency_p99_list,
                 conc_latency_p95_list,
                 conc_latency_avg_list,
+                recall_stats,
             )
         ]
 
@@ -182,6 +183,8 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
                     m.st_search_time_list = [round(d[1] - start_time, 4) for d in r]
                     m.st_max_qps_list_list = [d[2] for d in r]
                     m.st_recall_list = [d[3] for d in r]
+                    for name in ("recall_min", "recall_p1", "recall_p5", "recall_p10"):
+                        setattr(m, f"st_{name}_list", [d[13].get(name) for d in r])
                     m.st_ndcg_list = [d[4] for d in r]
                     m.st_serial_latency_p99_list = [d[5] for d in r]
                     m.st_serial_latency_p95_list = [d[6] for d in r]
@@ -260,13 +263,14 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
             log.info(f"Insert {perc}% done, total batch={total_batch}")
             test_time = round(time.perf_counter(), 4)
             max_qps, recall, ndcg, p99_latency, p95_latency, conc_failed_rate = 0, 0, 0, 0, 0, 0
+            recall_stats = {}
             conc_num_list, conc_qps_list = [], []
             conc_latency_p99_list, conc_latency_p95_list, conc_latency_avg_list = [], [], []
             try:
                 log.info(f"[{target_batch}/{total_batch}] Serial search - {perc}% start")
                 res, ssearch_dur = self.serial_search_runner.run()
                 ssearch_dur = round(ssearch_dur, 4)
-                recall, ndcg, p99_latency, p95_latency, p50_latency, _ = res
+                recall, ndcg, p99_latency, p95_latency, p50_latency, _, recall_stats = res
                 log.info(
                     f"[{target_batch}/{total_batch}] Serial search - {perc}% done, "
                     f"recall={recall}, ndcg={ndcg}, p99={p99_latency}, p95={p95_latency}, "
@@ -310,6 +314,7 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
                     conc_latency_p99_list,
                     conc_latency_p95_list,
                     conc_latency_avg_list,
+                    recall_stats,
                 )
             )
             start_batch = target_batch
