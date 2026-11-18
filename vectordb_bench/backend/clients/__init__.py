@@ -1,4 +1,8 @@
 from enum import Enum
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..cases import CaseLabel
 
 from .api import (
     DBCaseConfig,
@@ -60,7 +64,9 @@ class DB(Enum):
     AliSQL = "AlibabaCloudRDSMySQL"
     Doris = "Doris"
     TurboPuffer = "TurboPuffer"
+    Turso = "Turso"
     Zvec = "Zvec"
+    Warm = "Warm"
     Endee = "Endee"
     Lindorm = "Lindorm"
     VectorChord = "VectorChord"
@@ -69,6 +75,12 @@ class DB(Enum):
     SeekDB = "SeekDB"
     VolcMySQL = "VolcMySQL"
     Adbpg = "AnalyticDB for PostgreSQL"
+    HouyiDB = "HouyiDB"
+
+    def supports_case_label(self, label: "CaseLabel") -> bool:
+        from ..cases import CaseLabel
+
+        return self != DB.Warm or label == CaseLabel.Performance
 
     @property
     def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901, PLR0915
@@ -226,6 +238,11 @@ class DB(Enum):
 
             return TurboPuffer
 
+        if self == DB.Turso:
+            from .turso.turso import Turso
+
+            return Turso
+
         if self == DB.Test:
             from .test.test import Test
 
@@ -271,6 +288,11 @@ class DB(Enum):
 
             return Zvec
 
+        if self == DB.Warm:
+            from .warm.warm import Warm
+
+            return Warm
+
         if self == DB.Lindorm:
             from .lindorm.lindorm_search import LindormVector
 
@@ -304,6 +326,11 @@ class DB(Enum):
             from .adbpg.adbpg import Adbpg
 
             return Adbpg
+
+        if self == DB.HouyiDB:
+            from .houyidb.houyidb import HouyiDB
+
+            return HouyiDB
 
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
@@ -464,6 +491,11 @@ class DB(Enum):
 
             return TurboPufferConfig
 
+        if self == DB.Turso:
+            from .turso.config import TursoConfig
+
+            return TursoConfig
+
         if self == DB.Test:
             from .test.config import TestConfig
 
@@ -509,6 +541,11 @@ class DB(Enum):
 
             return ZvecConfig
 
+        if self == DB.Warm:
+            from .warm.config import WarmConfig
+
+            return WarmConfig
+
         if self == DB.Lindorm:
             from .lindorm.config import LindormConfig
 
@@ -542,6 +579,11 @@ class DB(Enum):
             from .adbpg.config import AdbpgConfig
 
             return AdbpgConfig
+
+        if self == DB.HouyiDB:
+            from .houyidb.config import HouyiDBConfig
+
+            return HouyiDBConfig
 
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
@@ -701,9 +743,16 @@ class DB(Enum):
             return HologresIndexConfig
 
         if self == DB.Zvec:
-            from .zvec.config import ZvecHNSWIndexConfig
+            from .zvec.config import ZvecDiskANNIndexConfig, ZvecHNSWIndexConfig
 
+            if index_type == IndexType.DISKANN:
+                return ZvecDiskANNIndexConfig
             return ZvecHNSWIndexConfig
+
+        if self == DB.Warm:
+            from .warm.config import WarmIndexConfig
+
+            return WarmIndexConfig
 
         if self == DB.TencentElasticsearch:
             from .tencent_elasticsearch.config import TencentElasticsearchIndexConfig
@@ -733,6 +782,11 @@ class DB(Enum):
             from .turbopuffer.config import TurboPufferIndexConfig
 
             return TurboPufferIndexConfig
+
+        if self == DB.Turso:
+            from .turso.config import TursoIndexConfig
+
+            return TursoIndexConfig
 
         if self == DB.Chroma:
             from .chroma.config import ChromaIndexConfig
@@ -782,6 +836,11 @@ class DB(Enum):
             from .kividb.config import KiviDBHNSWConfig, _kividb_case_config
 
             return _kividb_case_config.get(index_type, KiviDBHNSWConfig)
+
+        if self == DB.HouyiDB:
+            from .houyidb.config import HouyiDBIndexConfig
+
+            return HouyiDBIndexConfig
 
         # DB.Pinecone, DB.Redis
         return EmptyDBCaseConfig

@@ -5,6 +5,7 @@ from vectordb_bench.frontend.components.check_results.stPageConfig import (
 )
 from vectordb_bench.frontend.components.check_results.headerIcon import drawHeaderIcon
 from vectordb_bench.frontend.components.check_results.nav import (
+    NavToExternalLinks,
     NavToQuriesPerDollar,
     NavToRunTest,
     NavToPages,
@@ -46,6 +47,7 @@ def main():
     navContainer = st.sidebar.container()
     NavToRunTest(navContainer)
     NavToQuriesPerDollar(navContainer)
+    NavToExternalLinks(navContainer)
 
     # save or share
     resultesContainer = st.sidebar.container()

@@ -13,8 +13,8 @@ VectorDBBench provides repeatable workloads for insertion, vector search,
 filtered search, and full-text search. Its registered vector datasets range
 from classic [SIFT](http://corpus-texmex.irisa.fr/) and
 [GIST](http://corpus-texmex.irisa.fr/) corpora to
-[Cohere](https://huggingface.co/datasets/Cohere/wikipedia-22-12/tree/main/en)
-embeddings, OpenAI embeddings generated from the public
+[Cohere Wikipedia embedding archives](https://cohere.com/blog/embedding-archives-wikipedia),
+OpenAI embeddings generated from the public
 [C4 dataset](https://huggingface.co/datasets/allenai/c4), and the
 [VIBE and VDBBench multimodal datasets](docs/release/2026-09-hugging-face-datasets.md)
 hosted on Hugging Face. Together, these datasets cover different corpus sizes,
@@ -24,7 +24,7 @@ Prepare to delve into the world of VDBBench, and let it guide you in uncovering 
 
 VDBBench is sponsored by Zilliz，the leading opensource vectorDB company behind Milvus. Choose smarter with VDBBench - start your free test on [zilliz cloud](https://zilliz.com/) today!
 
-**Leaderboard:** https://zilliz.com/benchmark
+**[Leaderboard](https://zilliz.com/vdbbench-leaderboard)** · **[Cost leaderboard](https://zilliz.com/vdbbench-leaderboard-v2)**
 
 ## 🎈 Announcement 🎈
 
@@ -91,7 +91,9 @@ All the database client supported
 | polardb                  | `pip install vectordb-bench[polardb]`       |
 | polardb_pg               | `pip install vectordb-bench[pgvector]`      |
 | doris                    | `pip install vectordb-bench[doris]`         |
+| turso                    | `pip install vectordb-bench[turso]`         |
 | zvec                     | `pip install vectordb-bench[zvec]`          |
+| warm                     | `pip install vectordb-bench[warm]`          |
 | endee                    | `pip install vectordb-bench[endee]`         |
 | lindorm                  | `pip install vectordb-bench[lindorm]`       |
 | volc_mysql               | `pip install vectordb-bench[volc_mysql]`    |
@@ -275,6 +277,29 @@ Options:
                                   with-gt]
   --help                          Show this message and exit.
 ```
+
+### Run VDBBench against Zilliz Cloud (managed Milvus)
+
+Zilliz Cloud is the managed Milvus service, and its client is included in the
+default `pip install vectordb-bench`. To reproduce leaderboard cases on your own
+cluster:
+
+1. [Sign up for Zilliz Cloud](https://cloud.zilliz.com/signup?utm_source=github&utm_medium=referral&utm_campaign=vdbbench&utm_content=readme)
+   (a free tier is available) and create a cluster.
+2. From the cluster details page, copy the public endpoint (URI) and an API key (token).
+3. Run a case. The token is read from `$ZILLIZ_TOKEN` if `--token` is omitted:
+
+```shell
+export ZILLIZ_TOKEN=<your-api-key>
+vectordbbench zillizautoindex \
+  --uri <your-cluster-public-endpoint> \
+  --case-type Performance768D1M \
+  --db-label my-zilliz-cluster
+```
+
+Run `vectordbbench zillizautoindex --help` for all options (for example `--level`,
+`--num-concurrency`, `--k`). To benchmark your own embeddings instead of a
+registered dataset, see [Custom local datasets](#custom-local-datasets).
 
 ### Run polardb_pg from command line
 
@@ -626,6 +651,16 @@ Options:
 
 ### Run Zvec from command line
 
+HNSW remains the default. For both HNSW and DiskANN, the distance metric is determined by the selected dataset during task
+assembly, not by a Zvec CLI option. For example, `Performance768D10M` uses COSINE.
+
+In the run-test UI, select Zvec and choose HNSW or DISKANN in the case settings. Only parameters for the selected algorithm
+are displayed. Load cases expose build parameters; performance and streaming cases also expose search parameters. Defaults
+match the CLI. Use separate collection paths for HNSW and DiskANN, and keep DiskANN build parameters unchanged for search-only
+runs.
+
+Existing HNSW commands are unchanged:
+
 ```bash
 vectordbbench zvec --path Performance768D10M --db-label 16c64g-v0.1 \
     --case-type Performance768D10M --num-concurrency 12,14,16,18,20 \
@@ -644,6 +679,68 @@ To list the options for zvec, execute vectordbbench zvec --help
                                   refine with unquantized vector to `topk`
                                   results
 ```
+
+#### Zvec DiskANN
+
+DiskANN requires `zvec>=0.7.0`, which provides `Collection.close()`. The SDK must also expose
+`DiskAnnIndexParam` and `DiskAnnQueryParam`.
+This adapter uses zvec's native C++ DiskANN, not the Microsoft Rust implementation.
+From this updated checkout on Linux, install the adapter with its Zvec and test dependencies, then run the checks:
+
+```bash
+python -m pip install -e ".[zvec,test]"
+vectordbbench zvec --help
+python -m pytest tests/test_zvec.py -q
+ZVEC_NATIVE_TESTS=1 python -m pytest tests/test_zvec.py -k native_diskann -v
+```
+
+The `zvec` extra enforces the SDK minimum. `--no-deps` bypasses dependency resolution; use it only after
+independently verifying the installed SDK version and required APIs.
+
+The native test builds 1,200 32-dimensional vectors in a temporary directory, checks insertion and index completion,
+closes/reopens the collection, searches it, and exercises rebuilding. It is a functionality test, not a recall or
+performance benchmark. It is skipped unless explicitly enabled on Linux. Run it successfully before a large benchmark.
+
+| Option | Default | Meaning |
+| --- | --- | --- |
+| `--index-type` | hnsw | Select hnsw or diskann |
+| `--max-degree` | 64 | DiskANN graph degree, 1-100 |
+| `--build-list-size` | 100 | Construction candidate list, 10-100 |
+| `--search-list-size` | 300 | Query candidate list, at least 1; the engine uses at least top-k |
+| `--pq-chunk-num` | 0 | PQ bytes per vector; 0 is automatic, otherwise at most min(dimension, 1024) |
+
+DiskANN stores FP32 vectors and uses internal PQ for graph traversal. HNSW options (`--m`, `--ef-construction`,
+`--ef-search`, `--quantize-type`, `--is-using-refiner`) are rejected in DiskANN mode, and DiskANN options are rejected
+in HNSW mode. PQ chunks are not equivalent to HNSW INT8 scalar quantization.
+
+After the checks pass, build a separate DiskANN collection. The load stage includes `optimize()`, which builds the
+target index; flushing alone does not establish that a DiskANN index was built. `--drop-old` replaces any existing
+DiskANN collection at this path. The adapter refuses to use or delete an existing non-DiskANN collection.
+
+```bash
+export DATASET_LOCAL_DIR="$PWD/dataset"
+vectordbbench zvec --index-type diskann --path Performance768D10M_DiskANN \
+  --case-type Performance768D10M \
+  --max-degree 64 --build-list-size 100 --pq-chunk-num 96 \
+  --drop-old --load --skip-search-serial --skip-search-concurrent
+```
+
+Then search the same index without reloading or rebuilding it:
+
+```bash
+vectordbbench zvec --index-type diskann --path Performance768D10M_DiskANN \
+  --case-type Performance768D10M \
+  --max-degree 64 --build-list-size 100 --pq-chunk-num 96 \
+  --search-list-size 300 --num-concurrency 12,14,16,18,20 \
+  --skip-drop-old --skip-load --search-serial --search-concurrent
+```
+
+Search-only runs validate the stored dimensions, metric, build parameters, positive document count and complete
+indexing. Keep build parameters unchanged when reopening; sweep `--search-list-size` to compare QPS at matched recall.
+These examples use the Cohere dataset's COSINE metric for both building and searching. For an HNSW/DiskANN
+comparison, use the same dataset and separate collection paths; do not relabel an existing IP index as COSINE.
+Multiple search processes can duplicate in-memory PQ codes and metadata, so measure total process memory as well
+as QPS.
 
 ### Run Doris from command line
 
@@ -844,6 +941,48 @@ To list the options for VolcMySQL, execute `vectordbbench volcmysqlhnsw --help`.
 ```
 
 > Note: vectors are loaded and queried over the raw-binary `VECTOR` path by default; the client auto-probes server support and falls back to `to_vector()` text when unavailable. Set `VDB_BINARY_VEC=0` to force the text path or `1` to force binary.
+
+### Run HouyiDB from command line
+
+HouyiDB is a memory-first vector database with an HNSW index, a PostgreSQL-compatible pgwire endpoint and an HTTP benchmark API. Install the optional client dependencies with `pip install vectordb-bench[houyidb]`. The client loads and searches over pgwire by default and switches to the HTTP API for filtered cases or when `--transport http` is selected.
+
+HouyiDB builds a cosine index, so the client rejects datasets whose distance metric is not `COSINE`. Because the server has no remote drop for the main index, a `drop_old=True` case is rejected when the index is not empty: start HouyiDB from an empty data directory (and empty WAL) before a fresh load. Before measuring, the client reads the effective `hnsw_m`, `hnsw_ef_construction` and `distance_metric` from `/v1/index/status` and aborts the run if they do not match the case configuration. With `--transport pgwire`, start the server with matching build parameters, e.g. `--pgwire-hnsw-m 24 --pgwire-hnsw-efc 400`; `--no-verify-build-params` is available only for older servers that do not report these fields.
+
+```shell
+vectordbbench houyidb \
+  --case-type Performance1536D50K \
+  --host <db_host> \
+  --port 15432 \
+  --http-port 17000 \
+  --transport pgwire \
+  --m 24 \
+  --ef-construction 400 \
+  --ef-search 256 \
+  --num-concurrency '10,20,40,60,80' \
+  --concurrency-duration 30 \
+  --task-label <task_label> \
+  --db-label <db_label>
+```
+
+To list the options for HouyiDB, execute `vectordbbench houyidb --help`. The following are some HouyiDB-specific command-line options.
+
+```text
+  --host TEXT                      HouyiDB host  [required]
+  --port INTEGER                   HouyiDB pgwire port  [default: 15432]
+  --http-port INTEGER              Benchmark HTTP port  [default: 17000]
+  --transport [pgwire|http]        Data plane  [default: pgwire]
+  --use-tls / --no-use-tls         Use HTTPS for HTTP requests  [default: no-use-tls]
+  --api-key TEXT                   Optional token: HTTP Bearer or pgwire password
+  --timeout-sec INTEGER            Per-request timeout in seconds, including pgwire statement execution  [default: 600]
+  --verify-build-params / --no-verify-build-params
+                                   Verify the server's effective HNSW build parameters before measuring  [default: verify]
+  --metric-type [COSINE]           Distance metric (HouyiDB builds a cosine index)  [default: COSINE]
+  --m INTEGER                      HNSW m  [default: 24]
+  --ef-construction INTEGER        HNSW ef_construction  [default: 400]
+  --ef-search INTEGER              HNSW ef_search  [default: 256]
+```
+
+Filtered cases use the HTTP data plane because that is where HouyiDB accepts scalar labels and id filters.
 
 #### Using a configuration file.
 

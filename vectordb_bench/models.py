@@ -67,6 +67,12 @@ class CaseConfigParamType(Enum):
     hnsw_ef = "hnsw_ef"
     SearchList = "search_list"
     ef_search = "ef_search"
+    rerank = "rerank"
+    code_bits = "code_bits"
+    residual_bits = "residual_bits"
+    threads = "threads"
+    quantize_type = "quantize_type"
+    is_using_refiner = "is_using_refiner"
     ef_runtime = "ef_runtime"
     Nlist = "nlist"
     Nprobe = "nprobe"
@@ -113,6 +119,9 @@ class CaseConfigParamType(Enum):
     l_value_ib = "l_value_ib"
     l_value_is = "l_value_is"
     search_list_size = "search_list_size"
+    max_degree = "max_degree"
+    build_list_size = "build_list_size"
+    pq_chunk_num = "pq_chunk_num"
     max_alpha = "max_alpha"
     num_dimensions = "num_dimensions"
     num_bits_per_dimension = "num_bits_per_dimension"
@@ -214,6 +223,10 @@ class CaseConfigParamType(Enum):
 
     # SeekDB parameters
     reset_resource_limits = "reset_resource_limits"
+
+    # LanceDB scalar index, independent of the vector index selection.
+    scalar_index = "scalar_index"
+    scalar_column = "scalar_column"
 
 
 class CustomizedCase(BaseModel):
@@ -327,6 +340,21 @@ class TaskConfig(BaseModel):
     stages: list[TaskStage] = ALL_TASK_STAGES
     load_concurrency: int = config.LOAD_CONCURRENCY
     insert_batch_size: PositiveInt = config.DEFAULT_INSERT_BATCH_SIZE
+
+    @model_validator(mode="after")
+    def validate_supported_workload(self) -> Self:
+        unsupported = {
+            CaseType.CapacityDim128,
+            CaseType.CapacityDim960,
+            CaseType.StreamingPerformanceCase,
+            CaseType.StreamingCustomDataset,
+        }
+        if self.db is DB.Warm and (
+            self.case_config.case_id in unsupported or not self.db.supports_case_label(self.case_config.case.label)
+        ):
+            msg = f"{self.db.value} supports only performance cases; streaming and capacity cases are unsupported"
+            raise ValueError(msg)
+        return self
 
     @model_validator(mode="after")
     def validate_streaming_insert_rate(self) -> Self:
