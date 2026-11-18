@@ -53,6 +53,7 @@ from ..backend.clients.qdrant_local.cli import QdrantLocal
 from ..backend.clients.redis.cli import Redis
 from ..backend.clients.s3_vectors.cli import S3Vectors
 from ..backend.clients.seekdb.cli import SeekDBHNSW
+from ..backend.clients.sqlite_vector.cli import SQLiteVector
 from ..backend.clients.tencent_elasticsearch.cli import TencentElasticsearch
 from ..backend.clients.test.cli import Test
 from ..backend.clients.tidb.cli import TiDB
@@ -121,6 +122,7 @@ cli.add_command(TurboPuffer)
 cli.add_command(TurboPufferUnpin)
 cli.add_command(Turso)
 cli.add_command(Chroma)
+cli.add_command(SQLiteVector)
 cli.add_command(Zvec)
 cli.add_command(Warm)
 cli.add_command(Endee)
