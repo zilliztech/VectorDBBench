@@ -1,5 +1,5 @@
 import os
-from typing import Annotated, Unpack
+from typing import Annotated, Any, Unpack
 
 import click
 from pydantic import SecretStr
@@ -13,6 +13,20 @@ from ....cli.cli import (
     get_custom_case_config,
     run,
 )
+from .config import parse_adbpg_parameter_group
+
+
+class AdbpgParameterGroupType(click.ParamType):
+    name = "YAML_MAPPING"
+
+    def convert(self, value: Any, param: click.Parameter | None, ctx: click.Context | None) -> dict[str, Any]:
+        try:
+            return dict(parse_adbpg_parameter_group(value, param.name if param is not None else self.name))
+        except ValueError as exc:
+            self.fail(str(exc), param, ctx)
+
+
+ADBPG_PARAMETER_GROUP = AdbpgParameterGroupType()
 
 
 class AdbpgTypedDict(CommonTypedDict):
@@ -39,133 +53,36 @@ class AdbpgTypedDict(CommonTypedDict):
             help="Postgres database port",
             default=5432,
             show_default=True,
-            required=False,
         ),
     ]
     db_name: Annotated[str, click.option("--db-name", type=str, help="Db name", required=True)]
-    hnsw_m: Annotated[
-        int,
-        click.option("--hnsw-m", type=int, help="hnsw_m", default=48, show_default=True, required=False),
-    ]
-    ef_search: Annotated[
-        int,
-        click.option("--ef-search", type=int, help="ef_search", default=150, show_default=True, required=False),
-    ]
-    ef_construction: Annotated[
-        int,
+    build_parameters: Annotated[
+        dict[str, Any],
         click.option(
-            "--ef-construction",
-            type=int,
-            help="ef_construction",
-            default=600,
+            "--build-parameters",
+            type=ADBPG_PARAMETER_GROUP,
+            default="{}",
+            help="Build reloption/GUC mapping as YAML or JSON",
             show_default=True,
-            required=False,
         ),
     ]
-    nlist: Annotated[
-        int,
-        click.option("--nlist", type=int, help="nlist", default=1024, show_default=True, required=False),
-    ]
-    rabitq_bits: Annotated[
-        int,
-        click.option("--rabitq-bits", type=int, help="rabitq_bits", default=7, show_default=True, required=False),
-    ]
-    quantize_rescore_amp: Annotated[
-        float,
+    search_parameters: Annotated[
+        dict[str, Any],
         click.option(
-            "--quantize-rescore-amp",
-            type=float,
-            help="fastann.quantize_rescore_amp",
-            default=0.0,
+            "--search-parameters",
+            type=ADBPG_PARAMETER_GROUP,
+            default="{}",
+            help="Search reloption/GUC mapping as YAML or JSON",
             show_default=True,
-            required=False,
         ),
     ]
-    nova_adaptive_gamma: Annotated[
-        float,
+    autotune_parameters: Annotated[
+        dict[str, Any] | None,
         click.option(
-            "--nova-adaptive-gamma",
-            type=float,
-            help="fastann.nova_adaptive_gamma",
-            default=0.0,
-            show_default=True,
-            required=False,
-        ),
-    ]
-    auto_reduction: Annotated[
-        bool,
-        click.option(
-            "--auto-reduction/--no-auto-reduction",
-            "auto_reduction",
-            type=bool,
-            help="Index WITH auto_reduction=on when enabled",
-            default=False,
-            show_default=True,
-            required=False,
-        ),
-    ]
-    max_scan_points: Annotated[
-        int,
-        click.option(
-            "--max-scan-points",
-            type=int,
-            help="max_scan_points",
-            default=20000,
-            show_default=True,
-            required=False,
-        ),
-    ]
-    index_scan_mode: Annotated[
-        str,
-        click.option(
-            "--index-scan-mode",
-            type=str,
-            help="fastann.index_scan_mode",
-            default="snapshot",
-            show_default=True,
-            required=False,
-        ),
-    ]
-    algorithm: Annotated[
-        str,
-        click.option(
-            "--algorithm",
-            type=str,
-            help="algorithm",
-            default="novamr",
-            show_default=True,
-            required=False,
-        ),
-    ]
-    build_parallel_processes: Annotated[
-        int,
-        click.option(
-            "--build-parallel-processes",
-            type=int,
-            help="Sets the maximum process to build index",
-            required=False,
-        ),
-    ]
-    pca_dim: Annotated[
-        int | None,
-        click.option(
-            "--pca-dim",
-            type=int,
-            help="PCA dimension for index dimensionality reduction",
+            "--autotune-parameters",
+            type=ADBPG_PARAMETER_GROUP,
+            help="Autotune mapping as YAML or JSON; omit to disable",
             default=None,
-            show_default=True,
-            required=False,
-        ),
-    ]
-    nprobe: Annotated[
-        int,
-        click.option(
-            "--nprobe",
-            type=int,
-            help="fastann.nova_nprobe (novad search)",
-            default=5,
-            show_default=True,
-            required=False,
         ),
     ]
 
@@ -179,6 +96,7 @@ def AdbpgNova(**parameters: Unpack[AdbpgTypedDict]):
     run(
         db=DB.Adbpg,
         db_config=AdbpgConfig(
+            db_label=parameters["db_label"],
             user_name=SecretStr(parameters["user_name"]),
             password=SecretStr(parameters["password"]),
             host=parameters["host"],
@@ -186,20 +104,9 @@ def AdbpgNova(**parameters: Unpack[AdbpgTypedDict]):
             db_name=parameters["db_name"],
         ),
         db_case_config=AdbpgIndexConfig(
-            hnsw_m=parameters["hnsw_m"],
-            ef_search=parameters["ef_search"],
-            ef_construction=parameters["ef_construction"],
-            nlist=parameters["nlist"],
-            algorithm=parameters["algorithm"],
-            build_parallel_processes=parameters["build_parallel_processes"],
-            rabitq_bits=parameters["rabitq_bits"],
-            quantize_rescore_amp=parameters["quantize_rescore_amp"],
-            nova_adaptive_gamma=parameters["nova_adaptive_gamma"],
-            auto_reduction=parameters["auto_reduction"],
-            pca_dim=parameters["pca_dim"],
-            max_scan_points=parameters["max_scan_points"],
-            index_scan_mode=parameters["index_scan_mode"],
-            nprobe=parameters["nprobe"],
+            build_parameters=parameters["build_parameters"],
+            search_parameters=parameters["search_parameters"],
+            autotune_parameters=parameters["autotune_parameters"],
         ),
         **parameters,
     )
