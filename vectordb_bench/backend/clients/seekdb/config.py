@@ -1,6 +1,6 @@
 from typing import TypedDict
 
-from pydantic import BaseModel, SecretStr, model_validator
+from pydantic import BaseModel, Field, SecretStr, model_validator
 
 from ..api import DBCaseConfig, DBConfig, IndexType, MetricType
 
@@ -50,8 +50,9 @@ class SeekDBIndexConfig(BaseModel):
 
 
 class SeekDBHNSWConfig(SeekDBIndexConfig, DBCaseConfig):
-    m: int
-    ef_construction: int
+    # Bounds enforced by SeekDB's CREATE VECTOR INDEX, checked here because the table is dropped first.
+    m: int = Field(ge=5, le=128)
+    ef_construction: int = Field(ge=5, le=1000)
     ef_search: int
     index: IndexType = IndexType.HNSW
     # memory_limit and cpu_count are instance-wide, so resetting them is opt-in.
@@ -59,7 +60,6 @@ class SeekDBHNSWConfig(SeekDBIndexConfig, DBCaseConfig):
 
     @model_validator(mode="after")
     def check_ef_construction(self):
-        # The client drops the old table before creating the index, so reject this up front.
         if self.ef_construction <= self.m:
             msg = f"SeekDB HNSW requires ef_construction > m, got m={self.m}, ef_construction={self.ef_construction}"
             raise ValueError(msg)

@@ -208,13 +208,18 @@ class SeekDB(VectorDB):
         self._cursor.execute(f"SHOW CREATE TABLE {self.table_name}")
         row = self._cursor.fetchone()
         ddl = row[1] if row else ""
-        m = re.search(rf"VECTOR KEY `?{self._index_name}`?\s*\([^)]*\)\s*WITH\s*\(([^)]*)\)", ddl, re.IGNORECASE)
+        m = re.search(rf"VECTOR KEY `?{self._index_name}`?\s*\(([^)]*)\)\s*WITH\s*\(([^)]*)\)", ddl, re.IGNORECASE)
         if not m:
             msg = f"Cannot verify vector index {self._index_name} on {self.table_name}, rerun without reusing the index"
             raise ValueError(msg)
 
+        column = m.group(1).strip().strip("`")
+        if column != self._vector_field:
+            msg = f"Existing index {self._index_name} is on column {column}, expected {self._vector_field}"
+            raise ValueError(msg)
+
         actual = {}
-        for item in m.group(1).split(","):
+        for item in m.group(2).split(","):
             key, _, value = item.partition("=")
             actual[key.strip().lower()] = value.strip().lower()
 
