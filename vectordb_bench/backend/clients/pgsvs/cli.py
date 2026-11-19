@@ -5,7 +5,6 @@ import click
 from pydantic import SecretStr, ValidationError
 
 from vectordb_bench.backend.clients import DB
-from vectordb_bench.backend.clients.api import MetricType
 
 from ....cli.cli import (
     CommonTypedDict,
@@ -71,7 +70,7 @@ class PgSVSTypedDict(CommonTypedDict, SVSBaseTypedDict):
         str | None,
         click.option(
             "--quantization-type",
-            type=click.Choice(["none", "bit", "halfvec"]),
+            type=click.Choice(["none", "halfvec"]),
             help="quantization type for vectors (in index)",
             required=False,
         ),
@@ -80,40 +79,8 @@ class PgSVSTypedDict(CommonTypedDict, SVSBaseTypedDict):
         str | None,
         click.option(
             "--table-quantization-type",
-            type=click.Choice(["none", "bit", "halfvec"]),
-            help="quantization type for vectors (in table). "
-            "If equal to bit, the parameter quantization_type will be set to bit too.",
-            required=False,
-        ),
-    ]
-    reranking: Annotated[
-        bool | None,
-        click.option(
-            "--reranking/--skip-reranking",
-            type=bool,
-            help="Enable reranking for HNSW search for binary quantization",
-            default=False,
-        ),
-    ]
-    reranking_metric: Annotated[
-        str | None,
-        click.option(
-            "--reranking-metric",
-            type=click.Choice(
-                [metric.value for metric in MetricType if metric.value not in ["HAMMING", "JACCARD"]],
-            ),
-            help="Distance metric for reranking",
-            default="COSINE",
-            show_default=True,
-        ),
-    ]
-    quantized_fetch_limit: Annotated[
-        int | None,
-        click.option(
-            "--quantized-fetch-limit",
-            type=int,
-            help="Limit of fetching quantized vector ranked by distance for reranking \
-                -- bound by ef_search",
+            type=click.Choice(["none", "halfvec"]),
+            help="quantization type for vectors (in table)",
             required=False,
         ),
     ]
@@ -143,8 +110,6 @@ def PgSVS(
             normalize_cosine=parameters["normalize_cosine"],
             quantization_type=parameters["quantization_type"],
             table_quantization_type=parameters["table_quantization_type"],
-            reranking=parameters["reranking"],
-            quantized_fetch_limit=parameters["quantized_fetch_limit"],
         )
     except ValidationError as e:
         raise click.UsageError(str(e)) from e

@@ -59,7 +59,6 @@ class PgSVSSearchParam(TypedDict):
     reranking_metric_fun_op: LiteralString
     quantized_fetch_limit: int | None
     search_window_size: int | None
-    use_search_history: bool | None
 
 
 class PgSVSSessionCommands(TypedDict):
@@ -300,6 +299,8 @@ class PgSVSVamanaConfig(PgSVSIndexConfig):
         return self.metric_type
 
     def index_param(self) -> PgSVSIndexParam:
+        # use_search_history is a build-time reloption only (baked into the index at CREATE INDEX);
+        # svs has no session-level GUC to override it at search time, unlike search_window_size.
         index_parameters = {
             "alpha": self.alpha,
             "graph_degree": self.graph_degree,
@@ -335,7 +336,6 @@ class PgSVSVamanaConfig(PgSVSIndexConfig):
             "reranking_metric_fun_op": self.parse_reranking_metric_fun_op(),
             "quantized_fetch_limit": self.quantized_fetch_limit,
             "search_window_size": self.search_window_size,
-            "use_search_history": self.use_search_history,
         }
 
     def session_param(self) -> PgSVSSessionCommands:

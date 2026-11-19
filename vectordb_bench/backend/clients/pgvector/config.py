@@ -53,7 +53,6 @@ class PgVectorIndexParam(TypedDict):
 
 class PgVectorSearchParam(TypedDict):
     metric_fun_op: LiteralString
-    use_search_history: bool | None
 
 
 class PgVectorSessionCommands(TypedDict):
