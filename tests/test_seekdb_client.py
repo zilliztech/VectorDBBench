@@ -97,6 +97,13 @@ def test_reuse_rejects_mismatched_index(kwargs, field):
         seekdb.SeekDB(4, DB_CONFIG, _case_config(**kwargs), drop_old=False)
 
 
+def test_reuse_rejects_index_on_another_column(cursor):
+    cursor.ddl = EXISTING_DDL.replace("(`embedding`) WITH", "(`other_embedding`) WITH")
+
+    with pytest.raises(ValueError, match="on column other_embedding"):
+        seekdb.SeekDB(4, DB_CONFIG, _case_config(), drop_old=False)
+
+
 def test_reuse_rejects_unverifiable_index(cursor):
     cursor.ddl = "CREATE TABLE `items` (\n  `id` int(11) DEFAULT NULL\n) ORGANIZATION HEAP"
 
@@ -131,3 +138,22 @@ def test_ef_construction_must_exceed_m():
         _case_config(m=16, ef_construction=16)
 
     assert _case_config(m=16, ef_construction=17).ef_construction == 17
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"m": 4, "ef_construction": 256},
+        {"m": 129, "ef_construction": 256},
+        {"m": 64, "ef_construction": 1001},
+    ],
+)
+def test_hnsw_bounds_outside_seekdb_limits_are_rejected(kwargs):
+    with pytest.raises(ValidationError):
+        _case_config(**kwargs)
+
+
+def test_hnsw_upper_bounds_accepted():
+    config = _case_config(m=128, ef_construction=1000)
+
+    assert config.index_param()["params"] == {"m": 128, "ef_construction": 1000}

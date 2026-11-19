@@ -68,3 +68,13 @@ def test_load_case_builds_from_ui_defaults():
     (task,) = _generate(CaseType.CapacityDim960, CaseLabel.Load)
 
     assert isinstance(task.db_case_config, SeekDBHNSWConfig)
+
+
+def test_ui_bounds_are_accepted_by_the_hnsw_model():
+    inputs = {i.label.value: i.inputConfig for i in get_case_config_inputs(DB.SeekDB, CaseLabel.Performance)}
+    m, ef_construction = inputs["m"], inputs["ef_construction"]
+
+    for value in (m["min"], m["max"]):
+        SeekDBHNSWConfig(m=value, ef_construction=ef_construction["max"], ef_search=100)
+    for value in (ef_construction["min"], ef_construction["max"]):
+        SeekDBHNSWConfig(m=m["min"], ef_construction=value, ef_search=100)
