@@ -13,8 +13,8 @@ from psycopg import Connection, Cursor, sql
 
 from vectordb_bench.backend.filter import Filter, FilterOp
 
-from ..api import MetricType, VectorDB
-from .config import PgVectorConfigDict, PgVectorHNSWConfig, PgVectorIndexConfig
+from ..api import VectorDB
+from .config import PgVectorConfigDict, PgVectorIndexConfig
 
 log = logging.getLogger(__name__)
 
@@ -65,6 +65,7 @@ class PgVector(VectorDB):
         # construct basic units
         self.conn, self.cursor = self._create_connection(**self.connect_config)
 
+        # create vector extension
         self.cursor.execute("CREATE EXTENSION IF NOT EXISTS vector")
         self.conn.commit()
 
@@ -454,16 +455,6 @@ class PgVector(VectorDB):
         except Exception as e:
             log.warning(f"Failed to create pgvector table: {self.table_name} error: {e}")
             raise e from None
-
-    def need_normalize_cosine(self) -> bool:
-        if (
-            isinstance(self.case_config, PgVectorHNSWConfig)
-            and self.case_config.normalize_cosine
-            and self.case_config.metric_type == MetricType.COSINE
-        ):
-            log.info("current pgvector config enables normalization for cosine metric")
-            return True
-        return False
 
     def insert_embeddings(  # noqa: PLR0912
         self,

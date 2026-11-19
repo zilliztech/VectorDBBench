@@ -165,17 +165,8 @@ def PgVectorIVFFlat(
         **parameters,
     )
 
-class PgVectorHNSWTypedDict(PgVectorTypedDict, HNSWFlavor1):
-    normalize_cosine: Annotated[
-        bool,
-        click.option(
-            "--normalize-cosine/--skip-normalize-cosine",
-            type=bool,
-            default=False,
-            help="Normalize vectors before insert/search when dataset metric is COSINE",
-            show_default=True,
-        ),
-    ]
+
+class PgVectorHNSWTypedDict(PgVectorTypedDict, HNSWFlavor1): ...
 
 
 @cli.command()
@@ -207,9 +198,6 @@ def PgVectorHNSW(
             reranking=parameters["reranking"],
             reranking_metric=parameters["reranking_metric"],
             quantized_fetch_limit=parameters["quantized_fetch_limit"],
-            normalize_cosine=parameters["normalize_cosine"],
         ),
         **parameters,
     )
-
-
