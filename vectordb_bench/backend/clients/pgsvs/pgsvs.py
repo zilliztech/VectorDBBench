@@ -114,90 +114,35 @@ class PgSVS(VectorDB):
 
     def _generate_search_query(self) -> sql.Composed:
         index_param = self.case_config.index_param()
-        reranking = self.case_config.search_param()["reranking"]
-        column_name = (
-            sql.SQL("binary_quantize({0})").format(sql.Identifier(self._vector_field))
-            if index_param["quantization_type"] == "bit" and index_param["table_quantization_type"] != "bit"
-            else sql.SQL(self._vector_field)
-        )
-        search_vector = (
-            sql.SQL("binary_quantize({0})").format(sql.Placeholder())
-            if index_param["quantization_type"] == "bit"
-            else sql.Placeholder()
-        )
+        # vamana has no bit opclass (rejected by PgSVSVamanaConfig.reject_bit_quantization), so
+        # quantization_type can never be "bit" here -- always the plain (non-binary_quantize) path.
+        column_name = sql.SQL(self._vector_field)
+        search_vector = sql.Placeholder()
 
-        # The following sections assume that the quantization_type value matches the quantization function name
         if index_param["quantization_type"] != index_param["table_quantization_type"]:
-            # Reranking makes sense only if table quantization is not "bit"
-            if index_param["quantization_type"] == "bit" and reranking:
-                # Embeddings needs to be passed to binary_quantize function if quantization_type is bit
-                search_query = sql.Composed(
-                    [
-                        sql.SQL(
-                            """
-                            SELECT i.id
-                            FROM (
-                                SELECT {primary_field}, {vector_field} {reranking_metric_fun_op} %s::{table_quantization_type} AS distance
-                                FROM public.{table_name} {where_clause}
-                                ORDER BY {column_name}::{quantization_type}({dim})
-                            """,  # noqa: E501
-                        ).format(
-                            table_name=sql.Identifier(self.table_name),
-                            primary_field=sql.Identifier(self._primary_field),
-                            vector_field=sql.Identifier(self._vector_field),
-                            column_name=column_name,
-                            reranking_metric_fun_op=sql.SQL(
-                                self.case_config.search_param()["reranking_metric_fun_op"],
-                            ),
-                            search_vector=search_vector,
-                            table_quantization_type=sql.SQL(index_param["table_quantization_type"]),
-                            quantization_type=sql.SQL(index_param["quantization_type"]),
-                            dim=sql.Literal(self.dim),
-                            where_clause=sql.SQL(self.where_clause),
-                        ),
-                        sql.SQL(self.case_config.search_param()["metric_fun_op"]),
-                        sql.SQL(
-                            """
-                                {search_vector}::{quantization_type}({dim})
-                                LIMIT {quantized_fetch_limit}
-                            ) i
-                            ORDER BY i.distance
-                            LIMIT %s::int
-                            """,
-                        ).format(
-                            search_vector=search_vector,
-                            quantization_type=sql.SQL(index_param["quantization_type"]),
-                            dim=sql.Literal(self.dim),
-                            quantized_fetch_limit=sql.Literal(
-                                self.case_config.search_param()["quantized_fetch_limit"],
-                            ),
-                        ),
-                    ],
-                )
-            else:
-                search_query = sql.Composed(
-                    [
-                        sql.SQL(
-                            """
-                            SELECT {primary_field} FROM public.{table_name}
-                            {where_clause} ORDER BY {column_name}::{quantization_type}({dim})
-                            """,
-                        ).format(
-                            table_name=sql.Identifier(self.table_name),
-                            primary_field=sql.Identifier(self._primary_field),
-                            column_name=column_name,
-                            quantization_type=sql.SQL(index_param["quantization_type"]),
-                            dim=sql.Literal(self.dim),
-                            where_clause=sql.SQL(self.where_clause),
-                        ),
-                        sql.SQL(self.case_config.search_param()["metric_fun_op"]),
-                        sql.SQL(" {search_vector}::{quantization_type}({dim}) LIMIT %s::int").format(
-                            search_vector=search_vector,
-                            quantization_type=sql.SQL(index_param["quantization_type"]),
-                            dim=sql.Literal(self.dim),
-                        ),
-                    ]
-                )
+            search_query = sql.Composed(
+                [
+                    sql.SQL(
+                        """
+                        SELECT {primary_field} FROM public.{table_name}
+                        {where_clause} ORDER BY {column_name}::{quantization_type}({dim})
+                        """,
+                    ).format(
+                        table_name=sql.Identifier(self.table_name),
+                        primary_field=sql.Identifier(self._primary_field),
+                        column_name=column_name,
+                        quantization_type=sql.SQL(index_param["quantization_type"]),
+                        dim=sql.Literal(self.dim),
+                        where_clause=sql.SQL(self.where_clause),
+                    ),
+                    sql.SQL(self.case_config.search_param()["metric_fun_op"]),
+                    sql.SQL(" {search_vector}::{quantization_type}({dim}) LIMIT %s::int").format(
+                        search_vector=search_vector,
+                        quantization_type=sql.SQL(index_param["quantization_type"]),
+                        dim=sql.Literal(self.dim),
+                    ),
+                ]
+            )
         else:
             search_query = sql.Composed(
                 [
@@ -368,11 +313,8 @@ class PgSVS(VectorDB):
             ).format(
                 index_name=sql.Identifier(self._index_name),
                 table_name=sql.Identifier(self.table_name),
-                column_name=(
-                    sql.SQL("binary_quantize({0})").format(sql.Identifier("embedding"))
-                    if index_param["quantization_type"] == "bit"
-                    else sql.Identifier("embedding")
-                ),
+                # vamana has no bit opclass, so quantization_type can never be "bit" here.
+                column_name=sql.Identifier("embedding"),
                 index_type=sql.Identifier(index_param["index_type"]),
                 # This assumes that the quantization_type value matches the quantization function name
                 quantization_type=sql.SQL(index_param["quantization_type"]),
@@ -457,7 +399,7 @@ class PgSVS(VectorDB):
             return True
         return False
 
-    def insert_embeddings(  # noqa: PLR0912
+    def insert_embeddings(
         self,
         embeddings: list[list[float]],
         metadata: list[int],
@@ -475,46 +417,28 @@ class PgSVS(VectorDB):
             metadata_arr = np.array(metadata)
             embeddings_arr = np.array(embeddings)
 
-            if index_param["table_quantization_type"] == "bit":
-                with self.cursor.copy(
-                    sql.SQL("COPY public.{table_name} FROM STDIN (FORMAT TEXT)").format(
-                        table_name=sql.Identifier(self.table_name)
-                    )
-                ) as copy:
-                    # Same logic as pgvector binary_quantize
+            # vamana has no bit opclass, so table_quantization_type can never be "bit" here.
+            with self.cursor.copy(
+                sql.SQL("COPY public.{table_name} FROM STDIN (FORMAT BINARY)").format(
+                    table_name=sql.Identifier(self.table_name)
+                )
+            ) as copy:
+                if index_param["table_quantization_type"] == "halfvec":
                     for i, row in enumerate(metadata_arr):
-                        embeddings_bit = ""
-                        for embedding in embeddings_arr[i]:
-                            if embedding > 0:
-                                embeddings_bit += "1"
-                            else:
-                                embeddings_bit += "0"
                         if self.with_scalar_labels:
-                            copy.write_row((str(row), embeddings_bit, labels_data[i]))
+                            copy.set_types(["bigint", "halfvec", "varchar"])
+                            copy.write_row((row, HalfVector(embeddings_arr[i]), labels_data[i]))
                         else:
-                            copy.write_row((str(row), embeddings_bit))
-            else:
-                with self.cursor.copy(
-                    sql.SQL("COPY public.{table_name} FROM STDIN (FORMAT BINARY)").format(
-                        table_name=sql.Identifier(self.table_name)
-                    )
-                ) as copy:
-                    if index_param["table_quantization_type"] == "halfvec":
-                        for i, row in enumerate(metadata_arr):
-                            if self.with_scalar_labels:
-                                copy.set_types(["bigint", "halfvec", "varchar"])
-                                copy.write_row((row, HalfVector(embeddings_arr[i]), labels_data[i]))
-                            else:
-                                copy.set_types(["bigint", "halfvec"])
-                                copy.write_row((row, HalfVector(embeddings_arr[i])))
-                    else:
-                        for i, row in enumerate(metadata_arr):
-                            if self.with_scalar_labels:
-                                copy.set_types(["bigint", "vector", "varchar"])
-                                copy.write_row((row, embeddings_arr[i], labels_data[i]))
-                            else:
-                                copy.set_types(["bigint", "vector"])
-                                copy.write_row((row, embeddings_arr[i]))
+                            copy.set_types(["bigint", "halfvec"])
+                            copy.write_row((row, HalfVector(embeddings_arr[i])))
+                else:
+                    for i, row in enumerate(metadata_arr):
+                        if self.with_scalar_labels:
+                            copy.set_types(["bigint", "vector", "varchar"])
+                            copy.write_row((row, embeddings_arr[i], labels_data[i]))
+                        else:
+                            copy.set_types(["bigint", "vector"])
+                            copy.write_row((row, embeddings_arr[i]))
             self.conn.commit()
 
             return len(metadata), None
@@ -545,12 +469,10 @@ class PgSVS(VectorDB):
         assert self.conn is not None, "Connection is not initialized"
         assert self.cursor is not None, "Cursor is not initialized"
 
-        index_param = self.case_config.index_param()
-        search_param = self.case_config.search_param()
         q = np.asarray(query)
         result = self.cursor.execute(
             self._search,
-            (q, q, k) if index_param["quantization_type"] == "bit" and search_param["reranking"] else (q, k),
+            (q, k),
             prepare=True,
             binary=True,
         )

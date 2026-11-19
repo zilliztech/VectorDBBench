@@ -55,9 +55,6 @@ class PgSVSIndexParam(TypedDict):
 
 class PgSVSSearchParam(TypedDict):
     metric_fun_op: LiteralString
-    reranking: bool | None
-    reranking_metric_fun_op: LiteralString
-    quantized_fetch_limit: int | None
     search_window_size: int | None
 
 
@@ -75,16 +72,14 @@ class PgSVSIndexConfig(BaseModel, DBCaseConfig):
     iterative_scan: str = "relaxed_order"
 
     def parse_metric(self, metric_type: MetricType | None = None) -> str:
+        # quantization_type can never be "bit" here (PgSVSVamanaConfig.reject_bit_quantization
+        # rejects it at construction time; vamana has no bit opclass).
         effective_metric_type = self.metric_type if metric_type is None else metric_type
         d = {
             "halfvec": {
                 MetricType.L2: "halfvec_l2_ops",
                 MetricType.IP: "halfvec_ip_ops",
                 MetricType.COSINE: "halfvec_cosine_ops",
-            },
-            "bit": {
-                MetricType.JACCARD: "bit_jaccard_ops",
-                MetricType.HAMMING: "bit_hamming_ops",
             },
             "_fallback": {
                 MetricType.L2: "vector_l2_ops",
@@ -95,19 +90,10 @@ class PgSVSIndexConfig(BaseModel, DBCaseConfig):
 
         if d.get(self.quantization_type) is None:
             return d.get("_fallback").get(effective_metric_type)
-        metric = d.get(self.quantization_type).get(effective_metric_type)
-        # If using binary quantization for the index, use a bit metric
-        # no matter what metric was selected for vector or halfvec data
-        if self.quantization_type == "bit" and metric is None:
-            return "bit_hamming_ops"
-        return metric
+        return d.get(self.quantization_type).get(effective_metric_type)
 
     def parse_metric_fun_op(self, metric_type: MetricType | None = None) -> LiteralString:
         effective_metric_type = self.metric_type if metric_type is None else metric_type
-        if self.quantization_type == "bit":
-            if effective_metric_type == MetricType.JACCARD:
-                return "<%>"
-            return "<~>"
         if effective_metric_type == MetricType.L2:
             return "<->"
         if effective_metric_type == MetricType.IP:
@@ -121,13 +107,6 @@ class PgSVSIndexConfig(BaseModel, DBCaseConfig):
         if effective_metric_type == MetricType.IP:
             return "max_inner_product"
         return "cosine_distance"
-
-    def parse_reranking_metric_fun_op(self) -> LiteralString:
-        if self.reranking_metric == MetricType.L2:
-            return "<->"
-        if self.reranking_metric == MetricType.IP:
-            return "<#>"
-        return "<=>"
 
     @abstractmethod
     def index_param(self) -> PgSVSIndexParam: ...
@@ -184,9 +163,6 @@ class PgSVSVamanaConfig(PgSVSIndexConfig):
     table_quantization_type: str | None = None
     maintenance_work_mem: str | None = None
     max_parallel_workers: int | None = None
-    reranking: bool | None = None
-    quantized_fetch_limit: int | None = None
-    reranking_metric: str | None = None
     normalize_cosine: bool = False
 
     @field_validator("quantization_type", "table_quantization_type")
@@ -200,17 +176,6 @@ class PgSVSVamanaConfig(PgSVSIndexConfig):
             )
             raise ValueError(msg)
         return value
-
-    @model_validator(mode="after")
-    def reject_reranking(self):
-        # pgvector-level reranking only applies to bit indexes; svs reranks internally via compression_secondary
-        if self.reranking:
-            msg = "reranking is not supported for svs; svs reranks internally via compression_secondary"
-            raise ValueError(msg)
-        if self.quantized_fetch_limit is not None:
-            msg = "quantized_fetch_limit is not supported for svs (it only applies to bit quantization with reranking)"
-            raise ValueError(msg)
-        return self
 
     @field_validator("graph_degree")
     @classmethod
@@ -315,8 +280,6 @@ class PgSVSVamanaConfig(PgSVSIndexConfig):
             self.quantization_type = "vector"
         if self.table_quantization_type == "none" or self.table_quantization_type is None:
             self.table_quantization_type = "vector"
-        if self.table_quantization_type == "bit":
-            self.quantization_type = "bit"
         effective_metric_type = self._effective_metric_type()
         return {
             "metric": self.parse_metric(metric_type=effective_metric_type),
@@ -332,9 +295,6 @@ class PgSVSVamanaConfig(PgSVSIndexConfig):
         effective_metric_type = self._effective_metric_type()
         return {
             "metric_fun_op": self.parse_metric_fun_op(metric_type=effective_metric_type),
-            "reranking": self.reranking,
-            "reranking_metric_fun_op": self.parse_reranking_metric_fun_op(),
-            "quantized_fetch_limit": self.quantized_fetch_limit,
             "search_window_size": self.search_window_size,
         }
 
