@@ -2903,6 +2903,14 @@ PgSVSLoadingConfig = [
 ]
 PgSVSPerformanceConfig = [
     CaseConfigParamInput_IndexType_PgSVS,
+    CaseConfigParamInput_graph_degree_PgSVS,
+    CaseConfigParamInput_alpha_PgSVS,
+    CaseConfigParamInput_build_window_size_PgSVS,
+    CaseConfigParamInput_compression_type_PgSVS,
+    CaseConfigParamInput_compression_primary_PgSVS,
+    CaseConfigParamInput_compression_secondary_PgSVS,
+    CaseConfigParamInput_leanvec_dims_PgSVS,
+    CaseConfigParamInput_normalize_cosine_PgSVS,
     CaseConfigParamInput_quantization_type_PgSVS,
     CaseConfigParamInput_table_quantization_type_PgSVS,
     CaseConfigParamInput_use_search_history_PgSVS,

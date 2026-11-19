@@ -175,14 +175,14 @@ class PgSVSVamanaConfig(PgSVSIndexConfig):
     compression_primary: int | None = None
     compression_secondary: int | None = None
     alpha: int | None = None
-    build_window_size: int | None
-    search_window_size: int | None
+    build_window_size: int | None = None
+    search_window_size: int | None = None
     use_search_history: bool | None = None
     graph_degree: int | None = None
     leanvec_dims: int | None = None
     index: IndexType = IndexType.PGSVS_VAMANA
     quantization_type: str | None = None
-    table_quantization_type: str | None
+    table_quantization_type: str | None = None
     maintenance_work_mem: str | None = None
     max_parallel_workers: int | None = None
     reranking: bool | None = None
