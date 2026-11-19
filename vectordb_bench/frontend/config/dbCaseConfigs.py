@@ -3857,6 +3857,72 @@ QdrantLocalPerformanceConfig = [
     CaseConfigParamInput_hnsw_ef_QdrantLocal,
 ]
 
+CaseConfigParamInput_IndexType_SeekDB = CaseConfigInput(
+    label=CaseConfigParamType.IndexType,
+    inputHelp="Select SeekDB index type",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [IndexType.HNSW.value],
+    },
+)
+
+# Bounds match the checks in SeekDB's CREATE VECTOR INDEX (ob_vector_index_util.cpp).
+CaseConfigParamInput_m_SeekDB = CaseConfigInput(
+    label=CaseConfigParamType.m,
+    inputHelp="HNSW graph degree (m) for SeekDB",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 5,
+        "max": 128,
+        "value": 16,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_ef_construction_SeekDB = CaseConfigInput(
+    label=CaseConfigParamType.ef_construction,
+    inputHelp="HNSW ef_construction for SeekDB, must be greater than m",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 8,
+        "max": 1000,
+        "value": 256,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_ef_search_SeekDB = CaseConfigInput(
+    label=CaseConfigParamType.ef_search,
+    inputHelp="HNSW ef_search (session var ob_hnsw_ef_search) for SeekDB",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 65535,
+        "value": 100,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None) == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_reset_resource_limits_SeekDB = CaseConfigInput(
+    label=CaseConfigParamType.reset_resource_limits,
+    inputType=InputType.Bool,
+    displayLabel="Reset resource limits",
+    inputHelp="Set the instance-wide memory_limit and cpu_count to 0 (auto) before the run",
+    inputConfig={
+        "value": False,
+    },
+)
+
+# SeekDBHNSWConfig requires ef_search even for load-only cases.
+SeekDBLoadConfig = [
+    CaseConfigParamInput_IndexType_SeekDB,
+    CaseConfigParamInput_m_SeekDB,
+    CaseConfigParamInput_ef_construction_SeekDB,
+    CaseConfigParamInput_ef_search_SeekDB,
+    CaseConfigParamInput_reset_resource_limits_SeekDB,
+]
+SeekDBPerformanceConfig = SeekDBLoadConfig
+
 # Map DB to config
 WarmPerformanceConfig = [
     CaseConfigInput(
@@ -3995,6 +4061,10 @@ CASE_CONFIG_MAP = {
     DB.QdrantLocal: {
         CaseLabel.Load: QdrantLocalLoadConfig,
         CaseLabel.Performance: QdrantLocalPerformanceConfig,
+    },
+    DB.SeekDB: {
+        CaseLabel.Load: SeekDBLoadConfig,
+        CaseLabel.Performance: SeekDBPerformanceConfig,
     },
     DB.TencentElasticsearch: {
         CaseLabel.Load: TencentElasticsearchLoadingConfig,
