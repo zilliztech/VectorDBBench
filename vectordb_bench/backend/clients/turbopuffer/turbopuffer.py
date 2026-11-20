@@ -329,16 +329,16 @@ class TurboPuffer(VectorDB):
     @staticmethod
     def _warm_cache(ns: Any):
         """Start cache warming and poll until complete."""
-        # First call returns "cache warm hint accepted"
-        # Subsequent calls while warming return "cache is already warming"
-        # When warming is done, calling again returns "cache warm hint accepted"
+        # First call returns status="ACCEPTED", message="cache warm hint accepted"
+        # Subsequent calls while warming return status="ACCEPTED", message="cache is already warming"
+        # When warming is done, calling again returns status="ACCEPTED", message="cache warm hint accepted"
         log.debug("Starting cache warm...")
         ns.hint_cache_warm()
         while True:
             time.sleep(5)
             response = ns.hint_cache_warm()
             log.debug(f"Cache warm response: {response}")
-            if "accepted" in str(response).lower():
+            if "already warming" not in (response.message or "").lower():
                 log.debug("Cache warming complete")
                 return
 

@@ -149,7 +149,7 @@ def test_turbopuffer_multitenant_optimize_skips_base_namespace_by_default(
 
         def hint_cache_warm(self):
             warmed.append(self.name)
-            return "cache warm hint accepted"
+            return SimpleNamespace(status="ACCEPTED", message="cache warm hint accepted")
 
         def metadata(self):
             return SimpleNamespace(index=SimpleNamespace(status="up-to-date", unindexed_bytes=0))
@@ -194,7 +194,7 @@ def test_turbopuffer_multitenant_optimize_can_warm_all_tenant_namespaces(
 
         def hint_cache_warm(self):
             warmed.append(self.name)
-            return "cache warm hint accepted"
+            return SimpleNamespace(status="ACCEPTED", message="cache warm hint accepted")
 
         def metadata(self):
             return SimpleNamespace(index=SimpleNamespace(status="up-to-date", unindexed_bytes=0))
@@ -364,3 +364,31 @@ def test_turbopuffer_fts_insert_declares_filter_id_filterable() -> None:
             "disable_backpressure": False,
         }
     ]
+
+
+def test_turbopuffer_warm_cache_polls_until_not_already_warming(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    responses = iter(
+        [
+            SimpleNamespace(status="ACCEPTED", message="cache warm hint accepted"),
+            SimpleNamespace(status="ACCEPTED", message="cache is already warming"),
+            SimpleNamespace(status="ACCEPTED", message="cache is already warming"),
+            SimpleNamespace(status="ACCEPTED", message="cache warm hint accepted"),
+        ]
+    )
+    calls = 0
+    sleeps = []
+
+    class FakeNamespace:
+        def hint_cache_warm(self):
+            nonlocal calls
+            calls += 1
+            return next(responses)
+
+    monkeypatch.setattr(turbopuffer_client.time, "sleep", sleeps.append)
+
+    TurboPuffer._warm_cache(FakeNamespace())
+
+    assert calls == 4
+    assert sleeps == [5, 5, 5]
