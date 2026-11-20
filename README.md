@@ -71,7 +71,7 @@ All the database client supported
 | pinecone                 | `pip install vectordb-bench[pinecone]`      |
 | weaviate                 | `pip install vectordb-bench[weaviate]`      |
 | elastic, aliyun_elasticsearch| `pip install vectordb-bench[elastic]`       |
-| pgvector, pgvectorscale, pgdiskann, alloydb, vectorchord | `pip install vectordb-bench[pgvector]`      |
+| pgvector, pgvectorscale, pgdiskann, alloydb, vectorchord, lakebase_vector | `pip install vectordb-bench[pgvector]`      |
 | pgvecto.rs               | `pip install vectordb-bench[pgvecto_rs]`    |
 | redis                    | `pip install vectordb-bench[redis]`         |
 | memorydb                 | `pip install vectordb-bench[memorydb]`      |
@@ -124,6 +124,19 @@ Commands:
   weaviate
 ```
 To list the options for each command, execute `vectordbbench [command] --help`
+
+`milvusautoindex` and `zillizautoindex` accept `--level` from 1 to 10 (YAML:
+`level`) on servers that support AutoIndex search levels. If omitted, Milvus
+sends no level, preserving the server's default behavior; Zilliz Cloud keeps
+its existing default of 1 and always sends it. Results record the value in
+`task_config.db_case_config.level`.
+
+```shell
+vectordbbench milvusautoindex \
+  --uri http://localhost:19530 \
+  --level 2 \
+  <other options>
+```
 
 Use `--note` or `--note-file` to preserve deployment, resource, client, network, and constraint context in each result JSON under `task_config.db_config.note`. The options are mutually exclusive. Prefer `--note-file` for structured or multiline context, and never include credentials, tokens, or sensitive connection details.
 

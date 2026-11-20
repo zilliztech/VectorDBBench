@@ -1,6 +1,9 @@
+# ruff: noqa: I001  # Keep Lakebase immediately after AlloyDB in the PG-extension registration order.
+
 from ..backend.clients.adbpg.cli import AdbpgNova
 from ..backend.clients.alisql.cli import AliSQLHNSW
 from ..backend.clients.alloydb.cli import AlloyDBScaNN
+from ..backend.clients.lakebase_vector.cli import LakebaseANN
 from ..backend.clients.aws_opensearch.cli import AWSOpenSearch
 from ..backend.clients.chroma.cli import Chroma
 from ..backend.clients.clickhouse.cli import Clickhouse
@@ -72,6 +75,7 @@ cli.add_command(OSSOpenSearch)
 cli.add_command(PgVectorScaleDiskAnn)
 cli.add_command(PgDiskAnn)
 cli.add_command(AlloyDBScaNN)
+cli.add_command(LakebaseANN)
 cli.add_command(OceanBaseHNSW)
 cli.add_command(OceanBaseIVF)
 cli.add_command(MariaDBHNSW)
