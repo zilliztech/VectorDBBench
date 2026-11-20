@@ -1,5 +1,6 @@
 from types import SimpleNamespace
 
+import pytest
 from click.testing import CliRunner
 from pytest import MonkeyPatch
 
@@ -392,3 +393,43 @@ def test_turbopuffer_warm_cache_polls_until_not_already_warming(
 
     assert calls == 4
     assert sleeps == [5, 5, 5]
+
+
+def test_turbopuffer_wait_for_index_times_out(monkeypatch: MonkeyPatch) -> None:
+    assert turbopuffer_client.INDEX_TIMEOUT == 24 * 60 * 60
+    now = [0.0]
+
+    def fake_sleep(seconds: float) -> None:
+        now[0] += seconds
+
+    class FakeNamespace:
+        def metadata(self):
+            return SimpleNamespace(index=SimpleNamespace(status="updating", unindexed_bytes=1234))
+
+    monkeypatch.setattr(turbopuffer_client.time, "monotonic", lambda: now[0])
+    monkeypatch.setattr(turbopuffer_client.time, "sleep", fake_sleep)
+
+    with pytest.raises(TimeoutError, match="index"):
+        TurboPuffer._wait_for_index(FakeNamespace(), timeout=20)
+
+    assert now[0] == 20
+
+
+def test_turbopuffer_warm_cache_times_out(monkeypatch: MonkeyPatch) -> None:
+    assert turbopuffer_client.WARM_CACHE_TIMEOUT == 45 * 60
+    now = [0.0]
+
+    def fake_sleep(seconds: float) -> None:
+        now[0] += seconds
+
+    class FakeNamespace:
+        def hint_cache_warm(self):
+            return SimpleNamespace(status="ACCEPTED", message="cache is already warming")
+
+    monkeypatch.setattr(turbopuffer_client.time, "monotonic", lambda: now[0])
+    monkeypatch.setattr(turbopuffer_client.time, "sleep", fake_sleep)
+
+    with pytest.raises(TimeoutError, match="cache warming"):
+        TurboPuffer._warm_cache(FakeNamespace(), timeout=15)
+
+    assert now[0] == 15

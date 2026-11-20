@@ -27,6 +27,10 @@ from ..api import PartialInsertError, VectorDB
 
 log = logging.getLogger(__name__)
 TURBOPUFFER_SEARCHABLE_UNINDEXED_BYTES = 2 * 1024 * 1024 * 1024
+INDEX_POLL_INTERVAL = 10
+INDEX_TIMEOUT = 24 * 60 * 60
+WARM_CACHE_POLL_INTERVAL = 5
+WARM_CACHE_TIMEOUT = 45 * 60
 PINNING_POLL_INTERVAL = 10
 PINNING_TIMEOUT = 45 * 60
 
@@ -314,8 +318,9 @@ class TurboPuffer(VectorDB):
                 log.warning(f"Failed to send TurboPuffer hint_read_only for {namespace}. Error: {e}")
 
     @staticmethod
-    def _wait_for_index(ns: Any):
+    def _wait_for_index(ns: Any, timeout: float = INDEX_TIMEOUT):
         """Wait for index to be fully built."""
+        deadline = time.monotonic() + timeout
         while True:
             index = ns.metadata().index
             status = getattr(index, "status", None)
@@ -323,24 +328,36 @@ class TurboPuffer(VectorDB):
                 log.info("Index is up-to-date")
                 return
             unindexed = getattr(index, "unindexed_bytes", None)
-            log.info(f"Index status: {status}, unindexed_bytes: {unindexed}. Checking again in 10s...")
-            time.sleep(10)
+            if time.monotonic() >= deadline:
+                msg = (
+                    f"Timed out waiting for TurboPuffer index to be up-to-date "
+                    f"(status={status}, unindexed_bytes={unindexed})"
+                )
+                raise TimeoutError(msg)
+            log.info(
+                f"Index status: {status}, unindexed_bytes: {unindexed}. Checking again in {INDEX_POLL_INTERVAL}s..."
+            )
+            time.sleep(INDEX_POLL_INTERVAL)
 
     @staticmethod
-    def _warm_cache(ns: Any):
+    def _warm_cache(ns: Any, timeout: float = WARM_CACHE_TIMEOUT):
         """Start cache warming and poll until complete."""
         # First call returns status="ACCEPTED", message="cache warm hint accepted"
         # Subsequent calls while warming return status="ACCEPTED", message="cache is already warming"
         # When warming is done, calling again returns status="ACCEPTED", message="cache warm hint accepted"
+        deadline = time.monotonic() + timeout
         log.debug("Starting cache warm...")
         ns.hint_cache_warm()
         while True:
-            time.sleep(5)
+            time.sleep(WARM_CACHE_POLL_INTERVAL)
             response = ns.hint_cache_warm()
             log.debug(f"Cache warm response: {response}")
             if "already warming" not in (response.message or "").lower():
                 log.debug("Cache warming complete")
                 return
+            if time.monotonic() >= deadline:
+                msg = f"Timed out waiting for TurboPuffer cache warming to complete: {response}"
+                raise TimeoutError(msg)
 
     def _warmup_target_namespaces(self) -> list[str | None]:
         if not self.multitenant_tenant_labels:
