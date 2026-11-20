@@ -64,6 +64,10 @@ def make_hnsw_config(**kwargs) -> PgVectorHNSWConfig:
     )
 
 
+def make_halfvec_config(**kwargs) -> PgVectorHNSWConfig:
+    return make_hnsw_config(table_quantization_type="halfvec", **kwargs)
+
+
 def make_db(table_name: str = "test_pgvector", drop_old: bool = True) -> DB.PgVector.init_cls:
     cfg = dict(DB_CONFIG)
     cfg["table_name"] = table_name
@@ -97,6 +101,26 @@ class TestPgVectorBasic:
 
         with db.init():
             db.optimize()
+
+        with db.init():
+            db.prepare_filter(Filter(type=FilterOp.NonFilter))
+            results = db.search_embedding(query=embeddings[0], k=10)
+        assert len(results) > 0
+
+    def test_insert_and_search_halfvec_table(self):
+        db = DB.PgVector.init_cls(
+            dim=DIM,
+            db_config={**DB_CONFIG, "table_name": "test_halfvec"},
+            db_case_config=make_halfvec_config(),
+            drop_old=True,
+        )
+        embeddings = random_embeddings()
+        metadata = list(range(COUNT))
+
+        with db.init():
+            count, err = db.insert_embeddings(embeddings=embeddings, metadata=metadata)
+        assert err is None, f"Insert error: {err}"
+        assert count == COUNT
 
         with db.init():
             db.prepare_filter(Filter(type=FilterOp.NonFilter))
