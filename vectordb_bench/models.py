@@ -221,6 +221,9 @@ class CaseConfigParamType(Enum):
     max_scan_points = "max_scan_points"
     auto_reduction = "auto_reduction"
 
+    # SeekDB parameters
+    reset_resource_limits = "reset_resource_limits"
+
     # LanceDB scalar index, independent of the vector index selection.
     scalar_index = "scalar_index"
     scalar_column = "scalar_column"
