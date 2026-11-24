@@ -57,7 +57,7 @@ class PgSVS(VectorDB):
         self.dim = dim
         self.with_scalar_labels = with_scalar_labels
 
-        self._index_name = "pgvector_index"
+        self._index_name = f"{self.table_name}_svs_index"
         self._primary_field = "id"
         self._vector_field = "embedding"
         self._scalar_label_field = "label"
@@ -88,7 +88,7 @@ class PgSVS(VectorDB):
             raise RuntimeError(msg)
 
         if drop_old:
-            self._drop_index()
+            # DROP TABLE cascades and drops this table's own index too; no separate DROP INDEX needed.
             self._drop_table()
             self._create_table(dim)
             if self.case_config.create_index_before_load:
