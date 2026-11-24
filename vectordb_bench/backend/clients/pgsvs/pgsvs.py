@@ -93,6 +93,8 @@ class PgSVS(VectorDB):
             self._create_table(dim)
             if self.case_config.create_index_before_load:
                 self._create_index()
+        else:
+            self._validate_existing_index(dim)
 
         self.cursor.close()
         self.conn.close()
@@ -215,6 +217,57 @@ class PgSVS(VectorDB):
             ),
         )
         self.conn.commit()
+
+    def _validate_existing_index(self, dim: int):
+        assert self.conn is not None, "Connection is not initialized"
+        assert self.cursor is not None, "Cursor is not initialized"
+
+        # to_regclass returns NULL (rather than erroring) if the table doesn't exist yet,
+        # which the join below then naturally turns into zero rows.
+        row = self.cursor.execute(
+            sql.SQL(
+                """
+                SELECT am.amname, opc.opcname, format_type(att.atttypid, att.atttypmod) AS coltype,
+                       idxc.reloptions
+                FROM pg_index i
+                JOIN pg_class idxc ON idxc.oid = i.indexrelid
+                JOIN pg_am am ON am.oid = idxc.relam
+                JOIN pg_opclass opc ON opc.oid = i.indclass[0]
+                JOIN pg_attribute att ON att.attrelid = i.indrelid AND att.attnum = i.indkey[0]
+                WHERE idxc.relname = {index_name} AND i.indrelid = to_regclass({table_name})
+                """,
+            ).format(
+                index_name=sql.Literal(self._index_name),
+                table_name=sql.Literal(f"public.{self.table_name}"),
+            ),
+        ).fetchone()
+        if row is None:
+            # No existing index to reuse (table and/or index not created yet); it'll be
+            # built normally via create_index_before_load/create_index_after_load.
+            return
+
+        actual_am, actual_opc, actual_coltype, actual_reloptions = row
+        reloptions = dict(opt.split("=", 1) for opt in (actual_reloptions or []))
+
+        index_param = self.case_config.index_param()
+        expected_coltype = f"{index_param['table_quantization_type']}({dim})"
+        expected_options = {opt["option_name"]: opt["val"] for opt in index_param["index_creation_with_options"]}
+
+        mismatches = []
+        if actual_am != "vamana":
+            mismatches.append(f"access_method={actual_am} (expected vamana)")
+        if actual_opc != index_param["metric"]:
+            mismatches.append(f"operator_class={actual_opc} (expected {index_param['metric']})")
+        if actual_coltype != expected_coltype:
+            mismatches.append(f"column_type={actual_coltype} (expected {expected_coltype})")
+        for option_name, expected_val in expected_options.items():
+            actual_val = reloptions.get(option_name)
+            if actual_val != expected_val:
+                mismatches.append(f"{option_name}={actual_val} (expected {expected_val})")
+
+        if mismatches:
+            msg = f"Existing index {self._index_name} doesn't match this run's config: {', '.join(mismatches)}"
+            raise RuntimeError(msg)
 
     def optimize(self, data_size: int | None = None):
         self._post_insert()
