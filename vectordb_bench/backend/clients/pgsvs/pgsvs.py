@@ -20,6 +20,12 @@ from .config import PgSVSConfigDict, PgSVSIndexConfig, PgSVSVamanaConfig
 log = logging.getLogger(__name__)
 
 
+def _safe_connect_config(connect_config: dict[str, Any]) -> dict[str, Any]:
+    # allow-list: only ever surfaces these named fields, so a future field added
+    # to connect_config can't leak into logs by default.
+    return {k: connect_config[k] for k in ("host", "port", "dbname", "user") if k in connect_config}
+
+
 class PgSVS(VectorDB):
     """Use psycopg instructions"""
 
@@ -66,7 +72,8 @@ class PgSVS(VectorDB):
                 "Extension 'svs' is not installed. Run 'CREATE EXTENSION svs;' as a PostgreSQL superuser first."
             )
 
-        log.info(f"{self.name} config values: {self.connect_config}\n{self.case_config}")
+        safe_connect_config = _safe_connect_config(self.connect_config)
+        log.info(f"{self.name} config values: {safe_connect_config}\n{self.case_config}")
         if not any(
             (
                 self.case_config.create_index_before_load,
@@ -75,7 +82,7 @@ class PgSVS(VectorDB):
         ):
             msg = (
                 f"{self.name} config must create an index using create_index_before_load or create_index_after_load"
-                f"{self.name} config values: {self.connect_config}\n{self.case_config}"
+                f"{self.name} config values: {safe_connect_config}\n{self.case_config}"
             )
             log.error(msg)
             raise RuntimeError(msg)
