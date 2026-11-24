@@ -249,12 +249,6 @@ class PgSVS(VectorDB):
                     index_param["maintenance_work_mem"],
                 ),
             )
-            self.cursor.execute(
-                sql.SQL("ALTER USER {} SET maintenance_work_mem TO {};").format(
-                    sql.Identifier(self.connect_config["user"]),
-                    index_param["maintenance_work_mem"],
-                ),
-            )
             self.conn.commit()
 
         if index_param["max_parallel_workers"] is not None:
@@ -264,19 +258,7 @@ class PgSVS(VectorDB):
                 ),
             )
             self.cursor.execute(
-                sql.SQL("ALTER USER {} SET max_parallel_maintenance_workers TO '{}';").format(
-                    sql.Identifier(self.connect_config["user"]),
-                    index_param["max_parallel_workers"],
-                ),
-            )
-            self.cursor.execute(
                 sql.SQL("SET max_parallel_workers TO '{}';").format(
-                    index_param["max_parallel_workers"],
-                ),
-            )
-            self.cursor.execute(
-                sql.SQL("ALTER USER {} SET max_parallel_workers TO '{}';").format(
-                    sql.Identifier(self.connect_config["user"]),
                     index_param["max_parallel_workers"],
                 ),
             )
