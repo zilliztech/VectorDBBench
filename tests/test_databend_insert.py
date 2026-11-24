@@ -74,7 +74,7 @@ class TestOptimize(unittest.TestCase):
         return [call[0][0] for call in conn.exec.call_args_list]
 
     def test_default_compacts(self) -> None:
-        self.assertEqual(self.sqls(), ["OPTIMIZE TABLE db.t ALL"])
+        self.assertEqual(self.sqls(), ["OPTIMIZE TABLE db.t COMPACT"])
 
     def test_index_after_load(self) -> None:
         sqls = self.sqls(create_index_before_load=False, create_index_after_load=True, refine_factor=2)
@@ -83,7 +83,7 @@ class TestOptimize(unittest.TestCase):
             "CREATE VECTOR INDEX IF NOT EXISTS databend_index ON db.t (embedding) "
             "m = 16 ef_construct = 64 distance = cosine refine = true",
         )
-        self.assertEqual(sqls[1:], ["OPTIMIZE TABLE db.t ALL"])
+        self.assertEqual(sqls[1:], ["REFRESH VECTOR INDEX databend_index ON db.t", "OPTIMIZE TABLE db.t COMPACT"])
 
     def test_recluster(self) -> None:
         self.assertEqual(

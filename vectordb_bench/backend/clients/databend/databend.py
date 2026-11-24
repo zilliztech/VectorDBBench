@@ -147,12 +147,15 @@ class Databend(VectorDB):
         load, the k-means layout when configured, and compacts the table."""
         table = f"{self.database_name}.{self.table_name}"
         if self.case_config.create_index_after_load:
+            # CREATE INDEX only registers the index; the blocks already written get
+            # their index data from REFRESH (or when recluster rewrites them).
             self._create_index()
+            self._exec(f"REFRESH VECTOR INDEX {self._index_name} ON {table}", "refresh vector index")
         if self.case_config.recluster:
             self._exec(f"ALTER TABLE {table} CLUSTER BY ({self._vector_field})", "set cluster key")
             self._exec(f"ALTER TABLE {table} RECLUSTER FINAL", "recluster")
         else:
-            self._exec(f"OPTIMIZE TABLE {table} ALL", "optimize")
+            self._exec(f"OPTIMIZE TABLE {table} COMPACT", "compact")
 
     def insert_embeddings(
         self,
