@@ -1750,7 +1750,8 @@ CaseConfigParamInput_compression_primary_PgSVS = CaseConfigInput(
     inputHelp="Primary encoding width for LeanVec/LVQ compression",
     inputType=InputType.Option,
     inputConfig={
-        "options": [-8, -4, 4, 8],
+        # 4 first: valid with every secondary option below, for both LeanVec and LVQ.
+        "options": [4, 8, -4, -8],
     },
     isDisplayed=lambda config: config.get(CaseConfigParamType.compression_type, 0) in [1, 2],
 )
@@ -1761,7 +1762,8 @@ CaseConfigParamInput_compression_secondary_PgSVS = CaseConfigInput(
     inputHelp="Secondary/residual encoding width. 0 (no residual) is only valid when compression type is LVQ.",
     inputType=InputType.Option,
     inputConfig={
-        "options": [-8, -4, 0, 4, 8],
+        # 8 first: valid with the default primary=4, for both LeanVec and LVQ.
+        "options": [8, 4, 0, -4, -8],
     },
     isDisplayed=lambda config: config.get(CaseConfigParamType.compression_type, 0) in [1, 2],
 )

@@ -258,6 +258,37 @@ class PgSVSVamanaConfig(PgSVSIndexConfig):
             raise ValueError(msg)
         return self
 
+    @model_validator(mode="after")
+    def validate_compression_pair(self):
+        # svs compiles a fixed set of (primary, secondary) specializations per scheme;
+        # see docs/USER_GUIDE.md's compression table. Checked here, not just per-field,
+        # so an invalid pair fails before load rather than at CREATE INDEX after it.
+        if (
+            self.compression_type not in (1, 2)
+            or self.compression_primary is None
+            or self.compression_secondary is None
+        ):
+            return self
+        primary = abs(self.compression_primary)
+        secondary = self.compression_secondary
+
+        if self.compression_type == 1:
+            if primary > abs(secondary):
+                msg = (
+                    f"compression_primary={self.compression_primary}/compression_secondary={secondary} is not a "
+                    "supported LeanVec pairing; LeanVec requires abs(compression_primary) <= "
+                    "abs(compression_secondary) (supported: (4,4), (4,8), (8,8))"
+                )
+                raise ValueError(msg)
+        elif primary == 8 and secondary != 0:
+            msg = (
+                f"compression_primary={self.compression_primary}/compression_secondary={secondary} is not a "
+                "supported LVQ pairing; an 8-bit primary has no residual, so compression_secondary must be 0 "
+                "(supported: (4,0), (8,0), (4,4), (4,8))"
+            )
+            raise ValueError(msg)
+        return self
+
     def _effective_metric_type(self) -> MetricType | None:
         if self.normalize_cosine and self.metric_type == MetricType.COSINE:
             return MetricType.L2
