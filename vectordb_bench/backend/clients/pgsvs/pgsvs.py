@@ -476,6 +476,14 @@ class PgSVS(VectorDB):
         assert self.conn is not None, "Connection is not initialized"
         assert self.cursor is not None, "Cursor is not initialized"
 
+        configured_window = self.case_config.search_window_size
+        if configured_window is not None and k > configured_window:
+            msg = (
+                f"k={k} exceeds search_window_size={configured_window}; "
+                "search_window_size needs to be at least k for meaningful accuracy."
+            )
+            raise ValueError(msg)
+
         q = np.asarray(query)
         result = self.cursor.execute(
             self._search,
