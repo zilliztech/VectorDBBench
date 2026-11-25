@@ -566,11 +566,6 @@ class DB(Enum):
 
             return PolarDBConfig
 
-        if self == DB.Databend:
-            from .databend.config import DatabendConfig
-
-            return DatabendConfig
-
         if self == DB.Pinot:
             from .pinot.config import PinotConfig
 
@@ -595,6 +590,11 @@ class DB(Enum):
             from .houyidb.config import HouyiDBConfig
 
             return HouyiDBConfig
+
+        if self == DB.Databend:
+            from .databend.config import DatabendConfig
+
+            return DatabendConfig
 
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
@@ -751,10 +751,7 @@ class DB(Enum):
         if self == DB.Hologres:
             from .hologres.config import HologresIndexConfig
 
-        if self == DB.Databend:
-            from .databend.config import DatabendIndexConfig
-
-            return DatabendIndexConfig
+            return HologresIndexConfig
 
         if self == DB.Zvec:
             from .zvec.config import ZvecDiskANNIndexConfig, ZvecHNSWIndexConfig
@@ -855,6 +852,11 @@ class DB(Enum):
             from .houyidb.config import HouyiDBIndexConfig
 
             return HouyiDBIndexConfig
+
+        if self == DB.Databend:
+            from .databend.config import DatabendIndexConfig
+
+            return DatabendIndexConfig
 
         # DB.Pinecone, DB.Redis
         return EmptyDBCaseConfig

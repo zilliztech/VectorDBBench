@@ -6,6 +6,7 @@ import tempfile
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
+from urllib.parse import quote
 
 import numpy as np
 import pyarrow as pa
@@ -44,13 +45,25 @@ def write_arrow_stream(
 
 
 def search_settings(search_param: dict) -> str:
-    """The `SETTINGS (...)` prefix of a search query, or an empty string."""
+    """The `SETTINGS (...)` prefix of a search query, or an empty string. Zero is
+    kept: `vector_refine_factor = 0` disables refinement, which defaults to 2."""
     settings = []
-    if search_param.get("refine_factor"):
+    if search_param.get("refine_factor") is not None:
         settings.append(f"vector_refine_factor = {search_param['refine_factor']}")
-    if search_param.get("ef_search"):
+    if search_param.get("ef_search") is not None:
         settings.append(f"vector_search_ef = {search_param['ef_search']}")
     return f"SETTINGS ({', '.join(settings)}) " if settings else ""
+
+
+def connection_dsn(config: DatabendConfigDict) -> str:
+    """The DSN of `config`; the password is percent-encoded, as it may hold URL
+    delimiters such as `/`, and the driver decodes it."""
+    sslmode = "enable" if config.get("secure") else "disable"
+    password = quote(config["password"], safe="")
+    return (
+        f"databend://{config['user']}:{password}@{config['host']}:{config['port']}/{config['database']}"
+        f"?sslmode={sslmode}"
+    )
 
 
 class Databend(VectorDB):
@@ -76,7 +89,7 @@ class Databend(VectorDB):
 
         self.index_param = self.case_config.index_param()
         self._search_settings = search_settings(self.case_config.search_param())
-        self._distance_func = "l2_distance" if self.index_param["metric_type"] == "l2" else "cosine_distance"
+        self._distance_func = f"{self.index_param['metric_type']}_distance"
         self._where_clause = ""
 
         self._index_name = "databend_index"
@@ -109,10 +122,7 @@ class Databend(VectorDB):
             self.conn = None
 
     def _create_connection(self) -> BlockingDatabendConnection:
-        c = self.db_config
-        sslmode = "enable" if c.get("secure") else "disable"
-        dsn = f"databend://{c['user']}:{c['password']}@{c['host']}:{c['port']}/{c['database']}?sslmode={sslmode}"
-        return BlockingDatabendClient(dsn).get_conn()
+        return BlockingDatabendClient(connection_dsn(self.db_config)).get_conn()
 
     def _exec(self, sql: str, action: str) -> None:
         assert self.conn is not None, "Connection is not initialized"
@@ -133,12 +143,16 @@ class Databend(VectorDB):
         )
 
     def _create_index(self):
-        refine = " refine = true" if self.index_param["refine_factor"] else ""
+        # Unset HNSW options are left to the server defaults.
+        options = [
+            f"{name} = {self.index_param[name]}" for name in ("m", "ef_construct") if self.index_param[name] is not None
+        ]
+        options.append(f"distance = {self.index_param['metric_type']}")
+        if self.index_param["refine_factor"]:
+            options.append("refine = true")
         self._exec(
             f"CREATE VECTOR INDEX IF NOT EXISTS {self._index_name} "
-            f"ON {self.database_name}.{self.table_name} ({self._vector_field}) "
-            f"m = {self.index_param['m']} ef_construct = {self.index_param['ef_construct']} "
-            f"distance = {self.index_param['metric_type']}{refine}",
+            f"ON {self.database_name}.{self.table_name} ({self._vector_field}) {' '.join(options)}",
             "create vector index",
         )
 

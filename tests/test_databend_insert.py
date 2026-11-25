@@ -1,14 +1,21 @@
 import os
 import unittest
 import uuid
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
+from urllib.parse import unquote, urlsplit
 
 import numpy as np
 import pyarrow as pa
 import pytest
 
+from vectordb_bench.backend.clients.api import MetricType
 from vectordb_bench.backend.clients.databend.config import DatabendIndexConfig
-from vectordb_bench.backend.clients.databend.databend import Databend, search_settings, write_arrow_stream
+from vectordb_bench.backend.clients.databend.databend import (
+    Databend,
+    connection_dsn,
+    search_settings,
+    write_arrow_stream,
+)
 from vectordb_bench.backend.filter import FilterOp, IntFilter, non_filter
 
 
@@ -16,22 +23,52 @@ def read_stream(data) -> pa.Table:
     return pa.ipc.open_stream(data).read_all()
 
 
+DB_CONFIG = {"user": "u", "password": "", "host": "h", "port": 8000, "database": "db", "secure": False}
+
+
 def make_client(conn, dim: int, **case_config) -> Databend:
     """A client without a server: `__init__` connects when `drop_old` is set, so it
     is not."""
+    case_config = {"m": 16, "ef_construct": 64, "metric_type": MetricType.COSINE, **case_config}
     db = Databend(
         dim=dim,
-        db_config={"user": "u", "password": "", "host": "h", "port": 8000, "database": "db", "secure": False},
-        db_case_config=DatabendIndexConfig(m=16, ef_construct=64, **case_config),
+        db_config=DB_CONFIG,
+        db_case_config=DatabendIndexConfig(**case_config),
         collection_name="t",
     )
     db.conn = conn
     return db
 
 
+class TestConfig(unittest.TestCase):
+    def test_unsupported_metric_is_rejected_before_any_table_change(self) -> None:
+        for metric_type in (MetricType.IP, None):
+            with patch.object(Databend, "_create_connection") as connect, self.assertRaises(ValueError):
+                Databend(
+                    dim=2,
+                    db_config=DB_CONFIG,
+                    db_case_config=DatabendIndexConfig(metric_type=metric_type),
+                    collection_name="t",
+                    drop_old=True,
+                )
+            connect.assert_not_called()
+
+    def test_password_is_percent_encoded(self) -> None:
+        # URL delimiters, which the driver would otherwise parse as the port or path.
+        secret = "a/b:c@d?e#f%g"
+        dsn = connection_dsn({**DB_CONFIG, "password": secret, "secure": True})
+        self.assertEqual(dsn, "databend://u:a%2Fb%3Ac%40d%3Fe%23f%25g@h:8000/db?sslmode=enable")
+        url = urlsplit(dsn)
+        self.assertEqual((url.hostname, url.port, url.path), ("h", 8000, "/db"))
+        self.assertEqual(unquote(url.password), secret)
+
+
 class TestSearch(unittest.TestCase):
     def test_search_settings(self) -> None:
         self.assertEqual(search_settings({}), "")
+        self.assertEqual(search_settings({"refine_factor": None, "ef_search": None}), "")
+        # Zero disables refinement, which the server enables by default.
+        self.assertEqual(search_settings({"refine_factor": 0}), "SETTINGS (vector_refine_factor = 0) ")
         self.assertEqual(search_settings({"refine_factor": 2}), "SETTINGS (vector_refine_factor = 2) ")
         self.assertEqual(
             search_settings({"refine_factor": 2, "ef_search": 400}),
@@ -50,8 +87,6 @@ class TestSearch(unittest.TestCase):
         )
 
     def test_filter_and_l2(self) -> None:
-        from vectordb_bench.backend.clients.api import MetricType
-
         conn = MagicMock()
         conn.query_all.return_value = []
         db = make_client(conn, 2, metric_type=MetricType.L2)
@@ -84,6 +119,12 @@ class TestOptimize(unittest.TestCase):
             "m = 16 ef_construct = 64 distance = cosine refine = true",
         )
         self.assertEqual(sqls[1:], ["REFRESH VECTOR INDEX databend_index ON db.t", "OPTIMIZE TABLE db.t COMPACT"])
+
+    def test_unset_hnsw_options_are_omitted(self) -> None:
+        sqls = self.sqls(create_index_before_load=False, create_index_after_load=True, m=None, ef_construct=None)
+        self.assertEqual(
+            sqls[0], "CREATE VECTOR INDEX IF NOT EXISTS databend_index ON db.t (embedding) distance = cosine"
+        )
 
     def test_recluster(self) -> None:
         self.assertEqual(

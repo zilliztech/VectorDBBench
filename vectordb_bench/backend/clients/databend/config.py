@@ -36,6 +36,10 @@ class DatabendConfig(DBConfig):
         }
 
 
+# The metrics Databend indexes, by their `distance` option.
+_METRICS = {MetricType.L2: "l2", MetricType.COSINE: "cosine"}
+
+
 class DatabendIndexConfig(BaseModel, DBCaseConfig):
     metric_type: MetricType | None = None
     # When the HNSW index is created: before the load (the index is built while
@@ -54,9 +58,12 @@ class DatabendIndexConfig(BaseModel, DBCaseConfig):
     recluster: bool = False
 
     def parse_metric_str(self) -> str:
-        if self.metric_type == MetricType.L2:
-            return "l2"
-        return "cosine"
+        """The `distance` of the index; its distance function is `<metric>_distance`."""
+        metric = _METRICS.get(self.metric_type)
+        if metric is None:
+            msg = f"Databend does not support metric type {self.metric_type}, only {', '.join(_METRICS)}"
+            raise ValueError(msg)
+        return metric
 
     def index_param(self) -> dict:
         return {
