@@ -8,30 +8,30 @@
         "insert_duration": 92.7146,
         "optimize_duration": 90.3815,
         "load_duration": 183.0961,
-        "qps": 674.5161,
-        "serial_latency_p99": 0.0807,
-        "serial_latency_p95": 0.054,
-        "recall": 0.9191,
-        "ndcg": 0.0,
+        "qps": 1353.3032,
+        "serial_latency_p99": 0.0303,
+        "serial_latency_p95": 0.0232,
+        "recall": 0.7637,
+        "ndcg": 0.6244,
         "conc_num_list": [
-          40,
+          60,
           80
         ],
         "conc_qps_list": [
-          646.8905,
-          674.5161
+          1344.6128,
+          1353.3032
         ],
         "conc_latency_p99_list": [
-          0.18089975638085887,
-          0.2406859093923414
+          0.08339079822006171,
+          0.09601655204241978
         ],
         "conc_latency_p95_list": [
-          0.12103873724954597,
-          0.17825506660083193
+          0.06611652700194098,
+          0.08258865799944035
         ],
         "conc_latency_avg_list": [
-          0.06169217704263551,
-          0.11838266990017098
+          0.04456428650467425,
+          0.05904593880422133
         ],
         "payload_profile": "ids_only",
         "payload_estimated_bytes_per_query": 2000,
@@ -84,14 +84,15 @@
         "st_conc_qps_list_list": [],
         "st_conc_latency_p99_list_list": [],
         "st_conc_latency_p95_list_list": [],
-        "st_conc_latency_avg_list_list": []
+        "st_conc_latency_avg_list_list": [],
+        "mrr": 0.755
       },
       "task_config": {
         "db": "ElasticCloud",
         "db_config": {
           "db_label": "2026-06-23T17:49:51.080771",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-run-context/v1\",\n  \"profile\": \"elasticsearch/v1\",\n  \"backend_version\": \"9.4.3\",\n  \"deployment\": {\n    \"method\": \"docker\",\n    \"config\": {\n      \"mode\": \"single_node\"\n    }\n  },\n  \"server_groups\": [\n    {\n      \"role\": \"elasticsearch-data-master\",\n      \"count\": 1,\n      \"jvm_heap_gib\": 30,\n      \"hardware\": {\n        \"machine_type\": \"i8g.4xlarge\",\n        \"cpu_count\": 16,\n        \"memory_gib\": 123.54,\n        \"storage\": {\n          \"type\": \"local_nvme\",\n          \"device_count\": 1,\n          \"total_gib\": 3492.46,\n          \"model\": \"Amazon EC2 NVMe Instance Storage\"\n        }\n      }\n    }\n  ],\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  }\n}",
           "cloud_id": null,
           "scheme": "http",
           "host": "**********",
@@ -140,167 +141,33 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 92.7146,
-        "optimize_duration": 90.3815,
-        "load_duration": 183.0961,
-        "qps": 593.5741,
-        "serial_latency_p99": 0.0,
-        "serial_latency_p95": 0.0,
-        "recall": 0.0,
-        "ndcg": 0.0,
-        "conc_num_list": [
-          40,
-          80
-        ],
-        "conc_qps_list": [
-          550.5964,
-          593.5741
-        ],
-        "conc_latency_p99_list": [
-          0.2036623409306056,
-          0.24277012127848122
-        ],
-        "conc_latency_p95_list": [
-          0.13283362570000462,
-          0.19686596379851826
-        ],
-        "conc_latency_avg_list": [
-          0.07247916053391205,
-          0.13447533944632156
-        ],
-        "payload_profile": "text",
-        "payload_estimated_bytes_per_query": 53200,
-        "inserted_count": 5233329,
-        "insert_rows_per_second": 0.0,
-        "insert_completion_seconds": 0.0,
-        "searchable_after_insert_seconds": 0.0,
-        "indexed_after_searchable_seconds": 0.0,
-        "additional_parameters": {
-          "num_per_batch": 1000,
-          "load_concurrency": 0,
-          "fts_manifest": {
-            "bm25": {
-              "k1": 1.2,
-              "b": 0.75,
-              "avgdl": 47.43239876568051
-            },
-            "analyzer": {
-              "filter": [
-                "lowercase"
-              ],
-              "tokenizer": "standard"
-            }
-          },
-          "applied_bm25_params": {
-            "k1": 1.2,
-            "b": 0.75
-          },
-          "unapplied_bm25_params": {
-            "avgdl": 47.43239876568051
-          },
-          "applied_analyzer_params": {},
-          "unapplied_analyzer_params": {
-            "filter": [
-              "lowercase"
-            ],
-            "tokenizer": "standard"
-          }
-        },
-        "st_ideal_insert_duration": 0,
-        "st_search_stage_list": [],
-        "st_search_time_list": [],
-        "st_max_qps_list_list": [],
-        "st_recall_list": [],
-        "st_ndcg_list": [],
-        "st_serial_latency_p99_list": [],
-        "st_serial_latency_p95_list": [],
-        "st_conc_failed_rate_list": [],
-        "st_conc_num_list_list": [],
-        "st_conc_qps_list_list": [],
-        "st_conc_latency_p99_list_list": [],
-        "st_conc_latency_p95_list_list": [],
-        "st_conc_latency_avg_list_list": []
-      },
-      "task_config": {
-        "db": "ElasticCloud",
-        "db_config": {
-          "db_label": "2026-06-23T17:57:42.938491",
-          "version": "",
-          "note": "",
-          "cloud_id": null,
-          "scheme": "http",
-          "host": "**********",
-          "port": 9200,
-          "user": "elastic",
-          "user_name": null,
-          "password": "**********",
-          "use_ssl": false,
-          "verify_certs": true
-        },
-        "db_case_config": {
-          "number_of_shards": 1,
-          "number_of_replicas": 0,
-          "refresh_interval": "30s",
-          "use_force_merge": true,
-          "metric_type": "BM25",
-          "bm25_k1": 1.2,
-          "bm25_b": 0.75
-        },
-        "case_config": {
-          "case_id": 503,
-          "custom_case": {
-            "dataset_with_size_type": "HotpotQA Large (5.2M documents)",
-            "payload_profile": "text"
-          },
-          "k": 100,
-          "concurrency_search_config": {
-            "num_concurrency": [
-              40,
-              80
-            ],
-            "concurrency_duration": 30,
-            "concurrency_timeout": 3600
-          }
-        },
-        "stages": [
-          "drop_old",
-          "load",
-          "search_concurrent"
-        ],
-        "load_concurrency": 0
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
         "insert_duration": 17.887,
         "optimize_duration": 35.1281,
         "load_duration": 53.015,
-        "qps": 1985.7794,
-        "serial_latency_p99": 0.0245,
-        "serial_latency_p95": 0.0172,
-        "recall": 0.9241,
-        "ndcg": 0.0,
+        "qps": 4489.7666,
+        "serial_latency_p99": 0.0086,
+        "serial_latency_p95": 0.0067,
+        "recall": 0.8378,
+        "ndcg": 0.7287,
         "conc_num_list": [
-          40,
+          60,
           80
         ],
         "conc_qps_list": [
-          1866.3556,
-          1985.7794
+          4481.0331,
+          4489.7666
         ],
         "conc_latency_p99_list": [
-          0.06111374244974294,
-          0.07737018370979049
+          0.025020206998306094,
+          0.029247877919842704
         ],
         "conc_latency_p95_list": [
-          0.04278086074828025,
-          0.060899814298318235
+          0.02024304099904839,
+          0.02491419739963021
         ],
         "conc_latency_avg_list": [
-          0.021414252878386827,
-          0.04022542792055797
+          0.013372686260277478,
+          0.01778988601007296
         ],
         "payload_profile": "ids_only",
         "payload_estimated_bytes_per_query": 2000,
@@ -353,14 +220,15 @@
         "st_conc_qps_list_list": [],
         "st_conc_latency_p99_list_list": [],
         "st_conc_latency_p95_list_list": [],
-        "st_conc_latency_avg_list_list": []
+        "st_conc_latency_avg_list_list": [],
+        "mrr": 0.8598
       },
       "task_config": {
         "db": "ElasticCloud",
         "db_config": {
           "db_label": "2026-06-23T17:43:25.431349",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-run-context/v1\",\n  \"profile\": \"elasticsearch/v1\",\n  \"backend_version\": \"9.4.3\",\n  \"deployment\": {\n    \"method\": \"docker\",\n    \"config\": {\n      \"mode\": \"single_node\"\n    }\n  },\n  \"server_groups\": [\n    {\n      \"role\": \"elasticsearch-data-master\",\n      \"count\": 1,\n      \"jvm_heap_gib\": 30,\n      \"hardware\": {\n        \"machine_type\": \"i8g.4xlarge\",\n        \"cpu_count\": 16,\n        \"memory_gib\": 123.54,\n        \"storage\": {\n          \"type\": \"local_nvme\",\n          \"device_count\": 1,\n          \"total_gib\": 3492.46,\n          \"model\": \"Amazon EC2 NVMe Instance Storage\"\n        }\n      }\n    }\n  ],\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  }\n}",
           "cloud_id": null,
           "scheme": "http",
           "host": "**********",
@@ -409,167 +277,33 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 17.887,
-        "optimize_duration": 35.1281,
-        "load_duration": 53.015,
-        "qps": 1674.5226,
-        "serial_latency_p99": 0.0,
-        "serial_latency_p95": 0.0,
-        "recall": 0.0,
-        "ndcg": 0.0,
-        "conc_num_list": [
-          40,
-          80
-        ],
-        "conc_qps_list": [
-          1605.1991,
-          1674.5226
-        ],
-        "conc_latency_p99_list": [
-          0.06576651665181996,
-          0.08476530473002608
-        ],
-        "conc_latency_p95_list": [
-          0.04643557349754701,
-          0.0706571103990427
-        ],
-        "conc_latency_avg_list": [
-          0.024898764599791963,
-          0.047717378295758305
-        ],
-        "payload_profile": "text",
-        "payload_estimated_bytes_per_query": 53200,
-        "inserted_count": 1000000,
-        "insert_rows_per_second": 0.0,
-        "insert_completion_seconds": 0.0,
-        "searchable_after_insert_seconds": 0.0,
-        "indexed_after_searchable_seconds": 0.0,
-        "additional_parameters": {
-          "num_per_batch": 1000,
-          "load_concurrency": 0,
-          "fts_manifest": {
-            "bm25": {
-              "k1": 1.2,
-              "b": 0.75,
-              "avgdl": 55.803761
-            },
-            "analyzer": {
-              "filter": [
-                "lowercase"
-              ],
-              "tokenizer": "standard"
-            }
-          },
-          "applied_bm25_params": {
-            "k1": 1.2,
-            "b": 0.75
-          },
-          "unapplied_bm25_params": {
-            "avgdl": 55.803761
-          },
-          "applied_analyzer_params": {},
-          "unapplied_analyzer_params": {
-            "filter": [
-              "lowercase"
-            ],
-            "tokenizer": "standard"
-          }
-        },
-        "st_ideal_insert_duration": 0,
-        "st_search_stage_list": [],
-        "st_search_time_list": [],
-        "st_max_qps_list_list": [],
-        "st_recall_list": [],
-        "st_ndcg_list": [],
-        "st_serial_latency_p99_list": [],
-        "st_serial_latency_p95_list": [],
-        "st_conc_failed_rate_list": [],
-        "st_conc_num_list_list": [],
-        "st_conc_qps_list_list": [],
-        "st_conc_latency_p99_list_list": [],
-        "st_conc_latency_p95_list_list": [],
-        "st_conc_latency_avg_list_list": []
-      },
-      "task_config": {
-        "db": "ElasticCloud",
-        "db_config": {
-          "db_label": "2026-06-23T17:47:10.387803",
-          "version": "",
-          "note": "",
-          "cloud_id": null,
-          "scheme": "http",
-          "host": "**********",
-          "port": 9200,
-          "user": "elastic",
-          "user_name": null,
-          "password": "**********",
-          "use_ssl": false,
-          "verify_certs": true
-        },
-        "db_case_config": {
-          "number_of_shards": 1,
-          "number_of_replicas": 0,
-          "refresh_interval": "30s",
-          "use_force_merge": true,
-          "metric_type": "BM25",
-          "bm25_k1": 1.2,
-          "bm25_b": 0.75
-        },
-        "case_config": {
-          "case_id": 503,
-          "custom_case": {
-            "dataset_with_size_type": "HotpotQA Medium (1M documents)",
-            "payload_profile": "text"
-          },
-          "k": 100,
-          "concurrency_search_config": {
-            "num_concurrency": [
-              40,
-              80
-            ],
-            "concurrency_duration": 30,
-            "concurrency_timeout": 3600
-          }
-        },
-        "stages": [
-          "drop_old",
-          "load",
-          "search_concurrent"
-        ],
-        "load_concurrency": 0
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
         "insert_duration": 1.9662,
         "optimize_duration": 31.09,
         "load_duration": 33.0562,
-        "qps": 6719.6031,
-        "serial_latency_p99": 0.0053,
-        "serial_latency_p95": 0.0043,
-        "recall": 0.9367,
-        "ndcg": 0.0,
+        "qps": 12590.5736,
+        "serial_latency_p99": 0.0023,
+        "serial_latency_p95": 0.002,
+        "recall": 0.9203,
+        "ndcg": 0.842,
         "conc_num_list": [
-          40,
+          60,
           80
         ],
         "conc_qps_list": [
-          6293.0808,
-          6719.6031
+          12534.1131,
+          12590.5736
         ],
         "conc_latency_p99_list": [
-          0.021160466300316292,
-          0.033499905739445265
+          0.008597700440295735,
+          0.010427862039068704
         ],
         "conc_latency_p95_list": [
-          0.014183212001444187,
-          0.024311021799803705
+          0.007032485200761586,
+          0.008721868197972072
         ],
         "conc_latency_avg_list": [
-          0.0063481626425471735,
-          0.011883786454976971
+          0.0047639834292315195,
+          0.006304263635102981
         ],
         "payload_profile": "ids_only",
         "payload_estimated_bytes_per_query": 2000,
@@ -622,14 +356,15 @@
         "st_conc_qps_list_list": [],
         "st_conc_latency_p99_list_list": [],
         "st_conc_latency_p95_list_list": [],
-        "st_conc_latency_avg_list_list": []
+        "st_conc_latency_avg_list_list": [],
+        "mrr": 0.9446
       },
       "task_config": {
         "db": "ElasticCloud",
         "db_config": {
           "db_label": "2026-06-23T17:38:23.654768",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-run-context/v1\",\n  \"profile\": \"elasticsearch/v1\",\n  \"backend_version\": \"9.4.3\",\n  \"deployment\": {\n    \"method\": \"docker\",\n    \"config\": {\n      \"mode\": \"single_node\"\n    }\n  },\n  \"server_groups\": [\n    {\n      \"role\": \"elasticsearch-data-master\",\n      \"count\": 1,\n      \"jvm_heap_gib\": 30,\n      \"hardware\": {\n        \"machine_type\": \"i8g.4xlarge\",\n        \"cpu_count\": 16,\n        \"memory_gib\": 123.54,\n        \"storage\": {\n          \"type\": \"local_nvme\",\n          \"device_count\": 1,\n          \"total_gib\": 3492.46,\n          \"model\": \"Amazon EC2 NVMe Instance Storage\"\n        }\n      }\n    }\n  ],\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  }\n}",
           "cloud_id": null,
           "scheme": "http",
           "host": "**********",
@@ -678,167 +413,33 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 1.9662,
-        "optimize_duration": 31.09,
-        "load_duration": 33.0562,
-        "qps": 3471.0893,
-        "serial_latency_p99": 0.0,
-        "serial_latency_p95": 0.0,
-        "recall": 0.0,
-        "ndcg": 0.0,
-        "conc_num_list": [
-          40,
-          80
-        ],
-        "conc_qps_list": [
-          3245.7069,
-          3471.0893
-        ],
-        "conc_latency_p99_list": [
-          0.03633042563960771,
-          0.04837336179916747
-        ],
-        "conc_latency_p95_list": [
-          0.025955834001797476,
-          0.038765777499065734
-        ],
-        "conc_latency_avg_list": [
-          0.01231323081025481,
-          0.023020162052078588
-        ],
-        "payload_profile": "text",
-        "payload_estimated_bytes_per_query": 53200,
-        "inserted_count": 100000,
-        "insert_rows_per_second": 0.0,
-        "insert_completion_seconds": 0.0,
-        "searchable_after_insert_seconds": 0.0,
-        "indexed_after_searchable_seconds": 0.0,
-        "additional_parameters": {
-          "num_per_batch": 1000,
-          "load_concurrency": 0,
-          "fts_manifest": {
-            "bm25": {
-              "k1": 1.2,
-              "b": 0.75,
-              "avgdl": 56.88413
-            },
-            "analyzer": {
-              "filter": [
-                "lowercase"
-              ],
-              "tokenizer": "standard"
-            }
-          },
-          "applied_bm25_params": {
-            "k1": 1.2,
-            "b": 0.75
-          },
-          "unapplied_bm25_params": {
-            "avgdl": 56.88413
-          },
-          "applied_analyzer_params": {},
-          "unapplied_analyzer_params": {
-            "filter": [
-              "lowercase"
-            ],
-            "tokenizer": "standard"
-          }
-        },
-        "st_ideal_insert_duration": 0,
-        "st_search_stage_list": [],
-        "st_search_time_list": [],
-        "st_max_qps_list_list": [],
-        "st_recall_list": [],
-        "st_ndcg_list": [],
-        "st_serial_latency_p99_list": [],
-        "st_serial_latency_p95_list": [],
-        "st_conc_failed_rate_list": [],
-        "st_conc_num_list_list": [],
-        "st_conc_qps_list_list": [],
-        "st_conc_latency_p99_list_list": [],
-        "st_conc_latency_p95_list_list": [],
-        "st_conc_latency_avg_list_list": []
-      },
-      "task_config": {
-        "db": "ElasticCloud",
-        "db_config": {
-          "db_label": "2026-06-23T17:41:05.239861",
-          "version": "",
-          "note": "",
-          "cloud_id": null,
-          "scheme": "http",
-          "host": "**********",
-          "port": 9200,
-          "user": "elastic",
-          "user_name": null,
-          "password": "**********",
-          "use_ssl": false,
-          "verify_certs": true
-        },
-        "db_case_config": {
-          "number_of_shards": 1,
-          "number_of_replicas": 0,
-          "refresh_interval": "30s",
-          "use_force_merge": true,
-          "metric_type": "BM25",
-          "bm25_k1": 1.2,
-          "bm25_b": 0.75
-        },
-        "case_config": {
-          "case_id": 503,
-          "custom_case": {
-            "dataset_with_size_type": "HotpotQA Small (100K documents)",
-            "payload_profile": "text"
-          },
-          "k": 100,
-          "concurrency_search_config": {
-            "num_concurrency": [
-              40,
-              80
-            ],
-            "concurrency_duration": 30,
-            "concurrency_timeout": 3600
-          }
-        },
-        "stages": [
-          "drop_old",
-          "load",
-          "search_concurrent"
-        ],
-        "load_concurrency": 0
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
         "insert_duration": 160.1365,
         "optimize_duration": 92.5894,
         "load_duration": 252.7259,
-        "qps": 1582.6793,
-        "serial_latency_p99": 0.0502,
-        "serial_latency_p95": 0.0306,
-        "recall": 0.9352,
-        "ndcg": 0.0,
+        "qps": 2686.9741,
+        "serial_latency_p99": 0.0222,
+        "serial_latency_p95": 0.0157,
+        "recall": 0.6228,
+        "ndcg": 0.2732,
         "conc_num_list": [
-          40,
+          60,
           80
         ],
         "conc_qps_list": [
-          1485.1078,
-          1582.6793
+          2686.9741,
+          2663.4012
         ],
         "conc_latency_p99_list": [
-          0.10130014419868526,
-          0.1204227190394886
+          0.05383890143901231,
+          0.06195318944053717
         ],
         "conc_latency_p95_list": [
-          0.06413858909909301,
-          0.08464620050290249
+          0.039473479198204584,
+          0.04770255699986588
         ],
         "conc_latency_avg_list": [
-          0.026891243904133805,
-          0.05046188340033532
+          0.02230479944928826,
+          0.029977797620890846
         ],
         "payload_profile": "ids_only",
         "payload_estimated_bytes_per_query": 2000,
@@ -891,14 +492,15 @@
         "st_conc_qps_list_list": [],
         "st_conc_latency_p99_list_list": [],
         "st_conc_latency_p95_list_list": [],
-        "st_conc_latency_avg_list_list": []
+        "st_conc_latency_avg_list_list": [],
+        "mrr": 0.1862
       },
       "task_config": {
         "db": "ElasticCloud",
         "db_config": {
           "db_label": "2026-06-23T17:25:04.982818",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-run-context/v1\",\n  \"profile\": \"elasticsearch/v1\",\n  \"backend_version\": \"9.4.3\",\n  \"deployment\": {\n    \"method\": \"docker\",\n    \"config\": {\n      \"mode\": \"single_node\"\n    }\n  },\n  \"server_groups\": [\n    {\n      \"role\": \"elasticsearch-data-master\",\n      \"count\": 1,\n      \"jvm_heap_gib\": 30,\n      \"hardware\": {\n        \"machine_type\": \"i8g.4xlarge\",\n        \"cpu_count\": 16,\n        \"memory_gib\": 123.54,\n        \"storage\": {\n          \"type\": \"local_nvme\",\n          \"device_count\": 1,\n          \"total_gib\": 3492.46,\n          \"model\": \"Amazon EC2 NVMe Instance Storage\"\n        }\n      }\n    }\n  ],\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  }\n}",
           "cloud_id": null,
           "scheme": "http",
           "host": "**********",
@@ -947,167 +549,33 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 160.1365,
-        "optimize_duration": 92.5894,
-        "load_duration": 252.7259,
-        "qps": 1204.033,
-        "serial_latency_p99": 0.0,
-        "serial_latency_p95": 0.0,
-        "recall": 0.0,
-        "ndcg": 0.0,
-        "conc_num_list": [
-          40,
-          80
-        ],
-        "conc_qps_list": [
-          1131.3448,
-          1204.033
-        ],
-        "conc_latency_p99_list": [
-          0.10636549504153667,
-          0.13718578399857506
-        ],
-        "conc_latency_p95_list": [
-          0.0707971137984714,
-          0.10115620599754038
-        ],
-        "conc_latency_avg_list": [
-          0.03531235997717238,
-          0.06635058395138439
-        ],
-        "payload_profile": "text",
-        "payload_estimated_bytes_per_query": 53200,
-        "inserted_count": 8841823,
-        "insert_rows_per_second": 0.0,
-        "insert_completion_seconds": 0.0,
-        "searchable_after_insert_seconds": 0.0,
-        "indexed_after_searchable_seconds": 0.0,
-        "additional_parameters": {
-          "num_per_batch": 1000,
-          "load_concurrency": 0,
-          "fts_manifest": {
-            "bm25": {
-              "k1": 1.2,
-              "b": 0.75,
-              "avgdl": 57.83363736188793
-            },
-            "analyzer": {
-              "filter": [
-                "lowercase"
-              ],
-              "tokenizer": "standard"
-            }
-          },
-          "applied_bm25_params": {
-            "k1": 1.2,
-            "b": 0.75
-          },
-          "unapplied_bm25_params": {
-            "avgdl": 57.83363736188793
-          },
-          "applied_analyzer_params": {},
-          "unapplied_analyzer_params": {
-            "filter": [
-              "lowercase"
-            ],
-            "tokenizer": "standard"
-          }
-        },
-        "st_ideal_insert_duration": 0,
-        "st_search_stage_list": [],
-        "st_search_time_list": [],
-        "st_max_qps_list_list": [],
-        "st_recall_list": [],
-        "st_ndcg_list": [],
-        "st_serial_latency_p99_list": [],
-        "st_serial_latency_p95_list": [],
-        "st_conc_failed_rate_list": [],
-        "st_conc_num_list_list": [],
-        "st_conc_qps_list_list": [],
-        "st_conc_latency_p99_list_list": [],
-        "st_conc_latency_p95_list_list": [],
-        "st_conc_latency_avg_list_list": []
-      },
-      "task_config": {
-        "db": "ElasticCloud",
-        "db_config": {
-          "db_label": "2026-06-23T17:32:21.485921",
-          "version": "",
-          "note": "",
-          "cloud_id": null,
-          "scheme": "http",
-          "host": "**********",
-          "port": 9200,
-          "user": "elastic",
-          "user_name": null,
-          "password": "**********",
-          "use_ssl": false,
-          "verify_certs": true
-        },
-        "db_case_config": {
-          "number_of_shards": 1,
-          "number_of_replicas": 0,
-          "refresh_interval": "30s",
-          "use_force_merge": true,
-          "metric_type": "BM25",
-          "bm25_k1": 1.2,
-          "bm25_b": 0.75
-        },
-        "case_config": {
-          "case_id": 503,
-          "custom_case": {
-            "dataset_with_size_type": "MS MARCO Large (8.8M documents)",
-            "payload_profile": "text"
-          },
-          "k": 100,
-          "concurrency_search_config": {
-            "num_concurrency": [
-              40,
-              80
-            ],
-            "concurrency_duration": 30,
-            "concurrency_timeout": 3600
-          }
-        },
-        "stages": [
-          "drop_old",
-          "load",
-          "search_concurrent"
-        ],
-        "load_concurrency": 0
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
         "insert_duration": 17.8893,
         "optimize_duration": 34.2775,
         "load_duration": 52.1668,
-        "qps": 5702.2528,
-        "serial_latency_p99": 0.0092,
-        "serial_latency_p95": 0.0065,
-        "recall": 0.9437,
-        "ndcg": 0.0,
+        "qps": 10152.153,
+        "serial_latency_p99": 0.0043,
+        "serial_latency_p95": 0.0034,
+        "recall": 0.8028,
+        "ndcg": 0.5222,
         "conc_num_list": [
-          40,
+          60,
           80
         ],
         "conc_qps_list": [
-          5383.2674,
-          5702.2528
+          10134.0539,
+          10152.153
         ],
         "conc_latency_p99_list": [
-          0.02630764468107369,
-          0.03738318958105083
+          0.014198277799223388,
+          0.016789430999779142
         ],
         "conc_latency_p95_list": [
-          0.017680951600959793,
-          0.02877839460124961
+          0.01101246209909732,
+          0.013366064998990623
         ],
         "conc_latency_avg_list": [
-          0.007422129557916056,
-          0.014006341815361298
+          0.005904385368471612,
+          0.007849020531480228
         ],
         "payload_profile": "ids_only",
         "payload_estimated_bytes_per_query": 2000,
@@ -1160,14 +628,15 @@
         "st_conc_qps_list_list": [],
         "st_conc_latency_p99_list_list": [],
         "st_conc_latency_p95_list_list": [],
-        "st_conc_latency_avg_list_list": []
+        "st_conc_latency_avg_list_list": [],
+        "mrr": 0.4526
       },
       "task_config": {
         "db": "ElasticCloud",
         "db_config": {
           "db_label": "2026-06-23T17:19:23.319688",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-run-context/v1\",\n  \"profile\": \"elasticsearch/v1\",\n  \"backend_version\": \"9.4.3\",\n  \"deployment\": {\n    \"method\": \"docker\",\n    \"config\": {\n      \"mode\": \"single_node\"\n    }\n  },\n  \"server_groups\": [\n    {\n      \"role\": \"elasticsearch-data-master\",\n      \"count\": 1,\n      \"jvm_heap_gib\": 30,\n      \"hardware\": {\n        \"machine_type\": \"i8g.4xlarge\",\n        \"cpu_count\": 16,\n        \"memory_gib\": 123.54,\n        \"storage\": {\n          \"type\": \"local_nvme\",\n          \"device_count\": 1,\n          \"total_gib\": 3492.46,\n          \"model\": \"Amazon EC2 NVMe Instance Storage\"\n        }\n      }\n    }\n  ],\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  }\n}",
           "cloud_id": null,
           "scheme": "http",
           "host": "**********",
@@ -1216,167 +685,33 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 17.8893,
-        "optimize_duration": 34.2775,
-        "load_duration": 52.1668,
-        "qps": 3677.9597,
-        "serial_latency_p99": 0.0,
-        "serial_latency_p95": 0.0,
-        "recall": 0.0,
-        "ndcg": 0.0,
-        "conc_num_list": [
-          40,
-          80
-        ],
-        "conc_qps_list": [
-          3473.3114,
-          3677.9597
-        ],
-        "conc_latency_p99_list": [
-          0.0357281443210376,
-          0.04769462314165139
-        ],
-        "conc_latency_p95_list": [
-          0.025091530600184316,
-          0.03831459170251036
-        ],
-        "conc_latency_avg_list": [
-          0.011505997403950962,
-          0.021721806785628715
-        ],
-        "payload_profile": "text",
-        "payload_estimated_bytes_per_query": 53200,
-        "inserted_count": 1000000,
-        "insert_rows_per_second": 0.0,
-        "insert_completion_seconds": 0.0,
-        "searchable_after_insert_seconds": 0.0,
-        "indexed_after_searchable_seconds": 0.0,
-        "additional_parameters": {
-          "num_per_batch": 1000,
-          "load_concurrency": 0,
-          "fts_manifest": {
-            "bm25": {
-              "k1": 1.2,
-              "b": 0.75,
-              "avgdl": 57.242324
-            },
-            "analyzer": {
-              "filter": [
-                "lowercase"
-              ],
-              "tokenizer": "standard"
-            }
-          },
-          "applied_bm25_params": {
-            "k1": 1.2,
-            "b": 0.75
-          },
-          "unapplied_bm25_params": {
-            "avgdl": 57.242324
-          },
-          "applied_analyzer_params": {},
-          "unapplied_analyzer_params": {
-            "filter": [
-              "lowercase"
-            ],
-            "tokenizer": "standard"
-          }
-        },
-        "st_ideal_insert_duration": 0,
-        "st_search_stage_list": [],
-        "st_search_time_list": [],
-        "st_max_qps_list_list": [],
-        "st_recall_list": [],
-        "st_ndcg_list": [],
-        "st_serial_latency_p99_list": [],
-        "st_serial_latency_p95_list": [],
-        "st_conc_failed_rate_list": [],
-        "st_conc_num_list_list": [],
-        "st_conc_qps_list_list": [],
-        "st_conc_latency_p99_list_list": [],
-        "st_conc_latency_p95_list_list": [],
-        "st_conc_latency_avg_list_list": []
-      },
-      "task_config": {
-        "db": "ElasticCloud",
-        "db_config": {
-          "db_label": "2026-06-23T17:22:25.552010",
-          "version": "",
-          "note": "",
-          "cloud_id": null,
-          "scheme": "http",
-          "host": "**********",
-          "port": 9200,
-          "user": "elastic",
-          "user_name": null,
-          "password": "**********",
-          "use_ssl": false,
-          "verify_certs": true
-        },
-        "db_case_config": {
-          "number_of_shards": 1,
-          "number_of_replicas": 0,
-          "refresh_interval": "30s",
-          "use_force_merge": true,
-          "metric_type": "BM25",
-          "bm25_k1": 1.2,
-          "bm25_b": 0.75
-        },
-        "case_config": {
-          "case_id": 503,
-          "custom_case": {
-            "dataset_with_size_type": "MS MARCO Medium (1M documents)",
-            "payload_profile": "text"
-          },
-          "k": 100,
-          "concurrency_search_config": {
-            "num_concurrency": [
-              40,
-              80
-            ],
-            "concurrency_duration": 30,
-            "concurrency_timeout": 3600
-          }
-        },
-        "stages": [
-          "drop_old",
-          "load",
-          "search_concurrent"
-        ],
-        "load_concurrency": 0
-      },
-      "label": ":)"
-    },
-    {
-      "metrics": {
-        "max_load_count": 0,
         "insert_duration": 1.8862,
         "optimize_duration": 31.0352,
         "load_duration": 32.9214,
-        "qps": 12479.8332,
-        "serial_latency_p99": 0.0029,
-        "serial_latency_p95": 0.0023,
-        "recall": 0.9497,
-        "ndcg": 0.0,
+        "qps": 12530.9805,
+        "serial_latency_p99": 0.0016,
+        "serial_latency_p95": 0.0014,
+        "recall": 0.9116,
+        "ndcg": 0.7158,
         "conc_num_list": [
-          40,
+          60,
           80
         ],
         "conc_qps_list": [
-          11315.3177,
-          12479.8332
+          12508.8898,
+          12530.9805
         ],
         "conc_latency_p99_list": [
-          0.012597403119434608,
-          0.024557725561316985
+          0.00861286495841341,
+          0.00828596436098451
         ],
         "conc_latency_p95_list": [
-          0.00729868780035758,
-          0.01442482639795344
+          0.005912762001389639,
+          0.007557337400794491
         ],
         "conc_latency_avg_list": [
-          0.003526799491246593,
-          0.00638580620427849
+          0.004776813722617175,
+          0.006322142056532246
         ],
         "payload_profile": "ids_only",
         "payload_estimated_bytes_per_query": 2000,
@@ -1429,14 +764,15 @@
         "st_conc_qps_list_list": [],
         "st_conc_latency_p99_list_list": [],
         "st_conc_latency_p95_list_list": [],
-        "st_conc_latency_avg_list_list": []
+        "st_conc_latency_avg_list_list": [],
+        "mrr": 0.6665
       },
       "task_config": {
         "db": "ElasticCloud",
         "db_config": {
           "db_label": "2026-06-23T17:14:30.502248",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-run-context/v1\",\n  \"profile\": \"elasticsearch/v1\",\n  \"backend_version\": \"9.4.3\",\n  \"deployment\": {\n    \"method\": \"docker\",\n    \"config\": {\n      \"mode\": \"single_node\"\n    }\n  },\n  \"server_groups\": [\n    {\n      \"role\": \"elasticsearch-data-master\",\n      \"count\": 1,\n      \"jvm_heap_gib\": 30,\n      \"hardware\": {\n        \"machine_type\": \"i8g.4xlarge\",\n        \"cpu_count\": 16,\n        \"memory_gib\": 123.54,\n        \"storage\": {\n          \"type\": \"local_nvme\",\n          \"device_count\": 1,\n          \"total_gib\": 3492.46,\n          \"model\": \"Amazon EC2 NVMe Instance Storage\"\n        }\n      }\n    }\n  ],\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  }\n}",
           "cloud_id": null,
           "scheme": "http",
           "host": "**********",
@@ -1485,70 +821,88 @@
     {
       "metrics": {
         "max_load_count": 0,
-        "insert_duration": 1.8862,
-        "optimize_duration": 31.0352,
-        "load_duration": 32.9214,
-        "qps": 5037.2489,
-        "serial_latency_p99": 0.0,
-        "serial_latency_p95": 0.0,
-        "recall": 0.0,
-        "ndcg": 0.0,
+        "insert_duration": 210.0847,
+        "optimize_duration": 93.2572,
+        "load_duration": 303.3419,
+        "qps": 721.3662,
+        "serial_latency_p99": 0.07,
+        "serial_latency_p95": 0.0475,
+        "recall": 0.7966,
+        "ndcg": 0.6175,
+        "mrr": 0.6258,
         "conc_num_list": [
-          40,
+          60,
           80
         ],
         "conc_qps_list": [
-          4701.0004,
-          5037.2489
+          709.952,
+          721.3662
         ],
         "conc_latency_p99_list": [
-          0.026061404299944115,
-          0.03860565954051707
+          0.1806982008819614,
+          0.2100805627823138
         ],
         "conc_latency_p95_list": [
-          0.017935610502172503,
-          0.030578274452818733
+          0.13791442114634248,
+          0.16302671675002783
         ],
         "conc_latency_avg_list": [
-          0.008499634080099454,
-          0.01585666237961175
+          0.08436115583290123,
+          0.11065719012112213
         ],
-        "payload_profile": "text",
-        "payload_estimated_bytes_per_query": 53200,
-        "inserted_count": 100000,
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 5233329,
         "insert_rows_per_second": 0.0,
         "insert_completion_seconds": 0.0,
         "searchable_after_insert_seconds": 0.0,
         "indexed_after_searchable_seconds": 0.0,
         "additional_parameters": {
+          "fts_filter": {
+            "filter_type": "NumGE",
+            "filter_field": "filter_id",
+            "filter_value": 2616664,
+            "filter_rate": 0.5,
+            "filter_id_distribution": "affine_permutation_v1",
+            "filter_id_multiplier": 3234376,
+            "filter_id_offset": 1082441,
+            "matched_doc_count": 2616665,
+            "matched_doc_ratio": 0.5,
+            "original_query_count": 7405,
+            "filtered_query_count": 5547,
+            "filtered_query_ratio": 0.749088,
+            "original_relevant_doc_count": 13783,
+            "filtered_relevant_doc_count": 6846
+          },
+          "fts_recall": {
+            "skipped": false,
+            "reason": null,
+            "serial_query_count": 5547,
+            "full_query_count": 7405
+          },
           "num_per_batch": 1000,
-          "load_concurrency": 0,
-          "fts_manifest": {
-            "bm25": {
-              "k1": 1.2,
-              "b": 0.75,
-              "avgdl": 55.01342
-            },
-            "analyzer": {
-              "filter": [
-                "lowercase"
-              ],
-              "tokenizer": "standard"
-            }
-          },
-          "applied_bm25_params": {
-            "k1": 1.2,
-            "b": 0.75
-          },
-          "unapplied_bm25_params": {
-            "avgdl": 55.01342
-          },
-          "applied_analyzer_params": {},
-          "unapplied_analyzer_params": {
-            "filter": [
-              "lowercase"
+          "load_concurrency": 4,
+          "serial_measurement": {
+            "composed_from_separate_run": true,
+            "metric_fields": [
+              "serial_latency_p99",
+              "serial_latency_p95",
+              "recall",
+              "ndcg",
+              "mrr"
             ],
-            "tokenizer": "standard"
+            "source_run_id": "6d07ef1559b6411b9d0afa54df3785aa",
+            "source_task_label": "fts_filtered_serial_elasticsearch_hotpotqa-large_r50_permuted",
+            "source_timestamp": 1785715200.0,
+            "source_file": "result_20260803_fts_filtered_serial_elasticsearch_hotpotqa-large_r50_permuted_elasticcloud.json",
+            "source_sha256": "91b664746a916c20e5a0af5fde40bfcc30ccc8125a2dfaece86511f68ea94583",
+            "source_db_label": "2026-08-03T16:47:58.795789",
+            "source_stages": [
+              "drop_old",
+              "load",
+              "search_serial"
+            ],
+            "source_note": "{\n  \"schema\": \"vdbbench-run-context/v1\",\n  \"profile\": \"elasticsearch/v1\",\n  \"backend_version\": \"9.4.3\",\n  \"deployment\": {\n    \"method\": \"docker\",\n    \"config\": {\n      \"mode\": \"single_node\"\n    }\n  },\n  \"server_groups\": [\n    {\n      \"role\": \"elasticsearch-data-master\",\n      \"count\": 1,\n      \"jvm_heap_gib\": 30,\n      \"hardware\": {\n        \"machine_type\": \"i8g.4xlarge\",\n        \"cpu_count\": 16,\n        \"memory_gib\": 123.54,\n        \"storage\": {\n          \"type\": \"local_nvme\",\n          \"device_count\": 1,\n          \"total_gib\": 3492.46,\n          \"model\": \"Amazon EC2 NVMe Instance Storage\"\n        }\n      }\n    }\n  ],\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  }\n}"
           }
         },
         "st_ideal_insert_duration": 0,
@@ -1569,9 +923,9 @@
       "task_config": {
         "db": "ElasticCloud",
         "db_config": {
-          "db_label": "2026-06-23T17:17:03.106278",
+          "db_label": "2026-07-16T19:33:09.977867",
           "version": "",
-          "note": "",
+          "note": "{\n  \"schema\": \"vdbbench-run-context/v1\",\n  \"profile\": \"elasticsearch/v1\",\n  \"backend_version\": \"9.4.3\",\n  \"deployment\": {\n    \"method\": \"docker\",\n    \"config\": {\n      \"mode\": \"single_node\"\n    }\n  },\n  \"server_groups\": [\n    {\n      \"role\": \"elasticsearch-data-master\",\n      \"count\": 1,\n      \"jvm_heap_gib\": 30,\n      \"hardware\": {\n        \"machine_type\": \"i8g.4xlarge\",\n        \"cpu_count\": 16,\n        \"memory_gib\": 123.54,\n        \"storage\": {\n          \"type\": \"local_nvme\",\n          \"device_count\": 1,\n          \"total_gib\": 3492.46,\n          \"model\": \"Amazon EC2 NVMe Instance Storage\"\n        }\n      }\n    }\n  ],\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  }\n}",
           "cloud_id": null,
           "scheme": "http",
           "host": "**********",
@@ -1588,29 +942,1379 @@
           "refresh_interval": "30s",
           "use_force_merge": true,
           "metric_type": "BM25",
-          "bm25_k1": 1.2,
-          "bm25_b": 0.75
+          "bm25_k1": null,
+          "bm25_b": null
         },
         "case_config": {
           "case_id": 503,
           "custom_case": {
-            "dataset_with_size_type": "MS MARCO Small (100K documents)",
-            "payload_profile": "text"
+            "dataset_with_size_type": "HotpotQA Large (5.2M documents)",
+            "payload_profile": "ids_only",
+            "filter_rate": 0.5
           },
           "k": 100,
           "concurrency_search_config": {
             "num_concurrency": [
-              40,
+              60,
               80
             ],
             "concurrency_duration": 30,
-            "concurrency_timeout": 3600
+            "concurrency_timeout": 3600,
+            "serial_cooldown": 0.0
           }
         },
         "stages": [
           "drop_old",
           "load",
-          "search_concurrent"
+          "search_concurrent",
+          "search_serial"
+        ],
+        "load_concurrency": 4
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 750.5232,
+        "serial_latency_p99": 0.0637,
+        "serial_latency_p95": 0.0436,
+        "recall": 0.8263,
+        "ndcg": 0.6439,
+        "mrr": 0.6188,
+        "conc_num_list": [
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          742.2813,
+          750.5232
+        ],
+        "conc_latency_p99_list": [
+          0.17308506104236582,
+          0.19856040821949153
+        ],
+        "conc_latency_p95_list": [
+          0.12934453199850396,
+          0.1560941719049879
+        ],
+        "conc_latency_avg_list": [
+          0.08063411026564973,
+          0.10631068993652631
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 0,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "fts_filter": {
+            "filter_type": "NumGE",
+            "filter_field": "filter_id",
+            "filter_value": 3924996,
+            "filter_rate": 0.75,
+            "filter_id_distribution": "affine_permutation_v1",
+            "filter_id_multiplier": 3234376,
+            "filter_id_offset": 1082441,
+            "matched_doc_count": 1308333,
+            "matched_doc_ratio": 0.25,
+            "original_query_count": 7405,
+            "filtered_query_count": 3175,
+            "filtered_query_ratio": 0.428764,
+            "original_relevant_doc_count": 13783,
+            "filtered_relevant_doc_count": 3379
+          },
+          "fts_recall": {
+            "skipped": false,
+            "reason": null,
+            "serial_query_count": 3175,
+            "full_query_count": 7405
+          },
+          "serial_measurement": {
+            "composed_from_separate_run": true,
+            "metric_fields": [
+              "serial_latency_p99",
+              "serial_latency_p95",
+              "recall",
+              "ndcg",
+              "mrr"
+            ],
+            "source_run_id": "17bc3bc82c7a4367b901f21e8415867a",
+            "source_task_label": "fts_filtered_serial_elasticsearch_hotpotqa-large_r75_permuted",
+            "source_timestamp": 1785715200.0,
+            "source_file": "result_20260803_fts_filtered_serial_elasticsearch_hotpotqa-large_r75_permuted_elasticcloud.json",
+            "source_sha256": "0ed262bb98569e2c29ffda21c498767d25ff895a23fe02a78db6b40b2f0191cc",
+            "source_db_label": "2026-08-03T16:56:16.769773",
+            "source_stages": [
+              "search_serial"
+            ],
+            "source_note": "{\n  \"schema\": \"vdbbench-run-context/v1\",\n  \"profile\": \"elasticsearch/v1\",\n  \"backend_version\": \"9.4.3\",\n  \"deployment\": {\n    \"method\": \"docker\",\n    \"config\": {\n      \"mode\": \"single_node\"\n    }\n  },\n  \"server_groups\": [\n    {\n      \"role\": \"elasticsearch-data-master\",\n      \"count\": 1,\n      \"jvm_heap_gib\": 30,\n      \"hardware\": {\n        \"machine_type\": \"i8g.4xlarge\",\n        \"cpu_count\": 16,\n        \"memory_gib\": 123.54,\n        \"storage\": {\n          \"type\": \"local_nvme\",\n          \"device_count\": 1,\n          \"total_gib\": 3492.46,\n          \"model\": \"Amazon EC2 NVMe Instance Storage\"\n        }\n      }\n    }\n  ],\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  }\n}"
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ElasticCloud",
+        "db_config": {
+          "db_label": "2026-07-16T19:41:37.525743",
+          "version": "",
+          "note": "{\n  \"schema\": \"vdbbench-run-context/v1\",\n  \"profile\": \"elasticsearch/v1\",\n  \"backend_version\": \"9.4.3\",\n  \"deployment\": {\n    \"method\": \"docker\",\n    \"config\": {\n      \"mode\": \"single_node\"\n    }\n  },\n  \"server_groups\": [\n    {\n      \"role\": \"elasticsearch-data-master\",\n      \"count\": 1,\n      \"jvm_heap_gib\": 30,\n      \"hardware\": {\n        \"machine_type\": \"i8g.4xlarge\",\n        \"cpu_count\": 16,\n        \"memory_gib\": 123.54,\n        \"storage\": {\n          \"type\": \"local_nvme\",\n          \"device_count\": 1,\n          \"total_gib\": 3492.46,\n          \"model\": \"Amazon EC2 NVMe Instance Storage\"\n        }\n      }\n    }\n  ],\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  }\n}",
+          "cloud_id": null,
+          "scheme": "http",
+          "host": "**********",
+          "port": 9200,
+          "user": "elastic",
+          "user_name": null,
+          "password": "**********",
+          "use_ssl": false,
+          "verify_certs": true
+        },
+        "db_case_config": {
+          "number_of_shards": 1,
+          "number_of_replicas": 0,
+          "refresh_interval": "30s",
+          "use_force_merge": true,
+          "metric_type": "BM25",
+          "bm25_k1": null,
+          "bm25_b": null
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "HotpotQA Large (5.2M documents)",
+            "payload_profile": "ids_only",
+            "filter_rate": 0.75
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600,
+            "serial_cooldown": 0.0
+          }
+        },
+        "stages": [
+          "search_concurrent",
+          "search_serial"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 770.9499,
+        "serial_latency_p99": 0.0724,
+        "serial_latency_p95": 0.0508,
+        "recall": 0.8665,
+        "ndcg": 0.7004,
+        "mrr": 0.6627,
+        "conc_num_list": [
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          759.173,
+          770.9499
+        ],
+        "conc_latency_p99_list": [
+          0.15933862284160563,
+          0.18434771904256195
+        ],
+        "conc_latency_p95_list": [
+          0.12385570425285548,
+          0.14966088689725432
+        ],
+        "conc_latency_avg_list": [
+          0.07888747691351794,
+          0.10353734658255655
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 0,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "fts_filter": {
+            "filter_type": "NumGE",
+            "filter_field": "filter_id",
+            "filter_value": 4709996,
+            "filter_rate": 0.9,
+            "filter_id_distribution": "affine_permutation_v1",
+            "filter_id_multiplier": 3234376,
+            "filter_id_offset": 1082441,
+            "matched_doc_count": 523333,
+            "matched_doc_ratio": 0.1,
+            "original_query_count": 7405,
+            "filtered_query_count": 1367,
+            "filtered_query_ratio": 0.184605,
+            "original_relevant_doc_count": 13783,
+            "filtered_relevant_doc_count": 1335
+          },
+          "fts_recall": {
+            "skipped": false,
+            "reason": null,
+            "serial_query_count": 1367,
+            "full_query_count": 7405
+          },
+          "serial_measurement": {
+            "composed_from_separate_run": true,
+            "metric_fields": [
+              "serial_latency_p99",
+              "serial_latency_p95",
+              "recall",
+              "ndcg",
+              "mrr"
+            ],
+            "source_run_id": "b4641cb14b1644279c5f35fee2458dfb",
+            "source_task_label": "fts_filtered_serial_elasticsearch_hotpotqa-large_r90_permuted",
+            "source_timestamp": 1785715200.0,
+            "source_file": "result_20260803_fts_filtered_serial_elasticsearch_hotpotqa-large_r90_permuted_elasticcloud.json",
+            "source_sha256": "9a52e707376a127c8d538bab1a67883b6c5521df0d866d1a72aaab1cca0ddf2c",
+            "source_db_label": "2026-08-03T16:59:14.726191",
+            "source_stages": [
+              "search_serial"
+            ],
+            "source_note": "{\n  \"schema\": \"vdbbench-run-context/v1\",\n  \"profile\": \"elasticsearch/v1\",\n  \"backend_version\": \"9.4.3\",\n  \"deployment\": {\n    \"method\": \"docker\",\n    \"config\": {\n      \"mode\": \"single_node\"\n    }\n  },\n  \"server_groups\": [\n    {\n      \"role\": \"elasticsearch-data-master\",\n      \"count\": 1,\n      \"jvm_heap_gib\": 30,\n      \"hardware\": {\n        \"machine_type\": \"i8g.4xlarge\",\n        \"cpu_count\": 16,\n        \"memory_gib\": 123.54,\n        \"storage\": {\n          \"type\": \"local_nvme\",\n          \"device_count\": 1,\n          \"total_gib\": 3492.46,\n          \"model\": \"Amazon EC2 NVMe Instance Storage\"\n        }\n      }\n    }\n  ],\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  }\n}"
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ElasticCloud",
+        "db_config": {
+          "db_label": "2026-07-16T19:45:01.768660",
+          "version": "",
+          "note": "{\n  \"schema\": \"vdbbench-run-context/v1\",\n  \"profile\": \"elasticsearch/v1\",\n  \"backend_version\": \"9.4.3\",\n  \"deployment\": {\n    \"method\": \"docker\",\n    \"config\": {\n      \"mode\": \"single_node\"\n    }\n  },\n  \"server_groups\": [\n    {\n      \"role\": \"elasticsearch-data-master\",\n      \"count\": 1,\n      \"jvm_heap_gib\": 30,\n      \"hardware\": {\n        \"machine_type\": \"i8g.4xlarge\",\n        \"cpu_count\": 16,\n        \"memory_gib\": 123.54,\n        \"storage\": {\n          \"type\": \"local_nvme\",\n          \"device_count\": 1,\n          \"total_gib\": 3492.46,\n          \"model\": \"Amazon EC2 NVMe Instance Storage\"\n        }\n      }\n    }\n  ],\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  }\n}",
+          "cloud_id": null,
+          "scheme": "http",
+          "host": "**********",
+          "port": 9200,
+          "user": "elastic",
+          "user_name": null,
+          "password": "**********",
+          "use_ssl": false,
+          "verify_certs": true
+        },
+        "db_case_config": {
+          "number_of_shards": 1,
+          "number_of_replicas": 0,
+          "refresh_interval": "30s",
+          "use_force_merge": true,
+          "metric_type": "BM25",
+          "bm25_k1": null,
+          "bm25_b": null
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "HotpotQA Large (5.2M documents)",
+            "payload_profile": "ids_only",
+            "filter_rate": 0.9
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600,
+            "serial_cooldown": 0.0
+          }
+        },
+        "stages": [
+          "search_concurrent",
+          "search_serial"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 774.5308,
+        "serial_latency_p99": 0.0542,
+        "serial_latency_p95": 0.0383,
+        "recall": 0.884,
+        "ndcg": 0.7266,
+        "mrr": 0.6865,
+        "conc_num_list": [
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          774.5308,
+          772.2879
+        ],
+        "conc_latency_p99_list": [
+          0.15306021131982533,
+          0.17734859948323
+        ],
+        "conc_latency_p95_list": [
+          0.12027961940184463,
+          0.14829936109745176
+        ],
+        "conc_latency_avg_list": [
+          0.07731039411178581,
+          0.10336622360207741
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 0,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "fts_filter": {
+            "filter_type": "NumGE",
+            "filter_field": "filter_id",
+            "filter_value": 4971662,
+            "filter_rate": 0.95,
+            "filter_id_distribution": "affine_permutation_v1",
+            "filter_id_multiplier": 3234376,
+            "filter_id_offset": 1082441,
+            "matched_doc_count": 261667,
+            "matched_doc_ratio": 0.05,
+            "original_query_count": 7405,
+            "filtered_query_count": 698,
+            "filtered_query_ratio": 0.094261,
+            "original_relevant_doc_count": 13783,
+            "filtered_relevant_doc_count": 664
+          },
+          "fts_recall": {
+            "skipped": false,
+            "reason": null,
+            "serial_query_count": 698,
+            "full_query_count": 7405
+          },
+          "serial_measurement": {
+            "composed_from_separate_run": true,
+            "metric_fields": [
+              "serial_latency_p99",
+              "serial_latency_p95",
+              "recall",
+              "ndcg",
+              "mrr"
+            ],
+            "source_run_id": "a72a9198404847c696aa094dc2ecebce",
+            "source_task_label": "fts_filtered_serial_elasticsearch_hotpotqa-large_r95_permuted",
+            "source_timestamp": 1785715200.0,
+            "source_file": "result_20260803_fts_filtered_serial_elasticsearch_hotpotqa-large_r95_permuted_elasticcloud.json",
+            "source_sha256": "cd51a79edd64d94df8814bbfb745ddb555e251c338a2ddafae49c6cf989e5ea2",
+            "source_db_label": "2026-08-03T17:01:44.955740",
+            "source_stages": [
+              "search_serial"
+            ],
+            "source_note": "{\n  \"schema\": \"vdbbench-run-context/v1\",\n  \"profile\": \"elasticsearch/v1\",\n  \"backend_version\": \"9.4.3\",\n  \"deployment\": {\n    \"method\": \"docker\",\n    \"config\": {\n      \"mode\": \"single_node\"\n    }\n  },\n  \"server_groups\": [\n    {\n      \"role\": \"elasticsearch-data-master\",\n      \"count\": 1,\n      \"jvm_heap_gib\": 30,\n      \"hardware\": {\n        \"machine_type\": \"i8g.4xlarge\",\n        \"cpu_count\": 16,\n        \"memory_gib\": 123.54,\n        \"storage\": {\n          \"type\": \"local_nvme\",\n          \"device_count\": 1,\n          \"total_gib\": 3492.46,\n          \"model\": \"Amazon EC2 NVMe Instance Storage\"\n        }\n      }\n    }\n  ],\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  }\n}"
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ElasticCloud",
+        "db_config": {
+          "db_label": "2026-07-16T19:48:27.444308",
+          "version": "",
+          "note": "{\n  \"schema\": \"vdbbench-run-context/v1\",\n  \"profile\": \"elasticsearch/v1\",\n  \"backend_version\": \"9.4.3\",\n  \"deployment\": {\n    \"method\": \"docker\",\n    \"config\": {\n      \"mode\": \"single_node\"\n    }\n  },\n  \"server_groups\": [\n    {\n      \"role\": \"elasticsearch-data-master\",\n      \"count\": 1,\n      \"jvm_heap_gib\": 30,\n      \"hardware\": {\n        \"machine_type\": \"i8g.4xlarge\",\n        \"cpu_count\": 16,\n        \"memory_gib\": 123.54,\n        \"storage\": {\n          \"type\": \"local_nvme\",\n          \"device_count\": 1,\n          \"total_gib\": 3492.46,\n          \"model\": \"Amazon EC2 NVMe Instance Storage\"\n        }\n      }\n    }\n  ],\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  }\n}",
+          "cloud_id": null,
+          "scheme": "http",
+          "host": "**********",
+          "port": 9200,
+          "user": "elastic",
+          "user_name": null,
+          "password": "**********",
+          "use_ssl": false,
+          "verify_certs": true
+        },
+        "db_case_config": {
+          "number_of_shards": 1,
+          "number_of_replicas": 0,
+          "refresh_interval": "30s",
+          "use_force_merge": true,
+          "metric_type": "BM25",
+          "bm25_k1": null,
+          "bm25_b": null
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "HotpotQA Large (5.2M documents)",
+            "payload_profile": "ids_only",
+            "filter_rate": 0.95
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600,
+            "serial_cooldown": 0.0
+          }
+        },
+        "stages": [
+          "search_concurrent",
+          "search_serial"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 936.4393,
+        "serial_latency_p99": 0.0359,
+        "serial_latency_p95": 0.0298,
+        "recall": 0.898,
+        "ndcg": 0.7825,
+        "mrr": 0.7494,
+        "conc_num_list": [
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          919.3657,
+          936.4393
+        ],
+        "conc_latency_p99_list": [
+          0.11650546061813662,
+          0.13283855842935735
+        ],
+        "conc_latency_p95_list": [
+          0.09433838454860961,
+          0.11730172135248722
+        ],
+        "conc_latency_avg_list": [
+          0.06513757521688086,
+          0.08528450502047526
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 0,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "fts_filter": {
+            "filter_type": "NumGE",
+            "filter_field": "filter_id",
+            "filter_value": 5180995,
+            "filter_rate": 0.99,
+            "filter_id_distribution": "affine_permutation_v1",
+            "filter_id_multiplier": 3234376,
+            "filter_id_offset": 1082441,
+            "matched_doc_count": 52334,
+            "matched_doc_ratio": 0.01,
+            "original_query_count": 7405,
+            "filtered_query_count": 147,
+            "filtered_query_ratio": 0.019851,
+            "original_relevant_doc_count": 13783,
+            "filtered_relevant_doc_count": 136
+          },
+          "fts_recall": {
+            "skipped": false,
+            "reason": null,
+            "serial_query_count": 147,
+            "full_query_count": 7405
+          },
+          "serial_measurement": {
+            "composed_from_separate_run": true,
+            "metric_fields": [
+              "serial_latency_p99",
+              "serial_latency_p95",
+              "recall",
+              "ndcg",
+              "mrr"
+            ],
+            "source_run_id": "482bc4f2cf3a4c1692ff65756cd33ea5",
+            "source_task_label": "fts_filtered_serial_elasticsearch_hotpotqa-large_r99_permuted",
+            "source_timestamp": 1785715200.0,
+            "source_file": "result_20260803_fts_filtered_serial_elasticsearch_hotpotqa-large_r99_permuted_elasticcloud.json",
+            "source_sha256": "2f644813b64d937af334d5c52d120a4d89a096927034adb6f11c7cfd63bb95d5",
+            "source_db_label": "2026-08-03T17:03:52.164545",
+            "source_stages": [
+              "search_serial"
+            ],
+            "source_note": "{\n  \"schema\": \"vdbbench-run-context/v1\",\n  \"profile\": \"elasticsearch/v1\",\n  \"backend_version\": \"9.4.3\",\n  \"deployment\": {\n    \"method\": \"docker\",\n    \"config\": {\n      \"mode\": \"single_node\"\n    }\n  },\n  \"server_groups\": [\n    {\n      \"role\": \"elasticsearch-data-master\",\n      \"count\": 1,\n      \"jvm_heap_gib\": 30,\n      \"hardware\": {\n        \"machine_type\": \"i8g.4xlarge\",\n        \"cpu_count\": 16,\n        \"memory_gib\": 123.54,\n        \"storage\": {\n          \"type\": \"local_nvme\",\n          \"device_count\": 1,\n          \"total_gib\": 3492.46,\n          \"model\": \"Amazon EC2 NVMe Instance Storage\"\n        }\n      }\n    }\n  ],\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  }\n}"
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ElasticCloud",
+        "db_config": {
+          "db_label": "2026-07-16T19:51:49.557699",
+          "version": "",
+          "note": "{\n  \"schema\": \"vdbbench-run-context/v1\",\n  \"profile\": \"elasticsearch/v1\",\n  \"backend_version\": \"9.4.3\",\n  \"deployment\": {\n    \"method\": \"docker\",\n    \"config\": {\n      \"mode\": \"single_node\"\n    }\n  },\n  \"server_groups\": [\n    {\n      \"role\": \"elasticsearch-data-master\",\n      \"count\": 1,\n      \"jvm_heap_gib\": 30,\n      \"hardware\": {\n        \"machine_type\": \"i8g.4xlarge\",\n        \"cpu_count\": 16,\n        \"memory_gib\": 123.54,\n        \"storage\": {\n          \"type\": \"local_nvme\",\n          \"device_count\": 1,\n          \"total_gib\": 3492.46,\n          \"model\": \"Amazon EC2 NVMe Instance Storage\"\n        }\n      }\n    }\n  ],\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  }\n}",
+          "cloud_id": null,
+          "scheme": "http",
+          "host": "**********",
+          "port": 9200,
+          "user": "elastic",
+          "user_name": null,
+          "password": "**********",
+          "use_ssl": false,
+          "verify_certs": true
+        },
+        "db_case_config": {
+          "number_of_shards": 1,
+          "number_of_replicas": 0,
+          "refresh_interval": "30s",
+          "use_force_merge": true,
+          "metric_type": "BM25",
+          "bm25_k1": null,
+          "bm25_b": null
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "HotpotQA Large (5.2M documents)",
+            "payload_profile": "ids_only",
+            "filter_rate": 0.99
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600,
+            "serial_cooldown": 0.0
+          }
+        },
+        "stages": [
+          "search_concurrent",
+          "search_serial"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 305.6984,
+        "optimize_duration": 93.6347,
+        "load_duration": 399.3331,
+        "qps": 1670.2698,
+        "serial_latency_p99": 0.0427,
+        "serial_latency_p95": 0.0268,
+        "recall": 0.6974,
+        "ndcg": 0.3455,
+        "mrr": 0.256,
+        "conc_num_list": [
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          1613.9683,
+          1670.2698
+        ],
+        "conc_latency_p99_list": [
+          0.10500255563529215,
+          0.10993121209095964
+        ],
+        "conc_latency_p95_list": [
+          0.068664093100233,
+          0.07755282529615215
+        ],
+        "conc_latency_avg_list": [
+          0.03712288018409116,
+          0.04780773417065931
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 8841823,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "fts_filter": {
+            "filter_type": "NumGE",
+            "filter_field": "filter_id",
+            "filter_value": 4420911,
+            "filter_rate": 0.5,
+            "filter_id_distribution": "affine_permutation_v1",
+            "filter_id_multiplier": 5464547,
+            "filter_id_offset": 1684563,
+            "matched_doc_count": 4420912,
+            "matched_doc_ratio": 0.5,
+            "original_query_count": 6980,
+            "filtered_query_count": 3658,
+            "filtered_query_ratio": 0.524069,
+            "original_relevant_doc_count": 7433,
+            "filtered_relevant_doc_count": 3758
+          },
+          "fts_recall": {
+            "skipped": false,
+            "reason": null,
+            "serial_query_count": 3658,
+            "full_query_count": 6980
+          },
+          "num_per_batch": 1000,
+          "load_concurrency": 4,
+          "serial_measurement": {
+            "composed_from_separate_run": true,
+            "metric_fields": [
+              "serial_latency_p99",
+              "serial_latency_p95",
+              "recall",
+              "ndcg",
+              "mrr"
+            ],
+            "source_run_id": "44d302a866ef41f487cd50bab4cd6ee1",
+            "source_task_label": "fts_filtered_serial_elasticsearch_msmarco-large_r50_permuted",
+            "source_timestamp": 1785715200.0,
+            "source_file": "result_20260803_fts_filtered_serial_elasticsearch_msmarco-large_r50_permuted_elasticcloud.json",
+            "source_sha256": "0573762c9a2d93cd37248a6e6c63d2a0f6e245844e1f18ef83fa4368bea1ee57",
+            "source_db_label": "2026-08-03T16:36:18.370955",
+            "source_stages": [
+              "drop_old",
+              "load",
+              "search_serial"
+            ],
+            "source_note": "{\n  \"schema\": \"vdbbench-run-context/v1\",\n  \"profile\": \"elasticsearch/v1\",\n  \"backend_version\": \"9.4.3\",\n  \"deployment\": {\n    \"method\": \"docker\",\n    \"config\": {\n      \"mode\": \"single_node\"\n    }\n  },\n  \"server_groups\": [\n    {\n      \"role\": \"elasticsearch-data-master\",\n      \"count\": 1,\n      \"jvm_heap_gib\": 30,\n      \"hardware\": {\n        \"machine_type\": \"i8g.4xlarge\",\n        \"cpu_count\": 16,\n        \"memory_gib\": 123.54,\n        \"storage\": {\n          \"type\": \"local_nvme\",\n          \"device_count\": 1,\n          \"total_gib\": 3492.46,\n          \"model\": \"Amazon EC2 NVMe Instance Storage\"\n        }\n      }\n    }\n  ],\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  }\n}"
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ElasticCloud",
+        "db_config": {
+          "db_label": "2026-07-16T18:34:54.790049",
+          "version": "",
+          "note": "{\n  \"schema\": \"vdbbench-run-context/v1\",\n  \"profile\": \"elasticsearch/v1\",\n  \"backend_version\": \"9.4.3\",\n  \"deployment\": {\n    \"method\": \"docker\",\n    \"config\": {\n      \"mode\": \"single_node\"\n    }\n  },\n  \"server_groups\": [\n    {\n      \"role\": \"elasticsearch-data-master\",\n      \"count\": 1,\n      \"jvm_heap_gib\": 30,\n      \"hardware\": {\n        \"machine_type\": \"i8g.4xlarge\",\n        \"cpu_count\": 16,\n        \"memory_gib\": 123.54,\n        \"storage\": {\n          \"type\": \"local_nvme\",\n          \"device_count\": 1,\n          \"total_gib\": 3492.46,\n          \"model\": \"Amazon EC2 NVMe Instance Storage\"\n        }\n      }\n    }\n  ],\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  }\n}",
+          "cloud_id": null,
+          "scheme": "http",
+          "host": "**********",
+          "port": 9200,
+          "user": "elastic",
+          "user_name": null,
+          "password": "**********",
+          "use_ssl": false,
+          "verify_certs": true
+        },
+        "db_case_config": {
+          "number_of_shards": 1,
+          "number_of_replicas": 0,
+          "refresh_interval": "30s",
+          "use_force_merge": true,
+          "metric_type": "BM25",
+          "bm25_k1": null,
+          "bm25_b": null
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "MS MARCO Large (8.8M documents)",
+            "payload_profile": "ids_only",
+            "filter_rate": 0.5
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600,
+            "serial_cooldown": 0.0
+          }
+        },
+        "stages": [
+          "drop_old",
+          "load",
+          "search_concurrent",
+          "search_serial"
+        ],
+        "load_concurrency": 4
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 1760.9692,
+        "serial_latency_p99": 0.0375,
+        "serial_latency_p95": 0.0237,
+        "recall": 0.7618,
+        "ndcg": 0.4234,
+        "mrr": 0.3358,
+        "conc_num_list": [
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          1760.9692,
+          1748.2651
+        ],
+        "conc_latency_p99_list": [
+          0.08974919100000989,
+          0.10211793256872619
+        ],
+        "conc_latency_p95_list": [
+          0.060971413004153874,
+          0.0733459422524902
+        ],
+        "conc_latency_avg_list": [
+          0.0339761071088688,
+          0.04568243171278137
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 0,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "fts_filter": {
+            "filter_type": "NumGE",
+            "filter_field": "filter_id",
+            "filter_value": 6631367,
+            "filter_rate": 0.75,
+            "filter_id_distribution": "affine_permutation_v1",
+            "filter_id_multiplier": 5464547,
+            "filter_id_offset": 1684563,
+            "matched_doc_count": 2210456,
+            "matched_doc_ratio": 0.25,
+            "original_query_count": 6980,
+            "filtered_query_count": 1818,
+            "filtered_query_ratio": 0.260458,
+            "original_relevant_doc_count": 7433,
+            "filtered_relevant_doc_count": 1839
+          },
+          "fts_recall": {
+            "skipped": false,
+            "reason": null,
+            "serial_query_count": 1818,
+            "full_query_count": 6980
+          },
+          "serial_measurement": {
+            "composed_from_separate_run": true,
+            "metric_fields": [
+              "serial_latency_p99",
+              "serial_latency_p95",
+              "recall",
+              "ndcg",
+              "mrr"
+            ],
+            "source_run_id": "e798f27d27574fb4a070b632d6a39fd3",
+            "source_task_label": "fts_filtered_serial_elasticsearch_msmarco-large_r75_permuted",
+            "source_timestamp": 1785715200.0,
+            "source_file": "result_20260803_fts_filtered_serial_elasticsearch_msmarco-large_r75_permuted_elasticcloud.json",
+            "source_sha256": "2633cc2c75fdae118a8be7dd7cde4faa8ee705a35a1d6812d2355784c395c46a",
+            "source_db_label": "2026-08-03T16:44:18.348174",
+            "source_stages": [
+              "search_serial"
+            ],
+            "source_note": "{\n  \"schema\": \"vdbbench-run-context/v1\",\n  \"profile\": \"elasticsearch/v1\",\n  \"backend_version\": \"9.4.3\",\n  \"deployment\": {\n    \"method\": \"docker\",\n    \"config\": {\n      \"mode\": \"single_node\"\n    }\n  },\n  \"server_groups\": [\n    {\n      \"role\": \"elasticsearch-data-master\",\n      \"count\": 1,\n      \"jvm_heap_gib\": 30,\n      \"hardware\": {\n        \"machine_type\": \"i8g.4xlarge\",\n        \"cpu_count\": 16,\n        \"memory_gib\": 123.54,\n        \"storage\": {\n          \"type\": \"local_nvme\",\n          \"device_count\": 1,\n          \"total_gib\": 3492.46,\n          \"model\": \"Amazon EC2 NVMe Instance Storage\"\n        }\n      }\n    }\n  ],\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  }\n}"
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ElasticCloud",
+        "db_config": {
+          "db_label": "2026-07-16T18:43:49.325484",
+          "version": "",
+          "note": "{\n  \"schema\": \"vdbbench-run-context/v1\",\n  \"profile\": \"elasticsearch/v1\",\n  \"backend_version\": \"9.4.3\",\n  \"deployment\": {\n    \"method\": \"docker\",\n    \"config\": {\n      \"mode\": \"single_node\"\n    }\n  },\n  \"server_groups\": [\n    {\n      \"role\": \"elasticsearch-data-master\",\n      \"count\": 1,\n      \"jvm_heap_gib\": 30,\n      \"hardware\": {\n        \"machine_type\": \"i8g.4xlarge\",\n        \"cpu_count\": 16,\n        \"memory_gib\": 123.54,\n        \"storage\": {\n          \"type\": \"local_nvme\",\n          \"device_count\": 1,\n          \"total_gib\": 3492.46,\n          \"model\": \"Amazon EC2 NVMe Instance Storage\"\n        }\n      }\n    }\n  ],\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  }\n}",
+          "cloud_id": null,
+          "scheme": "http",
+          "host": "**********",
+          "port": 9200,
+          "user": "elastic",
+          "user_name": null,
+          "password": "**********",
+          "use_ssl": false,
+          "verify_certs": true
+        },
+        "db_case_config": {
+          "number_of_shards": 1,
+          "number_of_replicas": 0,
+          "refresh_interval": "30s",
+          "use_force_merge": true,
+          "metric_type": "BM25",
+          "bm25_k1": null,
+          "bm25_b": null
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "MS MARCO Large (8.8M documents)",
+            "payload_profile": "ids_only",
+            "filter_rate": 0.75
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600,
+            "serial_cooldown": 0.0
+          }
+        },
+        "stages": [
+          "search_concurrent",
+          "search_serial"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 1727.6187,
+        "serial_latency_p99": 0.0349,
+        "serial_latency_p95": 0.0232,
+        "recall": 0.8383,
+        "ndcg": 0.5152,
+        "mrr": 0.4301,
+        "conc_num_list": [
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          1727.6187,
+          1712.5496
+        ],
+        "conc_latency_p99_list": [
+          0.08606930284106058,
+          0.09963348716031763
+        ],
+        "conc_latency_p95_list": [
+          0.06112156380477239,
+          0.07310520800238009
+        ],
+        "conc_latency_avg_list": [
+          0.03468250891671445,
+          0.04662555647302419
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 0,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "fts_filter": {
+            "filter_type": "NumGE",
+            "filter_field": "filter_id",
+            "filter_value": 7957640,
+            "filter_rate": 0.9,
+            "filter_id_distribution": "affine_permutation_v1",
+            "filter_id_multiplier": 5464547,
+            "filter_id_offset": 1684563,
+            "matched_doc_count": 884183,
+            "matched_doc_ratio": 0.1,
+            "original_query_count": 6980,
+            "filtered_query_count": 739,
+            "filtered_query_ratio": 0.105874,
+            "original_relevant_doc_count": 7433,
+            "filtered_relevant_doc_count": 740
+          },
+          "fts_recall": {
+            "skipped": false,
+            "reason": null,
+            "serial_query_count": 739,
+            "full_query_count": 6980
+          },
+          "serial_measurement": {
+            "composed_from_separate_run": true,
+            "metric_fields": [
+              "serial_latency_p99",
+              "serial_latency_p95",
+              "recall",
+              "ndcg",
+              "mrr"
+            ],
+            "source_run_id": "3db387eca78a41b988db0fa5d8653078",
+            "source_task_label": "fts_filtered_serial_elasticsearch_msmarco-large_r90_permuted",
+            "source_timestamp": 1785715200.0,
+            "source_file": "result_20260803_fts_filtered_serial_elasticsearch_msmarco-large_r90_permuted_elasticcloud.json",
+            "source_sha256": "323dda4c7f6f14141ee1ff1b1df6b7d6dc20269bc1d01f90f36d22c143780f49",
+            "source_db_label": "2026-08-03T16:45:23.353032",
+            "source_stages": [
+              "search_serial"
+            ],
+            "source_note": "{\n  \"schema\": \"vdbbench-run-context/v1\",\n  \"profile\": \"elasticsearch/v1\",\n  \"backend_version\": \"9.4.3\",\n  \"deployment\": {\n    \"method\": \"docker\",\n    \"config\": {\n      \"mode\": \"single_node\"\n    }\n  },\n  \"server_groups\": [\n    {\n      \"role\": \"elasticsearch-data-master\",\n      \"count\": 1,\n      \"jvm_heap_gib\": 30,\n      \"hardware\": {\n        \"machine_type\": \"i8g.4xlarge\",\n        \"cpu_count\": 16,\n        \"memory_gib\": 123.54,\n        \"storage\": {\n          \"type\": \"local_nvme\",\n          \"device_count\": 1,\n          \"total_gib\": 3492.46,\n          \"model\": \"Amazon EC2 NVMe Instance Storage\"\n        }\n      }\n    }\n  ],\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  }\n}"
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ElasticCloud",
+        "db_config": {
+          "db_label": "2026-07-16T18:46:08.382474",
+          "version": "",
+          "note": "{\n  \"schema\": \"vdbbench-run-context/v1\",\n  \"profile\": \"elasticsearch/v1\",\n  \"backend_version\": \"9.4.3\",\n  \"deployment\": {\n    \"method\": \"docker\",\n    \"config\": {\n      \"mode\": \"single_node\"\n    }\n  },\n  \"server_groups\": [\n    {\n      \"role\": \"elasticsearch-data-master\",\n      \"count\": 1,\n      \"jvm_heap_gib\": 30,\n      \"hardware\": {\n        \"machine_type\": \"i8g.4xlarge\",\n        \"cpu_count\": 16,\n        \"memory_gib\": 123.54,\n        \"storage\": {\n          \"type\": \"local_nvme\",\n          \"device_count\": 1,\n          \"total_gib\": 3492.46,\n          \"model\": \"Amazon EC2 NVMe Instance Storage\"\n        }\n      }\n    }\n  ],\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  }\n}",
+          "cloud_id": null,
+          "scheme": "http",
+          "host": "**********",
+          "port": 9200,
+          "user": "elastic",
+          "user_name": null,
+          "password": "**********",
+          "use_ssl": false,
+          "verify_certs": true
+        },
+        "db_case_config": {
+          "number_of_shards": 1,
+          "number_of_replicas": 0,
+          "refresh_interval": "30s",
+          "use_force_merge": true,
+          "metric_type": "BM25",
+          "bm25_k1": null,
+          "bm25_b": null
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "MS MARCO Large (8.8M documents)",
+            "payload_profile": "ids_only",
+            "filter_rate": 0.9
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600,
+            "serial_cooldown": 0.0
+          }
+        },
+        "stages": [
+          "search_concurrent",
+          "search_serial"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 1640.447,
+        "serial_latency_p99": 0.0328,
+        "serial_latency_p95": 0.022,
+        "recall": 0.8559,
+        "ndcg": 0.5826,
+        "mrr": 0.5105,
+        "conc_num_list": [
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          1637.2394,
+          1640.447
+        ],
+        "conc_latency_p99_list": [
+          0.08551632568014624,
+          0.09862579727101546
+        ],
+        "conc_latency_p95_list": [
+          0.06308142885354755,
+          0.07469368650054091
+        ],
+        "conc_latency_avg_list": [
+          0.036597530028333033,
+          0.048665543477514936
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 0,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "fts_filter": {
+            "filter_type": "NumGE",
+            "filter_field": "filter_id",
+            "filter_value": 8399731,
+            "filter_rate": 0.95,
+            "filter_id_distribution": "affine_permutation_v1",
+            "filter_id_multiplier": 5464547,
+            "filter_id_offset": 1684563,
+            "matched_doc_count": 442092,
+            "matched_doc_ratio": 0.05,
+            "original_query_count": 6980,
+            "filtered_query_count": 347,
+            "filtered_query_ratio": 0.049713,
+            "original_relevant_doc_count": 7433,
+            "filtered_relevant_doc_count": 347
+          },
+          "fts_recall": {
+            "skipped": false,
+            "reason": null,
+            "serial_query_count": 347,
+            "full_query_count": 6980
+          },
+          "serial_measurement": {
+            "composed_from_separate_run": true,
+            "metric_fields": [
+              "serial_latency_p99",
+              "serial_latency_p95",
+              "recall",
+              "ndcg",
+              "mrr"
+            ],
+            "source_run_id": "8a211aced09a403486d088c32fd068e2",
+            "source_task_label": "fts_filtered_serial_elasticsearch_msmarco-large_r95_permuted",
+            "source_timestamp": 1785715200.0,
+            "source_file": "result_20260803_fts_filtered_serial_elasticsearch_msmarco-large_r95_permuted_elasticcloud.json",
+            "source_sha256": "c6d3dc57545fd1e5b9c44ae31f26e985c80ad3eebddd838c559228c52338170c",
+            "source_db_label": "2026-08-03T16:46:18.769194",
+            "source_stages": [
+              "search_serial"
+            ],
+            "source_note": "{\n  \"schema\": \"vdbbench-run-context/v1\",\n  \"profile\": \"elasticsearch/v1\",\n  \"backend_version\": \"9.4.3\",\n  \"deployment\": {\n    \"method\": \"docker\",\n    \"config\": {\n      \"mode\": \"single_node\"\n    }\n  },\n  \"server_groups\": [\n    {\n      \"role\": \"elasticsearch-data-master\",\n      \"count\": 1,\n      \"jvm_heap_gib\": 30,\n      \"hardware\": {\n        \"machine_type\": \"i8g.4xlarge\",\n        \"cpu_count\": 16,\n        \"memory_gib\": 123.54,\n        \"storage\": {\n          \"type\": \"local_nvme\",\n          \"device_count\": 1,\n          \"total_gib\": 3492.46,\n          \"model\": \"Amazon EC2 NVMe Instance Storage\"\n        }\n      }\n    }\n  ],\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  }\n}"
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ElasticCloud",
+        "db_config": {
+          "db_label": "2026-07-16T18:48:23.449047",
+          "version": "",
+          "note": "{\n  \"schema\": \"vdbbench-run-context/v1\",\n  \"profile\": \"elasticsearch/v1\",\n  \"backend_version\": \"9.4.3\",\n  \"deployment\": {\n    \"method\": \"docker\",\n    \"config\": {\n      \"mode\": \"single_node\"\n    }\n  },\n  \"server_groups\": [\n    {\n      \"role\": \"elasticsearch-data-master\",\n      \"count\": 1,\n      \"jvm_heap_gib\": 30,\n      \"hardware\": {\n        \"machine_type\": \"i8g.4xlarge\",\n        \"cpu_count\": 16,\n        \"memory_gib\": 123.54,\n        \"storage\": {\n          \"type\": \"local_nvme\",\n          \"device_count\": 1,\n          \"total_gib\": 3492.46,\n          \"model\": \"Amazon EC2 NVMe Instance Storage\"\n        }\n      }\n    }\n  ],\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  }\n}",
+          "cloud_id": null,
+          "scheme": "http",
+          "host": "**********",
+          "port": 9200,
+          "user": "elastic",
+          "user_name": null,
+          "password": "**********",
+          "use_ssl": false,
+          "verify_certs": true
+        },
+        "db_case_config": {
+          "number_of_shards": 1,
+          "number_of_replicas": 0,
+          "refresh_interval": "30s",
+          "use_force_merge": true,
+          "metric_type": "BM25",
+          "bm25_k1": null,
+          "bm25_b": null
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "MS MARCO Large (8.8M documents)",
+            "payload_profile": "ids_only",
+            "filter_rate": 0.95
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600,
+            "serial_cooldown": 0.0
+          }
+        },
+        "stages": [
+          "search_concurrent",
+          "search_serial"
+        ],
+        "load_concurrency": 0
+      },
+      "label": ":)"
+    },
+    {
+      "metrics": {
+        "max_load_count": 0,
+        "insert_duration": 0.0,
+        "optimize_duration": 0.0,
+        "load_duration": 0.0,
+        "qps": 1760.9558,
+        "serial_latency_p99": 0.0221,
+        "serial_latency_p95": 0.0191,
+        "recall": 0.9403,
+        "ndcg": 0.7033,
+        "mrr": 0.6373,
+        "conc_num_list": [
+          60,
+          80
+        ],
+        "conc_qps_list": [
+          1754.6975,
+          1760.9558
+        ],
+        "conc_latency_p99_list": [
+          0.06734019880532284,
+          0.07769490615988613
+        ],
+        "conc_latency_p95_list": [
+          0.052860249001241755,
+          0.06493684799788751
+        ],
+        "conc_latency_avg_list": [
+          0.03414497660724748,
+          0.04535883119607527
+        ],
+        "payload_profile": "ids_only",
+        "payload_estimated_bytes_per_query": 2000,
+        "inserted_count": 0,
+        "insert_rows_per_second": 0.0,
+        "insert_completion_seconds": 0.0,
+        "searchable_after_insert_seconds": 0.0,
+        "indexed_after_searchable_seconds": 0.0,
+        "additional_parameters": {
+          "fts_filter": {
+            "filter_type": "NumGE",
+            "filter_field": "filter_id",
+            "filter_value": 8753404,
+            "filter_rate": 0.99,
+            "filter_id_distribution": "affine_permutation_v1",
+            "filter_id_multiplier": 5464547,
+            "filter_id_offset": 1684563,
+            "matched_doc_count": 88419,
+            "matched_doc_ratio": 0.01,
+            "original_query_count": 6980,
+            "filtered_query_count": 67,
+            "filtered_query_ratio": 0.009599,
+            "original_relevant_doc_count": 7433,
+            "filtered_relevant_doc_count": 67
+          },
+          "fts_recall": {
+            "skipped": false,
+            "reason": null,
+            "serial_query_count": 67,
+            "full_query_count": 6980
+          },
+          "serial_measurement": {
+            "composed_from_separate_run": true,
+            "metric_fields": [
+              "serial_latency_p99",
+              "serial_latency_p95",
+              "recall",
+              "ndcg",
+              "mrr"
+            ],
+            "source_run_id": "c459c22a67544caaa467bacec9626531",
+            "source_task_label": "fts_filtered_serial_elasticsearch_msmarco-large_r99_permuted",
+            "source_timestamp": 1785715200.0,
+            "source_file": "result_20260803_fts_filtered_serial_elasticsearch_msmarco-large_r99_permuted_elasticcloud.json",
+            "source_sha256": "39cc6a5202b5daa079b35cd28d86e379866dced531bc59f50a2ac3a2ba30f78a",
+            "source_db_label": "2026-08-03T16:47:10.714140",
+            "source_stages": [
+              "search_serial"
+            ],
+            "source_note": "{\n  \"schema\": \"vdbbench-run-context/v1\",\n  \"profile\": \"elasticsearch/v1\",\n  \"backend_version\": \"9.4.3\",\n  \"deployment\": {\n    \"method\": \"docker\",\n    \"config\": {\n      \"mode\": \"single_node\"\n    }\n  },\n  \"server_groups\": [\n    {\n      \"role\": \"elasticsearch-data-master\",\n      \"count\": 1,\n      \"jvm_heap_gib\": 30,\n      \"hardware\": {\n        \"machine_type\": \"i8g.4xlarge\",\n        \"cpu_count\": 16,\n        \"memory_gib\": 123.54,\n        \"storage\": {\n          \"type\": \"local_nvme\",\n          \"device_count\": 1,\n          \"total_gib\": 3492.46,\n          \"model\": \"Amazon EC2 NVMe Instance Storage\"\n        }\n      }\n    }\n  ],\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  }\n}"
+          }
+        },
+        "st_ideal_insert_duration": 0,
+        "st_search_stage_list": [],
+        "st_search_time_list": [],
+        "st_max_qps_list_list": [],
+        "st_recall_list": [],
+        "st_ndcg_list": [],
+        "st_serial_latency_p99_list": [],
+        "st_serial_latency_p95_list": [],
+        "st_conc_failed_rate_list": [],
+        "st_conc_num_list_list": [],
+        "st_conc_qps_list_list": [],
+        "st_conc_latency_p99_list_list": [],
+        "st_conc_latency_p95_list_list": [],
+        "st_conc_latency_avg_list_list": []
+      },
+      "task_config": {
+        "db": "ElasticCloud",
+        "db_config": {
+          "db_label": "2026-07-16T18:50:39.525006",
+          "version": "",
+          "note": "{\n  \"schema\": \"vdbbench-run-context/v1\",\n  \"profile\": \"elasticsearch/v1\",\n  \"backend_version\": \"9.4.3\",\n  \"deployment\": {\n    \"method\": \"docker\",\n    \"config\": {\n      \"mode\": \"single_node\"\n    }\n  },\n  \"server_groups\": [\n    {\n      \"role\": \"elasticsearch-data-master\",\n      \"count\": 1,\n      \"jvm_heap_gib\": 30,\n      \"hardware\": {\n        \"machine_type\": \"i8g.4xlarge\",\n        \"cpu_count\": 16,\n        \"memory_gib\": 123.54,\n        \"storage\": {\n          \"type\": \"local_nvme\",\n          \"device_count\": 1,\n          \"total_gib\": 3492.46,\n          \"model\": \"Amazon EC2 NVMe Instance Storage\"\n        }\n      }\n    }\n  ],\n  \"client\": {\n    \"machine_type\": \"i8g.2xlarge\",\n    \"cpu_count\": 8,\n    \"memory_gib\": 61.65,\n    \"storage\": {\n      \"type\": \"ebs\",\n      \"device_count\": 1,\n      \"total_gib\": 500,\n      \"model\": \"Amazon Elastic Block Store\"\n    }\n  }\n}",
+          "cloud_id": null,
+          "scheme": "http",
+          "host": "**********",
+          "port": 9200,
+          "user": "elastic",
+          "user_name": null,
+          "password": "**********",
+          "use_ssl": false,
+          "verify_certs": true
+        },
+        "db_case_config": {
+          "number_of_shards": 1,
+          "number_of_replicas": 0,
+          "refresh_interval": "30s",
+          "use_force_merge": true,
+          "metric_type": "BM25",
+          "bm25_k1": null,
+          "bm25_b": null
+        },
+        "case_config": {
+          "case_id": 503,
+          "custom_case": {
+            "dataset_with_size_type": "MS MARCO Large (8.8M documents)",
+            "payload_profile": "ids_only",
+            "filter_rate": 0.99
+          },
+          "k": 100,
+          "concurrency_search_config": {
+            "num_concurrency": [
+              60,
+              80
+            ],
+            "concurrency_duration": 30,
+            "concurrency_timeout": 3600,
+            "serial_cooldown": 0.0
+          }
+        },
+        "stages": [
+          "search_concurrent",
+          "search_serial"
         ],
         "load_concurrency": 0
       },

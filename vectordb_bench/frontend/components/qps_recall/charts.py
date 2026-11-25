@@ -69,7 +69,7 @@ def drawlinechart(st, data: list[object], metric, key: str):
     new_data, new_remain_data = drawBestperformance(data, y, group)
     unique_db_names = list(set(item["db_name"] for item in new_data + new_remain_data))
 
-    colors = plt.cm.get_cmap("tab10", len(unique_db_names))
+    colors = plt.get_cmap("tab10", len(unique_db_names))
 
     color_map = {
         db: f"rgb({int(colors(i)[0] * 255)}, {int(colors(i)[1] * 255)}, {int(colors(i)[2] * 255)})"

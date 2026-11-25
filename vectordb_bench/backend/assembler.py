@@ -6,7 +6,6 @@ from vectordb_bench.backend.filter import FilterOp
 from vectordb_bench.models import TaskConfig
 
 from .cases import CaseLabel
-from .dataset import FtsDatasetManager
 from .task_runner import CaseRunner, RunningStatus, TaskRunner
 
 log = logging.getLogger(__name__)
@@ -22,19 +21,16 @@ class FilterNotSupportedError(ValueError):
 class Assembler:
     @classmethod
     def assemble(cls, run_id: str, task: TaskConfig, source: DatasetSource) -> CaseRunner:
-        c_cls = task.case_config.case_id.case_cls
-
-        c = c_cls(task.case_config.custom_case)
+        c = task.case_config.case
         if c.label == CaseLabel.FullTextSearchPerformance and not task.db.init_cls.supports_full_text_search():
             msg = f"{task.db.value} does not support full-text search"
             raise ValueError(msg)
 
-        # Auto-select data source based on dataset type
-        actual_source = DatasetSource.IR_DATASETS if isinstance(c.dataset, FtsDatasetManager) else source
+        actual_source = c.dataset.preferred_source or source
 
         if (
             type(task.db_case_config) is not EmptyDBCaseConfig
-            and not isinstance(c.dataset, FtsDatasetManager)
+            and c.label != CaseLabel.FullTextSearchPerformance
             and hasattr(c.dataset.data, "metric_type")
         ):
             task.db_case_config.metric_type = c.dataset.data.metric_type

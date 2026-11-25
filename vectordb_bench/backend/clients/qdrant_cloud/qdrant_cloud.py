@@ -78,9 +78,21 @@ class QdrantCloud(VectorDB):
             >>>     self.search_embedding()
         """
         self.qdrant_client = QdrantClient(**self.db_config)
-        yield
-        self.qdrant_client = None
-        del self.qdrant_client
+        benchmark_failed = False
+        try:
+            yield
+        except BaseException:
+            benchmark_failed = True
+            raise
+        finally:
+            try:
+                self.qdrant_client.close()
+            except Exception:
+                if not benchmark_failed:
+                    raise
+                log.exception("Failed to close Qdrant client after a benchmark error")
+            finally:
+                del self.qdrant_client
 
     def optimize(self, data_size: int | None = None):
         assert self.qdrant_client, "Please call self.init() before"

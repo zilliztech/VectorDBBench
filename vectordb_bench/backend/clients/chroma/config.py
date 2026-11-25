@@ -1,5 +1,5 @@
 from chromadb.config import Settings
-from pydantic import SecretStr
+from pydantic import Field, SecretStr
 
 from ..api import DBCaseConfig, DBConfig, MetricType
 
@@ -7,7 +7,7 @@ from ..api import DBCaseConfig, DBConfig, MetricType
 class ChromaConfig(DBConfig):
     user: str | None = None
     password: SecretStr | None = None
-    host: SecretStr = "localhost"
+    host: SecretStr = Field("localhost", validate_default=True)
     port: int = 8000
 
     def to_dict(self) -> dict:

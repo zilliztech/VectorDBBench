@@ -5,6 +5,7 @@ from vectordb_bench.frontend.components.run_test.dbSelector import dbSelector
 from vectordb_bench.frontend.components.run_test.generateTasks import generate_tasks
 from vectordb_bench.frontend.components.run_test.hideSidebar import hideSidebar
 from vectordb_bench.frontend.components.run_test.initStyle import initStyle
+from vectordb_bench.frontend.components.run_test.runSettings import runSettings
 from vectordb_bench.frontend.components.run_test.submitTask import submitTask
 from vectordb_bench.frontend.components.check_results.nav import NavToResults, NavToPages
 from vectordb_bench.frontend.components.check_results.headerIcon import drawHeaderIcon
@@ -46,8 +47,13 @@ def main():
     caseSelectorContainer = st.container()
     activedCaseList, allCaseConfigs = caseSelector(caseSelectorContainer, activedDbList)
 
+    # run settings
+    runSettingsContainer = st.container()
+    batch_size, areRunSettingsValid = runSettings(runSettingsContainer, activedCaseList)
+    isAllValid = isAllValid and areRunSettingsValid
+
     # generate tasks
-    tasks = generate_tasks(activedDbList, dbConfigs, activedCaseList, allCaseConfigs) if isAllValid else []
+    tasks = generate_tasks(activedDbList, dbConfigs, activedCaseList, allCaseConfigs, batch_size) if isAllValid else []
 
     # submit
     submitContainer = st.container()

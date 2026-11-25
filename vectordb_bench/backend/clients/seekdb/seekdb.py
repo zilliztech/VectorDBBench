@@ -3,6 +3,7 @@ import re
 import struct
 from collections.abc import Generator
 from contextlib import contextmanager
+from copy import copy
 from typing import Any
 
 import mysql.connector as mysql
@@ -69,8 +70,9 @@ class SeekDB(VectorDB):
         self._vector_field = "embedding"
         self.expr = ""
 
+        redacted_db_config = {**self.db_config, "password": "******"}
         log.info(
-            f"{self.name} initialized with config:\nDatabase: {self.db_config}\nCase Config: {self.db_case_config}"
+            f"{self.name} initialized with config:\nDatabase: {redacted_db_config}\nCase Config: {self.db_case_config}"
         )
 
         self._conn = None
@@ -78,11 +80,14 @@ class SeekDB(VectorDB):
 
         try:
             self._connect()
-            self._apply_system_settings()
+            if self.db_case_config.reset_resource_limits:
+                self._apply_system_settings()
             if drop_old:
                 self._drop_table()
                 self._create_table()
                 self._create_index()
+            else:
+                self._check_existing_index()
         finally:
             self._disconnect()
 
@@ -124,6 +129,14 @@ class SeekDB(VectorDB):
             ef_search = self.db_case_config.search_param()["params"]["ef_search"]
             # SeekDB uses OceanBase-style session vars (not plain hnsw_ef_search).
             self._cursor.execute(f"SET ob_hnsw_ef_search={ef_search}")
+
+    def copy_for_thread(self) -> "VectorDB":
+        # mysql.connector holds an open socket that can't be deep-copied; shallow-copy
+        # and drop the connection so init() reconnects inside the worker thread.
+        db_copy = copy(self)
+        db_copy._conn = None
+        db_copy._cursor = None
+        return db_copy
 
     @contextmanager
     def init(self) -> Generator[None, None, None]:
@@ -186,6 +199,40 @@ class SeekDB(VectorDB):
         except mysql.Error:
             log.exception("Failed to create HNSW index")
             raise
+
+    def _check_existing_index(self):
+        """Refuse to reuse an index whose build settings differ from the case config."""
+        if not self._cursor:
+            raise ValueError("Cursor is not initialized")
+
+        self._cursor.execute(f"SHOW CREATE TABLE {self.table_name}")
+        row = self._cursor.fetchone()
+        ddl = row[1] if row else ""
+        m = re.search(rf"VECTOR KEY `?{self._index_name}`?\s*\(([^)]*)\)\s*WITH\s*\(([^)]*)\)", ddl, re.IGNORECASE)
+        if not m:
+            msg = f"Cannot verify vector index {self._index_name} on {self.table_name}, rerun without reusing the index"
+            raise ValueError(msg)
+
+        column = m.group(1).strip().strip("`")
+        if column != self._vector_field:
+            msg = f"Existing index {self._index_name} is on column {column}, expected {self._vector_field}"
+            raise ValueError(msg)
+
+        actual = {}
+        for item in m.group(2).split(","):
+            key, _, value = item.partition("=")
+            actual[key.strip().lower()] = value.strip().lower()
+
+        index_params = self.db_case_config.index_param()
+        expected = {
+            "distance": index_params["metric_type"],
+            "type": index_params["index_type"].lower(),
+            **{k: str(v) for k, v in index_params["params"].items()},
+        }
+        mismatched = {k: f"expected {v}, found {actual.get(k)}" for k, v in expected.items() if actual.get(k) != v}
+        if mismatched:
+            msg = f"Existing index {self._index_name} on {self.table_name} does not match the case config: {mismatched}"
+            raise ValueError(msg)
 
     def optimize(self, data_size: int | None = None):
         """Post-load hook: refresh index metadata on SeekDB >= 1.3.0 when available.

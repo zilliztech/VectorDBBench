@@ -92,7 +92,8 @@ class Pinecone(VectorDB):
     def optimize(self, data_size: int | None = None):
         pass
 
-    def supports_payload_profile(self, payload_profile: PayloadProfile) -> bool:
+    @staticmethod
+    def supports_payload_profile(payload_profile: PayloadProfile) -> bool:
         return payload_profile in {
             PayloadProfile.IDS_ONLY,
             PayloadProfile.SCALAR_LABEL,

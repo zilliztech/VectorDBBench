@@ -1,6 +1,9 @@
-from typing import ClassVar
+from enum import StrEnum
+from typing import Annotated, ClassVar
 
-from pydantic import BaseModel, SecretStr
+from pydantic import BaseModel, Field, SecretStr, field_validator
+
+from vectordb_bench.backend.payload import FLOAT32_BYTES_PER_DIM
 
 from ..api import DBCaseConfig, DBConfig, IndexType, MetricType, SQType
 
@@ -13,6 +16,7 @@ class MilvusConfig(DBConfig):
     password: SecretStr | None = None
     num_shards: int = 1
     replica_number: int = 1
+    collection_name: str = "VDBBench"
 
     def to_dict(self) -> dict:
         return {
@@ -21,6 +25,7 @@ class MilvusConfig(DBConfig):
             "password": self.password.get_secret_value() if self.password else None,
             "num_shards": self.num_shards,
             "replica_number": self.replica_number,
+            "collection_name": self.collection_name,
         }
 
 
@@ -30,6 +35,16 @@ class MilvusIndexConfig(BaseModel):
     index: IndexType
     metric_type: MetricType | None = None
     use_partition_key: bool = False  # for label-filter
+    force_merge_enabled: bool = True
+    force_merge_target_size_mb: int | None = None
+
+    @field_validator("force_merge_target_size_mb")
+    @classmethod
+    def _validate_force_merge_target_size(cls, value: int | None) -> int | None:
+        if value is not None and value <= 0:
+            message = "force_merge_target_size_mb must be a positive integer or None"
+            raise ValueError(message)
+        return value
 
     @property
     def is_gpu_index(self) -> bool:
@@ -49,8 +64,12 @@ class MilvusIndexConfig(BaseModel):
         return self.metric_type.value
 
 
+AutoIndexLevel = Annotated[int, Field(ge=1, le=10)]
+
+
 class AutoIndexConfig(MilvusIndexConfig, DBCaseConfig):
     index: IndexType = IndexType.AUTOINDEX
+    level: AutoIndexLevel | None = None
 
     def index_param(self) -> dict:
         return {
@@ -60,9 +79,19 @@ class AutoIndexConfig(MilvusIndexConfig, DBCaseConfig):
         }
 
     def search_param(self) -> dict:
-        return {
-            "metric_type": self.parse_metric(),
-        }
+        params = {"metric_type": self.parse_metric()}
+        if self.level is not None:
+            params["params"] = {"level": self.level}
+        return params
+
+
+class VectorDataType(StrEnum):
+    FLOAT32 = "FLOAT32"
+    BFLOAT16 = "BFLOAT16"
+
+    @property
+    def bytes_per_dim(self) -> int:
+        return {VectorDataType.FLOAT32: FLOAT32_BYTES_PER_DIM, VectorDataType.BFLOAT16: 2}[self]
 
 
 class HNSWConfig(MilvusIndexConfig, DBCaseConfig):
@@ -70,6 +99,11 @@ class HNSWConfig(MilvusIndexConfig, DBCaseConfig):
     efConstruction: int
     ef: int | None = None
     index: IndexType = IndexType.HNSW
+    vector_data_type: VectorDataType = VectorDataType.FLOAT32
+
+    @property
+    def vector_bytes_per_dim(self) -> int:
+        return self.vector_data_type.bytes_per_dim
 
     def index_param(self) -> dict:
         return {
@@ -535,66 +569,16 @@ class MilvusFtsConfig(BaseModel, DBCaseConfig):
     analyzer_max_token_length: int | None = None
     analyzer_stop_words: str | None = None
     drop_ratio_search: float | None = None
+    force_merge_enabled: bool = True
+    force_merge_target_size_mb: int | None = None
 
-    @staticmethod
-    def _manifest_filter_list(analyzer_params: dict) -> list:
-        filters = analyzer_params.get("filter") or []
-        if isinstance(filters, list):
-            return filters
-        return [filters]
-
-    def _analyzer_manifest_updates(self, analyzer_params: dict) -> dict:
-        if not analyzer_params:
-            return {}
-
-        updates = {}
-        tokenizer = analyzer_params.get("tokenizer")
-        if tokenizer:
-            updates["analyzer_tokenizer"] = tokenizer
-
-        filters = self._manifest_filter_list(analyzer_params)
-        updates["analyzer_enable_lowercase"] = "lowercase" in filters
-
-        length_max = None
-        stop_words = None
-        for item in filters:
-            if not isinstance(item, dict):
-                continue
-            if item.get("type") == "length":
-                length_max = item.get("max")
-            elif item.get("type") == "stop":
-                configured_stop_words = item.get("stop_words")
-                if isinstance(configured_stop_words, list):
-                    stop_words = ",".join(str(word) for word in configured_stop_words)
-                elif configured_stop_words:
-                    stop_words = str(configured_stop_words)
-
-        updates["analyzer_max_token_length"] = length_max
-        updates["analyzer_stop_words"] = stop_words
-        return updates
-
-    def apply_fts_manifest(
-        self,
-        bm25_params: dict[str, float],
-        analyzer_params: dict,
-    ) -> tuple[DBCaseConfig, dict]:
-        updates = {}
-        applied_bm25_params = {}
-
-        if "k1" in bm25_params:
-            updates["bm25_k1"] = bm25_params["k1"]
-            applied_bm25_params["k1"] = bm25_params["k1"]
-        if "b" in bm25_params:
-            updates["bm25_b"] = bm25_params["b"]
-            applied_bm25_params["b"] = bm25_params["b"]
-        updates.update(self._analyzer_manifest_updates(analyzer_params))
-
-        return self.model_copy(update=updates), {
-            "applied_bm25_params": applied_bm25_params,
-            "unapplied_bm25_params": {k: v for k, v in bm25_params.items() if k not in applied_bm25_params},
-            "applied_analyzer_params": dict(analyzer_params),
-            "unapplied_analyzer_params": {},
-        }
+    @field_validator("force_merge_target_size_mb")
+    @classmethod
+    def _validate_force_merge_target_size(cls, value: int | None) -> int | None:
+        if value is not None and value <= 0:
+            message = "force_merge_target_size_mb must be a positive integer or None"
+            raise ValueError(message)
+        return value
 
     def analyzer_param(self) -> dict:
         analyzer_params = {}

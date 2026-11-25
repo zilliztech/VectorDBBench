@@ -28,7 +28,7 @@ dependencies = [
     "click",
     "pyyaml",
     "pytz",
-    "streamlit>=1.47,<2",  # 1.47 fixes streamlit#11660
+    "streamlit>=1.61,<2",  # Stateful tabs and stretch widths used by the FTS page
     "tornado>=6.0",
     "tqdm",
     "s3fs",
@@ -36,6 +36,7 @@ dependencies = [
     "psutil",
     "polars",
     "plotly",
+    "matplotlib",
     "environs",
     "pydantic>=2.0,<3",
     "scikit-learn",
@@ -43,6 +44,8 @@ dependencies = [
     "hdrhistogram>=0.10.1",
     "ujson",
     "ir_datasets",
+    "h5py",
+    "huggingface_hub",
 ]
 dynamic = ["version"]
 
@@ -51,6 +54,9 @@ test = [
     "black",
     "ruff",
     "pytest",
+    "psycopg",
+    "psycopg-binary",
+    "pgvector>=0.4.0",
 ]
 restful         = [ "flask" ]
 qdrant          = [ "qdrant-client" ]
@@ -59,12 +65,14 @@ weaviate        = [ "weaviate-client" ]
 elastic         = [ "elasticsearch" ]
 # For elastic and aliyun_elasticsearch
 
-pgvector        = [ "psycopg", "psycopg-binary", "pgvector" ]
-# for pgvector, pgvectorscale, pgdiskann, and, alloydb
+pgvector        = [ "psycopg", "psycopg-binary", "pgvector>=0.4.0" ]
+# for pgvector, pgvectorscale, pgdiskann, alloydb, lakebase_vector, and PolarDB for PostgreSQL HNSW
 
 pgvecto_rs      = [ "pgvecto_rs[psycopg3]>=0.2.2" ]
 redis           = [ "redis" ]
+valkey          = [ "valkey-glide-sync>=2.5.1" ]
 memorydb        = [ "memorydb" ]
+kividb          = [ "redis" ]
 chromadb        = [ "chromadb" ]
 opensearch      = [ "opensearch-py", "boto3", "requests-aws4auth" ]
 aliyun_opensearch = [ "alibabacloud_ha3engine_vector" ]
@@ -80,14 +88,16 @@ alisql          = [ "mysqlclient" ]
 polardb         = [ "PyMySQL" ]
 doris           = [ "doris-vector-search" ]
 turbopuffer     = [ "turbopuffer" ]
-zvec            = [ "zvec" ]
-endee           = [ "endee" ]
-endeeoss        = [ "endee==1.0.0" ]
+turso           = [ "pyturso>=0.8.3,<0.9.0" ]
+zvec            = [ "zvec>=0.7.0" ]
+warm            = [ "warm-python==0.6.4", "numpy" ]
+endee           = [ "endee==0.1.10" ]
 lindorm         = [ "opensearch-py" ]
 seekdb          = [ "mysql-connector-python" ]
 volc_mysql      = [ "mysql-connector-python" ]
 pinot           = [ "requests" ]
 adbpg           = [ "psycopg", "psycopg-binary", "pgvector" ]
+houyidb         = [ "requests", "psycopg[binary]>=3.1" ]
 
 [project.urls]
 Repository  = "https://github.com/zilliztech/VectorDBBench"

@@ -65,7 +65,9 @@ def test_case_config_constructs_multitenant_case():
 
     assert isinstance(case, CloudMultiTenantSearchCase)
     assert case.payload_profile == PayloadProfile.SCALAR_LABEL
+    assert case.filter_rate == pytest.approx(0.99)
     assert case.filters.type == FilterOp.StrEqual
+    assert case.filters.filter_rate == pytest.approx(0.99)
     assert case.tenant_labels() == ["tenant_0000", "tenant_0001", "tenant_0002", "tenant_0003", "tenant_0004"]
 
 
@@ -126,6 +128,9 @@ def test_search_only_zilliz_multitenant_validates_existing_partition_key_schema(
     calls: list[tuple[str, object]] = []
 
     class ExistingCollectionDB:
+        def supports_payload_profile(self, payload_profile: PayloadProfile) -> bool:
+            return payload_profile == PayloadProfile.IDS_ONLY
+
         def supports_multitenant(self) -> bool:
             return True
 

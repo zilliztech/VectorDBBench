@@ -1,5 +1,5 @@
-grpcio==1.53.2
-grpcio-tools==1.53.0
+grpcio==1.66.2
+grpcio-tools==1.66.2
 qdrant-client
 pinecone
 weaviate-client
@@ -7,10 +7,11 @@ elasticsearch==8.16.0
 opensearch-py
 boto3
 requests-aws4auth
-pgvector
+pgvector>=0.4.0
 pgvecto_rs[psycopg3]>=0.2.1
 sqlalchemy
 redis
+valkey-glide-sync>=2.5.1
 chromadb
 pytz
 streamlit-autorefresh
@@ -18,6 +19,7 @@ streamlit>=1.23.0
 streamlit_extras
 tornado>=6.0
 tqdm
+ujson
 s3fs
 psutil
 polars
@@ -33,3 +35,5 @@ PyMySQL
 packaging
 hdrhistogram>=0.10.1
 ir_datasets
+h5py
+huggingface_hub

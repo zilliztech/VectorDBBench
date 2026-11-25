@@ -3,22 +3,24 @@ import pathlib
 from dataclasses import asdict
 from datetime import date, datetime
 from enum import Enum, StrEnum
-from typing import Any, ClassVar, Self
+from typing import Any, ClassVar, Literal, Self
 
 import ujson
+from pydantic import ConfigDict, PositiveInt, field_validator, model_validator
 
-from vectordb_bench.backend.cases import type2case
 from vectordb_bench.backend.dataset import DatasetWithSizeMap
 
 from . import config
-from .backend.cases import Case, CaseType
+from .backend.cases import Case, CaseType, PerformanceCase, type2case
 from .backend.clients import (
     DB,
     DBCaseConfig,
     DBConfig,
     EmptyDBCaseConfig,
 )
-from .backend.clients.api import IndexType
+from .backend.clients.api import IndexType, MetricType
+from .backend.data_source import DatasetSource
+from .backend.payload import PayloadProfile
 from .base import BaseModel
 from .metric import Metric
 
@@ -60,15 +62,25 @@ class CaseConfigParamType(Enum):
     M = "M"
     EFConstruction = "efConstruction"
     ef_construction = "ef_construction"
+    ef_construct = "ef_construct"
     EF = "ef"
+    hnsw_ef = "hnsw_ef"
     SearchList = "search_list"
     ef_search = "ef_search"
+    rerank = "rerank"
+    code_bits = "code_bits"
+    residual_bits = "residual_bits"
+    threads = "threads"
+    quantize_type = "quantize_type"
+    is_using_refiner = "is_using_refiner"
+    ef_runtime = "ef_runtime"
     Nlist = "nlist"
     Nprobe = "nprobe"
     MaxConnections = "maxConnections"
     numCandidates = "num_candidates"
     lists = "lists"
     probes = "probes"
+    epsilon = "epsilon"
     quantizationType = "quantization_type"
     quantizationRatio = "quantization_ratio"
     tableQuantizationType = "table_quantization_type"
@@ -107,6 +119,9 @@ class CaseConfigParamType(Enum):
     l_value_ib = "l_value_ib"
     l_value_is = "l_value_is"
     search_list_size = "search_list_size"
+    max_degree = "max_degree"
+    build_list_size = "build_list_size"
+    pq_chunk_num = "pq_chunk_num"
     max_alpha = "max_alpha"
     num_dimensions = "num_dimensions"
     num_bits_per_dimension = "num_bits_per_dimension"
@@ -135,7 +150,10 @@ class CaseConfigParamType(Enum):
     metric_type_name = "metric_type_name"
     mongodb_quantization_type = "quantization"
     mongodb_num_candidates_ratio = "num_candidates_ratio"
+    mongodb_exact = "exact"
     use_partition_key = "use_partition_key"
+    force_merge_enabled = "force_merge_enabled"
+    force_merge_target_size_mb = "force_merge_target_size_mb"
     refresh_interval = "refresh_interval"
     use_rescore = "use_rescore"
     oversample_ratio = "oversample_ratio"
@@ -173,6 +191,14 @@ class CaseConfigParamType(Enum):
     post_load_index = "post_load_index"
     pq_nbits = "pq_nbits"
 
+    # PolarDB for PostgreSQL parameters
+    hnsw_quantization = "hnsw_quantization"
+    train_samples = "train_samples"
+    quantization_nbits = "quantization_nbits"
+    graph_cache = "graph_cache"
+    graph_cache_timeout = "graph_cache_timeout"
+    iterative_scan = "iterative_scan"
+
     # Lindorm parameters
     efSearch = "efSearch"
     pq_m = "pq_m"
@@ -195,6 +221,13 @@ class CaseConfigParamType(Enum):
     max_scan_points = "max_scan_points"
     auto_reduction = "auto_reduction"
 
+    # SeekDB parameters
+    reset_resource_limits = "reset_resource_limits"
+
+    # LanceDB scalar index, independent of the vector index selection.
+    scalar_index = "scalar_index"
+    scalar_column = "scalar_column"
+
 
 class CustomizedCase(BaseModel):
     pass
@@ -212,8 +245,44 @@ class CaseConfig(BaseModel):
 
     case_id: CaseType
     custom_case: dict | None = None
+    payload_profile: PayloadProfile | None = None
     k: int | None = config.K_DEFAULT
+    nq: PositiveInt = 1  # Concurrent search only; serial latency and recall always use one query per request.
     concurrency_search_config: ConcurrencySearchConfig = ConcurrencySearchConfig()
+
+    @field_validator("k")
+    @classmethod
+    def validate_k(cls, value: int | None) -> int | None:
+        if value is not None and value <= 0:
+            msg = f"K must be positive, got {value}"
+            raise ValueError(msg)
+        return value
+
+    @model_validator(mode="after")
+    def validate_case_k(self) -> Self:
+        if self.case_id == CaseType.Performance and self.k is not None:
+            case = self.case_id.case_cls(self.custom_case)
+            max_k = case.dataset.max_search_k(case.filters)
+            if max_k is not None and self.k > max_k:
+                msg = f"{case.dataset.data.name} supports K from 1 to {max_k}, got {self.k}"
+                raise ValueError(msg)
+        return self
+
+    @model_validator(mode="after")
+    def validate_payload_profile(self) -> Self:
+        if self.payload_profile is None:
+            return self
+
+        case_cls = type2case[self.case_id]
+        if not issubclass(case_cls, PerformanceCase):
+            msg = "Top-level payload_profile is only supported for PerformanceCase cases"
+            raise ValueError(msg)  # noqa: TRY004
+
+        legacy_profile = (self.custom_case or {}).get("payload_profile")
+        if legacy_profile is not None and PayloadProfile(legacy_profile) != self.payload_profile:
+            msg = "Top-level payload_profile conflicts with custom_case payload_profile"
+            raise ValueError(msg)
+        return self
 
     '''
     @property
@@ -232,7 +301,10 @@ class CaseConfig(BaseModel):
 
     @property
     def case(self) -> Case:
-        return self.case_id.case_cls(self.custom_case)
+        custom_case = dict(self.custom_case or {})
+        if self.payload_profile is not None:
+            custom_case["payload_profile"] = self.payload_profile
+        return self.case_id.case_cls(custom_case or None)
 
     @property
     def case_name(self) -> str:
@@ -267,6 +339,53 @@ class TaskConfig(BaseModel):
     case_config: CaseConfig
     stages: list[TaskStage] = ALL_TASK_STAGES
     load_concurrency: int = config.LOAD_CONCURRENCY
+    insert_batch_size: PositiveInt = config.DEFAULT_INSERT_BATCH_SIZE
+
+    @model_validator(mode="after")
+    def validate_supported_workload(self) -> Self:
+        unsupported = {
+            CaseType.CapacityDim128,
+            CaseType.CapacityDim960,
+            CaseType.StreamingPerformanceCase,
+            CaseType.StreamingCustomDataset,
+        }
+        if self.db is DB.Warm and (
+            self.case_config.case_id in unsupported or not self.db.supports_case_label(self.case_config.case.label)
+        ):
+            msg = f"{self.db.value} supports only performance cases; streaming and capacity cases are unsupported"
+            raise ValueError(msg)
+        return self
+
+    @model_validator(mode="after")
+    def validate_streaming_insert_rate(self) -> Self:
+        streaming_case_types = {
+            CaseType.StreamingPerformanceCase,
+            CaseType.StreamingCustomDataset,
+        }
+        if self.case_config.case_id not in streaming_case_types:
+            return self
+
+        custom_case = self.case_config.custom_case or {}
+        insert_rate = custom_case.get("insert_rate", config.DEFAULT_STREAMING_INSERT_RATE)
+        if not isinstance(insert_rate, int) or isinstance(insert_rate, bool) or insert_rate <= 0:
+            raise ValueError("streaming insert_rate must be a positive integer")
+
+        rate_is_too_low = insert_rate < self.insert_batch_size
+        rate_is_divisible = insert_rate % self.insert_batch_size == 0
+
+        if rate_is_too_low:
+            msg = (
+                f"streaming insert_rate ({insert_rate}) must be greater than or equal to "
+                f"insert_batch_size ({self.insert_batch_size})"
+            )
+            raise ValueError(msg)
+        if not rate_is_divisible:
+            msg = (
+                f"streaming insert_rate ({insert_rate}) must be divisible by "
+                f"insert_batch_size ({self.insert_batch_size})"
+            )
+            raise ValueError(msg)
+        return self
 
     @property
     def db_name(self):
@@ -286,10 +405,25 @@ class ResultLabel(Enum):
     OUTOFRANGE = "?"
 
 
+class DatasetMetadata(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    name: str
+    distribution: Literal["id", "ood"] | None = None
+    source: DatasetSource
+    repository: str | None = None
+    filename: str | None = None
+    revision: str | None = None
+    source_distance: str | None = None
+    metric_type: MetricType | None = None
+    point_type: str | None = None
+
+
 class CaseResult(BaseModel):
     metrics: Metric
     task_config: TaskConfig
     label: ResultLabel = ResultLabel.NORMAL
+    dataset_metadata: DatasetMetadata | None = None
 
 
 class TestResult(BaseModel):
@@ -307,7 +441,7 @@ class TestResult(BaseModel):
             return {
                 key: (
                     "**********"
-                    if key.lower() in cls.sensitive_output_fields and item
+                    if isinstance(key, str) and key.lower() in cls.sensitive_output_fields and item
                     else cls._redact_sensitive_fields(item)
                 )
                 for key, item in value.items()
@@ -418,7 +552,7 @@ class TestResult(BaseModel):
         return case_config
 
     @classmethod
-    def read_file(cls, full_path: pathlib.Path, trans_unit: bool = False) -> Self:
+    def read_file(cls, full_path: pathlib.Path, trans_unit: bool = False) -> Self:  # noqa: PLR0912
         if not full_path.exists():
             msg = f"No such file: {full_path}"
             raise ValueError(msg)
@@ -430,7 +564,22 @@ class TestResult(BaseModel):
             for case_result in test_result["results"]:
                 task_config = case_result.get("task_config")
                 case_config = task_config.get("case_config")
+                metrics = case_result.get("metrics")
                 db = DB(task_config.get("db"))
+                if "insert_batch_size" not in task_config:
+                    insert_batch_size = None
+                    if CaseType(case_config.get("case_id")) == CaseType.CloudInsertCase:
+                        custom_case = case_config.get("custom_case") or {}
+                        insert_batch_size = custom_case.get("batch_size")
+                    if insert_batch_size is None and metrics:
+                        additional_parameters = metrics.get("additional_parameters") or {}
+                        insert_batch_size = additional_parameters.get(
+                            "insert_batch_size",
+                            additional_parameters.get("num_per_batch"),
+                        )
+                    if insert_batch_size is not None:
+                        task_config["insert_batch_size"] = insert_batch_size
+
                 task_config["db_config"] = db.config_cls(**task_config["db_config"])
                 # Safely instantiate DBCaseConfig (fallback to EmptyDBCaseConfig on None)
                 raw_case_cfg = task_config.get("db_case_config") or {}
@@ -447,7 +596,6 @@ class TestResult(BaseModel):
 
                 task_config["case_config"] = cls.get_case_config(case_config=case_config)
                 case_result["task_config"] = task_config
-                metrics = case_result.get("metrics")
                 if (
                     metrics
                     and CaseType(case_config.get("case_id")) == CaseType.CloudColdLatencyCase
@@ -472,6 +620,12 @@ class TestResult(BaseModel):
                         )
                     elif "serial_latency_p99" in metrics:
                         metrics["serial_latency_p95"] = 0.0
+
+                    if "serial_latency_p50" in metrics:
+                        cur_latency_p50 = metrics["serial_latency_p50"]
+                        metrics["serial_latency_p50"] = (
+                            cur_latency_p50 * 1000 if cur_latency_p50 > 0 else cur_latency_p50
+                        )
             return TestResult.model_validate(test_result)
 
     def display(self, dbs: list[DB] | None = None):

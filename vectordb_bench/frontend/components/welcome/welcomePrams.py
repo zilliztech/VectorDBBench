@@ -6,6 +6,7 @@ from pathlib import Path
 from importlib import resources
 
 from vectordb_bench.frontend.components.welcome.pagestyle import pagestyle
+from vectordb_bench.frontend.utils import get_page_url_prefix
 
 
 def get_image_as_base64(image_path):
@@ -153,6 +154,7 @@ def welcomePrams(st):
         },
     ]
 
+    url_prefix = get_page_url_prefix(st.get_option("server.baseUrlPath"))
     html_content = pagestyle()
 
     for option in options:
@@ -160,7 +162,7 @@ def welcomePrams(st):
 
     for option in options[:8]:
         html_content += f"""
-        <a href="/{option['link']}" target="_self" style="text-decoration: none;">
+        <a href="{url_prefix}{option['link']}" target="_self" style="text-decoration: none;">
             <div class="section-card">
                 <img src="{option['image']}" class="section-image" alt="{option['title']}">
                 <div class="section-title">{option['title']}</div>
@@ -179,7 +181,7 @@ def welcomePrams(st):
 
     for option in options[8:10]:
         html_content += f"""
-        <a href="/{option['link']}" target="_self" style="text-decoration: none;">
+        <a href="{url_prefix}{option['link']}" target="_self" style="text-decoration: none;">
             <div class="section-card">
                 <img src="{option['image']}" class="section-image" alt="{option['title']}">
                 <div class="section-title">{option['title']}</div>

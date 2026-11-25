@@ -1,6 +1,9 @@
-from vectordb_bench.backend.clients import DB
-from vectordb_bench.frontend.components.run_test.inputWidget import inputWidget
 from collections import defaultdict
+from typing import Any
+
+from vectordb_bench.backend.clients import DB
+from vectordb_bench.backend.payload import PayloadProfile
+from vectordb_bench.frontend.components.run_test.inputWidget import inputWidget
 from vectordb_bench.frontend.config.dbCaseConfigs import (
     UI_CASE_CLUSTERS,
     UICaseItem,
@@ -8,6 +11,7 @@ from vectordb_bench.frontend.config.dbCaseConfigs import (
     get_case_config_inputs,
     get_custom_case_cluter,
     get_custom_streaming_case_cluster,
+    get_payload_profile_options,
     get_selectable_case_items,
 )
 from vectordb_bench.frontend.config.styles import (
@@ -15,9 +19,33 @@ from vectordb_bench.frontend.config.styles import (
     CHECKBOX_INDENT,
     DB_CASE_CONFIG_SETTING_COLUMNS,
 )
-
 from vectordb_bench.frontend.utils import addHorizontalLine
 from vectordb_bench.models import CaseConfig
+
+PAYLOAD_PROFILE_LABELS = {
+    PayloadProfile.IDS_ONLY: "IDs only",
+    PayloadProfile.VECTOR: "Vector payload",
+}
+
+
+def payloadProfileSetting(container: Any, ui_case_item: UICaseItem, active_dbs: list[DB]) -> None:
+    if not ui_case_item.supports_payload_profiles:
+        return
+
+    options = get_payload_profile_options(active_dbs)
+    selected = [profile for profile in ui_case_item.payload_profiles if profile in options]
+    if not selected:
+        selected = [PayloadProfile.IDS_ONLY]
+    backend_key = "-".join(sorted(db.name for db in active_dbs)) or "none"
+    ui_case_item.payload_profiles = container.multiselect(
+        "Return scenario",
+        options=options,
+        default=selected,
+        format_func=PAYLOAD_PROFILE_LABELS.__getitem__,
+        key=f"payload-profile-{ui_case_item.label}-{backend_key}",
+    )
+    if not ui_case_item.payload_profiles:
+        container.error("Select at least one return scenario.")
 
 
 def caseSelector(st, activedDbList: list[DB]):
@@ -66,6 +94,7 @@ def caseItemCheckbox(st, dbToCaseClusterConfigs, uiCaseItem: UICaseItem, actived
     caseConfigSetting(st.container(), uiCaseItem)
 
     if selected:
+        payloadProfileSetting(st.container(), uiCaseItem, activedDbList)
         dbCaseConfigSetting(st.container(), dbToCaseClusterConfigs, uiCaseItem, activedDbList)
 
     return uiCaseItem.get_cases() if selected else []

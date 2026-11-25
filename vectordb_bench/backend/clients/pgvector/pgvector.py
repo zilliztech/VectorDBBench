@@ -3,10 +3,12 @@
 import logging
 from collections.abc import Generator, Sequence
 from contextlib import contextmanager
+from copy import copy
 from typing import Any
 
 import numpy as np
 import psycopg
+from pgvector import HalfVector
 from pgvector.psycopg import register_vector
 from psycopg import Connection, Cursor, sql
 
@@ -18,9 +20,17 @@ from .config import PgVectorConfigDict, PgVectorIndexConfig
 log = logging.getLogger(__name__)
 
 
+def _redact_connect_config(connect_config: dict[str, Any]) -> dict[str, Any]:
+    redacted = dict(connect_config)
+    if "password" in redacted:
+        redacted["password"] = "**********"  # noqa: S105
+    return redacted
+
+
 class PgVector(VectorDB):
     """Use psycopg instructions"""
 
+    name = "PgVector"
     thread_safe: bool = False
     supported_filter_types: list[FilterOp] = [
         FilterOp.NonFilter,
@@ -42,7 +52,6 @@ class PgVector(VectorDB):
         with_scalar_labels: bool = False,
         **kwargs,
     ):
-        self.name = "PgVector"
         self.case_config = db_case_config
         self.table_name = db_config["table_name"]
         self.connect_config = db_config["connect_config"]
@@ -61,7 +70,8 @@ class PgVector(VectorDB):
         self.cursor.execute("CREATE EXTENSION IF NOT EXISTS vector")
         self.conn.commit()
 
-        log.info(f"{self.name} config values: {self.connect_config}\n{self.case_config}")
+        redacted_connect_config = _redact_connect_config(self.connect_config)
+        log.info("%s config values: %s\n%s", self.name, redacted_connect_config, self.case_config)
         if not any(
             (
                 self.case_config.create_index_before_load,
@@ -70,7 +80,7 @@ class PgVector(VectorDB):
         ):
             msg = (
                 f"{self.name} config must create an index using create_index_before_load or create_index_after_load"
-                f"{self.name} config values: {self.connect_config}\n{self.case_config}"
+                f"{self.name} config values: {redacted_connect_config}\n{self.case_config}"
             )
             log.error(msg)
             raise RuntimeError(msg)
@@ -98,6 +108,14 @@ class PgVector(VectorDB):
         assert cursor is not None, "Cursor is not initialized"
 
         return conn, cursor
+
+    def copy_for_thread(self) -> "VectorDB":
+        # psycopg holds an open socket that can't be deep-copied; shallow-copy
+        # and drop the connection so init() reconnects inside the worker thread.
+        db_copy = copy(self)
+        db_copy.conn = None
+        db_copy.cursor = None
+        return db_copy
 
     def _generate_search_query(self) -> sql.Composed:
         index_param = self.case_config.index_param()
@@ -485,10 +503,10 @@ class PgVector(VectorDB):
                         for i, row in enumerate(metadata_arr):
                             if self.with_scalar_labels:
                                 copy.set_types(["bigint", "halfvec", "varchar"])
-                                copy.write_row((row, np.float16(embeddings_arr[i]), labels_data[i]))
+                                copy.write_row((row, HalfVector(embeddings_arr[i]), labels_data[i]))
                             else:
                                 copy.set_types(["bigint", "halfvec"])
-                                copy.write_row((row, np.float16(embeddings_arr[i])))
+                                copy.write_row((row, HalfVector(embeddings_arr[i])))
                     else:
                         for i, row in enumerate(metadata_arr):
                             if self.with_scalar_labels:

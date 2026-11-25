@@ -33,7 +33,7 @@ def main():
                 "db": d.task_config.db.value,
                 "db_label": d.task_config.db_config.db_label,
                 "db_name": d.task_config.db_name,
-                "case": d.task_config.case_config.case_id.case_name(),
+                "case": d.task_config.case_config.case_name,
                 "qps": d.metrics.qps,
                 "latency": d.metrics.serial_latency_p99,
                 "recall": d.metrics.recall,

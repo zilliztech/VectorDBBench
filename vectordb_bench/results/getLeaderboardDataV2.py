@@ -50,6 +50,7 @@ def main():
                     "latency": round(latency, 4),
                     "recall": round(recall, 4),
                     "filter_ratio": round(filter_ratio, 3),
+                    "payload_profile": metrics.payload_profile,
                 }
             )
         else:

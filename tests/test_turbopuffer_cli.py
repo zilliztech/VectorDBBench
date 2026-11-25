@@ -291,3 +291,48 @@ def test_turbopuffer_unpin_namespace_uses_pin_timeout(monkeypatch: MonkeyPatch) 
         ("PATCH", {"pinning": None}, "secret", "aws-us-west-2", "laion100m", None),
         ("WAIT", None, "secret", "aws-us-west-2", "laion100m", None, 7200),
     ]
+
+
+def test_turbopuffer_fts_insert_declares_filter_id_filterable() -> None:
+    writes = []
+
+    class FakeNamespace:
+        def write(self, **kwargs):
+            writes.append(kwargs)
+
+    db = object.__new__(TurboPuffer)
+    db.ns = FakeNamespace()
+    db._is_fts = True
+    db._text_field = "text"
+    db._scalar_id_field = "id"
+    db._filter_id_field = "filter_id"
+    db.db_case_config = SimpleNamespace(disable_backpressure=False)
+
+    count, error = db.insert_documents(
+        texts=["alpha", "beta"],
+        doc_ids=["doc-1", "doc-2"],
+        filter_ids=[10, 20],
+    )
+
+    assert error is None
+    assert count == 2
+    assert writes == [
+        {
+            "upsert_columns": {
+                "id": ["doc-1", "doc-2"],
+                "text": ["alpha", "beta"],
+                "filter_id": [10, 20],
+            },
+            "schema": {
+                "text": {
+                    "type": "string",
+                    "full_text_search": True,
+                },
+                "filter_id": {
+                    "type": "int",
+                    "filterable": True,
+                },
+            },
+            "disable_backpressure": False,
+        }
+    ]

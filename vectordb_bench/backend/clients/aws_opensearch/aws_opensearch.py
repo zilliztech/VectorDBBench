@@ -5,6 +5,7 @@ from contextlib import contextmanager
 
 from opensearchpy import OpenSearch
 
+from vectordb_bench import config
 from vectordb_bench.backend.filter import Filter, FilterOp
 
 from ..api import VectorDB
@@ -45,6 +46,7 @@ class AWSOpenSearch(VectorDB):
         self.label_col_name = label_col_name
         self.vector_col_name = vector_col_name
         self.with_scalar_labels = with_scalar_labels
+        self._insert_batch_size = kwargs.get("insert_batch_size", config.DEFAULT_INSERT_BATCH_SIZE)
 
         log.info(f"AWS_OpenSearch client config: {self.db_config}")
         log.info(f"AWS_OpenSearch db case config : {self.case_config}")
@@ -237,8 +239,8 @@ class AWSOpenSearch(VectorDB):
         num_clients = self.case_config.number_of_indexing_clients or 1
         log.info(f"Number of indexing clients from case_config: {num_clients}")
 
-        # OpenSearch Serverless requires the single-client path: it does not support
-        # custom _id and needs the benchmark id stored in _source with small batches.
+        # OpenSearch Serverless requires the single-client path because it does not
+        # support custom _id and needs the benchmark id stored in _source.
         if self._is_serverless:
             log.info("Using single client for data insertion (OpenSearch Serverless)")
             return self._insert_with_single_client(embeddings, metadata, labels_data)
@@ -256,7 +258,9 @@ class AWSOpenSearch(VectorDB):
         labels_data: list[str] | None = None,
     ) -> tuple[int, Exception]:
         embeddings_list = list(embeddings)
-        batch_size = 100 if self._is_serverless else len(embeddings_list)
+        batch_size = self._insert_batch_size if self._is_serverless else len(embeddings_list)
+        if self._is_serverless and batch_size <= 0:
+            raise ValueError("insert_batch_size must be greater than 0 for OpenSearch Serverless")
         total_inserted = 0
 
         for i in range(0, len(embeddings_list), batch_size):
