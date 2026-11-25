@@ -827,6 +827,7 @@ class CommonTypedDict(TypedDict):
         ),
     ]
 
+
 class SVSBaseTypedDict(TypedDict):
     graph_degree: Annotated[
         int | None,
@@ -940,7 +941,6 @@ class SVSBaseTypedDict(TypedDict):
             show_default=True,
         ),
     ]
-
 
 
 class HNSWBaseTypedDict(TypedDict):
