@@ -7,7 +7,7 @@ elasticsearch==8.16.0
 opensearch-py
 boto3
 requests-aws4auth
-pgvector
+pgvector>=0.4.0
 pgvecto_rs[psycopg3]>=0.2.1
 sqlalchemy
 redis
