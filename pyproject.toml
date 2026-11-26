@@ -98,6 +98,7 @@ volc_mysql      = [ "mysql-connector-python" ]
 pinot           = [ "requests" ]
 adbpg           = [ "psycopg", "psycopg-binary", "pgvector" ]
 houyidb         = [ "requests", "psycopg[binary]>=3.1" ]
+databend        = [ "databend-driver>=0.34.3" ]
 
 [project.urls]
 Repository  = "https://github.com/zilliztech/VectorDBBench"

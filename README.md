@@ -98,6 +98,7 @@ All the database client supported
 | lindorm                  | `pip install vectordb-bench[lindorm]`       |
 | volc_mysql               | `pip install vectordb-bench[volc_mysql]`    |
 | adbpg                    | `pip install vectordb-bench[adbpg]`         |
+| databend                 | `pip install vectordb-bench[databend]`      |
 
 ### Run
 
@@ -987,6 +988,48 @@ To list the options for HouyiDB, execute `vectordbbench houyidb --help`. The fol
 ```
 
 Filtered cases use the HTTP data plane because that is where HouyiDB accepts scalar labels and id filters.
+
+### Run Databend from command line
+
+Databend is a lakehouse with a native `Vector` type and an HNSW vector index with SQ8 quantization. Install the client with `pip install vectordb-bench[databend]`. Rows are loaded as Arrow streams; the index is created before the load by default, or in `optimize` with `--create-index-after-load`.
+
+```shell
+vectordbbench databend \
+  --case-type Performance768D1M \
+  --host <db_host> \
+  --port 8000 \
+  --user root \
+  --password '<db_password>' \
+  --database default \
+  --m 16 \
+  --ef-construction 64 \
+  --ef-runtime 400 \
+  --refine-factor 2 \
+  --num-concurrency '1,10,20,40' \
+  --concurrency-duration 30 \
+  --task-label <task_label> \
+  --db-label <db_label>
+```
+
+To list the options for Databend, execute `vectordbbench databend --help`. The following are some Databend-specific command-line options.
+
+```text
+  --host TEXT                     DB host  [required]
+  --port INTEGER                  DB Port  [default: 8000]
+  --user TEXT                     DB user  [default: root]
+  --password TEXT                 DB password
+  --database TEXT                 Database of the benchmark table  [default: default]
+  --secure                        Connect over TLS
+  --m INTEGER                     hnsw m
+  --ef-construction INTEGER       hnsw ef-construction
+  --ef-runtime INTEGER            Query setting vector_search_ef
+  --refine-factor INTEGER         Create the index with refine = true (FP16 data)
+                                  and query with this vector_refine_factor
+  --create-index-after-load       Create the vector index in optimize, after the
+                                  load, instead of before it
+  --recluster                     In optimize, CLUSTER BY the vector column and
+                                  RECLUSTER FINAL (k-means block layout)
+```
 
 #### Using a configuration file.
 
