@@ -95,7 +95,6 @@ All the database client supported
 | zvec                     | `pip install vectordb-bench[zvec]`          |
 | warm                     | `pip install vectordb-bench[warm]`          |
 | endee                    | `pip install vectordb-bench[endee]`         |
-| endeeoss                 | `pip install vectordb-bench[endeeoss]`      |
 | lindorm                  | `pip install vectordb-bench[lindorm]`       |
 | volc_mysql               | `pip install vectordb-bench[volc_mysql]`    |
 | adbpg                    | `pip install vectordb-bench[adbpg]`         |

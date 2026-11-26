@@ -15,7 +15,7 @@ from ..backend.clients.elastic_cloud.cli import (
     ElasticCloudHNSWInt4,
     ElasticCloudHNSWInt8,
 )
-from ..backend.clients.endee.cli import Endee, EndeeOSS
+from ..backend.clients.endee.cli import Endee
 from ..backend.clients.hologres.cli import HologresHGraph
 from ..backend.clients.houyidb.cli import HouyiDB
 from ..backend.clients.lancedb.cli import (
@@ -124,7 +124,6 @@ cli.add_command(Chroma)
 cli.add_command(Zvec)
 cli.add_command(Warm)
 cli.add_command(Endee)
-cli.add_command(EndeeOSS)
 cli.add_command(LindormIVFPQ)
 cli.add_command(LindormHNSW)
 cli.add_command(LindormIVFBQ)
