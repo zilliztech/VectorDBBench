@@ -12,10 +12,14 @@ from .config import EndeeConfig
 
 log = logging.getLogger(__name__)
 
+_VECTOR_FIELD_NAME = "dense"
+# Max objects per upsert request accepted by the endee SDK (MAX_VECTORS_PER_BATCH).
+_MAX_UPSERT_BATCH = 10_000
+
 
 class Endee(VectorDB):
     """
-    VectorDBBench client implementation for Endee VectorDB.
+    VectorDBBench client implementation for Endee VectorDB (collections-based API).
     """
 
     supported_filter_types: list[FilterOp] = [
@@ -31,22 +35,23 @@ class Endee(VectorDB):
         db_case_config: DBCaseConfig,
         drop_old: bool = False,
         with_scalar_labels: bool = False,
+        collection_name: str | None = None,
         **kwargs,
     ):
         self.token = db_config.get("token", "")
-        self.region = db_config.get("region", "")
         self.base_url = db_config.get("base_url")
 
-        self.collection_name = db_config.get("collection_name") or db_config.get("index_name")
-        if not self.collection_name:
-            self.collection_name = f"endee_bench_{uuid.uuid4().hex[:8]}"
+        self.collection_name = (
+            collection_name or db_config.get("collection_name") or f"endee_bench_{uuid.uuid4().hex[:8]}"
+        )
 
         self.space_type = db_config.get("space_type", "cosine")
         self.precision = db_config.get("precision")
-        self.version = db_config.get("version")
         self.M = db_config.get("m")
         self.ef_con = db_config.get("ef_con")
         self.ef_search = db_config.get("ef_search")
+        self.prefilter_cardinality_threshold = db_config.get("prefilter_cardinality_threshold")
+        self.filter_boost_percentage = db_config.get("filter_boost_percentage")
         self.with_scalar_labels = with_scalar_labels
 
         self.filter_expr = None
@@ -60,57 +65,69 @@ class Endee(VectorDB):
             log.info(f"Targeting server: {self.base_url}")
 
         try:
-            index_name = self.collection_name
-            indices_resp = self.nd.list_indexes()
-            indices = indices_resp.get("indices", [])
+            collections = self.nd.list_collections()
+            existing_names = [c["name"] for c in collections] if collections else []
 
-            # Check if index exists by name
-            _ = [index["name"] for index in indices] if indices else []
+            if drop_old and self.collection_name in existing_names:
+                log.info(f"Dropping existing Endee collection: '{self.collection_name}'")
+                self._drop_collection(self.collection_name)
 
             try:
-                self.index = self.nd.get_index(name=index_name)
-                log.info(f"Connected to existing Endee index: '{index_name}'")
+                self.collection = self.nd.get_collection(name=self.collection_name)
+                log.info(f"Connected to existing Endee collection: '{self.collection_name}'")
 
             except Exception:
-                log.warning(f"Index '{index_name}' not found. Creating new index...")
+                log.warning(f"Collection '{self.collection_name}' not found. Creating new collection...")
                 try:
-                    self._create_index(dim)
-                    self.index = self.nd.get_index(name=index_name)
-                    log.info(f"Successfully created and connected to index: '{index_name}'")
+                    self._create_collection(dim)
+                    self.collection = self.nd.get_collection(name=self.collection_name)
+                    log.info(f"Successfully created and connected to collection: '{self.collection_name}'")
 
                 except Exception as create_error:
                     if "already exists" in str(create_error).lower() or "conflict" in str(create_error).lower():
-                        log.warning(f"Index '{index_name}' already exists despite previous error. Fetching it again.")
-                        self.index = self.nd.get_index(name=index_name)
+                        log.warning(f"Collection '{self.collection_name}' already exists. Fetching it again.")
+                        self.collection = self.nd.get_collection(name=self.collection_name)
                     else:
-                        log.exception("Failed to create Endee index")
+                        log.exception("Failed to create Endee collection")
                         raise
         except Exception:
-            log.exception(f"Error accessing or creating Endee index '{self.collection_name}'")
+            log.exception(f"Error accessing or creating Endee collection '{self.collection_name}'")
             raise
 
-    def _create_index(self, dim: int):
+    def _create_collection(self, dim: int):
         try:
-            resp = self.nd.create_index(
+            params: dict = {
+                "dimension": dim,
+                "space_type": self.space_type,
+            }
+            if self.precision is not None:
+                params["precision"] = self.precision
+            if self.M is not None:
+                params["M"] = self.M
+            if self.ef_con is not None:
+                params["ef_con"] = self.ef_con
+
+            resp = self.nd.create_collection(
                 name=self.collection_name,
-                dimension=dim,
-                space_type=self.space_type,
-                precision=self.precision,
-                version=self.version,
-                M=self.M,
-                ef_con=self.ef_con,
+                fields=[
+                    {
+                        "name": _VECTOR_FIELD_NAME,
+                        "type": "vector",
+                        "params": params,
+                    }
+                ],
             )
-            log.info(f"Created new Endee index: {resp}")
+            log.info(f"Created new Endee collection: {resp}")
         except Exception:
-            log.exception("Failed to create Endee index")
+            log.exception("Failed to create Endee collection")
             raise
 
-    def _drop_index(self, collection_name: str):
+    def _drop_collection(self, collection_name: str):
         try:
-            res = self.nd.delete_index(collection_name)
+            res = self.nd.delete_collection(collection_name)
             log.info(res)
         except Exception:
-            log.exception("Failed to drop Endee index")
+            log.exception("Failed to drop Endee collection")
             raise
 
     @classmethod
@@ -131,7 +148,7 @@ class Endee(VectorDB):
             if self.base_url:
                 nd.set_base_url(self.base_url)
             self.nd = nd
-            self.index = nd.get_index(name=self.collection_name)
+            self.collection = nd.get_collection(name=self.collection_name)
             yield
         except Exception as e:
             msg = "Error initializing Endee client"
@@ -153,8 +170,7 @@ class Endee(VectorDB):
             self.filter_expr = None
 
         elif filters.type == FilterOp.NumGE:
-            # Endee supports $range, assuming upper bound of 1M for benchmark dataset
-            self.filter_expr = [{self._scalar_id_field: {"$range": [filters.int_value, 1_000_000]}}]
+            self.filter_expr = [{self._scalar_id_field: {"$gte": filters.int_value}}]
 
         elif filters.type == FilterOp.StrEqual:
             self.filter_expr = [{self._scalar_label_field: {"$eq": filters.label_value}}]
@@ -176,22 +192,24 @@ class Endee(VectorDB):
         assert len(embeddings) == len(metadata)
         insert_count = 0
         try:
-            batch_vectors = []
+            objects = []
             for i in range(len(embeddings)):
-                vector_data = {
+                obj = {
                     "id": str(metadata[i]),
-                    "vector": embeddings[i],
                     "meta": {"id": metadata[i]},
                     "filter": {self._scalar_id_field: metadata[i]},
+                    "fields": {_VECTOR_FIELD_NAME: embeddings[i]},
                 }
 
                 if self.with_scalar_labels and labels_data is not None:
-                    vector_data["filter"][self._scalar_label_field] = labels_data[i]
+                    obj["filter"][self._scalar_label_field] = labels_data[i]
 
-                batch_vectors.append(vector_data)
+                objects.append(obj)
 
-            self.index.upsert(batch_vectors)
-            insert_count = len(batch_vectors)
+            for start in range(0, len(objects), _MAX_UPSERT_BATCH):
+                chunk = objects[start : start + _MAX_UPSERT_BATCH]
+                self.collection.upsert(chunk)
+                insert_count += len(chunk)
 
         except Exception as e:
             log.exception("Failed to insert data")
@@ -210,28 +228,38 @@ class Endee(VectorDB):
         Perform vector search with optional filters.
         """
         try:
-            results = self.index.query(
-                vector=query, top_k=k, filter=self.filter_expr, ef=self.ef_search, include_vectors=False
-            )
+            search_kwargs = {
+                "fields": {_VECTOR_FIELD_NAME: {"query": query, "limit": k}},
+                "filter": self.filter_expr,
+            }
+            if self.ef_search is not None:
+                search_kwargs["ef_search"] = self.ef_search
+            if self.filter_expr is not None:
+                if self.prefilter_cardinality_threshold is not None:
+                    search_kwargs["prefilter_cardinality_threshold"] = self.prefilter_cardinality_threshold
+                if self.filter_boost_percentage is not None:
+                    search_kwargs["filter_boost_percentage"] = self.filter_boost_percentage
+            response = self.collection.search(**search_kwargs)
 
-            return [int(result["id"]) for result in results]
+            results = response.get("results", {})
+            hits = results.get(_VECTOR_FIELD_NAME, []) if isinstance(results, dict) else results
+            return [int(hit["id"]) for hit in hits]
 
         except Exception as e:
-            log.warning(f"Error querying Endee index: {e}")
+            log.warning(f"Error querying Endee collection: {e}")
             raise
 
     def describe_index(self) -> dict:
         """
-        Get information about the current index.
+        Get information about the current collection.
         """
         try:
-            indices_resp = self.nd.list_indexes()
+            collections = self.nd.list_collections()
         except Exception as e:
-            log.warning(f"Error describing Endee index: {e}")
+            log.warning(f"Error describing Endee collection: {e}")
             return {}
 
-        all_indices = indices_resp.get("indices", [])
-        for idx in all_indices:
-            if idx.get("name") == self.collection_name:
-                return idx
+        for col in collections:
+            if col.get("name") == self.collection_name:
+                return col
         return {}

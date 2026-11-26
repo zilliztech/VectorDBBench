@@ -1,38 +1,34 @@
-import logging
-import uuid
-from typing import Annotated
+from typing import Annotated, Unpack
 
 import click
 
+from vectordb_bench.backend.clients import DB
 from vectordb_bench.cli.cli import (
     CommonTypedDict,
     benchmark_runner,
+    cli,
     click_parameter_decorators_from_typed_dict,
-    get_custom_case_config,
-    parse_task_stages,
-    resolve_db_note,
-)
-from vectordb_bench.models import (
-    CaseConfig,
-    CaseType,
-    ConcurrencySearchConfig,
-    TaskConfig,
+    run,
 )
 
-from .. import DB
 from ..api import EmptyDBCaseConfig
 from .config import EndeeConfig
 
-log = logging.getLogger(__name__)
+# `benchmark_runner` is re-exported for backward compatibility: the previous Endee CLI
+# imported it here, and existing callers/tests patch `endee.cli.benchmark_runner`.
+__all__ = ["Endee", "EndeeTypedDict", "benchmark_runner"]
 
 
 class EndeeTypedDict(CommonTypedDict):
     token: Annotated[str, click.option("--token", type=str, required=True, default=None, help="Endee API token")]
-    region: Annotated[str, click.option("--region", type=str, default=None, help="Endee region", show_default=True)]
     base_url: Annotated[
-        str,
+        str | None,
         click.option(
-            "--base-url", type=str, default="http://127.0.0.1:8080/api/v1", help="API server URL", show_default=True
+            "--base-url",
+            type=str,
+            default=None,
+            help="API server URL. Leave unset to auto-detect from a serverless token "
+            "or the local self-hosted default.",
         ),
     ]
     space_type: Annotated[
@@ -49,99 +45,80 @@ class EndeeTypedDict(CommonTypedDict):
         str,
         click.option(
             "--precision",
-            type=click.Choice(["binary", "int8d", "int16d", "float16", "float32"]),
-            default="int8d",
+            type=click.Choice(["binary", "int8", "int8e", "int16", "float16", "float32"]),
+            default="int16",
             help="Quant Level",
             show_default=True,
         ),
     ]
-    version: Annotated[int, click.option("--version", type=int, default=None, help="Index version", show_default=True)]
-    m: Annotated[int, click.option("--m", type=int, default=None, help="HNSW M parameter", show_default=True)]
-    ef_con: Annotated[
-        int, click.option("--ef-con", type=int, default=None, help="HNSW construction parameter", show_default=True)
-    ]
-    ef_search: Annotated[
-        int, click.option("--ef-search", type=int, default=None, help="HNSW search parameter", show_default=True)
-    ]
-    index_name: Annotated[
+    version: Annotated[
         str,
         click.option(
+            "--version",
+            type=str,
+            default="",
+            help="Endee server/SDK version label recorded in the results (metadata only)",
+        ),
+    ]
+    m: Annotated[int, click.option("--m", type=int, default=16, help="HNSW M parameter", show_default=True)]
+    ef_con: Annotated[
+        int, click.option("--ef-con", type=int, default=128, help="HNSW construction parameter", show_default=True)
+    ]
+    ef_search: Annotated[
+        int,
+        click.option(
+            "--ef-search",
+            type=click.IntRange(1, 1024),
+            default=128,
+            help="HNSW search parameter",
+            show_default=True,
+        ),
+    ]
+    collection_name: Annotated[
+        str,
+        click.option(
+            "--collection-name",
             "--index-name",
+            "collection_name",
             type=str,
             required=True,
-            help="Endee index name (will use a random name if not provided)",
+            help="Endee collection name (--index-name is a deprecated alias)",
+        ),
+    ]
+    prefilter_cardinality_threshold: Annotated[
+        int,
+        click.option(
+            "--prefilter-cardinality-threshold",
+            type=click.IntRange(1_000, 1_000_000),
+            default=10_000,
+            help="Filtered search only: use brute-force prefiltering when the filter matches at most N vectors.",
+            show_default=True,
+        ),
+    ]
+    filter_boost_percentage: Annotated[
+        int,
+        click.option(
+            "--filter-boost-percentage",
+            type=click.IntRange(0, 100),
+            default=0,
+            help="Filtered search only: expand the HNSW candidate pool by this percentage before filtering.",
             show_default=True,
         ),
     ]
 
 
-@click.command()
+@cli.command()
 @click_parameter_decorators_from_typed_dict(EndeeTypedDict)
-def Endee(**parameters):
+def Endee(**parameters: Unpack[EndeeTypedDict]):
     """
-    Run VectorDBBench against Endee VectorDB.
+    Run VectorDBBench against Endee VectorDB (collections-based API).
+
+    Python Package: pip install "endee>=2.2.0"
     """
-    stages = parse_task_stages(
-        parameters["drop_old"],
-        parameters["load"],
-        parameters["search_serial"],
-        parameters["search_concurrent"],
-    )
-
-    # Generate a random collection name if not provided
-    collection_name = parameters["index_name"]
-    if not collection_name:
-        collection_name = f"endee_bench_{uuid.uuid4().hex[:8]}"
-
-    # Filter out None values before creating config
     params_for_nd = {k: v for k, v in parameters.items() if v is not None}
-    params_for_nd["note"] = resolve_db_note(parameters["note"], parameters["note_file"])
-    db_config = EndeeConfig(**params_for_nd)
-
-    custom_case_config = get_custom_case_config(parameters)
-
-    db_case_config = EmptyDBCaseConfig()
-
-    task = TaskConfig(
+    run(
         db=DB.Endee,
-        db_config=db_config,
-        db_case_config=db_case_config,
-        case_config=CaseConfig(
-            case_id=CaseType[parameters["case_type"]],
-            k=parameters["k"],
-            concurrency_search_config=ConcurrencySearchConfig(
-                concurrency_duration=parameters["concurrency_duration"],
-                num_concurrency=[int(s) for s in parameters["num_concurrency"]],
-                concurrency_timeout=parameters["concurrency_timeout"],
-            ),
-            custom_case=custom_case_config,
-        ),
-        stages=stages,
+        db_config=EndeeConfig(**params_for_nd),
+        db_case_config=EmptyDBCaseConfig(),
+        **parameters,
     )
-
-    # Use the run method of the benchmark_runner object
-    if not parameters["dry_run"]:
-        # Generate task label
-        run_uuid = uuid.uuid4().hex
-        base_name = parameters.get("task_label")
-        if not base_name:
-            base_name = parameters.get("index_name", "endee")
-
-        final_label = f"{base_name}_{run_uuid}"
-
-        # Run the benchmark
-        benchmark_runner.run([task], final_label)
-
-        # Wait for task to complete
-        import time
-        from concurrent.futures import wait
-
-        from vectordb_bench.interface import global_result_future
-
-        time.sleep(5)
-        if global_result_future:
-            wait([global_result_future])
-
-        # Ensure CLI doesn't close while background processes are active
-        while benchmark_runner.has_running():
-            time.sleep(1)
