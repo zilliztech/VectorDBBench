@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import LiteralString, TypedDict
+from typing import ClassVar, LiteralString, TypedDict
 
 from pydantic import BaseModel, SecretStr
 
@@ -20,11 +20,15 @@ class PgVectorScaleConfigDict(TypedDict):
 
 
 class PgVectorScaleConfig(DBConfig):
+    # An empty password is valid (local trust/peer auth), and it is what a
+    # reloaded result carries when the run used no password — don't reject it.
+    _extra_empty_skip: ClassVar[frozenset[str]] = frozenset({"password"})
+
     user_name: SecretStr = SecretStr("postgres")
-    password: SecretStr
+    password: SecretStr = SecretStr("")
     host: str = "localhost"
     port: int = 5432
-    db_name: str
+    db_name: str = "vectordb"
 
     def to_dict(self) -> PgVectorScaleConfigDict:
         user_str = self.user_name.get_secret_value()
