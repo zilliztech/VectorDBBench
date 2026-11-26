@@ -201,6 +201,32 @@ class LindormVector(VectorDB):
             insert_data.append(doc_data)
         return insert_data
 
+    def _validate_bulk_response(self, response: Any, batch_metadata: list[int]) -> None:
+        """Acknowledge a batch only when every index operation has a successful response."""
+        if not isinstance(response, dict) or not isinstance(response.get("items"), list):
+            msg = f"Invalid bulk response: expected an items list for IDs {batch_metadata}"
+            raise TypeError(msg)
+
+        items = response["items"]
+        failures = []
+        for position, doc_id in enumerate(batch_metadata):
+            item = items[position] if position < len(items) else None
+            result = item.get("index") if isinstance(item, dict) and len(item) == 1 else None
+            if not isinstance(result, dict):
+                failures.append({"id": doc_id, "error": "Missing or invalid index result"})
+                continue
+
+            status = result.get("status")
+            if not isinstance(status, int) or status not in (200, 201) or result.get("error") is not None:
+                failures.append({"id": doc_id, "status": status, "error": result.get("error")})
+
+        if response.get("errors") is not False or len(items) != len(batch_metadata) or failures:
+            msg = (
+                f"Bulk insert failed: errors={response.get('errors')!r}, "
+                f"expected_items={len(batch_metadata)}, actual_items={len(items)}, failures={failures}"
+            )
+            raise RuntimeError(msg)
+
     def _insert_batch_func(
         self, batch_embeddings: list[list[float]], batch_metadata: list[int], batch_label: list[int] | None
     ) -> (int, Exception):
@@ -211,7 +237,8 @@ class LindormVector(VectorDB):
         for attempt in range(max_retries):
             try:
                 insert_data = self._prepare_bulk_data(batch_embeddings, batch_metadata, batch_label)
-                self.client.bulk(body=insert_data)
+                response = self.client.bulk(body=insert_data)
+                self._validate_bulk_response(response, batch_metadata)
                 return (len(batch_embeddings), None)
             except Exception as e:
                 if attempt < max_retries - 1:
