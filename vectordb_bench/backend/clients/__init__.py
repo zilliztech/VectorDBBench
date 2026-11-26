@@ -38,6 +38,7 @@ class DB(Enum):
     PgVectoRS = "PgVectoRS"
     PgVectorScale = "PgVectorScale"
     PgDiskANN = "PgDiskANN"
+    PgSVS = "PgSVS"
     AlloyDB = "AlloyDB"
     LakebaseVector = "LakebaseVector"
     Redis = "Redis"
@@ -144,6 +145,11 @@ class DB(Enum):
             from .pgdiskann.pgdiskann import PgDiskANN
 
             return PgDiskANN
+
+        if self == DB.PgSVS:
+            from .pgsvs.pgsvs import PgSVS
+
+            return PgSVS
 
         if self == DB.Redis:
             from .redis.redis import Redis
@@ -397,6 +403,11 @@ class DB(Enum):
             from .pgdiskann.config import PgDiskANNConfig
 
             return PgDiskANNConfig
+
+        if self == DB.PgSVS:
+            from .pgsvs.config import PgSVSConfig
+
+            return PgSVSConfig
 
         if self == DB.Redis:
             from .redis.config import RedisConfig
@@ -673,6 +684,11 @@ class DB(Enum):
             from .pgdiskann.config import _pgdiskann_case_config
 
             return _pgdiskann_case_config.get(index_type)
+
+        if self == DB.PgSVS:
+            from .pgsvs.config import _pgsvs_case_config
+
+            return _pgsvs_case_config.get(index_type)
 
         if self == DB.AlloyDB:
             from .alloydb.config import _alloydb_case_config

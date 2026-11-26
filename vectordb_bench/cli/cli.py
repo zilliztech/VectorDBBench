@@ -828,6 +828,121 @@ class CommonTypedDict(TypedDict):
     ]
 
 
+class SVSBaseTypedDict(TypedDict):
+    graph_degree: Annotated[
+        int | None,
+        click.option(
+            "--graph_degree",
+            type=int,
+            help="Vamana graph degree (R parameter); valid range 16-256, default 64",
+        ),
+    ]
+    alpha: Annotated[
+        int | None,
+        click.option(
+            "--alpha",
+            type=int,
+            help="Pruning alpha, encoded as alpha*100 (e.g. 120 = 1.2); "
+            "-1 = SVS library default; valid range -1 or 0-200",
+        ),
+    ]
+    compression_type: Annotated[
+        int | None,
+        click.option(
+            "--compression_type",
+            type=int,
+            help="Internal vector compression: 0=none, 1=leanvec, 2=lvq; default 0",
+        ),
+    ]
+    compression_primary: Annotated[
+        int | None,
+        click.option(
+            "--compression_primary",
+            type=int,
+            help="Primary quantization width: 4=UINT4, -4=INT4, 8=UINT8, -8=INT8",
+        ),
+    ]
+    compression_secondary: Annotated[
+        int | None,
+        click.option(
+            "--compression_secondary",
+            type=int,
+            help="LeanVec secondary quantization / LVQ residual width: "
+            "4=UINT4, -4=INT4, 8=UINT8, -8=INT8, 0=no residual (LVQ only)",
+        ),
+    ]
+    build_window_size: Annotated[
+        int | None,
+        click.option(
+            "--build_window_size",
+            type=int,
+            help="Build-time search window size; -1 = 2 * graph_degree (default)",
+        ),
+    ]
+    search_window_size: Annotated[
+        int | None,
+        click.option(
+            "--search_window_size",
+            type=int,
+            help="Query-time search window size, applied via the svs.search_window_size session "
+            "setting (not forwarded to index build); valid range 10-10000, default 100 "
+            "(no -1-means-default sentinel here, unlike build_window_size)",
+            is_eager=True,
+        ),
+    ]
+    use_search_history: Annotated[
+        bool | None,
+        click.option(
+            "--use-search-history/--skip-use-search-history",
+            type=bool,
+            default=None,
+            help="Maintain visited-node history during search; default true",
+            show_default=True,
+        ),
+    ]
+    leanvec_dims: Annotated[
+        int | None,
+        click.option(
+            "--leanvec_dims",
+            type=int,
+            help="LeanVec reduced dimensions; -1 = dimensions/2 (default); "
+            "ignored unless compression_type=1 (leanvec)",
+            is_eager=True,
+        ),
+    ]
+    maintenance_work_mem: Annotated[
+        str | None,
+        click.option(
+            "--maintenance-work-mem",
+            type=str,
+            help="Sets the maximum memory to be used for maintenance operations (index creation). "
+            "Can be entered as string with unit like '64GB' or as an integer number of KB."
+            "This will set the parameters: max_parallel_maintenance_workers,"
+            " max_parallel_workers & table(parallel_workers)",
+            required=False,
+        ),
+    ]
+    max_parallel_workers: Annotated[
+        int | None,
+        click.option(
+            "--max-parallel-workers",
+            type=int,
+            help="Sets the maximum number of parallel processes per maintenance operation (index creation)",
+            required=False,
+        ),
+    ]
+    normalize_cosine: Annotated[
+        bool,
+        click.option(
+            "--normalize-cosine/--skip-normalize-cosine",
+            type=bool,
+            default=False,
+            help="Normalize vectors before insert/search when dataset metric is COSINE",
+            show_default=True,
+        ),
+    ]
+
+
 class HNSWBaseTypedDict(TypedDict):
     m: Annotated[int | None, click.option("--m", type=int, help="hnsw m")]
     ef_construction: Annotated[

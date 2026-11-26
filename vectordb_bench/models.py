@@ -228,6 +228,17 @@ class CaseConfigParamType(Enum):
     scalar_index = "scalar_index"
     scalar_column = "scalar_column"
 
+    # PgSVS (vamana) parameters
+    alpha = "alpha"
+    compression_type = "compression_type"
+    compression_primary = "compression_primary"
+    compression_secondary = "compression_secondary"
+    build_window_size = "build_window_size"
+    search_window_size = "search_window_size"
+    use_search_history = "use_search_history"
+    leanvec_dims = "leanvec_dims"
+    normalize_cosine = "normalize_cosine"
+
 
 class CustomizedCase(BaseModel):
     pass

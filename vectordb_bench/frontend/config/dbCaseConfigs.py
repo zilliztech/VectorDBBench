@@ -1687,6 +1687,171 @@ CaseConfigParamInput_IterativeScan_PolarDBPG = CaseConfigInput(
     isDisplayed=lambda config: not config.get(CaseConfigParamType.graph_cache, True),
 )
 
+CaseConfigParamInput_IndexType_PgSVS = CaseConfigInput(
+    label=CaseConfigParamType.IndexType,
+    inputHelp="Select Index Type",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [
+            IndexType.PGSVS_VAMANA.value,
+        ],
+    },
+)
+
+CaseConfigParamInput_graph_degree_PgSVS = CaseConfigInput(
+    label=CaseConfigParamType.graph_degree,
+    displayLabel="Graph degree",
+    inputHelp="Maximum number of neighbors per graph node (reloption graph_degree)",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 16,
+        "max": 256,
+        "value": 32,
+    },
+)
+
+CaseConfigParamInput_alpha_PgSVS = CaseConfigInput(
+    label=CaseConfigParamType.alpha,
+    displayLabel="Alpha",
+    inputHelp="Pruning alpha, encoded as alpha*100 (e.g. 120 = alpha 1.2). -1 uses the SVS library default.",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": -1,
+        "max": 200,
+        "value": -1,
+    },
+)
+
+CaseConfigParamInput_build_window_size_PgSVS = CaseConfigInput(
+    label=CaseConfigParamType.build_window_size,
+    displayLabel="Build window size",
+    inputHelp="Search window size used while building the graph. -1 uses 2 * graph_degree.",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": -1,
+        "max": 1000,
+        "value": -1,
+    },
+)
+
+CaseConfigParamInput_compression_type_PgSVS = CaseConfigInput(
+    label=CaseConfigParamType.compression_type,
+    displayLabel="Compression type",
+    inputHelp="0 = none, 1 = LeanVec, 2 = LVQ",
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [0, 1, 2],
+    },
+)
+
+CaseConfigParamInput_compression_primary_PgSVS = CaseConfigInput(
+    label=CaseConfigParamType.compression_primary,
+    displayLabel="Compression primary bits",
+    inputHelp="Primary encoding width for LeanVec/LVQ compression",
+    inputType=InputType.Option,
+    inputConfig={
+        # 4 first: valid with every secondary option below, for both LeanVec and LVQ.
+        "options": [4, 8, -4, -8],
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.compression_type, 0) in [1, 2],
+)
+
+CaseConfigParamInput_compression_secondary_PgSVS = CaseConfigInput(
+    label=CaseConfigParamType.compression_secondary,
+    displayLabel="Compression secondary bits",
+    inputHelp="Secondary/residual encoding width. 0 (no residual) is only valid when compression type is LVQ.",
+    inputType=InputType.Option,
+    inputConfig={
+        # 8 first: valid with the default primary=4, for both LeanVec and LVQ.
+        "options": [8, 4, 0, -4, -8],
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.compression_type, 0) in [1, 2],
+)
+
+CaseConfigParamInput_leanvec_dims_PgSVS = CaseConfigInput(
+    label=CaseConfigParamType.leanvec_dims,
+    displayLabel="LeanVec dimensions",
+    inputHelp="Reduced dimensionality for LeanVec compression. -1 uses dimensions/2.",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": -1,
+        "max": 2000,
+        "value": -1,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.compression_type, 0) == 1,
+)
+
+CaseConfigParamInput_normalize_cosine_PgSVS = CaseConfigInput(
+    label=CaseConfigParamType.normalize_cosine,
+    displayLabel="Normalize for cosine",
+    inputType=InputType.Bool,
+    inputHelp="Normalize vectors and build an L2 index instead of relying on a cosine operator class",
+    inputConfig={
+        "value": False,
+    },
+)
+
+CaseConfigParamInput_quantization_type_PgSVS = CaseConfigInput(
+    label=CaseConfigParamType.quantizationType,
+    inputType=InputType.Option,
+    inputConfig={
+        "options": ["none", "halfvec"],
+    },
+)
+
+CaseConfigParamInput_table_quantization_type_PgSVS = CaseConfigInput(
+    label=CaseConfigParamType.tableQuantizationType,
+    inputType=InputType.Option,
+    inputConfig={
+        "options": ["none", "halfvec"],
+    },
+)
+
+CaseConfigParamInput_use_search_history_PgSVS = CaseConfigInput(
+    label=CaseConfigParamType.use_search_history,
+    displayLabel="Use search history",
+    inputType=InputType.Bool,
+    inputHelp="Reuse visited-node history across searches; also set as the default at index build time",
+    inputConfig={
+        "value": False,
+    },
+)
+
+CaseConfigParamInput_search_window_size_PgSVS = CaseConfigInput(
+    label=CaseConfigParamType.search_window_size,
+    displayLabel="Search window size",
+    inputHelp="svs.search_window_size -- search beam width; higher improves recall at the cost of latency",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 10,
+        "max": 10000,
+        "value": 100,
+    },
+)
+
+CaseConfigParamInput_maintenance_work_mem_PgSVS = CaseConfigInput(
+    label=CaseConfigParamType.maintenance_work_mem,
+    inputHelp="Recommended value: 1.33x the index size, not to exceed the available free memory."
+    "Specify in gigabytes. e.g. 8GB",
+    inputType=InputType.Text,
+    inputConfig={
+        "value": "8GB",
+    },
+)
+
+CaseConfigParamInput_max_parallel_workers_PgSVS = CaseConfigInput(
+    label=CaseConfigParamType.max_parallel_workers,
+    displayLabel="Max parallel workers",
+    inputHelp="Recommended value: (cpu cores - 1). This will set the parameters: max_parallel_maintenance_workers,"
+    " max_parallel_workers & table(parallel_workers)",
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 0,
+        "max": 1024,
+        "value": 16,
+    },
+)
+
 
 CaseConfigParamInput_IndexType_AlloyDB = CaseConfigInput(
     label=CaseConfigParamType.IndexType,
@@ -2720,6 +2885,40 @@ PolarDBPgPerformanceConfig = [
     CaseConfigParamInput_GraphCache_PolarDBPG,
     CaseConfigParamInput_GraphCacheTimeout_PolarDBPG,
     CaseConfigParamInput_IterativeScan_PolarDBPG,
+]
+
+PgSVSLoadingConfig = [
+    CaseConfigParamInput_IndexType_PgSVS,
+    CaseConfigParamInput_graph_degree_PgSVS,
+    CaseConfigParamInput_alpha_PgSVS,
+    CaseConfigParamInput_build_window_size_PgSVS,
+    CaseConfigParamInput_compression_type_PgSVS,
+    CaseConfigParamInput_compression_primary_PgSVS,
+    CaseConfigParamInput_compression_secondary_PgSVS,
+    CaseConfigParamInput_leanvec_dims_PgSVS,
+    CaseConfigParamInput_normalize_cosine_PgSVS,
+    CaseConfigParamInput_quantization_type_PgSVS,
+    CaseConfigParamInput_table_quantization_type_PgSVS,
+    CaseConfigParamInput_use_search_history_PgSVS,
+    CaseConfigParamInput_maintenance_work_mem_PgSVS,
+    CaseConfigParamInput_max_parallel_workers_PgSVS,
+]
+PgSVSPerformanceConfig = [
+    CaseConfigParamInput_IndexType_PgSVS,
+    CaseConfigParamInput_graph_degree_PgSVS,
+    CaseConfigParamInput_alpha_PgSVS,
+    CaseConfigParamInput_build_window_size_PgSVS,
+    CaseConfigParamInput_compression_type_PgSVS,
+    CaseConfigParamInput_compression_primary_PgSVS,
+    CaseConfigParamInput_compression_secondary_PgSVS,
+    CaseConfigParamInput_leanvec_dims_PgSVS,
+    CaseConfigParamInput_normalize_cosine_PgSVS,
+    CaseConfigParamInput_quantization_type_PgSVS,
+    CaseConfigParamInput_table_quantization_type_PgSVS,
+    CaseConfigParamInput_use_search_history_PgSVS,
+    CaseConfigParamInput_search_window_size_PgSVS,
+    CaseConfigParamInput_maintenance_work_mem_PgSVS,
+    CaseConfigParamInput_max_parallel_workers_PgSVS,
 ]
 
 PgVectoRSLoadingConfig = [
@@ -4008,6 +4207,10 @@ CASE_CONFIG_MAP = {
     DB.PolarDBPG: {
         CaseLabel.Load: PolarDBPgLoadingConfig,
         CaseLabel.Performance: PolarDBPgPerformanceConfig,
+    },
+    DB.PgSVS: {
+        CaseLabel.Load: PgSVSLoadingConfig,
+        CaseLabel.Performance: PgSVSPerformanceConfig,
     },
     DB.PgVectoRS: {
         CaseLabel.Load: PgVectoRSLoadingConfig,

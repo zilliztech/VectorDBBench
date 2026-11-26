@@ -71,7 +71,7 @@ All the database client supported
 | pinecone                 | `pip install vectordb-bench[pinecone]`      |
 | weaviate                 | `pip install vectordb-bench[weaviate]`      |
 | elastic, aliyun_elasticsearch| `pip install vectordb-bench[elastic]`       |
-| pgvector, pgvectorscale, pgdiskann, alloydb, vectorchord, lakebase_vector | `pip install vectordb-bench[pgvector]`      |
+| pgvector, pgvectorscale, pgdiskann, alloydb, vectorchord, lakebase_vector, pgsvs | `pip install vectordb-bench[pgvector]`      |
 | pgvecto.rs               | `pip install vectordb-bench[pgvecto_rs]`    |
 | redis                    | `pip install vectordb-bench[redis]`         |
 | valkey                   | `pip install vectordb-bench[valkey]`        |

@@ -62,6 +62,7 @@ class IndexType(StrEnum):
     IVF_HNSW_PQ = "IVF_HNSW_PQ"
     BTREE = "BTREE"
     NONE = "NONE"
+    PGSVS_VAMANA = "vamana"
 
 
 class SQType(StrEnum):
