@@ -59,6 +59,7 @@ class DB(Enum):
     LanceDB = "LanceDB"
     OceanBase = "OceanBase"
     S3Vectors = "S3Vectors"
+    DynamoDB = "DynamoDB"
     Hologres = "Alibaba Cloud Hologres"
     TencentElasticsearch = "TencentElasticsearch"
     AliSQL = "AlibabaCloudRDSMySQL"
@@ -262,6 +263,11 @@ class DB(Enum):
             from .s3_vectors.s3_vectors import S3Vectors
 
             return S3Vectors
+
+        if self == DB.DynamoDB:
+            from .dynamodb.dynamodb import DynamoDB
+
+            return DynamoDB
 
         if self == DB.Hologres:
             from .hologres.hologres import Hologres
@@ -516,6 +522,11 @@ class DB(Enum):
 
             return S3VectorsConfig
 
+        if self == DB.DynamoDB:
+            from .dynamodb.config import DynamoDBConfig
+
+            return DynamoDBConfig
+
         if self == DB.Hologres:
             from .hologres.config import HologresConfig
 
@@ -737,6 +748,10 @@ class DB(Enum):
             from .s3_vectors.config import S3VectorsIndexConfig
 
             return S3VectorsIndexConfig
+        if self == DB.DynamoDB:
+            from .dynamodb.config import DynamoDBIndexConfig
+
+            return DynamoDBIndexConfig
         if self == DB.Hologres:
             from .hologres.config import HologresIndexConfig
 
