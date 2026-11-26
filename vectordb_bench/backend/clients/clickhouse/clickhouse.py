@@ -34,6 +34,8 @@ class Clickhouse(VectorDB):
         self.index_param = self.case_config.index_param()
         self.search_param = self.case_config.search_param()
         self.session_param = self.case_config.session_param()
+        ef = self.search_param["params"].get("ef")
+        self._search_settings = {"hnsw_candidate_list_size_for_search": ef} if ef else None
 
         self._index_name = "clickhouse_index"
         self._primary_field = "id"
@@ -191,42 +193,16 @@ class Clickhouse(VectorDB):
             "metric_type": self.search_param["metric_type"],
             "query": query,
         }
-        if self.case_config.metric_type == "COSINE":
-            if filters:
-                result = self.conn.query(
-                    "SELECT {primary_field:Identifier}, {vector_field:Identifier} "
-                    "FROM {schema:Identifier}.{table:Identifier} "
-                    "WHERE {primary_field:Identifier} > {gt:UInt32} "
-                    "ORDER BY cosineDistance(embedding,{query:Array(Float64)}) "
-                    "LIMIT {k:UInt32}",
-                    parameters=parameters,
-                ).result_rows
-                return [int(row[0]) for row in result]
-
-            result = self.conn.query(
-                "SELECT {primary_field:Identifier}, {vector_field:Identifier} "
-                "FROM {schema:Identifier}.{table:Identifier} "
-                "ORDER BY cosineDistance(embedding,{query:Array(Float64)}) "
-                "LIMIT {k:UInt32}",
-                parameters=parameters,
-            ).result_rows
-            return [int(row[0]) for row in result]
-        if filters:
-            result = self.conn.query(
-                "SELECT {primary_field:Identifier}, {vector_field:Identifier} "
-                "FROM {schema:Identifier}.{table:Identifier} "
-                "WHERE {primary_field:Identifier} > {gt:UInt32} "
-                "ORDER BY L2Distance(embedding,{query:Array(Float64)}) "
-                "LIMIT {k:UInt32}",
-                parameters=parameters,
-            ).result_rows
-            return [int(row[0]) for row in result]
-
+        distance = "cosineDistance" if self.case_config.metric_type == "COSINE" else "L2Distance"
+        where = "WHERE {primary_field:Identifier} > {gt:UInt32} " if filters else ""
+        # Only ids are returned: also selecting the vector column made recall ignore ef.
         result = self.conn.query(
-            "SELECT {primary_field:Identifier}, {vector_field:Identifier} "
+            "SELECT {primary_field:Identifier} "
             "FROM {schema:Identifier}.{table:Identifier} "
-            "ORDER BY L2Distance(embedding,{query:Array(Float64)}) "
+            f"{where}"
+            f"ORDER BY {distance}(embedding,{{query:Array(Float64)}}) "
             "LIMIT {k:UInt32}",
             parameters=parameters,
+            settings=self._search_settings,
         ).result_rows
         return [int(row[0]) for row in result]
