@@ -56,7 +56,7 @@ test = [
     "pytest",
     "psycopg",
     "psycopg-binary",
-    "pgvector",
+    "pgvector>=0.4.0",
 ]
 restful         = [ "flask" ]
 qdrant          = [ "qdrant-client" ]
@@ -65,7 +65,7 @@ weaviate        = [ "weaviate-client" ]
 elastic         = [ "elasticsearch" ]
 # For elastic and aliyun_elasticsearch
 
-pgvector        = [ "psycopg", "psycopg-binary", "pgvector" ]
+pgvector        = [ "psycopg", "psycopg-binary", "pgvector>=0.4.0" ]
 # for pgvector, pgvectorscale, pgdiskann, alloydb, lakebase_vector, and PolarDB for PostgreSQL HNSW
 
 pgvecto_rs      = [ "pgvecto_rs[psycopg3]>=0.2.2" ]
@@ -99,6 +99,7 @@ volc_mysql      = [ "mysql-connector-python" ]
 pinot           = [ "requests" ]
 adbpg           = [ "psycopg", "psycopg-binary", "pgvector" ]
 houyidb         = [ "requests", "psycopg[binary]>=3.1" ]
+databend        = [ "databend-driver>=0.34.3" ]
 
 [project.urls]
 Repository  = "https://github.com/zilliztech/VectorDBBench"

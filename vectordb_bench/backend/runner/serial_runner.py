@@ -238,7 +238,14 @@ class SerialSearchRunner:
             return ground_truth.iter_rows()
         return iter(ground_truth)
 
-    def search(self, args: tuple[list, object]) -> tuple[float, ...]:
+    @staticmethod
+    def _recall_stats(recalls: list[float]) -> dict[str, float]:
+        return {
+            "recall_min": round(float(min(recalls)), 4),
+            **{f"recall_p{p}": round(float(np.percentile(recalls, p)), 4) for p in (1, 5, 10)},
+        }
+
+    def search(self, args: tuple[list, object]) -> tuple:
         log.info(f"{mp.current_process().name:14} start search the entire test_data to get recall and latency")
         test_data, ground_truth = args
         self._validate_ground_truth(test_data, ground_truth)
@@ -295,6 +302,7 @@ class SerialSearchRunner:
         avg_latency = round(np.mean(latencies), 4)
         avg_recall = round(np.mean(recalls), 4)
         avg_ndcg = round(np.mean(ndcgs), 4)
+        recall_stats = self._recall_stats(recalls) if self.measure_recall and ground_truth is not None else {}
         cost = round(np.sum(latencies), 4)
         p99 = round(np.percentile(latencies, 99), 4)
         p95 = round(np.percentile(latencies, 95), 4)
@@ -312,7 +320,7 @@ class SerialSearchRunner:
                 f"p99={p99}, "
                 f"p95={p95}"
             )
-            return (avg_recall, avg_ndcg, avg_mrr, p99, p95)
+            return (avg_recall, avg_ndcg, avg_mrr, p99, p95, recall_stats)
 
         avg_recall_at = {cutoff: round(np.mean(values), 4) for cutoff, values in recall_at_samples.items()}
         log.info(
@@ -327,9 +335,9 @@ class SerialSearchRunner:
             f"p50={p50}, "
             f"recall_at={avg_recall_at}"
         )
-        return (avg_recall, avg_ndcg, p99, p95, p50, avg_recall_at)
+        return (avg_recall, avg_ndcg, p99, p95, p50, avg_recall_at, recall_stats)
 
-    def _run_in_subprocess(self) -> tuple[float, ...]:
+    def _run_in_subprocess(self) -> tuple:
         with concurrent.futures.ProcessPoolExecutor(max_workers=1) as executor:
             future = executor.submit(self.search, (self.test_data, self.ground_truth))
             return future.result()

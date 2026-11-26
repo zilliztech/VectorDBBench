@@ -201,6 +201,10 @@ def test_fts_perf_metric_marks_recall_skipped_without_blocking_case(monkeypatch)
     metric = runner._run_perf_case(drop_old=False)
 
     assert metric.recall == 0.0
+    assert metric.recall_min is None
+    assert metric.recall_p1 is None
+    assert metric.recall_p5 is None
+    assert metric.recall_p10 is None
     assert metric.ndcg == 0.0
     assert metric.mrr == 0.0
     assert metric.additional_parameters["fts_recall"] == {
@@ -209,3 +213,19 @@ def test_fts_perf_metric_marks_recall_skipped_without_blocking_case(monkeypatch)
         "serial_query_count": 0,
         "full_query_count": 2,
     }
+
+
+def test_fts_perf_metric_records_recall_tail(monkeypatch):
+    class Case:
+        label = CaseLabel.FullTextSearchPerformance
+        dataset = object()
+
+    config = type("Config", (), {"stages": [TaskStage.SEARCH_SERIAL], "case_config": FtsCaseConfig()})()
+    runner = CaseRunner.construct(ca=Case(), config=config)
+    stats = {"recall_min": 0.0, "recall_p1": 0.01, "recall_p5": 0.05, "recall_p10": 0.1}
+    monkeypatch.setattr(CaseRunner, "_init_search_runners", lambda self: None)
+    monkeypatch.setattr(CaseRunner, "_serial_search", lambda self: (0.5, 0.4, 0.3, 0.2, 0.1, stats))
+
+    metric = runner._run_perf_case(drop_old=False)
+
+    assert {name: getattr(metric, name) for name in stats} == stats

@@ -29,6 +29,10 @@ class Metric:
     serial_latency_p95: float = 0.0
     serial_latency_p50: float = 0.0
     recall: float = 0.0
+    recall_min: float | None = None
+    recall_p1: float | None = None
+    recall_p5: float | None = None
+    recall_p10: float | None = None
     recall_at: dict[int, float] = field(default_factory=dict)
     ndcg: float = 0.0
     mrr: float = 0.0
@@ -54,6 +58,10 @@ class Metric:
     st_search_time_list: list[float] = field(default_factory=list)
     st_max_qps_list_list: list[float] = field(default_factory=list)
     st_recall_list: list[float] = field(default_factory=list)
+    st_recall_min_list: list[float | None] = field(default_factory=list)
+    st_recall_p1_list: list[float | None] = field(default_factory=list)
+    st_recall_p5_list: list[float | None] = field(default_factory=list)
+    st_recall_p10_list: list[float | None] = field(default_factory=list)
     st_ndcg_list: list[float] = field(default_factory=list)
     st_serial_latency_p99_list: list[float] = field(default_factory=list)
     st_serial_latency_p95_list: list[float] = field(default_factory=list)

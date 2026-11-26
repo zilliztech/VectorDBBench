@@ -30,7 +30,15 @@ class SeekDBTypedDict(CommonTypedDict):
     port: Annotated[int, click.option("--port", type=int, help="SeekDB port", default=3306, show_default=True)]
 
 
-class SeekDBHNSWTypedDict(SeekDBTypedDict, HNSWFlavor3): ...
+class SeekDBHNSWTypedDict(SeekDBTypedDict, HNSWFlavor3):
+    reset_resource_limits: Annotated[
+        bool,
+        click.option(
+            "--reset-resource-limits",
+            is_flag=True,
+            help="Reset the instance-wide memory_limit and cpu_count to 0 (auto) before the run",
+        ),
+    ]
 
 
 @cli.command()
@@ -55,6 +63,7 @@ def SeekDBHNSW(**parameters: Unpack[SeekDBHNSWTypedDict]):
             ef_construction=parameters["ef_construction"],
             ef_search=parameters["ef_search"],
             index=IndexType.HNSW,
+            reset_resource_limits=parameters["reset_resource_limits"],
         ),
         **parameters,
     )

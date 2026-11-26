@@ -77,6 +77,7 @@ class DB(Enum):
     VolcMySQL = "VolcMySQL"
     Adbpg = "AnalyticDB for PostgreSQL"
     HouyiDB = "HouyiDB"
+    Databend = "Databend"
 
     def supports_case_label(self, label: "CaseLabel") -> bool:
         from ..cases import CaseLabel
@@ -312,6 +313,11 @@ class DB(Enum):
             from .polardb.polardb import PolarDB
 
             return PolarDB
+
+        if self == DB.Databend:
+            from .databend.databend import Databend
+
+            return Databend
 
         if self == DB.Pinot:
             from .pinot.pinot import Pinot
@@ -596,6 +602,11 @@ class DB(Enum):
 
             return HouyiDBConfig
 
+        if self == DB.Databend:
+            from .databend.config import DatabendConfig
+
+            return DatabendConfig
+
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
 
@@ -857,6 +868,11 @@ class DB(Enum):
             from .houyidb.config import HouyiDBIndexConfig
 
             return HouyiDBIndexConfig
+
+        if self == DB.Databend:
+            from .databend.config import DatabendIndexConfig
+
+            return DatabendIndexConfig
 
         # DB.Pinecone, DB.Redis
         return EmptyDBCaseConfig
